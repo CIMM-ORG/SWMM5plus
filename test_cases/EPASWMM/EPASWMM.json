@@ -57,8 +57,8 @@
         "disableInterpolation": false
     },
     "CaseName" : {
-        "Long"  : "Channel",
-        "Short" : "Channel",
+        "Long"  : "EPAexample01-mod02",
+        "Short" : "EPAex01m02",
         "withTimeStamp" : ""
     },
     "Constant" : {
@@ -172,7 +172,7 @@
         "CelerityFactor" : 1.0
     },
     "Simulation" : {
-        "useHydrology" : false,
+        "useHydrology" : true,
         "useHydraulics" : true,
         "useSWMMC" : false
     },

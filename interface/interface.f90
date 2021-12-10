@@ -408,7 +408,9 @@ contains
         N_curve = SWMM_N_Curve
 
         !% brh202112082
-        SWMM_N_subcatch = get_num_objects(API_SUBCATCH)       
+        SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
+        
+        
 
 
         print *
@@ -1723,13 +1725,16 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         
-        print *, 'just before loading subcatchment'
+        !print *, 'just before loading subcatchment'
 
         call load_api_procedure("api_get_subcatch_runoff")
         error = ptr_api_get_subcatch_runoff(sc_idx,runoff)   
         call print_api_error(error, subroutine_name)
     
-        print *, "in interface_get_subcatchment_runoff, idx, runoff:", sc_idx, runoff
+        print *, "in interface_get_subcatchment_runoff, idx, runoff:"
+        print *, "******"
+        print *, sc_idx, runoff
+        print *, "*****"
         
         if (setting%Debug%File%interface)  &
              write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1926,11 +1931,16 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call load_api_procedure("api_get_NewRunoffTime")
-        interface_get_NewRunoffTime = ptr_api_get_NewRunoffTime() / onethousand
+        interface_get_NewRunoffTime = ptr_api_get_NewRunoffTime() / onethousandR
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function interface_get_NewRunoffTime
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+        
 !%
 !%=============================================================================
 !%=============================================================================

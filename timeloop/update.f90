@@ -213,6 +213,7 @@ module update
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         real(8), pointer :: Fr(:) !BRHbugfix20210811 test
+        integer :: ii
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%update) &
@@ -255,6 +256,13 @@ module update
 
             !% wavespeed at modified hydraulic depth (ell)
             wavespeed(thisP) = sqrt(grav * depth(thisP))
+
+            !print *, '-------------------'
+            !print *, 'in 309870 update '
+            !do ii=1,size(thisP)
+            !    print *, wavespeed(thisP(ii)), depth(thisP(ii)), elemR(thisP(ii),er_Depth)
+            !end do
+            !print *, '------------------'
 
             !% modify wavespeed for surcharged AC cells
             if (whichTM .ne. ETM) then

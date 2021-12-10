@@ -1772,6 +1772,28 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
+        !% brh 20211210
+        !% Flow solution that are NOT small volume
+        !% -- needed to limit where CFL is computed
+        ptype => col_elemP(ep_CC_Q_NOTsmallvolume)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_QeqType) == time_march) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallVolume))     )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_QeqType) == time_march) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallVolume))     )
+        end if
+
+
+
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
         !% ep_smallvolume_AC
         !% - all small volumes that are AC

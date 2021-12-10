@@ -205,7 +205,8 @@ module define_globals
     real(8), parameter :: tenR = 10.0
     real(8), parameter :: twentyfourR = 24.0
     real(8), parameter :: sixtyR = 60.0
-    real(8), parameter :: onethousand = 1000.0
+    real(8), parameter :: onehundredR = 100.0
+    real(8), parameter :: onethousandR = 1000.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneeighthR = oneR / eightR

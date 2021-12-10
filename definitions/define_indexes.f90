@@ -267,6 +267,9 @@ module define_indexes
          enumerator :: ei_node_Gidx_BIPquick        !% node index from global BIPquick network  (static)
          enumerator :: ei_QeqType                   !% type of flow equation (static)
          enumerator :: ei_specificType              !% specific element type (static)
+         !% brh20211210s
+         enumerator :: ei_Subcatchment_table_idx    !% index in subcatchment table for linking to subcatchments to this element 
+         !% brh20211210e         
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
          enumerator :: ei_lastplusone !% must be last enum item
@@ -398,6 +401,7 @@ module define_indexes
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements    
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
+        enumerator :: ep_CC_Q_NOTsmallvolume        !% all Q conduits used for CFL computation (added brh20211210)
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemP = ep_lastplusone-1
@@ -437,6 +441,9 @@ module define_indexes
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
+        !% brh20211210s
+        enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
+        !% brh20211210e
         enumerator :: eYN_isDummy
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum

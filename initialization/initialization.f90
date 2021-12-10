@@ -89,7 +89,6 @@ contains
         !% --- initialize the time stamp used for output (must be after json is read)
         call init_timestamp ()
 
-
         !% HACK
         !% --- Read and process the command-line options a second time to prevent overwrite
         !%     from json file and reprocess.
@@ -140,9 +139,7 @@ contains
         !% that all the data gets copied over when new stuff is added. Probably OK
         !% to keep the above as computing on all images until the code is near complete
 
-        sync all
-
-        
+        sync all 
         
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
             if (setting%Output%Verbose) print *, "begin network definition"
@@ -153,9 +150,22 @@ contains
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
 
-        !% --- initialize boundary condition
+        !% brh20211210s
 
-        
+ STARTING WORK HERE --Need a subroutine that sets up the subcatchments. 
+ Note we already have the number of subcatchments N_?
+ this should have the following
+ 1.  compute the maximum number of subcatchments to any single node. 
+ 2.  determine which SWMM nodes are connected to subcatchments
+ 3.  ideally we can use ei_node_Gidx_SWMM to set eYN_hasSubcatchRunOff for all elements with runoff 
+ 4.  Create an elemID_from_subcatch array that stores the elemID for each subcatchments
+ 5.  Create an interface routine that cycles through the subcatchments, gets its newrunoff, and adds it to an elemR(:,er_FlowrateLateral) 
+ for the appropriate elem.
+ 
+ 
+        !% brh20211210e
+
+        !% --- initialize boundary condition
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
             if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
             call init_bc()

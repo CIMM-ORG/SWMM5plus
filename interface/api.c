@@ -1398,12 +1398,36 @@ int DLLEXPORT api_get_subcatch_runoff(
         return error_getCode(ErrorCode);
     }
 
-    // runoff_execute();
-    *runoff = Subcatch[sc_idx].newRunoff;
+    // Get runoff and convert to cubic meters per second
+    *runoff = CFTOCM(Subcatch[sc_idx].newRunoff);
+    printf("... sc_idx, newRunoff CMS %d , %f \n",sc_idx,Subcatch[sc_idx].newRunoff);
     
     return 0;
 }
 
+// //===============================================================================
+// int DLLEXPORT api_get_subcatch_runoff_nodeName(
+//     int sc_idx, int *nodeIdx)
+// //===============================================================================
+// {
+//     printf(" in api_get_subcatch_runoff_nodeName");
+
+//     if ( ErrorCode ) return error_getCode(ErrorCode);
+//     if ( ! api->IsInitialized )
+//     {
+//         report_writeErrorMsg(ERR_NOT_OPEN, "");
+//         return error_getCode(ErrorCode);
+//     }
+
+    
+//     *runoff = CFTOCM(Subcatch[sc_idx].newRunoff);
+//     printf("... sc_idx, newRunoff CMS %d , %f \n",sc_idx,Subcatch[sc_idx].newRunoff);
+
+//     api_get_object_name(
+//     int sc_indx, char* object_name, int object_type)
+    
+//     return 0;
+// }
 
 // -------------------------------------------------------------------------
 // |

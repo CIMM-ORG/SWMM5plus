@@ -380,9 +380,9 @@ contains
         !% Description:
         !% initializes the output file path and filenames
         !%-----------------------------------------------------------------------------
-        integer :: istat, ireturn, ierr
+        integer :: istat, ireturn, ierr, kk
         logical :: isfolder = .false.
-        character(len=256) :: cmsg, default_path, output_path, this_purpose
+        character(len=256) :: cmsg, default_path, output_path, this_purpose, temppath
         character(64) :: subroutine_name = "util_file_setup_output_folders"
         !%-----------------------------------------------------------------------------
 
@@ -421,21 +421,81 @@ contains
             setting%File%output_kernel = 'run'
         end if
 
-        !% --- set up timestamp subfolder
+        !% --- set up timestamp subfolder name (provisional)
         setting%File%output_timestamp_subfolder = trim(setting%File%output_folder) // &
             '/' // trim( setting%File%output_kernel) // '_' // trim(setting%Time%DateTimeStamp)
 
-        !% --- check for clash if timestamp subfolder exists
-        !% --- HACK --- replace with inquire()
-        ierr = chdir(trim(setting%File%output_timestamp_subfolder))
-        if (ierr == 0) then
-            write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,..."
-            write(*,"(A)") "...but folder already exists. Either delete folder or wait one minute"
-            write(*,"(A)") "...to get a unique time stamp."
-            write(*,"(A)") "...Folder attempted to create was..."
-            write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
-            stop
+        !% --- check if provisional timestamp subfolder already exists and modify if it does exist
+        if (this_image() == 1) then
+            inquire (DIRECTORY=trim(setting%File%output_timestamp_subfolder),EXIST=isfolder)
+            if (isfolder) then
+                !% loop over ASCII lower case characters and try adding
+                do kk=97,122
+                    setting%File%output_timestamp_subfolder = trim(setting%File%output_folder) // &
+                        '/' // trim(setting%File%output_kernel) // '_' // trim(setting%Time%DateTimeStamp) &
+                        // '_' // char(kk)
+                    inquire (DIRECTORY=trim(setting%File%output_timestamp_subfolder),EXIST=isfolder)
+                    if (.not. isfolder) then
+                        !% accept this name and leave the loop
+                        exit
+                    else
+                        !% continue
+                    end if
+                end do
+                !% if all 26 letters don't work, there's something strange going on, so stop execution.
+                if (isfolder) then
+                    write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,..."
+                    write(*,"(A)") "...but folder already exists. Either delete folder or wait one minute"
+                    write(*,"(A)") "...to get a unique time stamp."
+                    write(*,"(A)") "...Last folder code attempted to create was..."
+                    write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
+                    stop 98375
+                else
+                    !% continue
+                end if
+            else
+                !% continue
+            end if
+        else
+            !% continue
         end if
+
+        !% --- HACK --- replace with inquire(), but check portability when doing so
+        !%        first save the current working directory
+        !ierr = getcwd(temppath)
+        !if (ierr /= 0) then
+        !    write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
+        !    write(*,"(A)") 'Unexpected system error'
+        !    stop 3907198
+        !end if
+        !%       change the directory to the provisional name, if it exists we need a new name
+        ! ierr = chdir(trim(setting%File%output_timestamp_subfolder))
+        !%       if directory exists, we will tack on a letter to the timestamp and try again
+        ! if (ierr == 0) then
+        !     do kk=97,122
+        !         setting%File%output_timestamp_subfolder = trim(setting%File%output_folder) // &
+        !             '   /' // trim( setting%File%output_kernel) // '_' // trim(setting%Time%DateTimeStamp) &
+        !             // '_' // char(kk)
+        !         ierr = chdir(trim(setting%File%output_timestamp_subfolder))
+        !         if (ierr /= 0) then
+        !             !% return to previous directory
+        !             ierr = chdir(temppath)
+        !             exit
+        !         else
+        !             !% continue
+        !         end if
+        !     end do
+        !     if (ierr == 0) then
+        !         write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,..."
+        !         write(*,"(A)") "...but folder already exists. Either delete folder or wait one minute"
+        !         write(*,"(A)") "...to get a unique time stamp."
+        !         write(*,"(A)") "...Last folder code attempted to create was..."
+        !         write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
+        !         stop 98375
+        !     else
+        !         !% continue
+        !     end if
+        ! end if
 
         !% --- make directory for timestamp subfolder
         if (this_image() == 1) then
@@ -449,7 +509,9 @@ contains
                 write(*,"(A)") '...system returned an error message of...'
                 write(*,"(A)") trim(cmsg)
                 write(*,"(A,i5)") 'The cmdstat returned was ',istat
-                stop
+                stop 73675
+            else
+                !% continue
             end if
         end if
 
@@ -473,7 +535,7 @@ contains
                     write(*,"(A)") '...system returned an error message of...'
                     write(*,"(A)") trim(cmsg)
                     write(*,"(A,i5)") 'The cmdstat returned was ',istat
-                    stop
+                    stop 439870
             end if
         end if
 

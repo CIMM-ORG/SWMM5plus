@@ -36,40 +36,45 @@ contains
 !%==========================================================================
 !%
     subroutine timeloop_toplevel()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%     Loops over all the major time-stepping routines
-    !%-----------------------------------------------------------------------------
-        integer          :: ii, additional_rows
-        logical          :: isTLfinished
-        logical          :: doHydraulics, doHydrology
-        real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
-        real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
-        real(8), pointer :: timeEnd, timeNow, dtTol, dtHydraulics
-        character(64)    :: subroutine_name = 'timeloop_toplevel'
-    !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Description:
+        !%     Loops over all the major time-stepping routines
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer          :: ii, additional_rows
+            logical          :: isTLfinished
+            logical          :: doHydraulics, doHydrology
+            real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
+            real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
+            real(8), pointer :: timeEnd, timeNow, dtTol, dtHydraulics
+            character(64)    :: subroutine_name = 'timeloop_toplevel'
+            integer :: kk !temporary
+        !%--------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Output%Verbose) &
-            write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-        call system_clock(count=setting%Time%Real%EpochTimeLoopStartSeconds)
-
-        !% pointers for clarity
-        nextHydrologyTime  => setting%Time%Hydrology%NextTime
-        nextHydraulicsTime => setting%Time%Hydraulics%NextTime
-        lastHydrologyTime  => setting%Time%Hydrology%LastTime
-        lastHydraulicsTime => setting%Time%Hydraulics%LastTime        
-        timeEnd => setting%Time%End
-        timeNow => setting%Time%Now
-        dtTol   => setting%Time%DtTol
-        dtHydraulics => setting%Time%Hydraulics%Dt
-
-        !% initialize the time
+            if (setting%Output%Verbose) &
+                write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
+            call system_clock(count=setting%Time%Real%EpochTimeLoopStartSeconds)
+        !%--------------------------------------------------------------------
+        !% Aliases
+            nextHydrologyTime  => setting%Time%Hydrology%NextTime
+            nextHydraulicsTime => setting%Time%Hydraulics%NextTime
+            lastHydrologyTime  => setting%Time%Hydrology%LastTime
+            lastHydraulicsTime => setting%Time%Hydraulics%LastTime        
+            timeEnd => setting%Time%End
+            timeNow => setting%Time%Now
+            dtTol   => setting%Time%DtTol
+            dtHydraulics => setting%Time%Hydraulics%Dt
+        !%--------------------------------------------------------------------
+        !% initialize the times
         setting%Time%Hydrology%LastTime  = timeNow  
         setting%Time%Hydraulics%LastTime = timeNow
 
+        !% local T/F that changes with each time step depending on whether or 
+        !% not the hydrology or hydraulics are conducted in that step
         doHydrology  = setting%simulation%useHydrology 
         doHydraulics = setting%simulation%useHydraulics
 
@@ -78,7 +83,7 @@ contains
             nextHydrologyTime = interface_get_NewRunoffTime()
         else   
             !% set a large dummy time for hydrology if not used
-            nextHydrologyTime = timeEnd + tenR * dtTol
+            nextHydrologyTime = timeEnd + onethousandR * dtTol
         end if
 
         !% get the initial dt and the next hydraulics time
@@ -86,7 +91,7 @@ contains
             call tl_update_hydraulics_timestep()
         else
             !% set a large dummy time for hydraulics if not used
-            nextHydraulicsTime = timeEnd + tenR * dtTol
+            nextHydraulicsTime = timeEnd + onethousandR * dtTol
             !% suppress the multi-level hydraulics output (otherwise seg faults)
             setting%Output%suppress_MultiLevel_Output = .true.
         end if
@@ -101,7 +106,17 @@ contains
 
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         !% The loop starts at t = setting%Time%Start
-        do ii=1,20 !while (setting%Time%Now <= setting%Time%End)
+        !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
+        ii=0
+        do ii=1,5
+        !do while (setting%Time%Now <= (setting%Time%End - dtTol))
+        !    ii = ii+1
+            print *, ii, timeNow, setting%Time%End, doHydrology, doHydraulics
+            !print *, 'here 3198755'
+            !do kk=1,size(elemR,2)
+            !    print *, kk, elemR(kk,er_Depth)
+            !end do
+
             if (doHydrology) call tl_hydrology()
             if (doHydraulics) then
                 call bc_update()
@@ -122,6 +137,12 @@ contains
                 end if
                 exit
             end if
+
+            !print *, 'here 47685'
+            !do kk=1,size(elemR,2)
+            !    print *, kk, elemR(kk,er_Velocity)
+            !end do
+
         end do
 
         !% >>> BEGIN HACK
@@ -170,7 +191,8 @@ contains
         setting%Time%Hydrology%NextTime = interface_get_NewRunoffTime()   
 
         !% cycle through the subcatchments to get the runoff 
-        do ii = 1,SWMM_N_subcatch  
+        !% starts at 0 because this is index into EPA SWMM storage
+        do ii = 0,SWMM_N_subcatch-1  
             call interface_get_subcatch_runoff(ii)  
             print *, '...need to get runoff out of subcatchments'
         end do  
@@ -183,15 +205,16 @@ contains
 !%==========================================================================
 !%
     subroutine tl_hydraulics()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Top level hydraulic solver for a single time step
-        !%-----------------------------------------------------------------------------
-        character(64)    :: subroutine_name = 'tl_hydraulics'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+            character(64)    :: subroutine_name = 'tl_hydraulics'
+        !%-------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
@@ -231,63 +254,69 @@ contains
 !%==========================================================================
 !%
     subroutine tl_update_hydraulics_timestep()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
-        !%-----------------------------------------------------------------------------
+        !% updates the timestep (dt) for hydraulics and computes the
+        !% setting.Time.Hydraulics.NextTime
+        !%------------------------------------------------------------------
+            logical, pointer :: matchHydrologyStep, useHydrology
+            real(8)          :: oldDT
+            real(8)          :: timeleft, thisCFL
+            real(8), pointer :: targetCFL, maxCFL, maxCFLlow, timeNow, dtTol
+            real(8), pointer :: decreaseFactor, increaseFactor
+            real(8), pointer :: newDT
+            !rm velocity(:), wavespeed(:), length(:), PCelerity(:)
+            real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
+            real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
+            integer          :: ii, neededSteps
+            integer, pointer :: stepNow, stepNext, stepfinal, lastCheckStep, checkStepInterval
+            !rm integer, pointer :: thisCol, Npack, thisP(:)
+            character(64)    :: subroutine_name = 'tl_update_hydraulics_timestep'
 
-        logical, pointer :: matchHydrologyStep, useHydrology
-        real(8)          :: oldDT
-        real(8)          :: timeleft, thisCFL
-        real(8), pointer :: targetCFL, maxCFL, maxCFLlow, timeNow, dtTol
-        real(8), pointer :: decreaseFactor, increaseFactor
-        real(8), pointer :: newDT, velocity(:), wavespeed(:), length(:), PCelerity(:)
-        real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
-        real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
-        integer          :: ii, neededSteps
-        integer, pointer :: stepNow, stepNext, stepfinal, lastCheckStep, checkStepInterval
-        integer, pointer :: thisCol, Npack, thisP(:)
-        character(64)    :: subroutine_name = 'tl_update_hydraulics_timestep'
+            integer :: kk !temporary
+        !%-------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases:
+            maxCFL             => setting%VariableDT%CFL_hi_max
+            targetCFL          => setting%VariableDT%CFL_target
+            maxCFLlow          => setting%VariableDT%CFL_lo_max
+            decreaseFactor     => setting%VariableDT%decreaseFactor
+            increaseFactor     => setting%VariableDT%increaseFactor
+            checkStepInterval  => setting%VariableDT%NstepsForCheck
 
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            useHydrology       => setting%Simulation%useHydrology
 
-        maxCFL             => setting%VariableDT%CFL_hi_max
-        targetCFL          => setting%VariableDT%CFL_target
-        maxCFLlow          => setting%VariableDT%CFL_lo_max
-        decreaseFactor     => setting%VariableDT%decreaseFactor
-        increaseFactor     => setting%VariableDT%increaseFactor
-        checkStepInterval  => setting%VariableDT%NstepsForCheck
+            matchHydrologyStep => setting%Time%matchHydrologyStep
 
-        useHydrology       => setting%Simulation%useHydrology
+            nextHydrologyTime  => setting%Time%Hydrology%NextTime
+            nextHydraulicsTime => setting%Time%Hydraulics%NextTime
 
-        matchHydrologyStep => setting%Time%matchHydrologyStep
-        nextHydrologyTime  => setting%Time%Hydrology%NextTime
-        nextHydraulicsTime => setting%Time%Hydraulics%NextTime
+            lastHydrologyTime  => setting%Time%Hydrology%LastTime
+            lastHydraulicsTime => setting%Time%Hydraulics%LastTime        
 
-        lastHydrologyTime  => setting%Time%Hydrology%LastTime
-        lastHydraulicsTime => setting%Time%Hydraulics%LastTime        
+            timeNow            => setting%Time%Now
+            dtTol              => setting%Time%DtTol
 
-        timeNow            => setting%Time%Now
-        dtTol              => setting%Time%DtTol
+            stepNow            => setting%Time%Hydraulics%Step
+            lastCheckStep      => setting%VariableDT%LastCheckStep
+        !%----------------------------------------------------------------------
+        !% brh2021210 removing JB JM and small volumes from CFL computation
+        !thisCol            => col_elemP(ep_CC_Q_NOTsmallvolume)  !col_elemP(ep_CC_ALLtm)
+        !Npack              => npack_elemP(thisCol)
+        !thisP              => elemP(1:Npack,thisCol)
 
-        stepNow            => setting%Time%Hydraulics%Step
-        lastCheckStep      => setting%VariableDT%LastCheckStep
-
-        thisCol            => col_elemP(ep_CC_ALLtm)
-        Npack              => npack_elemP(thisCol)
-        thisP              => elemP(1:Npack,thisCol)
-
-        velocity           => elemR(:,er_Velocity)
-        wavespeed          => elemR(:,er_WaveSpeed)
-        length             => elemR(:,er_Length)
-        PCelerity          => elemR(:,er_Preissmann_Celerity)
+        !velocity           => elemR(:,er_Velocity)
+        !wavespeed          => elemR(:,er_WaveSpeed)
+        !length             => elemR(:,er_Length)
+        !PCelerity          => elemR(:,er_Preissmann_Celerity)
 
         oldDT =  setting%Time%Hydraulics%Dt  ! not a pointer
         newDT => setting%Time%Hydraulics%Dt
 
-        print *, 'here ============================== in tl_update_hydraulics_timestep'
+        !print *, 'here ============================== in tl_update_hydraulics_timestep'
 
         if ((matchHydrologyStep) .and. (useHydrology)) then
     
@@ -297,15 +326,14 @@ contains
             !% For combined hydrology and hydraulics compute the CFL if we take a single
             !% step to match the next hydrology time
             timeLeft = nextHydrologyTime - lastHydraulicsTime
-            thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP)), &
-                           maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * timeleft / length(thisP)))
+            !rm thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP)), &
+            !rm               maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * timeleft / length(thisP)))
+            thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,timeleft)
 
-            print *, 'timeLeft ',timeLeft    
-            print *, 'thisCFL  ',thisCFL    
-            print *, 'oldDT    ',oldDT       
-
-            ! thisCFL = maxval((abs(velocity(thisP)) + abs(wavespeed(thisP)) + abs(PCelerity(thisP))) &
-            !     * timeleft / length(thisP))
+            !print *, 'timeLeft ',timeLeft    
+            !print *, 'thisCFL  ',thisCFL    
+            !print *, 'maxCFL   ',maxCFL
+            !print *, 'oldDT    ',oldDT       
 
             !% check to see if a single time step to match the hydrology time is possible
             if (thisCFL < maxCFL) then
@@ -320,7 +348,14 @@ contains
                         newDT = increaseFactor * oldDT
                     end if
                 else
+                    !% small time left, don't bother with it, go back to the old dt
                     newDT = oldDT
+                    !% check that resetting to oldDT didn't cause a problem
+                    thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,newDT)
+                    if (thisCFL > maxCFL) then 
+                        !% if CFL to large, set the time step based on the target CFL
+                        newDT = newDT * targetCFL / thisCFL
+                    end if
                 end if
             else
                 !% if more than one time step is needed
@@ -347,17 +382,27 @@ contains
                     else
                         !% accept the provisional newDT
                     end if
-                    !% if dt is large and there is more than 2 steps, then round to an integer number
-                    if ((newDT > fiveR) .and. (neededSteps > 2)) then
-                        !% round larger dt to counting numbers
-                        newDT = real(floor(newDT),8)
+                    !% check thatthe newDT didn't cause a CFL violation
+                    thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,newDT)
+                    if (thisCFL > maxCFL) then 
+                        !% if CFL to large, set the time step based on the target CFL
+                        newDT = newDT * targetCFL / thisCFL
                     end if
                 end if
             end if
         else
             !% Allowing hydrology and hydraulics to occur at different times
-            thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * oldDT / length(thisP)), &
-                           maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * oldDT / length(thisP)))
+            thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,oldDt)
+            !rm thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * oldDT / length(thisP)), &
+            !rm               maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * oldDT / length(thisP)))
+
+ 
+            !print *, 'thisCFL  ',thisCFL    
+            !print *, 'oldDT    ',oldDT  
+            !do kk = 1,size(thisP)
+            !    print *, kk, velocity(thisP(kk)), elemR(thisP(kk),er_Depth)
+            !end do
+            !print *, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP))), maxval(elemR(thisP,er_ell))
 
             if (thisCFL > maxCFL) then
                 !% decrease the time step to the target CFL and reset the checkStep counter
@@ -376,12 +421,30 @@ contains
             end if
         end if
 
+        !% if dt is large and there is more than 2 steps, then round to an integer number
+        if (neededSteps > 2) then
+            if (newDT > fiveR) then
+                !% round larger dt to counting numbers
+                newDT = real(floor(newDT),8)
+            elseif (newDT > oneR) then
+                newDT = real(floor(newDT * onehundredR),8) / onehundredR
+            else
+                !%  HACK NEED SOMETHING TO ROUND TO 3 DIGITS FOR SMALLER NUMBERS
+            end if
+        end if
+
+        !print *, 'timeNow,newDT ',timeNow, newDT
+        !print *, 'new CFL ', tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,newDt)
+
         nextHydraulicsTime = lastHydraulicsTime + newDT
 
         if ((setting%Limiter%Dt%UseLimitMin) .and. (newDT .le. setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
-            print*, 'max velocity', maxval(velocity(thisP)), 'max wavespeed', maxval(wavespeed(thisP))
+            print*, 'max velocity  ', maxval( &
+                elemR(elemP(1:npack_elemP(ep_CC_Q_NOTsmallvolume),ep_CC_Q_NOTsmallvolume),er_Velocity) )
+            print*, 'max wavespeed ', maxval( &
+                elemR(elemP(1:npack_elemP(ep_CC_Q_NOTsmallvolume),ep_CC_Q_NOTsmallvolume),er_WaveSpeed) )
             print*, 'warning: the dt value is smaller than the user supplied min dt value'
             stop 1123938
         end if
@@ -394,39 +457,44 @@ contains
 !%==========================================================================
 !%
     subroutine tl_increment_counters(doHydraulics, doHydrology)
-        !%-----------------------------------------------------------------------------
+        !%-------------------------------------------------------------------
         !% Description:
-        !%-----------------------------------------------------------------------------
-        logical, intent(inout) :: doHydraulics, doHydrology
-        logical, pointer       :: useHydrology, useHydraulics
-        real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
-        real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
-        real(8)                :: nextTime, nextTimeLocal
-        real(8), pointer       :: dtTol, timeNow, dtHydraulics
-        integer                :: minImg
-        integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
-        character(64)          :: subroutine_name = 'tl_increment_counters'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% increments the hydrology and hydraulics step counters and
+        !%-------------------------------------------------------------------
+        !% Declarations
+            logical, intent(inout) :: doHydraulics, doHydrology
+            logical, pointer       :: useHydrology, useHydraulics
+            real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
+            real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
+            real(8)                :: nextTime, nextTimeLocal
+            real(8), pointer       :: dtTol, timeNow, dtHydraulics
+            integer                :: minImg
+            integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
+            character(64)          :: subroutine_name = 'tl_increment_counters'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%--------------------------------------------------------------------
+        !% Aliases
+            hydraulicStep => setting%Time%Hydraulics%Step
+            hydrologyStep => setting%Time%Hydrology%Step
+            dtHydraulics  => setting%Time%Hydraulics%Dt
+            timeNow       => setting%Time%Now
+            step          => setting%Time%Step
+            reportStep    => setting%Output%reportStep
+            dtTol         => setting%Time%DtTol
 
-        hydraulicStep => setting%Time%Hydraulics%Step
-        hydrologyStep => setting%Time%Hydrology%Step
-        dtHydraulics  => setting%Time%Hydraulics%Dt
-        timeNow       => setting%Time%Now
-        step          => setting%Time%Step
-        reportStep    => setting%Output%reportStep
-        dtTol         => setting%Time%DtTol
+            nextHydraulicsTime => setting%Time%Hydraulics%NextTime
+            nextHydrologyTime  => setting%Time%Hydrology%NextTime
 
-        nextHydraulicsTime => setting%Time%Hydraulics%NextTime
-        nextHydrologyTime  => setting%Time%Hydrology%NextTime
+            lastHydraulicsTime => setting%Time%Hydraulics%LastTime
+            lastHydrologyTime  => setting%Time%Hydrology%LastTime
 
-        lastHydraulicsTime => setting%Time%Hydraulics%LastTime
-        lastHydrologyTime  => setting%Time%Hydrology%LastTime
-
-        useHydrology  => setting%Simulation%useHydrology
-        useHydraulics => setting%Simulation%useHydraulics
+            useHydrology  => setting%Simulation%useHydrology
+            useHydraulics => setting%Simulation%useHydraulics
+        !%--------------------------------------------------------------------
 
         !% get the timestep and the next time for hydraulics
         if (doHydraulics) then
@@ -442,7 +510,18 @@ contains
         !% provide a large number if hydrology isn't used
         if (.not. useHydrology) then
             nextHydrologyTime = setting%Time%End + tenR*DtTol
+        else
+            !% EPA SWMM will not return a next hydrology time that is
+            !% beyond the end of the simulation, so we need a special
+            !% treatment for this case
+            if ((nextHydrologyTime .eq. lastHydrologyTime) .and. &
+                (timeNow > setting%Time%Start)) then 
+                nextHydrologyTime = setting%Time%End + tenR*DtTol
+            end if
         end if
+
+        !print *, 'last times ',lastHydraulicsTime, lastHydrologyTime
+        !print *, 'next times ',nextHydraulicsTime, nextHydrologyTime
 
         !% find the minimum hydraulics time and store accross all processors
         call co_min(nextHydraulicsTime)
@@ -458,8 +537,6 @@ contains
         !call co_min(dt)
         !call co_min(nextTime)
 
-
-     
         ! if (nextTime == nextTimeLocal) then
         !     minImg = this_image()
         ! else
@@ -476,12 +553,12 @@ contains
         step    = step + 1
         timeNow = nextTime !timeNow + dt
 
-        print *, 'timeNow ',timeNow
+        !print *, 'timeNow  in tl_increment_counters',timeNow
 
         call tl_command_line_step_output()
 
-        LastHydraulicsTime = NextHydraulicsTime
-        LastHydrologyTime  = NextHydrologyTime
+        if (doHydraulics) LastHydraulicsTime = NextHydraulicsTime
+        if (doHydrology)  LastHydrologyTime  = NextHydrologyTime
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -574,13 +651,13 @@ contains
         !% Description:
         !%
         !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_command_line_step_output'
-        real (8), pointer :: dt, timeNow, timeEnd
-        real (8) :: thistime
-        integer, pointer :: step, interval
-        integer :: execution_realtime
-        real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
-        character(3) :: timeunit
+            character(64) :: subroutine_name = 'tl_command_line_step_output'
+            real (8), pointer :: dt, timeNow, timeEnd
+            real (8) :: thistime
+            integer, pointer :: step, interval
+            integer :: execution_realtime
+            real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
+            character(3) :: timeunit
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
@@ -644,6 +721,33 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_command_line_step_output
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function tl_get_max_cfl(thisCol,dt) result (outvalue)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% computes the maximum CFL for the cells masked by "thisCol" in
+        !% npack_elem(thisCol)
+        !%-------------------------------------------------------------------
+            integer, intent(in) :: thisCol
+            real(8), intent(in) :: dt
+            integer, pointer :: Npack, thisP(:)
+            real(8), pointer :: velocity(:), wavespeed(:), length(:), PCelerity(:)
+        !%-------------------------------------------------------------------
+            Npack              => npack_elemP(thisCol)
+            thisP              => elemP(1:Npack,thisCol)
+            velocity           => elemR(:,er_Velocity)
+            wavespeed          => elemR(:,er_WaveSpeed)
+            length             => elemR(:,er_Length)
+            PCelerity          => elemR(:,er_Preissmann_Celerity)
+        !%-------------------------------------------------------------------
+
+        outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt/ length(thisP)), &
+                        maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * dt / length(thisP)))
+
+    end function tl_get_max_cfl    
 !%
 !%==========================================================================
 !% END OF MODULE

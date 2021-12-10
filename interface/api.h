@@ -75,7 +75,7 @@ enum api_nodef_attributes {
   nodef_dwfInflow_avgvalue,         // 22
   nodef_has_dwfInflow,              // 23
   // brh20211207s
-  //node_depth,                      // xx
+  //node_depth,                     // xx
   nodef_newDepth,                   // 24
   // brh20211207e
   nodef_fullDepth,                  // 25
