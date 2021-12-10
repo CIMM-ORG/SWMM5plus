@@ -198,10 +198,12 @@ module define_settings
         integer :: EpochNowSeconds  = 0
     end type RealTimeType
 
-    !% setting%Time% ...Hydraulics, Hydrology
+    !% setting%Time% ...Hydraulics, Hydrology, Dry
     type TimeStepType
-        real(8) :: Dt
-        integer :: Step
+       real(8) :: Dt
+       real(8) :: LastTime
+       real(8) :: NextTime
+       integer :: Step
     end type TimeStepType
 
     !% setting%File%UnitNumber
@@ -357,10 +359,12 @@ module define_settings
 
     ! setting%Eps
     type EpsilonType
-        ! +- small non-dimensional range for hyd jump discrimination
+        !% +- small non-dimensional range for hyd jump discrimination
         real(8) :: FroudeJump = 0.1
-        ! Fractional increase in depth under froude limitation
+        !% Fractional increase in depth under froude limitation
         real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
+        !% small increment of time (seconds)
+        real(8) :: seconds = 4.9999999e-4
     end type EpsilonType
 
     !% setting%FaceInterp
@@ -538,9 +542,13 @@ module define_settings
         type(TimeStepType) :: Hydrology
         logical            :: matchHydrologyStep
         character(14)      :: DateTimeStamp
-        integer            :: Step
-        real(8)            :: Dt
-        real(8)            :: DtTol
+        integer            :: Step  !% count of the number of steps (either hydrology, hydraulics, or combined)
+        !% brh 20211209s
+        real(8)            :: WetStepSWMM
+        real(8)            :: DryStepSWMM
+        !% brh 20211209e
+        !rm real(8)            :: Dt      !% latest time step used for routing
+        real(8)            :: DtTol   !% tolerance when comparing Now time and accumulation of time steps.
         real(8)            :: Start
         real(8)            :: Now
         real(8)            :: End
@@ -564,8 +572,8 @@ module define_settings
         real(8) :: CFL_hi_max = 0.7
         real(8) :: CFL_target = 0.45
         real(8) :: CFL_lo_max = 0.3
-        real(8) :: decreaseFactor = 0.8
-        real(8) :: increaseFactor = 1.2
+        real(8) :: decreaseFactor = 0.8  
+        real(8) :: increaseFactor = 1.2 
         integer :: NstepsForCheck = 10
         integer :: LastCheckStep = 0
     end type VariableDTType
@@ -1215,6 +1223,23 @@ contains
         call json%get('Time.matchHydrologyStep', logical_value, found)
         setting%Time%matchHydrologyStep = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Time.matchHydrologyStep not found'
+
+        !% brh20211209s
+        call json%get('Time.Hydrology.NextTime', real_value, found)
+        setting%Time%Hydrology.NextTime = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.NextTime not found'
+        call json%get('Time.Hydrology.LastTime', real_value, found)
+        setting%Time%Hydrology.LastTime = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.LastTime not found'
+
+        call json%get('Time.Hydraulics.NextTime', real_value, found)
+        setting%Time%Hydraulics.NextTime = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydraulics.NextTime not found'
+        call json%get('Time.Hydraulics.LastTime', real_value, found)
+        setting%Time%Hydraulics.LastTime = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydraulics.LastTime not found'        
+        !% brh20211209e
+
         call json%get('Time.Start', real_value, found)
         setting%Time%Start = real_value
         if (.not. found) stop "Error - json file - setting " // 'Time.Start not found'
@@ -1224,12 +1249,16 @@ contains
         call json%get('Time.End', real_value, found)
         setting%Time%End = real_value
         if (.not. found) stop "Error - json file - setting " // 'Time.End not found'
-        call json%get('Time.Dt', real_value, found)
-        setting%Time%Dt = real_value
-        if (.not. found) stop "Error - json file - setting " // 'Time.Dt not found'
+
+        !% brh 20211209
+        !call json%get('Time.Dt', real_value, found)
+        !setting%Time%Dt = real_value
+        !if (.not. found) stop "Error - json file - setting " // 'Time.Dt not found'
+
         call json%get('Time.Step', integer_value, found)
         setting%Time%Step = integer_value
         if (.not. found) stop "Error - json file - setting " // 'Time.Step not found'
+
         call json%get('Time.Hydraulics.Dt', real_value, found)
         setting%Time%Hydraulics%Dt = real_value
         if (.not. found) stop "Error - json file - setting " // 'Time.Hydraulics.Dt not found'
@@ -1242,9 +1271,10 @@ contains
         call json%get('Time.Hydrology.Step', integer_value, found)
         setting%Time%Hydrology%Step = integer_value
         if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.Step not found'
+
         call json%get('Time.DtTol', real_value, found)
         setting%Time%DtTol = real_value
-        if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.DtTol not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.DtTol not found'
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
         if (.not. found) stop "Error - json file - setting " // 'Time.DateTimeStamp not found'

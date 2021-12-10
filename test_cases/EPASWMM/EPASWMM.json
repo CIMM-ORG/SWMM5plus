@@ -57,8 +57,8 @@
         "disableInterpolation": false
     },
     "CaseName" : {
-        "Long"  : "Single Link",
-        "Short" : "SL",
+        "Long"  : "Channel",
+        "Short" : "Channel",
         "withTimeStamp" : ""
     },
     "Constant" : {
@@ -121,15 +121,15 @@
         }
     },
     "Link" : {
-        "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
-        "PropertiesFile" : "" // HACK - TODO file for properties of specific links
+        "DefaultInitDepthType" : "Linear", 
+        "PropertiesFile" : "" 
     },
     "Output" : {
         "print_links_csv" : false,
         "print_nodes_csv" : false,
         "report" : true,
         "reportStartTime" : 0.0,
-        "reportDt" : 900.0,
+        "reportDt" : 100.0,
         "reportStep" : 0,
         "reportTimeUnits" : "Hours",
         "slots" : 20,
@@ -141,7 +141,7 @@
         "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 100
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -210,7 +210,7 @@
             "Step" : 0
         },
         "Hydrology" : {
-            "Dt" : 10.0,
+            "Dt" : 600.0,
             "LastTime" : 0.0,
             "NextTime" : 0.0,
             "Step" : 0
@@ -328,6 +328,6 @@
         "Tests" : true
     },
     "Profile" : {
-        "YN" : true
+        "YN" : true  
     }
 }

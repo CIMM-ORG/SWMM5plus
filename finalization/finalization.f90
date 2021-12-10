@@ -37,20 +37,23 @@ contains
         !% finalize the profiler and print times
         ! call util_profiler_print_summary()
 
+        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0    
         !% write a final combined multi-level files
-        call outputML_store_data (.true.)
+            call outputML_store_data (.true.)
 
-        !% write the control file for the stored mult-level files
-        call outputML_write_control_file ()
+            !% write the control file for the stored mult-level files
+            call outputML_write_control_file ()
 
-        ! !brh20211006 if ((this_image() == 1) .and. &
-        ! !brh20211006     (setting%Output%report .or. setting%Debug%Output)) then
-        ! !brh20211006     call outputD_combine_links()
-        ! !brh20211006 end if
+            ! !brh20211006 if ((this_image() == 1) .and. &
+            ! !brh20211006     (setting%Output%report .or. setting%Debug%Output)) then
+            ! !brh20211006     call outputD_combine_links()
+            ! !brh20211006 end if
 
-        sync all
+            sync all
 
-        call outputML_convert_elements_to_linknode_and_write ()
+            call outputML_convert_elements_to_linknode_and_write ()
+
+            end if !% brh20211208    
 
         !brh20211006 if (setting%Output%report .or. setting%Debug%Output) call outputD_move_node_files
         !brh20211006 if (setting%Output%report .or. setting%Debug%Output) call outputD_update_swmm_out

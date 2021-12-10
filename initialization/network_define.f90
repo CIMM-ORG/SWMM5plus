@@ -546,6 +546,9 @@ contains
             nAssignStatus => node%I(thisNode,ni_assigned)
             nodeType      => node%I(thisNode,ni_node_type)
 
+            !print *, nodeType, 'here at 983709785'
+            !stop 398704
+
             select case (nodeType)
 
                 !% Handle upstream boundary nodes
@@ -674,7 +677,7 @@ contains
                     print*, 'In ', subroutine_name
                     print*, 'error: node ' // node%Names(thisNode)%str // &
                             ' has an unexpected nodeType', nodeType
-                    stop
+                    stop 987034
             end select
 
         !% handle the node if it is not in the partition
@@ -1014,7 +1017,7 @@ contains
                     print*, 'In ', subroutine_name
                     print*, 'error: node ' // node%Names(thisNode)%str // &
                             ' has an unexpected nodeType', nodeType
-                    stop
+                    stop 398704
             end select
         else
             !% Advance face local and global counters for nodes outside of the partition

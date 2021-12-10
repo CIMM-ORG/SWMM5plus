@@ -8,9 +8,9 @@
 !
 module pack_mask_arrays
 
+    use define_globals
     use define_indexes
     use define_keys
-    use define_globals
     use define_settings
 
     implicit none

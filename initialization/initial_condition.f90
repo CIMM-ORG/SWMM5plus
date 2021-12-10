@@ -510,9 +510,10 @@ contains
     subroutine init_IC_get_channel_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry data for channel links
+    !% get the geometry data for open channel links
     !% and calculate element volumes
-    !
+    !%
+    !% Note that the "FullDepth" must be defined for open channels.    
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink

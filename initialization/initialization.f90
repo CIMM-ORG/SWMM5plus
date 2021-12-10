@@ -15,8 +15,8 @@ module initialization
     use utility_output
     use utility_profiler
     use utility_files
-    use pack_mask_arrays
     use output
+    use pack_mask_arrays
 
     implicit none
 
@@ -102,15 +102,14 @@ contains
         !% --- output file directories
         call util_file_setup_output_folders()
 
-        !%  --- finish setting all the paths to output folders
         sync all
 
         if (setting%Output%Verbose) then
             write(*,"(A)") "Simulation Starts..."
             write(*,"(A)") 'Using the following files:'
-            write(*,"(A)") 'Input file  : '//trim(setting%File%inp_file)
-            write(*,"(A)") 'Report file : '//trim(setting%File%rpt_file)
-            write(*,"(A)") 'Output file : '//trim(setting%File%out_file)
+            write(*,"(A)") 'Input file   : '//trim(setting%File%inp_file)
+            write(*,"(A)") 'Report file  : '//trim(setting%File%rpt_file)
+            write(*,"(A)") 'Output file  : '//trim(setting%File%out_file)
             write(*,"(A)") 'Settings file: '//trim(setting%File%setting_file)
         end if
 
@@ -143,27 +142,26 @@ contains
 
         sync all
 
-        if (setting%Output%Verbose) print *, "begin network definition"
-        call init_network_define_toplevel ()
-
-        !% --- HACK --- NEEDS FIXING FOR MULTILEVEL OUTPUT WITH MULTIPLE PROCESSOR
-        ! if (num_images() > 1) then
-        !     print *, "ERROR (code) -- NEED TO FIX HACK"
-        !     stop 9347044
-        ! else
-        !     !% temporarily assign the node index to the Global swmm index
-        !     !% only good for one processor operation
-        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)
-        ! end if
-        !% ---- END HACK
+        
+        
+        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
+            if (setting%Output%Verbose) print *, "begin network definition"
+            call init_network_define_toplevel ()
+        end if                                     !% brh20211208
 
         !% --- setup for csv output of links and nodes
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
 
         !% --- initialize boundary condition
-        if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
-        call init_bc()
+
+        
+        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
+            if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
+            call init_bc()
+        end if                                     !% brh20211208
+        
+        if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
 
         if (setting%Output%Verbose) then
@@ -175,44 +173,55 @@ contains
             endif
             endif
         endif
-        call init_IC_toplevel ()
 
-        print *
-        print *, 'WORK NEEDED HERE ',73794
-        print *
-        !% --- designate/select the nodes/links for output
-        call output_COMMON_nodes_selection ()
-        call output_COMMON_links_selection ()
-        !% --- designate the corresponding elements for output
-        call outputML_element_selection ()
-        !% --- deisgnate the corresponding face to output
-        call outputML_face_selection ()
-        !% --- create packed arrays of elem row numbers that are output
-        call pack_element_outputML ()
-        !% --- create packed arrays of face row numbers that are output
-        call pack_face_outputML ()
+        
+        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
+            if (setting%Output%Verbose) print *, "begin initial conditions"
+            call init_IC_toplevel ()
+        end if                                     !% brh20211208
 
-        !print *, elemP(1:npack_elemP(ep_Output_Elements),ep_Output_Elements)
-        !print *
-        !print *, faceP(1:npack_faceP(fp_Output_Faces),fp_Output_Faces)
-        !stop 34780
+        !% brh 20211207 rm --- designate/select the nodes/links for output
+        !% brh 20211207 rm -- replaced with api_nodef_rptFlag call output_COMMON_nodes_selection ()
+        !% brh 20211207 rm call output_COMMON_links_selection ()
 
-        !% --- compute the N_OutElem for each image
-        call outputML_size_OutElem_by_image ()
-        !% --- compute the N_OutFace for each imaige
-        call outputML_size_OutFace_by_image ()
-        !% --- setup the output element data types
-        call outputML_element_outtype_selection ()
-        !% -- setup the output face data types
-        call outputML_face_outtype_selection ()
-        !% --- create storage space for multi-level output data
-        call util_allocate_outputML_storage ()
-        !% --- create storage for output times
-        call util_allocate_outputML_times ()
-        !% --- create storage for output binary filenames
-        call util_allocate_outputML_filenames ()
+        !% brh20211207 move outputML setup routines to output module
+        if (setting%Simulation%useHydraulics) then !% brh 20211208 -- only if N_link > 0
+            if (setting%Output%Verbose) print *, "begin setup of output files"
+            call outputML_selection ()
+                                        
+            !% brh 20211207s remove all below
+            !% --- designate the corresponding elements for output
+            !call outputML_element_selection ()
+            !% --- deisgnate the corresponding face to output
+            !call outputML_face_selection ()
 
-        !if (setting%Output%Verbose) print *, "begin setup of output files"
+            !% brh 20211207 
+            !% Ideally, these should be in the output module, but that caused
+            !% linking problems with use pack_mask_arrays in that module
+            !% --- create packed arrays of elem row numbers that are output
+            call pack_element_outputML ()
+            !% --- create packed arrays of face row numbers that are output
+            call pack_face_outputML ()
+
+            call outputML_setup ()
+            ! !% --- compute the N_OutElem for each image
+            ! call outputML_size_OutElem_by_image ()
+            ! !% --- compute the N_OutFace for each imaige
+            ! call outputML_size_OutFace_by_image ()
+            ! !% --- setup the output element data types
+            ! call outputML_element_outtype_selection ()
+            ! !% -- setup the output face data types
+            ! call outputML_face_outtype_selection ()
+            ! !% --- create storage space for multi-level output data
+            ! call util_allocate_outputML_storage ()
+            ! !% --- create storage for output times
+            ! call util_allocate_outputML_times ()
+            ! !% --- create storage for output binary filenames
+            ! call util_allocate_outputML_filenames ()
+            !% brh20211207e
+        end if                                     !% brh20211208
+        
+        !
 
         !% creating output_folders and files
         !% brh 20211004 -- moved this functionality into util_file_setup_output_files
@@ -386,14 +395,14 @@ contains
 
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
-            link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
-            link%I(ii,li_weir_type) = interface_get_link_attribute(ii, api_weir_type)
-            link%I(ii,li_orif_type) = interface_get_link_attribute(ii, api_orifice_type)
-            link%I(ii,li_outlet_type) = interface_get_link_attribute(ii, api_outlet_type)
-            link%I(ii,li_pump_type) = interface_get_link_attribute(ii, api_pump_type)
-            link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
-            link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
-            link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
+            link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
+            link%I(ii,li_weir_type) = interface_get_linkf_attribute(ii, api_linkf_weir_type)
+            link%I(ii,li_orif_type) = interface_get_linkf_attribute(ii, api_linkf_orifice_type)
+            link%I(ii,li_outlet_type) = interface_get_linkf_attribute(ii, api_linkf_outlet_type)
+            link%I(ii,li_pump_type) = interface_get_linkf_attribute(ii, api_linkf_pump_type)
+            link%I(ii,li_geometry) = interface_get_linkf_attribute(ii, api_linkf_geometry)
+            link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
+            link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
             link%I(ii,li_parent_link) = ii
 
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
@@ -406,29 +415,29 @@ contains
             !% types via an external JSON file for links whose path can be specified in
             !% setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
-            link%R(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
+            link%R(ii,lr_Length) = interface_get_linkf_attribute(ii, api_linkf_conduit_length)
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
-            link%R(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
+            link%R(ii,lr_BreadthScale) = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax)
             !% link%R(ii,lr_Slope): defined in network_define.f08
-            link%R(ii,lr_LeftSlope) = interface_get_link_attribute(ii, api_link_left_slope)
-            link%R(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
-            link%R(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
-            link%R(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, api_link_q0)
-            write(*,*) 'api_node_initDepth 1'
-            link%R(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_u), api_node_initDepth)
-            write(*,*) 'api_node_initDepth 2'
-            link%R(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_d), api_node_initDepth)
+            link%R(ii,lr_LeftSlope) = interface_get_linkf_attribute(ii, api_linkf_left_slope)
+            link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
+            link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
+            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
+            write(*,*) 'api_nodef_initDepth 1'
+            link%R(ii,lr_InitialUpstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth)
+            write(*,*) 'api_nodef_initDepth 2'
+            link%R(ii,lr_InitialDnstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
-            link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
-            link%R(ii,lr_InletOffset) = interface_get_link_attribute(ii,api_link_offset1)
-            link%R(ii,lr_OutletOffset) = interface_get_link_attribute(ii,api_link_offset2)
+            link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
+            link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)
+            link%R(ii,lr_OutletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset2)
 
             !% special element attributes
-            link%I(ii,li_weir_EndContrations) = interface_get_link_attribute(ii, api_weir_end_contractions)
-            link%I(ii,li_curve_id) = interface_get_link_attribute(ii, api_link_curveid)
-            link%R(ii,lr_DischargeCoeff1) = interface_get_link_attribute(ii, api_discharge_coeff1)
-            link%R(ii,lr_DischargeCoeff2) = interface_get_link_attribute(ii, api_discharge_coeff2)
-            link%R(ii,lr_SideSlope) = interface_get_link_attribute(ii, api_weir_side_slope)
+            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions)
+            link%I(ii,li_curve_id) = interface_get_linkf_attribute(ii, api_linkf_curveid)
+            link%R(ii,lr_DischargeCoeff1) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1)
+            link%R(ii,lr_DischargeCoeff2) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2)
+            link%R(ii,lr_SideSlope) = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope)
             !% SWMM5 doesnot distinguish between channel and conduit
             !% however we need that distinction to set up the init condition
             if ( (link%I(ii,li_link_type) == lPipe)          .and. &
@@ -443,35 +452,50 @@ contains
 
                 link%I(ii,li_link_type) = lChannel
             end if
+            !% brh20211207s
+            link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag) == 1)
+            !% brh20211207e
         end do
 
         write(*,*) 
-        write(*,*) 'FINISHED WITH LINKS --------------------------------------------------------------------------------'
+        write(*,*) 'FINISHED WITH LINKS ---------------------------------------------------------'
+        write(*,*) 'N_node = ',N_node
         write(*,*)
 
+        
         do ii = 1, N_node
+            write(*,*) '======= starting node ',ii
+            write(*,*)
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
-            write(*,*) 'api_node_type'
-            if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
+            write(*,*) 'call api_nodef_type'
+            if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
+                write(*,*) '... is outfall type'
                 node%I(ii, ni_node_type) = nBCdn
-            else if (interface_get_node_attribute(ii, api_node_type) == API_STORAGE) then
+            else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
+                write(*,*) '... is storage type'
                 node%I(ii, ni_node_type) = nJm
                 node%YN(ii, nYN_has_storage) = .true.
             else if ((total_n_links == twoI)          .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
                      (node%I(ii,ni_N_link_d) == oneI) )then
+                write(*,*) '... is 2 junction type'        
                 node%I(ii, ni_node_type) = nJ2
             else if (total_n_links >= twoI) then
+                write(*,*) '... is 3+ junction type'
                 node%I(ii, ni_node_type) = nJm
             end if
+            write(*,*)
 
-            write(*,*) 'api_node_has_extInflow'
-            node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
-            write(*,*) 'node extInflow ',ii, node%YN(ii,nYN_has_extInflow)
-            write(*,*) 'api_node_has_dwfInflow'
-            node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
-            write(*,*) 'node dwfInflow ',ii, node%YN(ii,nYN_has_dwfInflow)
+            write(*,*) 'call api_nodef_has_extInflow'
+            node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
+            write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
+            write(*,*)
+
+            write(*,*) 'call api_nodef_has_dwfInflow'
+            node%YN(ii, nYN_has_dwfInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_dwfInflow) == 1)
+            write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
+            write(*,*)
 
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
@@ -480,22 +504,52 @@ contains
                 end if
             end if
 
-            write(*,*) 'api_node_initDepth'
-            node%R(ii,nr_InitialDepth)      = interface_get_node_attribute(ii, api_node_initDepth)
-            write(*,*) 'api_node_invertElev'
-            node%R(ii,nr_Zbottom)           = interface_get_node_attribute(ii, api_node_invertElev)
-            write(*,*) 'api_node_fullDepth'
-            node%R(ii,nr_FullDepth)         = interface_get_node_attribute(ii, api_node_fullDepth)
-            write(*,*) 'api_node_StorageConstant'
-            node%R(ii,nr_StorageConstant)   = interface_get_node_attribute(ii, api_node_StorageConstant)
-            write(*,*) 'api_node_StorageCoeff'
-            node%R(ii,nr_StorageCoeff)      = interface_get_node_attribute(ii, api_node_StorageCoeff)
-            write(*,*) 'api_node_StorageExponent'
-            node%R(ii,nr_StorageExponent)   = interface_get_node_attribute(ii, api_node_StorageExponent)
-            write(*,*) 'api_node_StorageCurveID'
-            node%I(ii,ni_curve_ID)          = interface_get_node_attribute(ii, api_node_StorageCurveID)
-            write(*,*) '... calling interface_get_BC_resolution'
+            write(*,*) 'call api_nodef_initDepth'
+            node%R(ii,nr_InitialDepth)      = interface_get_nodef_attribute(ii, api_nodef_initDepth)
+            write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth)
+            write(*,*)
+
+            write(*,*) 'call api_nodef_invertElev'
+            node%R(ii,nr_Zbottom)           = interface_get_nodef_attribute(ii, api_nodef_invertElev)
+            write(*,*) '... nr_Zbottom = ', node%R(ii,nr_Zbottom) 
+            write(*,*)
+
+            write(*,*) 'call api_nodef_fullDepth -- may be zero!'
+            node%R(ii,nr_FullDepth)         = interface_get_nodef_attribute(ii, api_nodef_fullDepth)
+            write(*,*) '... nr_FullDepth = ',node%R(ii,nr_FullDepth) 
+            write(*,*)
+
+            write(*,*) 'call api_nodef_StorageConstant'
+            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
+            write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
+            write(*,*)
+
+            write(*,*) 'call api_nodef_StorageCoeff'
+            node%R(ii,nr_StorageCoeff)      = interface_get_nodef_attribute(ii, api_nodef_StorageCoeff)
+            write(*,*) '... nr_StorageCoeff = ',node%R(ii,nr_StorageCoeff)
+            write(*,*)
+            
+            write(*,*) 'call api_nodef_StorageExponent'
+            node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
+            write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
+            write(*,*)
+
+            write(*,*) 'call api_nodef_StorageCurveID'
+            node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
+            write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
+            write(*,*)
+
+            write(*,*) 'call interface_get_BC_resolution'
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
+            write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
+            write(*,*)  
+
+            !% brh20211207s
+            write(*,*) 'call api_nodef_rptFlag'
+            node%YN(ii,nYN_isOutput)          = (interface_get_nodef_attribute(ii, api_nodef_rptFlag) == 1)
+            write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
+            write(*,*)
+            !% brh20211207e
         end do
 
         !% Update Link/Node names
@@ -636,9 +690,9 @@ contains
                     BC%flowI(ii, bi_node_idx) = nidx
                     BC%flowI(ii, bi_idx) = ii
                     nbasepat = &
-                        interface_get_node_attribute(nidx, api_node_extInflow_basePat)
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat)
                     ntseries = &
-                        interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
 
                     !% BC does not have fixed value if its associated with dwfInflow
                     !% or if extInflow has tseries or pattern
@@ -672,15 +726,15 @@ contains
                 BC%headI(ii, bi_idx) = ii
                 BC%headI(ii, bi_node_idx) = nidx
 
-                if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_FREE_OUTFALL) then
+                if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_FREE_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_free
-                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_NORMAL_OUTFALL) then
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_NORMAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_normal
-                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_FIXED_OUTFALL) then
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_FIXED_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_fixed
-                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_TIDAL_OUTFALL) then
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_TIDAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tidal
-                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_TIMESERIES_OUTFALL) then
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_TIMESERIES_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                 end if
             end do
@@ -714,6 +768,15 @@ contains
         if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% brh20211208s
+        !% if there are no links, the system cannot be partitioned
+        if (N_link == 0) then
+            write(*,*) '*** WARNING no conduit/channel links found, using SWMM hydrology only'
+            setting%Simulation%useHydraulics = .false.
+            return
+        end if
+        !% brh20211208e    
 
         if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
 
@@ -867,7 +930,8 @@ contains
 
         !%-----------------------------------------------------------------------------
 
-        setting%Time%Dt = setting%Time%Hydraulics%Dt
+        !% brh 20211209
+        !rm setting%Time%Dt = setting%Time%Hydraulics%Dt
         setting%Time%Now = 0
         setting%Time%Step = 0
         setting%Time%Hydraulics%Step = 0

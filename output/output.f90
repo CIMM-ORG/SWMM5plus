@@ -9,32 +9,38 @@ module output
     use utility_datetime
     use utility_allocate
     use utility_deallocate
+
+
     !use, intrinsic :: iso_fortran_env, only: *
 
     !%-----------------------------------------------------------------------------
     !% Description
     !% Provides main output for two different types of output schemes
     !% (1) outputML_ is a multi-level output scheme of limited data
-    !% (2) outputD_ is a csv -only scheme that dumps everything at every time step
-    !% (3) output_COMMON are common to both schemes
+    !% (2) outputD_ is a csv -only scheme that dumps everything at every time step - obsolete
+    !% (3) output_COMMON are common to both schemes -- obsolete
     implicit none
 
     private
 
     !% public subroutines common to both
-    public :: output_COMMON_nodes_selection
-    public :: output_COMMON_links_selection
+    !rm brh20211207 public :: output_COMMON_nodes_selection
+    !rm brh20211207 public :: output_COMMON_links_selection
 
-    public :: outputML_element_selection
-    public :: outputML_size_OutElem_by_image
-    public :: outputML_size_OutFace_by_image
-    public :: outputML_element_outtype_selection
-    public :: outputML_face_outtype_selection
+    public :: outputML_selection
+    public :: outputML_setup
+
+    !public :: outputML_element_selection
+    !public :: outputML_face_selection
+    !public :: outputML_size_OutElem_by_image
+    !public :: outputML_size_OutFace_by_image
+    !public :: outputML_element_outtype_selection
+    !public :: outputML_face_outtype_selection
     public :: outputML_store_data
     public :: outputML_write_control_file
     public :: outputML_combine_and_write_data
     public :: outputML_convert_elements_to_linknode_and_write
-    public :: outputML_face_selection
+    
 
     ! public :: outputD_read_csv_link_names
     ! public :: outputD_read_csv_node_names
@@ -52,16 +58,97 @@ contains
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine output_COMMON_nodes_selection ()
+    subroutine outputML_selection ()
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% provides selection of elements/faces of the multi-level output
+        !%-------------------------------------------------------------------
+        !%-------------------------------------------------------------------
+
+        !% --- designate the corresponding elements for output
+        call outputML_element_selection ()
+        !% --- deisgnate the corresponding face to output
+        call outputML_face_selection ()
+        ! !% --- create packed arrays of elem row numbers that are output
+        ! call pack_element_outpu
+        ! !% --- compute the N_OutElem for each image
+        ! call outputML_size_OutElem_by_image ()
+        ! !% --- compute the N_OutFace for each imaige
+        ! call outputML_size_OutFace_by_image ()
+        ! !% --- setup the output element data types
+        ! call outputML_element_outtype_selection ()
+        ! !% -- setup the output face data types
+        ! call outputML_face_outtype_selection ()
+        ! !% --- create storage space for multi-level output data
+        ! call util_allocate_outputML_storage ()
+        ! !% --- create storage for output times
+        ! call util_allocate_outputML_times ()
+        ! !% --- create storage for output binary filenames
+   
+        ! !% --- compute the N_OutElem for each image
+        ! call outputML_size_OutElem_by_image ()
+        ! !% --- compute the N_OutFace for each imaige
+        ! call outputML_size_OutFace_by_image ()
+        ! !% --- setup the output element data types
+        ! call outputML_element_outtype_selection ()
+        ! !% -- setup the output face data types
+        ! call outputML_face_outtype_selection ()
+        ! !% --- create storage space for multi-level output data
+        ! call util_allocate_outputML_storage ()
+        ! !% --- create storage for output times
+        ! call util_allocate_outputML_times ()
+        ! !% --- create storage for output binary filenames
+        ! call util_allocate_outputML_filenames ()
+
+    end subroutine outputML_selection
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine outputML_setup ()
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% provides setup of the multi-level output
+        !%-------------------------------------------------------------------
+        !%-------------------------------------------------------------------
+
+        !% --- compute the N_OutElem for each image
+        call outputML_size_OutElem_by_image ()
+        !% --- compute the N_OutFace for each imaige
+        call outputML_size_OutFace_by_image ()
+        !% --- setup the output element data types
+        call outputML_element_outtype_selection ()
+        !% -- setup the output face data types
+        call outputML_face_outtype_selection ()
+        !% --- create storage space for multi-level output data
+        call util_allocate_outputML_storage ()
+        !% --- create storage for output times
+        call util_allocate_outputML_times ()
+        !% --- create storage for output binary filenames
+        call util_allocate_outputML_filenames ()
+
+    end subroutine outputML_setup
+!%
+!%==========================================================================    
+!%==========================================================================
+!%
+!    subroutine output_COMMON_nodes_selection ()
+        !% brh 20211207 -- obsolete
+        !% Now using the api_node_rptFlag to initialize
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Gets the nodes that are output from the SWMM.inp file
         !% Stores T/F in the YN in the node%YN(:,nYN_isOutput) column
         !%-----------------------------------------------------------------------------
-
+         !   integer :: ii
         !%-----------------------------------------------------------------------------
         !% HACK -- presently only handles ALL
-        node%YN(1:N_node,nYN_isOutput) = .true.
+        !node%YN(1:N_node,nYN_isOutput) = .true.
+
+        !print *, 'printing the node output'
+        !do ii = 1,N_node
+        !    print *, ii, node%YN(ii,nYN_isOutput)
+        !end do
 
         !print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE NODE IS OUTPUT'
         !node%YN(1:N_node,nYN_isOutput) = .false.
@@ -71,21 +158,28 @@ contains
         !node%YN(3,nYN_isOutput)  = .true.
         !node%YN(4,nYN_isOutput)  = .true.
 
-    end subroutine output_COMMON_nodes_selection
+!    end subroutine output_COMMON_nodes_selection
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine output_COMMON_links_selection ()
+!   subroutine output_COMMON_links_selection ()
+        !% brh 20211207 -- obsolete
+        !% Now using the api_link_rptFlag to initialize
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Gets the links that are output from the SWMM.inp file
         !% Stores T/F in the YN in the link%YN(:,lYN_isOutput) column
         !%-----------------------------------------------------------------------------
-
+        ! integer :: ii
         !%-----------------------------------------------------------------------------
         !% HACK -- presently only handles ALL
-        link%YN(1:N_link,lYN_isOutput) = .true.
+        !link%YN(1:N_link,lYN_isOutput) = .true.
+
+        !print *, 'printing the link output'
+        !do ii = 1,N_link
+        !    print *, ii, link%YN(ii,lYN_isOutput)
+        !end do
 
         !print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE LINK IS OUTPUT'
 
@@ -95,7 +189,7 @@ contains
         ! link%YN(2,lYN_isOutput)  = .true.
         ! link%YN(3,lYN_isOutput)  = .true.
 
-    end subroutine output_COMMON_links_selection
+!    end subroutine output_COMMON_links_selection
 !%
 !%==========================================================================
 !%==========================================================================

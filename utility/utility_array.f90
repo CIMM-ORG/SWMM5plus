@@ -54,8 +54,9 @@ module utility_array
         nimgs_assign = size(unique_imagenum,1) ! The number of images assigned by BIPquick
 
         if ( nimgs_assign /= num_images() ) then
-            print*, "There is a mismatch between the assigned images and num_images", nimgs_assign, num_images()
-            stop
+            write(*,"(A,i5,A)") "in subroutine " // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,2i5)") "There is a mismatch between the assigned images and num_images", nimgs_assign, num_images()
+            stop 49703
         end if
 
         if (setting%Debug%File%utility_array)  &

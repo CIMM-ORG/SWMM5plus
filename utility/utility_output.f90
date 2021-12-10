@@ -7,7 +7,7 @@ module utility_output
     use define_types
     use interface
     use utility_datetime
-    use output
+    !use output
     !use, intrinsic :: iso_fortran_env, only: *
 
     implicit none
@@ -560,7 +560,7 @@ contains
             Npack     = npack_elemP(thisCol)
 
             timeNow   => setting%Time%Now
-            dt        => setting%Time%Dt
+            dt        => setting%Time%Hydraulics%Dt
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
             PCelerity => elemR(:,er_Preissmann_Celerity)

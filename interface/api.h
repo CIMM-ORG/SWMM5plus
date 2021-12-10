@@ -49,74 +49,82 @@ enum api_output_link_attribute {
   MAX_API_OUTPUT_LINK_ATTR
 };
 
-enum api_node_attributes {
-  node_ID = 1,
-  node_type,            // 2
-  node_outfall_type,    // 3
-  node_invertElev,      // 4
-  node_initDepth,       // 5
-  node_StorageConstant,    // 6
-  node_StorageCoeff,       // 7
-  node_StorageExponent,    // 8
-  node_StorageCurveID,     // 9
-  node_extInflow_tSeries,   // 10
-  node_extInflow_tSeries_x1,  // 11
-  node_extInflow_tSeries_x2,   // 12
-  node_extInflow_basePat,      // 13
-  node_extInflow_basePat_type,  // 14
-  node_extInflow_baseline,      // 15
-  node_extInflow_sFactor,       // 16
-  node_has_extInflow,             // 17
-  node_dwfInflow_monthly_pattern,  // 18
-  node_dwfInflow_daily_pattern,    // 19
-  node_dwfInflow_hourly_pattern,   // 20
-  node_dwfInflow_weekend_pattern,  // 21
-  node_dwfInflow_avgvalue,         // 22
-  node_has_dwfInflow,              // 23
+// these "nodef" are identical to the fortran api_nodef_... values
+enum api_nodef_attributes {
+  nodef_ID = 1,
+  nodef_type,            // 2
+  nodef_outfall_type,    // 3
+  nodef_invertElev,      // 4
+  nodef_initDepth,       // 5
+  nodef_StorageConstant,    // 6
+  nodef_StorageCoeff,       // 7
+  nodef_StorageExponent,    // 8
+  nodef_StorageCurveID,     // 9
+  nodef_extInflow_tSeries,   // 10
+  nodef_extInflow_tSeries_x1,  // 11
+  nodef_extInflow_tSeries_x2,   // 12
+  nodef_extInflow_basePat,      // 13
+  nodef_extInflow_basePat_type,  // 14
+  nodef_extInflow_baseline,      // 15
+  nodef_extInflow_sFactor,       // 16
+  nodef_has_extInflow,             // 17
+  nodef_dwfInflow_monthly_pattern,  // 18
+  nodef_dwfInflow_daily_pattern,    // 19
+  nodef_dwfInflow_hourly_pattern,   // 20
+  nodef_dwfInflow_weekend_pattern,  // 21
+  nodef_dwfInflow_avgvalue,         // 22
+  nodef_has_dwfInflow,              // 23
   // brh20211207s
   //node_depth,                      // xx
-  node_newDepth,                   // 24
+  nodef_newDepth,                   // 24
   // brh20211207e
-  node_fullDepth,                  // 25
-  node_inflow,                     // 26
-  node_volume,                     // 27
-  node_overflow                    // 28
+  nodef_fullDepth,                  // 25
+  nodef_inflow,                     // 26
+  nodef_volume,                     // 27
+  // brh20211207s
+  //node_overflow                    // 28
+  nodef_overflow,                    // 28
+  nodef_rptFlag                      // 29
 };
 
-enum api_link_attributes {
-  link_ID = 1,
-  link_subIndex,
-  link_node1,
-  link_node2,
-  link_offset1,
-  link_offset2,
-  link_q0,
-  link_flow,
-  link_depth,
-  link_volume,
-  link_froude,
-  link_setting,
-  link_left_slope,
-  link_right_slope,
-  weir_end_contractions,
-  weir_side_slope,
-  link_curveid,
-  discharge_coeff1,
-  discharge_coeff2,
-  conduit_roughness,
-  conduit_length,
+// these "linkf" are identical to the fortran api_linkf_... values
+enum api_linkf_attributes {
+  linkf_ID = 1,
+  linkf_subIndex,  // 2 *
+  linkf_node1,     // 3 *
+  linkf_node2,     // 4 *
+  linkf_offset1,   // 5 *
+  linkf_offset2,   // 6 *
+  linkf_q0,        // 7 *
+  linkf_flow,      // 8 *
+  linkf_depth,     // 9 *
+  linkf_volume,    // 10 *
+  linkf_froude,    // 11 *
+  linkf_setting,   // 12 *
+  linkf_left_slope,        // 13 *
+  linkf_right_slope,       // 14 *
+  linkf_weir_end_contractions,  // 15 *
+  linkf_weir_side_slope,        // 16 *
+  linkf_curveid,           // 17 *
+  linkf_discharge_coeff1,       // 18 *
+  linkf_discharge_coeff2,       // 19 *
+  linkf_conduit_roughness,      // 20 *
+  linkf_conduit_length,         // 21 *
+  // brh 20211207s
+  linkf_rptFlag,           // 22 new in api.c
+  // brh 20211207s
   // --- special elements attributes
-  link_type,
-  weir_type,
-  orifice_type,
-  outlet_type,
-  pump_type,
+  linkf_type,              // 23 *
+  linkf_weir_type,              // 24 *
+  linkf_orifice_type,           // 25 *
+  linkf_outlet_type,            // 26 *
+  linkf_pump_type,              // 27 *
   // --- xsect attributes
-  link_xsect_type,
-  link_geometry,
-  link_xsect_wMax,
-  link_xsect_yBot,
-  link_xsect_yFull,
+  linkf_xsect_type,        // 28 *
+  linkf_geometry,          // 29 missing in api.c
+  linkf_xsect_wMax,        // 30 *
+  linkf_xsect_yBot,        // 31 *
+  linkf_xsect_yFull        // 32 *
 };
 
 // API vars are those necessary for external applications
@@ -183,9 +191,19 @@ double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
 int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flowBC);
 int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC);
-int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
-int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value);
-int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value);
+//brh20211208s
+//int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
+int DLLEXPORT api_get_report_times(
+  double * report_start_datetime, 
+  int * report_step, 
+  int * hydrology_step,
+  int * hydrology_dry_step,
+  double * hydraulic_step);
+  double DLLEXPORT api_get_NewRunoffTime();
+//brh20211208e
+
+int DLLEXPORT api_get_nodef_attribute(int node_idx, int attr, double* value);
+int DLLEXPORT api_get_linkf_attribute(int link_idx, int attr, double* value);
 int DLLEXPORT api_get_num_objects(int object_type);
 int DLLEXPORT api_get_object_name(int object_idx, char* object_name, int object_type);
 int DLLEXPORT api_get_object_name_len(int object_idx, int object_type, int* len);
@@ -206,14 +224,17 @@ int DLLEXPORT api_export_linknode_properties(int units);
 int DLLEXPORT api_export_link_results(int link_idx);
 int DLLEXPORT api_export_node_results(int node_idx);
 
+// --- Hydrology 
+int DLLEXPORT api_call_runoff_execute();
+int DLLEXPORT api_get_subcatch_runoff(int id, double *runoff);
+
 // --- Utils
 int DLLEXPORT api_find_object(int object_type, char *id);
 int check_api_is_initialized();
 int api_load_vars();
 int getTokens(char *s);
 
-// --- Hydrology 
-int DLLEXPORT api_subcatch_runoff(int id, double *runoff);
+
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */

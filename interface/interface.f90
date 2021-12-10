@@ -25,8 +25,8 @@ module interface
     public :: interface_init
     public :: interface_finalize
     ! public :: interface_run_step
-    public :: interface_get_node_attribute
-    public :: interface_get_link_attribute
+    public :: interface_get_nodef_attribute
+    public :: interface_get_linkf_attribute
     public :: interface_get_table_attribute
     public :: interface_get_num_table_entries
     public :: interface_get_first_entry_table
@@ -43,7 +43,9 @@ module interface
     public :: interface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
-    public :: interface_subcatchment_runoff
+    public :: interface_call_runoff_execute
+    public :: interface_get_subcatch_runoff
+    public :: interface_get_NewRunoffTime
 
 !%==========================================================================
 !% PRIVATE
@@ -132,32 +134,41 @@ module interface
         end function api_get_headBC
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_report_times &
-            (report_start_datetime, report_step, hydrology_step) &
+            (report_start_datetime, report_step, hydrology_step, &
+             hydrology_dry_step, hydraulic_step) &
             BIND(C, name="api_get_report_times")
             use, intrinsic :: iso_c_binding
             implicit none
             real(c_double), intent(inout) :: report_start_datetime
             integer(c_int), intent(inout) :: report_step
             integer(c_int), intent(inout) :: hydrology_step
+            integer(c_int), intent(inout) :: hydrology_dry_step
+            real(c_double), intent(inout) :: hydraulic_step
         end function api_get_report_times
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_node_attribute(node_idx, attr, value) &
-            BIND(C, name="api_get_node_attribute")
+        real(c_double) function api_get_NewRunoffTime() &
+            BIND(C, name="api_get_NewRunoffTime")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+        end function api_get_NewRunoffTime
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_get_nodef_attribute(node_idx, attr, value) &
+            BIND(C, name="api_get_nodef_attribute")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in   ) :: node_idx
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
-        end function api_get_node_attribute
+        end function api_get_nodef_attribute
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_link_attribute(link_idx, attr, value) &
-            BIND(C, name="api_get_link_attribute")
+        integer(c_int) function api_get_linkf_attribute(link_idx, attr, value) &
+            BIND(C, name="api_get_linkf_attribute")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in   ) :: link_idx
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
-        end function api_get_link_attribute
+        end function api_get_linkf_attribute
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_num_objects(obj_type) &
             BIND(C, name="api_get_num_objects")
@@ -279,6 +290,22 @@ module interface
             integer(c_int), value, intent(in) :: node_idx
         end function api_export_node_results
         !% -------------------------------------------------------------------------------
+        ! --- Hydrology
+        !% -------------------------------------------------------------------------------   
+        integer(c_int) function api_call_runoff_execute() &
+            BIND(C, name='api_call_runoff_execte')
+            use, intrinsic :: iso_c_binding
+            implicit none 
+        end function api_call_runoff_execute
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_get_subcatch_runoff(sc_idx, runoff) &
+            BIND(C, name="api_get_subcatch_runoff")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: sc_idx
+            real(c_double),        intent(inout) :: runoff
+        end function api_get_subcatch_runoff
+        !% -------------------------------------------------------------------------------
         ! --- Utils
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_find_object(object_type, object_name) &
@@ -288,15 +315,6 @@ module interface
             integer(c_int), value,  intent(in) :: object_type
             character(kind=c_char), intent(in) :: object_name
         end function api_find_object
-        !% -------------------------------------------------------------------------------
-        integer(c_int) function api_subcatch_runoff(id, runoff) &
-            BIND(C, name="api_subcatch_runoff")
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int), value, intent(in) :: id 
-            real(c_double),        intent(inout) :: runoff
-        end function api_subcatch_runoff
-
 
     end interface
 !%
@@ -315,8 +333,9 @@ module interface
     procedure(api_get_flowBC),                 pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),                 pointer :: ptr_api_get_headBC
     procedure(api_get_report_times),           pointer :: ptr_api_get_report_times
-    procedure(api_get_node_attribute),         pointer :: ptr_api_get_node_attribute
-    procedure(api_get_link_attribute),         pointer :: ptr_api_get_link_attribute
+    procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
+    procedure(api_get_nodef_attribute),        pointer :: ptr_api_get_nodef_attribute
+    procedure(api_get_linkf_attribute),        pointer :: ptr_api_get_linkf_attribute
     procedure(api_get_num_objects),            pointer :: ptr_api_get_num_objects
     procedure(api_get_object_name_len),        pointer :: ptr_api_get_object_name_len
     procedure(api_get_object_name),            pointer :: ptr_api_get_object_name
@@ -332,7 +351,8 @@ module interface
     procedure(api_export_link_results),        pointer :: ptr_api_export_link_results
     procedure(api_export_node_results),        pointer :: ptr_api_export_node_results
     procedure(api_find_object),                pointer :: ptr_api_find_object
-    procedure(api_subcatch_runoff),            pointer :: ptr_api_subcatch_runoff 
+    procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
+    procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
     
     !% Error handling
     character(len = 1024) :: errmsg
@@ -386,6 +406,10 @@ contains
         N_node = SWMM_N_node
         SWMM_N_Curve = get_num_objects(API_CURVE)
         N_curve = SWMM_N_Curve
+
+        !% brh202112082
+        SWMM_N_subcatch = get_num_objects(API_SUBCATCH)       
+
 
         print *
         print *, 'BUG WARNING location ',980879,' in ',subroutine_name
@@ -573,7 +597,7 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_node_attribute(node_idx, attr) result(node_value)
+    function interface_get_nodef_attribute(node_idx, attr) result(node_value)
         !%-----------------------------------------------------------------------------
         !% Description:
         !%    Retrieves node attributes from EPA-SWMM. API node attributes are
@@ -585,16 +609,16 @@ contains
         !%-----------------------------------------------------------------------------
             integer :: node_idx, attr, error
             real(c_double), target :: node_value
-            character(64) :: subroutine_name = 'interface_get_node_attribute'
+            character(64) :: subroutine_name = 'interface_get_nodef_attribute'
         !%-----------------------------------------------------------------------------
 
-        write(*,*) '--- interface_get_node_attribute', attr
+        write(*,*) '--- interface_get_nodef_attribute', attr
 
         if (setting%Debug%File%interface)  &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
             "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
 
-        if ((attr > N_api_node_attributes) .or. (attr < 1)) then
+        if ((attr > N_api_nodef_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
             stop 948705
         end if
@@ -605,13 +629,13 @@ contains
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
-        call load_api_procedure("api_get_node_attribute")
-        error = ptr_api_get_node_attribute(node_idx-1, attr, node_value)
+        call load_api_procedure("api_get_nodef_attribute")
+        error = ptr_api_get_nodef_attribute(node_idx-1, attr, node_value)
         print *, '   node value ',node_value
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
-        if ((attr == api_node_extInflow_tSeries) .or. (attr == api_node_extInflow_basePat)) then
+        if ((attr == api_nodef_extInflow_tSeries) .or. (attr == api_nodef_extInflow_basePat)) then
             if (node_value /= -1) node_value = node_value + 1
         end if
 
@@ -619,12 +643,12 @@ contains
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
             "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
-    end function interface_get_node_attribute
+    end function interface_get_nodef_attribute
 !%
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_link_attribute(link_idx, attr) result(link_value)
+    function interface_get_linkf_attribute(link_idx, attr) result(link_value)
         !%-----------------------------------------------------------------------------
         !% Description:
         !%    Retrieves link attributes from EPA-SWMM. API link attributes are
@@ -638,14 +662,14 @@ contains
 
             real(c_double), target :: link_value
             character(64) :: thisposition
-            character(64) :: subroutine_name = 'interface_get_link_attribute'
+            character(64) :: subroutine_name = 'interface_get_linkf_attribute'
         !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
             "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
 
-        if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
+        if ((attr > N_api_total_linkf_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
             stop 49870555
         end if
@@ -655,32 +679,32 @@ contains
             stop 9987355
         end if
 
-        if (attr <= N_api_link_attributes) then
+        if (attr <= N_api_linkf_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
-            call load_api_procedure("api_get_link_attribute")
-            error = ptr_api_get_link_attribute(link_idx-1, attr, link_value)
+            call load_api_procedure("api_get_linkf_attribute")
+            error = ptr_api_get_linkf_attribute(link_idx-1, attr, link_value)
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
-        else if ( (attr > N_api_link_attributes) .and. &
-                  (attr <= (N_api_link_attributes + N_api_link_type_attributes)) )then
-            call load_api_procedure("api_get_link_attribute")
-            error = ptr_api_get_link_attribute(link_idx-1, api_link_type, link_value)
+        else if ( (attr > N_api_linkf_attributes) .and. &
+                  (attr <= (N_api_linkf_attributes + N_api_linkf_type_attributes)) )then
+            call load_api_procedure("api_get_linkf_attribute")
+            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
             
             if (link_value == API_CONDUIT) then
-                if (attr == api_link_type) then
+                if (attr == api_linkf_type) then
                     link_value = lPipe
-                else if (attr == api_weir_type) then
+                else if (attr == api_linkf_weir_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 837894'
                     link_value = nullvalueI
-                else if (attr == api_orifice_type) then
+                else if (attr == api_linkf_orifice_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 938765'
                     link_value = nullvalueI
-                else if (attr == api_pump_type) then
+                else if (attr == api_linkf_pump_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 875323'
                     link_value = nullvalueI
-                else if (attr == api_outlet_type) then
+                else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 3897895'
                     link_value = nullvalueI
                 !% brh20211207s
@@ -689,7 +713,7 @@ contains
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 45782987'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
                     ! stop 45782987 
@@ -697,17 +721,17 @@ contains
                 end if
 
             else if (link_value == API_PUMP) then
-                if (attr == api_link_type) then
+                if (attr == api_linkf_type) then
                     link_value = lPump
-                else if (attr == api_weir_type) then
+                else if (attr == api_linkf_weir_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 478974'
                     link_value = nullvalueI
-                else if (attr == api_orifice_type) then
+                else if (attr == api_linkf_orifice_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 3695'
                     link_value = nullvalueI
-                else if (attr == api_pump_type) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_pump_type, link_value)
+                else if (attr == api_linkf_pump_type) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_pump_type, link_value)
                     thisposition = trim(subroutine_name)//'_C03'
                     call print_api_error(error, thisposition)
                     if (link_value == API_TYPE1_PUMP) then
@@ -732,7 +756,7 @@ contains
                         ! stop 8836785 
                     !% brh20211207e                       
                     endif
-                else if (attr == api_outlet_type) then
+                else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 773682'
                     link_value = nullvalueI
                 !% brh20211207s    
@@ -741,7 +765,7 @@ contains
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  8836785'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
                     ! stop 8836785 
@@ -749,14 +773,14 @@ contains
                 end if
 
             else if (link_value == API_ORIFICE) then
-                if (attr == api_link_type) then
+                if (attr == api_linkf_type) then
                     link_value = lOrifice
-                else if (attr == api_weir_type) then
+                else if (attr == api_linkf_weir_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 82674'
                     link_value = nullvalueI
-                else if (attr == api_orifice_type) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_orifice_type, link_value)
+                else if (attr == api_linkf_orifice_type) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_orifice_type, link_value)
                     thisposition = trim(subroutine_name)//'_D04'
                     call print_api_error(error, thisposition)
                     if (link_value == API_SIDE_ORIFICE) then
@@ -775,10 +799,10 @@ contains
                         ! stop 8836785 
                     !% brh20211207e       
                     endif
-                else if (attr == api_pump_type) then
+                else if (attr == api_linkf_pump_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at  8378904'
                     link_value = nullvalueI
-                else if (attr == api_outlet_type) then
+                else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 3446789'
                     link_value = nullvalueI
                 !% brh20211207s    
@@ -787,7 +811,7 @@ contains
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
                     ! stop 9937685 
@@ -795,11 +819,11 @@ contains
                 end if
 
             else if (link_value == API_WEIR) then
-                if (attr == api_link_type) then
+                if (attr == api_linkf_type) then
                     link_value = lWeir
-                else if (attr == api_weir_type) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_weir_type, link_value)
+                else if (attr == api_linkf_weir_type) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_weir_type, link_value)
                     thisposition = trim(subroutine_name)//'_E05'
                     call print_api_error(error, thisposition)
                     if (link_value == API_TRANSVERSE_WEIR) then
@@ -824,13 +848,13 @@ contains
                         ! stop 620873 
                     !% brh20211207e      
                     endif
-                else if (attr == api_orifice_type) then
+                else if (attr == api_linkf_orifice_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 836637'
                     link_value = nullvalueI
-                else if (attr == api_pump_type) then
+                else if (attr == api_linkf_pump_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 6637892'
                     link_value = nullvalueI
-                else if (attr == api_outlet_type) then
+                else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 826784'
                     link_value = nullvalueI
                 !% brh20211207s    
@@ -839,7 +863,7 @@ contains
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
                     ! stop 9937685 
@@ -847,20 +871,20 @@ contains
                 end if
 
             else if (link_value == API_OUTLET) then
-                if (attr == api_link_type) then
+                if (attr == api_linkf_type) then
                     link_value = lOutlet
-                else if (attr == api_weir_type) then
+                else if (attr == api_linkf_weir_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 226784'
                     link_value = nullvalueI
-                else if (attr == api_orifice_type) then
+                else if (attr == api_linkf_orifice_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 737890'
                     link_value = nullvalueI
-                else if (attr == api_pump_type) then
+                else if (attr == api_linkf_pump_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 827894'
                     link_value = nullvalueI
-                else if (attr == api_outlet_type) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_outlet_type, link_value)
+                else if (attr == api_linkf_outlet_type) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_outlet_type, link_value)
                     thisposition = trim(subroutine_name)//'_F05'
                     call print_api_error(error, thisposition)
                     if (link_value == API_NODE_DEPTH) then
@@ -885,7 +909,7 @@ contains
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  11947'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
                     ! stop 11947
@@ -895,21 +919,21 @@ contains
             endif
 
         else
-            call load_api_procedure("api_get_link_attribute")
-            error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_type, link_value)
+            call load_api_procedure("api_get_linkf_attribute")
+            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_type, link_value)
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
             if (link_value == API_RECT_CLOSED) then
-                if (attr == api_link_geometry) then
+                if (attr == api_linkf_geometry) then
                     link_value = lRectangular_closed
-                else if (attr == api_link_xsect_wMax) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, link_value)
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                     thisposition = trim(subroutine_name)//'_F06'
                     call print_api_error(error, thisposition)
-                else if (attr == api_link_xsect_yFull) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, link_value)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_G07'
                     call print_api_error(error, thisposition)
                 else
@@ -917,16 +941,16 @@ contains
                     link_value = nullvalueR
                 end if
             else if (link_value == API_RECT_OPEN) then
-                if (attr == api_link_geometry) then
+                if (attr == api_linkf_geometry) then
                     link_value = lRectangular
-                else if (attr == api_link_xsect_wMax) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, link_value)
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                     thisposition = trim(subroutine_name)//'_H08'
                     call print_api_error(error, thisposition)
-                else if (attr == api_link_xsect_yFull) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, link_value)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_I09'
                     call print_api_error(error, thisposition)
                 else
@@ -934,16 +958,16 @@ contains
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRAPEZOIDAL) then
-                if (attr == api_link_geometry) then
+                if (attr == api_linkf_geometry) then
                     link_value = lTrapezoidal
-                else if (attr == api_link_xsect_wMax) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yBot, link_value)
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
                     thisposition = trim(subroutine_name)//'_J10'
                     call print_api_error(error, thisposition)
-                else if (attr == api_link_xsect_yFull) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, link_value)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_K11'
                     call print_api_error(error, thisposition)
                 else
@@ -951,16 +975,16 @@ contains
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRIANGULAR) then
-                if (attr == api_link_geometry) then
+                if (attr == api_linkf_geometry) then
                     link_value = lTriangular
-                else if (attr == api_link_xsect_wMax) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, link_value)
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                     thisposition = trim(subroutine_name)//'_M12'
                     call print_api_error(error, thisposition)
-                else if (attr == api_link_xsect_yFull) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, link_value)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_N13'
                     call print_api_error(error, thisposition)
                 else
@@ -968,16 +992,16 @@ contains
                     link_value = nullvalueR
                 end if
             else if (link_value == API_PARABOLIC) then
-                if (attr == api_link_geometry) then
+                if (attr == api_linkf_geometry) then
                     link_value = lParabolic
-                else if (attr == api_link_xsect_wMax) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, link_value)
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                     thisposition = trim(subroutine_name)//'_O14'
                     call print_api_error(error, thisposition)
-                else if (attr == api_link_xsect_yFull) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, link_value)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_P15'
                     call print_api_error(error, thisposition)
                 else
@@ -985,16 +1009,16 @@ contains
                     link_value = nullvalueR
                 end if
             else if (link_value == API_CIRCULAR) then
-                if (attr == api_link_geometry) then
+                if (attr == api_linkf_geometry) then
                     link_value = lCircular
-                else if (attr == api_link_xsect_wMax) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, link_value)
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                     thisposition = trim(subroutine_name)//'_Q16'
                     call print_api_error(error, thisposition)
-                else if (attr == api_link_xsect_yFull) then
-                    call load_api_procedure("api_get_link_attribute")
-                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, link_value)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_R17'
                     call print_api_error(error, thisposition)
                 else
@@ -1010,7 +1034,7 @@ contains
             write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
             "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
         end if
-    end function interface_get_link_attribute
+    end function interface_get_linkf_attribute
 !%
 !%=============================================================================
 !%=============================================================================
@@ -1259,8 +1283,8 @@ contains
 
             if (node%YN(node_idx, nYN_has_extInflow)) then
 
-                write(*,*) 'api_node_extInflow_basePat_type',api_node_extInflow_basePat_type
-                p0 = interface_get_node_attribute(node_idx, api_node_extInflow_basePat_type)
+                write(*,*) 'api_nodef_extInflow_basePat_type',api_nodef_extInflow_basePat_type
+                p0 = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_basePat_type)
                 write(*,*), p0
                 write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
@@ -1271,8 +1295,8 @@ contains
                 else if (p0 == api_daily_pattern) then
                     resolution = api_daily
                 else if (p0 == api_monthly_pattern) then
-                    write(*,*) 'api_node_extInflow_baseline',api_node_extInflow_baseline
-                    baseline = interface_get_node_attribute(node_idx, api_node_extInflow_baseline)
+                    write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
+                    baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
                 !% brh20211207s
                 else
@@ -1284,19 +1308,30 @@ contains
                     !stop 9873094
                 !% brh20211207e    
                 end if
-
+            !% brh20211208s
+            else
+                write(*,*) '   no ext inflows to this node'
+            !% brh20211208e
             end if
 
             if (node%YN(node_idx, nYN_has_dwfInflow)) then
 
-                write(*,*) 'api_node_dwfInflow_hourly_pattern',api_node_dwfInflow_hourly_pattern
-                p1 = interface_get_node_attribute(node_idx, api_node_dwfInflow_hourly_pattern)
-                write(*,*) 'api_node_dwfInflow_weekend_pattern',api_node_dwfInflow_weekend_pattern
-                p2 = interface_get_node_attribute(node_idx, api_node_dwfInflow_weekend_pattern)
-                write(*,*) 'api_node_dwfInflow_daily_pattern',api_node_dwfInflow_daily_pattern
-                p3 = interface_get_node_attribute(node_idx, api_node_dwfInflow_daily_pattern)
-                write(*,*) 'api_node_dwfInflow_monthly_pattern',api_node_dwfInflow_monthly_pattern
-                p4 = interface_get_node_attribute(node_idx, api_node_dwfInflow_monthly_pattern)
+                write(*,*) 'call api_nodef_dwfInflow_hourly_pattern'
+                p1 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_hourly_pattern)
+                write(*,*) '   p1 = ',p1
+
+                write(*,*) 'api_nodef_dwfInflow_weekend_pattern'
+                p2 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_weekend_pattern)
+                write(*,*) '   p2 = ',p2
+
+                write(*,*) 'api_nodef_dwfInflow_daily_pattern'
+                p3 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_daily_pattern)
+                write(*,*) '   p3 = ',p3
+
+
+                write(*,*) 'api_nodef_dwfInflow_monthly_pattern'
+                p4 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_monthly_pattern)
+                write(*,*) '   p4 = ',p4
 
                 if (p1 > 0) then
                     resolution = max(api_hourly, resolution)
@@ -1315,8 +1350,15 @@ contains
                     !stop 3987044
                 !% brh20211207e    
                 end if
-
+            !% brh20211208s
+            else
+                write(*,*) '   no dwfInflow to this node'
+            !% brh20211208e
             end if
+        !% brh20211208s
+        else
+            write(*,*) '   no dwf or ext inflows to this node'
+        !% brh20211208e
         end if
 
     end function interface_get_BC_resolution
@@ -1346,13 +1388,13 @@ contains
         if (nres >= 0) then
             tnextp = util_datetime_get_next_time(tnow, nres)
             if (node%YN(nidx, nYN_has_extInflow)) then
-                tseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+                tseries = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
                 if (tseries >= 0) then
                     success = get_next_entry_tseries(tseries)
-                    tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x1)
+                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1)
                     tnext = util_datetime_epoch_to_secs(tnext)
                     if (success == 0) then ! unsuccessful
-                        tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
+                        tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
                         tnext = util_datetime_epoch_to_secs(tnext)
                         if (tnext == tnow) then
                             tnext = setting%Time%End
@@ -1552,14 +1594,14 @@ contains
 !%=============================================================================
 !%
     subroutine interface_write_output_line(reportTime)
-    !%--------------------------------------------------------------------------
-    !% Description:
-    !%    Writes .out file with SWMM5+ data
-    !%--------------------------------------------------------------------------
-        real(c_double), intent(in) :: reportTime ! time in seconds
-        integer                    :: error
-        character(64)              :: subroutine_name = "interface_write_output_line"
-    !%--------------------------------------------------------------------------
+        !%--------------------------------------------------------------------------
+        !% Description:
+        !%    Writes .out file with SWMM5+ data
+        !%--------------------------------------------------------------------------
+            real(c_double), intent(in) :: reportTime ! time in seconds
+            integer                    :: error
+            character(64)              :: subroutine_name = "interface_write_output_line"
+        !%--------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1580,8 +1622,8 @@ contains
         !% Description:
         !%---------------------------------------------------------------------
         integer                :: error
-        real(c_double), target :: reportStart
-        integer(c_int), target :: reportStep, hydroStep
+        real(c_double), target :: reportStart, RouteStep
+        integer(c_int), target :: reportStep, WetStep, DryStep
         character(64)          :: subroutine_name = 'interface_get_report_times'
         !%----------------------------------------------------------------------
 
@@ -1596,14 +1638,19 @@ contains
         !%
         !% --- This generates EPA-SWMM Error Code: -1 if the reportStart is after the end time.
         call load_api_procedure("api_get_report_times")
-        error = ptr_api_get_report_times(reportStart, reportStep, hydroStep)
+        error = ptr_api_get_report_times(reportStart, reportStep, WetStep, DryStep, RouteStep)
         call print_api_error(error, subroutine_name)
 
         reportStart = util_datetime_epoch_to_secs(reportStart)
 
+        !% brh 20211209s
         setting%Output%reportStartTime = reportStart
         setting%Output%reportDt = reportStep
-        setting%Time%Hydrology%Dt = hydroStep
+        setting%Time%Hydrology%Dt = WetStep
+        setting%Time%Hydraulics%Dt = RouteStep
+        !% brh 20211209e
+
+        !% NOTE: brh20211208 we are reading in the DryStep, but not using it at the moment.
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1633,27 +1680,61 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function interface_find_object
-
-    subroutine interface_subcatchment_runoff(id)
-        
-        integer, intent(in) :: id
+!%
+!%=============================================================================
+!%=============================================================================
+!%   
+    subroutine interface_call_runoff_execute()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer             :: error
-        real(8)             :: runoff
-        character(64) :: subroutine_name        
-        subroutine_name = 'interface_find_object'
-        
+        character(64) :: subroutine_name = 'interface_call_runoff_execute'     
+        !%---------------------------------------------------------------------   
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         
-        call load_api_procedure("api_subcatch_runoff")
-        error = ptr_api_subcatch_runoff(id,runoff)   
+        print *, '...just before loading runoff_execute in interface_call_runoff_execute'
+
+        call load_api_procedure("api_call_runoff_execute")
+        error = ptr_api_call_runoff_execute()   
         call print_api_error(error, subroutine_name)
-        print *, "runoff :", runoff
+    
+        print *, "...finishing interface_call_runoff_execute"
         
         if (setting%Debug%File%interface)  &
              write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
-    end subroutine interface_subcatchment_runoff
+    end subroutine interface_call_runoff_execute
+!%
+!%=============================================================================
+!%=============================================================================
+!%   
+    subroutine interface_get_subcatch_runoff(sc_idx)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
+        integer, intent(in) :: sc_idx  !% index of this subcatchment
+        integer             :: error
+        real(8)             :: runoff
+        character(64) :: subroutine_name = 'interface_get_subcatch_runoff'     
+        !%---------------------------------------------------------------------   
+        
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        
+        print *, 'just before loading subcatchment'
+
+        call load_api_procedure("api_get_subcatch_runoff")
+        error = ptr_api_get_subcatch_runoff(sc_idx,runoff)   
+        call print_api_error(error, subroutine_name)
+    
+        print *, "in interface_get_subcatchment_runoff, idx, runoff:", sc_idx, runoff
+        
+        if (setting%Debug%File%interface)  &
+             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        
+    end subroutine interface_get_subcatch_runoff
 !%
 !%=============================================================================
 !% PRIVATE
@@ -1682,10 +1763,10 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
             case ("api_finalize")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
-            case ("api_get_node_attribute")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
-            case ("api_get_link_attribute")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
+            case ("api_get_nodef_attribute")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_nodef_attribute)
+            case ("api_get_linkf_attribute")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_linkf_attribute)
             case ("api_get_table_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_table_attribute)
             case ("api_get_num_objects")
@@ -1724,10 +1805,15 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
             case ("api_update_linkResult")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
-            case ("api_subcatch_runoff")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_subcatch_runoff)    
+            case ("api_call_runoff_execute")    
+                call c_f_procpointer(c_lib%procaddr, ptr_api_call_runoff_execute)
+            case ("api_get_subcatch_runoff")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_subcatch_runoff)    
+            case ("api_get_NewRunoffTime")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_NewRunoffTime)
             case default
-                write(*,"(A,A)") "Error, procedure " // api_procedure_name // " cannot been handled"
+                write(*,"(A,A)") "Error, procedure " // api_procedure_name // &
+                 " has not been handled in load_api_procedure"
                 stop
         end select
 
@@ -1822,6 +1908,29 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function get_end_datetime
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_NewRunoffTime()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% gets the latest NewRunoffTime from EPA SWMM (in milliseconds)
+        !% and converts to seconds
+        !%---------------------------------------------------------------------
+        real(8)       :: interface_get_NewRunoffTime
+        character(64) :: subroutine_name
+        !%---------------------------------------------------------------------
+        subroutine_name = 'interface_get_NewRunoffTime'
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        call load_api_procedure("api_get_NewRunoffTime")
+        interface_get_NewRunoffTime = ptr_api_get_NewRunoffTime() / onethousand
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end function interface_get_NewRunoffTime
 !%
 !%=============================================================================
 !%=============================================================================

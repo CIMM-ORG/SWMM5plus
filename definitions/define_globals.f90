@@ -55,7 +55,7 @@ module define_globals
     !% Boundary conditions
     type(BCArray), target :: BC
 
-    !!% Curve types
+    !!% Curve typesnode_overflow                    // 28
     type(curveType), dimension(:), allocatable, target :: curve
 
     !%  columns of element and face arrays
@@ -205,6 +205,7 @@ module define_globals
     real(8), parameter :: tenR = 10.0
     real(8), parameter :: twentyfourR = 24.0
     real(8), parameter :: sixtyR = 60.0
+    real(8), parameter :: onethousand = 1000.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneeighthR = oneR / eightR
@@ -230,6 +231,7 @@ module define_globals
     integer, parameter :: sixI = 6
 
     !% Number of objects
+    integer :: SWMM_N_subcatch
     integer :: SWMM_N_link
     integer :: N_link
     integer :: SWMM_N_node
@@ -253,12 +255,16 @@ module define_globals
     integer, target :: N_OutTypeFace
 
     !% Number of API parameters
-    integer, parameter :: N_api_node_attributes = api_node_overflow
-    integer, parameter :: N_api_link_attributes = api_conduit_length
-    integer, parameter :: N_api_link_type_attributes = api_pump_type - N_api_link_attributes
-    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yFull - N_api_link_type_attributes
-    integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_type_attributes &
-                                                        + N_api_link_xsect_attributes
+    !% brh20211207s
+    !rm integer, parameter :: N_api_node_attributes = api_node_overflow
+    integer, parameter :: N_api_nodef_attributes = api_nodef_rptFlag
+    !rm integer, parameter :: N_api_link_attributes = api_linkf_conduit_length
+    integer, parameter :: N_api_linkf_attributes = api_linkf_rptFlag
+    !% brh20211207e
+    integer, parameter :: N_api_linkf_type_attributes = api_linkf_pump_type - N_api_linkf_attributes
+    integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_xsect_yFull - N_api_linkf_type_attributes
+    integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
+                                                        + N_api_linkf_xsect_attributes
     integer, parameter :: N_api_total_table_attributes = api_table_refers_to
 
     !% Coarray variables
@@ -288,13 +294,7 @@ module define_globals
 
     ! useful shortcuts
     !% NOTE: don't use setting%... structure in define_globals to prevent linking problems
-    !rm 20210607 brh real(8), pointer :: dt => setting%time%dt  !% need different Hydrology and Hydraulics dt
-    !rm 20210610 brh real(8), pointer :: grav => setting%constant%gravity
     !rm 20210629 griano integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
-
-    !% 20210607 brh Moved these from globals and put in Discretization
-    !real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
-    !real(8), pointer :: elem_shorten_cof => setting%Discretization%LinkShortingFactor
 
     integer, parameter   :: NoAdjust       = 1   !% no link length adjustment has done
     integer, parameter   :: OneSideAdjust  = 2   !% one sided link length adjustment has done
