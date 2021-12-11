@@ -45,6 +45,7 @@ module interface
     public :: interface_export_link_results
     public :: interface_call_runoff_execute
     public :: interface_get_subcatch_runoff
+    public :: interface_get_subcatch_runoff_nodeIdx
     public :: interface_get_NewRunoffTime
 
 !%==========================================================================
@@ -298,13 +299,21 @@ module interface
             implicit none 
         end function api_call_runoff_execute
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_subcatch_runoff(sc_idx, runoff) &
+        integer(c_int) function api_get_subcatch_runoff(sc_idx,runoff) &
             BIND(C, name="api_get_subcatch_runoff")
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value, intent(in) :: sc_idx
+            integer(c_int), value, intent(in)    :: sc_idx
             real(c_double),        intent(inout) :: runoff
         end function api_get_subcatch_runoff
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_get_subcatch_runoff_nodeIdx(sc_idx, node_idx) &
+            BIND(C, name="api_get_subcatch_runoff_nodeIdx")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in)    :: sc_idx
+            integer(c_int),        intent(inout) :: node_idx
+        end function api_get_subcatch_runoff_nodeIdx
         !% -------------------------------------------------------------------------------
         ! --- Utils
         !% -------------------------------------------------------------------------------
@@ -353,6 +362,7 @@ module interface
     procedure(api_find_object),                pointer :: ptr_api_find_object
     procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
+    procedure(api_get_subcatch_runoff_nodeIdx), pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
     
     !% Error handling
     character(len = 1024) :: errmsg
@@ -1712,34 +1722,60 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%   
-    subroutine interface_get_subcatch_runoff(sc_idx)
+    real(8) function interface_get_subcatch_runoff (sc_idx) result(runoff)
         !%---------------------------------------------------------------------
         !% Description:
+        !% Gets the SWMM-C "newRunoff" for j=sc_idx for the data
+        !% Subcatch[j].newRunoff in subcatch.c/subcatch_getRunoff
         !%---------------------------------------------------------------------
-        integer, intent(in) :: sc_idx  !% index of this subcatchment
-        integer             :: error
-        real(8)             :: runoff
-        character(64) :: subroutine_name = 'interface_get_subcatch_runoff'     
+        !% Declarations
+            integer, intent(in) :: sc_idx  !% index of this subcatchment
+            integer             :: error
+            character(64) :: subroutine_name = 'interface_get_subcatch_runoff'     
         !%---------------------------------------------------------------------   
-        
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-        
-        !print *, 'just before loading subcatchment'
+        !% Preliminaries
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
 
         call load_api_procedure("api_get_subcatch_runoff")
-        error = ptr_api_get_subcatch_runoff(sc_idx,runoff)   
+        error = ptr_api_get_subcatch_runoff(sc_idx, runoff)   
         call print_api_error(error, subroutine_name)
-    
-        print *, "in interface_get_subcatchment_runoff, idx, runoff:"
-        print *, "******"
-        print *, sc_idx, runoff
-        print *, "*****"
-        
+
+        !%---------------------------------------------------------------------
+        !% Closing
         if (setting%Debug%File%interface)  &
              write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
-    end subroutine interface_get_subcatch_runoff
+    end function interface_get_subcatch_runoff
+!%
+!%=============================================================================
+!%=============================================================================
+!%  
+    integer function interface_get_subcatch_runoff_nodeIdx (sc_idx) result(node_idx)    
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Gets the SWMM-C node index that a subcatchment runs off to
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: sc_idx  !% index of this subcatchment
+            integer             :: error
+            character(64) :: subroutine_name = 'interface_get_subcatch_runoff_nodeIdx'     
+        !%---------------------------------------------------------------------   
+        !% Preliminaries
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+
+        call load_api_procedure("api_get_subcatch_runoff_nodeIdx")
+        error = ptr_api_get_subcatch_runoff_nodeIdx(sc_idx, node_idx)   
+        call print_api_error(error, subroutine_name)
+        
+        !%---------------------------------------------------------------------
+        !% Closing
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end function interface_get_subcatch_runoff_nodeIdx
 !%
 !%=============================================================================
 !% PRIVATE
@@ -1814,6 +1850,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_call_runoff_execute)
             case ("api_get_subcatch_runoff")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_subcatch_runoff)    
+            case ("api_get_subcatch_runoff_nodeIdx")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_subcatch_runoff_nodeIdx)        
             case ("api_get_NewRunoffTime")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_NewRunoffTime)
             case default
@@ -1920,7 +1958,7 @@ contains
     function interface_get_NewRunoffTime()
         !%---------------------------------------------------------------------
         !% Description:
-        !% gets the latest NewRunoffTime from EPA SWMM (in milliseconds)
+        !% gets the latest NewRunoffTime from SWMM-C (in milliseconds)
         !% and converts to seconds
         !%---------------------------------------------------------------------
         real(8)       :: interface_get_NewRunoffTime

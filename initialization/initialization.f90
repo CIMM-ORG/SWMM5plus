@@ -47,18 +47,26 @@ contains
 !%==========================================================================
 !%
     subroutine initialize_toplevel ()
-        !%-----------------------------------------------------------------------------
+        !%-------------------------------------------------------------------
         !% Description:
         !%   a public subroutine that calls all the private initialization subroutines
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'initialize_toplevel'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%-------------------------------------------------------------------
+            integer :: ii
+            character(64) :: subroutine_name = 'initialize_toplevel'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%initialization) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------    
         !% --- CPU and wall-clock timers
         call init_model_timer()
+
+        !% --- Define the reverse keys (used mainly for debugging)
+        call define_keys_reverse()
+        !call define_keys_printByNumber() ! usually comment this out
+        !call define_keys_printByName()
+        !stop 39866
 
         !% --- assign and store unit numbers for files
         call util_file_assign_unitnumber ()
@@ -127,6 +135,9 @@ contains
         if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
+        !% Allocate storage for subcatchment arrays
+        if (setting%Simulation%useHydrology) call util_allocate_subcatch()
+
         !% --- store the SWMM-C curves in equivalent Fortran arrays
         if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
         call init_curves()
@@ -143,27 +154,19 @@ contains
         
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
             if (setting%Output%Verbose) print *, "begin network definition"
-            call init_network_define_toplevel ()
+            call network_define_toplevel ()
         end if                                     !% brh20211208
 
+        sync all 
+
+        !% initialize the subcatchments connecting to SWMM-C
+        if (setting%Simulation%useHydrology) call init_subcatchment()
+
+        sync all
+           
         !% --- setup for csv output of links and nodes
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
-
-        !% brh20211210s
-
- STARTING WORK HERE --Need a subroutine that sets up the subcatchments. 
- Note we already have the number of subcatchments N_?
- this should have the following
- 1.  compute the maximum number of subcatchments to any single node. 
- 2.  determine which SWMM nodes are connected to subcatchments
- 3.  ideally we can use ei_node_Gidx_SWMM to set eYN_hasSubcatchRunOff for all elements with runoff 
- 4.  Create an elemID_from_subcatch array that stores the elemID for each subcatchments
- 5.  Create an interface routine that cycles through the subcatchments, gets its newrunoff, and adds it to an elemR(:,er_FlowrateLateral) 
- for the appropriate elem.
- 
- 
-        !% brh20211210e
 
         !% --- initialize boundary condition
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
@@ -626,6 +629,175 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine init_partitioning()
+        !%-----------------------------------------------------------------------------
+        !%
+        !% Description:
+        !%   This subroutine calls the public subroutine from the utility module,
+        !%   partitioning.f08. It also calls a public subroutine from the temporary
+        !%   coarray_partition.f08 utility module that defines how big the coarrays
+        !%   must be.
+        !%
+        !%-----------------------------------------------------------------------------
+        integer       :: ii
+        character(64) :: subroutine_name = 'init_partitioning'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% brh20211208s
+        !% if there are no links, the system cannot be partitioned
+        if (N_link == 0) then
+            write(*,*) '*** WARNING no conduit/channel links found, using SWMM hydrology only'
+            setting%Simulation%useHydraulics = .false.
+            return
+        end if
+        !% brh20211208e    
+
+        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
+
+        !% find the number of elements in a link based on nominal element length
+        do ii = 1, SWMM_N_link
+            call init_discretization_nominal(ii)
+        end do
+
+        !% Set the network partitioning method used for multi-processor parallel computation
+        call init_partitioning_method()
+
+        !% adjust the link lengths by cutting off a certain portion for the junction branch
+        !% this subroutine is called here to correctly estimate the number of elements and faces
+        !% to allocate the coarrays.
+        !% HACK: This might be moved someplace more suitable?
+        call init_discretization_adjustlinklength()
+
+        !% calculate the largest number of elements and faces to allocate the coarrays
+        call init_coarray_length()
+
+        !% allocate elem and face coarrays
+        call util_allocate_elemX_faceX()
+
+        !% allocate colum idxs of elem and face arrays for pointer operation
+        call util_allocate_columns()
+
+        if (setting%Profile%YN) call util_profiler_stop (pfc_init_partitioning)
+
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    end subroutine init_partitioning
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_subcatchment()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% sets the connection between the subcatchments of SWMM-c and the
+        !% elements that will get runoff
+        !%
+        !% This populates subcatchI() for the node index and element index
+        !% that are connected to the subcatchment. Note that the node index
+        !% stored is the SWMM5+ node index and the SWMM-C index is obtained
+        !% by subctracting one.
+        !%
+        !% HACK -- not sure how this functions of a node appears on more
+        !% than one image
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: ii
+            integer, pointer :: nodeIdx(:), elemIdx(:), nodeType(:)
+            integer, pointer :: tface
+            logical, pointer :: isToNode(:)
+            character(64) :: subroutine_name = 'init_subcatchment'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%initialization) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Aliases
+            nodeIdx  => subcatchI(:,si_runoff_nodeIdx) 
+            elemIdx  => subcatchI(:,si_runoff_elemIdx)
+            isToNode => subcatchYN(:,sYN_hasRunoff)
+            nodeType => node%I(:,ni_node_type)
+        !%------------------------------------------------------------------
+
+        !% set the counter for the number of subcatchments to an element to zero
+        !% THIS IS ONLY NEEDED IF WE NEED TO GO FROM elem -> subcatch, which we should avoid
+        !elemI(:, ei_Nsubcatch) = zeroI
+
+        !% cycle through subcatchments to set connections to runoff nodes in SWMM-C
+        do ii=1,SWMM_N_subcatch
+            !%Add 1 to the SWMM-C node to get the SWMM5+ node
+            nodeIdx(ii) = interface_get_subcatch_runoff_nodeIdx(ii-1)+oneI
+            if (nodeIdx(ii) < 1) then !% not a runoff node (SWMM-C flag)
+                isToNode(ii) = .false.
+            else
+                isToNode(ii) = .true.
+            end if         
+
+            !% only handle the subcatchment on images with its connected node
+            if (this_image() .eq. node%I(nodeIdx(ii), ni_P_image)) then
+                subcatchI(ii,si_runoff_P_image) = this_image()
+                select case (nodeType(nodeIdx(ii)))
+                    case (nJ2)
+                        !% for a node that is a face, the subcatch connects to the element
+                        !% upstream of the face, which is defined by ni_elemface_idx
+                        elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    case (nJm)
+                        !% for a node that is a multi-branch junction, subcatch connects to 
+                        !% the element itself, which is defined by ni_elemface_idx
+                        elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    case (nBCup)
+                        !% for a node that is an upstream BC, the subcatch connects into the
+                        !% first element downstream of the face
+                        !% Here ni_elemface_idx holds the face index
+                        tface => node%I(nodeIdx(ii),ni_elemface_idx) 
+                        if (tface .ne. nullvalueI) then 
+                            elemIdx(ii) = faceI(tface,fi_Melem_dL)
+                        else
+                            elemIdx(ii) = nullvalueI
+                        end if
+                    case (nBCdn)
+                        !% for a node that is an downstreamstream BC, the subcatch connects into the
+                        !% first element upstreamstream of the face
+                        !% Here ni_elemface_idx holds the face index
+                        tface => node%I(nodeIdx(ii),ni_elemface_idx)
+                        if (tface .ne. nullvalueI) then 
+                            elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                        else
+                            elemIdx(ii) = nullvalueI
+                        end if
+                    case default 
+                        write(*,*) 'ERROR CODE: unexpected case default in '//trim(subroutine_name)
+                end select
+                !% store logical for elem
+                if (elemIdx(ii) .ne. nullvalueI) then 
+                    elemYN(elemIdx(ii), eYN_hasSubcatchRunOff) = .true.
+                    !elemI(elemIdx(ii), ei_Nsubcatch) = elemI(elemIdx(ii), ei_Nsubcatch) + oneI
+                end if
+            end if
+        end do
+
+        ! do ii = 1,SWMM_N_subcatch
+        !     print *, ii
+        !     print *,  ii, subcatchI(:,si_runoff_nodeIdx) ,  subcatchI(:,si_runoff_elemIdx) 
+        ! end do
+
+        !do ii = 1,size(node%I,DIM=1)
+        !    print *, node%I(ii,ni_idx), node%I(ii,ni_node_type), reverseKey(node%I(ii,ni_node_type))
+        !end do
+
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initialization)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_subcatchment
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_bc()
         !%-----------------------------------------------------------------------------
         !%
@@ -762,64 +934,30 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_partitioning()
+    subroutine init_time()
         !%-----------------------------------------------------------------------------
         !%
         !% Description:
-        !%   This subroutine calls the public subroutine from the utility module,
-        !%   partitioning.f08. It also calls a public subroutine from the temporary
-        !%   coarray_partition.f08 utility module that defines how big the coarrays
-        !%   must be.
         !%
         !%-----------------------------------------------------------------------------
-        integer       :: ii
-        character(64) :: subroutine_name = 'init_partitioning'
+
         !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% brh20211208s
-        !% if there are no links, the system cannot be partitioned
-        if (N_link == 0) then
-            write(*,*) '*** WARNING no conduit/channel links found, using SWMM hydrology only'
-            setting%Simulation%useHydraulics = .false.
-            return
+        !% brh 20211209
+        !rm setting%Time%Dt = setting%Time%Hydraulics%Dt
+        setting%Time%Now = 0
+        setting%Time%Step = 0
+        setting%Time%Hydraulics%Step = 0
+        setting%Time%Hydrology%Step = 0
+        if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+
+        !% Initialize report step
+        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
+        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
+            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
         end if
-        !% brh20211208e    
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
-
-        !% find the number of elements in a link based on nominal element length
-        do ii = 1, SWMM_N_link
-            call init_discretization_nominal(ii)
-        end do
-
-        !% Set the network partitioning method used for multi-processor parallel computation
-        call init_partitioning_method()
-
-        !% adjust the link lengths by cutting off a certain portion for the junction branch
-        !% this subroutine is called here to correctly estimate the number of elements and faces
-        !% to allocate the coarrays.
-        !% HACK: This might be moved someplace more suitable?
-        call init_discretization_adjustlinklength()
-
-        !% calculate the largest number of elements and faces to allocate the coarrays
-        call init_coarray_length()
-
-        !% allocate elem and face coarrays
-        call util_allocate_elemX_faceX()
-
-        !% allocate colum idxs of elem and face arrays for pointer operation
-        call util_allocate_columns()
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_partitioning)
-
-        if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    end subroutine init_partitioning
-!%
+    end subroutine init_time
+!%    
 !%==========================================================================
 !%==========================================================================
 !%
@@ -928,33 +1066,6 @@ contains
 
     end subroutine init_coarray_length
 !%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine init_time()
-        !%-----------------------------------------------------------------------------
-        !%
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-
-        !% brh 20211209
-        !rm setting%Time%Dt = setting%Time%Hydraulics%Dt
-        setting%Time%Now = 0
-        setting%Time%Step = 0
-        setting%Time%Hydraulics%Step = 0
-        setting%Time%Hydrology%Step = 0
-        if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
-
-        !% Initialize report step
-        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
-        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
-            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
-        end if
-    end subroutine init_time
-
 !%==========================================================================
 !% END OF MODULE
 !%==========================================================================

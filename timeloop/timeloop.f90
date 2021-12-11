@@ -7,6 +7,7 @@ module timeloop
     use output, only: outputML_store_data
     use pack_mask_arrays
     use runge_kutta2
+    use hydrology
     use utility_output
     use boundary_conditions
     use utility_profiler
@@ -44,11 +45,18 @@ contains
             integer          :: ii, additional_rows
             logical          :: isTLfinished
             logical          :: doHydraulics, doHydrology
+            logical, pointer :: useHydraulics, useHydrology
             real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
             real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
             real(8), pointer :: timeEnd, timeNow, dtTol, dtHydraulics
             character(64)    :: subroutine_name = 'timeloop_toplevel'
             integer :: kk !temporary
+
+            !% temporary for lateral flow testing
+            integer :: mm
+            real(8), pointer :: Qlateral(:), Qrate(:)
+            integer, pointer :: thisCol, npack, thisP(:), thisBC(:)
+            integer, pointer :: sImage(:), eIdx(:)
         !%--------------------------------------------------------------------
         !% Preliminaries
             if (icrash) return
@@ -60,6 +68,8 @@ contains
             call system_clock(count=setting%Time%Real%EpochTimeLoopStartSeconds)
         !%--------------------------------------------------------------------
         !% Aliases
+            useHydrology       => setting%Simulation%useHydrology
+            useHydraulics      => setting%Simulation%useHydraulics
             nextHydrologyTime  => setting%Time%Hydrology%NextTime
             nextHydraulicsTime => setting%Time%Hydraulics%NextTime
             lastHydrologyTime  => setting%Time%Hydrology%LastTime
@@ -75,11 +85,11 @@ contains
 
         !% local T/F that changes with each time step depending on whether or 
         !% not the hydrology or hydraulics are conducted in that step
-        doHydrology  = setting%simulation%useHydrology 
-        doHydraulics = setting%simulation%useHydraulics
+        doHydrology  = useHydrology 
+        doHydraulics = useHydraulics
 
         !% get the next hydrology time
-        if (doHydrology) then      
+        if (useHydrology) then      
             nextHydrologyTime = interface_get_NewRunoffTime()
         else   
             !% set a large dummy time for hydrology if not used
@@ -87,7 +97,7 @@ contains
         end if
 
         !% get the initial dt and the next hydraulics time
-        if (doHydraulics) then
+        if (useHydraulics) then
             call tl_update_hydraulics_timestep()
         else
             !% set a large dummy time for hydraulics if not used
@@ -112,23 +122,62 @@ contains
         !do while (setting%Time%Now <= (setting%Time%End - dtTol))
         !    ii = ii+1
             print *, ii, timeNow, setting%Time%End, doHydrology, doHydraulics
-            !print *, 'here 3198755'
-            !do kk=1,size(elemR,2)
-            !    print *, kk, elemR(kk,er_Depth)
-            !end do
 
+            !% store the runoff from hydrology on a hydrology step
             if (doHydrology) call tl_hydrology()
-            if (doHydraulics) then
+
+            if (doHydraulics) then        
+                !% get updated boundary conditions
+                !% ***** BUGCHECK -- the lateral flowrate is cumulative of BC and hydrology, 
+                !% ***** so check that it is zeroed before the first BC added.
                 call bc_update()
+
+                !% get runoff from hydrology for this hydraulic step
+                !% note that this doesn't change unless the hydrology step has occured
+                !% so it should only be called with doHydrology, not useHydrology
+                if (doHydrology) call hydrology_runoff
+
+                !% HACK put lateral here for now -- cut out of face_interpolation.
+                !% set lateral to zero
+                Qlateral => elemR(:,er_FlowrateLateral)
+                Qlateral(:) = zeroR 
+        
+                !% add inflow BC to lateral inflow
+                npack   => npack_elemP(ep_BClat)
+                !% note that thisP and thisBC must be the same size or there is something wrong
+                thisP   => elemP(1:npack,ep_BClat)
+                thisBC  => BC%P%BClat
+                Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
+
+                !% add subcatchment inflows
+                if (useHydrology) then 
+                    sImage => subcatchI(:,si_runoff_P_image)
+                    eIdx   => subcatchI(:,si_runoff_elemIdx)
+                    !% using the full runoff rate for this period
+                    Qrate => subcatchR(:,sr_RunoffRate_baseline)
+                    do mm = 1,SWMM_N_subcatch
+                        !% only if this image holds this node
+                        if (this_image() .eq. sImage(mm)) then
+                            Qlateral(eIdx(mm)) = Qlateral(eIdx(mm)) + Qrate(mm)
+                        end if
+                    end do
+                else
+                    !% continue
+                end if
+
+                !% perform hydraulic routing
                 call tl_hydraulics()
             end if
-            call util_output_report() !% Results must be reported before counter increment
+
+            call util_output_report() !% Results must be reported before the "do"counter increments
+
             !% Multilevel time step output
             if ( (setting%Output%report) .and. &
                  (util_output_must_report()) .and. &
                  (.not. setting%Output%suppress_MultiLevel_Output) ) then
                 call outputML_store_data (.false.)
             end if
+
             !% increment the time step and counters for the next time loop
             call tl_increment_counters(doHydraulics, doHydrology)
             if (icrash) then
@@ -137,12 +186,6 @@ contains
                 end if
                 exit
             end if
-
-            !print *, 'here 47685'
-            !do kk=1,size(elemR,2)
-            !    print *, kk, elemR(kk,er_Velocity)
-            !end do
-
         end do
 
         !% >>> BEGIN HACK
@@ -169,33 +212,34 @@ contains
 !%==========================================================================
 !%
     subroutine tl_hydrology()
-        ! %-----------------------------------------------------------------------------
-        ! % Description:
-        ! % Performs a single hydrology step
-        ! %-----------------------------------------------------------------------------
-        integer :: ii
-        character(64) :: subroutine_name = 'tl_hydrology'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !rm !% return if not at the next hydrology time
-        !rm if (setting%Time%Now > (setting.Time.NextHydrologyTime - setting.Eps.seconds)) return
-
-        !% execute the EPA SWMM runoff for the next interval
-        print *, '...inside tl_hydrology for total subcatchments =', SWMM_N_subcatch    
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Performs a single hydrology step
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer :: ii
+            real(8), pointer :: sRunoff(:)
+            character(64) :: subroutine_name = 'tl_hydrology'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------              
+        !% Aliases
+            sRunoff => subcatchR(:,sr_RunoffRate_baseline)  
+        !%------------------------------------------------------------------      
+        !% execute the SWMM-C runoff for the next interval 
         call interface_call_runoff_execute()
 
-        !% runoff_execute updates the next runoff time, get the value and store
+        !% get the next runoff time
         setting%Time%Hydrology%NextTime = interface_get_NewRunoffTime()   
 
         !% cycle through the subcatchments to get the runoff 
-        !% starts at 0 because this is index into EPA SWMM storage
-        do ii = 0,SWMM_N_subcatch-1  
-            call interface_get_subcatch_runoff(ii)  
-            print *, '...need to get runoff out of subcatchments'
-        end do  
+        !% ii-1 required in arg as C arrays start from 0
+        do ii = 1,SWMM_N_subcatch
+            sRunoff(ii) = interface_get_subcatch_runoff(ii-1)  
+        end do
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -511,7 +555,7 @@ contains
         if (.not. useHydrology) then
             nextHydrologyTime = setting%Time%End + tenR*DtTol
         else
-            !% EPA SWMM will not return a next hydrology time that is
+            !% SWMM-C will not return a next hydrology time that is
             !% beyond the end of the simulation, so we need a special
             !% treatment for this case
             if ((nextHydrologyTime .eq. lastHydrologyTime) .and. &

@@ -25,13 +25,14 @@ module define_indexes
     !==========================================================================
     !
     !%-------------------------------------------------------------------------
-    !%  FIRST INDEXES (DO NOT CHANGE) -----------------------------------------
+    !%  FIRST INDEXES -- removed brh20211211
     !% In theory, we can use different first index values for the arrays.
     !% This was initially used in debugging, but it seemed the gfortran compiler
     !% had some behaviors with non-unity starting points that I couldn't figure out.
+    !%
     !%-------------------------------------------------------------------------
-    integer, parameter :: first_face_index  = 1
-    integer, parameter :: first_elem_index  = 1
+    !rm integer, parameter :: first_face_index  = 1
+    !rm integer, parameter :: first_elem_index  = 1
 
 
     !%-------------------------------------------------------------------------
@@ -268,7 +269,8 @@ module define_indexes
          enumerator :: ei_QeqType                   !% type of flow equation (static)
          enumerator :: ei_specificType              !% specific element type (static)
          !% brh20211210s
-         enumerator :: ei_Subcatchment_table_idx    !% index in subcatchment table for linking to subcatchments to this element 
+         !enumerator :: ei_Subcatch_TableIdx         !% index in subcatchment table for linking to subcatchments to this element 
+         !enumerator :: ei_Nsubcatch                 !% number of subcatchments feeding an element
          !% brh20211210e         
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
@@ -829,6 +831,40 @@ module define_indexes
         enumerator :: offi_lastplusone !% must be the last enum item
     end enum
     integer, target :: Ncol_offi = offi_lastplusone-1
+
+
+    !%-------------------------------------------------------------------------
+    !% Define the column indexes for subcatchR(:,:) arrays
+    !% These are arrays with SWMM_N_subcatch rows.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: sr_RunoffRate_baseline=1    !% hydrology step runoff rate from EPASWMM
+        enumerator :: sr_lastplusone            !% must be the last enum item
+    end enum
+    integer, target :: Ncol_subcatchR = sr_lastplusone-1
+
+    !%-------------------------------------------------------------------------
+    !% Define the column indexes for subcatchI(:,:) arrays
+    !% These are arrays with SWMM_N_subcatch rows.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: si_runoff_nodeIdx = 1   !% node index for runoff
+        enumerator :: si_runoff_elemIdx       !% runoff element for this subcatchment  
+        enumerator :: si_runoff_P_image       !% coarray image that holds element for runoff
+        enumerator :: si_lastplusone          !% must be the last enum item
+    end enum
+    integer, target :: Ncol_subcatchI = si_lastplusone-1
+
+    !%-------------------------------------------------------------------------
+    !% Define the column indexes for subcatchYN(:,:) arrays
+    !% These are arrays with SWMM_N_subcatch rows.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: sYN_hasRunoff            !% TRUE if subcatchment has runoff to an element
+        enumerator :: sYN_lastplusone          !% must be the last enum item
+    end enum
+    integer, target :: Ncol_subcatchYN = sYN_lastplusone-1
+
 
     !% data types (columns) in the table
     !% define column indexes for storage curve types

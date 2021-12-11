@@ -23,34 +23,30 @@ module network_define
 
     private
 
-    public :: init_network_define_toplevel
+    public :: network_define_toplevel
 
 contains
-!
-!==========================================================================
-! PUBLIC
-!==========================================================================
-!
-    subroutine init_network_define_toplevel ()
-        !--------------------------------------------------------------------------
-        !
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
+    subroutine network_define_toplevel ()
+        !%------------------------------------------------------------------
+        !% Description:
         !% Initializes a element-face network from a link-node network.
         !%   Requires network links and nodes before execution
-        !
-        !--------------------------------------------------------------------------
-
-        integer :: ii, jj
-
-        character(64) :: subroutine_name = 'init_network_define_toplevel'
-
-        !--------------------------------------------------------------------------
-        if (icrash) return
-
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_network_define_toplevel)
-
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            integer :: ii, jj
+            character(64) :: subroutine_name = 'init_network_define_toplevel'
+        !%-------------------------------------------------------------------
+        !% Preliminaries:
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Profile%YN) call util_profiler_start (pfc_init_network_define_toplevel)
+        !--------------------------------------------------------------------
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
 
@@ -67,67 +63,94 @@ contains
 
         sync all
 
-        !% print result
-        if (setting%Debug%File%network_define) then
-            print*
-            print*, '===================================================================' //&
-            '==================================================================='
-            print*, 'image = ', this_image()
-            print*, '.......................Elements...............................'
-            print*
-            print*, '     ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM      Mface_uL    Mface_dL'
-            do jj = 1,N_elem(this_image())
-                print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_BIPquick), &
-                elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM), &
-                elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
-            end do
-            print*
-            print*, '.......................Faces.............................'
-            print*, 'a)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image' //&
-            '     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM      zbottom'
-            do jj = 1,N_face(this_image())
-                print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
-                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_GhostElem_uL),&
-                faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx_BIPquick),faceI(jj, fi_node_idx_SWMM),&
-                faceI(jj,fi_link_idx_BIPquick),faceI(jj,fi_link_idx_SWMM),faceR(jj,fr_Zbottom)
-            end do
+        !%------------------------------------------------------------------
+        !% Closing:
+            !% print result
+            if (setting%Debug%File%network_define) then
+                print*
+                print*, '===================================================================' //&
+                '==================================================================='
+                print*, 'image = ', this_image()
+                print*, '.......................Elements...............................'
+                print*
+                print*, '     ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM      Mface_uL    Mface_dL'
+                do jj = 1,N_elem(this_image())
+                    print *, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_BIPquick), &
+                    elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM), &
+                    elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
+                end do
+                print*
+                print*, '.......................Faces.............................'
+                print*, 'a)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image' //&
+                '     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM      zbottom'
+                do jj = 1,N_face(this_image())
+                    print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
+                    faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_GhostElem_uL),&
+                    faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx_BIPquick),faceI(jj, fi_node_idx_SWMM),&
+                    faceI(jj,fi_link_idx_BIPquick),faceI(jj,fi_link_idx_SWMM),faceR(jj,fr_Zbottom)
+                end do
 
-            ! print*
-            ! print*, '.......................Faces..................................'
-            ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
-            ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
-            ! do jj = 1,N_face(this_image())
-            !     print*, faceI(jj,fi_Lidx),' ',faceI(jj,fi_BCtype),&
-            !     '           ',faceYN(jj,fYN_isInteriorFace), &
-            !     '                    ',faceYN(jj,fYN_isSharedFace), &
-            !     '              ',faceYN(jj,fYN_isnull), &
-            !     '            ',faceYN(jj,fYN_isUpGhost), &
-            !     '              ',faceYN(jj,fYN_isDnGhost)
+                ! print*
+                ! print*, '.......................Faces..................................'
+                ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
+                ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
+                ! do jj = 1,N_face(this_image())
+                !     print*, faceI(jj,fi_Lidx),' ',faceI(jj,fi_BCtype),&
+                !     '           ',faceYN(jj,fYN_isInteriorFace), &
+                !     '                    ',faceYN(jj,fYN_isSharedFace), &
+                !     '              ',faceYN(jj,fYN_isnull), &
+                !     '            ',faceYN(jj,fYN_isUpGhost), &
+                !     '              ',faceYN(jj,fYN_isDnGhost)
+                ! end do
+                print*, '===================================================================' //&
+                '==================================================================='
+                print*
+                ! call execute_command_line('')
+            end if
+
+            ! do jj = 1,N_elem(this_image())
+            !     print *, jj &
+            !         !, elemI(jj,ei_Lidx) &
+            !         !, elemI(jj,ei_Gidx) &
+            !         !, elemI(jj,ei_link_Gidx_BIPquick) &
+            !         , elemI(jj,ei_link_Gidx_SWMM) &
+            !         !, elemI(jj,ei_node_Gidx_BIPquick) &
+            !         , elemI(jj,ei_node_Gidx_SWMM) !&
+            !         !, elemI(jj,ei_Mface_uL) &
+            !         !, elemI(jj,ei_Mface_dL)
             ! end do
-            print*, '===================================================================' //&
-            '==================================================================='
-            print*
-            ! call execute_command_line('')
-        end if
+            !     stop 598706
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)
+            if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_network_define_toplevel
-!
-!==========================================================================
-! PRIVATE
-!==========================================================================
-!
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine network_define_toplevel
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine init_network_update_nj2_elem()
-        integer, allocatable :: nJ2_nodes(:)
-        integer              :: N_nJ2_nodes
-        character(64) :: subroutine_name = 'init_network_update_nj2_elem'
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% For nj2 nodes, assigns the ni_elemface_idx as the element
+        !% index that is upstream of the face.
+        !% CAUTION: the node%I() is a global (non-coarray) but it is storing
+        !% values for ni_elemface_idx that are ONLY correct on the 
+        !% image ni_P_image -- on any other image you get a location that is NOT
+        !% a correct element or face!
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, allocatable :: nJ2_nodes(:)
+            integer              :: N_nJ2_nodes
+            character(64) :: subroutine_name = 'init_network_update_nj2_elem'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
         N_nJ2_nodes = count((node%I(:, ni_node_type) == nJ2) .and. (node%I(:, ni_P_image) == this_image()))
 
         if (N_nJ2_nodes > 0) then
@@ -139,13 +162,15 @@ contains
 
         end if
 
+        !%-----------------------------------------------------------------
+        !% Closing
         if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_update_nj2_elem
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_network_linkslope()
         !--------------------------------------------------------------------------
         !
@@ -200,51 +225,53 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_network_linkslope
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_network_datacreate()
-        !--------------------------------------------------------------------------
-        !
+        !%------------------------------------------------------------------
+        !% Description:
         !% creates the network of elements and faces from nodes and link
-        !
-        !--------------------------------------------------------------------------
+        !%
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer :: ii, image
+            integer :: ElemGlobalCounter, FaceGlobalCounter
+            integer :: ElemLocalCounter, FacelocalCounter
+            integer :: unique_faces
+            integer, pointer :: Lidx
+            integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
+            character(64) :: subroutine_name = 'init_network_datacreate'
+        !%-------------------------------------------------------------------
+        !% Preliminaries    
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% initializing global element and face index counter
+        !% these are added to through the network definition to get the index
+        !% space required to define arrays
+        ElemGlobalCounter = oneI
+        FaceGlobalCounter = zeroI
 
-        integer :: ii, image
-        integer :: ElemGlobalIdx, FaceGlobalIdx
-        integer :: ElemLocalIdx, FacelocalIdx
-        integer :: unique_faces
-        integer, pointer :: Lidx
-        integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
-
-        character(64) :: subroutine_name = 'init_network_datacreate'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% initializing global element and face id
-        ElemGlobalIdx = first_elem_index
-        FaceGlobalIdx = first_face_index - oneI
-
-        !% initializing local element and face id
-        ElemLocalIdx = first_elem_index
-        FacelocalIdx = first_face_index - oneI
+        !% initializing local element and face index countier
+        ElemLocalCounter = oneI
+        FacelocalCounter = zeroI
 
         !% Setting the local image value
         image = this_image()
 
         !% initialize the global indexes of elements and faces
         call init_network_set_global_indexes &
-            (image, ElemGlobalIdx, FaceGlobalIdx)
+            (image, ElemGlobalCounter, FaceGlobalCounter)
 
         !% set the dummy element
         call init_network_set_dummy_elem ()
 
         !% handle all the links and nodes in a partition
         call init_network_handle_partition &
-            (image, ElemLocalIdx, FacelocalIdx, ElemGlobalIdx, FaceGlobalIdx)
+            (image, ElemLocalCounter, FacelocalCounter, ElemGlobalCounter, FaceGlobalCounter)
 
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
@@ -260,36 +287,33 @@ contains
         !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_datacreate
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_network_set_global_indexes &
         (image, ElemGlobalCounter, FaceGlobalCounter)
-        !
-        !--------------------------------------------------------------------------
-        !
-        !% This subroutine initaializes the global element and face indexes.
-        !% N_elem and N_face are global vectors of whose row number corresponds
-        !% to the number of elements and faces in a certain image. By looping
-        !% through all the images the element and face global indexes are set
-        !
-        !--------------------------------------------------------------------------
-        !
-        integer, intent(in)     :: image
-        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
-
-        integer                 :: ii
-
-        character(64) :: subroutine_name = 'init_network_set_global_indexes'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adds the size of the elements and unique faces on each image
+        !% to the global counters.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)     :: image
+            integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
+            integer                 :: ii
+            character(64) :: subroutine_name = 'init_network_set_global_indexes'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
         if (image /= 1) then
            do ii=1, image-1
               ElemGlobalCounter = ElemGlobalCounter + N_elem(ii)
@@ -297,70 +321,71 @@ contains
            end do
         end if
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%network_define) &
+              write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_set_global_indexes
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_network_set_dummy_elem ()
-        !
-        !--------------------------------------------------------------------------
-        !
-        !% initialize dummy row in the elem arrays
-        !
-        !--------------------------------------------------------------------------
-        !
-        integer       :: dummyIdx
-
-        character(64) :: subroutine_name = 'init_network_set_dummy_elem'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% index for the dummy element
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Creates the indexes for the dummy elements in each of the
+        !% elemXX arrays.
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            integer       :: dummyIdx
+            character(64) :: subroutine_name = 'init_network_set_dummy_elem'
+        !%-------------------------------------------------------------------
+        !% Preliminaries   
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% indexes for the dummy elements
         dummyIdx = max_caf_elem_N + N_dummy_elem
 
         !% set the elem arrays with dummy values
         elemI(dummyIdx, ei_Lidx)        = dummyIdx
         elemI(dummyIdx,ei_elementType)  = dummy
-
         elemYN(dummyIdx,eYN_isDummy)    = .true.
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%network_define) &
+             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_set_dummy_elem
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_network_handle_partition &
         (image, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%-------------------------------------------------------------------
+        !% Description
         !% Traverse through all the links and nodes in a partition and creates
         !% elements and faces. This subroutine assumes there will be at least
         !% one link in a partition.
-        !
-        !--------------------------------------------------------------------------
-        !
-        integer, intent(in)     :: image
-        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
+        !%--------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)     :: image
+            integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
+            integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
 
-        integer                 :: ii, pLink
-        integer, pointer        :: thisLink, upNode, dnNode
-        integer, dimension(:), allocatable, target :: packed_link_idx
+            integer                 :: ii, pLink
+            integer, pointer        :: thisLink, upNode, dnNode
+            integer, dimension(:), allocatable, target :: packed_link_idx
 
-        character(64) :: subroutine_name = 'init_network_handle_partition'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+            character(64) :: subroutine_name = 'init_network_handle_partition'
+        !%--------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%--------------------------------------------------------------------
         !% pack all the link indexes in a partition
         packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == image))
 
@@ -390,37 +415,35 @@ contains
                 FaceGlobalCounter)
         end do
 
-        !% deallocate temporary array
-        deallocate(packed_link_idx)
-
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%--------------------------------------------------------------------
+        !% Closing
+            deallocate(packed_link_idx) !% deallocate temporary array
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_partition
 !
 !==========================================================================
 !==========================================================================
 !
     subroutine init_network_map_nodes (image)
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%-----------------------------------------------------------------
+        !% Description
         !% map all the interior junction faces in an image
-        !
-        !--------------------------------------------------------------------------
-        !
-        integer, intent(in)    :: image
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)    :: image
 
-        integer :: ii, pNodes
-        integer, pointer :: thisJunctionNode, nodeType
-        integer, dimension(:), allocatable, target :: packed_node_idx, JunctionElementIdx
+            integer :: ii, pNodes
+            integer, pointer :: thisJunctionNode, nodeType
+            integer, dimension(:), allocatable, target :: packed_node_idx, JunctionElementIdx
 
-        character(64) :: subroutine_name = 'init_network_map_nodes'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-
+            character(64) :: subroutine_name = 'init_network_map_nodes'
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
         !% pack all the interior node indexes in a partition to find face maps
         packed_node_idx = pack(node%I(:,ni_idx),                       &
                               ((node%I(:,ni_P_image)   == image) .and. &
@@ -430,14 +453,12 @@ contains
         !% number of interior nodes in a partition
         pNodes = size(packed_node_idx)
 
-
         !% cycle through all the nJm nodes and set the face maps
         do ii = 1,pNodes
             thisJunctionNode => packed_node_idx(ii)
             nodeType         => node%I(thisJunctionNode,ni_node_type)
 
             select case (nodeType)
-
                 case (nJm)
                     JunctionElementIdx = pack( elemI(:,ei_Lidx), &
                                              ( elemI(:,ei_node_Gidx_BIPquick) == thisJunctionNode) )
@@ -449,6 +470,10 @@ contains
 
                 case (nJ2)
                     call init_network_map_nJ2 (image, thisJunctionNode)
+
+                case default    
+                    write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
+                    stop 39705
 
             end select
         end do

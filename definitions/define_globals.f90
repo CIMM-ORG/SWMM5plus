@@ -16,6 +16,10 @@ module define_globals
 
     public
 
+    !% reverseKeys is an array to find the string name of a key number in define_keys
+    !% used for debugging
+    character(len=32), allocatable :: reverseKey(:)
+
     ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
@@ -38,6 +42,7 @@ module define_globals
 !% ===================================================================================
 !% ARRAYS
 !% ===================================================================================
+
 
     !% Number of maximum branches for a junction
     integer, parameter :: max_us_branch_per_node = 3
@@ -112,6 +117,11 @@ module define_globals
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
     logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
     real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
+
+    !% subcatchments -- NOT coarray
+    real(8), allocatable, target :: subcatchR(:,:)      !% subcatchment real data
+    integer, allocatable, target :: subcatchI(:,:)      !% subcatchment integer data
+    logical, allocatable, target :: subcatchYN(:,:)     !% subcatchment logical data
 
     !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)

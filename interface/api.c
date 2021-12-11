@@ -1368,7 +1368,7 @@ int DLLEXPORT api_find_object(
 //===============================================================================
 int DLLEXPORT api_call_runoff_execute()
 //===============================================================================
-// calls the runoff_execute() procedure in EPA SWMM
+// calls the runoff_execute() procedure in SWMM-C
 {
     printf(" in api_call_runoff_execute");
 
@@ -1389,7 +1389,7 @@ int DLLEXPORT api_get_subcatch_runoff(
     int sc_idx, double *runoff)
 //===============================================================================
 {
-    printf(" in api_get_subcatch_runoff");
+    printf(" in api_get_subcatch_runoff \n");
 
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -1401,6 +1401,28 @@ int DLLEXPORT api_get_subcatch_runoff(
     // Get runoff and convert to cubic meters per second
     *runoff = CFTOCM(Subcatch[sc_idx].newRunoff);
     printf("... sc_idx, newRunoff CMS %d , %f \n",sc_idx,Subcatch[sc_idx].newRunoff);
+    
+    return 0;
+}
+
+//===============================================================================
+int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
+    int sc_idx, int *node_idx)
+//===============================================================================
+{
+    printf(" in api_get_subcatch_runoff_nodeIdx \n");
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    // Get node index
+    *node_idx = Subcatch[sc_idx].outNode;
+
+    printf("... sc_idx, node_idx %d , %d \n",sc_idx,*node_idx);
     
     return 0;
 }

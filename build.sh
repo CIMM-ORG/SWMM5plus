@@ -60,6 +60,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/boundary_conditions.f90\
               $TL_DIR/diagnostic_elements.f90\
               $TL_DIR/runge_kutta2.f90\
+              $TL_DIR/hydrology.f90\
               $TL_DIR/timeloop.f90\
               $INIT_DIR/initial_condition.f90\
               $INIT_DIR/initialization.f90\

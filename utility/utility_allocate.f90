@@ -29,6 +29,7 @@ module utility_allocate
 
     ! public members
     public :: util_allocate_linknode
+    public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
     public :: util_allocate_columns
@@ -45,33 +46,33 @@ module utility_allocate
 
 
 contains
-!
-!==========================================================================
-! PUBLIC
-!==========================================================================
-!
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine util_allocate_linknode()
-        !-----------------------------------------------------------------------------
-        !
-        ! Description:
-        !   Allocates the link and node storage used for the coarse representation
-        !   of the network connectivity
-        !
-        ! Method:
-        !   The tables node%I, link%I, node%R, link%R, node%YN, link%YN, are allocated
-        !   These are defined in globals.f08). Every time memory is allocated, the
-        !   util_allocate_check functionality (from utility.f08) is used to
-        !   determine wheter or not there was an error during the allocation.
-        !
-        !-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'util_allocate_linknode'
-        integer       :: additional_rows = 0
-        integer       :: ii, obj_name_len
-        !-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   Allocates the link and node storage used for the coarse representation
+        !%   of the network connectivity
+        !%
+        !% Method:
+        !%   The tables node%I, link%I, node%R, link%R, node%YN, link%YN, are allocated
+        !%   These are defined in globals.f08). Every time memory is allocated, the
+        !%   util_allocate_check functionality (from utility.f08) is used to
+        !%   determine wheter or not there was an error during the allocation.
+        !-------------------------------------------------------------------
+        !% Declarations
+            character(64) :: subroutine_name = 'util_allocate_linknode'
+            integer       :: additional_rows = 0
+            integer       :: ii, obj_name_len
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
             additional_rows = num_images() - 1
@@ -132,13 +133,59 @@ contains
         allocate(link_output_idx(SWMM_N_link + additional_rows), stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'link_output_idx')
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_linknode
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_subcatch()
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   Allocates the subcatchment storage 
+        !%
+        !% Method:
+        !%   Every time memory is allocated, the
+        !%   util_allocate_check functionality (from utility.f90) is used to
+        !%   determine wheter or not there was an error during the allocation.
+        !-------------------------------------------------------------------
+        !% Declarations
+            character(64) :: subroutine_name = 'util_allocate_subcatch'
+            integer       :: ii, obj_name_len
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+
+        !% subcatchR
+        allocate(subcatchR(SWMM_N_subcatch, Ncol_subcatchR), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'subcatchR')
+        subcatchR(:,:) = nullvalueR
+
+        !% subcatchI
+        allocate(subcatchI(SWMM_N_subcatch, Ncol_subcatchI), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'subcatchI')
+        subcatchR(:,:) = nullvalueI
+
+        !% subcatchYN
+        allocate(subcatchYN(SWMM_N_subcatch, Ncol_subcatchYN), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'subcatchYN')
+        subcatchR(:,:) = nullvalueL
+
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_subcatch
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
     subroutine util_allocate_partitioning_arrays()
         if (icrash) return
         allocate(adjacent_links(max_branch_per_node))

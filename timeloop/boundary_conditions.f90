@@ -21,45 +21,55 @@ contains
 !%==========================================================================
 !%
     subroutine bc_update()
-        !%-----------------------------------------------------------------------------
-        integer :: ii
-        character(64) :: subroutine_name = "bc_update"
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Description:
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: ii
+            logical :: isBConly = .true.
+            character(64) :: subroutine_name = "bc_update"
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%boundary_conditions)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
+        !% Gets boundary flow and head data from SWMM-C and stores in the BC structure
         call bc_step()
 
-        !% face interpolation for all BC faces
         if (N_flowBC > 0 .or. N_headBC > 0) then
-            call bc_interpolate() ! computes interpolation
-            call face_interpolate_bc() ! broadcast interpolation to face & elem arrays
+            !% interpolate the BC in time
+            call bc_interpolate()
+            call face_interpolate_bc(isBConly) ! broadcast interpolation to face & elem arrays
         end if
 
-        if (setting%Debug%File%boundary_conditions) then
-            print *, "INFLOW BC"
-            print *, "BC times"
-            do ii = 1, setting%BC%slots
-                print *, BC%flowR_timeseries(:, ii, br_time)
-            end do
-            print *, "BC values"
-            do ii = 1, setting%BC%slots
-                print *, BC%flowR_timeseries(:, ii, br_value)
-            end do
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%boundary_conditions) then
+                print *, "INFLOW BC"
+                print *, "BC times"
+                do ii = 1, setting%BC%slots
+                    print *, BC%flowR_timeseries(:, ii, br_time)
+                end do
+                print *, "BC values"
+                do ii = 1, setting%BC%slots
+                    print *, BC%flowR_timeseries(:, ii, br_value)
+                end do
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-            print *, "HEAD BC"
-            print *, "BC times"
-            do ii = 1, setting%BC%slots
-                print *, BC%headR_timeseries(:, ii, br_time)
-            end do
-            print *, "BC values"
-            do ii = 1, setting%BC%slots
-                print *, BC%headR_timeseries(:, ii, br_value)
-            end do
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        end if
+                print *, "HEAD BC"
+                print *, "BC times"
+                do ii = 1, setting%BC%slots
+                    print *, BC%headR_timeseries(:, ii, br_time)
+                end do
+                print *, "BC values"
+                do ii = 1, setting%BC%slots
+                    print *, BC%headR_timeseries(:, ii, br_value)
+                end do
+
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            end if
     end subroutine bc_update
 !%
 !%==========================================================================
@@ -230,16 +240,16 @@ contains
 !%==========================================================================
 !%
     subroutine bc_interpolate()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% This subroutine is for boundary condition interpolation.
-    !% Base on the time passed from the time loop, we interpolate (linear interpolation for now)
-    !% the boundary condition to get the corresponding value.
-    !%-----------------------------------------------------------------------------
-        real(8) :: tnow
-        integer :: ii, slot_idx, upper_idx, lower_idx
-        character(64) :: subroutine_name = 'bc_interpolate'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% This subroutine is for boundary condition interpolation.
+        !% Base on the time passed from the time loop, we interpolate (linear interpolation for now)
+        !% the boundary condition to get the corresponding value.
+        !%-----------------------------------------------------------------------------
+            real(8) :: tnow
+            integer :: ii, slot_idx, upper_idx, lower_idx
+            character(64) :: subroutine_name = 'bc_interpolate'
+        !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
