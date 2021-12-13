@@ -51,7 +51,7 @@ module diagnostic_elements
 
         if (Npack > 0) then
             call diagnostic_by_type (thisCol, Npack)
-            call face_interpolation (fp_Diag)
+            call face_interpolation (fp_Diag, dummy)
         end if
 
         if (setting%Profile%YN) call util_profiler_stop (pfc_diagnostic_toplevel)

@@ -496,34 +496,33 @@ contains
 
       !% checking elemP(:,ep_CCJB_eETM_i_fAC) indexes
 
+      !% HACK -- 20211212brh problems with CCJB_eETM_i_fAC array -- commented out
+      !% DO NOT DELETE -- NEEDS TO BE RESTORED AND DEBUGGED
+      ! min_val = minval(elemP(:,ep_CCJB_eETM_i_fAC)) - 1
+      ! max_val = maxval(elemP(:,ep_CCJB_eETM_i_fAC))
+      ! ii = 0
 
-      min_val = minval(elemP(:,ep_CCJB_eETM_i_fAC)) - 1
-      max_val = maxval(elemP(:,ep_CCJB_eETM_i_fAC))
-      ii = 0
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_CCJB_eETM_i_fAC),mask=elemP(:,ep_CCJB_eETM_i_fAC)>min_val)
+      ! end do
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_CCJB_eETM_i_fAC),mask=elemP(:,ep_CCJB_eETM_i_fAC)>min_val)
-      end do
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_CCJB_eETM_i_fAC) is only filled with nullvalueI. This_image ::", this_image()
 
+      ! else if (ii /= N_elem(this_image())) then
+      !    print *, "ERROR:::: elemP(:,ep_CCJB_eETM_i_fAC) is not unique. This_image ::", this_image()
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CCJB_eETM_i_fAC) is only filled with nullvalueI. This_image ::", this_image()
+      ! else
+      !    print *, "elemP(:,ep_CCJB_eETM_i_fAC) is unique. This_image ::", this_image()
+      ! end if
 
-      else if (ii /= N_elem(this_image())) then
-         print *, "ERROR:::: elemP(:,ep_CCJB_eETM_i_fAC) is not unique. This_image ::", this_image()
-
-      else
-         print *, "elemP(:,ep_CCJB_eETM_i_fAC) is unique. This_image ::", this_image()
-      end if
-
+      
       !% checking elemP(:,ep_CCJB_ETM) indexes
-
-
       min_val = minval(elemP(:,ep_CCJB_ETM)) - 1
       max_val = maxval(elemP(:,ep_CCJB_ETM))
       ii = 0

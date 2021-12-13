@@ -518,13 +518,16 @@ contains
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+
+        print * 'This subroutine is a stub for future use'
+        stop 398705
         !if (setting%Debug%Output) call util_output_report_summary()
 
-        if (setting%Output%report .and. util_output_must_report()) then
+        !if (setting%Output%Report%provideYN .and. util_output_must_report()) then
             !brh20211006 if (setting%Debug%Output) call util_output_write_elemR_faceR()
             !brh20211006 call outputD_write_link_files()
             !brh20211006 call outputD_write_node_files()
-        end if
+        !end if
 
 
         if (setting%Debug%File%utility_output) &
@@ -549,7 +552,7 @@ contains
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (util_output_must_report() .and. setting%output%report) then
+        if (util_output_must_report() .and. setting%Output%Report%provideYN) then
 
             !write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
             write(file_name, "(A,i5.5,A)") "summary_", this_image(), ".csv"
@@ -608,10 +611,10 @@ contains
         integer, pointer :: reportStep
         real(8) :: timeNow, reportDt, startReport
         !%-----------------------------------------------------------------------------
-        reportStep  => setting%Output%reportStep
+        reportStep  => setting%Output%Report%ThisStep
         timeNow     = setting%Time%Now
-        reportDt    = setting%Output%reportDt
-        startReport = setting%Output%reportStartTime
+        reportDt    = setting%Output%Report%TimeInterval
+        startReport = setting%Output%Report%StartTime
 
 
         if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport))then

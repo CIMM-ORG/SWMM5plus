@@ -306,6 +306,7 @@ module define_indexes
         enumerator :: er_GammaM                     !% gamma momentum source term for AC solver
         enumerator :: er_Head                       !% piezometric head (latest) -- water surface elevation in open channel
         enumerator :: er_Head_N0                    !% piezometric head (time N)
+        enumerator :: er_HeadAvg                    !% average of head on faces of an element.
         enumerator :: er_HeadLastAC                 !% piezometric head at start of last AC step
         enumerator :: er_HeadStore                  !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_HydDepth                   !% hydraulic depth of flow

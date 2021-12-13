@@ -603,7 +603,7 @@ contains
             end if
 
         end if
-            if (setting%Debug%Output .or. setting%Output%report) then
+            if (setting%Debug%Output) then
 
                 !% --- setup the subfolders for links and nodes
                 setting%File%debug_output_link_folder = trim(setting%File%output_timestamp_subfolder) &

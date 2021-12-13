@@ -48,26 +48,26 @@ subroutine init_partitioning_method()
     call util_allocate_partitioning_arrays()
 
     !% Determine which partitioning method is being used
-    print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
+    !print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
     if (setting%Partitioning%PartitioningMethod == Default) then
-        if (setting%Output%Verbose) print*, new_line(""), "Using Default Partitioning"
+        if (setting%Output%Verbose) print*, "...Using Default Partitioning"
         call init_partitioning_default()
     else if (setting%Partitioning%PartitioningMethod == Random) then
-        if (setting%Output%Verbose) print*, new_line(""), "Using Random Partitioning"
+        if (setting%Output%Verbose) print*, "...Using Random Partitioning"
         call init_partitioning_random()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
-        if (setting%Output%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
+        if (setting%Output%Verbose) print*, "...Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Output%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
+        if (setting%Output%Verbose) print*, "...Using BIPquick Partitioning"
         call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"
-        stop
+        stop 87095
     end if
 
     if (setting%Debug%File%partitioning) then
-        print *, "Node Partitioning"
+        print *, "...Node Partitioning"
         print*, new_line("")
         do ii = 1, size(node%I, 1)
             if ( ii <= N_node ) then
@@ -77,7 +77,7 @@ subroutine init_partitioning_method()
             endif
         end do
 
-        print *, "Link Partitioning"
+        print *, "...Link Partitioning"
         print *, new_line("")
         do ii = 1, size(link%I, 1)
             if ( ii <= N_link ) then
@@ -89,7 +89,6 @@ subroutine init_partitioning_method()
             endif
 
         end do
-
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()

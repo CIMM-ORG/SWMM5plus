@@ -50,6 +50,7 @@ contains
             real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
             real(8), pointer :: timeEnd, timeNow, dtTol, dtHydraulics
             character(64)    :: subroutine_name = 'timeloop_toplevel'
+            integer(kind=8) :: cval, crate, cmax
             integer :: kk !temporary
 
             !% temporary for lateral flow testing
@@ -65,7 +66,7 @@ contains
 
             if (setting%Output%Verbose) &
                 write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-            call system_clock(count=setting%Time%Real%EpochTimeLoopStartSeconds)
+            call system_clock(setting%Time%Real%ClockLoopStart)
         !%--------------------------------------------------------------------
         !% Aliases
             useHydrology       => setting%Simulation%useHydrology
@@ -118,10 +119,12 @@ contains
         !% The loop starts at t = setting%Time%Start
         !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
         ii=0
-        do ii=1,5
-        !do while (setting%Time%Now <= (setting%Time%End - dtTol))
-        !    ii = ii+1
-            print *, ii, timeNow, setting%Time%End, doHydrology, doHydraulics
+        !do ii=1,10
+        do while (setting%Time%Now <= (setting%Time%End - dtTol))
+            ii = ii+1
+            !print *, '----------------------'
+            !print *, ii, timeNow, setting%Time%End, doHydrology, doHydraulics
+            !print *
 
             !% store the runoff from hydrology on a hydrology step
             if (doHydrology) call tl_hydrology()
@@ -131,11 +134,6 @@ contains
                 !% ***** BUGCHECK -- the lateral flowrate is cumulative of BC and hydrology, 
                 !% ***** so check that it is zeroed before the first BC added.
                 call bc_update()
-
-                !% get runoff from hydrology for this hydraulic step
-                !% note that this doesn't change unless the hydrology step has occured
-                !% so it should only be called with doHydrology, not useHydrology
-                if (doHydrology) call hydrology_runoff
 
                 !% HACK put lateral here for now -- cut out of face_interpolation.
                 !% set lateral to zero
@@ -147,7 +145,7 @@ contains
                 !% note that thisP and thisBC must be the same size or there is something wrong
                 thisP   => elemP(1:npack,ep_BClat)
                 thisBC  => BC%P%BClat
-                Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
+                Qlateral(thisP) = Qlateral(thisP) !+ BC%flowRI(thisBC)  
 
                 !% add subcatchment inflows
                 if (useHydrology) then 
@@ -155,6 +153,9 @@ contains
                     eIdx   => subcatchI(:,si_runoff_elemIdx)
                     !% using the full runoff rate for this period
                     Qrate => subcatchR(:,sr_RunoffRate_baseline)
+
+                    !print *, 'all of Qrate ', Qrate(:)
+
                     do mm = 1,SWMM_N_subcatch
                         !% only if this image holds this node
                         if (this_image() .eq. sImage(mm)) then
@@ -167,21 +168,50 @@ contains
 
                 !% perform hydraulic routing
                 call tl_hydraulics()
+
+                !do kk=1,size(elemI,DIM=1)
+                !    write(*,'(i4, 3f8.3)') kk,elemR(kk,er_FlowrateLateral), elemR(kk,er_Flowrate), elemR(kk,er_Depth)
+                !end do
+
+                ! kk=24
+                
+                ! write(*,'(A,i4, 5f8.5)') 'Head    ', kk, &
+                !      elemR(kk-1,er_Head)-1514.0, &
+                !      elemR(kk  ,er_Head)-1514.0, &
+                !      elemR(kk+1,er_Head)-1514.0
+                ! write(*,'(A,i4, 5f8.5)') 'depth   ', kk, &
+                !      elemR(kk-1,er_Depth), &
+                !      elemR(kk  ,er_Depth), &
+                !      elemR(kk+1,er_Depth)
+                ! write(*,'(A,i4, 5f8.5)') 'Flowrate', kk, &
+                !      elemR(kk-1,er_Flowrate), &
+                !      elemR(kk  ,er_Flowrate), &
+                !      elemR(kk+1,er_Flowrate)
+
+                ! write(*,'(A,i4, 5f12.5)') 'FaceQ  ', kk, &
+                !      faceR(faceI(kk,fi_Melem_uL),fr_Flowrate), &
+                !      faceR(faceI(kk,fi_Melem_dL),fr_Flowrate)
+                ! !write(*,'(A,i4, 3f8.3)') 'lateral', kk, elemR(kk,er_FlowrateLateral), elemR(kk+1,er_FlowrateLateral)
+                ! !write(*,'(A,i4, 3f8.3)') 'flow   ', kk, elemR(kk,er_Flowrate), elemR(kk+1,er_Flowrate)
+                ! write(*,*) faceI(kk,fi_Melem_uL), kk, faceI(kk,fi_Melem_dL)
             end if
 
-            call util_output_report() !% Results must be reported before the "do"counter increments
+            if (setting%Output%Report%provideYN) then 
+                !% Results must be reported before the "do"counter increments
+                !call util_output_report()  --- this is a stub for future use
 
-            !% Multilevel time step output
-            if ( (setting%Output%report) .and. &
-                 (util_output_must_report()) .and. &
-                 (.not. setting%Output%suppress_MultiLevel_Output) ) then
-                call outputML_store_data (.false.)
-            end if
+                !% Multilevel time step output
+                if ((util_output_must_report()) .and. &
+                    (.not. setting%Output%Report.suppress_MultiLevel_Output) ) then
+                    call outputML_store_data (.false.)
+                end if
+            end if    
 
             !% increment the time step and counters for the next time loop
             call tl_increment_counters(doHydraulics, doHydrology)
             if (icrash) then
-                if (.not. setting%Output%suppress_MultiLevel_Output) then
+                if ((setting%Output%Report%provideYN) .and. &
+                (.not. setting%Output%Report%suppress_MultiLevel_Output)) then
                     call outputML_store_data (.true.)
                 end if
                 exit
@@ -527,7 +557,7 @@ contains
             dtHydraulics  => setting%Time%Hydraulics%Dt
             timeNow       => setting%Time%Now
             step          => setting%Time%Step
-            reportStep    => setting%Output%reportStep
+            reportStep    => setting%Output%Report%ThisStep
             dtTol         => setting%Time%DtTol
 
             nextHydraulicsTime => setting%Time%Hydraulics%NextTime
@@ -699,7 +729,7 @@ contains
             real (8), pointer :: dt, timeNow, timeEnd
             real (8) :: thistime
             integer, pointer :: step, interval
-            integer :: execution_realtime
+            integer (kind=8) :: execution_realtime
             real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
             character(3) :: timeunit
         !%-----------------------------------------------------------------------------
@@ -712,12 +742,20 @@ contains
         step          => setting%Time%Step
         interval      => setting%Output%CommandLine%interval
 
-        call system_clock(count=setting%Time%Real%EpochNowSeconds) ! Fortran function returns real epoch time
+        call system_clock(count=setting%Time%Real%ClockNow) ! Fortran function returns real time
 
         ! estimate the remaining time
-        execution_realtime = setting%Time%Real%EpochNowSeconds - setting%Time%Real%EpochTimeLoopStartSeconds
-        seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
+        execution_realtime = (setting%Time%Real%ClockNow - setting%Time%Real%ClockLoopStart)
+        seconds_to_completion = real(execution_realtime,kind=8) * (setting%Time%End - setting%Time%Now) &
                                                    / (setting%Time%Now - setting%Time%Start)
+
+        seconds_to_completion = execution_realtime / real(setting%Time%Real%ClockCountRate) 
+                                                   
+        !print *, 'setting%Time%Real%EpochTimeLoopStartSeconds ',setting%Time%Real%ClockLoopStart     
+        !print *, 'setting%Time%Real%EpochNowSeconds           ',setting%Time%Real%ClockNow                                  
+        !print *, 'execution_realtime ',execution_realtime    
+        !print *, 'seconds_to_completion ',  seconds_to_completion      
+        !stop 487566
 
         if (setting%Output%Verbose) then
             if (this_image() == 1) then

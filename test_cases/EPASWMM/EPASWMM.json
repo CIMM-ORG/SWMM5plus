@@ -125,17 +125,17 @@
         "PropertiesFile" : "" 
     },
     "Output" : {
-        "print_links_csv" : false,
-        "print_nodes_csv" : false,
-        "report" : true,
-        "reportStartTime" : 0.0,
-        "reportDt" : 100.0,
-        "reportStep" : 0,
-        "reportTimeUnits" : "Hours",
-        "slots" : 20,
+        "Report" : {
+            "useSWMMinp" :true,
+            "provideYN" : true,
+            "suppress_MultiLevel_Output" : false,
+            "StartTime" : 600.0,
+            "TimeInterval" : 1200.0,
+            "NextStep": 1,
+            "TimeUnits" : "Hours"
+        },
         "StoredLevels" : 100,
         "StoredFileNames" : 100,
-        "suppress_MultiLevel_Output" : false,
         "UseFileNameFile" : false,
         "Verbose" : true,
         "Warning" : true,
@@ -188,6 +188,7 @@
     "Solver" : {
         "MomentumSourceMethod" : "T00",
         "PreissmanSlot" : false,
+        "QinterpWithLocalHeadGradient" : false,
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9

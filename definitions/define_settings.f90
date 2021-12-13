@@ -26,8 +26,9 @@ module define_settings
 !% PUBLIC TYPES
 !%==========================================================================
 !%
-    !% ---------------------------------------------------------------
+    !%===================================================================
     !% Third Level Types
+    !%===================================================================
 
     !% setting%ACmethod%Anomaly
     type ACmethodAnomalyType
@@ -193,10 +194,24 @@ module define_settings
 
     !% setting%Time%Real
     type RealTimeType
-        integer :: EpochStartSeconds = 0
-        integer :: EpochTimeLoopStartSeconds = 0
-        integer :: EpochNowSeconds  = 0
+        integer (kind=8):: ClockStart = 0
+        integer (kind=8):: ClockLoopStart= 0
+        integer (kind=8):: ClockNow  = 0
+        integer (kind=8):: ClockCountRate = 0
     end type RealTimeType
+
+    !% setting%Output%Report
+    type ReportType
+        logical :: useSWMMinpYN = .true.
+        logical :: provideYN = .true.
+        logical :: suppress_MultiLevel_Output = .false.
+        real(8) :: StartTime
+        real(8) :: TimeInterval
+        integer :: NextStep
+        integer :: TimeUnits = InHours
+        real(8) :: StartTime_SWMMinp
+        real(8) :: TimeInterval_SWMMinp
+    end type ReportType
 
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     type TimeStepType
@@ -300,8 +315,9 @@ module define_settings
         logical :: utility          = .false.
     end type DebugFileGroupYNType
 
-    !% ---------------------------------------------------------------
+    !%===================================================================
     ! Second Level Types
+    !%===================================================================
 
     ! setting%ACmethodType
     type ACmethodType
@@ -456,11 +472,12 @@ module define_settings
 
     !% setting%Output
     type OutputType
-        logical :: report
-        real(8) :: reportStartTime
-        real(8) :: reportDt
-        integer :: reportStep
-        integer :: reportTimeUnits = InHours
+        type(ReportType) :: Report
+        !logical :: report
+        !real(8) :: reportStartTime
+        !real(8) :: reportDt
+        !integer :: reportStep
+        !integer :: reportTimeUnits = InHours
         integer :: LastLevel = 0
         integer :: MaxExpectedLevels = 0
         integer :: StoredLevels = 100
@@ -468,12 +485,10 @@ module define_settings
         logical :: OutputFacesExist = .false.
         integer :: StoredFileNames = 2
         logical :: UseFileNameFile = .false.
-        !integer :: Slots = 20 !% remove?
         integer :: max_links_csv = 100
         integer :: max_nodes_csv = 100
         logical :: print_links_csv = .false.
         logical :: print_nodes_csv = .false.
-        logical :: suppress_MultiLevel_Output = .false.
         logical :: Verbose = .true.
         logical :: Warning = .true.
         type(CommandLineType) :: CommandLine
@@ -493,7 +508,7 @@ module define_settings
 
     !% setting%Profile
     type ProfileType
-        logical :: YN = .false.
+        logical :: useYN = .false.
         !logical :: Tests = .false.
         !type(ProfileFileYNType) :: File
         !type(ProfileFileGroupYNType) :: FileGroup
@@ -526,6 +541,7 @@ module define_settings
         real(8), dimension(2) :: crk2 = [0.5, 1.0]
         integer :: MomentumSourceMethod = T00
         logical :: PreissmanSlot = .true.
+        logical :: QinterpWithLocalHeadGradient = .true.
         integer :: SolverSelect = ETM_AC
         real(8) :: SwitchFractionDn = 0.8
         real(8) :: SwitchFractionUp = 0.9
@@ -588,8 +604,9 @@ module define_settings
         real(8) :: Volume = 1.0e-4 ! m^3
     end type ZerovalueType
 
-    !% ---------------------------------------------------------------
+    !%===================================================================
     !% First Level Type (setting)
+    !%===================================================================
 
     type settingType
         type(ACmethodType)       :: ACmethod
@@ -947,24 +964,34 @@ contains
 
     !% Output
         !% --- Report settings
-        call json%get('Output.report', logical_value, found)
-        setting%Output%report = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.report not found'
 
-        call json%get('Output.reportStartTime', real_value, found)
-        setting%Output%reportStartTime = real_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.reportStartTime not found'
+        call json%get('Output.Report.useSWMMinpYN', logical_value, found)
+        setting%Output%Report%useSWMMinpYN = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.useSWMMinpYN not found'
 
-        call json%get('Output.reportDt', real_value, found)
-        setting%Output%reportDt = real_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.reportDt not found'
+        call json%get('Output.Report.provideYN', logical_value, found)
+        setting%Output%Report%provideYN = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.provideYN not found'
 
-        call json%get('Output.reportStep', integer_value, found)
-        setting%Output%reportStep = integer_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.reportStep not found'
+        !% --- suppression of output
+        call json%get('Output.Report.suppress_MultiLevel_Output', logical_value, found)
+        setting%Output%Report%suppress_MultiLevel_Output = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.suppress_MultiLevel_Output not found
+
+        call json%get('Output.Report.StartTime', real_value, found)
+        setting%Output%Report.StartTime = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.StartTime not found'
+
+        call json%get('Output.Report.TimeInterval', real_value, found)
+        setting%Output%Report.TimeInterval = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.TimeInterval not found'
+
+        call json%get('Output.Report.NextStep', integer_value, found)
+        setting%Output%Report.NextStep = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.NextStep not found'
 
        ! Load BIPQuick settings
-        call json%get('Output.reportTimeUnits', c, found)
+        call json%get('Output.Report.TimeUnits', c, found)
         call util_lower_case(c)
         if (c == 'seconds') then
             setting%Output%reportTimeUnits = InSeconds
@@ -975,10 +1002,10 @@ contains
         else if (c == 'days') then
             setting%Output%reportTimeUnits = InDays
         else
-            print *, "Error, the setting '" // trim(c) // "' is not supported for Output.reportTimeUnits"
+            print *, "Error, the setting '" // trim(c) // "' is not supported for Output.Report.TimeUnits"
             stop 4201
         end if
-        if (.not. found) stop "Error - json file - setting " // 'Output.reportTimeUnits'
+        if (.not. found) stop "Error - json file - setting " // 'Output.Report.TimeUnits'
 
 
         call json%get('Output.StoredLevels', integer_value, found)
@@ -993,25 +1020,23 @@ contains
         setting%Output%UseFileNameFile = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.UseFileNameFile not found'
 
-        !% --- HACK NOT USED?
+        !% --- HACK -- NOT USED?
         !call json%get('Output.slots', integer_value, found)
         !setting%Output%slots = integer_value
         !if (.not. found) stop "Error - json file - setting " // 'Output.slots not found'
 
-        !% --- suppression of output
-        call json%get('Output.suppress_MultiLevel_Output', logical_value, found)
-        setting%Output%suppress_MultiLevel_Output = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.suppress_MultiLevel_Output not found'
+  '
 
-
+        
+        !% HACK -- NOT USED
         !% --- link and node text files
-        call json%get('Output.print_links_csv', logical_value, found)
-        setting%Output%print_links_csv = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.print_links_csv not found'
+        !call json%get('Output.print_links_csv', logical_value, found)
+        !setting%Output%print_links_csv = logical_value
+        !if (.not. found) stop "Error - json file - setting " // 'Output.print_links_csv not found'
 
-        call json%get('Output.print_nodes_csv', logical_value, found)
-        setting%Output%print_nodes_csv = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.print_nodes_csv not found'
+        !call json%get('Output.print_nodes_csv', logical_value, found)
+        !setting%Output%print_nodes_csv = logical_value
+        !if (.not. found) stop "Error - json file - setting " // 'Output.print_nodes_csv not found'
 
         !% --- command line
         call json%get('Output.CommandLine.quiet', logical_value, found)
@@ -1194,7 +1219,12 @@ contains
         call json%get('Solver.PreissmanSlot', logical_value, found)
         setting%Solver%PreissmanSlot = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Solver.PreissmanSlot not found'
-
+        
+        !% --- Q interpolation with additional head gradient
+        call json%get('Solver.QinterpWithLocalHeadGradient', logical_value, found)
+        setting%Solver%QinterpWithLocalHeadGradient = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Solver.QinterpWithLocalHeadGradient not found'
+        
         !% --- solver selection
         call json%get('Solver.SolverSelect', c, found)
         call util_lower_case(c)
@@ -1553,9 +1583,9 @@ contains
 
     !% Profiler
         !% --- Profile settings
-        call json%get('Profile.YN', logical_value, found)
-        setting%Profile%YN = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Profile.YN not found'
+        call json%get('Profile.useYN', logical_value, found)
+        setting%Profile%useYN = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Profile.useYN not found'
 
      !% finished
         call json%destroy()

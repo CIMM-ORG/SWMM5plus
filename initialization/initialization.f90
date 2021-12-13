@@ -49,8 +49,9 @@ contains
     subroutine initialize_toplevel ()
         !%-------------------------------------------------------------------
         !% Description:
-        !%   a public subroutine that calls all the private initialization subroutines
+        !% Calls all the initialization subroutines
         !%-------------------------------------------------------------------
+        !% Declaratoins
             integer :: ii
             character(64) :: subroutine_name = 'initialize_toplevel'
         !%-------------------------------------------------------------------
@@ -145,11 +146,6 @@ contains
         if (setting%Output%Verbose) print *, "begin partitioning"
         call init_partitioning()
 
-        !% --- HACK -- to this point the above could all be done on image(1) and then
-        !% distributed to the other images. This might create problems in ensuring
-        !% that all the data gets copied over when new stuff is added. Probably OK
-        !% to keep the above as computing on all images until the code is near complete
-
         sync all 
         
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
@@ -159,8 +155,19 @@ contains
 
         sync all 
 
+        !do ii=1,size(elemI,DIM=1)
+        !    print *, ii, elemI(ii,ei_Mface_uL), elemI(ii,ei_Mface_dL), elemI(ii,ei_elementType), reversekey(elemI(ii,ei_elementType))
+        !end do
+
         !% initialize the subcatchments connecting to SWMM-C
-        if (setting%Simulation%useHydrology) call init_subcatchment()
+        if (setting%Simulation%useHydrology) then 
+            if (setting%Output%Verbose) print *, "begin subcatchment"
+            call init_subcatchment()
+        end if
+
+        !do ii=1,size(elemI,DIM=1)
+        !    print *, ii, elemI(ii,ei_Mface_uL), elemI(ii,ei_Mface_dL), elemI(ii,ei_elementType), reversekey(elemI(ii,ei_elementType))
+        !end do
 
         sync all
            
@@ -176,6 +183,9 @@ contains
         
         if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
+
+        if (setting%Output%Verbose) print *, "begin initializing report"
+        call init_report()
 
         if (setting%Output%Verbose) then
             if (this_image() == 1) then
@@ -197,44 +207,45 @@ contains
         !% brh 20211207 rm -- replaced with api_nodef_rptFlag call output_COMMON_nodes_selection ()
         !% brh 20211207 rm call output_COMMON_links_selection ()
 
-        !% brh20211207 move outputML setup routines to output module
-        if (setting%Simulation%useHydraulics) then !% brh 20211208 -- only if N_link > 0
-            if (setting%Output%Verbose) print *, "begin setup of output files"
-            call outputML_selection ()
-                                        
-            !% brh 20211207s remove all below
-            !% --- designate the corresponding elements for output
-            !call outputML_element_selection ()
-            !% --- deisgnate the corresponding face to output
-            !call outputML_face_selection ()
+        if (setting%Output%Report%provideYN) then 
+            !% brh20211207 move some of the outputML setup routines to output module
+            if (setting%Simulation%useHydraulics) then !% brh 20211208 -- only if N_link > 0
+                if (setting%Output%Verbose) print *, "begin setup of output files"
+                call outputML_selection ()
+                                            
+                !% brh 20211207s remove all below
+                !% --- designate the corresponding elements for output
+                !call outputML_element_selection ()
+                !% --- deisgnate the corresponding face to output
+                !call outputML_face_selection ()
 
-            !% brh 20211207 
-            !% Ideally, these should be in the output module, but that caused
-            !% linking problems with use pack_mask_arrays in that module
-            !% --- create packed arrays of elem row numbers that are output
-            call pack_element_outputML ()
-            !% --- create packed arrays of face row numbers that are output
-            call pack_face_outputML ()
+                !% brh 20211207 
+                !% Ideally, these should be in the output module, but that caused
+                !% linking problems with use pack_mask_arrays in that module
+                !% --- create packed arrays of elem row numbers that are output
+                call pack_element_outputML ()
+                !% --- create packed arrays of face row numbers that are output
+                call pack_face_outputML ()
 
-            call outputML_setup ()
-            ! !% --- compute the N_OutElem for each image
-            ! call outputML_size_OutElem_by_image ()
-            ! !% --- compute the N_OutFace for each imaige
-            ! call outputML_size_OutFace_by_image ()
-            ! !% --- setup the output element data types
-            ! call outputML_element_outtype_selection ()
-            ! !% -- setup the output face data types
-            ! call outputML_face_outtype_selection ()
-            ! !% --- create storage space for multi-level output data
-            ! call util_allocate_outputML_storage ()
-            ! !% --- create storage for output times
-            ! call util_allocate_outputML_times ()
-            ! !% --- create storage for output binary filenames
-            ! call util_allocate_outputML_filenames ()
-            !% brh20211207e
-        end if                                     !% brh20211208
+                call outputML_setup ()
+                ! !% --- compute the N_OutElem for each image
+                ! call outputML_size_OutElem_by_image ()
+                ! !% --- compute the N_OutFace for each imaige
+                ! call outputML_size_OutFace_by_image ()
+                ! !% --- setup the output element data types
+                ! call outputML_element_outtype_selection ()
+                ! !% -- setup the output face data types
+                ! call outputML_face_outtype_selection ()
+                ! !% --- create storage space for multi-level output data
+                ! call util_allocate_outputML_storage ()
+                ! !% --- create storage for output times
+                ! call util_allocate_outputML_times ()
+                ! !% --- create storage for output binary filenames
+                ! call util_allocate_outputML_filenames ()
+                !% brh20211207e
+            end if                                     !% brh20211208
+        end if
         
-        !
 
         !% creating output_folders and files
         !% brh 20211004 -- moved this functionality into util_file_setup_output_files
@@ -258,11 +269,15 @@ contains
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
+        
+        !%------------------------------------------------------------------- 
+        !% Closing
         if (icrash) then  !% if crash in initialization, write the output and exit
-            call outputML_store_data (.true.)
+            if (setting%Output%Report%provideYN) then 
+                call outputML_store_data (.true.)
+            end if
             return
         end if
-
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
@@ -272,15 +287,22 @@ contains
 !%==========================================================================
 !%
     subroutine init_model_timer()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% starts and stores the CPU clock and wall clock time
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations:
+        integer(kind=8) :: crate, cmax, cval
+        !%-------------------------------------------------------------------
         !% store CPU clock start time
         call cpu_time(setting%Time%CPU%EpochStartSeconds)
 
-        !% store Real time
-        call system_clock(count=setting%Time%Real%EpochStartSeconds)
+        !% get the Real time (epoch in computer clock count)
+        call system_clock(count=cval,count_rate=crate,count_max=cmax)
+
+        setting%Time%Real%ClockCountRate = crate
+        setting%Time%Real%ClockStart = cval
+
 
     end subroutine init_model_timer
 !%
@@ -436,9 +458,9 @@ contains
             link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
             link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
             link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
-            write(*,*) 'api_nodef_initDepth 1'
+            !write(*,*) 'api_nodef_initDepth 1'
             link%R(ii,lr_InitialUpstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth)
-            write(*,*) 'api_nodef_initDepth 2'
+            !write(*,*) 'api_nodef_initDepth 2'
             link%R(ii,lr_InitialDnstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
             link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
@@ -470,45 +492,45 @@ contains
             !% brh20211207e
         end do
 
-        write(*,*) 
-        write(*,*) 'FINISHED WITH LINKS ---------------------------------------------------------'
-        write(*,*) 'N_node = ',N_node
-        write(*,*)
+        !write(*,*) 
+        !write(*,*) 'FINISHED WITH LINKS ---------------------------------------------------------'
+        !write(*,*) 'N_node = ',N_node
+        !write(*,*)
 
         
         do ii = 1, N_node
-            write(*,*) '======= starting node ',ii
-            write(*,*)
+            !write(*,*) '======= starting node ',ii
+            !write(*,*)
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
-            write(*,*) 'call api_nodef_type'
+            !write(*,*) 'call api_nodef_type'
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
-                write(*,*) '... is outfall type'
+                !write(*,*) '... is outfall type'
                 node%I(ii, ni_node_type) = nBCdn
             else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
-                write(*,*) '... is storage type'
+                !write(*,*) '... is storage type'
                 node%I(ii, ni_node_type) = nJm
                 node%YN(ii, nYN_has_storage) = .true.
             else if ((total_n_links == twoI)          .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
                      (node%I(ii,ni_N_link_d) == oneI) )then
-                write(*,*) '... is 2 junction type'        
+                !write(*,*) '... is 2 junction type'        
                 node%I(ii, ni_node_type) = nJ2
             else if (total_n_links >= twoI) then
-                write(*,*) '... is 3+ junction type'
+                !write(*,*) '... is 3+ junction type'
                 node%I(ii, ni_node_type) = nJm
             end if
-            write(*,*)
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_has_extInflow'
+            !write(*,*) 'call api_nodef_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
-            write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
-            write(*,*)
+            !write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_has_dwfInflow'
+            !write(*,*) 'call api_nodef_has_dwfInflow'
             node%YN(ii, nYN_has_dwfInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_dwfInflow) == 1)
-            write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
-            write(*,*)
+            !write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
+            !write(*,*)
 
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
@@ -517,51 +539,51 @@ contains
                 end if
             end if
 
-            write(*,*) 'call api_nodef_initDepth'
+            !write(*,*) 'call api_nodef_initDepth'
             node%R(ii,nr_InitialDepth)      = interface_get_nodef_attribute(ii, api_nodef_initDepth)
-            write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth)
-            write(*,*)
+            !write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth)
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_invertElev'
+            !write(*,*) 'call api_nodef_invertElev'
             node%R(ii,nr_Zbottom)           = interface_get_nodef_attribute(ii, api_nodef_invertElev)
-            write(*,*) '... nr_Zbottom = ', node%R(ii,nr_Zbottom) 
-            write(*,*)
+            !write(*,*) '... nr_Zbottom = ', node%R(ii,nr_Zbottom) 
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_fullDepth -- may be zero!'
+            !write(*,*) 'call api_nodef_fullDepth -- may be zero!'
             node%R(ii,nr_FullDepth)         = interface_get_nodef_attribute(ii, api_nodef_fullDepth)
-            write(*,*) '... nr_FullDepth = ',node%R(ii,nr_FullDepth) 
-            write(*,*)
+            !write(*,*) '... nr_FullDepth = ',node%R(ii,nr_FullDepth) 
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_StorageConstant'
+            !write(*,*) 'call api_nodef_StorageConstant'
             node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
-            write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
-            write(*,*)
+            !write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_StorageCoeff'
+            !write(*,*) 'call api_nodef_StorageCoeff'
             node%R(ii,nr_StorageCoeff)      = interface_get_nodef_attribute(ii, api_nodef_StorageCoeff)
-            write(*,*) '... nr_StorageCoeff = ',node%R(ii,nr_StorageCoeff)
-            write(*,*)
+            !write(*,*) '... nr_StorageCoeff = ',node%R(ii,nr_StorageCoeff)
+            !write(*,*)
             
-            write(*,*) 'call api_nodef_StorageExponent'
+            !write(*,*) 'call api_nodef_StorageExponent'
             node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
-            write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
-            write(*,*)
+            !write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
+            !write(*,*)
 
-            write(*,*) 'call api_nodef_StorageCurveID'
+            !write(*,*) 'call api_nodef_StorageCurveID'
             node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
-            write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
-            write(*,*)
+            !write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
+            !write(*,*)
 
-            write(*,*) 'call interface_get_BC_resolution'
+            !write(*,*) 'call interface_get_BC_resolution'
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
-            write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
-            write(*,*)  
+            !write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
+            !write(*,*)  
 
             !% brh20211207s
-            write(*,*) 'call api_nodef_rptFlag'
+            !write(*,*) 'call api_nodef_rptFlag'
             node%YN(ii,nYN_isOutput)          = (interface_get_nodef_attribute(ii, api_nodef_rptFlag) == 1)
-            write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
-            write(*,*)
+            !write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
+            !write(*,*)
             !% brh20211207e
         end do
 
@@ -935,13 +957,10 @@ contains
 !%==========================================================================
 !%
     subroutine init_time()
-        !%-----------------------------------------------------------------------------
-        !%
+        !%------------------------------------------------------------------
         !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         !% brh 20211209
         !rm setting%Time%Dt = setting%Time%Hydraulics%Dt
@@ -951,12 +970,50 @@ contains
         setting%Time%Hydrology%Step = 0
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
 
-        !% Initialize report step
-        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
         if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
             stop "Error: Hydrology time step can't be smaller than hydraulics time step"
         end if
+        !%------------------------------------------------------------------
     end subroutine init_time
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_report()
+
+        !% if setting require the SWMM input file values, then overwrite setting values
+        if (setting%Report%useSWMMinpYN) then 
+            setting%Report%StartTime    = setting%Report%StartTime_SWMMinp
+            setting%Report%TimeInterval = setting%Report%TimeInterval_SWMMinp
+        else 
+            !% continue
+        end if
+
+        !% if selected report time is before the start time
+        if (setting%Report%StartTime < setting%Time%Start) then 
+            setting%Report%StartTime = setting%Time%Start
+        else 
+            !% continue
+        end if
+
+        if (setting%Report%TimeInterval < zeroR) then 
+            write(*,*) '***************************************************************'
+            write(*,*) '** WARNING -- selected report time interval (SWMM REPORT_STEP)'
+            write(*,*) '** is zero or less, so all reporting will be suppressed'
+            write(*,*) '***************************************************************'
+            setting%Output%Report%provideYN = .false.
+            setting%Output%Report%suppress_MultiLevel_Output = .true.
+            setting%Output%Report%ThisStep = 1
+        else 
+            !% Initialize report step -- 
+            !% Determine how many report steps have already been missed before
+            !% the output reports are actually written
+            setting%Output%Report%ThisStep = int( &
+                        (setting%Report%StartTime - setting%Time%Start) &
+                        / setting%Report%TimeInterval )
+        end if
+
+    end subroutine init_report
 !%    
 !%==========================================================================
 !%==========================================================================

@@ -45,28 +45,41 @@ module runge_kutta2
 
         ! print*, '-------------------------------------------------------------------------'
         ! print*, '1st RK step'
+
+        ! elemR(:,er_Head) = elemR(:,er_Head) - 1514.0
+        ! faceR(:,fr_Head_d) = faceR(:,fr_Head_d) - 1514.0
+        ! write(*,"(10f8.3)") &
+        !     elemR(ietmp(3),er_Head), &
+        !     faceR(iftmp(3),fr_Head_d), &
+        !     elemR(ietmp(4),er_Head), &
+        !     faceR(iftmp(4),fr_Head_d), &
+        !     elemR(ietmp(5),er_Head)
+
+        ! elemR(:,er_Head) = elemR(:,er_Head) + 1514.0
+        ! faceR(:,fr_Head_d) = faceR(:,fr_Head_d) + 1514.0
+
         ! print *, elemI(ietmp(4),ei_elementType), JM  !% main
         ! print *, ietmp(3),ietmp(4)+1                     !% upstream
         ! print *, ietmp(5), ietmp(4)+2                     !% downstream
         ! print *, elemI(ietmp(3),ei_Mface_uL), iftmp(2)  !% upstream JB face
         ! print *, elemI(ietmp(5),ei_Mface_dL), iftmp(5)  !% downstream JB face
 
-        ! print *, elemR(ietmp(1), er_Head),&
-        !          elemR(ietmp(2), er_Head),&
-        !          elemR(ietmp(3), er_Head),&
-        !          elemR(ietmp(4), er_Head),&
-        !          elemR(ietmp(5), er_Head),&
-        !          elemR(ietmp(6), er_Head),&
-        !          elemR(ietmp(7), er_Head)
+        ! print *, elemR(ietmp(1), er_Head)-1514.0,&
+        !          elemR(ietmp(2), er_Head)-1514.0,&
+        !          elemR(ietmp(3), er_Head)-1514.0,&
+        !          elemR(ietmp(4), er_Head)-1514.0,&
+        !          elemR(ietmp(5), er_Head)-1514.0,&
+        !          elemR(ietmp(6), er_Head)-1514.0,&
+        !          elemR(ietmp(7), er_Head)-1514.0
 
         ! write(*,"(10F8.3)")   &
-        !     elemR(ietmp(1), er_Head),&
-        !     elemR(ietmp(2), er_Head),&
-        !     elemR(ietmp(3), er_Head),&
-        !     elemR(ietmp(4), er_Head),&
-        !     elemR(ietmp(5), er_Head),&
-        !     elemR(ietmp(6), er_Head),&
-        !     elemR(ietmp(7), er_Head)   
+        !     elemR(ietmp(1), er_Head)-1514.0,&
+        !     elemR(ietmp(2), er_Head)-1514.0,&
+        !     elemR(ietmp(3), er_Head)-1514.0,&
+        !     elemR(ietmp(4), er_Head)-1514.0,&
+        !     elemR(ietmp(5), er_Head)-1514.0,&
+        !     elemR(ietmp(6), er_Head)-1514.0,&
+        !     elemR(ietmp(7), er_Head)-1514.0   
 
         ! print *, 'head'
         ! write(*,"(16F8.3)")   &
@@ -89,6 +102,7 @@ module runge_kutta2
         !         elemR(ietmp(7), er_Velocity)               
         ! !stop 98734
 
+        
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
@@ -128,7 +142,7 @@ module runge_kutta2
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
         !% RK2 solution step 4 -- all face interpolation
-        call face_interpolation(fp_all)
+        call face_interpolation(fp_all,ETM)
 
         !% RK2 solution step 5 -- update diagnostic elements and faces
         call diagnostic_toplevel()
@@ -157,11 +171,10 @@ module runge_kutta2
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
         !% RK2 solution step 8(d,e) -- update all faces
-        call face_interpolation(fp_all)
+        call face_interpolation(fp_all,ETM)
 
         !% RK2 solution step 9 -- update diagnostic elements and faces
         call diagnostic_toplevel()
-
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
@@ -230,7 +243,7 @@ module runge_kutta2
         call update_auxiliary_variables(ALLtm)
 
         !% step 4 -- all face interpolation
-        call face_interpolation(fp_all)
+        call face_interpolation(fp_all,ALLtm)
 
         !% step 5 -- update diagnostic elements and faces
         call diagnostic_toplevel ()
@@ -253,7 +266,7 @@ module runge_kutta2
             call update_auxiliary_variables (AC)
 
             !% step 6(f,g) -- update faces for AC elements
-            call face_interpolation (fp_AC)
+            call face_interpolation (fp_AC,AC)
 
         end if
 
@@ -275,7 +288,7 @@ module runge_kutta2
             call update_auxiliary_variables(ETM)
 
             !% step 8(d,e) -- update all faces
-            call face_interpolation (fp_all)
+            call face_interpolation (fp_all,ALLtm)
         end if
 
         !% step 9 -- update diagnostic elements and faces
@@ -518,8 +531,14 @@ module runge_kutta2
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
         if (icrash) return
+
+        !% brh20211212 hard stop until fixe is made
+        print *, 'CODE ERROR problems with CCJB_eETM_i_fAC mask need to be fixed'
+        stop 68795
+        
         thisCol => col_elemP(ep_CCJB_eETM_i_fAC)
         Npack => npack_elemP(thisCol)
+
 
         if (Npack > 0) then
             !% temporary storage of n+1/2 data

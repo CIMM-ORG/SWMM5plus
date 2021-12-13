@@ -41,15 +41,25 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        
         call mask_faces_whole_array_static()
+        
         call pack_geometry_alltm_elements()
+        
         call pack_geometry_etm_elements()
+        
         call pack_geometry_ac_elements()
+        
         call pack_nongeometry_static_elements()
+        
         call pack_nongeometry_dynamic_elements()
+        
         call pack_static_interior_faces()
+        
         call pack_static_shared_faces()
+        
         call pack_dynamic_interior_faces()
+        
         call pack_dynamic_shared_faces()
         !brh20211006 call pack_link_node_output()
 
@@ -1197,7 +1207,9 @@ contains
         !--------------------------------------------------------------------------
         integer          :: ii
         integer, pointer :: ptype, npack, eIDx(:)
-        integer, allocatable :: fup(:), fdn(:)
+        !% HACK brh20211212 temporary removal until problems with ep_CCJB_eETM_i_fAC
+        !% are fixed
+        !integer, allocatable :: fup(:), fdn(:)
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
         !--------------------------------------------------------------------------
         if (icrash) return
@@ -1206,9 +1218,19 @@ contains
 
         eIdx => elemI(:,ei_Lidx)
 
-        fup = pack(elemI(:,ei_Mface_uL), elemI(:,ei_Mface_uL) /= nullvalueI)
-        fdn = pack(elemI(:,ei_Mface_dL), elemI(:,ei_Mface_dL) /= nullvalueI)
+        !% HACK
+        !% brh20211212 -- this need to be changed becuase of two problems
+        !% 1 -- allocation/dallocation every time this is called
+        !% 2 -- fup and fdn are not guaranteed to be the same size as elemI, which
+        !% causes seg faults when used in masking. This seems to be due to the
+        !% dummy index, and might be fixed by elem(nodummy,:) where nodummy is
+        !% a packed set of indices. Needs careful work to restore
+        !% HACK brh20211212 temporary removal until problems with ep_CCJB_eETM_i_fAC
+        !% are fixed
+        !fup = pack(elemI(:,ei_Mface_uL), elemI(:,ei_Mface_uL) /= nullvalueI)
+        !fdn = pack(elemI(:,ei_Mface_dL), elemI(:,ei_Mface_dL) /= nullvalueI)
 
+        !print *, 'AC'
         !% ep_AC
         !% - all elements that use AC
         ptype => col_elemP(ep_AC)
@@ -1220,6 +1242,7 @@ contains
                 (elemI(:,ei_tmType) == AC))
         end if
 
+        !print *, 'CC_AC'
         !% ep_CC_AC
         !% - all channel conduit elements that use AC
         ptype => col_elemP(ep_CC_AC)
@@ -1235,6 +1258,7 @@ contains
                 (elemI(:,ei_tmType) == AC)     )
         end if
 
+        !print *, 'CC_ETM'
         !% ep_CC_ETM
         !% - all channel conduit elements that use ETM
         ptype => col_elemP(ep_CC_ETM)
@@ -1251,6 +1275,7 @@ contains
                 (elemI(:,ei_tmType) == ETM)     )
         end if
 
+        !print *, 'CC_H_ETM'
         !% ep_CC_H_ETM
         !% - all channel conduit elements that have head time march using ETM
         ptype => col_elemP(ep_CC_H_ETM)
@@ -1270,6 +1295,7 @@ contains
                 (elemI(:,ei_tmType) == ETM)     )
         end if
 
+        !print *, 'CC_Q_AC'
         !% ep_CC_Q_AC
         !% - all channel conduit elements that have flow time march using AC
         ptype => col_elemP(ep_CC_Q_AC)
@@ -1289,6 +1315,7 @@ contains
                 (elemI(:,ei_tmType) == AC)     )
         end if
 
+        !print *, 'CC_Q_ETM'
         !% ep_CC_Q_ETM
         !% - all channel conduit elements elements that have flow time march using ETM
         ptype => col_elemP(ep_CC_Q_ETM)
@@ -1308,6 +1335,7 @@ contains
                 (elemI(:,ei_tmType) == ETM)     )
         end if
 
+        !print *, 'CCJB_AC'
         !% ep_CCJB_AC
         !% - all channel conduit or junction branch elements elements that are AC
         ptype => col_elemP(ep_CCJB_AC)
@@ -1332,6 +1360,7 @@ contains
                 (elemI(:,ei_tmType) == AC)     )
         end if
 
+        !print *, 'CC_AC_surcharged'
         !% ep_CC_AC_surcharged
         !% - all channel conduit elements elements that are AC and surcharged
         ptype => col_elemP(ep_CC_AC_surcharged)
@@ -1356,6 +1385,7 @@ contains
                 (elemYN(:,eYN_isSurcharged)))
         end if
 
+        !print *, 'CCJB_AC_surcharged'
         !% ep_CCJB_AC_surcharged
         !% - all channel conduit or junction branch elements elements that are AC and surcharged
         ptype => col_elemP(ep_CCJB_AC_surcharged)
@@ -1384,6 +1414,7 @@ contains
                 (elemYN(:,eYN_isSurcharged)))
         end if
 
+        !print *, 'CC_ALLtm_surcharged'
         !% ep_CC_ALLtm_surcharged
         !% - all channel conduit elements with any time march and surcharged
         ptype => col_elemP(ep_CC_ALLtm_surcharged)
@@ -1416,6 +1447,7 @@ contains
                 (elemYN(:,eYN_isSurcharged)))
         end if
 
+        !print *, 'CCJB_ALLtm_surcharged'
         !% ep_CCJB_ALLtm_surcharged
         !% - all channel conduit or junction branch elements with any time march and surcharged
         ptype => col_elemP(ep_CCJB_ALLtm_surcharged)
@@ -1452,44 +1484,52 @@ contains
                 (elemYN(:,eYN_isSurcharged)))
         end if
 
-        !% ep_CCJB_eETM_i_fAC
-        !% conduits, channels, and junction branches that are ETM and have
-        !% an adjacent face that is AC
-        ptype => col_elemP(ep_CCJB_eETM_i_fAC)
-        npack => npack_elemP(ptype)
+        !% HACK brh20211212 -- BUGFIX NEEDED
+        !% problem with mismatch in size between elemI(:,:), DIM=1 and fup, fdn
+        !% seems to be because of dummy elements. Causes a seg fault.
+        !% comment until fixed
+        ! print *, 'CCJB_eETM_i_fAC'
+        ! !% ep_CCJB_eETM_i_fAC
+        ! !% conduits, channels, and junction branches that are ETM and have
+        ! !% an adjacent face that is AC
+        ! ptype => col_elemP(ep_CCJB_eETM_i_fAC)
+        ! npack => npack_elemP(ptype)
 
-        npack = count( &
-                ( &
-                    (elemI(:,ei_elementType) == CC) &
-                    .or. &
-                    (elemI(:,ei_elementType) == JB)  &
-                 ) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM) &
-                .and. &
-                ( &
-                    (faceYN(fup,fYN_isAC_adjacent)) &
-                    .or. &
-                    (faceYN(fdn,fYN_isAC_adjacent)) &
-                ))
+        ! npack = count( &
+        !         ( &
+        !             (elemI(:,ei_elementType) == CC) &
+        !             .or. &
+        !             (elemI(:,ei_elementType) == JB)  &
+        !          ) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == ETM) &
+        !         .and. &
+        !         ( &
+        !             (faceYN(fup,fYN_isAC_adjacent)) &
+        !             .or. &
+        !             (faceYN(fdn,fYN_isAC_adjacent)) &
+        !         ))
 
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx, &
-                ( &
-                    (elemI(:,ei_elementType) == CC) &
-                    .or. &
-                    (elemI(:,ei_elementType) == JB)  &
-                 ) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM) &
-                .and. &
-                ( &
-                    (faceYN(fup,fYN_isAC_adjacent)) &
-                    .or. &
-                    (faceYN(fdn,fYN_isAC_adjacent)) &
-                ))
-        end if
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx, &
+        !         ( &
+        !             (elemI(:,ei_elementType) == CC) &
+        !             .or. &
+        !             (elemI(:,ei_elementType) == JB)  &
+        !          ) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == ETM) &
+        !         .and. &
+        !         ( &
+        !             (faceYN(fup,fYN_isAC_adjacent)) &
+        !             .or. &
+        !             (faceYN(fdn,fYN_isAC_adjacent)) &
+        !         ))
+        ! end if
 
+  
+
+        !print *, 'CCJB_ETM'
         !% ep_CCJB_ETM
         !% - all channel conduit or junction branch that are ETM
         ptype => col_elemP(ep_CCJB_ETM)
@@ -1516,6 +1556,7 @@ contains
                 )
         end if
 
+        !print *, 'CC_ETM_surcharged'
         !% ep_CC_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
         ptype => col_elemP(ep_CC_ETM_surcharged)
@@ -1542,6 +1583,7 @@ contains
                 )
         end if
 
+        !print *, 'CCJB_ETM_surcharged'
         !% ep_CCJB_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
         ptype => col_elemP(ep_CCJB_ETM_surcharged)
@@ -1572,6 +1614,7 @@ contains
                 )
         end if
 
+        !print *, 'CCJM_H_AC_open'
         !% ep_CCJM_H_AC_open
         !% - all channel conduit or junction main elements solving head with AC and are non-surcharged
         ptype => col_elemP(ep_CCJM_H_AC_open)
@@ -1606,6 +1649,7 @@ contains
                 )
         end if
 
+        !print *, 'CCJM_H_ETM'
         !% ep_CCJM_H_ETM
         !% - all channel conduit or junction main that use head solution with ETM
         ptype => col_elemP(ep_CCJM_H_ETM)
@@ -1636,6 +1680,7 @@ contains
                 )
         end if
 
+        !print *, 'ETM'
         !% ep_ETM
         !% - all elements that use ETM
         ptype => col_elemP(ep_ETM)
@@ -1648,6 +1693,7 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
+        !print *, 'JM_AC'
         !% ep_JM_AC
         !% - all elements that are junction mains and use AC
         ptype => col_elemP(ep_JM_AC)
@@ -1664,6 +1710,7 @@ contains
                 (elemI(:,ei_tmType) == AC))
         end if
 
+        !print *, 'JB_AC'
         !% ep_JB_AC
         !% - all elements that are junction mains and use AC
         ptype => col_elemP(ep_JB_AC)
@@ -1680,6 +1727,7 @@ contains
                 (elemI(:,ei_tmType) == AC))
         end if
 
+        !print *, 'JM_ETM'
         !% ep_JM_ETM
         !% - all elements that are junction mains and ETM
         ptype => col_elemP(ep_JM_ETM)
@@ -1697,6 +1745,7 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
+        !print *, 'JB_ETM'
         !% ep_JB_ETM
         !% - all elements that are junction mains and ETM
         ptype => col_elemP(ep_JB_ETM)
@@ -1714,6 +1763,7 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
+        !print *, 'NonSurcharged_AC'
         !% ep_NonSurcharged_AC
         !% - all AC elements that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_AC)
@@ -1730,6 +1780,7 @@ contains
                 (elemI(:,ei_tmType) == AC))
         end if
 
+        !print *,'NonSurcharged_ALLtm'
         !% ep_NonSurcharged_ALLtm
         !% -- elements with any time march that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_ALLtm)
@@ -1755,6 +1806,7 @@ contains
                 ))
         end if
 
+        !print *, 'NonSurcharged_ETM'
         !% ep_NonSurcharged_ETM
         !% -- elements with ETM time march that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_ETM)
@@ -1773,6 +1825,8 @@ contains
         end if
 
         !% brh 20211210
+        !print *, 'CC_Q_NOTsmallvolume'
+        !% ep_CC_Q_NOTsmallvolume
         !% Flow solution that are NOT small volume
         !% -- needed to limit where CFL is computed
         ptype => col_elemP(ep_CC_Q_NOTsmallvolume)
@@ -1795,6 +1849,7 @@ contains
 
 
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
+        !print *, 'smallvolume_AC'
         !% ep_smallvolume_AC
         !% - all small volumes that are AC
         ptype => col_elemP(ep_smallvolume_AC)
@@ -1813,6 +1868,7 @@ contains
         end if
 
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
+        !print *, 'smallvolume_ALLtm'
         !% ep_smallvolume_ALLtm
         !% - all small volumes that are any time march
         ptype => col_elemP(ep_smallvolume_ALLtm)
@@ -1839,6 +1895,7 @@ contains
         end if
 
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
+        !print *, 'smallvolume_ETM'
         !% ep_smallvolume_ETM
         !% - all small volumes that are ETM
         ptype => col_elemP(ep_smallvolume_ETM)
@@ -1856,6 +1913,7 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
+        !print *,'Surcharged_AC'
         !% ep_Surcharged_AC
         !% - all AC elements that are surcharged
         ptype => col_elemP(ep_Surcharged_AC)
@@ -1873,6 +1931,7 @@ contains
                 (elemI(:,ei_tmType) == AC))
         end if
 
+        !print *, 'Surcharged_ALLtm'
         !% ep_Surcharged_ALLtm
         !% - all elements of any time march that are surcharged
         ptype => col_elemP(ep_Surcharged_ALLtm)
@@ -1898,6 +1957,7 @@ contains
                 ))
         end if
 
+        !print *, 'Surcharged_ETM'
         !% ep_Surcharged_ETM
         !% - all ETM elements that are surcharged
         ptype => col_elemP(ep_Surcharged_ETM)
@@ -1915,8 +1975,10 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
-        if (allocated(fup)) deallocate(fup)
-        if (allocated(fdn)) deallocate(fdn)
+        !% HACK brh20211212 temporary removal until problems with ep_CCJB_eETM_i_fAC
+        !% are fixed
+        !if (allocated(fup)) deallocate(fup)
+        !if (allocated(fdn)) deallocate(fdn)
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

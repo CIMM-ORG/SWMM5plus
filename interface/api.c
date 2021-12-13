@@ -175,6 +175,14 @@ double DLLEXPORT api_get_end_datetime()
 }
 
 //===============================================================================
+double DLLEXPORT api_get_TotalDuration()
+//===============================================================================
+// this is the SWMM-C Total Duration in milliseconds
+{
+    return TotalDuration;
+}
+
+//===============================================================================
 int DLLEXPORT api_get_flowBC(
     int node_idx, double current_datetime, double* flowBC)
 //===============================================================================
@@ -261,14 +269,14 @@ int DLLEXPORT api_get_headBC(
 {
     int ii = Node[node_idx].subIndex;
 
-    printf("  in api_get_headBC with outfall %d \n",Outfall[ii].type);
-    printf("     node_idx = %d \n",node_idx);
-    printf("     subIdx   = %d \n",ii);
-    printf("     FIXED_OUTFALL = %d \n",FIXED_OUTFALL);
-    printf("     NORMAL_OUTFALL = %d \n",NORMAL_OUTFALL);
-    printf("     FREE_OUTFALL = %d \n",FREE_OUTFALL);
-    printf("     TIDAL_OUTFALL = %d \n",TIDAL_OUTFALL);
-    printf("     TIMESERIES_OUTFALL = %d \n",TIMESERIES_OUTFALL);
+//      printf("  in api_get_headBC with outfall %d \n",Outfall[ii].type);
+//     printf("     node_idx = %d \n",node_idx);
+//     printf("     subIdx   = %d \n",ii);
+//     printf("     FIXED_OUTFALL = %d \n",FIXED_OUTFALL);
+//     printf("     NORMAL_OUTFALL = %d \n",NORMAL_OUTFALL);
+//     printf("     FREE_OUTFALL = %d \n",FREE_OUTFALL);
+//     printf("     TIDAL_OUTFALL = %d \n",TIDAL_OUTFALL);
+//    printf("     TIMESERIES_OUTFALL = %d \n",TIMESERIES_OUTFALL);
     
     switch (Outfall[ii].type)
     {
@@ -332,11 +340,11 @@ int DLLEXPORT api_get_report_times(
     *hydrology_dry_step    = DryStep;
     *hydraulic_step        = RouteStep;
 
-    printf(" report start datetime = %f \n",ReportStart);
-    printf(" report step = %d \n", ReportStep);
-    printf(" hydrology_step = %d \n",WetStep);
-    printf(" hydrology_dry_step = %d \n",DryStep);
-    printf(" hydraulic_step = %f \n",RouteStep);
+    // printf(" report start datetime = %f \n",ReportStart);
+    // printf(" report step = %d \n", ReportStep);
+    // printf(" hydrology_step = %d \n",WetStep);
+    // printf(" hydrology_dry_step = %d \n",DryStep);
+    // printf(" hydraulic_step = %f \n",RouteStep);
 
     return 0;
 }
@@ -364,12 +372,12 @@ int DLLEXPORT api_get_nodef_attribute(
 
     if (attr == nodef_type)
     {
-        printf("    nodef_type attr = 2 \n");
+        // printf("    nodef_type attr = 2 \n");
         *value = Node[node_idx].type;
     }
     else if (attr == nodef_outfall_type)
     {
-        printf("    nodef_outfall_type attr = 3 \n");
+        // printf("    nodef_outfall_type attr = 3 \n");
         if (Node[node_idx].type == OUTFALL)
         {
             *value = Outfall[Node[node_idx].subIndex].type;
@@ -384,20 +392,20 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_invertElev)
     {
-        printf("    nodef_invertElev attr = 4 \n");
+        // printf("    nodef_invertElev attr = 4 \n");
         *value = FTTOM(Node[node_idx].invertElev);
     }
     else if (attr == nodef_fullDepth)
     {
-        printf("   nodef_fullDepth attr = 25 \n ");
+        // printf("   nodef_fullDepth attr = 25 \n ");
         *value = FTTOM(Node[node_idx].fullDepth);
     }
     else if (attr == nodef_initDepth)
     {
-        printf("    nodef_initDepth attr attr = 5 \n");
+        // printf("    nodef_initDepth attr attr = 5 \n");
         if (Node[node_idx].type == OUTFALL)
         {
-            printf("   *** call api_get_headBC \n");
+            // printf("   *** call api_get_headBC \n");
             error = api_get_headBC(node_idx, StartDateTime, value);
             if (error) return error;
             *value -= FTTOM(Node[node_idx].invertElev);
@@ -407,7 +415,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_StorageConstant)
     {
-        printf("   nodef_StorageConstant attr = 6 \n");
+        // printf("   nodef_StorageConstant attr = 6 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aConst;
         else
@@ -415,7 +423,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_StorageCoeff)
     {
-        printf("   nodef_storage_Coeff attr = 7 \n");
+        // printf("   nodef_storage_Coeff attr = 7 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aCoeff;
         else
@@ -423,7 +431,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_StorageExponent)
     {
-        printf("   nodef_StorageExponent attr = 8 \n");
+        // printf("   nodef_StorageExponent attr = 8 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aExpon;
         else
@@ -431,7 +439,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_StorageCurveID)
     {
-        printf("   nodef_StorageCurveID attr = 9 \n");
+        // printf("   nodef_StorageCurveID attr = 9 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aCurve + 1;
         else
@@ -439,7 +447,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_tSeries)
     {
-        printf("   nodef_extInflow_tSeries attr = 10 \n");
+        //printf("   nodef_extInflow_tSeries attr = 10 \n");
         if (Node[node_idx].extInflow)
             *value = Node[node_idx].extInflow->tSeries;
         else
@@ -452,7 +460,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_tSeries_x1)
     {
-        printf("   nodef_extInflow_tSeries_x1 attr = 11 \n");
+        // printf("   nodef_extInflow_tSeries_x1 attr = 11 \n");
         tseries_idx = Node[node_idx].extInflow->tSeries;
         if (tseries_idx >= 0)
             *value = Tseries[tseries_idx].x1;
@@ -466,7 +474,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_tSeries_x2)
     {
-        printf("   nodef_extInflow_tSeries_x2 attr = 12 \n");
+        // printf("   nodef_extInflow_tSeries_x2 attr = 12 \n");
         tseries_idx = Node[node_idx].extInflow->tSeries;
         if (tseries_idx >= 0)
             *value = Tseries[tseries_idx].x2;
@@ -480,7 +488,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_basePat)
     {
-        printf("   nodef_extInflow_basePat attr = 13 \n");
+        // printf("   nodef_extInflow_basePat attr = 13 \n");
         if (Node[node_idx].extInflow)
             *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->basePat);
         else
@@ -493,15 +501,16 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_basePat_type)
     {
-        printf("   nodef_extInflow_basePat_type attr = 14 \n");
+        // printf("   nodef_extInflow_basePat_type attr = 14 \n");
         bpat = Node[node_idx].extInflow->basePat;
         
-        printf(" bpat %d",bpat);
+        // printf(" bpat %d",bpat);
         if (bpat >= 0) // baseline pattern exists
             *value = Pattern[bpat].type;
         else
         {
             *value = API_NULL_VALUE_I;
+            printf("  location 3098705 problem with basePatType");
             // brh20211207s  commenting this so that it moves through with null result
             //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
             //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
@@ -511,7 +520,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_baseline)
     {
-        printf("   nodef_extInflow_baseline attr = 15 \n");
+        // printf("   nodef_extInflow_baseline attr = 15 \n");
         if (Node[node_idx].extInflow)
         {
             *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
@@ -521,7 +530,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_sFactor)
     {
-        printf("   nodef_extInflow_sFactor attr = 16 \n");
+        // printf("   nodef_extInflow_sFactor attr = 16 \n");
         if (Node[node_idx].extInflow)
             *value = Node[node_idx].extInflow->sFactor;
         else
@@ -529,7 +538,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_has_extInflow)
     {
-        printf("   nodef_has_extInflow attr = 17 \n");
+        // printf("   nodef_has_extInflow attr = 17 \n");
         if (Node[node_idx].extInflow)
         {
             *value = 1;
@@ -539,7 +548,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_dwfInflow_monthly_pattern)
     {
-        printf("   nodef_dwInflow_monthly_pattern attr = 18 \n");
+        // printf("   nodef_dwInflow_monthly_pattern attr = 18 \n");
         if (Node[node_idx].dwfInflow)
             *value = Node[node_idx].dwfInflow->patterns[0];
         else
@@ -552,7 +561,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_dwfInflow_daily_pattern)
     {
-        printf("   nodef_dwdInflow_daily_pattern attr = 19 \n");
+        // printf("   nodef_dwdInflow_daily_pattern attr = 19 \n");
         if (Node[node_idx].dwfInflow)
         {
             *value = Node[node_idx].dwfInflow->patterns[1];
@@ -567,7 +576,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_dwfInflow_hourly_pattern)
     {
-        printf("   nodef_dwInflow_hourly_pattern attr = 20 \n");
+        // printf("   nodef_dwInflow_hourly_pattern attr = 20 \n");
         if (Node[node_idx].dwfInflow)
             *value = Node[node_idx].dwfInflow->patterns[2];
         else
@@ -580,7 +589,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_dwfInflow_weekend_pattern)
     {
-        printf("   nodef_dwInflow_weekend_pattern attr = 21 \n");
+        // printf("   nodef_dwInflow_weekend_pattern attr = 21 \n");
         if (Node[node_idx].dwfInflow)
             *value = Node[node_idx].dwfInflow->patterns[3];
         else
@@ -593,7 +602,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_dwfInflow_avgvalue)
     {
-        printf("   nodef_dwInflow_avgvalue attr = 22 \n");
+        // printf("   nodef_dwInflow_avgvalue attr = 22 \n");
         if (Node[node_idx].dwfInflow)
             *value = CFTOCM(Node[node_idx].dwfInflow->avgValue);
         else
@@ -601,7 +610,7 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_has_dwfInflow)
     {
-        printf("   nodef_has_dwfInflow attr = 23 \n");
+        // printf("   nodef_has_dwfInflow attr = 23 \n");
         if (Node[node_idx].dwfInflow)
             *value = 1;
         else
@@ -613,29 +622,29 @@ int DLLEXPORT api_get_nodef_attribute(
 
     {
         // printf("   node_depth = 24 \n");
-        printf("   nodef_newDepth attr = 24 \n");
+        // printf("   nodef_newDepth attr = 24 \n");
     // brh20211207e
         *value = FTTOM(Node[node_idx].newDepth);
     }         
     else if (attr == nodef_inflow)
     {
-        printf("   nodef_inflow attr = 26 \n");
+        // printf("   nodef_inflow attr = 26 \n");
         *value = CFTOCM(Node[node_idx].inflow);
     }
     else if (attr == nodef_volume)
     {
-        printf("   nodef_volume attr = 27 \n");
+        // printf("   nodef_volume attr = 27 \n");
         *value = CFTOCM(Node[node_idx].newVolume);
     }    
     else if (attr == nodef_overflow)
     {
-        printf("   nodef_overflow attr = 28 \n");
+        // printf("   nodef_overflow attr = 28 \n");
         *value = CFTOCM(Node[node_idx].overflow);
     }
     // brh20211207s
     else if (attr = nodef_rptFlag)
     {
-        printf("    nodef_rptFlag attr = 29 \n");
+        // printf("    nodef_rptFlag attr = 29 \n");
         if (Node[node_idx].rptFlag)
             *value = 1;
         else
@@ -1370,7 +1379,7 @@ int DLLEXPORT api_call_runoff_execute()
 //===============================================================================
 // calls the runoff_execute() procedure in SWMM-C
 {
-    printf(" in api_call_runoff_execute");
+    // printf(" in api_call_runoff_execute");
 
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -1389,7 +1398,7 @@ int DLLEXPORT api_get_subcatch_runoff(
     int sc_idx, double *runoff)
 //===============================================================================
 {
-    printf(" in api_get_subcatch_runoff \n");
+    // printf(" in api_get_subcatch_runoff \n");
 
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -1400,7 +1409,7 @@ int DLLEXPORT api_get_subcatch_runoff(
 
     // Get runoff and convert to cubic meters per second
     *runoff = CFTOCM(Subcatch[sc_idx].newRunoff);
-    printf("... sc_idx, newRunoff CMS %d , %f \n",sc_idx,Subcatch[sc_idx].newRunoff);
+    // printf("... sc_idx, newRunoff CMS %d , %f \n",sc_idx,Subcatch[sc_idx].newRunoff);
     
     return 0;
 }
@@ -1410,7 +1419,7 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     int sc_idx, int *node_idx)
 //===============================================================================
 {
-    printf(" in api_get_subcatch_runoff_nodeIdx \n");
+    // printf(" in api_get_subcatch_runoff_nodeIdx \n");
 
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )

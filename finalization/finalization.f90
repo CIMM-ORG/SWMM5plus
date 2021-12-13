@@ -35,25 +35,24 @@ contains
             write(*,"(2A,i5,A)") new_line(" "), 'finalize [Processor ', this_image(), "]"
 
         !% finalize the profiler and print times
-        ! call util_profiler_print_summary()
+        call util_profiler_print_summary()
 
-        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0    
-        !% write a final combined multi-level files
-            call outputML_store_data (.true.)
+        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0  
+            if ((setting%Output%Report%provideYN) .and. &
+                (.not. setting%Output%Report%suppress_MultiLevel_Output)) then    
 
-            !% write the control file for the stored mult-level files
-            call outputML_write_control_file ()
+                !% write a final combined multi-level files
+                call outputML_store_data (.true.)
 
-            ! !brh20211006 if ((this_image() == 1) .and. &
-            ! !brh20211006     (setting%Output%report .or. setting%Debug%Output)) then
-            ! !brh20211006     call outputD_combine_links()
-            ! !brh20211006 end if
+                !% write the control file for the stored mult-level files
+                call outputML_write_control_file ()
 
-            sync all
+                sync all
 
-            call outputML_convert_elements_to_linknode_and_write ()
+                call outputML_convert_elements_to_linknode_and_write ()
+            end if
 
-            end if !% brh20211208    
+        end if !% brh20211208    
 
         !brh20211006 if (setting%Output%report .or. setting%Debug%Output) call outputD_move_node_files
         !brh20211006 if (setting%Output%report .or. setting%Debug%Output) call outputD_update_swmm_out

@@ -845,6 +845,10 @@ contains
                 elemI(ElemLocalCounter,ei_link_Gidx_BIPquick)   = thisLink
                 elemI(ElemLocalCounter,ei_link_Gidx_SWMM)       = link%I(thisLink,li_parent_link)
 
+                !print *, '====================================== ww'
+                !print *, trim(subroutine_name), ElemLocalCounter, elemI(ElemLocalCounter,ei_Mface_dL)
+                !print *, '======================================'
+
                 !% real data
                 elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_AdjustedLength)/link%I(thisLink,li_N_element)
                 elemR(ElemLocalCounter,er_Zbottom)          = zCenter
@@ -1264,6 +1268,10 @@ contains
                 !% integer data
                 elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
 
+                !print *, '====================================== xx'
+                !print *, trim(subroutine_name), ElemLocalCounter, elemI(ElemLocalCounter,ei_Mface_dL)
+                !print *, '======================================'
+
                 !% face array
                 !% integer data
                 faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
@@ -1409,6 +1417,10 @@ contains
 
                             !% local d/s face map to element u/s of the branch
                             elemI(LinkLastElem,ei_Mface_dL) = fLidx
+
+                            !print *, '====================================== yy'
+                            !print *, trim(subroutine_name), LinkLastElem, elemI(LinkLastElem,ei_Mface_dL)
+                            !print *, '======================================'
 
                             !% local u/s element of the face
                             faceI(fLidx,fi_Melem_uL) = LinkLastElem
@@ -1569,6 +1581,10 @@ contains
             if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
                 !% local d/s face map to element u/s of the branch
                 elemI(LinkLastElem,ei_Mface_dL) = fLidx
+
+                !print *, '====================================== zz'
+                !print *, trim(subroutine_name), LinkLastElem, elemI(LinkLastElem,ei_Mface_dL)
+                !print *, '======================================'
 
                 !% local u/s element of the face
                 faceI(fLidx,fi_Melem_uL) = LinkLastElem

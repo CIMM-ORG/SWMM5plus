@@ -51,6 +51,14 @@ module update
 
         call geometry_toplevel (whichTM)
 
+        !% Store the head as the average head
+        !% note the average head is only needed if solver uses 
+        !% method QinterpWithLocalHeadGradient, which updates
+        !% HeadAvg in the face_interpolation call
+        !% Here we set the average to the actual head to ensure we don't
+        !% have zero values anywhere
+        elemR(:,er_HeadAvg) = elemR(:,er_Head)
+
         !print *, '---- in ',subroutine_name,'   y02'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
 

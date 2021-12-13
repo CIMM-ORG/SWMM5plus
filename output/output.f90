@@ -567,7 +567,7 @@ contains
         end if
 
         !% --- set the type of time units for the output
-        select case (setting%Output%reportTimeUnits)
+        select case (setting%Output%Report.TimeUnits)
             case (InSeconds)
                 output_typeUnits_withtime_elemR(1) = 'seconds'
             case (InMinutes)
@@ -577,8 +577,8 @@ contains
             case (InDays)
                 output_typeUnits_withtime_elemR(1) = 'days'
             case default
-                write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.reportTimeUnits of...'
-                write(*,*) setting%Output%reportTimeUnits
+                write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.Report.TimeUnits of...'
+                write(*,*) setting%Output%Report.TimeUnits
                 stop
         end select
 
@@ -722,7 +722,7 @@ contains
         end if
 
         !% --- set the type of time units for the output
-        select case (setting%Output%reportTimeUnits)
+        select case (setting%Output%Report.TimeUnits)
             case (InSeconds)
                 output_typeUnits_withtime_faceR(1) = 'seconds'
             case (InMinutes)
@@ -732,8 +732,8 @@ contains
             case (InDays)
                 output_typeUnits_withtime_faceR(1) = 'days'
             case default
-                write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.reportTimeUnits of...'
-                write(*,*) setting%Output%reportTimeUnits
+                write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.Report.TimeUnits of...'
+                write(*,*) setting%Output%Report.TimeUnits
                 stop
         end select
 
@@ -1099,7 +1099,7 @@ contains
         !% --- the model starting time
         write(thisUnit) setting%Time%StartEpoch
         !% --- integer key for report time units (e.g. IsHours)
-        write(thisUnit) setting%Output%reportTimeUnits
+        write(thisUnit) setting%Output%Report.TimeUnits
         !% --- total number number of output elements
         write(thisUnit) sum(N_OutElem(:))
         !% --- number of output element types (excluding time)
@@ -1338,8 +1338,8 @@ contains
             time_units_str = 'days'
             time_scale_for_output = seconds_per_day
         case default
-            write(*,'(A)') 'ERROR (code) unknown value of setting%Output%reportTimeUnits of ...'
-            write(*,*) setting%Output%reportTimeUnits
+            write(*,'(A)') 'ERROR (code) unknown value of setting%Output%Report%TimeUnits of ...'
+            write(*,*) setting%Output%Report%TimeUnits
             stop
         end select
 

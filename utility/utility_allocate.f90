@@ -753,11 +753,14 @@ contains
 
         !% --- get the total number of time levels for the report
         !% --- increase by 2 for start and end files
-        if (setting%Output%reportDt > zeroR) then
-            setting%Output%MaxExpectedLevels = 2 + (setting%Time%End - setting%Output%reportStartTime) /setting%Output%reportDt
+        if (setting%Output%Report%TimeInterval > zeroR) then
+            setting%Output%MaxExpectedLevels = 2 + &
+                ceil((setting%Time%End - setting%Output%Report%StartTime) &
+                      /setting%Output%Report%TimeInterval)
         else
-            write (*,"(A)") 'SWMM report step less than zero, which will suppress multi-level binary output files'
-            setting%Output%suppress_MultiLevel_Output = .true.
+            write (*,"(A)") 'The Report Interval (SWMM inp file REPORT_STEP) is less than zero.'
+            write (*,"(A)") 'This will suppress multi-level output files'
+            setting%Output%Report%suppress_MultiLevel_Output = .true.
             return
         end if
 
@@ -781,7 +784,7 @@ contains
         if (setting%Output%OutputElementsExist) then
             !% --- shortand for the output types
             nType => N_OutTypeElem
-            print*, nType, 'nType in image = ', this_image()
+            !print*, nType, 'nType in image = ', this_image()
             !% --- bug check
             if (nType < 1) then
                 write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'

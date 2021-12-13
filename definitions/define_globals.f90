@@ -24,8 +24,11 @@ module define_globals
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
     !% HACK brh -- element indexes for junction test
-    integer :: ietmp(7) = (/99,100,102,101,103,208,209/)
-    integer :: iftmp(6) = (/100,101,1,1,102,207/)
+    !integer :: ietmp(7) = (/99,100,102,101,103,208,209/)
+    !integer :: iftmp(6) = (/100,101,1,1,102,207/)
+
+    integer :: ietmp(7) = (/  21, 22, 23, 24, 25, 26, 27/)
+    integer :: iftmp(6) = (/    21, 22, 23, 24, 25, 26/)
 
     integer :: temptime(6) !used for temporary time debugging
 

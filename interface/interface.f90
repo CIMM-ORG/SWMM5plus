@@ -448,8 +448,11 @@ contains
 
         setting%Time%StartEpoch = get_start_datetime()
         setting%Time%EndEpoch = get_end_datetime()
-        setting%Time%Start = 0
-        setting%Time%End = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)
+        setting%Time%Start = zeroR
+        !% use floor() to match approachin SWMM-C
+        setting%Time%End = real(floor( &
+            (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)) &
+            ,KIND=8)
 
         call interface_get_report_times()
 
@@ -624,7 +627,7 @@ contains
             character(64) :: subroutine_name = 'interface_get_nodef_attribute'
         !%-----------------------------------------------------------------------------
 
-        write(*,*) '--- interface_get_nodef_attribute', attr
+        !write(*,*) '--- interface_get_nodef_attribute', attr
 
         if (setting%Debug%File%interface)  &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
@@ -643,7 +646,7 @@ contains
         !% Substracts 1 to every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_nodef_attribute")
         error = ptr_api_get_nodef_attribute(node_idx-1, attr, node_value)
-        print *, '   node value ',node_value
+        !print *, '   node value ',node_value
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
@@ -651,7 +654,7 @@ contains
             if (node_value /= -1) node_value = node_value + 1
         end if
 
-        write(*,*) '.................'
+        !write(*,*) '.................'
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
             "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
@@ -1295,10 +1298,10 @@ contains
 
             if (node%YN(node_idx, nYN_has_extInflow)) then
 
-                write(*,*) 'api_nodef_extInflow_basePat_type',api_nodef_extInflow_basePat_type
+                !write(*,*) 'api_nodef_extInflow_basePat_type',api_nodef_extInflow_basePat_type
                 p0 = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_basePat_type)
-                write(*,*), p0
-                write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
+                !write(*,*), p0
+                !write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
                 if (p0 == api_hourly_pattern) then
                     resolution = api_hourly
@@ -1307,7 +1310,7 @@ contains
                 else if (p0 == api_daily_pattern) then
                     resolution = api_daily
                 else if (p0 == api_monthly_pattern) then
-                    write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
+                    !write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
                     baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
                 !% brh20211207s
@@ -1364,12 +1367,12 @@ contains
                 end if
             !% brh20211208s
             else
-                write(*,*) '   no dwfInflow to this node'
+                !write(*,*) '   no dwfInflow to this node'
             !% brh20211208e
             end if
         !% brh20211208s
         else
-            write(*,*) '   no dwf or ext inflows to this node'
+            !write(*,*) '   no dwf or ext inflows to this node'
         !% brh20211208e
         end if
 
@@ -1656,11 +1659,14 @@ contains
         reportStart = util_datetime_epoch_to_secs(reportStart)
 
         !% brh 20211209s
-        setting%Output%reportStartTime = reportStart
-        setting%Output%reportDt = reportStep
-        setting%Time%Hydrology%Dt = WetStep
-        setting%Time%Hydraulics%Dt = RouteStep
+        setting%Output%Report%StartTime_SWMMinp    = reportStart
+        setting%Output%Report%TimeInterval_SWMMinp = reportStep
+        setting%Time%Hydrology%Dt                  = WetStep
+        setting%Time%Hydraulics%Dt                 = RouteStep
         !% brh 20211209e
+
+        print *, reportStart, reportStep, wetStep, RouteStep
+        stop 39875
 
         !% NOTE: brh20211208 we are reading in the DryStep, but not using it at the moment.
 
@@ -1706,13 +1712,13 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         
-        print *, '...just before loading runoff_execute in interface_call_runoff_execute'
+        ! print *, '...just before loading runoff_execute in interface_call_runoff_execute'
 
         call load_api_procedure("api_call_runoff_execute")
         error = ptr_api_call_runoff_execute()   
         call print_api_error(error, subroutine_name)
     
-        print *, "...finishing interface_call_runoff_execute"
+        ! print *, "...finishing interface_call_runoff_execute"
         
         if (setting%Debug%File%interface)  &
              write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
