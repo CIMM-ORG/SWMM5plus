@@ -348,16 +348,13 @@ contains
                     if (elemI(elemUpIdx,ei_elementType) == CC) then
                         normDepth = elemR(elemUpIdx,er_Depth)
                         critDepth = bc_get_CC_critical_depth(elemUpIdx)
-
+                        BC%headRI(ii) = min(critDepth,normDepth) + faceR(faceIdx,fr_Zbottom)
                     else
                         !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
                         !% the depth in the node is zero
                         BC%headRI(ii) =  faceR(faceIdx,fr_Zbottom)
                     end if
-
                 end if
-
-                stop 55474
             else
                 call util_print_warning("Error (bc.f08): Unknown downstream boundary condition type at " &
                     // node%Names(nodeIdx)%str // " node")
@@ -401,7 +398,6 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
 
         if (Q2g == zeroR) then
             criticalDepth =  zeroR
-            
         else
             select case (elemGeometry)
 
@@ -416,20 +412,12 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                     ratio = FullArea/((pi/fourR)*FullDepth**twoR)
 
                     if ((ratio >= onehalfR) .and. (ratio <= twoR)) then
-                        
-
                         criticalDepth = bc_critDepth_enum (elemIdx, Flowrate, critDepthEstimate)
-                        
                     else
-                        print*, 'riddlers method has not been developed yet'
-                        stop 123541
-                        
+                        criticalDepth = bc_critDepth_ridder (elemIdx, Flowrate, critDepthEstimate)
                     end if
-
             end select
         end if
-        print*, criticalDepth, 'criticalDepth'
-        stop 121345
 
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -451,7 +439,7 @@ function bc_critDepth_enum (elemIdx, Q, yEstimate) result (criticalDepth)
         real(8), pointer     :: FullDepth
         real(8)              :: dY, Y, Q0, QC
         integer              :: i1, ii
-        character(64) :: subroutine_name = 'bc_critDepth_enum'
+        character(64)        :: subroutine_name = 'bc_critDepth_enum'
     !%-----------------------------------------------------------------------------
 
     FullDepth => elemR(elemIdx,er_FullDepth)
@@ -459,12 +447,12 @@ function bc_critDepth_enum (elemIdx, Q, yEstimate) result (criticalDepth)
     !% find the critical depth from SWMM5 ennumeration method
     dY = FullDepth/25.0
     i1 = int(yEstimate/dY)
-    Q0 = bc_get_critical_flow(elemIdx, i1*dY)
+    Q0 = bc_get_critical_flow(elemIdx,i1*dY,zeroR)
 
     if (Q0 < Q) then
         criticalDepth = FullDepth
         do  ii = i1+1,25
-            QC = bc_get_critical_flow(elemIdx,ii*dY)
+            QC = bc_get_critical_flow(elemIdx,ii*dY,zeroR)
             if (QC > Q) then
                 criticalDepth = ((Q-Q0)/(QC-Q0)+ real((ii-1),8))*dY
                 return
@@ -474,7 +462,7 @@ function bc_critDepth_enum (elemIdx, Q, yEstimate) result (criticalDepth)
     else
         criticalDepth = zeroR
         do  ii = i1-1,0,-1
-            QC = bc_get_critical_flow(elemIdx,ii*dY)
+            QC = bc_get_critical_flow(elemIdx,ii*dY,zeroR)
             if (QC < Q) then
                 criticalDepth = ((Q-QC)/(Q0-QC)+ real((ii),8))*dY
                 return
@@ -488,13 +476,143 @@ end function bc_critDepth_enum
 !%==========================================================================
 !%==========================================================================
 !%
-function bc_get_critical_flow (elemIdx, Depth) result (Flow)
+function bc_critDepth_ridder (elemIdx, Q, yEstimate) result (criticalDepth)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% gets the critical depth of a CC by ridder method
+    !% this code has been adapted from SWMM5-C code
+    !%-----------------------------------------------------------------------------
+        integer, intent(in)  :: elemIdx
+        real(8), intent(in)  :: Q, yEstimate
+        real(8)              :: criticalDepth, Y1, Y2
+        real(8), pointer     :: FullDepth
+        real(8)              :: Q0, Q1, Q2, Tol
+        character(64)        :: subroutine_name = 'bc_critDepth_ridder'
+    !%-----------------------------------------------------------------------------
+
+    FullDepth => elemR(elemIdx,er_FullDepth)
+
+    Y1 = zeroR
+    Y2 = 0.99*FullDepth
+
+    !% check if critical flow at full depth < target flow
+    Q2 = bc_get_critical_flow(elemIdx,Y2,zeroR)
+    if (Q2 < Q) then
+        criticalDepth = FullDepth
+
+    !% otherwise evaluate critical flow at initial estimate
+    !% and 1/2 of fullDepth
+    else
+        Q0 = bc_get_critical_flow(elemIdx,yEstimate,zeroR)
+        Q1 = bc_get_critical_flow(elemIdx, onehalfR*FullDepth,zeroR)
+
+        if (Q0 > Q) then
+            Y2 = yEstimate
+            if (Q1 < Q) Y1 = onehalfR*FullDepth
+        else
+            Y1 = yEstimate
+            if (Q1 > Q) Y2 = onehalfR*FullDepth
+        end if
+        Tol = 0.001
+        criticalDepth = bc_findRoot_ridder_for_critDepth(elemIdx,Q,Y1,Y2,Tol)
+    end if
+
+end function bc_critDepth_ridder
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+function bc_findRoot_ridder_for_critDepth(elemIdx,Q,Y1,Y2,Tol) result (criticalDepth)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% find root for the critical depth of a CC by ridder method
+    !% this code has directly been adapted from SWMM5-C code
+    !%-----------------------------------------------------------------------------
+        integer, intent(in)  :: elemIdx
+        real(8), intent(in)  :: Q, Y1, Y2, Tol
+        real(8)              :: criticalDepth
+        integer              :: ii, MaxIter
+        real(8)              :: ans, fhi, flo, fm, fnew, s, Yhi, Ylo, Ym, Ynew
+
+        character(64)        :: subroutine_name = 'bc_findRoot_ridder_for_critDepth'
+    !%-----------------------------------------------------------------------------
+        MaxIter = 60
+        flo = bc_get_critical_flow(elemIdx,Y1,Q)
+        fhi = bc_get_critical_flow(elemIdx,Y2,Q)
+
+        if (flo == zeroR) then
+            criticalDepth = Y1
+            return
+        end if
+
+        if (fhi == zeroR) then
+            criticalDepth = Y2
+            return
+        end if
+
+        ans = onehalfR*(Y1+Y2)
+
+        if ((flo > zeroR .and. fhi < zeroR) .or. (flo < zeroR .and. fhi > zeroR)) then
+            Ylo = Y1
+            Yhi = Y2
+            do ii = 1,MaxIter
+                Ym = onehalfR*(Ylo+Yhi)
+                fm = bc_get_critical_flow(elemIdx,Ym,Q)
+                s = sqrt(fm*fm - flo*fhi)
+                if (s == zeroR) then
+                    criticalDepth = ans
+                    return
+                end if
+
+                if (flo >= fhi) then
+                    Ynew = Ym + (Ym-Ylo)*fm/s
+                else
+                    Ynew = Ym + (Ym-Ylo)*(-oneI*fm/s)
+                endif
+
+                if(abs(Ynew-ans) <= Tol) then 
+                    criticalDepth = Ynew
+                    return
+                end if
+                ans = Ynew
+                fnew = bc_get_critical_flow(elemIdx,Ynew,Q)
+
+                if (sign(fm,fnew) /= fm) then
+                    Ylo = Ym
+                    flo = fm
+                    Yhi = ans
+                    fhi = fnew
+                else if (sign(flo,fnew) /= flo) then
+                    Yhi = ans
+                    fhi = fnew
+                else if (sign(fhi,fnew) /= fhi) then
+                    Ylo = ans
+                    flo = fnew
+                else
+                    criticalDepth = ans
+                    return
+                end if
+
+                if ( abs(Yhi - Ylo) <= Tol) then
+                    criticalDepth = ans
+                    return
+                end if
+            end do
+            criticalDepth = ans
+        end if
+
+end function bc_findRoot_ridder_for_critDepth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
     !%-----------------------------------------------------------------------------
     !% Description:
     !% gets the critical flow of a CC element for a given depth
     !%-----------------------------------------------------------------------------
         integer, intent(in)  :: elemIdx
-        real(8), intent(in)  :: Depth 
+        real(8), intent(in)  :: Depth, Flow_0 
         real(8)              :: Flow
         integer, pointer     :: elemGeometry
         real(8), pointer     :: fullDepth, fullArea, grav
@@ -515,9 +633,10 @@ function bc_get_critical_flow (elemIdx, Depth) result (Flow)
             Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc, NTCirc), &
                         setting%ZeroValue%Topwidth)
 
-            Flow  = Area * sqrt(grav*Area/Topwidth)
+            Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
 
         case default
+            print*, 'In', subroutine_name
             print*, 'This default case should not reach'
             stop 84198
      end select
