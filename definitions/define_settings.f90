@@ -485,6 +485,7 @@ module define_settings
     type PreissmannSlotType
         integer :: PreissmannSlotMethod = VariableSlot
         real(8) :: CelerityFactor = 1.0
+        real(8) :: DesiredTimeStep = 0.01
     end type PreissmannSlotType
 
     !% setting%Profile
@@ -1120,6 +1121,9 @@ contains
         call json%get('PreissmannSlot.CelerityFactor', real_value, found)
         setting%PreissmannSlot%CelerityFactor = real_value
         if (.not. found) stop "Error - json file - setting " // 'PreissmannSlot.CelerityFactor not found'
+        call json%get('PreissmannSlot.DesiredTimeStep', real_value, found)
+        setting%PreissmannSlot%DesiredTimeStep = real_value
+        if (.not. found) stop "Error - json file - setting " // 'PreissmannSlot.DesiredTimeStep not found'
 
     !% Simulation controls
         !% --- Hydrology and hydraulics simulation controls

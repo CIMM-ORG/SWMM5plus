@@ -1000,7 +1000,7 @@ module lowlevel_rk2
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
-        real(8), pointer    :: CelerityFactor
+        real(8), pointer    :: CelerityFactor, tDelta, cfl, grav
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
@@ -1019,6 +1019,9 @@ module lowlevel_rk2
 
         SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         CelerityFactor => setting%PreissmannSlot%CelerityFactor
+        tDelta         => setting%PreissmannSlot%DesiredTimeStep
+        cfl            => setting%VariableDT%CFL_target
+        grav           => setting%Constant%gravity
 
         select case (SlotMethod)
 
@@ -1035,7 +1038,9 @@ module lowlevel_rk2
 
                 SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
                 !% SWMM5 uses 1% of width max as slot width
-                SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
+                ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
+                SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
+                    (cfl*length(thisP))**twoR
                 SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                 SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
