@@ -104,7 +104,7 @@ contains
             !% set a large dummy time for hydraulics if not used
             nextHydraulicsTime = timeEnd + onethousandR * dtTol
             !% suppress the multi-level hydraulics output (otherwise seg faults)
-            setting%Output%suppress_MultiLevel_Output = .true.
+            setting%Output%Report%suppress_MultiLevel_Output = .true.
         end if
 
         !% check to see if there is an initial step to hydrology
@@ -145,7 +145,7 @@ contains
                 !% note that thisP and thisBC must be the same size or there is something wrong
                 thisP   => elemP(1:npack,ep_BClat)
                 thisBC  => BC%P%BClat
-                Qlateral(thisP) = Qlateral(thisP) !+ BC%flowRI(thisBC)  
+                Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
 
                 !% add subcatchment inflows
                 if (useHydrology) then 
@@ -202,7 +202,7 @@ contains
 
                 !% Multilevel time step output
                 if ((util_output_must_report()) .and. &
-                    (.not. setting%Output%Report.suppress_MultiLevel_Output) ) then
+                    (.not. setting%Output%Report%suppress_MultiLevel_Output) ) then
                     call outputML_store_data (.false.)
                 end if
             end if    
@@ -220,7 +220,7 @@ contains
 
         !% >>> BEGIN HACK
         !%     Temporary for debugging (can be deleted for deployment)
-        ! if (setting%Debug%Output) then
+        ! if (setting%Debug%OutputYN) then
         !     !% Write .out in readable .csv
         !     if (this_image() == 1) then
         !         additional_rows = num_images() - 1
@@ -512,7 +512,7 @@ contains
 
         nextHydraulicsTime = lastHydraulicsTime + newDT
 
-        if ((setting%Limiter%Dt%UseLimitMin) .and. (newDT .le. setting%Limiter%Dt%Minimum)) then
+        if ((setting%Limiter%Dt%UseLimitMinYN) .and. (newDT .le. setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
             print*, 'max velocity  ', maxval( &

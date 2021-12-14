@@ -45,7 +45,7 @@ contains
             if (icrash) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-            if (setting%Profile%YN) call util_profiler_start (pfc_init_network_define_toplevel)
+            if (setting%Profile%useYN) call util_profiler_start (pfc_init_network_define_toplevel)
         !--------------------------------------------------------------------
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
@@ -121,7 +121,7 @@ contains
             ! end do
             !     stop 598706
 
-            if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)
+            if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

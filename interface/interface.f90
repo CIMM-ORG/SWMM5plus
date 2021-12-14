@@ -134,18 +134,21 @@ module interface
             real(c_double),        intent(inout) :: headBC
         end function api_get_headBC
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_report_times &
-            (report_start_datetime, report_step, hydrology_step, &
-             hydrology_dry_step, hydraulic_step) &
-            BIND(C, name="api_get_report_times")
+        integer(c_int) function api_get_SWMM_times &
+            (starttime_epoch, endtime_epoch, report_start_datetime, report_step, &
+             hydrology_step, hydrology_dry_step, hydraulic_step, total_duration) &
+            BIND(C, name="api_get_SWMM_times")
             use, intrinsic :: iso_c_binding
             implicit none
+            real(c_double), intent(inout) :: starttime_epoch
+            real(c_double), intent(inout) :: endtime_epoch
             real(c_double), intent(inout) :: report_start_datetime
             integer(c_int), intent(inout) :: report_step
             integer(c_int), intent(inout) :: hydrology_step
             integer(c_int), intent(inout) :: hydrology_dry_step
             real(c_double), intent(inout) :: hydraulic_step
-        end function api_get_report_times
+            real(c_double), intent(inout) :: total_duration
+        end function api_get_SWMM_times
         !% -------------------------------------------------------------------------------
         real(c_double) function api_get_NewRunoffTime() &
             BIND(C, name="api_get_NewRunoffTime")
@@ -341,7 +344,7 @@ module interface
     procedure(api_get_end_datetime),           pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),                 pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),                 pointer :: ptr_api_get_headBC
-    procedure(api_get_report_times),           pointer :: ptr_api_get_report_times
+    procedure(api_get_SWMM_times),             pointer :: ptr_api_get_SWMM_times
     procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
     procedure(api_get_nodef_attribute),        pointer :: ptr_api_get_nodef_attribute
     procedure(api_get_linkf_attribute),        pointer :: ptr_api_get_linkf_attribute
@@ -404,7 +407,7 @@ contains
             setting%File%inp_file, &
             setting%File%rpt_file, &
             setting%File%out_file, &
-            setting%Simulation%useSWMMC)
+            dummyI)
         call print_api_error(error, subroutine_name)
         api_is_initialized = .true.
 
@@ -420,9 +423,6 @@ contains
         !% brh202112082
         SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
         
-        
-
-
         print *
         print *, 'BUG WARNING location ',980879,' in ',subroutine_name
         print *, '...if the SWMM code detects a parse error for the *.inp file then the ...'
@@ -440,21 +440,32 @@ contains
         end if
         print *
 
-        !% Defines start and end simulation times
-        !% SWMM defines start and end dates as epoch times in days
-        !% we need to transform those values to durations in seconds,
-        !% such that our start time is zero and our end time is
-        !% the total simulation duration in seconds.
+        !% brh20211214 -- the SWMM times are all read using interface_get_SWMM_times and
+        !% are stored in the settings. We now use init_time to setup times
+        ! if (setting%Time%useSWMMinpYN) then
+        !     write(*,*) '...Using simulation start and end time from SWMM input file'
+        !     setting%Time%StartEpoch = get_start_datetime()
+        !     setting%Time%EndEpoch = get_end_datetime()
+        !     setting%Time%Start = zeroR
+        !     !% use floor() to match approachin SWMM-C
+        !     setting%Time%End = real(floor( &
+        !         (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)) &
+        !         ,KIND=8)
+        ! else 
+        !     write(*,*) '...Using simulation start and end time from json input file'     
+        ! end if 
 
-        setting%Time%StartEpoch = get_start_datetime()
-        setting%Time%EndEpoch = get_end_datetime()
-        setting%Time%Start = zeroR
-        !% use floor() to match approachin SWMM-C
-        setting%Time%End = real(floor( &
-            (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)) &
-            ,KIND=8)
+        ! !% Check times
+        ! if (setting%Time%End .le. setting%Time%Start) then
+        !     write(*,*) 'FATAL INPUT ERROR:'
+        !     write(*,*) 'end time is less than start time'
+        !     write(*,*) 'input start time (seconds): ',setting%Time%Start
+        !     write(*,*) 'input end time   (seconds): ',setting%Time%End
+        !     stop 309875
+        ! end if
 
-        call interface_get_report_times()
+        call interface_get_SWMM_times()
+
 
         if (setting%Debug%File%interface) then
             print *, new_line("")
@@ -468,26 +479,29 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end if
     end subroutine interface_init
-    !%
-    !%=============================================================================
-    !%=============================================================================
-    !%
+!%
+!%=============================================================================
+!%=============================================================================
+!%
     subroutine interface_finalize()
-        !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
         !% Description:
         !%    finalizes the EPA-SWMM shared library
-        !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+        !% Declarations:
             character(64) :: subroutine_name = 'interface_finalize'
-        !%-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
 
         call ptr_api_finalize()
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%---------------------------------------------------------------------
+        !% Closing        
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine interface_finalize
 !%
 !%=============================================================================
@@ -496,7 +510,7 @@ contains
     ! subroutine interface_run_step()
     ! !%-----------------------------------------------------------------------------
     ! !% Description:
-    ! !%    runs steps of EPA-SWMM model. If setting%Simulation%useSWMMC was defined
+    ! !%    runs steps of EPA-SWMM model. If setting%Simulation% was defined
     ! !%    true, steps include routing model. If false, steps are for hydrology only
     ! !%-----------------------------------------------------------------------------
     !     real(8), pointer :: timeNow
@@ -1413,7 +1427,7 @@ contains
                         tnext = util_datetime_epoch_to_secs(tnext)
                         if (tnext == tnow) then
                             tnext = setting%Time%End
-                            setting%BC%disableInterpolation = .true.
+                            setting%BC%disableInterpolationYN = .true.
                         !% brh20211207s
                         else
                             write(*,*)
@@ -1632,14 +1646,16 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    subroutine interface_get_report_times()
+    subroutine interface_get_SWMM_times()
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
         integer                :: error
-        real(c_double), target :: reportStart, RouteStep
+        real(c_double), target :: reportStart_epoch, RouteStep 
+        real(c_double), target :: starttime_epoch, endtime_epoch
+        real(c_double), target :: TotalDuration
         integer(c_int), target :: reportStep, WetStep, DryStep
-        character(64)          :: subroutine_name = 'interface_get_report_times'
+        character(64)          :: subroutine_name = 'interface_get_SWMM_times'
         !%----------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
@@ -1652,27 +1668,30 @@ contains
         !% ... then SWMM will make reportStart = start datetime.
         !%
         !% --- This generates EPA-SWMM Error Code: -1 if the reportStart is after the end time.
-        call load_api_procedure("api_get_report_times")
-        error = ptr_api_get_report_times(reportStart, reportStep, WetStep, DryStep, RouteStep)
+        call load_api_procedure("api_get_SWMM_times")
+        error = ptr_api_get_SWMM_times( &
+            starttime_epoch,  &
+            endtime_epoch,    &
+            reportStart_epoch, &
+            reportStep,  &
+            WetStep,     &
+            DryStep,     &
+            RouteStep,   &
+            TotalDuration)
         call print_api_error(error, subroutine_name)
 
-        reportStart = util_datetime_epoch_to_secs(reportStart)
-
-        !% brh 20211209s
-        setting%Output%Report%StartTime_SWMMinp    = reportStart
-        setting%Output%Report%TimeInterval_SWMMinp = reportStep
-        setting%Time%Hydrology%Dt                  = WetStep
-        setting%Time%Hydraulics%Dt                 = RouteStep
-        !% brh 20211209e
-
-        print *, reportStart, reportStep, wetStep, RouteStep
-        stop 39875
-
-        !% NOTE: brh20211208 we are reading in the DryStep, but not using it at the moment.
+        setting%SWMMinput%StartEpoch            = starttime_epoch
+        setting%SWMMinput%EndEpoch              = endtime_epoch                      
+        setting%SWMMinput%ReportStartTimeEpoch  = reportStart_epoch
+        setting%SWMMinput%ReportTimeInterval    = reportStep
+        setting%SWMMinput%WetStep               = WetStep
+        setting%SWMMinput%RouteStep             = RouteStep
+        setting%SWMMinput%DryStep               = DryStep
+        setting%SWMMinput%TotalDuration         = TotalDuration
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine interface_get_report_times
+    end subroutine interface_get_SWMM_times
 !%
 !%=============================================================================
 !%=============================================================================
@@ -1836,8 +1855,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
             case ("api_get_headBC")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
-            case ("api_get_report_times")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
+            case ("api_get_SWMM_times")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_times)
             case ("api_get_next_entry_tseries")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
             case ("api_find_object")

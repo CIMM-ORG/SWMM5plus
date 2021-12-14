@@ -2,8 +2,8 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "EPAexample01-mod02",
-        "Short" : "EPAex01m02"
+        "Long"  : "test",
+        "Short" : "test"
     },
     "Limiter" : {
         "BC" : {
@@ -59,7 +59,7 @@
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 1200.0,
+            "TimeInterval" : 300.0,
             "TimeUnits" : "Hours"
         }
     },

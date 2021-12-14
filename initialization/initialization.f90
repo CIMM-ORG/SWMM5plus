@@ -92,9 +92,9 @@ contains
         branchsign(2:max_branch_per_node:2)   = -oneR
 
         !% --- load the settings.json file with the default setting% model control structure
-        !%     def_load_settings is one of the few subroutines in the Definition modules
-        call def_load_settings()
-
+        !%     define_settings_load is one of the few subroutines in the Definition modules
+        call define_settings_load()
+        
         !% --- initialize the time stamp used for output (must be after json is read)
         call init_timestamp ()
 
@@ -103,9 +103,11 @@ contains
         !%     from json file and reprocess.
         !%     Possibly replace this later with a set of settings that are saved
         !%     and simply overwrite after the settings.json is loaded.
-        call util_file_assign_unitnumber ()
-        call util_file_get_commandline ()
-        call util_file_setup_input_paths_and_files()
+        if (setting%JSON_FoundFileYN) then
+            call util_file_assign_unitnumber ()
+            call util_file_get_commandline ()
+            call util_file_setup_input_paths_and_files()
+        end if
 
         !% --- output file directories
         call util_file_setup_output_folders()
@@ -122,7 +124,7 @@ contains
         end if
 
         !% --- set up the profiler
-        if (setting%Profile%YN) then
+        if (setting%Profile%useYN) then
             call util_allocate_profiler ()
             call util_profiler_start (pfc_initialize_all)
         end if
@@ -253,18 +255,18 @@ contains
         !call util_output_create_folders()
 
         !brh20211006 COMMENTING OUT THE OUTPUT BY CSV
-        !brh20211006 if ((this_image() == 1) .and. setting%Debug%Setup) call util_output_export_linknode_input()
-        !brh20211006 if (setting%Debug%Output) then
+        !brh20211006 if ((this_image() == 1) .and. setting%Debug%SetupYN) call util_output_export_linknode_input()
+        !brh20211006 if (setting%Debug%OutputYN) then
         !brh20211006     call util_output_create_elemR_files()
         !brh20211006     call util_output_create_faceR_files()
         !brh20211006     call util_output_create_summary_files()
         !brh20211006 end if
-        !brh20211006 if (setting%Debug%Output .or. setting%Output%report) then
+        !brh20211006 if (setting%Debug%OutputYN .or. setting%Output%report) then
         !brh20211006     call output_create_link_files()
         !brh20211006     call output_create_node_files()
         !brh20211006 end if
 
-        ! if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
+        ! if (setting%Profile%useYN) call util_profiler_stop (pfc_initialize_all)
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
@@ -677,7 +679,7 @@ contains
         end if
         !% brh20211208e    
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
+        if (setting%Profile%useYN) call util_profiler_start (pfc_init_partitioning)
 
         !% find the number of elements in a link based on nominal element length
         do ii = 1, SWMM_N_link
@@ -702,7 +704,7 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_partitioning)
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_init_partitioning)
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -849,7 +851,7 @@ contains
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_bc)
+        if (setting%Profile%useYN) call util_profiler_start (pfc_init_bc)
 
         call pack_nodes()
         call util_allocate_bc()
@@ -947,7 +949,7 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_bc)
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_init_bc)
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -959,21 +961,32 @@ contains
     subroutine init_time()
         !%------------------------------------------------------------------
         !% Description:
+        !% initializes the time either using the SWMM input file or the
+        !% json file data (selected by setting.Time.useSWMMinpYN)
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
 
-        !% brh 20211209
-        !rm setting%Time%Dt = setting%Time%Hydraulics%Dt
-        setting%Time%Now = 0
-        setting%Time%Step = 0
-        setting%Time%Hydraulics%Step = 0
-        setting%Time%Hydrology%Step = 0
+        !% HACK start time is always measured from zero (need to fix for hotstart)
+        setting%Time%Start = zeroR 
+        setting%Time%Now   = zeroR
+        setting%Time%Step  = zeroI
+
+        if (setting%Time%useSWMMinpYN) then 
+            setting%Time%StartEpoch    = setting%SWMMinput%StartEpoch
+            setting%Time%EndEpoch      = setting%SWMMinput%EndEpoch
+            setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep
+            setting%Time%Hydrology%Dt  = setting%SWMMinput%WetStep
+            ! HACK ??                  = setting%SWMMinput%DryStep
+            ! HACK ??                  = setting%SWMMinput%TotalDuration
+        else 
+            !% use values from json file
+        end if
+
+        !% null out the wet step if not using hydrology
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
 
-        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
-            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
-        end if
         !%------------------------------------------------------------------
+        !% Closing
     end subroutine init_time
 !%    
 !%==========================================================================
@@ -982,24 +995,25 @@ contains
     subroutine init_report()
 
         !% if setting require the SWMM input file values, then overwrite setting values
-        if (setting%Report%useSWMMinpYN) then 
-            setting%Report%StartTime    = setting%Report%StartTime_SWMMinp
-            setting%Report%TimeInterval = setting%Report%TimeInterval_SWMMinp
+        if (setting%Output%Report%useSWMMinpYN) then 
+            setting%Output%Report%StartTime    = util_datetime_epoch_to_secs(setting%SWMMinput%ReportStartTimeEpoch)
+            setting%Output%Report%TimeInterval = setting%SWMMinput%ReportTimeInterval
+            write(*,*) '...Using SWMM input file (*.inp) report start time and time interval.'
         else 
-            !% continue
+            write(*,*) '...Using *.json file report start time and time interval.'
         end if
 
         !% if selected report time is before the start time
-        if (setting%Report%StartTime < setting%Time%Start) then 
-            setting%Report%StartTime = setting%Time%Start
+        if (setting%Output%Report%StartTime < setting%Time%Start) then 
+            setting%Output%Report%StartTime = setting%Time%Start
         else 
             !% continue
         end if
 
-        if (setting%Report%TimeInterval < zeroR) then 
+        if (setting%Output%Report%TimeInterval < zeroR) then 
             write(*,*) '***************************************************************'
-            write(*,*) '** WARNING -- selected report time interval (SWMM REPORT_STEP)'
-            write(*,*) '** is zero or less, so all reporting will be suppressed'
+            write(*,*) '** WARNING -- selected report time interval is zero or less, **'
+            write(*,*) '**          so all reporting will be suppressed              **'
             write(*,*) '***************************************************************'
             setting%Output%Report%provideYN = .false.
             setting%Output%Report%suppress_MultiLevel_Output = .true.
@@ -1009,8 +1023,8 @@ contains
             !% Determine how many report steps have already been missed before
             !% the output reports are actually written
             setting%Output%Report%ThisStep = int( &
-                        (setting%Report%StartTime - setting%Time%Start) &
-                        / setting%Report%TimeInterval )
+                        ( setting%Output%Report%StartTime - setting%Time%Start ) &
+                        / setting%Output%Report%TimeInterval )
         end if
 
     end subroutine init_report

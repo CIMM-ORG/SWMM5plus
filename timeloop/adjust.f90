@@ -43,7 +43,7 @@ module adjust
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
               
         !% ad hoc adjustments to flowrate 
-        if (setting%Adjust%Flowrate%Apply) then   
+        if (setting%Adjust%Flowrate%ApplyYN) then   
             select case (setting%Adjust%Flowrate%Approach)
                 case (vshape)
                     !% suppress v-shape over face/element/face
@@ -56,7 +56,7 @@ module adjust
         end if
         
         !% ad hoc adjustments to head
-        if (setting%Adjust%Head%Apply) then          
+        if (setting%Adjust%Head%ApplyYN) then          
             select case (setting%Adjust%Head%Approach)
                 case (vshape_surcharge_only)
                     call adjust_Vshaped_head_surcharged (whichTM)
@@ -200,7 +200,7 @@ module adjust
         end select
         
         !% reset the small volumes for flow/velocity limit computations
-        if (setting%SmallVolume%UseSmallVolumes) then
+        if (setting%SmallVolume%UseSmallVolumesYN) then
             Npack => npack_elemP(thisCol_all) 
             if (Npack > 0) then   
                 call adjust_smallvolumes_reset_old (Npack,thisCol_all)  
@@ -210,7 +210,7 @@ module adjust
         end if
         
         !% apply ad-hoc velocity limiter
-        if (setting%Limiter%Velocity%UseLimitMax) then
+        if (setting%Limiter%Velocity%UseLimitMaxYN) then
             Npack => npack_elemP(thiscol_all)
             if (Npack > 0) then 
                 call adjust_velocity_limiter_reset_old (Npack, thiscol_all) 
@@ -221,7 +221,7 @@ module adjust
         !% For small volumes, compute a velocity that is blended from
         !% the update value and a Chezy-Manning computed using the 
         !% free surface slope of the element
-        ! if (setting%SmallVolume%UseSmallVolumes) then
+        ! if (setting%SmallVolume%UseSmallVolumesYN) then
         !     Npack => npack_elemP(thisSmallVolumeCol)
         !     if (Npack > 0) then
         !         call adjust_velocity_smallvolume_blended    &
@@ -313,7 +313,7 @@ module adjust
             end if
 
             !%  limit high velocities
-            if (setting%Limiter%Velocity%UseLimitMax) then
+            if (setting%Limiter%Velocity%UseLimitMaxYN) then
                 where(abs(f_velocity_u(thisP))  > vMax)
                     f_velocity_u(thisP) = sign(0.99 * vMax, f_velocity_u(thisP))
                 endwhere

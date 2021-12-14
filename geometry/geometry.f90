@@ -365,7 +365,7 @@ module geometry
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_geo_assign_JB)
+        if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
 
         Npack         => npack_elemP(thisColP_JM)
         area          => elemR(:,er_Area)
@@ -505,7 +505,7 @@ module geometry
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_geo_assign_JB)
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

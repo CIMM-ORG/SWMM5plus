@@ -109,7 +109,7 @@ module runge_kutta2
         call update_auxiliary_variables (ETM)
 
         !% junction branch flowrate and velocity update
-        if (.not. setting%Junction%isDynamic) then
+        if (.not. setting%Junction%isDynamicYN) then
             call ll_junction_branch_flowrate_and_velocity (ETM) 
         else
             !% called here because volume update on JB isn't known until after eta updated on JM 
@@ -160,7 +160,7 @@ module runge_kutta2
         call update_auxiliary_variables(ETM)
 
         !% junction branch flowrate and velocity update
-        if (.not. setting%Junction%isDynamic) then
+        if (.not. setting%Junction%isDynamicYN) then
             call ll_junction_branch_flowrate_and_velocity(ETM) 
         else
             !% called here because volume update on JB isn't known until after eta updated on JM 
@@ -472,7 +472,7 @@ module runge_kutta2
         end if
 
         !% junction branch momentum source
-        if (setting%Junction%isDynamic) then
+        if (setting%Junction%isDynamicYN) then
             call ll_momentum_source_JB (ETM, istep)
         end if
 

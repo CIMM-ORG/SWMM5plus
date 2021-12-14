@@ -236,6 +236,7 @@ module define_globals
     real(8), parameter :: seconds_per_hour = 3600.0
     real(8), parameter :: seconds_per_day  = 86400.0
 
+    integer            :: dummyI
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2

@@ -391,7 +391,7 @@ contains
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%BC%slots < 2) then
+        if (setting%BC%TimeSlotsStored < 2) then
             print *, "Error: the number of slots has to be greater than 2"
             stop
         end if
@@ -400,7 +400,7 @@ contains
             allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headI')
 
-            allocate(BC%headR_timeseries(N_headBC, setting%BC%slots, N_headR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%headR_timeseries(N_headBC, setting%BC%TimeSlotsStored, N_headR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headR_timeseries')
 
             allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
@@ -414,7 +414,7 @@ contains
             allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowI')
 
-            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%slots, N_flowR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%TimeSlotsStored, N_flowR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowR_timeseries')
 
             allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
@@ -442,7 +442,7 @@ contains
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) then
+        if (setting%Profile%useYN) then
             !% allocate profiler data
             allocate(profiler_data(Nrow_pf,Ncol_pf), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'profiler_data')
@@ -670,16 +670,16 @@ contains
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         nLevel => setting%Output%StoredLevels
 
         !% --- bug check
         if (nLevel < 1) then
             write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
-            write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
+            write(*,"(A)") '... which should have caused Output.Report.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
-            write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
+            write(*,"(A,i8)") '... etting%Output%Report%suppress_MultiLevel_Output ', setting%Output%Report%suppress_MultiLevel_Output
             stop
         end if
 
@@ -707,16 +707,16 @@ contains
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         nLevel => setting%Output%StoredFileNames
 
         !% --- bug check
         if (nLevel < 1) then
             write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
-            write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
+            write(*,"(A)") '... which should have caused Output.Report.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
-            write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
+            write(*,"(A,i8)") '... etting%Output%Report%suppress_MultiLevel_Output ', setting%Output%Report%suppress_MultiLevel_Output
             stop
         end if
 
@@ -746,7 +746,7 @@ contains
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% --- shorthand for the stored levels
         nLevel => setting%Output%StoredLevels
@@ -755,7 +755,7 @@ contains
         !% --- increase by 2 for start and end files
         if (setting%Output%Report%TimeInterval > zeroR) then
             setting%Output%MaxExpectedLevels = 2 + &
-                ceil((setting%Time%End - setting%Output%Report%StartTime) &
+                ceiling((setting%Time%End - setting%Output%Report%StartTime) &
                       /setting%Output%Report%TimeInterval)
         else
             write (*,"(A)") 'The Report Interval (SWMM inp file REPORT_STEP) is less than zero.'
@@ -775,9 +775,9 @@ contains
         !% --- bug check
         if (nLevel < 1) then
             write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
-            write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
+            write(*,"(A)") '... which should have caused Output.Report.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
-            write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output=', setting%Output%suppress_MultiLevel_Output
+            write(*,"(A,i8)") '... etting%Output%Report%suppress_MultiLevel_Output=', setting%Output%Report%suppress_MultiLevel_Output
             stop
         end if
 

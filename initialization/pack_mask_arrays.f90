@@ -216,7 +216,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         !% don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -255,7 +255,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         !% don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         fIdx => faceI(:,fi_Lidx)
 

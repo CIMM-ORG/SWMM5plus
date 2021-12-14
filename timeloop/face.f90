@@ -48,7 +48,7 @@ module face
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             
-            if (setting%Profile%YN) call util_profiler_start (pfc_face_interpolation)
+            if (setting%Profile%useYN) call util_profiler_start (pfc_face_interpolation)
         !%--------------------------------------------------------------------
 
         Npack => npack_faceP(faceCol)
@@ -90,7 +90,7 @@ module face
 
         !%-------------------------------------------------------------------
         !% Closing
-            if (setting%Profile%YN) call util_profiler_stop (pfc_face_interpolation)
+            if (setting%Profile%useYN) call util_profiler_stop (pfc_face_interpolation)
 
             if (setting%Debug%File%face)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -217,7 +217,7 @@ module face
         end if
 
         !%  limit high velocities
-        if (setting%Limiter%Velocity%UseLimitMax) then
+        if (setting%Limiter%Velocity%UseLimitMaxYN) then
             where(abs(faceR(face_P,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
                 faceR(face_P,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
                     faceR(face_P,fr_Velocity_d))
@@ -348,7 +348,7 @@ module face
             end if
 
             !%  limit high velocities
-            if (setting%Limiter%Velocity%UseLimitMax) then
+            if (setting%Limiter%Velocity%UseLimitMaxYN) then
                 where(abs(faceR(face_P,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
                     faceR(face_P,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
                         faceR(face_P,fr_Velocity_d))
@@ -659,7 +659,6 @@ module face
             character(64) :: subroutine_name = 'face_head_average_on_element'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            print *, 'in zzz'
             if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
             if (icrash) return
             if (setting%Debug%File%face) &

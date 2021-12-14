@@ -82,7 +82,7 @@ void DLLEXPORT api_finalize()
     swmm_end();
     swmm_close();
 
-    // frees double variables in API
+    //frees double variables in API
     for (i = 0; i < NUM_API_DOUBLE_VARS; i++)
     {
         if (api->double_vars[i] != NULL)
@@ -322,23 +322,29 @@ int DLLEXPORT api_get_headBC(
 }
 
 //===============================================================================
-int DLLEXPORT api_get_report_times(
+int DLLEXPORT api_get_SWMM_times(
+    double* starttime_epoch,
+    double* endtime_epoch,
     double* report_start_datetime, 
     int*    report_step, 
     int*    hydrology_step, 
     int*    hydrology_dry_step, 
-    double* hydraulic_step) 
+    double* hydraulic_step,
+    double* total_duration) 
 {
     int error;
 
-    error = check_api_is_initialized("api_get_report_times");
+    error = check_api_is_initialized("api_get_SWMM_times");
     if (error) return error;
 
+    *starttime_epoch       = StartDateTime;
+    *endtime_epoch         = EndDateTime;
     *report_start_datetime = ReportStart;
     *report_step           = ReportStep;
     *hydrology_step        = WetStep;
     *hydrology_dry_step    = DryStep;
     *hydraulic_step        = RouteStep;
+    *total_duration        = TotalDuration / 1000.0;
 
     // printf(" report start datetime = %f \n",ReportStart);
     // printf(" report step = %d \n", ReportStep);
@@ -1431,7 +1437,7 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     // Get node index
     *node_idx = Subcatch[sc_idx].outNode;
 
-    printf("... sc_idx, node_idx %d , %d \n",sc_idx,*node_idx);
+    //printf("... sc_idx, node_idx %d , %d \n",sc_idx,*node_idx);
     
     return 0;
 }

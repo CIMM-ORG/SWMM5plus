@@ -193,12 +193,15 @@ int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flow
 int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC);
 //brh20211208s
 //int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
-int DLLEXPORT api_get_report_times(
+int DLLEXPORT api_get_SWMM_times(
+  double * starttime_epoch,
+  double * endtime_epoch,
   double * report_start_datetime, 
   int * report_step, 
   int * hydrology_step,
   int * hydrology_dry_step,
-  double * hydraulic_step);
+  double * hydraulic_step,
+  double * total_duration);
   double DLLEXPORT api_get_NewRunoffTime();
 //brh20211208e
 

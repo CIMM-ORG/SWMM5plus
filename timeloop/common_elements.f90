@@ -45,7 +45,7 @@ module common_elements
         
         !% Velocity limiter
         elemYN(eIdx,eYN_IsAdHocFlowrate) = .true.
-        if (setting%Limiter%Velocity%UseLimitMax) then
+        if (setting%Limiter%Velocity%UseLimitMaxYN) then
             if (abs(Velocity) > Vmax) then
                 Velocity = sign(0.99*Vmax,Velocity)
                 isAdHocFlowrate = .true.

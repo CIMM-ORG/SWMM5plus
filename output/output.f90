@@ -339,7 +339,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% don't do this if there are no elements to output
         if (.not. setting%Output%OutputElementsExist) return
@@ -380,7 +380,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% don't do this if there are no faces to output
         if (.not. setting%Output%OutputFacesExist) return
@@ -421,7 +421,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% don't do this if there are no output elements
         if (.not. setting%Output%OutputElementsExist) return
@@ -567,7 +567,7 @@ contains
         end if
 
         !% --- set the type of time units for the output
-        select case (setting%Output%Report.TimeUnits)
+        select case (setting%Output%Report%TimeUnits)
             case (InSeconds)
                 output_typeUnits_withtime_elemR(1) = 'seconds'
             case (InMinutes)
@@ -578,7 +578,7 @@ contains
                 output_typeUnits_withtime_elemR(1) = 'days'
             case default
                 write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.Report.TimeUnits of...'
-                write(*,*) setting%Output%Report.TimeUnits
+                write(*,*) setting%Output%Report%TimeUnits
                 stop
         end select
 
@@ -601,7 +601,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is outpuot is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% don't do this if there are no output faces
         if (.not. setting%Output%OutputFacesExist) return
@@ -722,7 +722,7 @@ contains
         end if
 
         !% --- set the type of time units for the output
-        select case (setting%Output%Report.TimeUnits)
+        select case (setting%Output%Report%TimeUnits)
             case (InSeconds)
                 output_typeUnits_withtime_faceR(1) = 'seconds'
             case (InMinutes)
@@ -733,7 +733,7 @@ contains
                 output_typeUnits_withtime_faceR(1) = 'days'
             case default
                 write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.Report.TimeUnits of...'
-                write(*,*) setting%Output%Report.TimeUnits
+                write(*,*) setting%Output%Report%TimeUnits
                 stop
         end select
 
@@ -763,7 +763,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% --- increment the stored time level counter
         setting%Output%LastLevel = setting%Output%LastLevel+1
@@ -851,7 +851,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% --- only run serial
         if (this_image() .ne. 1) return
@@ -1073,7 +1073,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% --- only run serial
         if (this_image() .ne. 1) return
@@ -1099,7 +1099,7 @@ contains
         !% --- the model starting time
         write(thisUnit) setting%Time%StartEpoch
         !% --- integer key for report time units (e.g. IsHours)
-        write(thisUnit) setting%Output%Report.TimeUnits
+        write(thisUnit) setting%Output%Report%TimeUnits
         !% --- total number number of output elements
         write(thisUnit) sum(N_OutElem(:))
         !% --- number of output element types (excluding time)
@@ -1264,7 +1264,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
-        if (setting%Output%suppress_MultiLevel_Output) return
+        if (setting%Output%Report%suppress_MultiLevel_Output) return
 
         !% run as serial as part of finalization
         if (this_image() .ne. 1) return

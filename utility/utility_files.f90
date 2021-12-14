@@ -45,28 +45,28 @@ contains
         setting%File%UnitNumber%setting_file  = setting%File%last_unit
 
         !% --- link and node input files
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%links_input_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%links_input_file  = setting%File%last_unit
 
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%nodes_input_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%nodes_input_file  = setting%File%last_unit
 
         !% --- debug setup link files
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%debug_setup_linkR_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%debug_setup_linkR_file  = setting%File%last_unit
 
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%debug_setup_linkI_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%debug_setup_linkI_file  = setting%File%last_unit
 
         !% --- debug setup node files
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%debug_setup_nodeR_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%debug_setup_nodeR_file  = setting%File%last_unit
 
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%debug_setup_nodeI_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%debug_setup_nodeI_file  = setting%File%last_unit
 
-        setting%File%last_unit = setting%File%last_unit+1
-        setting%File%UnitNumber%debug_setup_nodeYN_file  = setting%File%last_unit
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%debug_setup_nodeYN_file  = setting%File%last_unit
 
         !setting%File%last_unit = setting%File%last_unit+1
         !setting%File%UnitNumber%outputML_combined_file  = setting%File%last_unit
@@ -262,7 +262,7 @@ contains
         setting_path = setting%File%setting_file
         library_path = setting%File%library_folder
 
-        !print *, 'libary
+        !print *, 'library
         !% =======================
         !% --- Library folder (for SWMM library)
         default_path = "" ! added on to base_folder
@@ -315,18 +315,25 @@ contains
         !print *, 'setting'
         !% =======================
         !% --- Parse the settings.json file
-        !% --- HACK -- set the default path for settings file to subfolder "definitions"
-        !% --- this assumes that SWMM is called from the directory with the source code.
-        default_path = './definitions/settings.json'
-        call util_file_parse_folder_or_file_path ( &
-            setting_path, setting%File%project_folder, default_path,  setting%File%setting_file)
-        !% --- check that setting file exists
-        this_purpose = 'setting file (-s command line)'
-        ireturn = 0
-        fext = '.json'
-        call util_file_check_if_file_exist ( &
-            setting%File%UnitNumber%setting_file, setting%File%setting_file, &
-            this_purpose, ireturn, fext)
+        if (trim(setting%File%setting_File) == "") then 
+            setting%JSON_FoundFileYN = .false.
+            write(*,"(A)") "************************************************************************"
+            write(*,"(A)") "** setting.json file not specified (-s [filepathname] on command line **"
+            write(*,"(A)") "** Running SWMM5+ with default settings and data from *.inp file only **"
+            write(*,"(A)") "************************************************************************"
+        else
+            default_path = 'settings.json'
+            call util_file_parse_folder_or_file_path ( &
+                setting_path, setting%File%project_folder, default_path,  setting%File%setting_file)
+            !% --- check that setting file exists
+            this_purpose = 'setting file (-s command line)'
+            ireturn = 0
+            fext = '.json'
+            call util_file_check_if_file_exist ( &
+                setting%File%UnitNumber%setting_file, setting%File%setting_file, &
+                this_purpose, ireturn, fext)
+            if (ireturn == 0) setting%JSON_FoundFileYN = .true.
+        end if 
 
         !print *, 'link'
         !% 20211206brh --- I believe this is all obsolete.
@@ -352,21 +359,21 @@ contains
 
         !print *, 'nodes'
         !% --- nodes_input.csv
-        if (setting%Output%print_nodes_csv) then
-            thisfile = 'nodes_input.csv'
-            default_path = ""  ! added on to project_folder
-            call util_file_parse_folder_or_file_path ( &
-                thisfile, setting%File%project_folder, default_path,  setting%File%nodes_input_file)
-            this_purpose = 'link input csv file'
-            ireturn = 1
-            fext = '.csv'
-            call util_file_check_if_file_exist ( &
-                setting%File%UnitNumber%nodes_input_file, setting%File%nodes_input_file, &
-                this_purpose, ireturn, fext)
-            if (ireturn == 2) then
-                setting%File%nodes_input_file_exist = .false.
-            end if
-        endif
+        ! if (setting%Output%print_nodes_csv) then
+        !     thisfile = 'nodes_input.csv'
+        !     default_path = ""  ! added on to project_folder
+        !     call util_file_parse_folder_or_file_path ( &
+        !         thisfile, setting%File%project_folder, default_path,  setting%File%nodes_input_file)
+        !     this_purpose = 'link input csv file'
+        !     ireturn = 1
+        !     fext = '.csv'
+        !     call util_file_check_if_file_exist ( &
+        !         setting%File%UnitNumber%nodes_input_file, setting%File%nodes_input_file, &
+        !         this_purpose, ireturn, fext)
+        !     if (ireturn == 2) then
+        !         setting%File%nodes_input_file_exist = .false.
+        !     end if
+        ! endif
 
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -581,93 +588,93 @@ contains
         !% --- HACK -- need error handling for all the mkdir below
 
         !% --- debug and swmm output folders
-        if (setting%Debug%Setup) then
+        if (setting%Debug%SetupYN) then
 
-            !% --- setup the subfolders for links and nodes
-            setting%File%debug_setup_link_folder = trim(setting%File%output_timestamp_subfolder) &
-                // '/' // 'debug_setup/link'
-            setting%File%debug_setup_node_folder = trim(setting%File%output_timestamp_subfolder) &
-                // '/' // 'debug_setup/node'
+            ! !% --- setup the subfolders for links and nodes
+            ! setting%File%debug_setup_link_folder = trim(setting%File%output_timestamp_subfolder) &
+            !     // '/' // 'debug_setup/link'
+            ! setting%File%debug_setup_node_folder = trim(setting%File%output_timestamp_subfolder) &
+            !     // '/' // 'debug_setup/node'
 
-            !% --- create directories only using image 1
-            if ( this_image() == 1) then
-                !% --- create the debug_setup folder
-                call execute_command_line ( &
-                    ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_setup'), &
-                    cmdstat=istat, cmdmsg=cmsg)
-                !% --- create the subfolders for links and nodes
-                call execute_command_line ( &
-                    ('mkdir '// trim(setting%File%debug_setup_link_folder)), cmdstat=istat, cmdmsg=cmsg)
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%debug_setup_node_folder)), cmdstat=istat, cmdmsg=cmsg)
-            end if
+            ! !% --- create directories only using image 1
+            ! if ( this_image() == 1) then
+            !     !% --- create the debug_setup folder
+            !     call execute_command_line ( &
+            !         ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_setup'), &
+            !         cmdstat=istat, cmdmsg=cmsg)
+            !     !% --- create the subfolders for links and nodes
+            !     call execute_command_line ( &
+            !         ('mkdir '// trim(setting%File%debug_setup_link_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !     call execute_command_line (&
+            !         ('mkdir '// trim(setting%File%debug_setup_node_folder)), cmdstat=istat, cmdmsg=cmsg)
+            ! end if
 
         end if
-            if (setting%Debug%Output) then
+            ! if (setting%Debug%OutputYN) then
 
-                !% --- setup the subfolders for links and nodes
-                setting%File%debug_output_link_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/link'
+            !     !% --- setup the subfolders for links and nodes
+            !     setting%File%debug_output_link_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'debug_output/link'
 
-                setting%File%debug_output_node_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/node'
+            !     setting%File%debug_output_node_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'debug_output/node'
 
-                !% --- setup subfolders for elemR, faceR, summmary
-                setting%File%debug_output_elemR_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/elemR'
+            !     !% --- setup subfolders for elemR, faceR, summmary
+            !     setting%File%debug_output_elemR_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'debug_output/elemR'
 
-                setting%File%debug_output_faceR_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/faceR'
+            !     setting%File%debug_output_faceR_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'debug_output/faceR'
 
-                setting%File%debug_output_summary_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/summary'
+            !     setting%File%debug_output_summary_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'debug_output/summary'
 
-                !% --- setup swmm% subfolders for link an node
-                setting%File%swmm5_output_link_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'swmm5_output/link'
+            !     !% --- setup swmm% subfolders for link an node
+            !     setting%File%swmm5_output_link_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'swmm5_output/link'
 
-                setting%File%swmm5_output_node_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'swmm5_output/node'
+            !     setting%File%swmm5_output_node_folder = trim(setting%File%output_timestamp_subfolder) &
+            !         // '/' // 'swmm5_output/node'
 
 
-                !% --- create directories only using image 1
-                if ( this_image() == 1) then
-                    !% --- create the debug_output folder
-                    call execute_command_line ( &
-                        ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_output'), &
-                        cmdstat=istat, cmdmsg=cmsg)
+            !     !% --- create directories only using image 1
+            !     if ( this_image() == 1) then
+            !         !% --- create the debug_output folder
+            !         call execute_command_line ( &
+            !             ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_output'), &
+            !             cmdstat=istat, cmdmsg=cmsg)
 
-                    !% --- create the subfolders for links and nodes
-                    call execute_command_line ( &
-                        ('mkdir '// trim(setting%File%debug_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !         !% --- create the subfolders for links and nodes
+            !         call execute_command_line ( &
+            !             ('mkdir '// trim(setting%File%debug_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)
 
-                    call execute_command_line (&
-                        ('mkdir '// trim(setting%File%debug_output_node_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !         call execute_command_line (&
+            !             ('mkdir '// trim(setting%File%debug_output_node_folder)), cmdstat=istat, cmdmsg=cmsg)
 
-                    !% --- create subfolders for elemR, faceR, summmary
-                    call execute_command_line (&
-                        ('mkdir '// trim(setting%File%debug_output_elemR_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !         !% --- create subfolders for elemR, faceR, summmary
+            !         call execute_command_line (&
+            !             ('mkdir '// trim(setting%File%debug_output_elemR_folder)), cmdstat=istat, cmdmsg=cmsg)
 
-                    call execute_command_line (&
-                        ('mkdir '// trim(setting%File%debug_output_faceR_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !         call execute_command_line (&
+            !             ('mkdir '// trim(setting%File%debug_output_faceR_folder)), cmdstat=istat, cmdmsg=cmsg)
 
-                    call execute_command_line (&
-                        ('mkdir '// trim(setting%File%debug_output_summary_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !         call execute_command_line (&
+            !             ('mkdir '// trim(setting%File%debug_output_summary_folder)), cmdstat=istat, cmdmsg=cmsg)
 
-                    !% --- create the swmm_output folder
-                    call execute_command_line ( &
-                        ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/swmm5_output'), &
-                        cmdstat=istat, cmdmsg=cmsg)
+            !         !% --- create the swmm_output folder
+            !         call execute_command_line ( &
+            !             ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/swmm5_output'), &
+            !             cmdstat=istat, cmdmsg=cmsg)
 
-                    !% --- create swmm% subfolders for link an node
-                    call execute_command_line (&
-                        ('mkdir '// trim(setting%File%swmm5_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !         !% --- create swmm% subfolders for link an node
+            !         call execute_command_line (&
+            !             ('mkdir '// trim(setting%File%swmm5_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)
 
-                    call execute_command_line (&
-                        ('mkdir '// trim(setting%File%swmm5_output_node_folder)), cmdstat=istat, cmdmsg=cmsg)
-                end if
-            end if
-            !if (setting%Debug%Output) then
+            !         call execute_command_line (&
+            !             ('mkdir '// trim(setting%File%swmm5_output_node_folder)), cmdstat=istat, cmdmsg=cmsg)
+            !     end if
+            ! end if
+            !if (setting%Debug%OutputYN) then
                 ! call system('mkdir debug_output/elemR')
                 ! call system('mkdir debug_output/faceR')
                 ! call system('mkdir debug_output/summary')
@@ -680,7 +687,7 @@ contains
         ! end if
 
         ! !% --- debug and swmm output files
-        ! if (setting%Debug%Setup) then
+        ! if (setting%Debug%SetupYN) then
         !     !% --- link files
         !     setting%File%debug_setup_linkR_file = trim(setting%File%debug_setup_link_folder) // '/linkR.csv'
         !     setting%File%debug_setup_linkI_file = trim(setting%File%debug_setup_link_folder) // '/linkI.csv'
@@ -689,7 +696,7 @@ contains
         !     setting%File%debug_setup_nodeI_file  = trim(setting%File%debug_setup_node_folder) // '/nodeI.csv'
         !     setting%File%debug_setup_nodeYN_file = trim(setting%File%debug_setup_node_folder) // '/nodeYN.csv'
         ! end if
-        ! if (setting%Debug%Output .or. setting%Output%report) then
+        ! if (setting%Debug%OutputYN .or. setting%Output%report) then
         !     write(str_image, '(i5.5)') this_image()
         !     setting%File%debug_output_elemR_file = trim(setting%File%debug_output_elemR_folder) &
         !         // 'i' //trim(str_image) //'_CC_' // trim(ADJUSTL(str_link_node_idx)) &
@@ -780,7 +787,7 @@ contains
         if (.not. folder_exist) then
             !% --- if ireturn == 0 we don't crash on non-existence
             if (ireturn == 0) then
-                if (setting%File%force_folder_creation) then
+                if (setting%File%force_folder_creationYN) then
                     if (this_image() == 1) then
                         call execute_command_line (('mkdir '//trim(thisfolder)), &
                             exitstat=istat, cmdmsg=cmsg)
@@ -836,7 +843,7 @@ contains
         ! !% --- change directory unsuccessful
         ! if (ierr /= 0) then
         !     if (ireturn == 0) then
-        !         if (setting%File%force_folder_creation) then
+        !         if (setting%File%force_folder_creationYN) then
         !             if (this_image() == 1) then
         !                 call execute_command_line (('mkdir '//trim(thisfolder)), &
         !                     cmdstat=istat, cmdmsg=cmsg)
