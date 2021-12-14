@@ -2,6 +2,7 @@ module boundary_conditions
 
     use interface
     use define_indexes
+    use define_keys
     use define_globals
     use utility, only: util_print_warning
     use utility_interpolate
@@ -197,7 +198,8 @@ contains
         integer, intent(in) :: bc_idx
         integer             :: ii, NN
         real(8)             :: new_head_time
-        real(8)             :: new_head_value
+        real(8)             :: new_head_value, normDepth, critDepth
+        integer, pointer    :: nodeIdx, faceIdx, elemUpIdx
         character(64)       :: subroutine_name = "bc_fetch_head"
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -207,8 +209,51 @@ contains
         NN = setting%BC%slots
 
         if (BC%headIdx(bc_idx) == 0) then ! First fetch
-            BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
-            BC%headR_timeseries(bc_idx, 1, br_value) = interface_get_headBC(bc_idx, setting%Time%Start)
+            if ((BC%headI(bc_idx, bi_subcategory) == BCH_fixed) .or. &
+                (BC%headI(bc_idx, bi_subcategory) == BCH_tseries)) then
+
+                BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
+                BC%headR_timeseries(bc_idx, 1, br_value) = interface_get_headBC(bc_idx, setting%Time%Start)
+
+            else if (BC%headI(bc_idx, bi_subcategory) == BCH_free) then
+
+                BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
+                nodeIdx => BC%headI(bc_idx, bi_node_idx)
+
+                if (node%R(nodeIdx, nr_Zbottom) > zeroR) then
+                    BC%headR_timeseries(bc_idx, 1, br_value) = zeroR
+                else
+
+                    faceIdx => BC%headI(bc_idx, bi_face_idx)
+                    elemUpIdx => faceI(faceIdx, fi_Melem_uL)
+
+                    if (elemI(elemUpIdx,ei_elementType) == CC) then
+                        normDepth = elemR(elemUpIdx,er_Depth)
+                        print*, 'BCH_free is under dev'
+                        stop 123
+                    else
+                        BC%headR_timeseries(bc_idx, 1, br_value) = zeroR
+                    end if
+
+                end if 
+            else if (BC%headI(bc_idx, bi_subcategory) == BCH_normal) then
+
+                BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
+                nodeIdx => BC%headI(bc_idx, bi_node_idx)
+
+                if (node%R(nodeIdx, nr_Zbottom) > zeroR) then
+                    BC%headR_timeseries(bc_idx, 1, br_value) = zeroR
+                else
+                    faceIdx   => BC%headI(bc_idx, bi_face_idx)
+                    elemUpIdx => faceI(faceIdx, fi_Melem_uL)
+
+                    if (elemI(elemUpIdx,ei_elementType) == CC) then
+                        BC%headR_timeseries(bc_idx, 1, br_value) = elemR(elemUpIdx,er_Depth)
+                    else
+                        BC%headR_timeseries(bc_idx, 1, br_value) = zeroR
+                    end if
+                end if
+            end if
         else ! last value becomes first
             BC%headR_timeseries(bc_idx, 1, br_time) = BC%headR_timeseries(bc_idx, NN, br_time)
             BC%headR_timeseries(bc_idx, 1, br_value) = BC%headR_timeseries(bc_idx, NN, br_value)
@@ -301,6 +346,33 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine bc_interpolate
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+! subroutine bc_get_CC_critical_depth(elemIdx)
+!     !%-----------------------------------------------------------------------------
+!     !% Description:
+!     !% gets the critical depth of a CC element
+!     !%-----------------------------------------------------------------------------
+!         integer, intent(in) :: elemIdx
+!         integer, pointer    :: elemGeometry 
+!         character(64) :: subroutine_name = 'bc_get_CC_critical_depth'
+!     !%-----------------------------------------------------------------------------
+!         if (icrash) return
+!         if (setting%Debug%File%boundary_conditions)  &
+!             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+!         elemGeometry => elemI(elemIdx,ei_geometryType)
+
+!         select case (elemGeometry)
+
+!             case()
+
+!         if (setting%Debug%File%boundary_conditions) &
+!             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+! end subroutine bc_get_CC_critical_depth
 !%
 !%==========================================================================
 !% END OF MODULE

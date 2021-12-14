@@ -161,11 +161,6 @@ contains
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
 
-        !% --- initialize boundary condition
-        if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
-        call init_bc()
-        call init_time()
-
         if (setting%Output%Verbose) then
             if (this_image() == 1) then
             if ((N_link > 5000) .or. (N_node > 5000)) then
@@ -176,6 +171,11 @@ contains
             endif
         endif
         call init_IC_toplevel ()
+
+        !% --- initialize boundary condition
+        if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
+        call init_bc()
+        call init_time()
 
         print *
         print *, 'WORK NEEDED HERE ',73794

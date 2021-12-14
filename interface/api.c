@@ -267,6 +267,12 @@ int DLLEXPORT api_get_headBC(
             *headBC = FTTOM(Outfall[i].fixedStage);
             return 0;
 
+        case FREE_OUTFALL:
+            return 0;
+
+        case NORMAL_OUTFALL:
+            return 0;
+
         default:
             *headBC = API_NULL_VALUE_I;
             sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[i].type, Node[node_idx].ID);
