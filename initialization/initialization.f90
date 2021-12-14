@@ -161,6 +161,11 @@ contains
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
 
+        !% --- initialize boundary condition
+        if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
+        call init_bc()
+        call init_time()
+
         if (setting%Output%Verbose) then
             if (this_image() == 1) then
             if ((N_link > 5000) .or. (N_node > 5000)) then
@@ -171,11 +176,6 @@ contains
             endif
         endif
         call init_IC_toplevel ()
-
-        !% --- initialize boundary condition
-        if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
-        call init_bc()
-        call init_time()
 
         print *
         print *, 'WORK NEEDED HERE ',73794
@@ -635,6 +635,8 @@ contains
 
                     BC%flowI(ii, bi_node_idx) = nidx
                     BC%flowI(ii, bi_idx) = ii
+                    BC%flowYN(ii, bYN_read_input_file) = .true.
+
                     nbasepat = &
                         interface_get_node_attribute(nidx, api_node_extInflow_basePat)
                     ntseries = &
@@ -674,18 +676,23 @@ contains
 
                 if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_FREE_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_free
+                    BC%headYN(ii, bYN_read_input_file) = .false.
                 else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_NORMAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_normal
+                    BC%headYN(ii, bYN_read_input_file) = .false.
                 else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_FIXED_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_fixed
+                    BC%headYN(ii, bYN_read_input_file) = .true.
                 else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_TIDAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tidal
+                    BC%headYN(ii, bYN_read_input_file) = .true.
                 else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_TIMESERIES_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tseries
+                    BC%headYN(ii, bYN_read_input_file) = .true.
                 end if
             end do
         end if
-
+        
         call bc_step()
         call pack_bc()
 

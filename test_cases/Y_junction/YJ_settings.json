@@ -270,7 +270,7 @@
     "Debug" : {
         "File" : {
             "adjust" : false,
-            "boundary_conditions" : false,
+            "boundary_conditions" : true,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,

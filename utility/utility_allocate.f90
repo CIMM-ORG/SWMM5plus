@@ -352,29 +352,47 @@ contains
         if (N_headBC > 0) then
             allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headI')
+            BC%headI(:,:) = nullvalueI
+
+            allocate(BC%headYN(N_headBC, N_headYN), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headYN')
+            BC%headYN(:,:) = nullvalueL
 
             allocate(BC%headR_timeseries(N_headBC, setting%BC%slots, N_headR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headR_timeseries')
+            BC%headR_timeseries(:,:,:) = nullvalueR
 
             allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headIdx')
+            BC%headIdx(:) = nullvalueI
 
             allocate(BC%headRI(N_headBC), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headRI')
+            BC%headRI(:) = nullvalueR
+
         end if
 
         if (N_flowBC > 0) then
             allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowI')
+            BC%flowI(:,:) = nullvalueI
+
+            allocate(BC%flowYN(N_flowBC, N_flowYN), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowYN')
+            BC%flowYN(:,:) = nullvalueL
 
             allocate(BC%flowR_timeseries(N_flowBC, setting%BC%slots, N_flowR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowR_timeseries')
+            BC%flowR_timeseries(:,:,:) = nullvalueR
 
             allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowIdx')
+            BC%flowIdx(:) = nullvalueI
 
             allocate(BC%flowRI(N_flowBC), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowRI(N_flowBC)')
+            BC%flowRI(:) = nullvalueR
+            
         end if
 
         if (setting%Debug%File%utility_allocate) &

@@ -255,7 +255,7 @@ module face
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
         character(64) :: subroutine_name = 'face_interpolation_dnBC_byPack'
         integer :: ii
-        integer, pointer :: face_P(:), eup(:), idx_P(:)
+        integer, pointer :: face_P(:), eup(:), idx_P(:), bcType
         real :: DownStreamBcHead
 
         !%-----------------------------------------------------------------------------
