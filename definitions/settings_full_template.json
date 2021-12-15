@@ -138,7 +138,7 @@
         "StoredFileNames" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 10
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -156,7 +156,7 @@
             "isWaveSpeedOut"    : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" : true,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,

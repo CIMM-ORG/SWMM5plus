@@ -466,7 +466,6 @@ contains
 
         call interface_get_SWMM_times()
 
-
         if (setting%Debug%File%interface) then
             print *, new_line("")
             print *, "SWMM_N_link", SWMM_N_link
@@ -1688,6 +1687,10 @@ contains
         setting%SWMMinput%RouteStep             = RouteStep
         setting%SWMMinput%DryStep               = DryStep
         setting%SWMMinput%TotalDuration         = TotalDuration
+
+        !print *, '............'
+        !print *, 'in ',trim(subroutine_name), starttime_epoch, endtime_epoch, setting%SWMMinput%EndEpoch
+        !print *, '............'
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

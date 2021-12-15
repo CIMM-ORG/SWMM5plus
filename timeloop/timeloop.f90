@@ -84,6 +84,8 @@ contains
         setting%Time%Hydrology%LastTime  = timeNow  
         setting%Time%Hydraulics%LastTime = timeNow
 
+        print *, 'here37685 ',dtHydraulics
+
         !% local T/F that changes with each time step depending on whether or 
         !% not the hydrology or hydraulics are conducted in that step
         doHydrology  = useHydrology 
@@ -97,6 +99,8 @@ contains
             nextHydrologyTime = timeEnd + onethousandR * dtTol
         end if
 
+        print *, 'here 37686 ',dtHydraulics
+
         !% get the initial dt and the next hydraulics time
         if (useHydraulics) then
             call tl_update_hydraulics_timestep()
@@ -107,6 +111,8 @@ contains
             setting%Output%Report%suppress_MultiLevel_Output = .true.
         end if
 
+        print *, 'here 3875 ',dtHydraulics
+
         !% check to see if there is an initial step to hydrology
         !% if not, then skip the initial tl_hydrology
         if (( abs(nextHydrologyTime - timeNow) < dtTol) .and. (doHydrology) ) then
@@ -114,6 +120,8 @@ contains
         else
             doHydrology = .false.
         endif 
+
+        print *, 'here 9875 ',dtHydraulics
 
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         !% The loop starts at t = setting%Time%Start
@@ -165,6 +173,8 @@ contains
                 else
                     !% continue
                 end if
+
+                print *, 'here 87355 ',dtHydraulics
 
                 !% perform hydraulic routing
                 call tl_hydraulics()
@@ -290,18 +300,26 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
+        print *, 'here aaa75',setting%Time%Hydraulics%Dt
+
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select()
         end if
+
+        print *, 'here bbb75',setting%Time%Hydraulics%Dt
 
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
         call pack_dynamic_arrays()
         ! print *, "Need to decide on pack_dynamic_arrays 94837"
 
+        print *, 'here ccc75',setting%Time%Hydraulics%Dt
+
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values()
+
+        print *, 'here ddd75',setting%Time%Hydraulics%Dt
 
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
@@ -394,6 +412,7 @@ contains
 
         if ((matchHydrologyStep) .and. (useHydrology)) then
     
+            !print *, ' in match ', trim(subroutine_name)
             !% brh20211209 
             !rm nextTimeHydrology = (setting%Time%Hydrology%Step + 1) * setting%Time%Hydrology%Dt
             
@@ -404,10 +423,10 @@ contains
             !rm               maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * timeleft / length(thisP)))
             thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,timeleft)
 
-            !print *, 'timeLeft ',timeLeft    
-            !print *, 'thisCFL  ',thisCFL    
-            !print *, 'maxCFL   ',maxCFL
-            !print *, 'oldDT    ',oldDT       
+            print *, 'timeLeft ',timeLeft    
+            print *, 'thisCFL  ',thisCFL    
+            print *, 'maxCFL   ',maxCFL
+            print *, 'oldDT    ',oldDT       
 
             !% check to see if a single time step to match the hydrology time is possible
             if (thisCFL < maxCFL) then
@@ -426,10 +445,13 @@ contains
                     newDT = oldDT
                     !% check that resetting to oldDT didn't cause a problem
                     thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmallvolume,newDT)
+                    
+                    print *, 'here thisCFL ',thisCFL
                     if (thisCFL > maxCFL) then 
                         !% if CFL to large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
                     end if
+                    print *, 'here newDT ',newDT
                 end if
             else
                 !% if more than one time step is needed
@@ -496,7 +518,9 @@ contains
         end if
 
         !% if dt is large and there is more than 2 steps, then round to an integer number
-        if (neededSteps > 2) then
+        if ((matchHydrologyStep) .and. (useHydrology) .and. (neededSteps .le. 2)) then
+            !% don't round the dt
+        else
             if (newDT > fiveR) then
                 !% round larger dt to counting numbers
                 newDT = real(floor(newDT),8)
@@ -776,9 +800,9 @@ contains
                     endif
 
                     ! write a time counter
-                    write(*,"(A12,i8,a17,F9.2,a1,a3,a6,f5.2)") &
+                    write(*,"(A12,i8,a17,F9.2,a1,a3,a6,f9.2,a3)") &
                         'time step = ',step,'; model time = ',thistime, &
-                        ' ',timeunit,'; dt = ',dt
+                        ' ',timeunit,'; dt = ',dt,' s'
 
                     ! write estimate of time remaining
                     if (seconds_to_completion < sixtyR) then
@@ -828,6 +852,18 @@ contains
 
         outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt/ length(thisP)), &
                         maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * dt / length(thisP)))
+
+        print * , ' '
+        print *, velocity(thisP)
+        print *, ' '
+        print *, wavespeed(thisP)
+        print *, elemR(thisP,er_Area)
+        print *, elemR(thisP,er_Head)
+        print *, elemR(thisP,er_WaveSpeed)
+        print *, elemR(thisP,er_Preissmann_Celerity)
+        print *, ' '
+        print *, outvalue
+        stop 39875
 
     end function tl_get_max_cfl    
 !%

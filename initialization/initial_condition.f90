@@ -28,46 +28,47 @@ module initial_condition
     private
 
 contains
-    !
-    !==========================================================================
-    ! PUBLIC
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine init_IC_toplevel ()
-    !--------------------------------------------------------------------------
-    !
-    !% set up the initial conditions for all the elements
-    !
-    !--------------------------------------------------------------------------
-
-        integer          :: ii
-        integer, pointer :: solver
-        character(64)    :: subroutine_name = 'init_IC_toplevel'
-
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        solver => setting%Solver%SolverSelect
+        !%------------------------------------------------------------------
+        !% Description:
+        !% set up the initial conditions for all the elements
+        !%------------------------------------------------------------------
+        !% Declaratins:
+            integer          :: ii
+            integer, pointer :: solver
+            integer, allocatable :: thisP(:)
+            character(64)    :: subroutine_name = 'init_IC_toplevel'
+        !%-------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases
+            solver => setting%Solver%SolverSelect
+        !%-------------------------------------------------------------------
 
         if (setting%Output%Verbose) print *,'begin init_IC_from_linkdata'
-
         !% get data that can be extracted from links
         call init_IC_from_linkdata ()
 
         if (setting%Output%Verbose) print *,'begin init_IC_from_nodedata'
-
         !% get data that can be extracted from nodes
         call init_IC_from_nodedata ()
 
-        if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
+        
 
+        if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
         !% zero out the lateral inflow column
         call init_IC_set_zero_lateral_inflow ()
 
-        if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
 
+
+        if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
         !% update time marching type
         call init_IC_solver_select (solver)
 
@@ -78,19 +79,31 @@ contains
 
         if (setting%Output%Verbose) print *, 'begin init_IC_set_SmallVolumes'
 
+              
         !% set small volume values in elements
         call init_IC_set_SmallVolumes ()
+
+        
 
         if (setting%Output%Verbose) print *, 'begin update_auxiliary_variables'
 
         !% initialize slots
         call init_IC_slot ()
 
+        !% brh 20211215 replacing link-based call for velocity
+        if (setting%Output%Verbose) print *, 'begin init_IC_derived_data'
+        call init_IC_derived_data()
+
+         
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
 
-        if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
+        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
+        print *, elemR(thisP,er_Depth)
+        deallocate(thisP)
 
+        stop 389750 
+        if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
         !% update diagnostic interpolation weights
         !% (the interpolation weights of diagnostic elements
         !% stays the same throughout the simulation. Thus, they
@@ -119,6 +132,31 @@ contains
         call init_IC_oneVectors ()
 
         ! if (setting%Profile%useYN) call util_profiler_stop (pfc_init_IC_setup)
+
+        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == CC)
+        print *, elemR(thisP,er_Depth)
+        deallocate(thisP)
+
+        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JM)
+        print *, elemR(thisP,er_Depth)
+        deallocate(thisP)
+
+        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
+        print *, elemR(thisP,er_Depth)
+        deallocate(thisP)
+
+        stop 389750
+
+        ! print *, '395551'
+        ! print *,  ' ...1  '
+        ! print *,  elemR(:,er_InterpWeight_dG)
+        ! print *, ' ...2'
+        ! print *,  elemR(:,er_InterpWeight_uH)
+        ! print *, ' ...3'
+        ! print *,  elemR(:,er_InterpWeight_dH)
+        ! print *, ' ...4'
+        ! print *,  elemR(:,er_InterpWeight_uQ)
+        ! stop 3978555
 
         if (setting%Debug%File%initial_condition) then
            print*, '----------------------------------------------------'
@@ -156,28 +194,27 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_toplevel
-    !
-    !==========================================================================
-    ! PRIVATE
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine init_IC_from_linkdata ()
-    !--------------------------------------------------------------------------
-    !
-    !% get the initial depth, flowrate, and geometry data from links
-    !
-    !--------------------------------------------------------------------------
-
-        integer                                     :: ii, image, pLink
-        integer, pointer                            :: thisLink
-        integer, dimension(:), allocatable, target  :: packed_link_idx
-
-        character(64) :: subroutine_name = 'init_IC_from_linkdata'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%------------------------------------------------------------------
+        !% Description:
+        !% get the initial depth, flowrate, and geometry data from links
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer                                     :: ii, image, pLink
+            integer, pointer                            :: thisLink
+            integer, dimension(:), allocatable, target  :: packed_link_idx
+            character(64) :: subroutine_name = 'init_IC_from_linkdata'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
         !% Setting the local image value
         image = this_image()
 
@@ -200,41 +237,43 @@ contains
 
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            !% HACK we need to add a small/zero volume adjustment here
+        
+            !call init_IC_get_channel_conduit_velocity (thisLink)
 
-            call init_IC_get_channel_conduit_velocity (thisLink)
+            !call init_IC_get_channel_conduit_wavespeed (thislink)
 
         end do
 
-        !% deallocate the temporary array
-        deallocate(packed_link_idx)
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            !% deallocate the temporary array
+            deallocate(packed_link_idx)
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_depth_from_linkdata (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the initial depth data from links
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the initial depth data from links
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
+            integer, intent(in) :: thisLink
 
-        integer             :: mm, ei_max
-        real(8)             :: kappa
-        integer, pointer    :: LdepthType
-        real(8), pointer    :: DepthUp, DepthDn
+            integer             :: mm, ei_max
+            real(8)             :: kappa
+            integer, pointer    :: LdepthType
+            real(8), pointer    :: DepthUp, DepthDn
 
-        character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -326,24 +365,24 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_depth_from_linkdata
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_flow_roughness_from_linkdata (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the initial flowrate and roughness data from links
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the initial flowrate and roughness data from links
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
+            integer, intent(in) :: thisLink
 
-        character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -356,25 +395,25 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_flow_roughness_from_linkdata
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_elemtype_from_linkdata (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry data from links
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry data from links
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
-        integer, pointer    :: linkType
+            integer, intent(in) :: thisLink
+            integer, pointer    :: linkType
 
-        character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -440,24 +479,24 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_elemtype_from_linkdata
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_geometry_from_linkdata (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry data from links
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry data from links
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
-        integer, pointer    :: linkType
+            integer, intent(in) :: thisLink
+            integer, pointer    :: linkType
 
-        character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
+            character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
@@ -503,27 +542,27 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_geometry_from_linkdata
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_channel_geometry (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry data for open channel links
-    !% and calculate element volumes
-    !%
-    !% Note that the "FullDepth" must be defined for open channels.    
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry data for open channel links
+        !% and calculate element volumes
+        !%
+        !% Note that the "FullDepth" must be defined for open channels.    
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
-        integer, pointer    :: geometryType
+            integer, intent(in) :: thisLink
+            integer, pointer    :: geometryType
 
-        character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -606,26 +645,26 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_channel_geometry
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_conduit_geometry (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry data for conduit links
-    !% and calculate element volumes
-    !
-    !--------------------------------------------------------------------------
-        integer :: ii
-        integer, intent(in) :: thisLink
-        integer, pointer    :: geometryType
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry data for conduit links
+        !% and calculate element volumes
+        !
+        !--------------------------------------------------------------------------
+            integer :: ii
+            integer, intent(in) :: thisLink
+            integer, pointer    :: geometryType
 
-        character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -702,25 +741,25 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_conduit_geometry
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_weir_geometry (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry and other data data for weir links
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry and other data data for weir links
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
-        integer, pointer    :: specificWeirType
+            integer, intent(in) :: thisLink
+            integer, pointer    :: specificWeirType
 
-        character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
@@ -806,25 +845,25 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_get_weir_geometry
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_orifice_geometry (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry and other data data for orifice links
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry and other data data for orifice links
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
-        integer, pointer    :: specificOrificeType, OrificeGeometryType
+            integer, intent(in) :: thisLink
+            integer, pointer    :: specificOrificeType, OrificeGeometryType
 
-        character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
@@ -891,26 +930,25 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_orifice_geometry
-
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_outlet_geometry (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the geometry and other data data for orifice links
-    !
-    !--------------------------------------------------------------------------
-        integer             :: ii
-        integer, intent(in) :: thisLink
-        integer, pointer    :: specificOutletType, curveID, eIDx
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry and other data data for orifice links
+        !
+        !--------------------------------------------------------------------------
+            integer             :: ii
+            integer, intent(in) :: thisLink
+            integer, pointer    :: specificOutletType, curveID, eIDx
 
-        character(64) :: subroutine_name = 'init_IC_get_outlet_geometry'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_get_outlet_geometry'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific outlet type
         specificOutletType => link%I(thisLink,li_outlet_type)
@@ -951,70 +989,71 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_outlet_geometry
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine init_IC_get_channel_conduit_velocity (thisLink)
-    !--------------------------------------------------------------------------
-    !
-    !% get the velocity of channel and conduits
-    !% and sell all other velocity to zero
-    !
-    !--------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
+    ! subroutine init_IC_get_channel_conduit_velocity (thisLink)
+    !     !% brh 20211216 obsolete -- replaced with init_IC_derived_values()
+    !     !%-----------------------------------------------------------------
+    !     !% Description:
+    !     !% get the velocity of channel and conduits
+    !     !% and sell all other velocity to zero
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: thisLink
+    !         integer, pointer    :: specificWeirType
+    !         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !         if (icrash) return
+    !         if (setting%Debug%File%initial_condition) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
 
-        integer, intent(in) :: thisLink
-        integer, pointer    :: specificWeirType
+    !     !% HACK: this might not be right
+    !     where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+    !             (elemR(:,er_area)               .gt. zeroR ) .and. &
+    !             (elemI(:,ei_elementType)        == CC      ) )
 
-        character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !         elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
+    !         elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
+    !         elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
 
-        !% HACK: this might not be right
-        where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-                (elemR(:,er_area)               .gt. zeroR ) .and. &
-                (elemI(:,ei_elementType)        == CC      ) )
+    !     elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+    !                 (elemR(:,er_area)               .le. zeroR ) .and. &
+    !                 (elemI(:,ei_elementType)        == CC    ) )
 
-            elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
-            elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
-            elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
+    !         elemR(:,er_Velocity)    = zeroR
+    !         elemR(:,er_Velocity_N0) = zeroR
+    !         elemR(:,er_Velocity_N1) = zeroR
 
-        elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-                    (elemR(:,er_area)               .le. zeroR ) .and. &
-                    (elemI(:,ei_elementType)        == CC    ) )
+    !     endwhere
 
-            elemR(:,er_Velocity)    = zeroR
-            elemR(:,er_Velocity_N0) = zeroR
-            elemR(:,er_Velocity_N1) = zeroR
+    !     if (setting%Debug%File%initial_condition) &
+    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        endwhere
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    end subroutine init_IC_get_channel_conduit_velocity
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    ! end subroutine init_IC_get_channel_conduit_velocity
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_IC_from_nodedata ()
-    !--------------------------------------------------------------------------
-    !
-    !% get the initial depth, and geometry data from nJm nodes
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% get the initial depth, and geometry data from nJm nodes
+        !
+        !--------------------------------------------------------------------------
 
-        integer                       :: ii, image, pJunction
-        integer, pointer              :: thisJunctionNode
-        integer, allocatable, target  :: packed_nJm_idx(:)
+            integer                       :: ii, image, pJunction
+            integer, pointer              :: thisJunctionNode
+            integer, allocatable, target  :: packed_nJm_idx(:)
 
-        character(64) :: subroutine_name = 'init_IC_from_nodedata'
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            character(64) :: subroutine_name = 'init_IC_from_nodedata'
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
@@ -1040,18 +1079,18 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_nodedata
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_get_junction_data (thisJunctionNode)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% get data for the multi branch junction elements
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% get data for the multi branch junction elements
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in) :: thisJunctionNode
 
         integer              :: ii, jj, JMidx, JBidx
@@ -1059,7 +1098,7 @@ contains
         real(8), allocatable :: integrated_volume(:)
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1147,12 +1186,15 @@ contains
 
                 !% set the initial head to the same as the junction main
                 elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
+                print *, 'here 39705 head ',elemR(JBidx,er_Head)
                 elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
+                print *, 'here 98847 depth',elemR(JBidx,er_Depth)
                 if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
                     elemR(JBidx,er_Depth) = setting%ZeroValue%depth
                     elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
                 end if
 
+                print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
                 !% JB elements initialized for momentum
                 elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
                 elemR(JBidx,er_FroudeNumber) = zeroR
@@ -1323,24 +1365,75 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_junction_data
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_derived_data ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initial conditions for data derived from data already read from
+        !% the input file
+        !%------------------------------------------------------------------
+        !% Declarations
+            logical, pointer :: isSmallVol(:)
+            integer, pointer :: eType(:)
+            real(8), pointer :: area(:), flowrate(:), velocity(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+        !%------------------------------------------------------------------
+        !% Aliases
+            area      => elemR(:,er_Area)
+            ! dHdA      => elemR(:,er_dHdA)
+            ! ell       => elemR(:,er_ell)
+            flowrate   => elemR(:,er_Flowrate)
+            ! Froude    => elemR(:,er_FroudeNumber)
+            ! head      => elemR(:,er_Head)
+            ! hydDepth  => elemR(:,er_HydDepth)
+            ! hydRadius => elemR(:,er_HydRadius)
+            ! perimeter => elemR(:,er_Perimeter)
+            velocity   => elemR(:,er_Velocity)
+            ! pCelerity => elemR(:,er_Preissmann_Celerity
+            eType      => elemI(:,ei_elementType)
+            isSmallVol => elemYN(:,eYN_isSmallVolume)
+        !%------------------------------------------------------------------
+
+        where ((eType == cc) .and. (flowrate .ne. nullvalueR) .and. (.not. isSmallVol))
+            velocity = flowrate / area
+        endwhere
+
+        where ((eType == cc) .and. (flowrate .ne. nullvalueR) .and. (isSmallVol))
+            velocity = zeroR
+        endwhere
+
+        !print *, elemR(:,er_Volume)
+        !print *, elemR(:,er_Area)
+        !print *, elemR(:,er_Flowrate)
+        !print *, elemR(:,er_Velocity)
+        !print *, elemYN(:,eYN_isSmallVolume)
+        !stop 839705
+
+        !%------------------------------------------------------------------
+        !% Closing
+    end subroutine init_IC_derived_data
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_IC_solver_select (solver)
-    !--------------------------------------------------------------------------
-    !
-    !% select the solver based on depth for all the elements
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% select the solver based on depth for all the elements
+        !
+        !--------------------------------------------------------------------------
 
-        integer, intent(in) :: solver
-        character(64)       :: subroutine_name = 'init_IC_solver_select'
+            integer, intent(in) :: solver
+            character(64)       :: subroutine_name = 'init_IC_solver_select'
 
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         select case (solver)
@@ -1378,25 +1471,25 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_solver_select
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_small_values_diagnostic_elements ()
-    !--------------------------------------------------------------------------
-    !
-    !% set the volume, area, head, other geometry, and flow to zero values
-    !% for the diagnostic elements so no error is induced in the primary
-    !% face update
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set the volume, area, head, other geometry, and flow to zero values
+        !% for the diagnostic elements so no error is induced in the primary
+        !% face update
+        !
+        !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
+            character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         where ( (elemI(:,ei_QeqType) == diagnostic) .or. (elemI(:,ei_HeqType) == diagnostic))
             !% HACK: settings%ZeroValues should be used here
@@ -1411,25 +1504,25 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_small_values_diagnostic_elements
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_diagnostic_interpolation_weights ()
-    !--------------------------------------------------------------------------
-    !
-    !% set the interpolation weights for diagnostic elements
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set the interpolation weights for diagnostic elements
+        !
+        !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_IC_diagnostic_interpolation_weights'
+            character(64)       :: subroutine_name = 'init_IC_diagnostic_interpolation_weights'
 
-        integer, pointer ::  Npack, thisP(:), tM
-        integer :: ii, kk, tB
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            integer, pointer ::  Npack, thisP(:), tM
+            integer :: ii, kk, tB
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         !% Q-diagnostic elements will have minimum interp weights for Q
@@ -1481,23 +1574,23 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_diagnostic_interpolation_weights
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_set_SmallVolumes ()
-    !--------------------------------------------------------------------------
-    !
-    !% set the small volume values in elements
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set the small volume values in elements
+        !
+        !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
+            character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
 
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%SmallVolume%UseSmallVolumesYN) then
             where (elemI(:,ei_geometryType) == rectangular)
@@ -1520,69 +1613,69 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_SmallVolumes
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_set_zero_lateral_inflow ()
-    !--------------------------------------------------------------------------
-    !
-    !% set all the lateral inflows to zero before start of a simulation
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set all the lateral inflows to zero before start of a simulation
+        !
+        !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
+            character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
 
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_FlowrateLateral) = zeroR
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_zero_lateral_inflow
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_oneVectors ()
-    !--------------------------------------------------------------------------
-    !
-    !% set all the lateral inflows to zero before start of a simulation
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set all the lateral inflows to zero before start of a simulation
+        !
+        !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_IC_oneVectors'
+            character(64)       :: subroutine_name = 'init_IC_oneVectors'
 
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_ones) = oneR
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_oneVectors
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_IC_slot ()
-    !--------------------------------------------------------------------------
-    !
-    !% set all the slot values to zero before start of a simulation
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set all the slot values to zero before start of a simulation
+        !
+        !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_IC_slot'
+            character(64)       :: subroutine_name = 'init_IC_slot'
 
-    !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !--------------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR

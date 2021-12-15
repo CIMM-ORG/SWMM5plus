@@ -32,23 +32,21 @@ module update
         !% Description:
         !%
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM  !% indicates which Time marching method
-        integer, pointer :: thisCol_all
+            integer, intent(in) :: whichTM  !% indicates which Time marching method
+            integer, pointer :: thisCol_all
+            character(64) :: subroutine_name = 'update_auxiliary_variables'
         !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'update_auxiliary_variables'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%update) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (icrash) return
+            if (setting%Debug%File%update) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
+            if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%-----------------------------------------------------------------------------
         !%
         !% update the head (non-surcharged) and geometry
 
         !print *, '---- in ',subroutine_name,'   y01'
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
-
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '    
         call geometry_toplevel (whichTM)
 
         !% Store the head as the average head

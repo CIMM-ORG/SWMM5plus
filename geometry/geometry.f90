@@ -43,7 +43,7 @@ module geometry
         integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
         integer, pointer :: thisColP_JM, thisColP_JB, thisColP_ClosedElems
-
+        integer, allocatable :: tempP(:)
         character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -119,9 +119,18 @@ module geometry
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
 
+        print *, '================================='
+        tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
+            print *, elemR(tempP,er_Depth)
+            deallocate(tempP)
+           
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
+        tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
+            print *, elemR(tempP,er_Depth)
+            deallocate(tempP)
+            stop 370577
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
 
@@ -358,7 +367,7 @@ module geometry
 
         !% thisColP_JM is the column for the junction mains of a particular
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
-
+        integer, allocatable :: tempP(:)
         character(64) :: subroutine_name = 'geo_assign_JB'
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -402,6 +411,8 @@ module geometry
                         tB = tM + kk !% junction branch ID
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
+                            print *, 'in ',trim(subroutine_name)
+                            print *, tB, head(tM), zBtm(tB)
                             if ( head(tM) > zBtm(tB) ) then
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
@@ -422,6 +433,8 @@ module geometry
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
                                     *(velocity(tB)**twoR) / grav
                             end if
+                            print *, 'in ',trim(subroutine_name)
+                            print *, head(tB), velocity(tB)**twoR, grav
                             !% compute provisional depth
                             depth(tB) = head(tB) - zBtm(tB)
                             if (depth(tB) .ge. fulldepth(tB)) then
@@ -504,6 +517,13 @@ module geometry
         !% Note, the above can only be made a concurrent loop if we replace the tM
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
+
+
+        print *, 'at 9870598709875 **************************************'
+        tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
+            print *, elemR(tempP,er_Depth)
+            deallocate(tempP)
+            !stop 8875
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
 

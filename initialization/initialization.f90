@@ -51,8 +51,9 @@ contains
         !% Description:
         !% Calls all the initialization subroutines
         !%-------------------------------------------------------------------
-        !% Declaratoins
+        !% Declarations
             integer :: ii
+            integer, pointer :: Npack, thisP(:)
             character(64) :: subroutine_name = 'initialize_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -163,8 +164,14 @@ contains
 
         !% initialize the subcatchments connecting to SWMM-C
         if (setting%Simulation%useHydrology) then 
-            if (setting%Output%Verbose) print *, "begin subcatchment"
-            call init_subcatchment()
+            if (SWMM_N_subcatch > 0) then
+                if (setting%Output%Verbose) print *, "begin subcatchment"
+                call init_subcatchment()
+            else 
+               ! write(*,'(A)') 'setting...useHydrology requested, but no subcatchments found.'
+               ! write(*,'(A)') '...skipping hydrology in this simulation.'
+               ! setting%Simulation%useHydrology = .false.
+            end if
         end if
 
         !do ii=1,size(elemI,DIM=1)
@@ -182,7 +189,7 @@ contains
             if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
             call init_bc()
         end if                                     !% brh20211208
-        
+
         if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
 
@@ -198,7 +205,6 @@ contains
             endif
             endif
         endif
-
         
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
             if (setting%Output%Verbose) print *, "begin initial conditions"
@@ -271,6 +277,13 @@ contains
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
+        print *, '----'
+        print *, 'in ',trim(subroutine_name)
+        Npack => npack_elemP(ep_CC_Q_NOTsmallvolume)
+        thisP => elemP(1:Npack,ep_CC_Q_NOTsmallvolume)
+        print *, elemR(thisP,er_Velocity)
+        print *, elemR(thisP,er_WaveSpeed)
+        stop 938705
         
         !%------------------------------------------------------------------- 
         !% Closing
@@ -972,6 +985,7 @@ contains
         setting%Time%Step  = zeroI
 
         if (setting%Time%useSWMMinpYN) then 
+            !% set the start/stop times and time steps from SWMM *.inp file
             setting%Time%StartEpoch    = setting%SWMMinput%StartEpoch
             setting%Time%EndEpoch      = setting%SWMMinput%EndEpoch
             setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep
@@ -981,6 +995,12 @@ contains
         else 
             !% use values from json file
         end if
+
+        !% Translate epoc endtime to seconds from a zero start time
+        !% use floor() to match approachin SWMM-C
+        setting%Time%End = real(floor(                            &
+                (setting%Time%EndEpoch - setting%Time%StartEpoch) &
+                 * real(secsperday)),KIND=8)
 
         !% null out the wet step if not using hydrology
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
