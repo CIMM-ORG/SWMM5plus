@@ -1253,8 +1253,8 @@ contains
         integer :: StoredLevels
         logical :: verbose
 
-        integer :: dummyarrayI(1)
-        integer :: dummyI
+        integer :: dummyarrayI(1) = 1
+        integer :: dummyI = 1
 
         real(8) :: time_secs, time_epoch, time_scale_for_output
         integer :: startdate(6) !% yr, month, day, hr, min, sec

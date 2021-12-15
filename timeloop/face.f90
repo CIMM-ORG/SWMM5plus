@@ -285,43 +285,61 @@ module face
     subroutine face_interpolation_dnBC(isBConly)
         !%------------------------------------------------------------------
         !% Description:
-        !% Interpolates data to all downstream boundary faces
-        !% When called with isBConly == true, only does the BC update
-        !%-------------------------------------------------------------------
-        !% Declarations
-            logical, intent(in) :: isBConly
-            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
-            integer :: ii
-            integer, pointer :: face_P(:), eup(:), idx_P(:)
-            real :: DownStreamBcHead
-            character(64) :: subroutine_name = 'face_interpolation_dnBC'
-        !%--------------------------------------------------------------------
-        !% Preliminaries
-            if (icrash) return
-            if (setting%Debug%File%boundary_conditions)  &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%--------------------------------------------------------------------
-        !% Aliases
-            eup    => faceI(:,fi_Melem_uL)
-            face_P => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
-            idx_P  => BC%P%BCdn
-        !%--------------------------------------------------------------------        
-        !%  linear interpolation using ghost and interior cells
-        faceR(face_P, fr_Head_u) = 0.5 * (elemR(eup(face_P), er_Head) + BC%headRI(idx_P)) !% downstream head update
-        faceR(face_P, fr_Head_d) = faceR(face_P, fr_Head_u)
+        !% Interpolates all boundary faces using a pack arrays -- base on bi_category
+        !%-----------------------------------------------------------------------------
+        integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+        integer :: fFlowSet(1), eFlowSet(1)
+        integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
+        character(64) :: subroutine_name = 'face_interpolation_dnBC_byPack'
+        integer :: ii
+        integer, pointer :: face_P(:), eup(:), idx_P(:), bcType
+        real :: DownStreamBcHead
 
-        if (.not. isBConly) then
-            
-            fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-            fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-            eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%boundary_conditions)  &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-            faceR(face_P, fr_Flowrate) = elemR(eup(face_P), er_Flowrate) !% Copying the flow from the upstream element
 
-            do ii=1,size(fGeoSetD)
-                faceR(face_P, fGeoSetD(ii)) = elemR(eup(face_P), eGeoSet(ii)) !% Copying other geo factors from the upstream element
-                faceR(face_P, fGeoSetU(ii)) = faceR(face_P, fGeoSetD(ii))
-            end do
+        eup => faceI(:,fi_Melem_uL)
+
+        face_P => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+        idx_P  => BC%P%BCdn
+
+        fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+        fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+
+        fHeadSetU = [fr_Head_u]
+        fHeadSetD = [fr_Head_d]
+        eHeadSet = [er_Head]
+
+        fFlowSet = [fr_Flowrate]
+        eFlowSet = [er_Flowrate]
+
+
+        do ii=1,size(fHeadSetD)
+            !%  linear interpolation using ghost and interior cells
+            faceR(face_P, fHeadSetU(ii)) = 0.5 * (elemR(eup(face_P), er_Head) + BC%headRI(idx_P)) !% downstream head update
+            faceR(face_P, fHeadSetD(ii)) = faceR(face_P, fHeadSetU(ii))
+        end do
+
+        do ii=1,size(fFlowSet)
+            faceR(face_P, fFlowSet(ii)) = elemR(eup(face_P), eFlowSet(ii)) !% Copying the flow from the upstream element
+        end do
+
+        do ii=1,size(fGeoSetD)
+            faceR(face_P, fGeoSetD(ii)) = elemR(eup(face_P), eGeoSet(ii)) !% Copying other geo factors from the upstream element
+            faceR(face_P, fGeoSetU(ii)) = faceR(face_P, fGeoSetD(ii))
+        end do
+
+        !% HACK: This is needed to be revisited later
+        if (setting%ZeroValue%UseZeroValues) then
+            !% ensure face area_u is not smaller than zerovalue
+            where (faceR(face_P,fr_Area_d) < setting%ZeroValue%Area)
+                faceR(face_P,fr_Area_d) = setting%ZeroValue%Area
+                faceR(face_P,fr_Area_u) = setting%ZeroValue%Area
+            endwhere
 
             !% HACK: This is needed to be revisited later
             if (setting%ZeroValue%UseZeroValues) then
@@ -552,12 +570,8 @@ module face
         !% NOTES
         !% elemR(eup(thisP),eset(ii)) is the element value upstream of the face
         !% elemR(edn(thisP),eset(ii) is the element value downstream of the face.
-        !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element
-        !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
+        !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element----------------------------------------------------------
 
-        !%------------------------------------------------------------------
-        !% Closing
-            if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine face_interp_interior_set
 !%

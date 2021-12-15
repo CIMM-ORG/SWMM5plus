@@ -169,7 +169,8 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 1.0
+        "CelerityFactor" : 1.0,
+        "DesiredTimeStep" : 0.01
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -270,7 +271,7 @@
     "Debug" : {
         "File" : {
             "adjust" : false,
-            "boundary_conditions" : false,
+            "boundary_conditions" : true,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,

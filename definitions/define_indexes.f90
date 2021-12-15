@@ -220,11 +220,20 @@ module define_indexes
         enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
         enumerator :: bi_lastplusone !% must be last enum item
     end enum
+
+    !% Column indexes for BC%xYN(:,:)
+    enum, bind(c)
+        enumerator :: bYN_read_input_file = 1
+        enumerator :: bYN_lastplusone !% must be last enum item
+    end enum
+
     !% HACK - we will probably want to create a different set of indexes for BC%flowI and BC%headI tables
     !% For instance, BC%flowI tables will probably need addititonal information to distribute flowrates
     !% over link elements.
     integer, parameter :: N_flowI = bi_lastplusone-1
     integer, parameter :: N_headI = bi_lastplusone-1
+    integer, parameter :: N_flowYN = bYN_lastplusone-1
+    integer, parameter :: N_headYN = bYN_lastplusone-1
 
     !% Column indexes for BC_xR_timeseries(:,:,:)
     enum, bind(c)

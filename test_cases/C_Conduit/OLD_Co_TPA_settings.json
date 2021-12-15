@@ -168,8 +168,9 @@
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 1000.0
+        "PreissmannSlotMethod" : "StaticSlot", // VariableSlot, StaticSlot
+        "CelerityFactor" : 1000.0,
+        "DesiredTimeStep" : 0.0001
     },
     "Simulation" : {
         "useHydrology" : true,

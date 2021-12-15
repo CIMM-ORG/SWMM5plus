@@ -67,8 +67,8 @@ subroutine init_partitioning_method()
     end if
 
     if (setting%Debug%File%partitioning) then
-        print *, "...Node Partitioning"
-        print*, new_line("")
+        print *, "Node Partitioning"
+        print *
         do ii = 1, size(node%I, 1)
             if ( ii <= N_node ) then
                 print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
@@ -77,8 +77,8 @@ subroutine init_partitioning_method()
             endif
         end do
 
-        print *, "...Link Partitioning"
-        print *, new_line("")
+        print *, "Link Partitioning"
+        print *
         do ii = 1, size(link%I, 1)
             if ( ii <= N_link ) then
                 print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &

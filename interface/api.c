@@ -284,33 +284,39 @@ int DLLEXPORT api_get_headBC(
             *headBC = FTTOM(Outfall[ii].fixedStage);
             return 0;
 
-        case NORMAL_OUTFALL:
-            *headBC = API_NULL_VALUE_I;
-            sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_not_developed, errmsg);
-            printf("Error for outfall type NORMAL_OUTFALL \n");
-            return api_err_not_developed;
+        // case NORMAL_OUTFALL:
+        //     *headBC = API_NULL_VALUE_I;
+        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
+        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
+        //     printf("Error for outfall type NORMAL_OUTFALL \n");
+        //     return api_err_not_developed;
 
+        // case FREE_OUTFALL:
+        //     *headBC = API_NULL_VALUE_I;
+        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
+        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
+        //     printf("Error for outfall type FREE_OUTFALL \n");
+        //     return api_err_not_developed;
+
+        // case TIDAL_OUTFALL:
+        //     *headBC = API_NULL_VALUE_I;
+        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
+        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
+        //     printf("Error for outfall type TIDAL_OUTFALL \n");
+        //     return api_err_not_developed;
+
+        // case TIMESERIES_OUTFALL:    
+        //     *headBC = API_NULL_VALUE_I;
+        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
+        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
+        //     printf("Error for outfall type TIMESERIES_OUTFALL \n");
+        //     return api_err_not_developed;
+        
         case FREE_OUTFALL:
-            *headBC = API_NULL_VALUE_I;
-            sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_not_developed, errmsg);
-            printf("Error for outfall type FREE_OUTFALL \n");
-            return api_err_not_developed;
+            return 0;
 
-        case TIDAL_OUTFALL:
-            *headBC = API_NULL_VALUE_I;
-            sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_not_developed, errmsg);
-            printf("Error for outfall type TIDAL_OUTFALL \n");
-            return api_err_not_developed;
-
-        case TIMESERIES_OUTFALL:    
-            *headBC = API_NULL_VALUE_I;
-            sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_not_developed, errmsg);
-            printf("Error for outfall type TIMESERIES_OUTFALL \n");
-            return api_err_not_developed;
+        case NORMAL_OUTFALL:
+            return 0;
 
         default:
             *headBC = API_NULL_VALUE_I;

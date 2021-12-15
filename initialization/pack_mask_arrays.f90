@@ -1206,10 +1206,7 @@ contains
         !% packed arrays for non geometry dynamic elements
         !--------------------------------------------------------------------------
         integer          :: ii
-        integer, pointer :: ptype, npack, eIDx(:)
-        !% HACK brh20211212 temporary removal until problems with ep_CCJB_eETM_i_fAC
-        !% are fixed
-        !integer, allocatable :: fup(:), fdn(:)
+        integer, pointer :: ptype, npack, fup, fdn, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
         !--------------------------------------------------------------------------
         if (icrash) return
@@ -1218,19 +1215,6 @@ contains
 
         eIdx => elemI(:,ei_Lidx)
 
-        !% HACK
-        !% brh20211212 -- this need to be changed becuase of two problems
-        !% 1 -- allocation/dallocation every time this is called
-        !% 2 -- fup and fdn are not guaranteed to be the same size as elemI, which
-        !% causes seg faults when used in masking. This seems to be due to the
-        !% dummy index, and might be fixed by elem(nodummy,:) where nodummy is
-        !% a packed set of indices. Needs careful work to restore
-        !% HACK brh20211212 temporary removal until problems with ep_CCJB_eETM_i_fAC
-        !% are fixed
-        !fup = pack(elemI(:,ei_Mface_uL), elemI(:,ei_Mface_uL) /= nullvalueI)
-        !fdn = pack(elemI(:,ei_Mface_dL), elemI(:,ei_Mface_dL) /= nullvalueI)
-
-        !print *, 'AC'
         !% ep_AC
         !% - all elements that use AC
         ptype => col_elemP(ep_AC)
@@ -1484,52 +1468,32 @@ contains
                 (elemYN(:,eYN_isSurcharged)))
         end if
 
-        !% HACK brh20211212 -- BUGFIX NEEDED
-        !% problem with mismatch in size between elemI(:,:), DIM=1 and fup, fdn
-        !% seems to be because of dummy elements. Causes a seg fault.
-        !% comment until fixed
-        ! print *, 'CCJB_eETM_i_fAC'
-        ! !% ep_CCJB_eETM_i_fAC
-        ! !% conduits, channels, and junction branches that are ETM and have
-        ! !% an adjacent face that is AC
-        ! ptype => col_elemP(ep_CCJB_eETM_i_fAC)
-        ! npack => npack_elemP(ptype)
+        !% ep_CCJB_eETM_i_fAC
+        !% conduits, channels, and junction branches that are ETM and have
+        !% an adjacent face that is AC
+        ptype => col_elemP(ep_CCJB_eETM_i_fAC)
+        npack => npack_elemP(ptype)
 
-        ! npack = count( &
-        !         ( &
-        !             (elemI(:,ei_elementType) == CC) &
-        !             .or. &
-        !             (elemI(:,ei_elementType) == JB)  &
-        !          ) &
-        !         .and. &
-        !         (elemI(:,ei_tmType) == ETM) &
-        !         .and. &
-        !         ( &
-        !             (faceYN(fup,fYN_isAC_adjacent)) &
-        !             .or. &
-        !             (faceYN(fdn,fYN_isAC_adjacent)) &
-        !         ))
+        !% HACK: due to elements having u/s or d/s null faces, the code below
+        !% is written in do loop untill other fix is figured out
 
-        ! if (npack > 0) then
-        !     elemP(1:npack,ptype) = pack(eIdx, &
-        !         ( &
-        !             (elemI(:,ei_elementType) == CC) &
-        !             .or. &
-        !             (elemI(:,ei_elementType) == JB)  &
-        !          ) &
-        !         .and. &
-        !         (elemI(:,ei_tmType) == ETM) &
-        !         .and. &
-        !         ( &
-        !             (faceYN(fup,fYN_isAC_adjacent)) &
-        !             .or. &
-        !             (faceYN(fdn,fYN_isAC_adjacent)) &
-        !         ))
-        ! end if
+        npack = zeroI
+        do ii = 1,N_elem(this_image())
+            fup => elemI(ii,ei_Mface_uL)
+            fdn => elemI(ii,ei_Mface_dL)
+            if ((fup /= nullvalueI) .and. (fdn /= nullValueI)) then
+                if (((elemI(ii,ei_elementType) == CC) .or. (elemI(ii,ei_elementType) == JB)) &
+                    .and. &
+                    (elemI(ii,ei_tmType) == ETM) &
+                    .and. &
+                    ((faceYN(fup,fYN_isAC_adjacent)) .or. (faceYN(fdn,fYN_isAC_adjacent)))) then
+                    
+                    npack = npack + oneI
+                    elemP(npack,ptype) = ii
+                end if
+            end if
+        end do
 
-  
-
-        !print *, 'CCJB_ETM'
         !% ep_CCJB_ETM
         !% - all channel conduit or junction branch that are ETM
         ptype => col_elemP(ep_CCJB_ETM)
@@ -1974,11 +1938,6 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
         end if
-
-        !% HACK brh20211212 temporary removal until problems with ep_CCJB_eETM_i_fAC
-        !% are fixed
-        !if (allocated(fup)) deallocate(fup)
-        !if (allocated(fdn)) deallocate(fdn)
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
