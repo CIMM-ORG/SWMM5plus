@@ -20,8 +20,6 @@ module update
     public :: update_auxiliary_variables
     public :: update_Froude_number_junction_branch
 
-    real(8), pointer :: grav => setting%constant%gravity
-
     contains
 !%==========================================================================
 !% PUBLIC
@@ -145,12 +143,13 @@ module update
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol
         integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: Froude(:), velocity(:), depth(:)
+        real(8), pointer :: Froude(:), velocity(:), depth(:), grav
         !%-----------------------------------------------------------------------------
         if (icrash) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
+        grav     => setting%constant%gravity
         !%-----------------------------------------------------------------------------
 
         Npack => npack_elemP(thisCol)
@@ -173,7 +172,7 @@ module update
         character(64) :: subroutine_name = 'update_Froude_number_junction_branch'
         integer, intent(in) :: thisCol_JM
         integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
-        real(8), pointer :: Froude(:), velocity(:), depth(:)
+        real(8), pointer :: Froude(:), velocity(:), depth(:), grav
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -181,6 +180,7 @@ module update
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        grav     => setting%constant%gravity
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -218,7 +218,7 @@ module update
         real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:)
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
-        real(8), pointer :: Fr(:) !BRHbugfix20210811 test
+        real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
         integer :: ii
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -241,6 +241,7 @@ module update
         SlotVolume => elemR(:,er_SlotVolume)
         SlotWidth  => elemR(:,er_SlotWidth)
         fullArea   => elemR(:,er_FullArea)
+        grav       => setting%constant%gravity
         !%-----------------------------------------------------------------------------
         !% 2nd cases needed for handling surcharged AC elements and using the celerity
         !% multiplier of the AC method for the wavespeed

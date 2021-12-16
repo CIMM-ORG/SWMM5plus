@@ -1014,6 +1014,19 @@ contains
                 )
         end if
 
+        !print *, 'JM'
+        !% ep_JM
+        !% - all elements that are JM
+        ptype => col_elemP(ep_JM)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == JM))
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == JM))
+        end if
+
         !% ep_JM_ALLtm
         !% - all junction main elements that are time march
         ptype => col_elemP(ep_JM_ALLtm)

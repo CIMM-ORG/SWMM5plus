@@ -1407,7 +1407,7 @@ contains
         !%                      DesiredTimeStep
         call json%get('PreissmannSlot.DesiredTimeStep', real_value, found)
         if (found) setting%PreissmannSlot%DesiredTimeStep = real_value
-        if (.not. found) stop "Error - json file - setting " // 'PreissmannSlot.DesiredTimeStep not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.DesiredTimeStep not found'
 
     !% Profile. =====================================================================
         !%                       Profile.useYN

@@ -114,11 +114,11 @@ contains
             call execute_command_line('')
         end if
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_network_define_toplevel
+    end subroutine network_define_toplevel
 !
 !==========================================================================
 ! PRIVATE

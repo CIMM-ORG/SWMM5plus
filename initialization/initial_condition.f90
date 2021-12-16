@@ -14,6 +14,7 @@ module initial_condition
     use define_globals
     use define_settings
     use pack_mask_arrays
+    use boundary_conditions
     use update
     use face
     use diagnostic_elements
@@ -41,7 +42,7 @@ contains
         !% Declaratins:
             integer          :: ii
             integer, pointer :: solver
-            integer, allocatable :: thisP(:)
+            integer, allocatable :: tempP(:)  !% for debugging
             character(64)    :: subroutine_name = 'init_IC_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -60,33 +61,23 @@ contains
         !% get data that can be extracted from nodes
         call init_IC_from_nodedata ()
 
-        
-
         if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
         !% zero out the lateral inflow column
         call init_IC_set_zero_lateral_inflow ()
-
-
 
         if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
         !% update time marching type
         call init_IC_solver_select (solver)
 
         if (setting%Output%Verbose) print *, 'begin pack_mask arrays_all'
-
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
 
         if (setting%Output%Verbose) print *, 'begin init_IC_set_SmallVolumes'
-
-              
         !% set small volume values in elements
         call init_IC_set_SmallVolumes ()
 
-        
-
         if (setting%Output%Verbose) print *, 'begin update_auxiliary_variables'
-
         !% initialize slots
         call init_IC_slot ()
 
@@ -94,15 +85,16 @@ contains
         if (setting%Output%Verbose) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
-         
+        !% brh 20211215 need BC update so that face interp works?
+        call bc_update()
+
+        if (setting%Output%Verbose) print *, 'begin update_aux_variables'
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
+        
+        !% initialize old head
+        elemR(:,er_Head_N0) = elemR(:,er_Head)
 
-        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
-        print *, elemR(thisP,er_Depth)
-        deallocate(thisP)
-
-        stop 389750 
         if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
         !% update diagnostic interpolation weights
         !% (the interpolation weights of diagnostic elements
@@ -131,21 +123,27 @@ contains
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
 
+        !tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType)== CC)
+        !print *, elemR(tempP,er_Head)
+        !deallocate(tempP)
+        !stop 7695
+
         ! if (setting%Profile%useYN) call util_profiler_stop (pfc_init_IC_setup)
 
-        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == CC)
-        print *, elemR(thisP,er_Depth)
-        deallocate(thisP)
+        ! tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == CC)
+        ! print *, elemR(tempP,er_Zcrown)
+        ! deallocate(tempP)
 
-        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JM)
-        print *, elemR(thisP,er_Depth)
-        deallocate(thisP)
+        ! tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JM)
+        ! print *, elemR(tempP,er_Zcrown)
 
-        thisP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
-        print *, elemR(thisP,er_Depth)
-        deallocate(thisP)
+        ! tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
+        ! print *, elemR(tempP,er_Zcrown)
+        ! deallocate(tempP)
 
-        stop 389750
+        ! stop 389750
+        !% Notes on initialization, brh20211215
+        !% dHdA is not initialized in channels except where timemarch is AC
 
         ! print *, '395551'
         ! print *,  ' ...1  '
@@ -236,11 +234,8 @@ contains
             call init_IC_get_elemtype_from_linkdata(thisLink)
 
             call init_IC_get_geometry_from_linkdata (thisLink)
-
         
             !call init_IC_get_channel_conduit_velocity (thisLink)
-
-            !call init_IC_get_channel_conduit_wavespeed (thislink)
 
         end do
 
@@ -993,47 +988,47 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    ! subroutine init_IC_get_channel_conduit_velocity (thisLink)
-    !     !% brh 20211216 obsolete -- replaced with init_IC_derived_values()
-    !     !%-----------------------------------------------------------------
-    !     !% Description:
-    !     !% get the velocity of channel and conduits
-    !     !% and sell all other velocity to zero
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: thisLink
-    !         integer, pointer    :: specificWeirType
-    !         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
-    !     !%------------------------------------------------------------------
-    !     !% Preliminaries:
-    !         if (icrash) return
-    !         if (setting%Debug%File%initial_condition) &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    !     !%------------------------------------------------------------------
+    subroutine init_IC_get_channel_conduit_velocity (thisLink)
+        !% brh 20211216 obsolete -- replaced with init_IC_derived_values()
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% get the velocity of channel and conduits
+        !% and sell all other velocity to zero
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisLink
+            integer, pointer    :: specificWeirType
+            character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (icrash) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
-    !     !% HACK: this might not be right
-    !     where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-    !             (elemR(:,er_area)               .gt. zeroR ) .and. &
-    !             (elemI(:,ei_elementType)        == CC      ) )
+        !% HACK: this might not be right
+        where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+                (elemR(:,er_area)               .gt. zeroR ) .and. &
+                (elemI(:,ei_elementType)        == CC      ) )
 
-    !         elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
-    !         elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
-    !         elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
+            elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
+            elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
+            elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
 
-    !     elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-    !                 (elemR(:,er_area)               .le. zeroR ) .and. &
-    !                 (elemI(:,ei_elementType)        == CC    ) )
+        elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+                    (elemR(:,er_area)               .le. zeroR ) .and. &
+                    (elemI(:,ei_elementType)        == CC    ) )
 
-    !         elemR(:,er_Velocity)    = zeroR
-    !         elemR(:,er_Velocity_N0) = zeroR
-    !         elemR(:,er_Velocity_N1) = zeroR
+            elemR(:,er_Velocity)    = zeroR
+            elemR(:,er_Velocity_N0) = zeroR
+            elemR(:,er_Velocity_N1) = zeroR
 
-    !     endwhere
+        endwhere
 
-    !     if (setting%Debug%File%initial_condition) &
-    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-    ! end subroutine init_IC_get_channel_conduit_velocity
+    end subroutine init_IC_get_channel_conduit_velocity
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1378,40 +1373,48 @@ contains
         !% Declarations
             logical, pointer :: isSmallVol(:)
             integer, pointer :: eType(:)
+            integer, allocatable :: tempP(:) !% debugging
             real(8), pointer :: area(:), flowrate(:), velocity(:)
         !%------------------------------------------------------------------
         !% Preliminaries
         !%------------------------------------------------------------------
         !% Aliases
             area      => elemR(:,er_Area)
-            ! dHdA      => elemR(:,er_dHdA)
-            ! ell       => elemR(:,er_ell)
             flowrate   => elemR(:,er_Flowrate)
-            ! Froude    => elemR(:,er_FroudeNumber)
-            ! head      => elemR(:,er_Head)
-            ! hydDepth  => elemR(:,er_HydDepth)
-            ! hydRadius => elemR(:,er_HydRadius)
-            ! perimeter => elemR(:,er_Perimeter)
             velocity   => elemR(:,er_Velocity)
-            ! pCelerity => elemR(:,er_Preissmann_Celerity
             eType      => elemI(:,ei_elementType)
             isSmallVol => elemYN(:,eYN_isSmallVolume)
         !%------------------------------------------------------------------
 
-        where ((eType == cc) .and. (flowrate .ne. nullvalueR) .and. (.not. isSmallVol))
+        
+
+        !% Initialize velocity from flowrate and area
+        where ((eType == CC) .and. (flowrate .ne. nullvalueR) .and. (.not. isSmallVol))
             velocity = flowrate / area
         endwhere
 
-        where ((eType == cc) .and. (flowrate .ne. nullvalueR) .and. (isSmallVol))
+        where ((eType == CC) .and. (flowrate .ne. nullvalueR) .and. (isSmallVol))
             velocity = zeroR
         endwhere
 
-        !print *, elemR(:,er_Volume)
-        !print *, elemR(:,er_Area)
-        !print *, elemR(:,er_Flowrate)
-        !print *, elemR(:,er_Velocity)
-        !print *, elemYN(:,eYN_isSmallVolume)
-        !stop 839705
+        where ((eType == JB) .and. (flowrate .ne. nullvalueR) .and. (.not. isSmallVol))
+            velocity = flowrate / area
+        endwhere
+
+        where ((eType == JB) .and. (flowrate .ne. nullvalueR) .and. (isSmallVol))
+            velocity = zeroR
+        endwhere
+
+        where (eType == JM)
+            velocity = zeroR
+        endwhere
+
+        elemR(:,er_Velocity_N0) = velocity
+        elemR(:,er_Velocity_N1) = velocity
+
+        !tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType)== CC)
+        !print *, elemR(tempP,er_Head_N0)
+        !deallocate(tempP)
 
         !%------------------------------------------------------------------
         !% Closing

@@ -24,8 +24,6 @@ module geometry
     public :: geometry_toplevel
     public :: geo_assign_JB  !BRHbugfix 20210813
 
-    real(8), pointer :: grav => setting%constant%gravity
-
     contains
 !%==========================================================================
 !% PUBLIC
@@ -39,55 +37,58 @@ module geometry
         !% Note that the elemPGx arrays contain only time-marched elements so they
         !% will only handle CC and JM elements as the JB elements are not time-marched.
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM
-        integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-        integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
-        integer, pointer :: thisColP_JM, thisColP_JB, thisColP_ClosedElems
-        integer, allocatable :: tempP(:)
-        character(64) :: subroutine_name = 'geometry_toplevel'
+        !% Declarations
+            integer, intent(in) :: whichTM
+            integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
+            integer, pointer :: thisColP_JM, thisColP_JB, thisColP_ClosedElems
+            integer, allocatable :: tempP(:) !% debugging
+            character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------------------
+        !% Aliases
         !% set the packed geometry element array (elemPG) to use and columns of the
         !% packed elemP to use
-        select case (whichTM)
-            case (ALLtm)
-                elemPGx                => elemPGalltm(:,:)
-                npack_elemPGx          => npack_elemPGalltm(:)
-                col_elemPGx            => col_elemPGalltm(:)
-                thisColP_JM            => col_elemP(ep_JM_ALLtm)
-                thisColP_JB            => col_elemP(ep_JB_ALLtm)
-                thisColP_surcharged    => col_elemP(ep_Surcharged_ALLtm)
-                thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ALLtm)
-                thisColP_all           => col_elemP(ep_ALLtm)
-                thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
-             case (ETM)
-                elemPGx                => elemPGetm(:,:)
-                npack_elemPGx          => npack_elemPGetm(:)
-                col_elemPGx            => col_elemPGetm(:)
-                thisColP_JM            => col_elemP(ep_JM_ETM)
-                thisColP_JB            => col_elemP(ep_JB_ETM)
-                thisColP_surcharged    => col_elemP(ep_Surcharged_ETM)
-                thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ETM)
-                thisColP_all           => col_elemP(ep_ETM)
-                thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
-            case (AC)
-                elemPGx                => elemPGac(:,:)
-                npack_elemPGx          => npack_elemPGac(:)
-                col_elemPGx            => col_elemPGac(:)
-                thisColP_JM            => col_elemP(ep_JM_AC)
-                thisColP_JB            => col_elemP(ep_JB_AC)
-                thisColP_surcharged    => col_elemP(ep_Surcharged_AC)
-                thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_AC)
-                thisColP_all           => col_elemP(ep_AC)
-                thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
-            case default
-                print *, 'error, case default should never be reached.'
-                stop 7389
-        end select
-
+            select case (whichTM)
+                case (ALLtm)
+                    elemPGx                => elemPGalltm(:,:)
+                    npack_elemPGx          => npack_elemPGalltm(:)
+                    col_elemPGx            => col_elemPGalltm(:)
+                    thisColP_JM            => col_elemP(ep_JM_ALLtm)
+                    thisColP_JB            => col_elemP(ep_JB_ALLtm)
+                    thisColP_surcharged    => col_elemP(ep_Surcharged_ALLtm)
+                    thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ALLtm)
+                    thisColP_all           => col_elemP(ep_ALLtm)
+                    thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
+                case (ETM)
+                    elemPGx                => elemPGetm(:,:)
+                    npack_elemPGx          => npack_elemPGetm(:)
+                    col_elemPGx            => col_elemPGetm(:)
+                    thisColP_JM            => col_elemP(ep_JM_ETM)
+                    thisColP_JB            => col_elemP(ep_JB_ETM)
+                    thisColP_surcharged    => col_elemP(ep_Surcharged_ETM)
+                    thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ETM)
+                    thisColP_all           => col_elemP(ep_ETM)
+                    thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
+                case (AC)
+                    elemPGx                => elemPGac(:,:)
+                    npack_elemPGx          => npack_elemPGac(:)
+                    col_elemPGx            => col_elemPGac(:)
+                    thisColP_JM            => col_elemP(ep_JM_AC)
+                    thisColP_JB            => col_elemP(ep_JB_AC)
+                    thisColP_surcharged    => col_elemP(ep_Surcharged_AC)
+                    thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_AC)
+                    thisColP_all           => col_elemP(ep_AC)
+                    thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
+                case default
+                    print *, 'error, case default should never be reached.'
+                    stop 7389
+            end select
+        !%-----------------------------------------------------------------------------
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
@@ -118,19 +119,10 @@ module geometry
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
-
-        print *, '================================='
-        tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
-            print *, elemR(tempP,er_Depth)
-            deallocate(tempP)
            
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
-        tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
-            print *, elemR(tempP,er_Depth)
-            deallocate(tempP)
-            stop 370577
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
 
@@ -157,6 +149,9 @@ module geometry
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell (thisColP_all)
+
+        !% Set JM values that are not otherwise defined
+        call geo_JM_values ()
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
@@ -336,13 +331,13 @@ module geometry
 !%==========================================================================
 !%
     subroutine geo_assign_JB (whichTM, thisColP_JM)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Assigns geometry for head, depth, area and volume for JB (junction branches)
         !% When the main head is higher than the branch, this applies
         !% the main head to the branch with an adjustment for head loss.
         !% When the main head is below the branch, this sets the
-        !% branch head to the bottom elevation plus a depth implied
+        !% branch head to the bottom elevation plus a depth implied!%------------------------------------------------------------------
         !% by a Froude number of one.
         !%
         !% Note that the JB works in an inverse form from the other geometry computations.
@@ -353,7 +348,15 @@ module geometry
         !% 20210611 -- this is written in a simple loop form. See notes in draft SWMM5+
         !% NewCode Framework document on possible changes for a packed vector form.
         !% It is not clear that the number of junctions would make the change useful.
-        !%-----------------------------------------------------------------------------
+        !%
+        !% HACK
+        !% The following are NOT assigned on JB
+        !% FullHydDepth, FullPerimeter, FullVolume, Roughness
+        !%
+        !% The following initializations are unknown as of 20211215
+        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
+        !% SmallVolume_xxx,
+        !%-------------------------------------------------------------------
         integer, intent(in) :: whichTM, thisColP_JM
         integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
         real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
@@ -361,6 +364,7 @@ module geometry
         real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
         real(8), pointer :: zCrown(:), fullarea(:), fulldepth(:), fullperimeter(:)
         real(8), pointer :: fullhyddepth(:)
+        real(8), pointer :: grav
         integer :: tB, ii, kk
         !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
         !real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
@@ -369,36 +373,39 @@ module geometry
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
         integer, allocatable :: tempP(:)
         character(64) :: subroutine_name = 'geo_assign_JB'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
+        !%----------------------------------------------------------------------
+        !% Aliases
+            Npack         => npack_elemP(thisColP_JM)
+            area          => elemR(:,er_Area)
+            depth         => elemR(:,er_Depth)
+            dHdA          => elemR(:,er_dHdA)
+            ell           => elemR(:,er_ell)
+            head          => elemR(:,er_Head)
+            hyddepth      => elemR(:,er_HydDepth)
+            hydradius     => elemR(:,er_HydRadius)
+            length        => elemR(:,er_Length)
+            perimeter     => elemR(:,er_Perimeter)
+            topwidth      => elemR(:,er_Topwidth)
+            velocity      => elemR(:,er_Velocity)
+            volume        => elemR(:,er_Volume)
+            zBtm          => elemR(:,er_Zbottom)
+            zCrown        => elemR(:,er_Zcrown)
+            fullarea      => elemR(:,er_FullArea)
+            fulldepth     => elemR(:,er_FullDepth)
+            fullhyddepth  => elemR(:,er_FullHydDepth)
+            fullperimeter => elemR(:,er_FullPerimeter)
+            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
+            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            thisSolve     => elemI(:,ei_tmType)
+            grav => setting%Constant%gravity
+        !%------------------------------------------------------------------
 
-        if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
-
-        Npack         => npack_elemP(thisColP_JM)
-        area          => elemR(:,er_Area)
-        depth         => elemR(:,er_Depth)
-        dHdA          => elemR(:,er_dHdA)
-        ell           => elemR(:,er_ell)
-        head          => elemR(:,er_Head)
-        hyddepth      => elemR(:,er_HydDepth)
-        hydradius     => elemR(:,er_HydRadius)
-        length        => elemR(:,er_Length)
-        perimeter     => elemR(:,er_Perimeter)
-        topwidth      => elemR(:,er_Topwidth)
-        velocity      => elemR(:,er_Velocity)
-        volume        => elemR(:,er_Volume)
-        zBtm          => elemR(:,er_Zbottom)
-        zCrown        => elemR(:,er_Zcrown)
-        fullarea      => elemR(:,er_FullArea)
-        fulldepth     => elemR(:,er_FullDepth)
-        fullhyddepth  => elemR(:,er_FullHydDepth)
-        fullperimeter => elemR(:,er_FullPerimeter)
-        Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
-        BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
-        thisSolve     => elemI(:,ei_tmType)
-        !%-----------------------------------------------------------------------------
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP_JM)
             !% cycle through the all the main junctions and each of its branches
@@ -411,8 +418,6 @@ module geometry
                         tB = tM + kk !% junction branch ID
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
-                            print *, 'in ',trim(subroutine_name)
-                            print *, tB, head(tM), zBtm(tB)
                             if ( head(tM) > zBtm(tB) ) then
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
@@ -433,8 +438,7 @@ module geometry
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
                                     *(velocity(tB)**twoR) / grav
                             end if
-                            print *, 'in ',trim(subroutine_name)
-                            print *, head(tB), velocity(tB)**twoR, grav
+                           
                             !% compute provisional depth
                             depth(tB) = head(tB) - zBtm(tB)
                             if (depth(tB) .ge. fulldepth(tB)) then
@@ -474,7 +478,8 @@ module geometry
                                 hydDepth(tB) = zeroR
                                 perimeter(tB) = zeroR
                                 hydRadius(tB) = zeroR
-                                dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+                                !dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+                                dHdA(tB)      = setting%ZeroValue%Topwidth
                             else
                                 !% not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
@@ -517,13 +522,6 @@ module geometry
         !% Note, the above can only be made a concurrent loop if we replace the tM
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
-
-
-        print *, 'at 9870598709875 **************************************'
-        tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
-            print *, elemR(tempP,er_Depth)
-            deallocate(tempP)
-            !stop 8875
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
 
@@ -737,7 +735,8 @@ module geometry
     subroutine geo_ell (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% computes the value of "ell" -- the length scale for the AC method
+        !% computes the value of "ell" -- the modified hydraulic depth
+        !% used as a length scale in AC method
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
@@ -896,6 +895,46 @@ module geometry
     end subroutine geo_slot_adjustments
 !%
 !%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_JM_values ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% The junction main (JM) values for HydDepth, ell,...
+        !% Are not defined because geometry such as ZbreadthMax are not 
+        !% defined. 
+        !% Here we use the depth at the JM junctions so that we don't have
+        !% nullvalueR stored here
+        !%
+        !% HACK
+        !% the following variables are NOT defined on JM and perhaps need to
+        !% be added:
+        !% dHdA, FullArea, FroudeNumber, FullHydDepth, FullPerimeter,
+        !% FullVolume, HydRadius, InterpWeight_xx, Length, Perimeter,
+        !% Roughness, TopWidth, ZbreadthMax, Zcrown
+        !%
+        !% The following initializations are unknown as of 20211215
+        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
+        !% SmallVolume_xxx
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: thisCol, Npack, thisP(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisCol => col_elemP(ep_JM)
+            Npack   => npack_elemP(thisCol)
+            thisP   => elemP(1:Npack,thisCol)
+        !%------------------------------------------------------------------
+        if (Npack > 0) then 
+            elemR(thisP,er_HydDepth) = elemR(thisP,er_Depth)
+            elemR(thisP,er_ell)      = elemR(thisP,er_Depth)
+        end if
+        !%------------------------------------------------------------------
+        !% Closing
+    end subroutine geo_JM_values
+!%
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================

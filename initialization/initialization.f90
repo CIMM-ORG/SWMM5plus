@@ -54,6 +54,7 @@ contains
         !% Declarations
             integer :: ii
             integer, pointer :: Npack, thisP(:)
+            integer, allocatable :: tempP(:)
             character(64) :: subroutine_name = 'initialize_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -168,9 +169,9 @@ contains
                 if (setting%Output%Verbose) print *, "begin subcatchment"
                 call init_subcatchment()
             else 
-               ! write(*,'(A)') 'setting...useHydrology requested, but no subcatchments found.'
-               ! write(*,'(A)') '...skipping hydrology in this simulation.'
-               ! setting%Simulation%useHydrology = .false.
+               write(*,'(A)') 'setting...useHydrology requested, but no subcatchments found.'
+               write(*,'(A)') '...skipping hydrology in this simulation.'
+               setting%Simulation%useHydrology = .false.
             end if
         end if
 
@@ -211,6 +212,9 @@ contains
             call init_IC_toplevel ()
         end if                                     !% brh20211208
 
+        !print *, faceR(:,fr_Flowrate)
+        !stop 938705
+        
         !% brh 20211207 rm --- designate/select the nodes/links for output
         !% brh 20211207 rm -- replaced with api_nodef_rptFlag call output_COMMON_nodes_selection ()
         !% brh 20211207 rm call output_COMMON_links_selection ()
@@ -277,13 +281,13 @@ contains
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
-        print *, '----'
-        print *, 'in ',trim(subroutine_name)
-        Npack => npack_elemP(ep_CC_Q_NOTsmallvolume)
-        thisP => elemP(1:Npack,ep_CC_Q_NOTsmallvolume)
-        print *, elemR(thisP,er_Velocity)
-        print *, elemR(thisP,er_WaveSpeed)
-        stop 938705
+        ! print *, '----'
+        ! print *, 'in ',trim(subroutine_name)
+        ! Npack => npack_elemP(ep_CC_Q_NOTsmallvolume)
+        ! thisP => elemP(1:Npack,ep_CC_Q_NOTsmallvolume)
+        ! print *, elemR(thisP,er_Velocity)
+        ! print *, elemR(thisP,er_WaveSpeed)
+
         
         !%------------------------------------------------------------------- 
         !% Closing

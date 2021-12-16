@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 1000.00
+        "NominalElemLength" : 1500.00
     },
     "Limiter" : {
         "BC" : {
@@ -43,7 +43,7 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 10
+            "interval" : 1
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -73,7 +73,7 @@
         "useYN" : false
     },
     "Simulation" : {
-        "useHydrology" : true,
+        "useHydrology" : false,
         "useHydraulics" : true
     },
     "SmallVolume" : {

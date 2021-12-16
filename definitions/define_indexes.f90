@@ -298,8 +298,8 @@ module define_indexes
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
-        enumerator :: er_dHdA                       !% geometric change in elevation with area
-        enumerator :: er_ell                        !% the ell (lower case L)  length scale in AC solver
+        enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
+        enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
         enumerator :: er_Flowrate_N1                !% flowrate (time N-1)
@@ -390,6 +390,7 @@ module define_indexes
         enumerator :: ep_CCJM_H_ETM                 !% CC and JM elements that are ETM for H
         enumerator :: ep_Diag                       !% diagnostic elements (static)
         enumerator :: ep_ETM                        !% all ETM elements
+        enumerator :: ep_JM                         !% all JM elements
         enumerator :: ep_JM_AC                      !% junction mains using AC method
         enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
         enumerator :: ep_JM_ETM                     !% junction mains using ETM method

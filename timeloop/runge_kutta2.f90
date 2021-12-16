@@ -43,70 +43,47 @@ module runge_kutta2
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
 
-        ! print*, '-------------------------------------------------------------------------'
-        ! print*, '1st RK step'
-
-        ! elemR(:,er_Head) = elemR(:,er_Head) - 1514.0
-        ! faceR(:,fr_Head_d) = faceR(:,fr_Head_d) - 1514.0
-        ! write(*,"(10f8.3)") &
-        !     elemR(ietmp(3),er_Head), &
-        !     faceR(iftmp(3),fr_Head_d), &
-        !     elemR(ietmp(4),er_Head), &
-        !     faceR(iftmp(4),fr_Head_d), &
-        !     elemR(ietmp(5),er_Head)
-
-        ! elemR(:,er_Head) = elemR(:,er_Head) + 1514.0
-        ! faceR(:,fr_Head_d) = faceR(:,fr_Head_d) + 1514.0
-
-        ! print *, elemI(ietmp(4),ei_elementType), JM  !% main
-        ! print *, ietmp(3),ietmp(4)+1                     !% upstream
-        ! print *, ietmp(5), ietmp(4)+2                     !% downstream
-        ! print *, elemI(ietmp(3),ei_Mface_uL), iftmp(2)  !% upstream JB face
-        ! print *, elemI(ietmp(5),ei_Mface_dL), iftmp(5)  !% downstream JB face
-
-        ! print *, elemR(ietmp(1), er_Head)-1514.0,&
-        !          elemR(ietmp(2), er_Head)-1514.0,&
-        !          elemR(ietmp(3), er_Head)-1514.0,&
-        !          elemR(ietmp(4), er_Head)-1514.0,&
-        !          elemR(ietmp(5), er_Head)-1514.0,&
-        !          elemR(ietmp(6), er_Head)-1514.0,&
-        !          elemR(ietmp(7), er_Head)-1514.0
-
-        ! write(*,"(10F8.3)")   &
-        !     elemR(ietmp(1), er_Head)-1514.0,&
-        !     elemR(ietmp(2), er_Head)-1514.0,&
-        !     elemR(ietmp(3), er_Head)-1514.0,&
-        !     elemR(ietmp(4), er_Head)-1514.0,&
-        !     elemR(ietmp(5), er_Head)-1514.0,&
-        !     elemR(ietmp(6), er_Head)-1514.0,&
-        !     elemR(ietmp(7), er_Head)-1514.0   
-
-        ! print *, 'head'
-        ! write(*,"(16F8.3)")   &
-        !     elemR(ietmp(1), er_Head), faceR(iftmp(1), fr_Head_u), faceR(iftmp(1), fr_Head_d),&
-        !     elemR(ietmp(2), er_Head), faceR(iftmp(2), fr_Head_u), faceR(iftmp(2), fr_Head_d),&
-        !     elemR(ietmp(3), er_Head),&
-        !     elemR(ietmp(4), er_Head),&
-        !     elemR(ietmp(5), er_Head), faceR(iftmp(5), fr_Head_u), faceR(iftmp(5), fr_Head_d),&
-        !     elemR(ietmp(6), er_Head), faceR(iftmp(6), fr_Head_u), faceR(iftmp(6), fr_Head_d),&
-        !     elemR(ietmp(7), er_Head)        
- 
-        !     print *, 'velocity'
-        !     write(*,"(16F8.3)")   &
-        !         elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
-        !         elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
-        !         elemR(ietmp(3), er_Velocity),&
-        !         elemR(ietmp(4), er_Velocity),&
-        !         elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
-        !         elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
-        !         elemR(ietmp(7), er_Velocity)               
-        ! !stop 98734
-
+        print*, '-------------------------------------------------------------------------'
+        print*, '1st RK step start ------------------'
+        write(*,'(A,7f9.2)') 'H ',elemR(1:N_elem(1),er_Head)
+        print *, ' '
+        write(*,'(A,7f9.2)') 'Q ',elemR(1:N_elem(1),er_Flowrate)
+        print *, ' '
+        write(*,'(A,7f9.2)') 'Vol   ',elemR(1:N_elem(1),er_Volume)
+        write(*,'(A,7f9.2)') 'Vel   ',elemR(1:N_elem(1),er_Velocity)
+        print *, ' '
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_u)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_d)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_u)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_d)
+        print *, ' '
+        print *, faceR(:,fr_Flowrate)
         
+        !write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
+        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Head_u)
+        print *, ' '
+        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
+        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+      
         call rk2_step_ETM (istep)
+
+        print*, '1st RK step after -------------------'
+        write(*,'(A,7f9.2)') 'Vol   ',elemR(1:N_elem(1),er_Volume)
+        write(*,'(A,7f9.2)') 'Vel   ',elemR(1:N_elem(1),er_Velocity)
+        !write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
+        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Head_u)
+        !print *, ' '
+        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
+        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
         call update_auxiliary_variables (ETM)
+
+        print *, 'after update_Aux ---------------------------------------------'
+        write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
+        print *, ' '
+        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
 
         !% junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
@@ -115,28 +92,6 @@ module runge_kutta2
             !% called here because volume update on JB isn't known until after eta updated on JM 
             call ll_momentum_solve_JB (ETM)
         end if
-
-        ! print *, 'after ll'
-        ! print *, 'head'
-        ! write(*,"(16F8.3)")   &
-        !     elemR(ietmp(1), er_Head), faceR(iftmp(1), fr_Head_u), faceR(iftmp(1), fr_Head_d),&
-        !     elemR(ietmp(2), er_Head), faceR(iftmp(2), fr_Head_u), faceR(iftmp(2), fr_Head_d),&
-        !     elemR(ietmp(3), er_Head),&
-        !     elemR(ietmp(4), er_Head),&
-        !     elemR(ietmp(5), er_Head), faceR(iftmp(5), fr_Head_u), faceR(iftmp(5), fr_Head_d),&
-        !     elemR(ietmp(6), er_Head), faceR(iftmp(6), fr_Head_u), faceR(iftmp(6), fr_Head_d),&
-        !     elemR(ietmp(7), er_Head)        
- 
-        !     print *, 'velocity'
-        !     write(*,"(16F8.3)")   &
-        !         elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
-        !         elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
-        !         elemR(ietmp(3), er_Velocity),&
-        !         elemR(ietmp(4), er_Velocity),&
-        !         elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
-        !         elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
-        !         elemR(ietmp(7), er_Velocity)               
-        ! !stop 987398
 
         !% compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
@@ -153,8 +108,19 @@ module runge_kutta2
         !% RK2 solution step 8 -- RK2 second step for ETM
         !% RK2 solution step 8(a)
         istep=2
+
+        print*, '2nd RK step before----------------------'
+        write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
+        print *, ' '
+        !write(*,'(A,8f8.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
         
         call rk2_step_ETM (istep)
+
+        print*, '2nd RK step after--------------'
+        write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
+        print *, ' '
+        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
+        
 
         !% RK2 solution step 8(c)
         call update_auxiliary_variables(ETM)
@@ -178,6 +144,20 @@ module runge_kutta2
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
+
+        print*, 'RK at end --------------'
+        write(*,'(A,7f9.2)') 'H ',elemR(1:N_elem(1),er_Head)
+        print *, ' '
+        write(*,'(A,7f9.2)') 'Q ',elemR(1:N_elem(1),er_Flowrate)
+        print *, ' '
+        write(*,'(A,7f9.2)') 'Vol   ',elemR(1:N_elem(1),er_Volume)
+        write(*,'(A,7f9.2)') 'Vel   ',elemR(1:N_elem(1),er_Velocity)
+        print *, ' '
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_u)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_d)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_u)
+        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_d)
 
         if (setting%Debug%File%runge_kutta2)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

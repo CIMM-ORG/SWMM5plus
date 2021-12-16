@@ -21,8 +21,6 @@ module orifice_elements
 
     public :: orifice_toplevel
 
-    real(8), pointer :: grav => setting%constant%gravity
-
     contains
 !%==========================================================================
 !% PUBLIC
@@ -128,7 +126,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         integer, pointer :: SpecificOrificeType, FlowDirection, GeometryType
-        real(8), pointer :: Flowrate, EffectiveHeadDelta, Zcrest, Head
+        real(8), pointer :: Flowrate, EffectiveHeadDelta, Zcrest, Head, grav
         real(8), pointer :: RectangularBreadth, NominalDownstreamHead
         real(8), pointer :: DischargeCoeff, EffectiveFullDepth, FullArea
         real(8), pointer :: WeirExponent, VillemonteExponent, SharpCrestedWeirCoeff
@@ -156,6 +154,7 @@ module orifice_elements
         SharpCrestedWeirCoeff => Setting%Orifice%SharpCrestedWeirCoefficient
         WeirExponent          => Setting%Orifice%TransverseWeirExponent
         VillemonteExponent    => Setting%Orifice%VillemonteCorrectionExponent
+        grav                  => setting%constant%gravity
         !%-----------------------------------------------------------------------------
         !% find full area for flow, and A/L for critical depth calculations
         select case (GeometryType)

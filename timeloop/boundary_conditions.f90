@@ -44,8 +44,18 @@ contains
 
         if (N_flowBC > 0 .or. N_headBC > 0) then
             !% interpolate the BC in time
+            print *, 'in 223563 ',trim(subroutine_name)
+                write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+
             call bc_interpolate()
+
+            print *, 'in 4789615 ',trim(subroutine_name)
+                write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+
             call face_interpolate_bc(isBConly) ! broadcast interpolation to face & elem arrays
+
+            print *, 'in 836673 ',trim(subroutine_name)
+                write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
         end if
 
         !%------------------------------------------------------------------
@@ -149,7 +159,7 @@ contains
                                 do while((tnow > ttime) .and. (BC%headIdx(ii) < setting%BC%TimeSlotsStored))
                                     BC%headIdx(ii) = BC%headIdx(ii) + 1
                                     ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time)
-                                    if ((BC%headIdx(ii) == setting%BC%slots) .and. (tnow > ttime)) then
+                                    if ((BC%headIdx(ii) == setting%BC%TimeSlotsStored) .and. (tnow > ttime)) then
                                         call bc_fetch_head(ii)
                                         ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time)
                                     end if
@@ -204,6 +214,13 @@ contains
             if (new_inflow_time == setting%Time%End) exit
         end do
         BC%flowIdx(bc_idx) = 2
+
+        print *, 'in 398705', trim(subroutine_name)
+        print *, bc_idx
+        do ii = 1,NN
+             print *, BC%flowR_timeseries(bc_idx,ii,br_time), BC%flowR_timeseries(bc_idx,ii,br_value)
+        end do
+        
 
         if (setting%Debug%File%boundary_conditions) then
             do ii = 1, NN
@@ -275,17 +292,27 @@ contains
 
         tnow = setting%Time%Now
 
+        print *, 'in ',trim(subroutine_name)
+
         do ii=1, N_flowBC
+            print *, 'ii', ii
             slot_idx = BC%flowIdx(ii)
+            print *, 'slot_idx',slot_idx
             upper_idx = slot_idx
+            print *, 'upper_idx',upper_idx
             lower_idx = slot_idx - 1
+            print *, 'lower_Idx',lower_idx
+            print *, 'tnow',tnow
+            print *, 'br_time ', BC%flowR_timeseries(ii, lower_idx, br_time)
             !% Find the cloest index first, assign it to lower_idx for now
             if (BC%flowR_timeseries(ii, lower_idx, br_time) == tnow) then
                 !% no need to do the interpolation, directly take the existing BC data
                 BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
+                print *, 'bcflow 1 ',BC%flowRI(ii)
             else if (lower_idx > 0) then
                 if ( BC%flowR_timeseries(ii, lower_idx, br_value) == BC%flowR_timeseries(ii, upper_idx, br_value)) then
                     BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
+                    print *, 'bcflow 2 ',BC%flowRI(ii)
                     !% constant value, no need to do the interpolation
                 else
                     !% interpolation step
@@ -296,12 +323,17 @@ contains
                             BC%flowR_timeseries(ii, upper_idx, br_time), &
                             BC%flowR_timeseries(ii, lower_idx, br_value), &
                             BC%flowR_timeseries(ii, upper_idx, br_value))
+                        print *, 'bcflow 3 ',BC%flowRI(ii)    
                     else
                         BC%flowRI(ii) = BC%flowR_timeseries(ii, upper_idx, br_value) !% will be zero
+                        print *, 'bcflow 4 ',BC%flowRI(ii)  
                     end if
                 end if
             end if
         end do
+
+        print *, 'in ', trim(subroutine_name)
+        print *, BC%flowRI(:)
 
         do ii=1, N_headBC
             nodeIdx     => BC%headI(ii,bi_node_idx)

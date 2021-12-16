@@ -7,8 +7,6 @@ module lowlevel_rk2
 
     implicit none
 
-    real(8), pointer :: grav => setting%constant%gravity
-
     !%-----------------------------------------------------------------------------
     !% Description:
     !% Runge-Kutta method for time-marching (ETM and AC)
@@ -311,7 +309,7 @@ module lowlevel_rk2
         !% different T00, T10, T20 methods
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: outCol, thisCol, Npack
-        real(8), pointer :: fAdn(:), fAup(:), fHdn(:), fHup(:), eHead(:)
+        real(8), pointer :: fAdn(:), fAup(:), fHdn(:), fHup(:), eHead(:), grav
         integer, pointer :: iup(:), idn(:), thisP(:)
         !%-----------------------------------------------------------------------------
         thisP  => elemP(1:Npack,thisCol)
@@ -322,6 +320,7 @@ module lowlevel_rk2
         eHead  => elemR(:,er_Head)
         iup    => elemI(:,ei_Mface_uL)
         idn    => elemI(:,ei_Mface_dL)
+        grav => setting%constant%gravity
         !%-----------------------------------------------------------------------------
 
         select case (setting%Solver%MomentumSourceMethod)
@@ -354,7 +353,7 @@ module lowlevel_rk2
         integer, intent(in) :: outCol, thisCol, Npack
         real(8) :: delta
         real(8), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
-        real(8), pointer :: fHdn(:), fHup(:), eKsource(:)
+        real(8), pointer :: fHdn(:), fHup(:), eKsource(:), grav
         integer, pointer :: iup(:), idn(:), thisP(:)
         character(64)    :: subroutine_name = "ll_momentum_source_CC"
         !%-----------------------------------------------------------------------------
@@ -372,6 +371,7 @@ module lowlevel_rk2
         eKsource => elemR(:,er_Ksource)
         iup      => elemI(:,ei_Mface_uL)
         idn      => elemI(:,ei_Mface_dL)
+        grav => setting%constant%gravity
         !%-----------------------------------------------------------------------------
 
         select case (setting%Solver%MomentumSourceMethod)
@@ -410,7 +410,7 @@ module lowlevel_rk2
         !% is the implict friction used in both AC and ETM
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: outCol, thisCol, Npack
-        real(8), pointer :: velocity(:), mn(:), rh(:), oneVec(:)
+        real(8), pointer :: velocity(:), mn(:), rh(:), oneVec(:), grav
         integer, pointer :: thisP(:)
         !%------------------------------------------------------------------------------
         thisP    => elemP(1:Npack,thisCol)
@@ -418,6 +418,7 @@ module lowlevel_rk2
         mn       => elemR(:,er_Roughness)
         rh       => elemR(:,er_HydRadius)
         oneVec   => elemR(:,er_ones)
+        grav => setting%constant%gravity
         !%------------------------------------------------------------------------------
 
         elemR(thisP,outCol) = &
@@ -682,7 +683,7 @@ module lowlevel_rk2
         integer, pointer :: Npack
         real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:)
         real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax
-        real(8), pointer :: eVolume(:), dt, headC
+        real(8), pointer :: eVolume(:), dt, headC, grav
         logical, pointer :: isAdhocFlowrate(:)
         integer :: ii, kk, tB
         real(8) :: dHead
@@ -708,6 +709,7 @@ module lowlevel_rk2
 
         dt           => setting%Time%Hydraulics%Dt
         headC        => setting%Junction%HeadCoef
+        grav         => setting%constant%gravity
         !%-----------------------------------------------------------------------------
         !%
         select case (whichTM)
@@ -766,10 +768,10 @@ module lowlevel_rk2
                         dHead = eHead(tB) - fHead_d(tFdn) !% using elem to face
                         if (dHead < zeroR) then
                             ! upstream flow in a downstream branch use downstream values
-                            eFlow(tB) =  - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead) ) !BRH bugfix 20210829
+                            eFlow(tB) =  - eArea(tB) * sqrt(twoR * grav * (-dHead) ) !BRH bugfix 20210829
                         else
                             ! downstream flow in an downstream branch
-                            eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
+                            eFlow(tB) =  + eArea(tB) * sqrt(twoR * grav * dHead )
                             ! if outflow, limit flowrate by 1/3 main volume
                             eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )
                         end if
@@ -894,7 +896,7 @@ module lowlevel_rk2
 
         real(8), pointer :: eLength(:), eWaveSpeed(:), eHead(:)
         real(8), pointer :: eVolume0(:), eVelocity0(:), Msource(:)
-        real(8), pointer :: cLim,  crk(:)
+        real(8), pointer :: cLim,  crk(:), grav
 
         real(8) :: dC, deltaHead
         !%-----------------------------------------------------------------------------
@@ -905,9 +907,11 @@ module lowlevel_rk2
         eLength      => elemR(:,er_Length)
         eHead        => elemR(:,er_Head)
         eWaveSpeed   => elemR(:,er_WaveSpeed)
+        
 
         cLim         => setting%Junction%CFLlimit
         crk          => setting%Solver%crk2
+        grav         => setting%constant%gravity
 
         !% dynamic coefficient
         dC = + grav * eVolume0(tB) &
