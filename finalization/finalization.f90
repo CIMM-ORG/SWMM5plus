@@ -38,22 +38,22 @@ contains
         !% finalize the profiler and print times
         if (setting%Profile%useYN) call util_profiler_print_summary()
 
-        ! if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0  
-        !     if ((setting%Output%Report%provideYN) .and. &
-        !         (.not. setting%Output%Report%suppress_MultiLevel_Output)) then    
+        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0  
+            if ((setting%Output%Report%provideYN) .and. &
+                (.not. setting%Output%Report%suppress_MultiLevel_Output)) then    
 
-        !         !% write a final combined multi-level files
-        !         call outputML_store_data (.true.)
+                !% write a final combined multi-level files
+                call outputML_store_data (.true.)
 
-        !         !% write the control file for the stored mult-level files
-        !         call outputML_write_control_file ()
+                !% write the control file for the stored mult-level files
+                call outputML_write_control_file ()
 
-        !         sync all
+                sync all
 
-        !         call outputML_convert_elements_to_linknode_and_write ()
-        !     end if
+                call outputML_convert_elements_to_linknode_and_write ()
+            end if
 
-        ! end if !% brh20211208    
+        end if !% brh20211208    
 
         !% HACK brh20211214 -- segmentation fault from interface_finalize()
         !% when running YJ_subcritical_all_constant_inflow.inp testcase

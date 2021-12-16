@@ -346,7 +346,8 @@ contains
 
         !% allocate a coarray with the number of images
         allocate(N_OutElem(num_images())[*])
-
+        !% initialize with zero value
+        N_OutElem = zeroI
         !% the packed number of elements is the number with "true" in eYN_isOutput
         !% for each image
         N_OutElem(this_image()) = npack_elemP(ep_Output_Elements)
