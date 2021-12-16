@@ -382,26 +382,28 @@ contains
 !%=============================================================================
 
     subroutine interface_init()
-        !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
         !% Description:
         !%    initializes the EPA-SWMM shared library, creating input (.inp),
         !%    report (.rpt), and output (.out) files, necessary to run simulation with
         !%    EPA-SWMM. It also updates the number of objects in the SWMM model, i.e.,
         !%    number of links, nodes, and tables, and defines the start and end
         !%    simulation times.
-        !%-----------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
             integer :: ppos, num_args, error
             character(64) :: subroutine_name = 'interface_init'
+        
+        !% Preliminaries:
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
         setting%File%inp_file = trim(setting%File%inp_file) // c_null_char
         setting%File%rpt_file = trim(setting%File%rpt_file) // c_null_char
         setting%File%out_file = trim(setting%File%out_file) // c_null_char
         c_lib%filename = trim(setting%File%library_folder) // "/libswmm5.so"
 
+        !% --- initialize the api between SWMM-C and SWMM5+
+        !%     This returns and stores the SWMM-C input and output filenames
         call load_api_procedure("api_initialize")
         error = ptr_api_initialize( &
             setting%File%inp_file, &
@@ -411,72 +413,51 @@ contains
         call print_api_error(error, subroutine_name)
         api_is_initialized = .true.
 
-        !% Get number of objects
-
+        !% --- Get number of objects in SWMM-C
         SWMM_N_link = get_num_objects(API_LINK)
         N_link = SWMM_N_link
+
         SWMM_N_node = get_num_objects(API_NODE)
         N_node = SWMM_N_node
+
         SWMM_N_Curve = get_num_objects(API_CURVE)
         N_curve = SWMM_N_Curve
 
-        !% brh202112082
         SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
-        
-        print *
-        print *, 'BUG WARNING location ',980879,' in ',subroutine_name
-        print *, '...if the SWMM code detects a parse error for the *.inp file then the ...'
-        print *, '...get_num_objects function returns an error code 200 (SWMM parse error)... '
-        print *, '...that is stored instead of the names of nodes and links...'
-        print *, '...this has unexpected errors.'
+               
         if ((N_link == 200) .AND. (N_node == 200)) then
-             print *, SWMM_N_link, SWMM_N_node
-             print *, 'ERROR (input file): Appears to be parse error in the input file...'
-             print *, '...where some links/nodes are either not connected or not identified...'
-             print *, '...This can happen if nodes are renamed and some of the conduit connection did not get changed...'
-             print *, '...This error might have been tripped accidently if the system has exactly...'
-             print *, '...200 nodes and 200 links.'
-             stop 2398760
+            print *, ''
+            print *, 'BUG WARNING location ',980879,' in ',subroutine_name
+            print *, '...if the SWMM code detects a parse error for the *.inp file then the ...'
+            print *, '...get_num_objects function returns an error code 200 (SWMM parse error)... '
+            print *, '...that is stored instead of the names of nodes and links...'
+            print *, '...this has unexpected errors.'
+            print *, ''
+            print *, SWMM_N_link, SWMM_N_node
+            print *, 'ERROR (input file): Appears to be parse error in the input file...'
+            print *, '...where some links/nodes are either not connected or not identified...'
+            print *, '...This can happen if nodes are renamed and some of the conduit connection did not get changed...'
+            print *, '...This error might have been tripped accidently if the system has exactly...'
+            print *, '...200 nodes and 200 links.'
+            stop 2398760
         end if
-        print *
 
-        !% brh20211214 -- the SWMM times are all read using interface_get_SWMM_times and
-        !% are stored in the settings. We now use init_time to setup times
-        ! if (setting%Time%useSWMMinpYN) then
-        !     write(*,*) '...Using simulation start and end time from SWMM input file'
-        !     setting%Time%StartEpoch = get_start_datetime()
-        !     setting%Time%EndEpoch = get_end_datetime()
-        !     setting%Time%Start = zeroR
-        !     !% use floor() to match approachin SWMM-C
-        !     setting%Time%End = real(floor( &
-        !         (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)) &
-        !         ,KIND=8)
-        ! else 
-        !     write(*,*) '...Using simulation start and end time from json input file'     
-        ! end if 
-
-        ! !% Check times
-        ! if (setting%Time%End .le. setting%Time%Start) then
-        !     write(*,*) 'FATAL INPUT ERROR:'
-        !     write(*,*) 'end time is less than start time'
-        !     write(*,*) 'input start time (seconds): ',setting%Time%Start
-        !     write(*,*) 'input end time   (seconds): ',setting%Time%End
-        !     stop 309875
-        ! end if
-
+        !% --- get the time start, end, and interval data from SWMM-C input file
         call interface_get_SWMM_times()
 
-        if (setting%Debug%File%interface) then
-            print *, new_line("")
-            print *, "SWMM_N_link", SWMM_N_link
-            print *, "SWMM_N_node", SWMM_N_node
-            print *, new_line("")
-            print *, "SWMM start time", setting%Time%StartEpoch
-            print *, "SWMM end time", setting%Time%EndEpoch
-            print *, "setting%time%start", setting%Time%Start
-            print *, "setting%time%end", setting%Time%End
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        end if
+        !%----------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%interface) then
+                print *, new_line("")
+                print *, "SWMM_N_link", SWMM_N_link
+                print *, "SWMM_N_node", SWMM_N_node
+                print *, new_line("")
+                print *, "SWMM start time", setting%Time%StartEpoch
+                print *, "SWMM end time", setting%Time%EndEpoch
+                print *, "setting%time%start", setting%Time%Start
+                print *, "setting%time%end", setting%Time%End
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            end if
     end subroutine interface_init
 !%
 !%=============================================================================
@@ -724,18 +705,17 @@ contains
                 if (attr == api_linkf_type) then
                     link_value = lPipe
                 else if (attr == api_linkf_weir_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 837894'
+                    !write(*,*) '****** Not clear why this is null brh20211207 at 837894'
                     link_value = nullvalueI
                 else if (attr == api_linkf_orifice_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 938765'
+                    !write(*,*) '****** Not clear why this is null brh20211207 at 938765'
                     link_value = nullvalueI
                 else if (attr == api_linkf_pump_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 875323'
+                    !write(*,*) '****** Not clear why this is null brh20211207 at 875323'
                     link_value = nullvalueI
                 else if (attr == api_linkf_outlet_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 3897895'
+                    !write(*,*) '****** Not clear why this is null brh20211207 at 3897895'
                     link_value = nullvalueI
-                !% brh20211207s
                 else
                     link_value = nullvalueI
                     write(*,*)
@@ -744,8 +724,6 @@ contains
                     write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
-                    ! stop 45782987 
-                !% brh20211207e
                 end if
 
             else if (link_value == API_PUMP) then
@@ -771,8 +749,7 @@ contains
                     else if (link_value == API_TYPE4_PUMP) then
                         link_value = lType4Pump
                     else if (link_value == API_IDEAL_PUMP) then
-                        link_value = lTypeIdealPump
-                    !% brh20211207s    
+                        link_value = lTypeIdealPump   
                     else
                         link_value = nullvalueI
                         write(*,*)
@@ -780,9 +757,7 @@ contains
                         write(*,*) '   link_value = ',link_value
                         write(*,*) '   allowable are ',API_TYPE1_PUMP, API_TYPE2_PUMP, API_TYPE3_PUMP, API_TYPE4_PUMP, API_IDEAL_PUMP
                         write(*,*) '   skipping error condition!'
-                        write(*,*) '******'
-                        ! stop 8836785 
-                    !% brh20211207e                       
+                        write(*,*) '******'                     
                     endif
                 else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 773682'
@@ -795,9 +770,7 @@ contains
                     write(*,*) '   attr = ',attr
                     write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
-                    write(*,*) '******'
-                    ! stop 8836785 
-                !% brh20211207e                   
+                    write(*,*) '******'          
                 end if
 
             else if (link_value == API_ORIFICE) then
@@ -814,8 +787,7 @@ contains
                     if (link_value == API_SIDE_ORIFICE) then
                         link_value = lSideOrifice
                     else if (link_value == API_BOTTOM_ORIFICE) then
-                        link_value = lBottomOrifice
-                    !% brh20211207s    
+                        link_value = lBottomOrifice  
                     else
                         link_value = nullvalueI
                         write(*,*)
@@ -823,17 +795,14 @@ contains
                         write(*,*) '   link_value = ',link_value
                         write(*,*) '   allowable are ',API_SIDE_ORIFICE, API_BOTTOM_ORIFICE
                         write(*,*) '   skipping error condition!'
-                        write(*,*) '******'
-                        ! stop 8836785 
-                    !% brh20211207e       
+                        write(*,*) '******'     
                     endif
                 else if (attr == api_linkf_pump_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at  8378904'
                     link_value = nullvalueI
                 else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 3446789'
-                    link_value = nullvalueI
-                !% brh20211207s    
+                    link_value = nullvalueI  
                 else
                     link_value = nullvalueI
                     write(*,*)
@@ -841,9 +810,7 @@ contains
                     write(*,*) '   attr = ',attr
                     write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
-                    write(*,*) '******'
-                    ! stop 9937685 
-                !% brh20211207e                    
+                    write(*,*) '******'              
                 end if
 
             else if (link_value == API_WEIR) then
@@ -863,8 +830,7 @@ contains
                     else if (link_value == API_TRAPEZOIDAL_WEIR) then
                         link_value = lTrapezoidalWeir
                     else if (link_value == API_ROADWAY_WEIR) then
-                        link_value = lRoadWayWeir
-                    !% brh20211207s    
+                        link_value = lRoadWayWeir  
                     else
                         link_value = nullvalueI
                         write(*,*)
@@ -872,9 +838,7 @@ contains
                         write(*,*) '   link_value = ',link_value
                         write(*,*) '   allowable are ',API_TRANSVERSE_WEIR, API_SIDEFLOW_WEIR, API_VNOTCH_WEIR, API_TRAPEZOIDAL_WEIR, API_ROADWAY_WEIR
                         write(*,*) '   skipping error condition!'
-                        write(*,*) '******'
-                        ! stop 620873 
-                    !% brh20211207e      
+                        write(*,*) '******'  
                     endif
                 else if (attr == api_linkf_orifice_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 836637'
@@ -884,8 +848,7 @@ contains
                     link_value = nullvalueI
                 else if (attr == api_linkf_outlet_type) then
                     write(*,*) '****** Not clear why this is null brh20211207 at 826784'
-                    link_value = nullvalueI
-                !% brh20211207s    
+                    link_value = nullvalueI    
                 else
                     link_value = nullvalueI
                     write(*,*)
@@ -893,9 +856,7 @@ contains
                     write(*,*) '   attr = ',attr
                     write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
-                    write(*,*) '******'
-                    ! stop 9937685 
-                !% brh20211207e       
+                    write(*,*) '******'   
                 end if
 
             else if (link_value == API_OUTLET) then
@@ -918,8 +879,7 @@ contains
                     if (link_value == API_NODE_DEPTH) then
                         link_value = lNodeDepth
                     else if (link_value == API_NODE_HEAD) then
-                        link_value = lNodeHead
-                    !% brh20211207s    
+                        link_value = lNodeHead 
                     else
                         link_value = nullvalueI
                         write(*,*)
@@ -927,11 +887,8 @@ contains
                         write(*,*) '   link_value = ',link_value
                         write(*,*) '   allowable are ',API_NODE_DEPTH, API_NODE_HEAD
                         write(*,*) '   skipping error condition!'
-                        write(*,*) '******'
-                        ! stop 220455
-                    !% brh20211207e                       
+                        write(*,*) '******'                       
                     endif
-                !% brh20211207s    
                 else
                     link_value = nullvalueI
                     write(*,*)
@@ -939,9 +896,7 @@ contains
                     write(*,*) '   attr = ',attr
                     write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
                     write(*,*) '   skipping error condition!'
-                    write(*,*) '******'
-                    ! stop 11947
-                !% brh20211207e       
+                    write(*,*) '******'     
                 end if                
 
             endif
@@ -1326,20 +1281,16 @@ contains
                     !write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
                     baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
-                !% brh20211207s
                 else
-                    write(*,*) '****** unexpected else in ',trim(subroutine_name), ' at 9873094'
-                    write(*,*), '   p0 read is ',p0
-                    write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
-                    write(*,*), '   skipping error condition!'
-                    write(*,*) '******'
-                    !stop 9873094
-                !% brh20211207e    
+                    !write(*,*) '--- no external inflow timeseries pattern for node ',node_idx
+                    !write(*,*) '****** unexpected else in ',trim(subroutine_name), ' at 9873094'
+                    !write(*,*), '   p0 read is ',p0
+                    !write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
+                    !write(*,*), '   skipping error condition!'
+                    !write(*,*) '******'  
                 end if
-            !% brh20211208s
             else
-                write(*,*) '   no ext inflows to this node'
-            !% brh20211208e
+                !write(*,*) '--- no external inflows to node ',node_idx
             end if
 
             if (node%YN(node_idx, nYN_has_dwfInflow)) then
@@ -1429,22 +1380,22 @@ contains
                             setting%BC%disableInterpolationYN = .true.
                         !% brh20211207s
                         else
-                            write(*,*)
-                            write(*,*) '****** Unexpected else in ',subroutine_name,' at 4479823'
-                            write(*,*) '   tnext = ', tnext
-                            write(*,*) '   tnow  = ', tnow
-                            write(*,*) '   skipping error condition'
-                            write(*,*) '******'
+                            ! write(*,*)
+                            ! write(*,*) '****** Unexpected else in ',subroutine_name,' at 4479823'
+                            ! write(*,*) '   tnext = ', tnext
+                            ! write(*,*) '   tnow  = ', tnow
+                            ! write(*,*) '   skipping error condition'
+                            ! write(*,*) '******'
                             ! stop 4479823
                         !% brh20211207e    
                         end if
                     !% brh20211207s
                     else
-                        write(*,*)
-                        write(*,*) '****** Unexpected else in ',subroutine_name,' at 4589709'
-                        write(*,*) '   success = ', success
-                        write(*,*) '   skipping error condition'
-                        write(*,*) '******'
+                        ! write(*,*)
+                        ! write(*,*) '****** Unexpected else in ',subroutine_name,' at 4589709'
+                        ! write(*,*) '   success = ', success
+                        ! write(*,*) '   skipping error condition'
+                        ! write(*,*) '******'
                         ! stop 4589709
                     !% brh20211207e                          
                     end if

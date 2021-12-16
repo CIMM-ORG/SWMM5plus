@@ -44,18 +44,19 @@ contains
 
         if (N_flowBC > 0 .or. N_headBC > 0) then
             !% interpolate the BC in time
-            print *, 'in 223563 ',trim(subroutine_name)
-                write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+            !print *, 'in 223563 ',trim(subroutine_name)
+            !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+            !print *, faceR(1:N_elem(1)+1,fr_Flowrate)
 
             call bc_interpolate()
 
-            print *, 'in 4789615 ',trim(subroutine_name)
-                write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+            !print *, 'in 4789615 ',trim(subroutine_name)
+            !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
 
             call face_interpolate_bc(isBConly) ! broadcast interpolation to face & elem arrays
 
-            print *, 'in 836673 ',trim(subroutine_name)
-                write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+            !print *, 'in 836673 ',trim(subroutine_name)
+            !    write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
         end if
 
         !%------------------------------------------------------------------
@@ -185,43 +186,58 @@ contains
 !%==========================================================================
 !%
     subroutine bc_fetch_flow(bc_idx)
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        integer             :: ii, NN
-        real(8)             :: new_inflow_time
-        real(8)             :: new_inflow_value
-        character(64)       :: subroutine_name = "bc_fetch_flow"
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Description
+        !% To prevent having to read the inflow file at every time step
+        !% we store a number of "slots" of data controlled by the setting
+        !% parameter "setting.BC.TimeSlotsStored". This code reads in and
+        !% stores from the inflows in the SWMM input files
+        !%-------------------------------------------------------------------
+            integer, intent(in) :: bc_idx
+            integer             :: ii
+            integer, pointer    ::  NN
+            real(8)             :: new_inflow_time
+            real(8)             :: new_inflow_value
+            character(64)       :: subroutine_name = "bc_fetch_flow"
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%boundary_conditions)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases        
+            NN => setting%BC%TimeSlotsStored
+        !%-------------------------------------------------------------------
 
-        NN = setting%BC%TimeSlotsStored
-
-        if (BC%flowIdx(bc_idx) == 0) then ! First fetch
-            BC%flowR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
+        !% get the first of the next set of data   
+        if (BC%flowIdx(bc_idx) == 0) then ! First fetch is for the simulation start time
+            BC%flowR_timeseries(bc_idx, 1, br_time)  = setting%Time%Start
             BC%flowR_timeseries(bc_idx, 1, br_value) = interface_get_flowBC(bc_idx, setting%Time%Start)
-        else ! last value becomes first
-            BC%flowR_timeseries(bc_idx, 1, br_time) = BC%flowR_timeseries(bc_idx, NN, br_time)
+        else ! last value becomes first in the new storred set
+            BC%flowR_timeseries(bc_idx, 1, br_time)  = BC%flowR_timeseries(bc_idx, NN, br_time)
             BC%flowR_timeseries(bc_idx, 1, br_value) = BC%flowR_timeseries(bc_idx, NN, br_value)
         end if
 
+
+        !% read in additional data
         new_inflow_time = setting%Time%Start
         do ii = 2, NN
+            !print *, 'from interface ',interface_get_next_inflow_time(bc_idx, new_inflow_time)
             new_inflow_time = min(setting%Time%End, interface_get_next_inflow_time(bc_idx, new_inflow_time))
             BC%flowR_timeseries(bc_idx, ii, br_time) = new_inflow_time
             BC%flowR_timeseries(bc_idx, ii, br_value) = interface_get_flowBC(bc_idx, new_inflow_time)
+            !print *,  ii, new_inflow_time
             if (new_inflow_time == setting%Time%End) exit
         end do
         BC%flowIdx(bc_idx) = 2
 
-        print *, 'in 398705', trim(subroutine_name)
-        print *, bc_idx
-        do ii = 1,NN
-             print *, BC%flowR_timeseries(bc_idx,ii,br_time), BC%flowR_timeseries(bc_idx,ii,br_value)
-        end do
+        ! print *, 'in 398705 ', trim(subroutine_name)
+        ! print *, bc_idx
+        ! do ii = 1,NN
+        !      print *, BC%flowR_timeseries(bc_idx,ii,br_time), BC%flowR_timeseries(bc_idx,ii,br_value)
+        ! end do
+        ! stop 398705
         
-
         if (setting%Debug%File%boundary_conditions) then
             do ii = 1, NN
                 write(*, "(*(G0.4 : ','))") BC%flowR_timeseries(bc_idx, ii, :)
@@ -275,45 +291,42 @@ contains
 !%==========================================================================
 !%
     subroutine bc_interpolate()
-        !%-----------------------------------------------------------------------------
+        !%-------------------------------------------------------------------
         !% Description:
         !% This subroutine is for boundary condition interpolation.
         !% Base on the time passed from the time loop, we interpolate (linear interpolation for now)
         !% the boundary condition to get the corresponding value.
-        !%-----------------------------------------------------------------------------
-            real(8) :: tnow, normDepth, critDepth
-            integer :: ii, slot_idx, upper_idx, lower_idx 
-            integer, pointer :: nodeIdx, faceIdx, elemUpIdx
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            real(8) :: normDepth, critDepth
+            real(8), pointer :: tnow
+            integer :: ii,  lower_idx 
+            integer, pointer :: nodeIdx, faceIdx, elemUpIdx, upper_idx
             character(64) :: subroutine_name = 'bc_interpolate'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        tnow = setting%Time%Now
-
-        print *, 'in ',trim(subroutine_name)
+        !%-------------------------------------------------------------------
+        !% Preliminaries:   
+            if (setting%Debug%File%boundary_conditions)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases
+            tnow => setting%Time%Now
+        !%-------------------------------------------------------------------    
 
         do ii=1, N_flowBC
-            print *, 'ii', ii
-            slot_idx = BC%flowIdx(ii)
-            print *, 'slot_idx',slot_idx
-            upper_idx = slot_idx
-            print *, 'upper_idx',upper_idx
-            lower_idx = slot_idx - 1
-            print *, 'lower_Idx',lower_idx
-            print *, 'tnow',tnow
-            print *, 'br_time ', BC%flowR_timeseries(ii, lower_idx, br_time)
-            !% Find the cloest index first, assign it to lower_idx for now
+            !slot_idx  => BC%flowIdx(ii)
+            upper_idx => BC%flowIdx(ii)
+            !upper_idx = slot_idx
+            lower_idx = upper_idx - 1
+
+            !% Find the closest index first, assign it to lower_idx for now
             if (BC%flowR_timeseries(ii, lower_idx, br_time) == tnow) then
-                !% no need to do the interpolation, directly take the existing BC data
+                !% exact match -- take the existing BC data, no need to do the interpolation
                 BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
-                print *, 'bcflow 1 ',BC%flowRI(ii)
+
             else if (lower_idx > 0) then
                 if ( BC%flowR_timeseries(ii, lower_idx, br_value) == BC%flowR_timeseries(ii, upper_idx, br_value)) then
-                    BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
-                    print *, 'bcflow 2 ',BC%flowRI(ii)
                     !% constant value, no need to do the interpolation
+                    BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
                 else
                     !% interpolation step
                     if (.not. setting%BC%disableInterpolationYN) then
@@ -322,39 +335,42 @@ contains
                             BC%flowR_timeseries(ii, lower_idx, br_time), &
                             BC%flowR_timeseries(ii, upper_idx, br_time), &
                             BC%flowR_timeseries(ii, lower_idx, br_value), &
-                            BC%flowR_timeseries(ii, upper_idx, br_value))
-                        print *, 'bcflow 3 ',BC%flowRI(ii)    
+                            BC%flowR_timeseries(ii, upper_idx, br_value))                   
                     else
-                        BC%flowRI(ii) = BC%flowR_timeseries(ii, upper_idx, br_value) !% will be zero
-                        print *, 'bcflow 4 ',BC%flowRI(ii)  
-                    end if
+                        !% no interpolatoni -- take the upper index value
+                        BC%flowRI(ii) = BC%flowR_timeseries(ii, upper_idx, br_value) 
+                    end if  
                 end if
+            else 
+                !% lower_idx <= 0
+                write(*,*), 'CODE ERROR? unexpected else in BC'
+                stop 9870985    
             end if
         end do
-
-        print *, 'in ', trim(subroutine_name)
-        print *, BC%flowRI(:)
 
         do ii=1, N_headBC
             nodeIdx     => BC%headI(ii,bi_node_idx)
             faceIdx     => BC%headI(ii,bi_face_idx)
             elemUpIdx   => faceI(faceIdx,fi_Melem_uL)
+            !slot_idx    => BC%headIdx(ii)
+            upper_idx   => BC%headIdx(ii)
+            lower_idx   =  upper_idx - 1
 
+            !% --- prescribed head at outlet
             if ((BC%headI(ii,bi_subcategory) == BCH_fixed)   .or. &
                 (BC%headI(ii,bi_subcategory) == BCH_tseries) .or. &
                 (BC%headI(ii,bi_subcategory) == BCH_tidal)) then
-                slot_idx = BC%headIdx(ii)
-                upper_idx = slot_idx
-                lower_idx = slot_idx - 1
-                !% Find the cloest index first, assign it to lower_idx just for now
+
+                !% Find the closest index first, assign it to lower_idx just for now
                 if (BC%headR_timeseries(ii, lower_idx, br_time) == tnow) then
-                    !% no need to do the interpolation, directly take the existing BC data
+                    !% exact match -- directly take the existing BC data, no need to do the interpolation, 
                     BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
-                else if (lower_idx .ne. 0) then
+                else if (lower_idx > 0) then
                     if ( BC%headR_timeseries(ii, lower_idx, br_value) == BC%headR_timeseries(ii, upper_idx, br_value)) then
-                        BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
                         !% constant value, no need to do the interpolation
+                        BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
                     else
+                        !% do the interpolation -- NOTE the setting..disableInterpolationYN not available here
                         BC%headRI(ii) = util_interpolate_linear( &
                             tnow, &
                             BC%headR_timeseries(ii, lower_idx, br_time), &
@@ -362,8 +378,13 @@ contains
                             BC%headR_timeseries(ii, lower_idx, br_value), &
                             BC%headR_timeseries(ii, upper_idx, br_value))
                     end if
+                else 
+                    !% lower_idx <= 0
+                    write(*,*), 'CODE ERROR? unexpected else in BC'
+                        stop 786985    
                 end if
 
+            !% --- normal flow at outlet   
             else if (BC%headI(ii,bi_subcategory) == BCH_normal) then
 
                 !% for normal dnBC, if the node has a invert,
@@ -380,6 +401,7 @@ contains
                     end if
                 end if
 
+            !% --- free overflow at outlet
             else if (BC%headI(ii,bi_subcategory) == BCH_free) then
 
                 !% for free dnBC, if the node has a invert,
@@ -397,6 +419,8 @@ contains
                         BC%headRI(ii) =  faceR(faceIdx,fr_Zbottom)
                     end if
                 end if
+             
+            !% --- error in specifying outlet    
             else
                 call util_print_warning("Error (bc.f08): Unknown downstream boundary condition type at " &
                     // node%Names(nodeIdx)%str // " node")

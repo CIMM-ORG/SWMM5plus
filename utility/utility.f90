@@ -17,6 +17,7 @@ module utility
 
     private
 
+    public :: util_print_programheader
     public :: util_count_node_types
     public :: util_sign_with_ones
     public :: util_print_warning
@@ -26,6 +27,42 @@ module utility
 !%
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine util_print_programheader ()
+        write(*,*) " "
+        write(*,*) "*********************************************************************"
+        write(*,*) "*                            SWMM5+                                 *"
+        write(*,*) "*                   beta 0.1 release 2021-01-xx                     *"
+        write(*,*) "*  A public-domain, finite-volume hydraulics engine for EPA SWMM.   *"
+        write(*,*) "*                        developed by CIMM                          *"
+        write(*,*) "*                                                                   *"
+        write(*,*) "* CIMM is the Center for Infrastructure Modeling and Management     *"
+        write(*,*) "* funded under US EPA Cooperative Agreement 83595001 awarded to the *" 
+        write(*,*) "* University of Texas at Austin, 2017-23. PI: Prof. Ben R. Hodges   *"
+        write(*,*) "*                                                                   *"
+        write(*,*) "* Code authors:                                                     *"
+        write(*,*) "*    2016-2022 Dr. Ben R. Hodges                                    *"
+        write(*,*) "*    2016-2022 Edward Tiernan                                       *"
+        write(*,*) "*    2019-2022 Sazzad Sharior                                       *"
+        write(*,*) "*    2019-2022 Gerardo Riano-Briceno                                *"
+        write(*,*) "*    2019-2022 Eric Jenkins                                         *"
+        write(*,*) "*    2020-2022 Dr. Cheng-Wei (Justin) Yu                            *"
+        write(*,*) "*    2021-2022 Christopher Brashear                                 *"
+        write(*,*) "*    2021-2022 Abdulmuttalib Lokhandwala                            *"
+        write(*,*) "*    2018-2020 Dr. Ehsan Madadi-Kandjani                            *"
+        write(*,*) "*********************************************************************"
+        write(*,*)
+        write(*,"(A,i5,A)") "Simulation starts with ",num_images()," processors"
+        write(*,"(A)") 'Using the following files:'
+        write(*,"(A)") 'SWMM Input file   : '//trim(setting%File%inp_file)
+        write(*,"(A)") 'SWMM Report file  : '//trim(setting%File%rpt_file)
+        write(*,"(A)") 'SWMM Output file  : '//trim(setting%File%out_file)
+        write(*,"(A)") 'Output folder     : '//trim(setting%File%output_timestamp_subfolder )
+        write(*,"(A)") 'Settings file     : '//trim(setting%File%setting_file)
+    end subroutine util_print_programheader  
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)

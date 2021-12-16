@@ -28,139 +28,82 @@ module runge_kutta2
 !% PUBLIC
 !%==========================================================================
     subroutine rk2_toplevel_ETM ()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% single RK2 step for explicit time advance of SVE
-        !%-----------------------------------------------------------------------------
-        integer :: istep, ii
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: istep, ii
+            character(64) :: subroutine_name = 'rk2_toplevel_ETM'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%runge_kutta2) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
         
-        character(64) :: subroutine_name = 'rk2_toplevel_ETM'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%runge_kutta2) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        !% RK2 solution step 1 -- single time advance step for CC and JM
+        !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
-
-        print*, '-------------------------------------------------------------------------'
-        print*, '1st RK step start ------------------'
-        write(*,'(A,7f9.2)') 'H ',elemR(1:N_elem(1),er_Head)
-        print *, ' '
-        write(*,'(A,7f9.2)') 'Q ',elemR(1:N_elem(1),er_Flowrate)
-        print *, ' '
-        write(*,'(A,7f9.2)') 'Vol   ',elemR(1:N_elem(1),er_Volume)
-        write(*,'(A,7f9.2)') 'Vel   ',elemR(1:N_elem(1),er_Velocity)
-        print *, ' '
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_u)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_d)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_u)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_d)
-        print *, ' '
-        print *, faceR(:,fr_Flowrate)
-        
-        !write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
-        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Head_u)
-        print *, ' '
-        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
-        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
-      
         call rk2_step_ETM (istep)
 
-        print*, '1st RK step after -------------------'
-        write(*,'(A,7f9.2)') 'Vol   ',elemR(1:N_elem(1),er_Volume)
-        write(*,'(A,7f9.2)') 'Vel   ',elemR(1:N_elem(1),er_Velocity)
-        !write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
-        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Head_u)
-        !print *, ' '
-        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
-        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
-
-        !% RK2 solution step 3 -- all aux variables for non-diagnostic
+        !% --- RK2 solution step -- update all non-diagnostic aux variables
         call update_auxiliary_variables (ETM)
 
-        print *, 'after update_Aux ---------------------------------------------'
-        write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
-        print *, ' '
-        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
-
-        !% junction branch flowrate and velocity update
+        !% --- junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
+            !% --- for static JB solve both flow and velocity
             call ll_junction_branch_flowrate_and_velocity (ETM) 
         else
-            !% called here because volume update on JB isn't known until after eta updated on JM 
+            !% --- for dynamic junction just velocity because JB
+            !%     volume isn't  known until after head updated on JM 
             call ll_momentum_solve_JB (ETM)
         end if
 
-        !% compute element Froude number for JB
+        !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
-        !% RK2 solution step 4 -- all face interpolation
+        !% --- RK2 solution step  -- all face interpolation
         call face_interpolation(fp_all,ETM)
 
-        !% RK2 solution step 5 -- update diagnostic elements and faces
+        !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
-        !% RK2 solution step X -- make ad hoc adjustments
+        !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_values (ETM)
 
-        !% RK2 solution step 8 -- RK2 second step for ETM
-        !% RK2 solution step 8(a)
+        !% --- RK2 solution step -- RK2 second step for ETM
         istep=2
-
-        print*, '2nd RK step before----------------------'
-        write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
-        print *, ' '
-        !write(*,'(A,8f8.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
-        
         call rk2_step_ETM (istep)
 
-        print*, '2nd RK step after--------------'
-        write(*,'(A,7f9.2)') 'H   ',elemR(1:N_elem(1),er_Head)
-        print *, ' '
-        !write(*,'(A,7f9.2)') 'Q   ',elemR(1:N_elem(1),er_Flowrate)
-        
-
-        !% RK2 solution step 8(c)
+        !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         call update_auxiliary_variables(ETM)
 
-        !% junction branch flowrate and velocity update
+        !% --- junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
+            !% --- static JB solve both flow and velocity
             call ll_junction_branch_flowrate_and_velocity(ETM) 
         else
-            !% called here because volume update on JB isn't known until after eta updated on JM 
+            !% --- for dynamic junction just velocity because JB
+            !%     volume isn't  known until after head updated on JM 
             call ll_momentum_solve_JB (ETM)
         end if
 
-        !% compute element Froude number for JB
+        !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
-        !% RK2 solution step 8(d,e) -- update all faces
+        !% --- RK2 solution step -- update all faces
         call face_interpolation(fp_all,ETM)
 
-        !% RK2 solution step 9 -- update diagnostic elements and faces
+        !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
-        !% RK2 solution step X -- make ad hoc adjustments
+        !% --- RK2 solution step -- make ad hoc adjustments
         call adjust_values (ETM)
 
-        print*, 'RK at end --------------'
-        write(*,'(A,7f9.2)') 'H ',elemR(1:N_elem(1),er_Head)
-        print *, ' '
-        write(*,'(A,7f9.2)') 'Q ',elemR(1:N_elem(1),er_Flowrate)
-        print *, ' '
-        write(*,'(A,7f9.2)') 'Vol   ',elemR(1:N_elem(1),er_Volume)
-        write(*,'(A,7f9.2)') 'Vel   ',elemR(1:N_elem(1),er_Velocity)
-        print *, ' '
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_u)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Area_d)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_u)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Velocity_d)
-
-        if (setting%Debug%File%runge_kutta2)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%runge_kutta2)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETM
 !%
 !%==========================================================================

@@ -387,13 +387,20 @@ contains
         !% Description:
         !% initializes the output file path and filenames
         !%-----------------------------------------------------------------------------
-        integer :: istat, ireturn, ierr, kk
+        integer :: istat, ireturn, ierr, kk, lc
         logical :: isfolder = .false.
         character(len=256) :: cmsg, default_path, output_path, this_purpose, temppath
         character(64) :: subroutine_name = "util_file_setup_output_folders"
         !%-----------------------------------------------------------------------------
 
         output_path = trim(setting%File%output_folder)
+        !% remove the last character of the path if it is a '/' or '\
+        lc = len_trim(output_path)
+        !print *, lc, output_path(lc:lc)
+        if (output_path(lc:lc) == '/') output_path(lc:lc) = ' '
+        if (output_path(lc:lc) == '\') output_path(lc:lc) = ' '
+        !print *, 'output_path',trim(output_path)
+        !stop 39875
 
         !% =======================
         !% --- Parse the first-level output folder and path

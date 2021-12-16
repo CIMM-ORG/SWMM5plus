@@ -159,13 +159,13 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
-        print *, 'in 763764 ',trim(subroutine_name)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+        !print *, 'in 763764 ',trim(subroutine_name)
+        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
 
         if (N_nBCup > 0) call face_interpolation_upBC(isBConly)
 
-        print *, 'in 9353 ',trim(subroutine_name)
-        write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
+        !print *, 'in 9353 ',trim(subroutine_name)
+        !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
 
         !% brh20211211 MOVED -- this is an element update
         !rm if (N_nBClat > 0) call face_interpolation_latBC_byPack()
@@ -213,12 +213,12 @@ module face
         !% enforce BC    
         faceR(face_P, fr_Flowrate) = BC%flowRI(idx_P)
 
-        print *, 'in 22975 ',trim(subroutine_name)
-        print *, idx_P
-        print *, face_P
-        print *, BC%flowRI(idx_P(1))
-        print *, faceR(face_P(1), fr_Flowrate)
-        print *, BC%flowRI(:)
+        !print *, 'in 22975 ',trim(subroutine_name)
+        !print *, idx_P
+        !print *, face_P
+        !print *, BC%flowRI(idx_P(1))
+        !print *, faceR(face_P(1), fr_Flowrate)
+        !print *, BC%flowRI(:)
 
         !% update geometry data (don't do on a BC-only call)
         if (.not. isBConly) then

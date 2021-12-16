@@ -203,7 +203,7 @@ int DLLEXPORT api_get_flowBC(
     dow = datetime_dayOfWeek(current_datetime);
     attr = nodef_has_dwfInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
-    if (val == 1) { // node_has_dwfInflow
+    if (val == 1) { // node_has_dwfInflow 
         for(i=0; i<4; i++)
         {
             j = Node[node_idx].dwfInflow->patterns[i];
@@ -460,6 +460,7 @@ int DLLEXPORT api_get_nodef_attribute(
     else if (attr == nodef_extInflow_tSeries)
     {
         //printf("   nodef_extInflow_tSeries attr = 10 \n");
+        //printf("    %d \n ",Node[node_idx].extInflow->tSeries);
         if (Node[node_idx].extInflow)
             *value = Node[node_idx].extInflow->tSeries;
         else
@@ -500,9 +501,13 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_basePat)
     {
-        // printf("   nodef_extInflow_basePat attr = 13 \n");
+        printf("   nodef_extInflow_basePat attr = 13 \n");
         if (Node[node_idx].extInflow)
+        {
             *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->basePat);
+            printf("%g \n",Node[node_idx].extInflow->cFactor);
+            printf("%d \n",Node[node_idx].extInflow->basePat);
+        }    
         else
         {
             *value = API_NULL_VALUE_I;
@@ -513,16 +518,18 @@ int DLLEXPORT api_get_nodef_attribute(
     }
     else if (attr == nodef_extInflow_basePat_type)
     {
-        // printf("   nodef_extInflow_basePat_type attr = 14 \n");
+        //printf("   nodef_extInflow_basePat_type attr = 14 \n");
         bpat = Node[node_idx].extInflow->basePat;
         
-        // printf(" bpat %d",bpat);
+        //printf(" bpat %d",bpat);
         if (bpat >= 0) // baseline pattern exists
             *value = Pattern[bpat].type;
         else
         {
-            *value = API_NULL_VALUE_I;
-            printf("  location 3098705 problem with basePatType");
+            *value = bpat;  // brh changed to bpat (-1) because API_NULL_VALUE_I does not have scope for where its needed
+            //*value = API_NULL_VALUE_I;
+            //printf("  bpat = %d \n", bpat);
+            //printf("  location 3098705 problem with basePatType \n");
             // brh20211207s  commenting this so that it moves through with null result
             //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
             //api_report_writeErrorMsg(api_err_wrong_type, errmsg);

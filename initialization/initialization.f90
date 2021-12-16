@@ -9,6 +9,7 @@ module initialization
     use interface
     use network_define
     use partitioning
+    use utility
     use utility_allocate
     use utility_array
     use utility_datetime
@@ -62,243 +63,200 @@ contains
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
-        !% --- CPU and wall-clock timers
+        !% --- set the CPU and wall-clock timers
         call init_model_timer()
 
-        !% --- Define the reverse keys (used mainly for debugging)
+        !% --- define the reverse keys (used mainly for debugging)
         call define_keys_reverse()
-        !call define_keys_printByNumber() ! usually comment this out
-        !call define_keys_printByName()
-        !stop 39866
+        !% NOTES:
+        !%    reverseKey(ii) gives you the text name of the ii key
+        !%    there are also two useful subroutines:
+        !%       call define_keys_printByNumber() !% command-line writes a full list of keys by number
+        !%       call define_keys_printByName()   !% command-line writes a full list of keys in alphabetical order
 
-        !% --- assign and store unit numbers for files
+        !% --- assign and store unit numbers for input/output files
         call util_file_assign_unitnumber ()
 
         !% --- get command line assignments and store
         call util_file_get_commandline ()
 
-        !% --- input project paths and filenames from command line arguments
-        !%     note that all files and folders must exist
-        !%     This is needed here so that -p command line option works
+        !% --- setup the input project paths and filenames from command line arguments.
+        !%        Note that all files and folders must exist or you get error condition.
+        !%        This is needed here so that -p command line option works
         call util_file_setup_input_paths_and_files()
-
-        if (setting%Output%Verbose) &
-            write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
-
-        !% --- set the branchsign global -- this is used for junction branches (JB)
-        !%     for upstream (+1) and downstream (-1)
-        !%     HACK: for clarity and consistency, this probably should be moved into
-        !%     the init_network. Placed here for the time being in case we need it
-        !%     for translating link/node from SWMM-C or partitioning.
-        branchsign(1:max_branch_per_node-1:2) = +oneR
-        branchsign(2:max_branch_per_node:2)   = -oneR
-
+        
         !% --- load the settings.json file with the default setting% model control structure
-        !%     define_settings_load is one of the few subroutines in the Definition modules
+        !%         define_settings_load is one of the few subroutines in the Definition modules
+        !%         If the file is not found, the defaults in define_settings.f90 are used 
         call define_settings_load()
         
-        !% --- initialize the time stamp used for output (must be after json is read)
-        call init_timestamp ()
-
-        !% HACK
-        !% --- Read and process the command-line options a second time to prevent overwrite
-        !%     from json file and reprocess.
-        !%     Possibly replace this later with a set of settings that are saved
-        !%     and simply overwrite after the settings.json is loaded.
+        !% --- if the settings.json file was read we need to re-process the command-line 
+        !%        options a second time to prevent overwrite from json file.
+        !%        That is, settings on the command line take precedence over the json file
         if (setting%JSON_FoundFileYN) then
             call util_file_assign_unitnumber ()
             call util_file_get_commandline ()
             call util_file_setup_input_paths_and_files()
         end if
 
-        !% --- output file directories
+        !% --- initialize the time stamp used for output (must be after json is read)
+        call init_timestamp ()
+
+        !% --- setup the output file directories. 
+        !%        This will create a new directory with a timestamp for output
         call util_file_setup_output_folders()
 
         sync all
 
-        if (setting%Output%Verbose) then
-            write(*,"(A)") "Simulation Starts..."
-            write(*,"(A)") 'Using the following files:'
-            write(*,"(A)") 'Input file   : '//trim(setting%File%inp_file)
-            write(*,"(A)") 'Report file  : '//trim(setting%File%rpt_file)
-            write(*,"(A)") 'Output file  : '//trim(setting%File%out_file)
-            write(*,"(A)") 'Settings file: '//trim(setting%File%setting_file)
-        end if
+        !% -- program header
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) &
+             call util_print_programheader ()    
 
         !% --- set up the profiler
         if (setting%Profile%useYN) then
             call util_allocate_profiler ()
             call util_profiler_start (pfc_initialize_all)
+        else 
+            !% continue without profiler    
         end if
 
-        !%  --- finish setting all the file paths before initialing the interface
-        sync all
         !% --- initialize the API with the SWMM-C code
+        !if (setting%Output%Verbose) print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        if (setting%Output%Verbose) print *, "begin link-node processing"
+        !if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
-        !% Allocate storage for subcatchment arrays
-        if (setting%Simulation%useHydrology) call util_allocate_subcatch()
+        !% --- initialize globals that are run-time dependent
+        call init_globals()
+
+        !% --- allocate storage for subcatchment arrays
+        if (setting%Simulation%useHydrology) then 
+            !if (setting%Output%Verbose) print *, "begin subcatchment allocation"
+            call util_allocate_subcatch()
+        else    
+            !% continue without hydrology    
+        end if
 
         !% --- store the SWMM-C curves in equivalent Fortran arrays
-        if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
+        !if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
         call init_curves()
 
-        if (setting%Output%Verbose) print *, "begin partitioning"
+        !% --- break the link-node system into partitions for multi-processor operation
+        !if (setting%Output%Verbose) print *, "begin link-node partitioning"
         call init_partitioning()
 
         sync all 
         
-        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
-            if (setting%Output%Verbose) print *, "begin network definition"
+        !% --- translate the link-node system into a finite-volume network
+        if (setting%Simulation%useHydraulics) then 
+            !if (setting%Output%Verbose) print *, "begin network definition"
             call network_define_toplevel ()
-        end if                                     !% brh20211208
+        else 
+            write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
+            write(*,*) '...this presently is not supported in SWMM5+'
+            stop 879815
+        end if                                   
 
         sync all 
 
-        !do ii=1,size(elemI,DIM=1)
-        !    print *, ii, elemI(ii,ei_Mface_uL), elemI(ii,ei_Mface_dL), elemI(ii,ei_elementType), reversekey(elemI(ii,ei_elementType))
-        !end do
+        !% --- initialize the time variables
+        !if (setting%Output%Verbose) print *, "begin initializing time"
+        call init_time()
 
-        !% initialize the subcatchments connecting to SWMM-C
+        !% --- initialize the subcatchments connecting to SWMM-C
         if (setting%Simulation%useHydrology) then 
             if (SWMM_N_subcatch > 0) then
-                if (setting%Output%Verbose) print *, "begin subcatchment"
+                !if (setting%Output%Verbose) print *, "begin subcatchment initialization"
                 call init_subcatchment()
             else 
-               write(*,'(A)') 'setting...useHydrology requested, but no subcatchments found.'
+               write(*,'(A)') 'setting.Simulation.useHydrology requested, but no subcatchments found.'
                write(*,'(A)') '...skipping hydrology in this simulation.'
                setting%Simulation%useHydrology = .false.
             end if
+        else 
+            !% continue without hydrology    
         end if
 
-        !do ii=1,size(elemI,DIM=1)
-        !    print *, ii, elemI(ii,ei_Mface_uL), elemI(ii,ei_Mface_dL), elemI(ii,ei_elementType), reversekey(elemI(ii,ei_elementType))
-        !end do
-
         sync all
-           
-        !% --- setup for csv output of links and nodes
-        !brh20211006 call outputD_read_csv_link_names()
-        !brh20211006 call outputD_read_csv_node_names()
 
-        !% --- initialize boundary condition
-        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
-            if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
+        !% --- initialize boundary conditions
+        if (setting%Simulation%useHydraulics) then
+            !if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
             call init_bc()
-        end if                                     !% brh20211208
+        else 
+            write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
+            write(*,*) '...this presently is not supported in SWMM5+'
+            stop 309875
+        end if                                     
 
-        if (setting%Output%Verbose) print *, "begin initializing time"
-        call init_time()
-
-        if (setting%Output%Verbose) print *, "begin initializing report"
+        !% --- initialize the output reports
+        !if (setting%Output%Verbose) print *, "begin initializing output report"
         call init_report()
 
-        if (setting%Output%Verbose) then
-            if (this_image() == 1) then
-            if ((N_link > 5000) .or. (N_node > 5000)) then
-                print *, "begin setting initial conditions (this takes several minutes for big systems)"
-                print *, "This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
-                print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
-            endif
-            endif
-        endif
-        
+        !% --- set up initial conditions in the FV network
         if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
-            if (setting%Output%Verbose) print *, "begin initial conditions"
+            if (setting%Output%Verbose) then 
+                !print *, "begin initial conditions"
+                if (this_image() == 1) then
+                    if ((N_link > 5000) .or. (N_node > 5000)) then
+                        print *, "... setting IC can takes several minutes for big systems."
+                        print *, "... This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
+                        print *, "... The finite-volume system is ", sum(N_elem(:)), " elements"
+                    else 
+                        !% no need to write for small systems
+                    end if
+                else 
+                    !% only print for 1 processor
+                end if
+            else 
+                !% be silent    
+            end if    
+            !% --- initial conditions all are setup here
             call init_IC_toplevel ()
-        end if                                     !% brh20211208
+        else 
+            write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
+            write(*,*) '...this presently is not supported in SWMM5+'
+            stop 9378975
+        end if                                   
 
-        !print *, faceR(:,fr_Flowrate)
-        !stop 938705
-        
-        !% brh 20211207 rm --- designate/select the nodes/links for output
-        !% brh 20211207 rm -- replaced with api_nodef_rptFlag call output_COMMON_nodes_selection ()
-        !% brh 20211207 rm call output_COMMON_links_selection ()
-
+        !% --- setup the multi-level finite-volume output
+        !%        Ideally, this should be a procedure accessed in the output module, 
+        !%        but that caused linking problems due to pack/mask calls
         if (setting%Output%Report%provideYN) then 
-            !% brh20211207 move some of the outputML setup routines to output module
-            if (setting%Simulation%useHydraulics) then !% brh 20211208 -- only if N_link > 0
-                if (setting%Output%Verbose) print *, "begin setup of output files"
-                call outputML_selection ()
-                                            
-                !% brh 20211207s remove all below
-                !% --- designate the corresponding elements for output
-                !call outputML_element_selection ()
-                !% --- deisgnate the corresponding face to output
-                !call outputML_face_selection ()
-
-                !% brh 20211207 
-                !% Ideally, these should be in the output module, but that caused
-                !% linking problems with use pack_mask_arrays in that module
-                !% --- create packed arrays of elem row numbers that are output
+            if (setting%Simulation%useHydraulics) then !% 
+                !if (setting%Output%Verbose) print *, "begin setup of output files"
+                !% --- Get the output element locations
+                call outputML_selection ()                
+                !% --- Create packed arrays of elem row numbers that are output
                 call pack_element_outputML ()
-                !% --- create packed arrays of face row numbers that are output
+                !% --- Create packed arrays of face row numbers that are output
                 call pack_face_outputML ()
-
+                !% --  Setup of the outputML data structures
                 call outputML_setup ()
-                ! !% --- compute the N_OutElem for each image
-                ! call outputML_size_OutElem_by_image ()
-                ! !% --- compute the N_OutFace for each imaige
-                ! call outputML_size_OutFace_by_image ()
-                ! !% --- setup the output element data types
-                ! call outputML_element_outtype_selection ()
-                ! !% -- setup the output face data types
-                ! call outputML_face_outtype_selection ()
-                ! !% --- create storage space for multi-level output data
-                ! call util_allocate_outputML_storage ()
-                ! !% --- create storage for output times
-                ! call util_allocate_outputML_times ()
-                ! !% --- create storage for output binary filenames
-                ! call util_allocate_outputML_filenames ()
-                !% brh20211207e
-            end if                                     !% brh20211208
+            else 
+                write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
+                write(*,*) '...this presently is not supported in SWMM5+'
+                stop 487587  
+            end if  
+        else 
+            !% continue without any output files                                      
         end if
-        
 
-        !% creating output_folders and files
-        !% brh 20211004 -- moved this functionality into util_file_setup_output_files
-        !call util_output_clean_folders()
-        !call util_output_create_folders()
-
-        !brh20211006 COMMENTING OUT THE OUTPUT BY CSV
-        !brh20211006 if ((this_image() == 1) .and. setting%Debug%SetupYN) call util_output_export_linknode_input()
-        !brh20211006 if (setting%Debug%OutputYN) then
-        !brh20211006     call util_output_create_elemR_files()
-        !brh20211006     call util_output_create_faceR_files()
-        !brh20211006     call util_output_create_summary_files()
-        !brh20211006 end if
-        !brh20211006 if (setting%Debug%OutputYN .or. setting%Output%report) then
-        !brh20211006     call output_create_link_files()
-        !brh20211006     call output_create_node_files()
-        !brh20211006 end if
-
-        ! if (setting%Profile%useYN) call util_profiler_stop (pfc_initialize_all)
-
-        !% wait for all the processors to reach this stage before starting the time loop
+        !% --- wait for processors before exiting to the time loop
         sync all
-
-        ! print *, '----'
-        ! print *, 'in ',trim(subroutine_name)
-        ! Npack => npack_elemP(ep_CC_Q_NOTsmallvolume)
-        ! thisP => elemP(1:Npack,ep_CC_Q_NOTsmallvolume)
-        ! print *, elemR(thisP,er_Velocity)
-        ! print *, elemR(thisP,er_WaveSpeed)
-
         
         !%------------------------------------------------------------------- 
         !% Closing
-        if (icrash) then  !% if crash in initialization, write the output and exit
-            if (setting%Output%Report%provideYN) then 
-                call outputML_store_data (.true.)
+            if (icrash) then  !% if crash in initialization, write the output and exit
+                if (setting%Output%Report%provideYN) then 
+                    call outputML_store_data (.true.)
+                end if
+                return
             end if
-            return
-        end if
-        if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Debug%File%initialization)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
 !%
 !%==========================================================================
@@ -617,6 +575,23 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine init_globals()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initializes globals values that are run-time based, i.e.
+        !% they depend on a size
+        !%------------------------------------------------------------------
+        !% branchsign global is used for junction branches (JB)
+        !%     for upstream (+1) and downstream (-1)
+        branchsign(1:max_branch_per_node-1:2) = +oneR
+        branchsign(2:max_branch_per_node:2)   = -oneR
+        !%------------------------------------------------------------------
+        !% Closing
+    end subroutine init_globals
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_curves()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -861,7 +836,7 @@ contains
         !%
         !%-----------------------------------------------------------------------------
         integer :: ii, nidx, ntype, counter_bc_er
-        integer :: ntseries, nbasepat
+        integer :: SWMMtseriesIdx, SWMMbasepatType
         character(64) :: subroutine_name = "init_bc"
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -914,19 +889,35 @@ contains
                     BC%flowI(ii, bi_idx) = ii
                     BC%flowYN(ii, bYN_read_input_file) = .true.
 
-                    nbasepat = &
-                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat)
-                    ntseries = &
+                    !% check whether there is a pattern (-1 is no pattern) for this inflow
+                    SWMMbasepatType = &
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat_type)
+                    !% brh20211216 should be _type?    
+                    !rm nbasepat = &
+                    !rm    interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat)
+                    
+                    !% check whether there is a time series 
+                    !% (-1 is none, >0 is index, API_NULL_VALUE_I is error, which crashes API)
+                    SWMMtseriesIdx = &
                         interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
 
                     !% BC does not have fixed value if its associated with dwfInflow
                     !% or if extInflow has tseries or pattern
                     BC%flowI(ii, bi_subcategory) = BCQ_tseries
+                    !print *, ii, nidx, node%YN(nidx, nYN_has_dwfInflow)
                     if (.not. node%YN(nidx, nYN_has_dwfInflow)) then !% extInflow only
-                        if ((ntseries == -1) .and. (nbasepat /= -1)) then
+                        !% brh 20211216 modified the following for basepatType == -1 rather than basepat /= -1
+                        if ((SWMMtseriesIdx == -1) .and. (SWMMbasepatType == -1)) then
                             BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                            !print *, 'subcategory aaa' 
+                            !print *, ii, BC%flowI(ii, bi_subcategory), BCQ_fixed
+                            !print *, reverseKey(BC%flowI(ii, bi_subcategory)), reverseKey(BCQ_fixed)
+                            !print *, ' '
                         end if
                     end if
+
+                    !print *, ii, BCQ_fixed, BC%flowI(ii, bi_subcategory), BCQ_tseries
+                    !stop 398705
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
                     stop

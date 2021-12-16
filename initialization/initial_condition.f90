@@ -52,144 +52,114 @@ contains
         !% Aliases
             solver => setting%Solver%SolverSelect
         !%-------------------------------------------------------------------
-
-        if (setting%Output%Verbose) print *,'begin init_IC_from_linkdata'
-        !% get data that can be extracted from links
+        !% --- get data that can be extracted from links
+        !if (setting%Output%Verbose) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
-        if (setting%Output%Verbose) print *,'begin init_IC_from_nodedata'
-        !% get data that can be extracted from nodes
+        !% --- get data that can be extracted from nodes
+        !if (setting%Output%Verbose) print *,'begin init_IC_from_nodedata'
         call init_IC_from_nodedata ()
-
-        if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
-        !% zero out the lateral inflow column
+        
+        !% ---zero out the lateral inflow column
+        !if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
-        if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
-        !% update time marching type
+        !% --- update time marching type
+        !if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
         call init_IC_solver_select (solver)
 
-        if (setting%Output%Verbose) print *, 'begin pack_mask arrays_all'
-        !% set up all the static packs and masks
+        !% --- set up all the static packs and masks
+        !if (setting%Output%Verbose) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
-        if (setting%Output%Verbose) print *, 'begin init_IC_set_SmallVolumes'
-        !% set small volume values in elements
+        !% --- set small volume values in elements
+        !if (setting%Output%Verbose) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
-        if (setting%Output%Verbose) print *, 'begin update_auxiliary_variables'
-        !% initialize slots
+        !% --- initialize slots
+        !if (setting%Output%Verbose) print *, 'begin update_auxiliary_variables'
         call init_IC_slot ()
 
-        !% brh 20211215 replacing link-based call for velocity
-        if (setting%Output%Verbose) print *, 'begin init_IC_derived_data'
+        !% --- get the velocity and any other derived data
+        !%     These are data needed before bc and aux variables are updated
+        !if (setting%Output%Verbose) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
-        !% brh 20211215 need BC update so that face interp works?
+        !% --- update the BC so that face interpolation works in update_aux...
         call bc_update()
 
-        if (setting%Output%Verbose) print *, 'begin update_aux_variables'
-        !% update all the auxiliary variables
+        !% --- update all the auxiliary variables
+        !if (setting%Output%Verbose) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (solver)
         
-        !% initialize old head
+        !% --- initialize old head 
+        !%     HACK - make into a subroutine if more variables need initializing
+        !%     after update_aux_var
         elemR(:,er_Head_N0) = elemR(:,er_Head)
 
-        if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
-        !% update diagnostic interpolation weights
-        !% (the interpolation weights of diagnostic elements
-        !% stays the same throughout the simulation. Thus, they
-        !% are only needed to be set at the top of the simulation)
+        !% --- update diagnostic interpolation weights
+        !%     (the interpolation weights of diagnostic elements
+        !%     stays the same throughout the simulation. Thus, they
+        !%     are only needed to be set at the top of the simulation)
+        !if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
         call init_IC_diagnostic_interpolation_weights()
 
-        if (setting%Output%Verbose) print *, 'begin  init_IC_small_values_diagnostic_elements'
-
-        !% set small values to diagnostic element interpolation sets
-        !% so that junk values does not mess up the first interpolation
+        !% --- set small values to diagnostic element interpolation sets
+        !%     Neede so that junk values does not mess up the first interpolation
+        !if (setting%Output%Verbose) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
-        if (setting%Output%Verbose) print *, 'begin face_interpolation '
-
-        !% update faces
+        !% --- update faces
+        !if (setting%Output%Verbose) print *, 'begin face_interpolation '
         call face_interpolation (fp_all,ALLtm)
 
-        if (setting%Output%Verbose) print *, 'begin diagnostic_toplevel'
-
-        !% update the initial condition in all diagnostic elements
+        !% --- update the initial condition in all diagnostic elements
+        !if (setting%Output%Verbose) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel ()
 
-        if (setting%Output%Verbose) print *, 'begin init_IC_oneVectors'
-
-        !% populate er_ones columns with ones
+        !% ---populate er_ones columns with ones
+        !if (setting%Output%Verbose) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-        !tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType)== CC)
-        !print *, elemR(tempP,er_Head)
-        !deallocate(tempP)
-        !stop 7695
-
-        ! if (setting%Profile%useYN) call util_profiler_stop (pfc_init_IC_setup)
-
-        ! tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == CC)
-        ! print *, elemR(tempP,er_Zcrown)
-        ! deallocate(tempP)
-
-        ! tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JM)
-        ! print *, elemR(tempP,er_Zcrown)
-
-        ! tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType) == JB)
-        ! print *, elemR(tempP,er_Zcrown)
-        ! deallocate(tempP)
-
-        ! stop 389750
-        !% Notes on initialization, brh20211215
+        !% Notes on initial conditoins brh20211215
         !% dHdA is not initialized in channels except where timemarch is AC
 
-        ! print *, '395551'
-        ! print *,  ' ...1  '
-        ! print *,  elemR(:,er_InterpWeight_dG)
-        ! print *, ' ...2'
-        ! print *,  elemR(:,er_InterpWeight_uH)
-        ! print *, ' ...3'
-        ! print *,  elemR(:,er_InterpWeight_dH)
-        ! print *, ' ...4'
-        ! print *,  elemR(:,er_InterpWeight_uQ)
-        ! stop 3978555
-
-        if (setting%Debug%File%initial_condition) then
-           print*, '----------------------------------------------------'
-           print*, 'image = ', this_image()
-           print*, '.....................elements.......................'
-           print*, elemI(:,ei_elementType), 'element type'
-           print*, elemI(:,ei_geometryType),'element geometry'
-           print*, '-------------------Geometry Data--------------------'
-           print*, elemR(:,er_Depth), 'depth'
-           print*, elemR(:,er_Area), 'area'
-           print*, elemR(:,er_Head), 'head'
-           print*, elemR(:,er_Topwidth), 'topwidth'
-           print*, elemR(:,er_HydDepth), 'hydraulic depth'
-           print*, elemR(:,er_HydRadius), 'hydraulic radius'
-           print*, elemR(:,er_Perimeter), 'wetted perimeter'
-           print*, elemR(:,er_Volume),'volume'
-           print*, '-------------------Dynamics Data--------------------'
-           print*, elemR(:,er_Flowrate), 'flowrate'
-           print*, elemR(:,er_Velocity), 'velocity'
-           print*, elemR(:,er_FroudeNumber), 'froude Number'
-           print*, elemR(:,er_InterpWeight_uQ), 'timescale Q up'
-           print*, elemR(:,er_InterpWeight_dQ), 'timescale Q dn'
-           print*, '..................faces..........................'
-           print*, faceR(:,fr_Area_u), 'face area up'
-           print*, faceR(:,fr_Area_d), 'face area dn'
-           print*, faceR(:,fr_Head_u), 'face head up'
-           print*, faceR(:,fr_Head_d), 'face head dn'
-           print*, faceR(:,fr_Flowrate), 'face flowrate'
-           print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
-           print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
-           ! call execute_command_line('')
-        end if
-        
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initial_condition) then
+            print*, '----------------------------------------------------'
+            print*, 'image = ', this_image()
+            print*, '.....................elements.......................'
+            print*, elemI(:,ei_elementType), 'element type'
+            print*, elemI(:,ei_geometryType),'element geometry'
+            print*, '-------------------Geometry Data--------------------'
+            print*, elemR(:,er_Depth), 'depth'
+            print*, elemR(:,er_Area), 'area'
+            print*, elemR(:,er_Head), 'head'
+            print*, elemR(:,er_Topwidth), 'topwidth'
+            print*, elemR(:,er_HydDepth), 'hydraulic depth'
+            print*, elemR(:,er_HydRadius), 'hydraulic radius'
+            print*, elemR(:,er_Perimeter), 'wetted perimeter'
+            print*, elemR(:,er_Volume),'volume'
+            print*, '-------------------Dynamics Data--------------------'
+            print*, elemR(:,er_Flowrate), 'flowrate'
+            print*, elemR(:,er_Velocity), 'velocity'
+            print*, elemR(:,er_FroudeNumber), 'froude Number'
+            print*, elemR(:,er_InterpWeight_uQ), 'timescale Q up'
+            print*, elemR(:,er_InterpWeight_dQ), 'timescale Q dn'
+            print*, '..................faces..........................'
+            print*, faceR(:,fr_Area_u), 'face area up'
+            print*, faceR(:,fr_Area_d), 'face area dn'
+            print*, faceR(:,fr_Head_u), 'face head up'
+            print*, faceR(:,fr_Head_d), 'face head dn'
+            print*, faceR(:,fr_Flowrate), 'face flowrate'
+            print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
+            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
+            ! call execute_command_line('')
+            end if
+            
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_toplevel
 !%
@@ -235,7 +205,9 @@ contains
 
             call init_IC_get_geometry_from_linkdata (thisLink)
         
-            !call init_IC_get_channel_conduit_velocity (thisLink)
+            !%brh20211215 this stuff moved to init_IC_derived_data as it
+            !% does not need to be done on a link-by-link basis.
+            !call init_IC_get_channel_conduit_velocity (thisLink) 
 
         end do
 
@@ -1181,15 +1153,15 @@ contains
 
                 !% set the initial head to the same as the junction main
                 elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
-                print *, 'here 39705 head ',elemR(JBidx,er_Head)
+                !print *, 'here 39705 head ',elemR(JBidx,er_Head)
                 elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
-                print *, 'here 98847 depth',elemR(JBidx,er_Depth)
+                !print *, 'here 98847 depth',elemR(JBidx,er_Depth)
                 if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
                     elemR(JBidx,er_Depth) = setting%ZeroValue%depth
                     elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
                 end if
 
-                print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
+                !print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
                 !% JB elements initialized for momentum
                 elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
                 elemR(JBidx,er_FroudeNumber) = zeroR

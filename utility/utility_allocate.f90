@@ -784,10 +784,8 @@ contains
 
         !% --- check and adjust stored level output so as not to waste memory
         if ( setting%Output%StoredLevels > setting%Output%MaxExpectedLevels+ 2) then
-            write (*,"(A)") 'Changing Output.StoredLevels to Output.MaxExpectedLevels...'
-            write (*,"(A)") '... based on requested SWMM report step. Old and new stored levels are...'
-            write (*,"(2i8)") setting%Output%StoredLevels, setting%Output%MaxExpectedLevels
-            setting%Output%StoredLevels = setting%Output%MaxExpectedLevels
+            write (*,"(A,i5)") '... Changing output levels stored before writing; originally: ',setting%Output%StoredLevels 
+            write (*,"(A,i5)") '               Now using the max expected output time levels: ',setting%Output%MaxExpectedLevels
         end if
 
         !% --- bug check
