@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 150.00
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "BC" : {
@@ -43,7 +43,7 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : true,

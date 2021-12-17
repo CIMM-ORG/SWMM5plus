@@ -6,13 +6,11 @@ module utility_deallocate
 
     implicit none
 
-!-----------------------------------------------------------------------------
-!
-! Description:
-!   This has all the array and variables deallocation.
-!   All the top-level storage should be deallocated in this module
-!
-!-----------------------------------------------------------------------------
+!%-------------------------------------------------------------------------
+!% Description:
+!%   This has all the array and variables deallocation.
+!%   All the top-level storage should be deallocated in this module
+!%-------------------------------------------------------------------------
 
     private
 
@@ -24,62 +22,131 @@ module utility_deallocate
     public :: util_deallocate_check
 
 contains
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine util_deallocate_network_data()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   deallocate all the data relate to defined network, including:
-    !   linkX, nodeX, elemX, faceX
-    !-----------------------------------------------------------------------------
-
-        character(64) :: subroutine_name = 'util_deallocate_network_data'
-
-    !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   deallocate all the data relate to defined network, including:
+        !%   linkX, nodeX, elemX, faceX
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            character(64) :: subroutine_name = 'util_deallocate_network_data'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
 
         call util_deallocate_linknode()
 
         call util_deallocate_elemX_faceX()
 
-        !stop 7504
         call util_deallocate_columns()
 
         call util_deallocate_bc()
 
-        if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_network_data
-!
-!==========================================================================
-!==========================================================================
-!
-    subroutine util_deallocate_linknode()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   deallocates the link and node storage used for the coarse representation
-    !   of the network connectivity
-    !
-    ! Method:
-    !   Release the memory used by the tables node%I, link%I, node%R, link%R, node%YN,
-    !   link%YN.
-    !   These are defined in globals.f08), and allocated in allocate_storage.f08
-    !   Every time memory is deallocated, the utility_check_deallocation functionality
-    !   (from utility.f08) is used to determine wheter or not there was an error during
-    !   the deallocation.
-    !
-    !-----------------------------------------------------------------------------
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_deallocate_partitioning_arrays()
+        !%-------------------------------------------------------------------
+        !% Description
+        !%   deallocates the partitioning arrays storage used for storing partitioned
+        !%   network information
+        !%-------------------------------------------------------------------
+        !% Declarations
+            character(64) :: subroutine_name = 'util_deallocate_partitioning_arrays'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------        
 
-        integer       :: ii
-        character(64) :: subroutine_name = 'util_deallocate_linknode'
+        deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg,'adjacent_links')
 
-    !-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%utility_deallocate) &
+        deallocate(elem_per_image, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg, 'elem_per_image')
+
+        deallocate(image_full, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg, 'image_full')
+
+        !%-------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_deallocate_partitioning_arrays
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_deallocate_check(deallocation_status, emsg, locationstring)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !%   Checks deallocation status and stops if there is an error
+        !%-------------------------------------------------------------------
+        !% Declaratoins
+            integer,            intent(in   ) :: deallocation_status
+            character(len=*),   intent(in   ) :: emsg
+            character(len=*),   intent(in   ) :: locationstring !% unique identifier of location
+            character(64):: subroutine_name = 'util_deallocate_check'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%utility) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
 
+            if (deallocation_status > 0) then
+                print *, trim(emsg)
+                print *, 'variable trying to deallocate = ',trim(locationstring)
+                stop
+            end if
+
+        !%-------------------------------------------------------------------    
+            if (setting%Debug%File%utility) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_deallocate_check    
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
+    subroutine util_deallocate_linknode()
+        !%-------------------------------------------------------------------
+        !% Description:
+        !%   deallocates the link and node storage used for the coarse representation
+        !%   of the network connectivity
+        !%
+        !% Method:
+        !%   Release the memory used by the tables node%I, link%I, node%R, link%R, node%YN,
+        !%   link%YN.
+        !%   These are defined in globals.f08), and allocated in allocate_storage.f08
+        !%   Every time memory is deallocated, the utility_check_deallocation functionality
+        !%   (from utility.f08) is used to determine wheter or not there was an error during
+        !%   the deallocation.
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer       :: ii
+            character(64) :: subroutine_name = 'util_deallocate_linknode'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+                
         deallocate(node%I, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node%I')
 
@@ -112,87 +179,54 @@ contains
             call util_deallocate_check(deallocation_status, emsg, 'node%Names(ii)%str')
         end do
 
+       
         deallocate(node%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node%Names')
 
         deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'link%Names')
 
-        deallocate(node_output_idx,stat=deallocation_status,errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'node_output_idx')
+    
+        !% brh20211217 -- 
+        !% the followin commented asobsolete approach to storing output nodes and links
+        !deallocate(node_output_idx,stat=deallocation_status,errmsg=emsg)
+        !call util_deallocate_check(deallocation_status, emsg, 'node_output_idx')
 
-        deallocate(link_output_idx,stat=deallocation_status,errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'link_output_idx')
+        !deallocate(link_output_idx,stat=deallocation_status,errmsg=emsg)
+        !call util_deallocate_check(deallocation_status, emsg, 'link_output_idx')
 
-        if (allocated(node%P%have_output)) then
-            deallocate(node%P%have_output,stat=deallocation_status,errmsg=emsg)
-            call util_deallocate_check(deallocation_status, emsg, 'node%P%have_output')
-        end if
+        ! if (allocated(node%P%have_output)) then
+        !     deallocate(node%P%have_output,stat=deallocation_status,errmsg=emsg)
+        !     call util_deallocate_check(deallocation_status, emsg, 'node%P%have_output')
+        ! end if
 
-        if (allocated(link%P%have_output)) then
-            deallocate(link%P%have_output,stat=deallocation_status,errmsg=emsg)
-            call util_deallocate_check(deallocation_status, emsg, 'link%P%have_output')
-        end if
+        ! if (allocated(link%P%have_output)) then
+        !     deallocate(link%P%have_output,stat=deallocation_status,errmsg=emsg)
+        !     call util_deallocate_check(deallocation_status, emsg, 'link%P%have_output')
+        ! end if
 
-
-        if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%-------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_linknode
-
-!
-!==========================================================================
-!==========================================================================
-!
-
-    subroutine util_deallocate_partitioning_arrays()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   deallocates the partitioning arrays storage used for storing partitioned
-    !   network information
-    !
-    !-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'util_deallocate_partitioning_arrays'
-    !-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg,'adjacent_links')
-
-        deallocate(elem_per_image, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'elem_per_image')
-
-        deallocate(image_full, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'image_full')
-
-        if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine util_deallocate_partitioning_arrays
-
-!
-!==========================================================================
-!==========================================================================
-!
-
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_deallocate_elemX_faceX ()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Simply deallocate the elemX and faceX thatwe assigned across all employed images
-    !
-    !-----------------------------------------------------------------------------
-
-        character(64) :: subroutine_name = 'util_deallocate_elemX_faceX'
-
-    !-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%-------------------------------------------------------------------
+        ! Description:
+        !   Simply deallocate the elemX and faceX thatwe assigned across all employed images
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            character(64) :: subroutine_name = 'util_deallocate_elemX_faceX'
+        !%-------------------------------------------------------------------
+        !% Preliminaries   
+            if (icrash) return
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
 
         !==== elem deallocation ====
         deallocate(elemR, stat=deallocation_status, errmsg=emsg)
@@ -204,8 +238,6 @@ contains
         deallocate(elemYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemYN')
 
-         !% OK HERE
-
         deallocate(elemP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemP')
 
@@ -215,24 +247,14 @@ contains
         deallocate(elemPGac, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemPGac')
 
-
         deallocate(elemPGalltm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemPGalltm')
 
         deallocate(elemSI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemSI')
 
-        !% oK here
-
-        !print *, elemSR(:,:)
-        !deallocate(elemSR, stat=deallocation_status)
-        !print *, deallocation_status
-        !stop 76896
-
         deallocate(elemSR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemSR')
-
-
 
         !==== face deallocation ====
         deallocate(faceR, stat=deallocation_status, errmsg=emsg)
@@ -247,32 +269,27 @@ contains
         deallocate(faceP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceP')
 
-
-
-        if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_elemX_faceX
-
-!
-!==========================================================================
-!==========================================================================
-!
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_deallocate_columns()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   All variables are stored in col_elemX(:) arrays, release the memory here
-    !   in all images
-    !
-    !-----------------------------------------------------------------------------
-
-        character(64) :: subroutine_name = 'util_deallocate_columns'
-
-    !-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Description:
+        !%   All variables are stored in col_elemX(:) arrays, release the memory here
+        !%   in all images
+        !%-------------------------------------------------------------------
+            character(64) :: subroutine_name = 'util_deallocate_columns'
+        !%-------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
 
         !==== col_elemI====
         deallocate(col_elemI, stat=deallocation_status, errmsg=emsg)
@@ -341,24 +358,22 @@ contains
         deallocate(col_faceYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'col_faceYN')
 
-
-        if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_columns
-
-
-!
-!==========================================================================
-!==========================================================================
-!
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_deallocate_bc()
-
-        character(64) :: subroutine_name = 'util_deallocate_bc'
-
-        if (icrash) return
-        if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+            character(64) :: subroutine_name = 'util_deallocate_bc'
+        !%-------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
 
         if (N_flowBC > 0) then
             deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
@@ -402,43 +417,13 @@ contains
                 call util_deallocate_check (deallocation_status, emsg, 'BC%P%BCdn')
             end if
         end if
-
+        !%-------------------------------------------------------------------
         if (setting%Debug%File%utility_deallocate) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_bc
-
-
-!
-!==========================================================================
-!==========================================================================
-!
-    subroutine util_deallocate_check(deallocation_status, emsg, locationstring)
-        !-----------------------------------------------------------------------------
-        !
-        ! Description:
-        !   Checks deallocation status and stops if there is an error
-        !
-        !-----------------------------------------------------------------------------
-            integer,            intent(in   ) :: deallocation_status
-            character(len=*),   intent(in   ) :: emsg
-            character(len=*),   intent(in   ) :: locationstring !% unique identifier of location
-
-            character(64):: subroutine_name = 'util_deallocate_check'
-
-        !-----------------------------------------------------------------------------
-            if (icrash) return
-            if (setting%Debug%File%utility) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-            if (deallocation_status > 0) then
-                print *, trim(emsg)
-                print *, 'variable trying to deallocate = ',trim(locationstring)
-                stop
-            end if
-
-            if (setting%Debug%File%utility) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    end subroutine util_deallocate_check
-
+!%
+!%==========================================================================
+!% END MODULE
+!%==========================================================================
+!%
 end module utility_deallocate

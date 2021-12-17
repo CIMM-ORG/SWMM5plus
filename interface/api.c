@@ -82,14 +82,14 @@ void DLLEXPORT api_finalize()
     swmm_end();
     swmm_close();
 
-    //frees double variables in API
+    // frees double variables in API
     for (i = 0; i < NUM_API_DOUBLE_VARS; i++)
     {
         if (api->double_vars[i] != NULL)
             free(api->double_vars[i]);
     }
 
-    // // frees integer variables in API
+    // // frees integer variables in API --- these do not exist brh20211217
     // for (i = 0; i < NUM_API_INT_VARS; i++)
     // {
     //     if (api->int_vars[i] != NULL)

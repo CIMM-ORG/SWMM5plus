@@ -69,37 +69,7 @@ contains
         call outputML_element_selection ()
         !% --- deisgnate the corresponding face to output
         call outputML_face_selection ()
-        ! !% --- create packed arrays of elem row numbers that are output
-        ! call pack_element_outpu
-        ! !% --- compute the N_OutElem for each image
-        ! call outputML_size_OutElem_by_image ()
-        ! !% --- compute the N_OutFace for each imaige
-        ! call outputML_size_OutFace_by_image ()
-        ! !% --- setup the output element data types
-        ! call outputML_element_outtype_selection ()
-        ! !% -- setup the output face data types
-        ! call outputML_face_outtype_selection ()
-        ! !% --- create storage space for multi-level output data
-        ! call util_allocate_outputML_storage ()
-        ! !% --- create storage for output times
-        ! call util_allocate_outputML_times ()
-        ! !% --- create storage for output binary filenames
-   
-        ! !% --- compute the N_OutElem for each image
-        ! call outputML_size_OutElem_by_image ()
-        ! !% --- compute the N_OutFace for each imaige
-        ! call outputML_size_OutFace_by_image ()
-        ! !% --- setup the output element data types
-        ! call outputML_element_outtype_selection ()
-        ! !% -- setup the output face data types
-        ! call outputML_face_outtype_selection ()
-        ! !% --- create storage space for multi-level output data
-        ! call util_allocate_outputML_storage ()
-        ! !% --- create storage for output times
-        ! call util_allocate_outputML_times ()
-        ! !% --- create storage for output binary filenames
-        ! call util_allocate_outputML_filenames ()
-
+      
     end subroutine outputML_selection
 !%
 !%==========================================================================
@@ -221,9 +191,9 @@ contains
         !% --- HACK brute force with do loop
         !% --- note that each image has a different number of elements
         do ii =1,N_elem(this_image())
+            tlink => link_idx(ii)
             select case (elementType(ii))
                 case (CC)
-                    tlink => link_idx(ii)
                     !% --- conduits always correspond to links
                     if (isLinkOut(tlink)) then
                         isElemOut(ii) = .true.
@@ -245,7 +215,7 @@ contains
                         isElemOut(ii) = .false.
                     end if
                 case (outlet)
-                    !% --- weirs always correspond to links
+                    !% --- outlets that correspond to links
                     if (isLinkOut(tlink)) then
                         isElemOut(ii) = .true.
                     else
@@ -260,7 +230,7 @@ contains
                         isElemOut(ii) = .false.
                     end if
                 case (JB)
-                    !% --- no SWMM output on junction branches
+                    !% --- no output on junction branches
                     isElemOut(ii) = .false.
                 case default
                     write (*,"(A)") 'ERROR (code): statement should be unreachable'
@@ -269,11 +239,6 @@ contains
             end select
         end do
 
-        ! !% testing
-        ! do ii=1,N_elem(this_image())
-        !     print *, ii, elemYN(ii,eYN_isOutput)
-        ! end do
-        ! stop 80987
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_element_selection
@@ -1150,130 +1115,133 @@ contains
         !% This doesn't need to be written in the control array, we can simply create
         !% locally rather than use from global.
         !%-----------------------------------------------------------------------------
-        integer :: nWritten
-        integer :: nTotalTimeLevels
-        integer, pointer   :: thiselem, thislink, thisface, thisnode, thisType
-        integer, pointer   :: SWMMlink, SWMMnode
-        integer, pointer   :: swmmIdx(:), tlink(:), tnode(:)
-        integer :: lasttimestart, lasttimeread !% last timelevel started, read and processed
-        integer :: ii, kk, mm, pp,  mminc, ios, allocation_status, fu
-        integer :: npackElem     !% number of element items in a pack
-        integer :: npackFace     !% number of face items in a pack
-        integer :: nPackVolume   !% number of output types of volume
+        !% Declarations
+            integer :: nWritten
+            integer :: nTotalTimeLevels
+            integer, pointer   :: thiselem, thislink, thisface, thisnode, thisType
+            integer, pointer   :: SWMMlink, SWMMnode
+            integer, pointer   :: swmmIdx(:), tlink(:), tnode(:)
+            integer :: lasttimestart, lasttimeread !% last timelevel started, read and processed
+            integer :: ii, kk, mm, pp,  mminc, ios, allocation_status, fu
+            integer :: npackElem     !% number of element items in a pack
+            integer :: npackFace     !% number of face items in a pack
+            integer :: nPackVolume   !% number of output types of volume
 
-        integer :: nTypeElem, nTypeFace     !% number of data types
-        integer :: nTypeElemWtime, nTypeFaceWtime !% number of data types with time included
-        integer :: nTotalElem, oldnTotalElem  !% total number of output elements (and prior value)
-        integer :: nTotalFace, oldnTotalFace  !% total number of output faces (and prior value)
-        integer :: nLevel    !% number of time levels
-        integer :: nMax_elemInLink     !% maximum number of elements in any output link
-        integer :: nMax_elemInNodeElem ! maximum number of elements in any output node
-        integer :: nMax_faceInNodeFace ! maximum number of faces in any output node
-        integer :: nOutLink  !% total number of output links
-        integer :: nOutNodeElem  !% total number of output nodes from elements
-        integer :: nOutNodeFace  !% total number of output nodes from faces
-        integer :: nOutElemFixedColumns !% number of columns in the OutElem_FixedI(:,:) array
-        integer :: nOutFaceFixedColumns !% number of columns in the OutFace_FixedI(:,:) array
-        integer :: dimvector(3), olddimvector(3)  !% size of 3D array (and prior value)
-        integer :: additional_rows  !% number of additional rows in link and node arrays due to Bquick
+            integer :: nTypeElem, nTypeFace     !% number of data types
+            integer :: nTypeElemWtime, nTypeFaceWtime !% number of data types with time included
+            integer :: nTotalElem, oldnTotalElem  !% total number of output elements (and prior value)
+            integer :: nTotalFace, oldnTotalFace  !% total number of output faces (and prior value)
+            integer :: nLevel    !% number of time levels
+            integer :: nMax_elemInLink     !% maximum number of elements in any output link
+            integer :: nMax_elemInNodeElem ! maximum number of elements in any output node
+            integer :: nMax_faceInNodeFace ! maximum number of faces in any output node
+            integer :: nOutLink  !% total number of output links
+            integer :: nOutNodeElem  !% total number of output nodes from elements
+            integer :: nOutNodeFace  !% total number of output nodes from faces
+            integer :: nOutElemFixedColumns !% number of columns in the OutElem_FixedI(:,:) array
+            integer :: nOutFaceFixedColumns !% number of columns in the OutFace_FixedI(:,:) array
+            integer :: dimvector(3), olddimvector(3)  !% size of 3D array (and prior value)
+            integer :: additional_rows  !% number of additional rows in link and node arrays due to Bquick
 
-        integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
-        integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
-        integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
-        integer, allocatable :: OutLink_N_elem_in_link(:)  !% number of elements in links
-        integer, allocatable :: OutNodeElem_N_elem_in_node(:)  !% number of elements in nodes
-        integer, allocatable :: OutNodeFace_N_face_in_node(:) !% number of faces in nodes
+            integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
+            integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
+            integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+            integer, allocatable :: OutLink_N_elem_in_link(:)  !% number of elements in links
+            integer, allocatable :: OutNodeElem_N_elem_in_node(:)  !% number of elements in nodes
+            integer, allocatable :: OutNodeFace_N_face_in_node(:) !% number of faces in nodes
 
-        integer, allocatable, target :: OutLink_pSWMMidx(:)       !% Global link index packed for output link size
-        integer, allocatable, target :: OutNodeElem_pSWMMidx(:)   !% Global node index packed for output node/elem size
-        integer, allocatable, target :: OutNodeFace_pSWMMidx(:)           !% Global node index packed for output node/face size
+            integer, allocatable, target :: OutLink_pSWMMidx(:)       !% Global link index packed for output link size
+            integer, allocatable, target :: OutNodeElem_pSWMMidx(:)   !% Global node index packed for output node/elem size
+            integer, allocatable, target :: OutNodeFace_pSWMMidx(:)           !% Global node index packed for output node/face size
 
-        integer, allocatable         :: OutElem_LinearIdx(:)        !% 1..n indexes corresponding to 1:nTotalElem for packing
-        integer, allocatable         :: OutFace_LinearIdx(:)        !% 1..n indexes corresponding to 1:nTotalElem for packing
-        integer, allocatable         :: pOutLinkElem(:)             !% local packed locations of elements that are links
-        integer, allocatable         :: pOutNodeElem(:)             !% local packed locations of elements that are nodes
-        integer, allocatable         :: pOutNodeFace(:)              !% local packed locations o faces that are nodes
+            integer, allocatable         :: OutElem_LinearIdx(:)        !% 1..n indexes corresponding to 1:nTotalElem for packing
+            integer, allocatable         :: OutFace_LinearIdx(:)        !% 1..n indexes corresponding to 1:nTotalElem for packing
+            integer, allocatable         :: pOutLinkElem(:)             !% local packed locations of elements that are links
+            integer, allocatable         :: pOutNodeElem(:)             !% local packed locations of elements that are nodes
+            integer, allocatable         :: pOutNodeFace(:)              !% local packed locations o faces that are nodes
 
-        !% full list of packed Elem ID for each output link (link, list of elemID) note the valid length of columns is SWMMlink_num_elements(kk)
-        integer, allocatable, target :: OutLink_pOutElemIdx(:,:) !
-        integer, allocatable, target :: OutNodeElem_pOutElemIdx(:,:)        !% packed locations of 1:nTotalElem with elements that are nodes
-        integer, allocatable, target :: OutNodeFace_pOutFaceIdx(:,:)   !% packed locations of OutFaceGidx with faces that are nodes
+            !% full list of packed Elem ID for each output link (link, list of elemID) note the valid length of columns is SWMMlink_num_elements(kk)
+            integer, allocatable, target :: OutLink_pOutElemIdx(:,:) !
+            integer, allocatable, target :: OutNodeElem_pOutElemIdx(:,:)        !% packed locations of 1:nTotalElem with elements that are nodes
+            integer, allocatable, target :: OutNodeFace_pOutFaceIdx(:,:)   !% packed locations of OutFaceGidx with faces that are nodes
 
-        real(8), allocatable         :: OutLink_ElemDataR(:,:,:,:) !% (link, elements in link, data types, time levels)
-        real(8), allocatable         :: OutNodeElem_ElemDataR(:,:,:,:) !% (node, elements in node, data types, time levels)
-        real(8), allocatable         :: OutNodeFace_FaceDataR(:,:,:,:) !% (node, faces in node, data types, time levels)
+            real(8), allocatable         :: OutLink_ElemDataR(:,:,:,:) !% (link, elements in link, data types, time levels)
+            real(8), allocatable         :: OutNodeElem_ElemDataR(:,:,:,:) !% (node, elements in node, data types, time levels)
+            real(8), allocatable         :: OutNodeFace_FaceDataR(:,:,:,:) !% (node, faces in node, data types, time levels)
 
-        real(8), allocatable         :: OutLink_ProcessedDataR(:,:,:)       !%  (link, data types, time levels
-        real(8), allocatable         :: OutNodeElem_ProcessedDataR(:,:,:)   !%  (node, data types, time levels)
-        real(8), allocatable         :: OutNodeFace_ProcessedDataR(:,:,:)   !%  (node, data types, time levels)
+            real(8), allocatable         :: OutLink_ProcessedDataR(:,:,:)       !%  (link, data types, time levels
+            real(8), allocatable         :: OutNodeElem_ProcessedDataR(:,:,:)   !%  (node, data types, time levels)
+            real(8), allocatable         :: OutNodeFace_ProcessedDataR(:,:,:)   !%  (node, data types, time levels)
 
-        !integer, allocatable         :: OutElem_SWMMnodeIdx(:)   !% list of SWMM node indexes for the output elements
-        !integer, allocatable         :: OutElem_SWMMlinkIdx(:)   !% list of SWMM link indexes for the output elements
-        !integer, allocatable         :: OutFace_SWMMnodeIdx(:)   !% list of SWMM node indexes for the output faces
+            !integer, allocatable         :: OutElem_SWMMnodeIdx(:)   !% list of SWMM node indexes for the output elements
+            !integer, allocatable         :: OutElem_SWMMlinkIdx(:)   !% list of SWMM link indexes for the output elements
+            !integer, allocatable         :: OutFace_SWMMnodeIdx(:)   !% list of SWMM node indexes for the output faces
 
-        !% aliases
-        integer, pointer             :: pOutElem_Gidx(:)
-        integer, pointer             :: pOutElem_Link_SWMM_idx(:)
-        integer, pointer             :: pOutElem_Node_SWMM_idx(:)
+            !% aliases
+            integer, pointer             :: pOutElem_Gidx(:)
+            integer, pointer             :: pOutElem_Link_SWMM_idx(:)
+            integer, pointer             :: pOutElem_Node_SWMM_idx(:)
 
-        integer, pointer             :: pOutFace_Gidx(:)
-        integer, pointer             :: pOutFace_Node_SWMM_idx(:)
+            integer, pointer             :: pOutFace_Gidx(:)
+            integer, pointer             :: pOutFace_Node_SWMM_idx(:)
 
-        integer, pointer             :: pElem(:), pFace(:)
+            integer, pointer             :: pElem(:), pFace(:)
 
-        ! logical to suppress face file writing of processed file (used for junction to avoid processing faces)
-        logical, allocatable         :: isOutNodeFaceWriteFVonly(:)
-        logical, allocatable         :: isOutNodeElemWriteFVOnly(:)
-        logical, allocatable         :: isOutLinkWriteFVOnly(:)
+            ! logical to suppress face file writing of processed file (used for junction to avoid processing faces)
+            logical, allocatable         :: isOutNodeFaceWriteFVonly(:)
+            logical, allocatable         :: isOutNodeElemWriteFVOnly(:)
+            logical, allocatable         :: isOutLinkWriteFVOnly(:)
 
 
-        integer :: rlimits(2)  ! reshaping array
+            integer :: rlimits(2)  ! reshaping array
 
-        logical :: isopen = .false.
+            logical :: isopen = .false.
 
-        integer            :: deallocation_status
-        integer            :: thisUnit
-        character(len=256) :: thisFile
-        character(len=32)  :: tlinkname, tnodename
-        character(len=256) :: fn_link_unf, fn_link_csv, fn_linkFV_csv
-        character(len=256) :: fn_nodeElem_unf, fn_nodeElem_csv, fn_nodeElemFV_csv
-        character(len=256) :: fn_nodeFace_unf, fn_nodeFace_csv, fn_nodeFaceFV_csv
-        integer            :: fU_link_unf, fU_link_csv, fU_linkFV_csv
-        integer            :: fU_nodeElem_unf, fU_nodeElem_csv, fU_nodeElemFV_csv
-        integer            :: fU_nodeFace_unf, fU_nodeFace_csv, fU_nodeFaceFV_csv
-        character(len=99)  :: emsg
-        character(len=8)   :: tstatus
+            integer            :: deallocation_status
+            integer            :: thisUnit
+            character(len=256) :: thisFile
+            character(len=32)  :: tlinkname, tnodename
+            character(len=256) :: fn_link_unf, fn_link_csv, fn_linkFV_csv
+            character(len=256) :: fn_nodeElem_unf, fn_nodeElem_csv, fn_nodeElemFV_csv
+            character(len=256) :: fn_nodeFace_unf, fn_nodeFace_csv, fn_nodeFaceFV_csv
+            integer            :: fU_link_unf, fU_link_csv, fU_linkFV_csv
+            integer            :: fU_nodeElem_unf, fU_nodeElem_csv, fU_nodeElemFV_csv
+            integer            :: fU_nodeFace_unf, fU_nodeFace_csv, fU_nodeFaceFV_csv
+            character(len=99)  :: emsg
+            character(len=8)   :: tstatus
 
-        character(len=16)  :: time_units_str
+            character(len=16)  :: time_units_str
 
-        real(8) :: StartTimeEpoch
-        integer :: reportTimeUnits
-        integer :: NtotalOutputElements
-        integer :: NtotalOutputFaces
-        integer :: StoredLevels
-        logical :: verbose
+            real(8) :: StartTimeEpoch
+            integer :: reportTimeUnits
+            integer :: NtotalOutputElements
+            integer :: NtotalOutputFaces
+            integer :: StoredLevels
+            logical :: verbose
 
-        integer :: dummyarrayI(1) = 1
-        integer :: dummyI = 1
+            integer :: dummyarrayI(1) = 1
+            integer :: dummyI = 1
 
-        real(8) :: time_secs, time_epoch, time_scale_for_output
-        integer :: startdate(6) !% yr, month, day, hr, min, sec
-        character(64)      :: subroutine_name = 'outputML_convert_elements_to_linknode_and_write'
+            real(8) :: time_secs, time_epoch, time_scale_for_output
+            integer :: startdate(6) !% yr, month, day, hr, min, sec
+            character(64)      :: subroutine_name = 'outputML_convert_elements_to_linknode_and_write'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Preliminaries
+            if (setting%Debug%File%output) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% --- do not execute if ML output is suppressed
-        if (setting%Output%Report%suppress_MultiLevel_Output) return
+            !% --- do not execute if ML output is suppressed
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
 
-        !% run as serial as part of finalization
-        if (this_image() .ne. 1) return
+            !% run as serial as part of finalization
+            if (this_image() .ne. 1) return
 
-        !% --- HACK -- need to change this to an input variable if making this independent
-        verbose = setting%Output%Verbose
+            !% --- HACK -- need to change this to an input variable if making this independent
+            verbose = setting%Output%Verbose
 
-        if (verbose) write(*,*) '**** Beginning unformatted file conversion and multi-level output processing ****'
+            if (verbose) write(*,*) '**** Beginning unformatted file conversion and multi-level output processing ****'
         !% -------------------------------------------------------------
+
         !% --- CONTROL FILE
         !% --- open and read the control file
         thisFile = trim(setting%File%outputML_control_file)
@@ -1284,7 +1252,7 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(thisFile)
-            stop
+            stop 309870
         end if
 
         !% --- get the total number of combined files written
@@ -2317,125 +2285,125 @@ contains
 
             !% HACK 20211206brh -- error in the use of the outputML_csv_header in ROW 13 stuff
 
-                ! do kk=1,nOutNodeFace
-                !     !% --- Cycle through the nodes to create the individual nodes output files
-                !     !% get the global SWMM index for this node
-                !     SWMMnode => OutNodeFace_pSWMMidx(kk)
+                do kk=1,nOutNodeFace
+                    !% --- Cycle through the nodes to create the individual nodes output files
+                    !% get the global SWMM index for this node
+                    SWMMnode => OutNodeFace_pSWMMidx(kk)
 
-                !     !% -- error checking
-                !     !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMnode)%str is a valid string
-                !     if (.not. allocated(node%Names(SWMMnode)%str)) then
-                !         write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
-                !         stop
-                !     end if
+                    !% -- error checking
+                    !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMnode)%str is a valid string
+                    if (.not. allocated(node%Names(SWMMnode)%str)) then
+                        write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
+                        stop
+                    end if
 
-                !     if (len(node%Names(SWMMnode)%str) == 0) then
-                !         write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
-                !         stop
-                !     end if
+                    if (len(node%Names(SWMMnode)%str) == 0) then
+                        write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
+                        stop
+                    end if
 
-                !     if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
-                !         write(*,"(A)") 'ERROR (user): User node name is too long...'
-                !         write(*,"(A,i8)") '... in node%Name(SWMMnode)%str is too long for SWMMnode= ',SWMMnode
-                !         write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
-                !         write(*,"(A)") '... node name in SWMM is ...'
-                !         write(*,"(A)") trim(node%Names(SWMMnode)%str)
-                !         stop
-                !     end if
+                    if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
+                        write(*,"(A)") 'ERROR (user): User node name is too long...'
+                        write(*,"(A,i8)") '... in node%Name(SWMMnode)%str is too long for SWMMnode= ',SWMMnode
+                        write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
+                        write(*,"(A)") '... node name in SWMM is ...'
+                        write(*,"(A)") trim(node%Names(SWMMnode)%str)
+                        stop
+                    end if
 
-                !     !% --- use a temporary name for convenience
-                !     tnodename = trim(node%Names(SWMMnode)%str)
+                    !% --- use a temporary name for convenience
+                    tnodename = trim(node%Names(SWMMnode)%str)
 
-                !     !% -----------------------------------------
-                !     !% --- NODE-FACE FILES, CSV AND UNF (all types in 1 file)
-                !     !%
-                !     if (.not. isOutNodeFaceWriteFVonly(kk)) then
-                !         !% --- set the filenames for output of SWMM links
-                !         fn_nodeFace_unf = trim(setting%File%outputML_Node_kernel) &
-                !             // '_face_' //trim(tnodename) //'.unf'
-                !         fn_nodeFace_csv = trim(setting%File%outputML_Node_kernel) &
-                !             // '_face_' //trim(tnodename) //'.csv'
+                    !% -----------------------------------------
+                    !% --- NODE-FACE FILES, CSV AND UNF (all types in 1 file)
+                    !%
+                    if (.not. isOutNodeFaceWriteFVonly(kk)) then
+                        !% --- set the filenames for output of SWMM links
+                        fn_nodeFace_unf = trim(setting%File%outputML_Node_kernel) &
+                            // '_face_' //trim(tnodename) //'.unf'
+                        fn_nodeFace_csv = trim(setting%File%outputML_Node_kernel) &
+                            // '_face_' //trim(tnodename) //'.csv'
 
-                !         if (ii==1) then  !% --- Create new node output files and write headers for first file read
-                !             ! !% --- open unformatted node file
-                !             ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
-                !             !     action='write', access='append', status='new')
-                !             ! !% --- write header to unformated node file
-                !             ! call outputML_unf_header( &
-                !             !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, &
-                !             !     startdate, setting%Time%StartEpoch, &
-                !             !     output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
-                !             !     dummyarrayI,    &
-                !             !     tnodename, setting%Time%DateTimeStamp, time_units_str, .false.)
+                        if (ii==1) then  !% --- Create new node output files and write headers for first file read
+                            ! !% --- open unformatted node file
+                            ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
+                            !     action='write', access='append', status='new')
+                            ! !% --- write header to unformated node file
+                            ! call outputML_unf_header( &
+                            !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, &
+                            !     startdate, setting%Time%StartEpoch, &
+                            !     output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
+                            !     dummyarrayI,    &
+                            !     tnodename, setting%Time%DateTimeStamp, time_units_str, .false.)
 
-                !             !% --- open formatted csv node file
-                !             open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted', &
-                !                 action='write', access='append')
-                !             !% --- write header to csv node file
-                !             call outputML_csv_header( &
-                !                 fU_nodeFace_csv, nTypeFace, nTotalTimeLevels, dummyI, &
-                !                 OutNodeFace_pSWMMidx(kk), &
-                !                 startdate, setting%Time%StartEpoch, &
-                !                 output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
-                !                 pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
-                !                 tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
-                !             !% --- finished with the headers
-                !         else
-                !             !print *,' in here'
-                !             ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
-                !             !     action='write', access='append', status='old')
-                !             open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted',  &
-                !                 action='write', access='append')
-                !         end if
+                            !% --- open formatted csv node file
+                            open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted', &
+                                action='write', access='append')
+                            !% --- write header to csv node file
+                            call outputML_csv_header( &
+                                fU_nodeFace_csv, nTypeFace, nTotalTimeLevels, dummyI, &
+                                OutNodeFace_pSWMMidx(kk), &
+                                startdate, setting%Time%StartEpoch, &
+                                output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
+                                pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
+                                tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
+                            !% --- finished with the headers
+                        else
+                            !print *,' in here'
+                            ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
+                            !     action='write', access='append', status='old')
+                            open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted',  &
+                                action='write', access='append')
+                        end if
 
-                !         !% --- write node data to the unformatted file
-                !         ! call outputML_unf_writedata ( &
-                !         !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, kk, OutNodeFace_ProcessedDataR)
+                        !% --- write node data to the unformatted file
+                        ! call outputML_unf_writedata ( &
+                        !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, kk, OutNodeFace_ProcessedDataR)
 
-                !         !% --- write node data to the csv formatted data for these nLevels
-                !         call outputML_csv_writedata ( &
-                !             fU_nodeFace_csv, kk, nTypeFaceWtime, dummyI, nLevel,  &
-                !             OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
+                        !% --- write node data to the csv formatted data for these nLevels
+                        call outputML_csv_writedata ( &
+                            fU_nodeFace_csv, kk, nTypeFaceWtime, dummyI, nLevel,  &
+                            OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
 
-                !         ! close(fU_nodeFace_unf) !% close the unformatted link file
-                !         close(fU_nodeFace_csv) !% close the csv link file
-                !     end if
+                        ! close(fU_nodeFace_unf) !% close the unformatted link file
+                        close(fU_nodeFace_csv) !% close the csv link file
+                    end if
 
-                !     !% -----------------------------------------
-                !     !% --- NODE-FACE FINITE-VOLUME FILES CSV (1 type per file)
-                !     !%
-                !     do mm=1,nTypeFace
-                !         !% --- cycle through the types
-                !         mminc = mm+1 !% increment to skip time level
-                !         !% --- create the filename
-                !         fn_nodeFaceFV_csv = trim(setting%File%outputML_Node_kernel) &
-                !             // 'FV_face_' //trim(tnodename) //'_'//trim(output_typeNames_faceR(mm)) //'.csv'
+                    !% -----------------------------------------
+                    !% --- NODE-FACE FINITE-VOLUME FILES CSV (1 type per file)
+                    !%
+                    do mm=1,nTypeFace
+                        !% --- cycle through the types
+                        mminc = mm+1 !% increment to skip time level
+                        !% --- create the filename
+                        fn_nodeFaceFV_csv = trim(setting%File%outputML_Node_kernel) &
+                            // 'FV_face_' //trim(tnodename) //'_'//trim(output_typeNames_faceR(mm)) //'.csv'
 
-                !         if (ii==1) then
-                !             !% --- open a new file for this type and set the header
-                !             open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
-                !                 action='write', access='append')
-                !             !% --- write the header
-                !             call outputML_csv_header( &
-                !                 fU_nodeFaceFV_csv, OutNodeFace_N_face_in_node(kk), nLevel, mminc, &
-                !                 OutNodeFace_pSWMMidx(kk), &
-                !                 startdate, setting%Time%StartEpoch, &
-                !                 output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
-                !                 pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
-                !                 tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .true. )
-                !             !% --- finished writing headers
-                !         else !% --- for ii> 2, open the existing FV file for this type and node
-                !             open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
-                !                 action='write', position='append')
-                !         end if
-                !         call outputML_csv_writedata ( &
-                !             fU_nodeFaceFV_csv, kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
-                !             OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)
-                !         !% --- close this file so that the unit# can be used for a new file
-                !         close(fU_nodeFaceFV_csv)
-                !     end do !% mm
+                        if (ii==1) then
+                            !% --- open a new file for this type and set the header
+                            open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
+                                action='write', access='append')
+                            !% --- write the header
+                            call outputML_csv_header( &
+                                fU_nodeFaceFV_csv, OutNodeFace_N_face_in_node(kk), nLevel, mminc, &
+                                OutNodeFace_pSWMMidx(kk), &
+                                startdate, setting%Time%StartEpoch, &
+                                output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
+                                pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
+                                tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .true. )
+                            !% --- finished writing headers
+                        else !% --- for ii> 2, open the existing FV file for this type and node
+                            open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
+                                action='write', position='append')
+                        end if
+                        call outputML_csv_writedata ( &
+                            fU_nodeFaceFV_csv, kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
+                            OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)
+                        !% --- close this file so that the unit# can be used for a new file
+                        close(fU_nodeFaceFV_csv)
+                    end do !% mm
 
-                ! end do !% kk
+                end do !% kk
             !% --- finished writing all Node output files for NodeFace
 
         end do !% ii
@@ -2804,23 +2772,23 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-!     subroutine outputD_read_csv_link_names()
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% reading the link input file and storing it in link_output_idx
-!         !%-----------------------------------------------------------------------------
-!         integer              :: rc, fu, pp, jj, kk, link_idx, phantom_counter
-!         logical              :: no_file = .false.
-!         logical              :: file_exists, endoffile
-!         character(len = 250) :: link_name
-!         character(len=16)    :: thispos
-!         character(64)        :: subroutine_name = 'outputD_read_csv_link_names'
-!         !%--------------------------------------------------------------------------
-!         if (setting%Debug%File%output) &
-!             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     subroutine outputD_read_csv_link_names()
+    !         !%-----------------------------------------------------------------------------
+    !         !% Description:
+    !         !% reading the link input file and storing it in link_output_idx
+    !         !%-----------------------------------------------------------------------------
+    !         integer              :: rc, fu, pp, jj, kk, link_idx, phantom_counter
+    !         logical              :: no_file = .false.
+    !         logical              :: file_exists, endoffile
+    !         character(len = 250) :: link_name
+    !         character(len=16)    :: thispos
+    !         character(64)        :: subroutine_name = 'outputD_read_csv_link_names'
+    !         !%--------------------------------------------------------------------------
+    !         if (setting%Debug%File%output) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-!         !% --- abandon procedure if printout of links not needed
-!         link_output_idx = nullvalueI  subroutine outputD_update_swmm_out()
+    !         !% --- abandon procedure if printout of links not needed
+    !         link_output_idx = nullvalueI  subroutine outputD_update_swmm_out()
         ! !%-----------------------------------------------------------------------------
         ! !% Description:
         ! !%
@@ -2940,208 +2908,208 @@ contains
         ! write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
-!         !% --- check to see if file exists
-!         inquire (FILE=setting%File%links_input_file, EXIST=file_exists)
+    !         !% --- check to see if file exists
+    !         inquire (FILE=setting%File%links_input_file, EXIST=file_exists)
 
-!         if (file_exists) then
-!             !% open the csv file of link names
-!             open(unit= setting%File%UnitNumber%links_input_file, &
-!                  file=trim(setting%File%links_input_file), &
-!                  action='read', &
-!                  iostat=rc)
-!             if (rc /= 0) then
-!                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%links_input_file), ' failed: ', rc
-!                 stop
-!             end if
-!             pp = 1 ! parent link
-!             endoffile = .false.
-!             !% ---loop through till the end of the file and save the valid links
-!             do while ((.not. endoffile) .and. (pp .le. setting%Output%max_links_csv))
-!                 inquire (FILE=setting%File%UnitNumber%links_input_file, position=thispos)
-!                 if (thispos .eq. 'APPEND') then
-!                     endoffile = .true.
-!                     pp = pp-1 !% so that pp=0 indicates nothing read (empty file)
-!                     exit !end the do loop
-!                 end if
-!                 !% --- read in the link name from the csv
-!                 read(setting%File%UnitNumber%links_input_file, *,  iostat = rc) link_name
-!                 !% --- crash on error
-!                 if (rc /= 0) then
-!                     close(setting%File%UnitNumber%links_input_file)
-!                     !exit
-!                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%links_input_file)
-!                     write(*,"(A,i5)") 'failed before end of file with error ',rc
-!                     stop
-!                 end if
+    !         if (file_exists) then
+    !             !% open the csv file of link names
+    !             open(unit= setting%File%UnitNumber%links_input_file, &
+    !                  file=trim(setting%File%links_input_file), &
+    !                  action='read', &
+    !                  iostat=rc)
+    !             if (rc /= 0) then
+    !                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%links_input_file), ' failed: ', rc
+    !                 stop
+    !             end if
+    !             pp = 1 ! parent link
+    !             endoffile = .false.
+    !             !% ---loop through till the end of the file and save the valid links
+    !             do while ((.not. endoffile) .and. (pp .le. setting%Output%max_links_csv))
+    !                 inquire (UNIT=setting%File%UnitNumber%links_input_file, position=thispos)
+    !                 if (thispos .eq. 'APPEND') then
+    !                     endoffile = .true.
+    !                     pp = pp-1 !% so that pp=0 indicates nothing read (empty file)
+    !                     exit !end the do loop
+    !                 end if
+    !                 !% --- read in the link name from the csv
+    !                 read(setting%File%UnitNumber%links_input_file, *,  iostat = rc) link_name
+    !                 !% --- crash on error
+    !                 if (rc /= 0) then
+    !                     close(setting%File%UnitNumber%links_input_file)
+    !                     !exit
+    !                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%links_input_file)
+    !                     write(*,"(A,i5)") 'failed before end of file with error ',rc
+    !                     stop
+    !                 end if
 
-!                 !% --- converting link name to link idx using the interface
-!                 link_idx = interface_find_object(object_type=API_LINK, object_name = link_name)
-!                 !% --- crash on error
-!                 if (link_idx == 0) then
-!                     write(*, "(A)") "ERROR (user): Link " // trim(link_name) // " in " // &
-!                         trim(setting%File%links_input_file) // " couldn't be found"
-!                     !exit
-!                     stop
-!                 end if
+    !                 !% --- converting link name to link idx using the interface
+    !                 link_idx = interface_find_object(object_type=API_LINK, object_name = link_name)
+    !                 !% --- crash on error
+    !                 if (link_idx == 0) then
+    !                     write(*, "(A)") "ERROR (user): Link " // trim(link_name) // " in " // &
+    !                         trim(setting%File%links_input_file) // " couldn't be found"
+    !                     !exit
+    !                     stop
+    !                 end if
 
-!                 !% --- store index of link for output and increase index
-!                 link_output_idx(pp) = link_idx
-!                 pp = pp + 1
+    !                 !% --- store index of link for output and increase index
+    !                 link_output_idx(pp) = link_idx
+    !                 pp = pp + 1
 
-!                 !% checking if the link is split across processors if
-!                 !% so then store the id of the phantom link for output
-!                 phantom_counter = 0
-!                 if (link%I(link_idx, li_parent_link) == link_idx) then
-!                     do jj = SWMM_N_link+1, N_link
-!                         if (link%I(jj, li_parent_link) == link_idx) then
-!                             link_output_idx(pp+phantom_counter+1) = jj
-!                             phantom_counter = phantom_counter + 1
-!                         end if
-!                     end do
-!                 end if
-!                 pp = pp + phantom_counter + 1
-!                 link%I(link_idx,li_num_phantom_links) = phantom_counter
+    !                 !% checking if the link is split across processors if
+    !                 !% so then store the id of the phantom link for output
+    !                 phantom_counter = 0
+    !                 if (link%I(link_idx, li_parent_link) == link_idx) then
+    !                     do jj = SWMM_N_link+1, N_link
+    !                         if (link%I(jj, li_parent_link) == link_idx) then
+    !                             link_output_idx(pp+phantom_counter+1) = jj
+    !                             phantom_counter = phantom_counter + 1
+    !                         end if
+    !                     end do
+    !                 end if
+    !                 pp = pp + phantom_counter + 1
+    !                 link%I(link_idx,li_num_phantom_links) = phantom_counter
 
-!                 !% --- check for stopping due to max links setting.
-!                 if (pp .ge. setting%Output%max_links_csv) then
-!                     if (setting%Output%Warning) then
-!                         write(*,"(A)") 'WARNING: stopped reading links_input_file file due to excessive number of links'
-!                         write(*,"(A)") 'Filename = ',trim(setting%File%links_input_file)
-!                         write(*,"(A,i5)") 'Maximum links set by setting.Output.max_links_csv as: ',setting%Output%max_links_csv
-!                     end if
-!                 end if
-!             end do
-!             !% --- if exited without reading (empty file) send warning
-!             if (pp == 0) then
-!                 if (setting%Output%Warning) then
-!                     write(*,"(A)") 'WARNING: did not find an links in the links_input_file'
-!                     write(*,"(A)") 'Filename = ',trim(setting%File%links_input_file)
-!                 end if
-!             end if
-!         end if
+    !                 !% --- check for stopping due to max links setting.
+    !                 if (pp .ge. setting%Output%max_links_csv) then
+    !                     if (setting%Output%Warning) then
+    !                         write(*,"(A)") 'WARNING: stopped reading links_input_file file due to excessive number of links'
+    !                         write(*,"(A)") 'Filename = ',trim(setting%File%links_input_file)
+    !                         write(*,"(A,i5)") 'Maximum links set by setting.Output.max_links_csv as: ',setting%Output%max_links_csv
+    !                     end if
+    !                 end if
+    !             end do
+    !             !% --- if exited without reading (empty file) send warning
+    !             if (pp == 0) then
+    !                 if (setting%Output%Warning) then
+    !                     write(*,"(A)") 'WARNING: did not find an links in the links_input_file'
+    !                     write(*,"(A)") 'Filename = ',trim(setting%File%links_input_file)
+    !                 end if
+    !             end if
+    !         end if
 
-!         if (.not. file_exists) then
-!             !% --- if links_input_file is not specified we output all the links up to the maximum allowed
-!             pp = 1 !% parent link
-!             !do link_idx = 1, SWMM_N_link
-!             do while ( (pp <= SWMM_N_link) .and. (pp .le. setting%Output%max_links_csv))
-!                 phantom_counter = 0
-!                 link_output_idx(pp) = link_idx
-!                 !% --- only parent links have associated phantoms
-!                 if (link%I(link_idx, li_parent_link) == link_idx) then
-!                     do jj = SWMM_N_link+1, N_link
-!                         if (link%I(jj, li_parent_link) == link_idx) then
-!                             link_output_idx(pp+phantom_counter+1) = jj
-!                             phantom_counter = phantom_counter + 1
-!                         end if
-!                     end do
-!                 end if
-!                 pp = pp + phantom_counter + 1
-!                 link%I(link_idx,li_num_phantom_links) = phantom_counter
+    !         if (.not. file_exists) then
+    !             !% --- if links_input_file is not specified we output all the links up to the maximum allowed
+    !             pp = 1 !% parent link
+    !             !do link_idx = 1, SWMM_N_link
+    !             do while ( (pp <= SWMM_N_link) .and. (pp .le. setting%Output%max_links_csv))
+    !                 phantom_counter = 0
+    !                 link_output_idx(pp) = link_idx
+    !                 !% --- only parent links have associated phantoms
+    !                 if (link%I(link_idx, li_parent_link) == link_idx) then
+    !                     do jj = SWMM_N_link+1, N_link
+    !                         if (link%I(jj, li_parent_link) == link_idx) then
+    !                             link_output_idx(pp+phantom_counter+1) = jj
+    !                             phantom_counter = phantom_counter + 1
+    !                         end if
+    !                     end do
+    !                 end if
+    !                 pp = pp + phantom_counter + 1
+    !                 link%I(link_idx,li_num_phantom_links) = phantom_counter
 
-!                 !% --- check for stopping due to max links setting.
-!                 if (pp .ge. setting%Output%max_links_csv) then
-!                     if (setting%Output%Warning) then
-!                         write(*,"(A)") 'WARNING: stopped selecting links for csv output due to excessive number of links'
-!                         write(*,"(A,i5)") 'Maximum links set by setting.Output.max_links_csv as: ',setting%Output%max_links_csv
-!                     end if
-!                 end if
-!             end do
-!         end if
+    !                 !% --- check for stopping due to max links setting.
+    !                 if (pp .ge. setting%Output%max_links_csv) then
+    !                     if (setting%Output%Warning) then
+    !                         write(*,"(A)") 'WARNING: stopped selecting links for csv output due to excessive number of links'
+    !                         write(*,"(A,i5)") 'Maximum links set by setting.Output.max_links_csv as: ',setting%Output%max_links_csv
+    !                     end if
+    !                 end if
+    !             end do
+    !         end if
 
-!         if (setting%Debug%File%output) &
-!         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-!     end subroutine outputD_read_csv_link_names
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     subroutine outputD_read_csv_node_names()
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Reading the node input file and store nodes in note_output_idx.
-!         !% If file does not exist, then choose the first 1:setting%Output%max_nodes_csv
-!         !% nodes for output.
-!         !%-----------------------------------------------------------------------------
-!         character(len = 250) :: node_name
-!         integer :: rc, fu, ii, node_idx, maxnode
-!         character(16) :: thispos
-!         logical :: file_exists, endoffile
-!         character(64) :: subroutine_name = 'outputD_read_csv_node_names'
-!         !%--------------------------------------------------------------------------
-!         if (setting%Debug%File%output) &
-!             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !         if (setting%Debug%File%output) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     end subroutine outputD_read_csv_link_names
+    ! !%
+    ! !%==========================================================================
+    ! !%==========================================================================
+    ! !%
+    !     subroutine outputD_read_csv_node_names()
+    !         !%-----------------------------------------------------------------------------
+    !         !% Description:
+    !         !% Reading the node input file and store nodes in note_output_idx.
+    !         !% If file does not exist, then choose the first 1:setting%Output%max_nodes_csv
+    !         !% nodes for output.
+    !         !%-----------------------------------------------------------------------------
+    !         character(len = 250) :: node_name
+    !         integer :: rc, fu, ii, node_idx, maxnode
+    !         character(16) :: thispos
+    !         logical :: file_exists, endoffile
+    !         character(64) :: subroutine_name = 'outputD_read_csv_node_names'
+    !         !%--------------------------------------------------------------------------
+    !         if (setting%Debug%File%output) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-!         !% --- abandon procedure if printout of nodes not needed
-!         node_output_idx = nullvalueI
-!         if (.not. setting%Output%print_nodes_csv) return
+    !         !% --- abandon procedure if printout of nodes not needed
+    !         node_output_idx = nullvalueI
+    !         if (.not. setting%Output%print_nodes_csv) return
 
-!         !% --- check to see if file exists
-!         inquire (FILE=setting%File%nodes_input_file, EXIST=file_exists)
+    !         !% --- check to see if file exists
+    !         inquire (FILE=setting%File%nodes_input_file, EXIST=file_exists)
 
-!         !% --- read the file that exists
-!         if (file_exists) then
-!             !% --- open the csv file of link names
-!             open(unit= setting%File%UnitNumber%nodes_input_file, &
-!                  file=trim(setting%File%nodes_input_file), &
-!                  action='read', &
-!                  iostat=rc)
-!             if (rc /= 0) then
-!                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%nodes_input_file), ' failed: ', rc
-!                 stop
-!             end if
-!             ii = 1
-!             endoffile = .false.
-!             do while ((.not. endoffile) .and. (ii .le. setting%Output%max_nodes_csv))
-!                 inquire (FILE=setting%File%UnitNumber%nodes_input_file, position=thispos)
-!                 if (thispos .eq. 'APPEND') then
-!                     endoffile = .true.
-!                     ii = ii-1 !% so that ii=0 indicates nothing read (empty file)
-!                     exit !end the do loop
-!                 end if
-!                 !% --- read in nodes
-!                 read(setting%File%UnitNumber%nodes_input_file, *, iostat = rc) node_name
-!                 if (rc /= 0) then
-!                     node_output_idx(ii:) = nullvalueI
-!                     close(setting%File%UnitNumber%nodes_input_file)
-!                     !exit
-!                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%nodes_input_file)
-!                     write(*,"(A,i5)") 'failed before end of file with error ',rc
-!                     stop
-!                 end if
-!                 !% --- converting node name to node idx using the interface
-!                 node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
-!                 if (node_idx == 0) then
-!                     write(*, "(A)") "Node " // trim(node_name) // " in " // &
-!                     trim(setting%File%nodes_input_file) // " couldn't be found"
-!                     stop
-!                 end if
-!                 node_output_idx(ii) = node_idx
-!                 ii = ii + 1
-!             end do
-!             !% --- if exited without reading (empty file) send warning
-!             if (ii == 0) then
-!                 if (setting%Output%Warning) then
-!                     write(*,"(A)") 'WARNING: did not find an nodes in the nodes_input_file'
-!                     write(*,"(A)") 'Filename = ',trim(setting%File%nodes_input_file)
-!                 end if
-!             end if
-!         end if
+    !         !% --- read the file that exists
+    !         if (file_exists) then
+    !             !% --- open the csv file of link names
+    !             open(unit= setting%File%UnitNumber%nodes_input_file, &
+    !                  file=trim(setting%File%nodes_input_file), &
+    !                  action='read', &
+    !                  iostat=rc)
+    !             if (rc /= 0) then
+    !                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%nodes_input_file), ' failed: ', rc
+    !                 stop
+    !             end if
+    !             ii = 1
+    !             endoffile = .false.
+    !             do while ((.not. endoffile) .and. (ii .le. setting%Output%max_nodes_csv))
+    !                 inquire (UNIT=setting%File%UnitNumber%nodes_input_file, position=thispos)
+    !                 if (thispos .eq. 'APPEND') then
+    !                     endoffile = .true.
+    !                     ii = ii-1 !% so that ii=0 indicates nothing read (empty file)
+    !                     exit !end the do loop
+    !                 end if
+    !                 !% --- read in nodes
+    !                 read(setting%File%UnitNumber%nodes_input_file, *, iostat = rc) node_name
+    !                 if (rc /= 0) then
+    !                     node_output_idx(ii:) = nullvalueI
+    !                     close(setting%File%UnitNumber%nodes_input_file)
+    !                     !exit
+    !                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%nodes_input_file)
+    !                     write(*,"(A,i5)") 'failed before end of file with error ',rc
+    !                     stop
+    !                 end if
+    !                 !% --- converting node name to node idx using the interface
+    !                 node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
+    !                 if (node_idx == 0) then
+    !                     write(*, "(A)") "Node " // trim(node_name) // " in " // &
+    !                     trim(setting%File%nodes_input_file) // " couldn't be found"
+    !                     stop
+    !                 end if
+    !                 node_output_idx(ii) = node_idx
+    !                 ii = ii + 1
+    !             end do
+    !             !% --- if exited without reading (empty file) send warning
+    !             if (ii == 0) then
+    !                 if (setting%Output%Warning) then
+    !                     write(*,"(A)") 'WARNING: did not find an nodes in the nodes_input_file'
+    !                     write(*,"(A)") 'Filename = ',trim(setting%File%nodes_input_file)
+    !                 end if
+    !             end if
+    !         end if
 
-!         !% --- store 1:setting%Output%max_nodes_csv nodes for output when file doesn't exist
-!         if (.not. file_exists) then
-!             !% --- Output all nodes (up to max) if CSV file
-!             maxnode = max( SWMM_N_node, setting%Output%max_nodes_csv)
-!             node_output_idx = (/ (ii, ii =1, maxnode)/)
-!             !% --- send warning if output is truncated
-!             if (SWMM_N_node > maxnode) then
-!                 write(*,"(A)") 'WARNING: stopped selecting nodes for csv output due to excessive number of nodes'
-!                 write(*,"(A,i5)") 'Maximum nodes set by setting.Output.max_nodes_csv as: ',setting%Output%max_links_csv
-!             end if
-!         end if
+    !         !% --- store 1:setting%Output%max_nodes_csv nodes for output when file doesn't exist
+    !         if (.not. file_exists) then
+    !             !% --- Output all nodes (up to max) if CSV file
+    !             maxnode = max( SWMM_N_node, setting%Output%max_nodes_csv)
+    !             node_output_idx = (/ (ii, ii =1, maxnode)/)
+    !             !% --- send warning if output is truncated
+    !             if (SWMM_N_node > maxnode) then
+    !                 write(*,"(A)") 'WARNING: stopped selecting nodes for csv output due to excessive number of nodes'
+    !                 write(*,"(A,i5)") 'Maximum nodes set by setting.Output.max_nodes_csv as: ',setting%Output%max_links_csv
+    !             end if
+    !         end if
 
-!         if (setting%Debug%File%output) &
-!         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !         if (setting%Debug%File%output) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 !     end subroutine outputD_read_csv_node_names
 !%
 !%==========================================================================
@@ -3785,6 +3753,10 @@ contains
     ! end subroutine outputD_update_swmm_out
 !%
 !%==========================================================================
+!%==========================================================================
+!%    
+!%
+!%==========================================================================
 !% PRIVATE
 !%==========================================================================
 !%
@@ -3867,25 +3839,36 @@ contains
 !%==========================================================================
 !%
     subroutine outputML_get_all_output_binary_filenames (nWritten)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description
         !% gets binary output filenames in memory from a file file
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: nWritten  !% number of files that were written
-        integer             :: allocation_status, ios, ii
-        integer, pointer    :: fnunit
-        logical             :: isopen
-        character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_get_output_binary_filenames'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: nWritten  !% number of files that were written
+            integer             :: allocation_status, ios, ii
+            integer, pointer    :: fnunit
+            logical             :: isopen, doesexist
+            character(len=99)   :: emsg
+            character(64)       :: subroutine_name = 'outputML_get_output_binary_filenames'
+        !%-------------------------------------------------------------------
+
         !% --- create filename storage that is large enough for all the files
         allocate(output_binary_filenames_all(nWritten), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'output_binary_filenames_all')
 
         if (setting%Output%UseFileNameFile) then
-            !print *, 'need to read the filename file'
+            !% --- reading in the file of filenames
             fnunit   => setting%File%UnitNumber%outputML_filename_file
-            inquire(FILE=fnunit,opened=isopen)
+            inquire(UNIT=fnunit,EXIST=doesexist)
+            if (.not. doesexist) then 
+                write(*,"(A)") 'ERROR (file), expected the file of output file names to already exist.'
+                write(*,"(A)") 'but it cannot be found. The filename is'
+                write(*,"(A)") trim(setting%File%outputML_filename_file)
+                write(*,"(A,i6)") 'and the unit number is ',fnunit 
+                stop 339182
+            end if     
+            inquire(UNIT=fnunit,OPENED=isopen)
+
             !% --- if previously open for writing, we want to close to switch to reading
             if (isopen) close(fnunit)
             open(unit=fnunit, &
@@ -3896,7 +3879,7 @@ contains
                 write(*,"(A)") trim(setting%File%outputML_filename_file)
                 write(*,"(A)") '... file is the outputML_filename_file ...'
                 write(*,"(A,i5)") '... iostat value = ',ios
-                stop
+                stop 89075
             end if
             rewind(unit=fnunit)
             do ii=1,nWritten

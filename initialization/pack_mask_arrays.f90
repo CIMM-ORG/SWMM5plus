@@ -2401,31 +2401,32 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine pack_link_node_output
-        integer :: ii, jj, link_output_idx_length, node_output_idx_length
-        character(64)    :: subroutine_name = 'pack_link_node_output'
-        !% --------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+!% OBSOLETE?
+    ! subroutine pack_link_node_output
+    !     integer :: ii, jj, link_output_idx_length, node_output_idx_length
+    !     character(64)    :: subroutine_name = 'pack_link_node_output'
+    !     !% --------------------------------------------------------------------------
+    !     if (icrash) return
+    !     if (setting%Debug%File%pack_mask_arrays) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% count the amount of valid output links
-        link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
-        node_output_idx_length = count(node_output_idx(:) /= nullvalueI)
+    !     !% count the amount of valid output links
+    !     link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
+    !     node_output_idx_length = count(node_output_idx(:) /= nullvalueI)
 
-        !% allocate the pack
-        allocate(link%P%have_output(link_output_idx_length))
-        allocate(node%P%have_output(node_output_idx_length))
+    !     !% allocate the pack
+    !     allocate(link%P%have_output(link_output_idx_length))
+    !     allocate(node%P%have_output(node_output_idx_length))
 
-        !% fill the pack
-        link%P%have_output = pack(link%I(link_output_idx(1:link_output_idx_length), li_idx), &
-            link%I(link_output_idx(1:link_output_idx_length), li_P_image) == this_image())
-        node%P%have_output = pack(node%I(node_output_idx(1:node_output_idx_length), ni_idx), &
-            node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
+    !     !% fill the pack
+    !     link%P%have_output = pack(link%I(link_output_idx(1:link_output_idx_length), li_idx), &
+    !         link%I(link_output_idx(1:link_output_idx_length), li_P_image) == this_image())
+    !     node%P%have_output = pack(node%I(node_output_idx(1:node_output_idx_length), ni_idx), &
+    !         node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
 
-        if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine pack_link_node_output
+    !     if (setting%Debug%File%pack_mask_arrays) &
+    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine pack_link_node_output
 !
 !==========================================================================
 ! END MODULE

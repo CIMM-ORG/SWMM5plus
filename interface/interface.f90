@@ -466,22 +466,22 @@ contains
     subroutine interface_finalize()
         !%---------------------------------------------------------------------
         !% Description:
-        !%    finalizes the EPA-SWMM shared library
+        !% stops EPA SWMMC, deletes pointers and closese the shared library
         !%---------------------------------------------------------------------
         !% Declarations:
             character(64) :: subroutine_name = 'interface_finalize'
         !%---------------------------------------------------------------------
         !% Preliminaries:
-            if (setting%Debug%File%interface)  &
+           if (setting%Debug%File%interface)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%---------------------------------------------------------------------
 
-        call ptr_api_finalize()
+        call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
 
         !%---------------------------------------------------------------------
         !% Closing        
-            if (setting%Debug%File%interface)  &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+           if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine interface_finalize
 !%
 !%=============================================================================
