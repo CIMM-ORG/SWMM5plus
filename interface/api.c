@@ -70,7 +70,7 @@ int DLLEXPORT api_initialize(
 }
 
 //===============================================================================
-void DLLEXPORT api_finalize()
+int DLLEXPORT api_finalize()
 //===============================================================================
     //
     //  Input: f_api is an Interface object passed as a void*
@@ -79,7 +79,19 @@ void DLLEXPORT api_finalize()
 {
     int i;
 
+     //printf("\n in api finalize \n");
+
     swmm_end();
+
+    //printf(" ------------------\n");
+    //printf("Fout.mode %d, %d %d \n",Fout.mode,SCRATCH_FILE,SAVE_FILE);
+    //printf(" ------------------\n");
+
+    // NOTE -- because we always initialize with
+    // an *.out file name, the Fout.mode is SAVE_FILE
+    // so the swmm_report() is NOT called at the end
+    //if ( Fout.mode == SCRATCH_FILE ) swmm_report();
+
     swmm_close();
 
     // frees double variables in API
@@ -97,6 +109,8 @@ void DLLEXPORT api_finalize()
     // }
 
     free(api);
+
+    return 0;
 }
 
 //===============================================================================

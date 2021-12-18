@@ -67,11 +67,11 @@ module interface
             integer(c_int),  value, intent(in) :: run_routing
         end function api_initialize
         !% -------------------------------------------------------------------------------
-        subroutine api_finalize() &
+        integer(c_int) function api_finalize() &
             BIND(C, name="api_finalize")
             use, intrinsic :: iso_c_binding
             implicit none
-        end subroutine api_finalize
+        end function api_finalize
         !% -------------------------------------------------------------------------------
         real(c_double) function api_run_step() &
             BIND(C, name="api_run_step")
@@ -469,6 +469,7 @@ contains
         !% stops EPA SWMMC, deletes pointers and closese the shared library
         !%---------------------------------------------------------------------
         !% Declarations:
+            integer :: errstat
             character(64) :: subroutine_name = 'interface_finalize'
         !%---------------------------------------------------------------------
         !% Preliminaries:
@@ -476,7 +477,9 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%---------------------------------------------------------------------
 
-        call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
+        call load_api_procedure("api_finalize")
+        errstat = ptr_api_finalize()
+        call print_api_error(errstat, subroutine_name)
 
         !%---------------------------------------------------------------------
         !% Closing        
@@ -1782,6 +1785,7 @@ contains
             case ("api_initialize")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
             case ("api_finalize")
+                print *, '9781053 calling api_finalize'
                 call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
             case ("api_get_nodef_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_nodef_attribute)

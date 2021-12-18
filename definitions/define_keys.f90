@@ -75,7 +75,8 @@
         !% different link roughness types
         enumerator :: lManningsN            !% ManningsN roughness type
         enumerator :: lCD                   !% drag coefficient roughness type
-        !% different node types (HACK: probably could be consolidated to element types)
+        !% different node types 
+        enumerator :: nJ1                   !% a node without an inflow connecting to only 1 link    
         enumerator :: nJ2                   !% junction node with 2 links
         enumerator :: nJm                   !% junction node with multiple links
         enumerator :: nStorage              !% storage node
@@ -153,6 +154,7 @@
         enumerator :: BCdn                  !% downstream BC
         enumerator :: BCup                  !% upstream BC
         enumerator :: BClat                 !% lateral BC
+        enumerator :: BCnone                !% end face without a BC
         !% BC subcategory (Q - flowrate)
         enumerator :: BCQ_fixed
         enumerator :: BCQ_tseries
@@ -288,6 +290,7 @@
         reverseKey(lForce_main) = 'lForce_main'
         reverseKey(lManningsN) = 'lManningsN'
         reverseKey(lCD) = 'lCD'
+        reverseKey(nJ1) = 'nJ1'
         reverseKey(nJ2) = 'nJ2'
         reverseKey(nJm) = 'nJm'
         reverseKey(nStorage) = 'nStorage'
@@ -356,6 +359,7 @@
         reverseKey(BCdn) = 'BCdn'
         reverseKey(BCup) = 'BCup'
         reverseKey(BClat) = 'BClat'
+        reverseKey(BCnone) = 'BCnone'
         reverseKey(BCQ_fixed) = 'BCQ_fixed'
         reverseKey(BCQ_tseries) = 'BCQ_tseries'
         reverseKey(BCH_free) = 'BCH_free'
@@ -463,6 +467,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(BCup)) , BCup
         write(*,'(A," = ",i4)') trim(reverseKey(BCQ_fixed)) , BCQ_fixed
         write(*,'(A," = ",i4)') trim(reverseKey(BCQ_tseries)) , BCQ_tseries
+        write(*,'(A," = ",i4)') trim(reverseKey(BCnone)) , BCnone
         write(*,'(A," = ",i4)') trim(reverseKey(BLink)) , BLink
         write(*,'(A," = ",i4)') trim(reverseKey(bottom_orifice)) , bottom_orifice
         write(*,'(A," = ",i4)') trim(reverseKey(BQuick)) , BQuick
@@ -556,6 +561,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(nBCdn)) , nBCdn
         write(*,'(A," = ",i4)') trim(reverseKey(nBClat)) , nBClat
         write(*,'(A," = ",i4)') trim(reverseKey(nBCup)) , nBCup
+        write(*,'(A," = ",i4)') trim(reverseKey(nJ1)) , nJ1
         write(*,'(A," = ",i4)') trim(reverseKey(nJ2)) , nJ2
         write(*,'(A," = ",i4)') trim(reverseKey(nJm)) , nJm
         write(*,'(A," = ",i4)') trim(reverseKey(NodeElemOut)) , NodeElemOut

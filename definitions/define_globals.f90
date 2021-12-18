@@ -259,6 +259,7 @@ module define_globals
     integer :: N_nJm
     integer :: N_nStorage
     integer :: N_nJ2
+    integer :: N_nJ1
     integer :: N_diag
     integer :: N_ac
     integer :: N_etm
@@ -306,6 +307,7 @@ module define_globals
     integer, parameter :: N_elem_nStorage = 1 ! Storage nodes are assigned to 1 element
     integer, parameter :: N_elem_nBCdn    = 0 ! Downstream BC nodes are assigned to 0 element (only a face)
     integer, parameter :: N_elem_nBCup    = 0 ! Upstream BC nodes are assigned to 0 element (only a face)
+    integer, parameter :: N_elem_nJ1      = 0 ! Upstream non-BC nodes are assigned to 0 elements (only a face)
 
     ! useful shortcuts
     !% NOTE: don't use setting%... structure in define_globals to prevent linking problems

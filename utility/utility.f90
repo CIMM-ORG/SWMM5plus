@@ -65,13 +65,13 @@ module utility
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+    subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% This subroutine uses the vectorized count() function to search the array for
         !% numberof instances of each node type
         !%-----------------------------------------------------------------------------
-        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
         integer :: ii
         !%-----------------------------------------------------------------------------
         N_nBCup = count(node%I(:, ni_node_type) == nBCup)
@@ -79,6 +79,7 @@ module utility
         N_nJm = count(node%I(:, ni_node_type) == nJM)
         N_nStorage = count(node%I(:, ni_node_type) == nStorage)
         N_nJ2 = count(node%I(:, ni_node_type) == nJ2)
+        N_nj1 = count(node%I(:, ni_node_type) == nJ1)
 
     end subroutine util_count_node_types
 !%

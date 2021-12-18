@@ -1200,9 +1200,7 @@ contains
                         elemR(JBidx,er_ZbreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom)
 
                     case (lTrapezoidal)
-
-                        print *, 'Need to rewrite trapezoidal inital conditions'
-                        stop 3983
+                        !% brh20211217, reviewed
                         elemI(JBidx,ei_geometryType) = trapezoidal
 
                         !% store geometry specific data
@@ -1210,17 +1208,19 @@ contains
                         elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
                         elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
 
+                        elemR(JBidx,er_ZBreadthMax) = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
 
-                        elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom)
+                        elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) &
+                                 + link%R(BranchIdx,lr_FullDepth)                             &
+                                 * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)               &
+                                     + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) 
 
-                        elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) + &
-                                (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + &
-                                elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * elemR(JBidx,er_ZbreadthMax)
-
-                        elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
-                                (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
-                                elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth) !  BRHbugfix 20210813
-
+                        elemR(JBidx,er_FullArea)    =  elemR(JBidx,er_FullDepth)                  &
+                                * (   elemSGR(JBidx,esgr_Trapezoidal_Breadth)                     &
+                                    + onehalfR * elemR(JBidx,er_FullDepth)                        &
+                                       * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
+                                           + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
+                                  
                     case (lCircular)
                         elemI(JBidx,ei_geometryType) = circular
 
@@ -1236,9 +1236,10 @@ contains
 
                     case default
 
-                        print*, 'In, ', subroutine_name
-                        print*, 'Only rectangular geometry is handeled at this moment'
-                        stop
+                        print *, 'In, ', subroutine_name
+                        print *, 'link found of type ',trim(reverseKey(lCircular))
+                        print *, 'Only rectangular, trapezoidal, and circular geometry is handeled at this time'
+                        stop 308974
 
                 end select
 

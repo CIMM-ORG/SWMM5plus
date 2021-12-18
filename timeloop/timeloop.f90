@@ -132,10 +132,21 @@ contains
 
                 !% HACK -- much of the following needs to be combined into an upper level BC subroutine
 
+                ! do mm =1,N_elem(1)
+                !     print *, mm, elemR(mm,er_Flowrate)
+                ! end do
+
+                !do mm=1,N_face(1)
+                !    print *, mm, faceR(mm,fr_Flowrate)
+                !end do
+                !stop 397085
+
                 !% get updated boundary conditions
                 !% ***** BUGCHECK -- the lateral flowrate is cumulative of BC and hydrology, 
                 !% ***** so check that it is zeroed before the first BC added.
                 call bc_update()
+
+            
 
                 !% HACK put lateral here for now -- moved from face_interpolation.
                 !% set lateral to zero

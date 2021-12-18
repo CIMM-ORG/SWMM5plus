@@ -383,21 +383,20 @@ contains
         !%   Keeping the same order is important to be able to locate node/link data
         !%   by label and not by index, reusing EPA-SWMM functionalities.
         !%-----------------------------------------------------------------------------
-
-        integer       :: ii, total_n_links
-
-        character(64) :: subroutine_name = 'init_linknode_arrays'
-
+        !% Declarations
+            integer       :: ii, total_n_links
+            character(64) :: subroutine_name = 'init_linknode_arrays'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%initialization) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (.not. api_is_initialized) then
-            print *, "ERROR: API is not initialized"
-            stop
-        end if
-
+            if (.not. api_is_initialized) then
+                print *, "ERROR: API is not initialized"
+                stop
+            end if
+        !%-----------------------------------------------------------------------------
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
@@ -480,7 +479,8 @@ contains
             !write(*,*)
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
-            !write(*,*) 'call api_nodef_type'
+            !%
+            !% --- handle special types of nodes
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
                 !write(*,*) '... is outfall type'
                 node%I(ii, ni_node_type) = nBCdn
@@ -488,15 +488,44 @@ contains
                 !write(*,*) '... is storage type'
                 node%I(ii, ni_node_type) = nJm
                 node%YN(ii, nYN_has_storage) = .true.
-            else if ((total_n_links == twoI)          .and. &
-                     (node%I(ii,ni_N_link_u) == oneI) .and. &
-                     (node%I(ii,ni_N_link_d) == oneI) )then
-                !write(*,*) '... is 2 junction type'        
-                node%I(ii, ni_node_type) = nJ2
-            else if (total_n_links >= twoI) then
-                !write(*,*) '... is 3+ junction type'
-                node%I(ii, ni_node_type) = nJm
-            end if
+            else 
+                !% --- classify by number of links connected
+                select case (total_n_links)
+                    case (oneI)
+                        !write(*,*) '... is 1 junction is an upstream BC
+                        node%I(ii, ni_node_type) = nJ1
+                    case (twoI)
+                        !write(*,*) '... is 2 junction type'        
+                        node%I(ii, ni_node_type) = nJ2
+                    case default 
+                        !write(*,*) '... is 3+ junction type'
+                        node%I(ii, ni_node_type) = nJm
+                end select
+            end if 
+        
+            ! if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
+            !     !write(*,*) '... is outfall type'
+            !     node%I(ii, ni_node_type) = nBCdn
+            ! else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
+            !     !write(*,*) '... is storage type'
+            !     node%I(ii, ni_node_type) = nJm
+            !     node%YN(ii, nYN_has_storage) = .true.
+            ! else if ((total_n_links == twoI)          .and. &
+            !          (node%I(ii,ni_N_link_u) == oneI) .and. &
+            !          (node%I(ii,ni_N_link_d) == oneI) )then
+            !     !write(*,*) '... is 2 junction type'        
+            !     node%I(ii, ni_node_type) = nJ2
+            ! else if (total_n_links >= twoI) then
+            !     !write(*,*) '... is 3+ junction type'
+            !     node%I(ii, ni_node_type) = nJm
+            ! else if (total_n_links == oneI) then  !% brh 20211217
+            !     !write(*,*) '... is 1 junction is an upstream BC
+            !     node%I(ii, ni_node_type) = nJ1
+            ! else 
+            !     write(*,*) 'CODE or INP FILE ERROR, unexpected else condition '
+            !     write(*,*) 'Node type is undefined for node',ii
+            !     stop 98075               
+            ! end if
             !write(*,*)
 
             !write(*,*) 'call api_nodef_has_extInflow'
@@ -509,11 +538,15 @@ contains
             !write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
             !write(*,*)
 
+            !% --- set up the inflows
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
+                !% set inflow to true for any node type
                 node%YN(ii, nYN_has_inflow) = .true.
-                if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
-                    node%I(ii, ni_node_type) = nBCup
-                end if
+                !% change the node type of an nJ1 with inflow to nBCup
+                if (node%I(ii, ni_node_type) == nJ1) node%I(ii, ni_node_type) = nBCup
+                !if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
+                !    node%I(ii, ni_node_type) = nBCup
+                !end if
             end if
 
             !write(*,*) 'call api_nodef_initDepth'
@@ -567,8 +600,19 @@ contains
         !% Update Link/Node names
         call interface_update_linknode_names()
 
-        if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------------------
+        !% closing
+            ! print *,  'at end of ',trim(subroutine_name)
+            ! print *, 'node data'
+            
+            ! print *, 'idx,    nodeType,    linkU,    linkD,   curveID, patternRes,    assigned'
+            ! do ii=1,N_node
+            !     write(*,"(10i8)") node%I(ii,ni_idx), node%I(ii,ni_node_type), node%I(ii,ni_N_link_u), node%I(ii,ni_N_link_d) &
+            !     , node%I(ii,ni_curve_ID), node%I(ii,ni_pattern_resolution), node%I(ii,ni_assigned)
+            ! end do
+
+            if (setting%Debug%File%initialization)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
 !%
@@ -765,9 +809,9 @@ contains
                         !% for a node that is a multi-branch junction, subcatch connects to 
                         !% the element itself, which is defined by ni_elemface_idx
                         elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
-                    case (nBCup)
-                        !% for a node that is an upstream BC, the subcatch connects into the
-                        !% first element downstream of the face
+                    case (nBCup,nJ1)
+                        !% for a node that is an upstream BC or dead end the subcatch connects 
+                        !% into the first element downstream of the face
                         !% Here ni_elemface_idx holds the face index
                         tface => node%I(nodeIdx(ii),ni_elemface_idx) 
                         if (tface .ne. nullvalueI) then 
@@ -776,9 +820,9 @@ contains
                             elemIdx(ii) = nullvalueI
                         end if
                     case (nBCdn)
-                        !% for a node that is an downstreamstream BC, the subcatch connects into the
+                        !% for a node that is an downstreamstream BC, the subcatch connects 
                         !% first element upstreamstream of the face
-                        !% Here ni_elemface_idx holds the face index
+                        !% into the Here ni_elemface_idx holds the face index
                         tface => node%I(nodeIdx(ii),ni_elemface_idx)
                         if (tface .ne. nullvalueI) then 
                             elemIdx(ii) = faceI(tface,fi_Melem_uL)
@@ -847,6 +891,12 @@ contains
 
         call pack_nodes()
         call util_allocate_bc()
+
+        ! do ii=1,size(BC%flowI,DIM=1)
+        !     write(*,"(10i8)"), BC%flowI(ii,bi_idx), BC%flowI(ii,bi_node_idx), BC%flowI(ii,bi_face_idx), &
+        !     BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_category), BC%flowI(ii,bi_subcategory), BC%flowI(ii,bi_fetch)
+        ! end do 
+        ! stop 39766
 
         !% Convention to denote that xR_timeseries arrays haven't been fetched
         if (N_flowBC > 0) then
@@ -1108,10 +1158,17 @@ contains
                 idx = node_index(jj)
                 if (node%I(idx, ni_node_type) == nJ2) then
                     face_counter = face_counter + 1 !% add the face of 1-to-1 junction between 2 links
-                elseif (node%I(idx, ni_node_type) == nBCup) then
+                elseif ((node%I(idx, ni_node_type) == nBCup) .or. (node%I(idx, ni_node_type) == nJ1)) then  !% brh20211217
                     face_counter = face_counter +1 !% add the upstream faces
                 elseif (node%I(idx, ni_node_type) == nBCdn) then
                     face_counter = face_counter +1 !% add the downstream faces
+                elseif (node%I(idx, ni_node_type) == nJm) then   
+                    !% skip -- faces are counted elsewhere
+                else 
+                    print *, jj, node%I(idx, ni_node_type), reverseKey(node%I(idx, ni_node_type))
+                    print *, reverseKey(nJ1), reverseKey(nJ2), reverseKey(nBCup), reverseKey(nBCdn)
+                    print *, 'CODE ERROR, unexpected else'
+                    stop 390715
                 end if !% multiple junction faces already counted
             end do
 

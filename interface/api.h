@@ -176,7 +176,7 @@ extern "C" {
 // --- Simulation
 
 int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
-void DLLEXPORT api_finalize();
+int DLLEXPORT api_finalize();
 double DLLEXPORT api_run_step();
 
 // --- Property-extraction

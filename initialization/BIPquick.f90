@@ -77,7 +77,7 @@ contains
             return
         end if
 
-        call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+        call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
         print*, "Number of root nodes (downstream BC)", N_nBCdn
 

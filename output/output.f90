@@ -271,7 +271,7 @@ contains
         !% --- note that each image has a different number of faces
         do ii =1,N_face(this_image())
             !% --- check for valid nodes
-            !% --- this should only be nJ2, nBCup and nBCdn nodes
+            !% --- this should only be nJ1, nJ2, nBCup and nBCdn nodes
             !% --- (note that nJm nodes are already handled with elements)
             if (node_idx(ii) .ne. nullvalueI) then
                 !% --- check that node is an output node
@@ -711,26 +711,27 @@ contains
 !%==========================================================================
 !%
     subroutine outputML_store_data (isLastStep)
-    !%-----------------------------------------------------------------------------
-    !% Description -- stores the multi-level output data in memory
-    !% Hiearchy of data for outpuot
-    !% --- elemR(:,:) is working data at the current time level on each image (coarray)
-    !% --- elemOutR(:,:,:) is multi-time-level storage data of elemR for each image (coarray)
-    !% --- OutElemDataR(:,:,:) combines the elements from different images into a global set (not coarray)
-    !% --- OutElemFixedI(:,:) is static integer data (e.g. indexes) that are needed for output (not coarray)
-    !% --- OutLink_ElemDataR(:,:,:,:) organizes OutElemDataR() by links, and add time as a data type (not coarray)
-    !% --- OutLink_ProcessedDataR(:,:,:) averages the OutLink_ElemDataR over the links (not coarray)
-    !%-----------------------------------------------------------------------------
-        logical, intent(in) :: isLastStep
-        integer, pointer :: thisLevel, Npack, thisP(:), thisType(:)
-        character(64)    :: subroutine_name = 'outputML_store_data'
-    !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Description -- stores the multi-level output data in memory
+        !% Hiearchy of data for outpuot
+        !% --- elemR(:,:) is working data at the current time level on each image (coarray)
+        !% --- elemOutR(:,:,:) is multi-time-level storage data of elemR for each image (coarray)
+        !% --- OutElemDataR(:,:,:) combines the elements from different images into a global set (not coarray)
+        !% --- OutElemFixedI(:,:) is static integer data (e.g. indexes) that are needed for output (not coarray)
+        !% --- OutLink_ElemDataR(:,:,:,:) organizes OutElemDataR() by links, and add time as a data type (not coarray)
+        !% --- OutLink_ProcessedDataR(:,:,:) averages the OutLink_ElemDataR over the links (not coarray)
+        !%-------------------------------------------------------------------
+            logical, intent(in) :: isLastStep
+            integer, pointer :: thisLevel, Npack, thisP(:), thisType(:)
+            character(64)    :: subroutine_name = 'outputML_store_data'
+        !%--------------------------------------------------------------------
+            if (setting%Debug%File%output) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%Report%suppress_MultiLevel_Output) return
-
+        !%--------------------------------------------------------------------
         !% --- increment the stored time level counter
         setting%Output%LastLevel = setting%Output%LastLevel+1
         thisLevel => setting%Output%LastLevel
@@ -2773,23 +2774,7 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    !     subroutine outputD_read_csv_link_names()
-    !         !%-----------------------------------------------------------------------------
-    !         !% Description:
-    !         !% reading the link input file and storing it in link_output_idx
-    !         !%-----------------------------------------------------------------------------
-    !         integer              :: rc, fu, pp, jj, kk, link_idx, phantom_counter
-    !         logical              :: no_file = .false.
-    !         logical              :: file_exists, endoffile
-    !         character(len = 250) :: link_name
-    !         character(len=16)    :: thispos
-    !         character(64)        :: subroutine_name = 'outputD_read_csv_link_names'
-    !         !%--------------------------------------------------------------------------
-    !         if (setting%Debug%File%output) &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    !         !% --- abandon procedure if printout of links not needed
-    !         link_output_idx = nullvalueI  subroutine outputD_update_swmm_out()
+    ! subroutine outputD_update_swmm_out()
         ! !%-----------------------------------------------------------------------------
         ! !% Description:
         ! !%

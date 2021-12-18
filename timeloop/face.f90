@@ -119,7 +119,7 @@ module face
             end if
 
             !% need another call to face_interpolate so that the Q_HeadGradient
-            !% does not change the upper boundarin inflow conditon
+            !% does not change the upper boundary inflow conditon
             isBConly = .true.
             call face_interpolate_bc (isBConly)
 
@@ -162,7 +162,7 @@ module face
         !print *, 'in 763764 ',trim(subroutine_name)
         !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
 
-        if (N_nBCup > 0) call face_interpolation_upBC(isBConly)
+        if ((N_nBCup > 0) .or. (N_nJ1 > 0)) call face_interpolation_upBC(isBConly)
 
         !print *, 'in 9353 ',trim(subroutine_name)
         !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
@@ -193,7 +193,8 @@ module face
             logical, intent(in) :: isBConly
             integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: ii
-            integer, pointer :: face_P(:), edn(:), idx_P(:), fdn(:)
+            integer, pointer :: edn(:), idx_P(:), fdn(:)
+            integer, pointer :: idx_fBC(:), idx_fJ1(:), idx_fBoth(:)
             character(64) :: subroutine_name = 'face_interpolation_upBC'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -204,20 +205,26 @@ module face
         !% Aliases
         !% For the head/geometry at the upstream faces, we directly take the dnwnstream element
         !% So there is no eup for upstream BCs
-            edn => faceI(:,fi_Melem_dL)
-            fdn => elemI(:,ei_Mface_dL)
-        
-            face_P => faceP(1:npack_faceP(fp_BCup),fp_BCup)
-            idx_P  => BC%P%BCup(:)
+            edn       => faceI(:,fi_Melem_dL)
+            fdn       => elemI(:,ei_Mface_dL)   
+            idx_fBC   => faceP(1:npack_faceP(fp_BCup),fp_BCup)
+            idx_fJ1   => faceP(1:npack_faceP(fp_J1),  fp_J1)
+            idx_fBoth => faceP(1:npack_faceP(fp_J1),  fp_J1_BCup)
+            idx_P     => BC%P%BCup(:)
         !%-------------------------------------------------------------------
-        !% enforce BC    
-        faceR(face_P, fr_Flowrate) = BC%flowRI(idx_P)
+        !% enforce stored inflow BC    
+        faceR(idx_fBC, fr_Flowrate) = BC%flowRI(idx_P)
+
+        !% enforce zero flow on J1 faces
+        faceR(idx_fJ1, fr_Flowrate) = zeroR
+        faceR(idx_fJ1, fr_Velocity_u) = zeroR
+        faceR(idx_fJ1, fr_Velocity_d) = zeroR
 
         !print *, 'in 22975 ',trim(subroutine_name)
         !print *, idx_P
-        !print *, face_P
+        !print *, idx_fBC
         !print *, BC%flowRI(idx_P(1))
-        !print *, faceR(face_P(1), fr_Flowrate)
+        !print *, faceR(idx_fBC(1), fr_Flowrate)
         !print *, BC%flowRI(:)
 
         !% update geometry data (don't do on a BC-only call)
@@ -228,59 +235,65 @@ module face
             fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
             eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
 
-            !% Copying other data to the BC faces
+            !% Copying geometric data from elements to the BC/J1 faces
             do ii = 1,size(fGeoSetU)
-                faceR(face_P,fGeoSetD(ii)) = elemR(edn(face_P),eGeoSet(ii)) ! Copying the Geo
-                faceR(face_P,fGeoSetU(ii)) = faceR(face_P,fGeoSetD(ii))
+                faceR(idx_fBoth,fGeoSetD(ii)) = elemR(edn(idx_fBoth),eGeoSet(ii)) 
+                !% upstream side of face matches downstream (no jump)
+                faceR(idx_fBoth,fGeoSetU(ii)) = faceR(idx_fBoth,fGeoSetD(ii))
             end do
 
-            !% gradient extrapolation for head from PipeAC20
-            faceR(face_P,fr_Head_d) = elemR(edn(face_P),er_Head) + elemR(edn(face_P),er_Head) - &
-                        faceR(fdn(edn(face_P)),fr_Head_d) !% Bugfix SAZ 09212021
+            !% gradient extrapolation for head at infow
+            faceR(idx_fBC, fr_Head_d) = elemR(edn(idx_fBC),er_Head)       &
+                                      + elemR(edn(idx_fBC),er_Head)        &
+                                      - faceR(fdn(edn(idx_fBC)),fr_Head_d) 
 
-            faceR(face_P,fr_Head_u) = faceR(face_P,fr_Head_d)
+            !% zero head gradient at J1 cells
+            faceR(idx_fJ1,fr_Head_d) = elemR(edn(idx_fJ1),er_Head) 
 
-            !% HACK: This is needed to be revisited later
+            !% head on downstream side of face is copied to upstream side (no jump)
+            faceR(idx_fBoth,fr_Head_u) = faceR(idx_fBoth,fr_Head_d)
+
+            !% HACK: ZeroValues needs to be revisited later
             if (setting%ZeroValue%UseZeroValues) then
                 !% ensure face area_u is not smaller than zerovalue
-                where (faceR(face_P,fr_Area_d) <= setting%ZeroValue%Area)
-                    faceR(face_P,fr_Area_d)     = setting%ZeroValue%Area
-                    faceR(face_P,fr_Area_u)     = setting%ZeroValue%Area
-                    faceR(face_P,fr_Velocity_d) = zeroR
-                    faceR(face_P,fr_Velocity_u) = zeroR
+                where (faceR(idx_fBC,fr_Area_d) <= setting%ZeroValue%Area)
+                    faceR(idx_fBC,fr_Area_d)     = setting%ZeroValue%Area
+                    faceR(idx_fBC,fr_Area_u)     = setting%ZeroValue%Area
+                    faceR(idx_fBC,fr_Velocity_d) = zeroR
+                    faceR(idx_fBC,fr_Velocity_u) = zeroR
                 endwhere
             else
                 !% ensure face area_u is not smaller than zerovalue
-                where (faceR(face_P,fr_Area_d) <= zeroR)
-                    faceR(face_P,fr_Area_d)     = zeroR
-                    faceR(face_P,fr_Area_u)     = zeroR
-                    faceR(face_P,fr_Velocity_d) = zeroR
-                    faceR(face_P,fr_Velocity_u) = zeroR
+                where (faceR(idx_fBC,fr_Area_d) <= zeroR)
+                    faceR(idx_fBC,fr_Area_d)     = zeroR
+                    faceR(idx_fBC,fr_Area_u)     = zeroR
+                    faceR(idx_fBC,fr_Velocity_d) = zeroR
+                    faceR(idx_fBC,fr_Velocity_u) = zeroR
                 endwhere
             end if  
 
         end if
 
-        !% set velocity based on flowrate an limit
+        !% set velocity based on flowrate, butlimit for small areas
         if (setting%ZeroValue%UseZeroValues) then
-            where (faceR(face_P,fr_Area_d) > setting%ZeroValue%Area)
-                faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
-                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)  
+            where (faceR(idx_fBC,fr_Area_d) > setting%ZeroValue%Area)
+                faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
+                faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)  
             endwhere
         else     
-            where (faceR(face_P,fr_Area_d) > zeroR)
-                faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
-                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+            where (faceR(idx_fBC,fr_Area_d) > zeroR)
+                faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
+                faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)
             endwhere
         end if
 
         !%  limit high velocities
         if (setting%Limiter%Velocity%UseLimitMaxYN) then
-            where(abs(faceR(face_P,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
-                faceR(face_P,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
-                    faceR(face_P,fr_Velocity_d))
+            where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
+                faceR(idx_fBC,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
+                    faceR(idx_fBC,fr_Velocity_d))
 
-                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+                faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)
             endwhere
         end if
 
@@ -350,7 +363,7 @@ module face
             logical, intent(in) :: isBConly
             integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: ii
-            integer, pointer :: face_P(:), eup(:), idx_P(:)
+            integer, pointer :: idx_fBC(:), eup(:), idx_P(:)
             real :: DownStreamBcHead
             character(64) :: subroutine_name = 'face_interpolation_dnBC'
         !%--------------------------------------------------------------------
@@ -361,14 +374,14 @@ module face
         !%--------------------------------------------------------------------
         !% Aliases
             eup    => faceI(:,fi_Melem_uL)
-            face_P => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+            idx_fBC => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
             idx_P  => BC%P%BCdn
         !%--------------------------------------------------------------------   
         !% For fixed, tidal, and timeseries BC
         !% The BC is imagined as enforced on a ghost cell outside the boundary
         !% so the face value is given by linear interpolation using ghost and interior cells 
-        faceR(face_P, fr_Head_u) = 0.5 * (elemR(eup(face_P), er_Head) + BC%headRI(idx_P)) !% downstream head update
-        faceR(face_P, fr_Head_d) = faceR(face_P, fr_Head_u)
+        faceR(idx_fBC, fr_Head_u) = 0.5 * (elemR(eup(idx_fBC), er_Head) + BC%headRI(idx_P)) !% downstream head update
+        faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
 
         if (.not. isBConly) then
             
@@ -376,44 +389,44 @@ module face
             fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
             eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
 
-            faceR(face_P, fr_Flowrate) = elemR(eup(face_P), er_Flowrate) !% Copying the flow from the upstream element
+            faceR(idx_fBC, fr_Flowrate) = elemR(eup(idx_fBC), er_Flowrate) !% Copying the flow from the upstream element
 
             do ii=1,size(fGeoSetD)
-                faceR(face_P, fGeoSetD(ii)) = elemR(eup(face_P), eGeoSet(ii)) !% Copying other geo factors from the upstream element
-                faceR(face_P, fGeoSetU(ii)) = faceR(face_P, fGeoSetD(ii))
+                faceR(idx_fBC, fGeoSetD(ii)) = elemR(eup(idx_fBC), eGeoSet(ii)) !% Copying other geo factors from the upstream element
+                faceR(idx_fBC, fGeoSetU(ii)) = faceR(idx_fBC, fGeoSetD(ii))
             end do
 
             !% HACK: This is needed to be revisited later
             if (setting%ZeroValue%UseZeroValues) then
                 !% ensure face area_u is not smaller than zerovalue
-                where (faceR(face_P,fr_Area_d) < setting%ZeroValue%Area)
-                    faceR(face_P,fr_Area_d) = setting%ZeroValue%Area
-                    faceR(face_P,fr_Area_u) = setting%ZeroValue%Area
+                where (faceR(idx_fBC,fr_Area_d) < setting%ZeroValue%Area)
+                    faceR(idx_fBC,fr_Area_d) = setting%ZeroValue%Area
+                    faceR(idx_fBC,fr_Area_u) = setting%ZeroValue%Area
                 endwhere
 
-                where (faceR(face_P,fr_Area_d) >= setting%ZeroValue%Area)
-                    faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
-                    faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)  
+                where (faceR(idx_fBC,fr_Area_d) >= setting%ZeroValue%Area)
+                    faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
+                    faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)  
                 endwhere
             else
                 !% ensure face area_u is not smaller than zerovalue
-                where (faceR(face_P,fr_Area_d) < zeroR)
-                    faceR(face_P,fr_Area_d) = zeroR
+                where (faceR(idx_fBC,fr_Area_d) < zeroR)
+                    faceR(idx_fBC,fr_Area_d) = zeroR
                 endwhere
 
-                where (faceR(face_P,fr_Area_d) >= zeroR)
-                    faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
-                    faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+                where (faceR(idx_fBC,fr_Area_d) >= zeroR)
+                    faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
+                    faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)
                 endwhere
             end if
 
             !%  limit high velocities
             if (setting%Limiter%Velocity%UseLimitMaxYN) then
-                where(abs(faceR(face_P,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
-                    faceR(face_P,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
-                        faceR(face_P,fr_Velocity_d))
+                where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
+                    faceR(idx_fBC,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
+                        faceR(idx_fBC,fr_Velocity_d))
 
-                    faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+                    faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)
                 endwhere
             end if
         else

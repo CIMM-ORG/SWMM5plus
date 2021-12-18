@@ -1982,8 +1982,8 @@ contains
         eup  => faceI(1:Nfaces,fi_Melem_uL)
         edn  => faceI(1:Nfaces,fi_Melem_dL)
 
-        ! % fp_all
-        ! % - all faces execpt boundary, null, and shared faces
+        !% fp_all
+        !% - all faces execpt boundary, null, and shared faces
         ptype => col_faceP(fp_all)
         npack => npack_faceP(ptype)
 
@@ -1995,6 +1995,35 @@ contains
                 )
         end if
 
+        !% fp_J1
+        !% - faces with only one link that are not inflow BC
+        ptype => col_faceP(fp_J1)
+        npack => npack_faceP(ptype)
+
+        npack = count(faceI(1:Nfaces,fi_BCtype)==BCnone)
+
+        if (npack > 0) then 
+            faceP(1:npack, ptype) = pack( fIdx, &
+                    faceI(1:Nfaces,fi_BCtype)==BCnone)
+        end if
+
+        !% fp_J1_BCup
+        !% - faces with only one link that are not outfalls
+        !%   these are either J1 or BCup
+        ptype => col_faceP(fp_J1_BCup)
+        npack => npack_faceP(ptype)
+
+        npack = count(                              &
+                (faceI(1:Nfaces,fi_BCtype)==BCnone) &
+                .or.                                &
+                (faceI(1:Nfaces,fi_BCtype)==BCup) )
+
+        if (npack > 0) then 
+            faceP(1:npack, ptype) = pack( fIdx,    &
+                (faceI(1:Nfaces,fi_BCtype)==BCnone) &
+                .or.                                &
+                (faceI(1:Nfaces,fi_BCtype)==BCup) )
+        end if
 
         !% fp_Diag
         !% - all faces adjacent to a diagnostic element

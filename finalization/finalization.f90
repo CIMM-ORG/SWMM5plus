@@ -56,14 +56,15 @@ contains
         end if !% brh20211208    
 
         !% --- shut down EPA SWMM-C and delete the API
+        print *, 'calling interface finalize'
         call interface_finalize()
 
         !% --- close all the allocated data
         call util_deallocate_network_data()
 
-        !sync all
+        sync all
 
-        !call cpu_time(setting%Time%CPU%EpochFinishSeconds)
+        call cpu_time(setting%Time%CPU%EpochFinishSeconds)
 
         !--------------------------------------------------------------------
         !% Closing

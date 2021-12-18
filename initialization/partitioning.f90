@@ -117,7 +117,7 @@ subroutine init_partitioning_default()
     !   in the order in which they appear in the link-node arrays.
     !
     ! -----------------------------------------------------------------------------------------------------------------
-    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold
@@ -125,12 +125,17 @@ subroutine init_partitioning_default()
 
     if (icrash) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
-    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(link%I(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
-        (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
+    total_num_elements = sum(link%I(:, li_N_element))         &
+                             + (N_nBCup    * N_elem_nBCup)    &
+                             + (N_nBCdn    * N_elem_nBCdn)    &
+                             + (N_nJm      * N_elem_nJm)      &
+                             + (N_nStorage * N_elem_nStorage) &
+                             + (N_nJ2      * N_elem_nJ2)      &
+                             + (N_nJ1      * N_elem_nJ1)                   !% brh 20211217
     partition_threshold = total_num_elements / real(num_images())
 
     !% This loop counts the elements attributed to each link, and assigns the link to an image
@@ -167,17 +172,38 @@ subroutine init_partitioning_default()
     do ii = 1, size(node%I, 1)
 
         !% This if statement increments the num_attributed_elements by the number of elements associated with that node type
-        if ( node%I(ii, ni_node_type) == nBCup ) then
-            num_attributed_elements = num_attributed_elements + N_elem_nBCup
-        else if ( node%I(ii, ni_node_type) == nBCdn ) then
-            num_attributed_elements = num_attributed_elements + N_elem_nBCdn
-        else if ( node%I(ii, ni_node_type) == nStorage ) then
-            num_attributed_elements = num_attributed_elements + N_elem_nStorage
-        else if ( node%I(ii, ni_node_type) == nJ2 ) then
-            num_attributed_elements = num_attributed_elements + N_elem_nJ2
-        else if ( node%I(ii, ni_node_type) == nJm ) then
-            num_attributed_elements = num_attributed_elements + N_elem_nJm
-        end if
+
+        ! if ( node%I(ii, ni_node_type) == nBCup ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nBCup
+        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nBCdn
+        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nStorage
+        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nJ2
+        ! else if ( node%I(ii, ni_node_type) == nJm ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nJm
+        ! end if
+
+        !% brh20211217 -- revised to add nJ1
+        select case (node%I(ii, ni_node_type))
+            case (nBCup)
+                num_attributed_elements = num_attributed_elements + N_elem_nBCup
+            case (nBCdn)
+                num_attributed_elements = num_attributed_elements + N_elem_nBCdn
+            case (nStorage)
+                num_attributed_elements = num_attributed_elements + N_elem_nStorage
+            case (nJ1)
+                num_attributed_elements = num_attributed_elements + N_elem_nJ1
+            case (nJ2)
+                num_attributed_elements = num_attributed_elements + N_elem_nJ2
+            case (nJM)
+                num_attributed_elements = num_attributed_elements + N_elem_nJm
+            case default 
+                write(*,*) 'CODE ERROR, unexpected case default'
+                stop 1098226
+        end select
+
 
         !% If the number of attributed nodes exceeds the partition_threshold, then the remaining nodes are assigned to a new image
         if ( num_attributed_elements > partition_threshold) then
@@ -220,19 +246,24 @@ subroutine init_partitioning_random()
     !   it to a random image (after checking to ensure that image is not full).
     !
     ! -----------------------------------------------------------------------------------------------------------------
-    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold, rand_num
     !% ----------------------------------------------------------------------------------------------------------------
     if (icrash) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
-    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(link%I(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
-        (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
+    total_num_elements = sum(link%I(:, li_N_element))        &
+                            + (N_nBCup * N_elem_nBCup)       &
+                            + (N_nBCdn * N_elem_nBCdn)       &
+                            + (N_nJm * N_elem_nJm)           &
+                            + (N_nStorage * N_elem_nStorage) &
+                            + (N_nJ2 * N_elem_nJ2)           &
+                            + (N_nJ1 * N_elem_nJ1)                            !% brh20211217
     partition_threshold = ( total_num_elements / real(num_images()) )
 
     !% Initialize the arrays that will hold the number of elements already on an image (and whether that image is full)
@@ -279,17 +310,36 @@ subroutine init_partitioning_random()
         end do
 
         !% elem_per_image is incremented by the number of elements associated with each node type
-        if ( node%I(ii, ni_node_type) == nBCup ) then
-            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCup
-        else if ( node%I(ii, ni_node_type) == nBCdn ) then
-            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
-        else if ( node%I(ii, ni_node_type) == nStorage ) then
-            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
-        else if ( node%I(ii, ni_node_type) == nJ2 ) then
-            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
-        else if ( node%I(ii, ni_node_type) == nJm ) then
-            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
-        end if
+        ! if ( node%I(ii, ni_node_type) == nBCup ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCup
+        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
+        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
+        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
+        ! else if ( node%I(ii, ni_node_type) == nJm ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
+        ! end if
+
+        !% brh20211217 -- revised to add nJ1
+        select case (node%I(ii, ni_node_type))
+            case (nBCup)
+                elem_per_image(assigning_image) = elem_per_image(assigning_image)+ N_elem_nBCup
+            case (nBCdn)
+                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
+            case (nStorage)
+                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
+            case (nJ1)
+                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ1
+            case (nJ2)
+                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
+            case (nJM)
+                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
+            case default 
+                write(*,*) 'CODE ERROR, unexpected case default'
+                stop 1098226
+        end select
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
         !% Note, this check after the assigning_image has been selected allows for images be over-filled
@@ -424,19 +474,40 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
         !% The current image is the one to which the current link has been assigned
         current_image = node%I(ii, ni_P_image)
 
-        !% elem_per_image for the current image is incremented by the number of elements associated with each node type
-        if ( node%I(ii, ni_node_type) == nBCup ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
-        else if ( node%I(ii, ni_node_type) == nBCdn ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCdn
-        else if ( node%I(ii, ni_node_type) == nStorage ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nStorage
-        else if ( node%I(ii, ni_node_type) == nJ2 ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
-        else if ( node%I(ii, ni_node_type) == nJm ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
-        end if
+        ! !% elem_per_image for the current image is incremented by the number of elements associated with each node type
+        ! if ( node%I(ii, ni_node_type) == nBCup ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
+        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCdn
+        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nStorage
+        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
+        ! else if ( node%I(ii, ni_node_type) == nJm ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
+        ! end if
+
+        !% brh20211217 -- revised to add nJ1
+        select case (node%I(ii, ni_node_type))
+            case (nBCup)
+                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
+            case (nBCdn)
+                elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nBCdn
+            case (nStorage)
+                elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nStorage
+            case (nJ1)
+                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ1
+            case (nJ2)
+                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
+            case (nJM)
+                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
+            case default 
+                write(*,*) 'CODE ERROR, unexpected case default'
+                stop 73875
+        end select
     end do
+
+     
 
     !% The maximum and minimum number of elements for an image are determined
     max_elem = maxval(elem_per_image(:))

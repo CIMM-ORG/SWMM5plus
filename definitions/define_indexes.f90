@@ -762,6 +762,8 @@ module define_indexes
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
         enumerator :: fp_BCup
         enumerator :: fp_BCdn
+        enumerator :: fp_J1                     !% faces that are dead-ends of link without inflow BC
+        enumerator :: fp_J1_BCup                !% faces that are either J1 or BCup
         enumerator :: fp_Output_Faces           !% faces that are selected for output
         enumerator :: fp_lastplusone !% must be last enum item
     end enum

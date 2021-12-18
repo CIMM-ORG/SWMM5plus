@@ -111,7 +111,7 @@ contains
             print*, '===================================================================' //&
             '==================================================================='
             print*
-            call execute_command_line('')
+            !call execute_command_line('')
         end if
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
@@ -123,65 +123,23 @@ contains
 !==========================================================================
 ! PRIVATE
 !==========================================================================
-!
-    subroutine init_network_update_nj2_elem()
-        !%-----------------------------------------------------------------
+!%
+    subroutine init_network_linkslope()
+        !%------------------------------------------------------------------
         !% Description:
-        !% For nj2 nodes, assigns the ni_elemface_idx as the element
-        !% index that is upstream of the face.
-        !% CAUTION: the node%I() is a global (non-coarray) but it is storing
-        !% values for ni_elemface_idx that are ONLY correct on the 
-        !% image ni_P_image -- on any other image you get a location that is NOT
-        !% a correct element or face!
-        !%-----------------------------------------------------------------
-        !% Declarations:
-            integer, allocatable :: nJ2_nodes(:)
-            integer              :: N_nJ2_nodes
-            character(64) :: subroutine_name = 'init_network_update_nj2_elem'
-        !%-----------------------------------------------------------------
-        !% Preliminaries
+        !% compute the slope across each link
+        !%------------------------------------------------------------------
+        !% Declarations
+            character(64) :: subroutine_name = 'init_network_linkslope'
+            integer, pointer :: NodeUp, NodeDn, lType
+            real(8), pointer :: zUp, zDn, Slope, Length
+            integer          :: mm
+        !%------------------------------------------------------------------
+        !% Preliminaries:
             if (icrash) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------
-        N_nJ2_nodes = count((node%I(:, ni_node_type) == nJ2) .and. (node%I(:, ni_P_image) == this_image()))
-
-        if (N_nJ2_nodes > 0) then
-
-            nJ2_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_node_type) == nJ2) &
-                        .and. (node%I(:, ni_P_image) == this_image()))
-
-            node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
-
-        end if
-
-        !%-----------------------------------------------------------------
-        !% Closing
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_network_update_nj2_elem
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine init_network_linkslope()
-        !--------------------------------------------------------------------------
-        !
-        !% compute the slope across each link
-        !
-        !--------------------------------------------------------------------------
-
-        character(64) :: subroutine_name = 'init_network_linkslope'
-
-        integer, pointer :: NodeUp, NodeDn, lType
-        real(8), pointer :: zUp, zDn, Slope, Length
-        integer          :: mm
-
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%------------------------------------------------------------------
         do mm = 1, N_link
             !% Inputs
             NodeUp      => link%I(mm,li_Mnode_u)
@@ -212,10 +170,18 @@ contains
             do mm=1, N_link
                 print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
             end do
+            print *, ' '
+            print *, ' node assigments '
+            print *, 'link ID,         nodeUp,         nodeDn'
+            do mm=1, N_link 
+                print *, mm, link%I(mm,li_Mnode_u), link%I(mm,li_Mnode_d)
+            end do
         end if
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_network_linkslope
 !%
@@ -285,6 +251,46 @@ contains
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_datacreate
+!%
+!%==========================================================================
+!%==========================================================================
+!
+    subroutine init_network_update_nj2_elem()
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% For nj2 nodes, assigns the ni_elemface_idx as the element
+        !% index that is upstream of the face.
+        !% CAUTION: the node%I() is a global (non-coarray) but it is storing
+        !% values for ni_elemface_idx that are ONLY correct on the 
+        !% image ni_P_image -- on any other image you get a location that is NOT
+        !% a correct element or face!
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, allocatable :: nJ2_nodes(:)
+            integer              :: N_nJ2_nodes
+            character(64) :: subroutine_name = 'init_network_update_nj2_elem'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        N_nJ2_nodes = count((node%I(:, ni_node_type) == nJ2) .and. (node%I(:, ni_P_image) == this_image()))
+
+        if (N_nJ2_nodes > 0) then
+
+            nJ2_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_node_type) == nJ2) &
+                        .and. (node%I(:, ni_P_image) == this_image()))
+
+            node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
+
+        end if
+
+        !%-----------------------------------------------------------------
+        !% Closing
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_network_update_nj2_elem
 !%
 !%==========================================================================
 !%==========================================================================
@@ -392,6 +398,10 @@ contains
             upNode   => link%I(thisLink,li_Mnode_u)
             dnNode   => link%I(thisLink,li_Mnode_d)
 
+            !print *, '============ link ii ',ii
+            !print *, upNode
+            !print *, dnNode
+
             !% handle the upstream node of the link to create elements and faces
             call init_network_handle_upstreamnode &
                 (image, thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
@@ -482,13 +492,11 @@ contains
 !==========================================================================
 !
     subroutine init_network_map_shared_faces (image)
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%------------------------------------------------------------------
+        !% Description:
         !% set the global indexes for shared faces across images
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%-------------------------------------------------------------------
+    
         integer, intent(in)    :: image
 
         integer :: ii, NsharedFaces
@@ -537,40 +545,35 @@ contains
     subroutine init_network_handle_upstreamnode &
         (image, thisLink, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter)
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%----------------------------------------------------------------
+        !% Description:
         !% Handle the node upstream of a link to create elements and faces
-        !
-        !--------------------------------------------------------------------------
-        !
-        integer, intent(in)     :: image, thisLink, thisNode
-        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
-
-        integer                 :: ii
-        integer, pointer        :: nAssignStatus, nodeType, linkUp
-
-        character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
-       !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !%-----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)     :: image, thisLink, thisNode
+            integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
+            integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
+            integer                 :: ii
+            integer, pointer        :: nAssignStatus, nodeType, linkUp
+            character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+      
         !% Check 1: If the node is in the partition
         if (node%I(thisNode,ni_P_image) == image) then
 
             !% necessary pointers
             nAssignStatus => node%I(thisNode,ni_assigned)
             nodeType      => node%I(thisNode,ni_node_type)
-
-            !print *, nodeType, 'here at 983709785'
-            !stop 398704
-
+            
             select case (nodeType)
 
                 !% Handle upstream boundary nodes
-                case(nBCup)
+                case(nBCup, nJ1)                                            !% brh20211217
                     !% Check 2: If the node has already been assigned
                     if (nAssignStatus == nUnassigned) then
 
@@ -586,7 +589,11 @@ contains
                         !% thus, it is mapped to the dummy element
                         faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
-                        faceI(FaceLocalCounter,fi_BCtype)   = BCup
+                        if (nodeType == nBCup) then
+                            faceI(FaceLocalCounter,fi_BCtype)   = BCup
+                        else 
+                            faceI(FaceLocalCounter,fi_BCtype)   = BCnone
+                        end if
                         node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
                         node%I(thisNode,ni_face_idx)        = FaceLocalCounter
                         !% set zbottom
