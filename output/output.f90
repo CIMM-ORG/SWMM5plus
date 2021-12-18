@@ -353,6 +353,9 @@ contains
 
         !% allocate a coarray with the number of images
         allocate(N_OutFace(num_images())[*])
+        
+        !% initialize the N_OutFace
+        N_OutFace(:) = zeroI
 
         !% the packed number of elements is the number with "true" in eYN_isOutput
         !% for each image
