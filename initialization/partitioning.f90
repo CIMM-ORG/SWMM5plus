@@ -219,7 +219,8 @@ subroutine init_partitioning_default()
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
         current_node_image = node%I(ii, ni_P_image)
-        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        !adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        adjacent_links = node%I(ii, ni_MlinkStart:ni_MlinkEnd)        !% brh20211219
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle
@@ -353,7 +354,8 @@ subroutine init_partitioning_random()
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
         current_node_image = node%I(ii, ni_P_image)
-        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        !adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        adjacent_links = node%I(ii, ni_MlinkStart:ni_MlinkEnd)        !% brh20211219
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle

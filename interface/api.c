@@ -1227,11 +1227,27 @@ int DLLEXPORT api_export_linknode_properties(
         li_geometry[i] = Link[i].xsect.type;
 
         li_Mnode_u[i] = Link[i].node1;
-        error = add_link(i, li_Mnode_u[i], DOWNSTREAM, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
+        error = add_link(i, li_Mnode_u[i], DOWNSTREAM, 
+            ni_N_link_u, 
+                ni_Mlink_u1, 
+                ni_Mlink_u2, 
+                ni_Mlink_u3, 
+            ni_N_link_d, 
+                ni_Mlink_d1, 
+                ni_Mlink_d2, 
+                ni_Mlink_d3);
         if (error) return error;
 
         li_Mnode_d[i] = Link[i].node2;
-        error = add_link(i, li_Mnode_d[i], UPSTREAM, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
+        error = add_link(i, li_Mnode_d[i], UPSTREAM, 
+            ni_N_link_u, 
+                ni_Mlink_u1, 
+                ni_Mlink_u2, 
+                ni_Mlink_u3, 
+            ni_N_link_d, 
+                ni_Mlink_d1, 
+                ni_Mlink_d2, 
+                ni_Mlink_d3);
         if (error) return error;
 
         li_sub_idx = Link[i].subIndex;
@@ -1555,6 +1571,44 @@ int api_load_vars()
     }
     return 0;
 }
+//===============================================================================
+// int add_link_alt(
+//     int li_idx,
+//     int ni_idx,
+//     int maxUp,
+//     int maxDn,
+//     int direction,
+//     int* ni_N_link_u,
+//     int* ni_N_link_d,
+//     int* MlinkUp[3],
+//     int*,MlinkDn[3])
+// //===============================================================================
+// {
+//     if (direction == UPSTREAM) {
+//         ni_N_link_u[ni_idx] ++;
+//         if (ni_N_link_up[ni_idx] <= maxUp){
+//             MlinkUp[ni_N_link_up[ni_idx]] = li_idx;
+//         } else {
+//             sprintf(errmsg, "incoming links for NODE %s > Max allowed [api.c -> add_link_alt]", Node[ni_idx].ID);
+//             api_report_writeErrorMsg(api_err_model_junctions, errmsg);
+//             return api_err_model_junctions;
+//         }
+//         return 0;
+//     } else {
+//         ni_N_link_d[ni_idx] ++;
+//         if (ni_N_link_dn[ni_idx] <= maxDn){
+//             MlinkDn[ni_N_link_dn[ni_idx]] = li_idx;
+//         } else {
+//             sprintf(errmsg, "outgoing links for NODE %s > 3 [api.c -> add_link_alt]", Node[ni_idx].ID);
+//             api_report_writeErrorMsg(api_err_model_junctions, errmsg);
+//             return api_err_model_junctions;
+//         }
+//         return 0;    
+//     }
+//     api_report_writeErrorMsg(api_err_internal, "[api.c -> add_link_alt]");
+//     return api_err_internal;
+// }
+
 //===============================================================================
 int add_link(
     int li_idx,

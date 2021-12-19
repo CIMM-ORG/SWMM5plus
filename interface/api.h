@@ -221,8 +221,20 @@ int DLLEXPORT api_write_output_line(double t);
 int DLLEXPORT api_update_nodeResult(int node_idx, int resultType, double newNodeResult);
 int DLLEXPORT api_update_linkResult(int link_idx, int resultType, double newLinkResult);
 
-// --- Print-out
-int add_link(int li_idx, int ni_idx, int direction, int* ni_N_link_u, int* ni_Mlink_u1, int* ni_Mlink_u2, int* ni_Mlink_u3, int* ni_N_link_d, int* ni_Mlink_d1, int* ni_Mlink_d2, int* ni_Mlink_d3);
+// --- Printout
+int add_link(int li_idx, 
+              int ni_idx, 
+              int direction, 
+              int* ni_N_link_u, 
+              int* ni_Mlink_u1, 
+              int* ni_Mlink_u2, 
+              int* ni_Mlink_u3, 
+              int* ni_N_link_d, 
+              int* ni_Mlink_d1, 
+              int* ni_Mlink_d2, 
+              int* ni_Mlink_d3);
+
+
 int DLLEXPORT api_export_linknode_properties(int units);
 int DLLEXPORT api_export_link_results(int link_idx);
 int DLLEXPORT api_export_node_results(int node_idx);

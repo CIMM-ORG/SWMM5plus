@@ -1,18 +1,21 @@
 program main
     !==========================================================================
-    !% SWMM5+ Alpha release, version 0.0.0-a1
+    !% SWMM5+ Beta release, version 0.0.0-b1
     !% 20210831
     !% Hydraulics engine that links with EPA SWMM-C
-    !% August 31, 2021  
+    !% January XX 2022  
     !% see technical report at https://doi.org/10.18738/T8/WQZ5EX
     !% 
     !% Code authors:
-    !% Ben Hodges -- lead developer and algorithm guru
-    !% Cheng-Wei Yu -- large system test cases, compilation
-    !% Eddie Tiernan -- network partitioning
-    !% Sazzad Sharior -- SWMM hydraulic features
-    !% Gerardo Riano-Briceno -- SWMM-C interface, intput and output
-    !% Eric Jenkins -- SWMM-C interface, input and output
+    !% 2016-22  Prof. Ben Hodges -- lead developer and algorithm guru
+    !% 2016-22  Eddie Tiernan -- network partitioning
+    !% 2019-22  Sazzad Sharior -- SWMM hydraulic features
+    !% 2019-22  Gerardo Riano-Briceno -- SWMM-C interface, intput and output
+    !% 2019-22  Eric Jenkins -- SWMM-C interface, input and output
+    !% 2020-22  Dr. Cheng-Wei (Justin) Yu -- large system test cases, compilation
+    !% 2021-22  Christopher Bashear -- Profiling and testing
+    !% 2021-22  Abdulmuttalib Lokhandwala -- testing
+    !% 2018-20  Dr. Ehsan Madidi-Kandjani -- preliminary development
     !%
     !% This code was developed under Cooperative Agreement No. 83595001 awarded 
     !% by the U.S. Environmental Protection Agency to The University of Texas at 

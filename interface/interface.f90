@@ -424,6 +424,21 @@ contains
         N_curve = SWMM_N_Curve
 
         SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
+
+        SWMM_N_pollutant = get_num_objects(API_POLLUT)
+        if (SWMM_N_pollutant > 0) then
+            write(*,*) ' '
+            write(*,*) '*************************************************************'
+            write(*,*) '*                                                           *'
+            write(*,*) '*  WARNING WARNING WARNING WARNING WARNING WARNING WARNING  *'
+            write(*,*) '*                                                           *'
+            write(*,*) '* The SWMM input file contains one or more pollutants.      *'
+            write(*,*) '* The current version of SWMM5+ does not support pollutants *'
+            write(*,*) '* The simulation will be run, but pollutants will not       *'
+            write(*,*) '* be included in the hydraulic computations.                *'
+            write(*,*) '*************************************************************'
+        end if
+
                
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, ''

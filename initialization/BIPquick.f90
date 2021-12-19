@@ -470,7 +470,8 @@ contains
 
         character(64) :: subroutine_name = 'calc_upstream_weight'
 
-        integer :: upstream_node_list(3)
+        !integer :: upstream_node_list(3)
+        integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
         integer, intent(in out) :: weight_index, root
         integer :: jj
         !--------------------------------------------------------------------------
@@ -581,7 +582,8 @@ contains
         character(64) :: subroutine_name = 'trav_subnetwork'
 
         integer, intent(in out) :: root, image
-        integer :: upstream_node_list(3)
+        !integer :: upstream_node_list(3)
+        integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
         if (icrash) return
@@ -951,7 +953,8 @@ contains
         integer, intent(in out)   :: phantom_node_idx, phantom_link_idx
         real(8), intent(in)       :: phantom_node_start, partition_threshold
         integer, intent(in)       :: spanning_link
-        integer :: upstream_node_list(3)
+        !integer :: upstream_node_list(3)
+        integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
         integer :: downstream_node, upstream_node
         integer :: kk
         real    :: l1, l2, y1, y2
@@ -974,7 +977,8 @@ contains
         node%I(phantom_node_idx, ni_N_link_d) = oneI
 
         !% Initialize the upstream and downstream links as null values
-        node%I(phantom_node_idx, ni_Mlink_u1:ni_Mlink_d3) = nullValueI
+        !node%I(phantom_node_idx, ni_Mlink_u1:ni_Mlink_d3) = nullValueI
+        node%I(phantom_node_idx, ni_MlinkStart:ni_MlinkEnd) = nullValueI   !% brh20211219
 
         !% The upstream link for the phantom node is the spanning link
         node%I(phantom_node_idx, ni_Mlink_u1) = spanning_link
@@ -993,7 +997,12 @@ contains
 
         !% Find the adjacent upstream nodes for the B_nodeI traversal array
         upstream_node = link%I(spanning_link, li_Mnode_u)
-        upstream_node_list(:) = (/upstream_node, nullValueI, nullValueI/)
+
+        !% brh20211219 revise for general size of upstream_node_list
+        !upstream_node_list(:) = (/upstream_node, nullValueI, nullValueI/)
+        upstream_node_list(:) = nullValueI
+        upstream_node_list(1) = upstream_node
+        
         B_nodeI(phantom_node_idx, :) = upstream_node_list
 
         !% Copy the link row entries from the spanning link to the phantom link
@@ -1080,7 +1089,9 @@ contains
         integer, intent(in out)   :: effective_root, spanning_link, ideal_junction, image
         real(8), intent(in out)   :: partition_threshold, max_weight
         logical, intent(in out)   :: ideal_exists
-        integer   :: upstream_node_list(3), upstream_node
+        integer    :: upstream_node
+        !integer   :: upstream_node_list(3)
+        integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
         real(8)   :: upstream_link_length, upstream_weight, total_clipped_weight
         integer   :: jj
 
@@ -1174,7 +1185,9 @@ contains
 
         character(64) :: subroutine_name = 'calc_is_boundary'
 
-        integer    :: adjacent_links(6), link_image
+        !integer    :: adjacent_links(6), link_image
+        ! this is global: integer    :: adjacent_links(ni_MlinkEnd - ni_MlinkStart + 1)  !% brh20211219
+        integer    :: link_image
         integer    :: ii, kk
 
     !--------------------------------------------------------------------------
@@ -1189,7 +1202,8 @@ contains
         do ii = 1, size(node%I, 1)
 
             !% Create a list of links that are adjacent to the node
-            adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+            !adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+            adjacent_links = node%I(ii, ni_MlinkStart:ni_MlinkEnd)  !% brh20211219
 
             !% Iterate through that list
             do kk = 1, size(adjacent_links)

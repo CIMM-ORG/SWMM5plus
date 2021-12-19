@@ -121,7 +121,7 @@ contains
         !if (setting%Output%Verbose) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-        !% Notes on initial conditoins brh20211215
+        !% Notes on initial conditions brh20211215
         !% dHdA is not initialized in channels except where timemarch is AC
 
         !%-------------------------------------------------------------------
@@ -861,7 +861,7 @@ contains
 
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
-            case (lRectangular)
+            case (lRectangular, lRectangular_closed)  !% brh20211219 added Rect_closed
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,ei_geometryType)          = rectangular
@@ -1186,10 +1186,10 @@ contains
                     elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
                 end if
 
-                !% get the geometry data
+                !% get the geometry data -- the branch takes on geometry of the upstream link
                 select case (geometryType)
 
-                    case (lRectangular)
+                    case (lRectangular,lRectangular_closed) !% brh20211219 the rect closed needed when orifice is adjacent
                         elemI(JBidx,ei_geometryType) = rectangular
                         elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
                         elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)

@@ -47,11 +47,48 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_init_network_define_toplevel)
         !--------------------------------------------------------------------
+
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
 
         !% divide the link node networks in elements and faces
         call init_network_datacreate ()
+
+        ! print *, ' in ',trim(subroutine_name)
+        ! ii=123
+        ! !print *, size(elemI,DIM=1),size(elemI,DIM=2)
+        ! print *, 'Element Type = ' ,elemI(ii,ei_elementType)
+        ! print *, 'Geometry Type = ',elemI(ii,ei_geometryType)
+        ! print *, 'this link       ',elemI(ii,ei_link_Gidx_SWMM)
+
+        ! stop 397805        
+
+        ! print *, ' '
+        ! print *, ' elements ---------------------------------------------'
+        ! do ii =1,N_elem(1)
+        !     write(*,"(A, 10i9)") trim(reverseKey(elemI(ii,ei_elementType))), &
+        !         elemI(ii,ei_Lidx), &
+        !         elemI(ii,ei_Mface_uL), &
+        !         elemI(ii,ei_Mface_dL)
+        ! end do
+
+        ! print *, ' ======================================='
+        ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+        ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+        ! print *, ' ======================================='
+        ! !stop 77869
+
+        ! print *, 'why do elements 15 and 16 have the same downstream face?'
+        ! stop 398705
+
+        ! print *, ' '
+        ! print *, ' faces ---------------------------------------------------'
+        ! do ii=1,N_face(1)
+        !     write(*,"(A,10i9)") trim(reverseKey(faceI(ii,fi_BCtype))), &
+        !         faceI(ii,fi_Lidx), &
+        !         faceI(ii,fi_Melem_uL), &
+        !         faceI(ii,fi_Melem_dL)
+        ! end do
 
         !% replaces ni_elemface_idx of nJ2 nodes for the upstream elem
         !% of the face associated with the node
@@ -62,6 +99,27 @@ contains
         call init_network_CC_elem_length_adjust ()
 
         sync all
+
+        ! print *, ' '
+        ! print *, ' elements'
+        ! do ii =1,N_elem(1)
+        !     write(*,"(A, 10i9)") trim(reverseKey(elemI(ii,ei_elementType))), &
+        !         elemI(ii,ei_Lidx), &
+        !         elemI(ii,ei_Mface_uL), &
+        !         elemI(ii,ei_Mface_dL)
+        ! end do
+
+        ! print *, ' '
+        ! print *, ' faces'
+        ! do ii=1,N_face(1)
+        !     write(*,"(A,10i9)") trim(reverseKey(faceI(ii,fi_BCtype))), &
+        !         faceI(ii,fi_Lidx), &
+        !         faceI(ii,fi_Melem_uL), &
+        !         faceI(ii,fi_Melem_dL)
+        ! end do
+
+        
+        ! stop 39705
 
         !% print result
         if (setting%Debug%File%network_define) then
@@ -232,6 +290,12 @@ contains
         call init_network_handle_partition &
             (image, ElemLocalCounter, FacelocalCounter, ElemGlobalCounter, FaceGlobalCounter)
 
+            ! print *, ' ======================================='
+            ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+            ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+            ! print *, ' ======================================='
+            ! !stop 77869
+
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
         call init_network_map_nodes (image)
@@ -352,6 +416,8 @@ contains
         elemI(dummyIdx,ei_elementType)  = dummy
         elemYN(dummyIdx,eYN_isDummy)    = .true.
 
+        !print *, 'DUMMY = ',dummyIdx
+
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%network_define) &
@@ -398,25 +464,59 @@ contains
             upNode   => link%I(thisLink,li_Mnode_u)
             dnNode   => link%I(thisLink,li_Mnode_d)
 
-            !print *, '============ link ii ',ii
-            !print *, upNode
-            !print *, dnNode
+            ! print *, '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+            ! print *, ii
+            ! print *, 'THIS LINK = ',thisLink
+            ! print *, 'UP NODE = ',upNode
+            ! print *, 'DN NODE = ',dnNode
 
+            ! print *, ' =======================================  0001'
+            ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+            ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+            ! print *, ' ======================================='
+
+            !print *, 'AAA ',ElemLocalCounter, FaceLocalCounter
             !% handle the upstream node of the link to create elements and faces
             call init_network_handle_upstreamnode &
                 (image, thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
 
+            ! print *, ' =======================================  0002'
+            ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+            ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+            ! print *, ' ======================================='
+
+            !print *, 'BBB ',ElemLocalCounter, FaceLocalCounter
             !% handle the link to create elements and faces
             call init_network_handle_link &
                 (image, thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
 
+            ! print *, ' ======================================= 0003'
+            ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+            ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+            ! print *, ' ======================================='
+
+            !print *, 'CCC ',ElemLocalCounter, FaceLocalCounter    
             !% handle the downstream node of the link to create elements and faces
             call init_network_handle_downstreamnode &
                 (image, thisLink, dnNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
+                
+
+            ! print *, ' ======================================= 0004'
+            ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+            ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+            ! print *, ' ======================================='   
+
+            !print *, 'DDD ',ElemLocalCounter, FaceLocalCounter 
         end do
+
+        ! print *, ' ======================================='
+        !     print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
+        !     print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
+        !     print *, ' ======================================='
+        !     !stop 77869
 
         !%--------------------------------------------------------------------
         !% Closing
@@ -603,6 +703,9 @@ contains
                         faceI(FacelocalCounter,fi_node_idx_SWMM)     = thisNode
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
+
+                        !write(*,"(A,i4,A,i4)"), '                              face   = ',&
+                        !FaceLocalCounter,  ' elem_dn = ',FaceI(FaceLocalCounter,fi_Melem_dL)
                     end if
 
                 !% Handle 2 branch junction nodes
@@ -845,6 +948,8 @@ contains
                 elemI(ElemLocalCounter,ei_link_Gidx_BIPquick)   = thisLink
                 elemI(ElemLocalCounter,ei_link_Gidx_SWMM)       = link%I(thisLink,li_parent_link)
 
+                !write(*,"(A,i4,A,i4,A,i4)"), '                              faceUp = ',&
+                !   FaceLocalCounter,  ' elem    = ',ElemLocalCounter, '   faceDn = ',FaceLocalCounter + oneI
                 !print *, '====================================== ww'
                 !print *, trim(subroutine_name), ElemLocalCounter, elemI(ElemLocalCounter,ei_Mface_dL)
                 !print *, '======================================'
@@ -1182,9 +1287,10 @@ contains
             !%......................................................
             !% Upstream Branches
             !%......................................................
-            ! if ((ii == 1) .or. (ii == 3) .or. (ii == 5)) then
+            !if ((ii == 1) .or. (ii == 3) .or. (ii == 5)) then
             select case (mod(ii,2))
             case (1)
+                !print *, 'upstream branch = ',ii
             !% finds odd number branches
             !% all the odd numbers are upstream branches
                 upBranchSelector = upBranchSelector + oneI
@@ -1205,6 +1311,10 @@ contains
                 !% set the node the face has been originated from
                 faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
                 faceI(FaceLocalCounter,fi_node_idx_SWMM)     = thisNode
+
+                !write(*,"(A,i4,A,i4,A,i4)"), '                              faceUp = ',&
+                !FaceLocalCounter,  ' elem    = ',ElemLocalCounter
+  
 
                 !% real branches
                 if (upBranchIdx /= nullvalueI) then
@@ -1258,7 +1368,7 @@ contains
             !else
             case (0)
             !% even number branches
-
+                 !print *, 'Downstream branch = ',ii
                 !% all the even numbers are downstream branches
                 dnBranchSelector = dnBranchSelector + oneI
                 !% pointer to upstream branch
@@ -1268,10 +1378,12 @@ contains
                 !% integer data
                 elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
 
+                !write(*,"(A,A,i4,A,i4)"), '                                               ',&
+                !           ' elem    = ',ElemLocalCounter, '   faceDn = ',FaceLocalCounter
                 !print *, '====================================== xx'
                 !print *, trim(subroutine_name), ElemLocalCounter, elemI(ElemLocalCounter,ei_Mface_dL)
                 !print *, '======================================'
-
+                
                 !% face array
                 !% integer data
                 faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
@@ -1379,97 +1491,101 @@ contains
         dnBranchSelector = zeroI
 
         !% cycle through the junction elements of map faces
-        do ii = 1,Nelem_in_Junction
+        !%do ii = 1,Nelem_in_Junction
+        do ii = 1, max_branch_per_node + 1
 
             !% now we are considering all the junction elements including
             !% junction main.
 
             !% all the even numbers are upstream branch elements
-            if ((ii == 2) .or. (ii == 4) .or. (ii == 6)) then
+            !if ((ii == 2) .or. (ii == 4) .or. (ii == 6)) then
+            if (ii > 1) then
+                select case (mod(ii,2))
+                case(0)
+                    upBranchSelector = upBranchSelector + oneI
+                    !% pointer to upstream branch
+                    upBranchIdx => node%I(thisJNode,ni_idx_base1 + upBranchSelector)
 
-                upBranchSelector = upBranchSelector + oneI
-                !% pointer to upstream branch
-                upBranchIdx => node%I(thisJNode,ni_idx_base1 + upBranchSelector)
+                    !% condition for a link connecting this branch is valid and
+                    !% included in this partition.
 
-                !% condition for a link connecting this branch is valid and
-                !% included in this partition.
+                    if (upBranchIdx /= nullvalueI) then
+                        if (link%I(upBranchIdx,li_P_image) == image) then
+                            !% find the last element index of the link
+                            LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
 
-                if (upBranchIdx /= nullvalueI) then
-                    if (link%I(upBranchIdx,li_P_image) == image) then
-                        !% find the last element index of the link
-                        LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
+                            !% pointer to the specific branch element
+                            eIdx => JelemIdx(ii)
 
-                        !% pointer to the specific branch element
-                        eIdx => JelemIdx(ii)
+                            !% find the downstream face index of that last element
+                            fLidx => elemI(eIdx,ei_Mface_uL)
 
-                        !% find the downstream face index of that last element
-                        fLidx => elemI(eIdx,ei_Mface_uL)
+                            !% if the face is a shared face across images,
+                            !% it will not have any upstream local element
+                            if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
 
-                        !% if the face is a shared face across images,
-                        !% it will not have any upstream local element
-                        if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
+                                !% the upstream face of the upstream branch will be the
+                                !% last downstream face of the connected link
+                                !% here, one important thing to remember is that
+                                !% the upstrem branch elements does not have any
+                                !% downstream faces.
 
-                            !% the upstream face of the upstream branch will be the
-                            !% last downstream face of the connected link
-                            !% here, one important thing to remember is that
-                            !% the upstrem branch elements does not have any
-                            !% downstream faces.
+                                !% local d/s face map to element u/s of the branch
+                                elemI(LinkLastElem,ei_Mface_dL) = fLidx
 
-                            !% local d/s face map to element u/s of the branch
-                            elemI(LinkLastElem,ei_Mface_dL) = fLidx
+                                !print *, '====================================== yy'
+                                !print *, trim(subroutine_name), LinkLastElem, elemI(LinkLastElem,ei_Mface_dL)
+                                !print *, '======================================'
 
-                            !print *, '====================================== yy'
-                            !print *, trim(subroutine_name), LinkLastElem, elemI(LinkLastElem,ei_Mface_dL)
-                            !print *, '======================================'
-
-                            !% local u/s element of the face
-                            faceI(fLidx,fi_Melem_uL) = LinkLastElem
+                                !% local u/s element of the face
+                                faceI(fLidx,fi_Melem_uL) = LinkLastElem
+                            end if
                         end if
                     end if
-                end if
 
             !% all odd numbers starting from 3 are downstream branch elements
-            elseif ((ii == 3) .or. (ii == 5) .or. (ii == 7)) then
+            !elseif ((ii == 3) .or. (ii == 5) .or. (ii == 7)) then
+                case (1)
+                    dnBranchSelector = dnBranchSelector + oneI
+                    !% pointer to upstream branch
+                    dnBranchIdx => node%I(thisJNode,ni_idx_base2 + dnBranchSelector)
 
-                dnBranchSelector = dnBranchSelector + oneI
-                !% pointer to upstream branch
-                dnBranchIdx => node%I(thisJNode,ni_idx_base2 + dnBranchSelector)
+                    !% condition for a link connecting this branch is valid and
+                    !% included in this partition.
+                    if (dnBranchIdx /= nullvalueI)  then
+                        if (link%I(dnBranchIdx,li_P_image) == image) then
 
-                !% condition for a link connecting this branch is valid and
-                !% included in this partition.
-                if (dnBranchIdx /= nullvalueI)  then
-                    if (link%I(dnBranchIdx,li_P_image) == image) then
+                            !% find the first element index of the link
+                            LinkFirstElem = link%I(dnBranchIdx,li_first_elem_idx)
 
-                        !% find the first element index of the link
-                        LinkFirstElem = link%I(dnBranchIdx,li_first_elem_idx)
+                            !% pointer to the specific branch element
+                            eIdx => JelemIdx(ii)
 
-                        !% pointer to the specific branch element
-                        eIdx => JelemIdx(ii)
+                            !% find the downstream face index of that last element
+                            fLidx => elemI(eIdx,ei_Mface_dL)
 
-                        !% find the downstream face index of that last element
-                        fLidx => elemI(eIdx,ei_Mface_dL)
+                            !% if the face is a shared face across images,
+                            !% it will not have any upstream local element
+                            !% (not sure if we need this condition)
+                            if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
 
-                        !% if the face is a shared face across images,
-                        !% it will not have any upstream local element
-                        !% (not sure if we need this condition)
-                        if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
+                                !% the downstream face of the downstream branch will be the
+                                !% first upstream face of the connected link
+                                !% here, one important thing to remember is that
+                                !% the downstream branch elements does not have any
+                                !% upstream faces.
 
-                            !% the downstream face of the downstream branch will be the
-                            !% first upstream face of the connected link
-                            !% here, one important thing to remember is that
-                            !% the downstream branch elements does not have any
-                            !% upstream faces.
+                                !% local map to upstream face for elemI
+                                elemI(LinkFirstElem,ei_Mface_uL) = fLidx
+                                !% set the first element as the immediate downstream element of a JB
+                                elemYN(LinkFirstElem,eYN_isElementDownstreamOfJB) = .true.
 
-                            !% local map to upstream face for elemI
-                            elemI(LinkFirstElem,ei_Mface_uL) = fLidx
-                            !% set the first element as the immediate downstream element of a JB
-                            elemYN(LinkFirstElem,eYN_isElementDownstreamOfJB) = .true.
-
-                            !% local downstream element of the face
-                            faceI(fLidx,fi_Melem_dL) = LinkFirstElem
+                                !% local downstream element of the face
+                                faceI(fLidx,fi_Melem_dL) = LinkFirstElem
+                            end if
                         end if
                     end if
-                end if
+                end select
             end if
         end do
 

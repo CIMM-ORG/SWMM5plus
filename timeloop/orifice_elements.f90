@@ -165,6 +165,9 @@ module orifice_elements
                 FullArea = EffectiveFullDepth * RectangularBreadth
                 AoverL   = FullArea / (twoR * (EffectiveFullDepth + RectangularBreadth))
             case default
+                print *, 'element idx = ',eIdx
+                print *, 'GeometryType = ',GeometryType
+                print *, 'SpecificOrificeType = ',SpecificOrificeType, ' ',reverseKey(SpecificOrificeType)
                 print *, 'error, case default should not be reached.'
                 stop 5983
         end select

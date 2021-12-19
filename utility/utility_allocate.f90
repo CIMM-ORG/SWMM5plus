@@ -196,7 +196,7 @@ contains
         if (setting%Partitioning%PartitioningMethod == BQuick) then
             call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
-            allocate(B_nodeI(size(node%I,1), max_us_branch_per_node))
+            allocate(B_nodeI(size(node%I,1), max_up_branch_per_node))
             allocate(B_nodeR(size(node%R,1), twoI))
             allocate(B_roots(N_nBCdn))
             allocate(totalweight_visited_nodes(size(node%I, oneI)))

@@ -48,9 +48,17 @@ module define_globals
 
 
     !% Number of maximum branches for a junction
-    integer, parameter :: max_us_branch_per_node = 3
-    integer, parameter :: max_ds_branch_per_node = 3
-    integer, parameter :: max_branch_per_node = 6
+
+    !% ADDBRANCH
+    !% always MUST be the same number up and down
+    !integer, parameter :: max_up_branch_per_node = 3
+    !integer, parameter :: max_dn_branch_per_node = 3 
+    !integer, parameter :: max_branch_per_node = 6
+
+    integer, parameter :: max_up_branch_per_node = 5   !% ADDBRANCH
+    integer, parameter :: max_dn_branch_per_node = 5   !% ADDBRANCH
+    integer, parameter :: max_branch_per_node = 10      !% ADDBRANCH
+
     real(8) :: branchsign(max_branch_per_node)
 
     !% Main Arrays - Allocated in utility_allocate.f08
@@ -248,8 +256,9 @@ module define_globals
     !% Number of objects
     integer :: SWMM_N_subcatch
     integer :: SWMM_N_link
-    integer :: N_link
     integer :: SWMM_N_node
+    integer :: SWMM_N_pollutant
+    integer :: N_link
     integer :: N_node
     integer :: N_headBC
     integer :: N_flowBC
@@ -298,12 +307,12 @@ module define_globals
     integer, parameter :: lDeferred   = -1
 
     ! Constants for Junction
-    integer, parameter :: J_elem_add = 7 ! Supplement elements for junction
-    integer, parameter :: J_face_add = 6 ! Supplement faces for junction
+    integer, parameter :: J_elem_add = max_branch_per_node+1 ! Supplement elements for junction !%brh20211219
+    integer, parameter :: J_face_add = max_branch_per_node   ! Supplement faces for junction !%brh20211219
 
     ! default number of elements for different node types
     integer, parameter :: N_elem_nJ2      = 0 ! 2-link nodes are assigned to a single face
-    integer, parameter :: N_elem_nJm      = 7 ! M-link nodes are assigned a maximum of 7 elements
+    integer, parameter :: N_elem_nJm      = max_branch_per_node+1 ! M-link nodes are assigned a maximum of 7 elements !%brh20211219
     integer, parameter :: N_elem_nStorage = 1 ! Storage nodes are assigned to 1 element
     integer, parameter :: N_elem_nBCdn    = 0 ! Downstream BC nodes are assigned to 0 element (only a face)
     integer, parameter :: N_elem_nBCup    = 0 ! Upstream BC nodes are assigned to 0 element (only a face)

@@ -468,6 +468,31 @@ contains
             !% brh20211207e
         end do
 
+        !% check for errors in number of connections
+        ! print *, ' '
+        ! print *, '=========================================================='
+        ! print *, '  in ',trim(subroutine_name)
+        ! print *, 'printing number of connections up and down on each node'
+        do ii = 1,N_node
+
+            print *, ii, node%I(ii, ni_N_link_u),  node%I(ii, ni_N_link_d)
+
+            if (node%I(ii, ni_N_link_u) > max_up_branch_per_node) then
+                write(*,*) 'FATAL ERROR IN INPUT FILE'
+                write(*,"(A,i4,A)") 'One or more nodes have more than ',max_up_branch_per_node,' upstream connections'
+                write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
+                stop 387666
+            end if
+            if (node%I(ii, ni_N_link_u) > max_dn_branch_per_node) then
+                write(*,*) 'FATAL ERROR IN INPUT FILE'
+                write(*,"(A,i4,A)") 'One or more nodes have more than ',max_dn_branch_per_node,' downstream connections'
+                write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
+                stop 86752
+            end if
+
+        end do
+
+        !stop 398706
         !write(*,*) 
         !write(*,*) 'FINISHED WITH LINKS ---------------------------------------------------------'
         !write(*,*) 'N_node = ',N_node
