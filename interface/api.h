@@ -63,7 +63,7 @@ enum api_nodef_attributes {
   nodef_extInflow_tSeries,   // 10
   nodef_extInflow_tSeries_x1,  // 11
   nodef_extInflow_tSeries_x2,   // 12
-  nodef_extInflow_basePat,      // 13
+  nodef_extInflow_basePat_idx,      // 13
   nodef_extInflow_basePat_type,  // 14
   nodef_extInflow_baseline,      // 15
   nodef_extInflow_sFactor,       // 16

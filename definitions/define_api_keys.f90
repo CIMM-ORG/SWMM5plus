@@ -499,7 +499,7 @@ module define_api_keys
         enumerator :: api_nodef_extInflow_tSeries !10
         enumerator :: api_nodef_extInflow_tSeries_x1  !11
         enumerator :: api_nodef_extInflow_tSeries_x2  !12
-        enumerator :: api_nodef_extInflow_basePat     !13
+        enumerator :: api_nodef_extInflow_basePat_idx     !13
         !% brh20211707s 
         !enumerator :: api_node_extInflow_baseline    !moved
         enumerator :: api_nodef_extInflow_basePat_type   !14

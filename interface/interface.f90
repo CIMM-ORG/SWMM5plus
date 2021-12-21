@@ -662,7 +662,7 @@ contains
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
-        if ((attr == api_nodef_extInflow_tSeries) .or. (attr == api_nodef_extInflow_basePat)) then
+        if ((attr == api_nodef_extInflow_tSeries) .or. (attr == api_nodef_extInflow_basePat_idx)) then
             if (node_value /= -1) node_value = node_value + 1
         end if
 

@@ -184,12 +184,14 @@ double DLLEXPORT api_get_start_datetime()
 {
     return StartDateTime;
 }
+
 //===============================================================================
 double DLLEXPORT api_get_end_datetime()
 //===============================================================================
 {
     return EndDateTime;
 }
+
 //===============================================================================
 double DLLEXPORT api_get_TotalDuration()
 //===============================================================================
@@ -197,6 +199,7 @@ double DLLEXPORT api_get_TotalDuration()
 {
     return TotalDuration;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_flowBC(
     int node_idx, double current_datetime, double* flowBC)
@@ -248,16 +251,12 @@ int DLLEXPORT api_get_flowBC(
                         total_factor *= Pattern[jj].factor[thour];
                         break;
                     case WEEKEND_PATTERN :
-                        {
                         if ((tweekday == 1) || (tweekday == 7))
                             total_factor *= Pattern[jj].factor[thour];
                         break;
-                        }
                     default :
-                        {
                         printf(" unexpected default reached in api_get_flowBC at A -- needs debugging");
                         return -1;
-                        }
                 }
             }
         }
@@ -307,11 +306,9 @@ int DLLEXPORT api_get_flowBC(
                     total_extinflow += Pattern[pp].factor[thour] * bline;
                     break;
                 case WEEKEND_PATTERN :
-                    {
                     if ((tweekday == 1) || (tweekday == 7))
                         total_extinflow += Pattern[pp].factor[thour] * bline;
                     break;
-                    }
                 default :
                     printf(" unexpected default reached in api_get_flowBC at B -- needs debugging");
                     return -1;
@@ -412,6 +409,7 @@ int DLLEXPORT api_get_SWMM_times(
     int*    hydrology_dry_step, 
     double* hydraulic_step,
     double* total_duration) 
+//===============================================================================    
 {
     int error;
 
@@ -435,12 +433,10 @@ int DLLEXPORT api_get_SWMM_times(
 
     return 0;
 }
-//===============================================================================
 
 //===============================================================================
 double DLLEXPORT api_get_NewRunoffTime()
 //===============================================================================
-
 {
     return NewRunoffTime;
 }
@@ -457,300 +453,564 @@ int DLLEXPORT api_get_nodef_attribute(
     error = check_api_is_initialized("api_get_nodef_attribute");
     if (error) return error;
 
-    if (attr == nodef_type)
-    {
-        // printf("    nodef_type attr = 2 \n");
-        *value = Node[node_idx].type;
-    }
-    else if (attr == nodef_outfall_type)
-    {
-        // printf("    nodef_outfall_type attr = 3 \n");
-        if (Node[node_idx].type == OUTFALL)
-        {
-            *value = Outfall[Node[node_idx].subIndex].type;
-        }
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting nodef_outfall_type for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_invertElev)
-    {
-        // printf("    nodef_invertElev attr = 4 \n");
-        *value = FTTOM(Node[node_idx].invertElev);
-    }
-    else if (attr == nodef_fullDepth)
-    {
-        // printf("   nodef_fullDepth attr = 25 \n ");
-        *value = FTTOM(Node[node_idx].fullDepth);
-    }
-    else if (attr == nodef_initDepth)
-    {
-        // printf("    nodef_initDepth attr attr = 5 \n");
-        if (Node[node_idx].type == OUTFALL)
-        {
-            // printf("   *** call api_get_headBC \n");
-            error = api_get_headBC(node_idx, StartDateTime, value);
-            if (error) return error;
-            *value -= FTTOM(Node[node_idx].invertElev);
-        }
-        else
-            *value = FTTOM(Node[node_idx].initDepth);
-    }
-    else if (attr == nodef_StorageConstant)
-    {
-        // printf("   nodef_StorageConstant attr = 6 \n");
-        if (Node[node_idx].type == STORAGE)
-            *value = Storage[Node[node_idx].subIndex].aConst;
-        else
-            *value = -1;
-    }
-    else if (attr == nodef_StorageCoeff)
-    {
-        // printf("   nodef_storage_Coeff attr = 7 \n");
-        if (Node[node_idx].type == STORAGE)
-            *value = Storage[Node[node_idx].subIndex].aCoeff;
-        else
-            *value = -1;
-    }
-    else if (attr == nodef_StorageExponent)
-    {
-        // printf("   nodef_StorageExponent attr = 8 \n");
-        if (Node[node_idx].type == STORAGE)
-            *value = Storage[Node[node_idx].subIndex].aExpon;
-        else
-            *value = -1;
-    }
-    else if (attr == nodef_StorageCurveID)
-    {
-        // printf("   nodef_StorageCurveID attr = 9 \n");
-        if (Node[node_idx].type == STORAGE)
-            *value = Storage[Node[node_idx].subIndex].aCurve + 1;
-        else
-            *value = -1;
-    }
-    else if (attr == nodef_extInflow_tSeries)
-    {
-        //printf("   nodef_extInflow_tSeries attr = 10 \n");
-        //printf("    %d \n ",Node[node_idx].extInflow->tSeries);
-        if (Node[node_idx].extInflow)
-            *value = Node[node_idx].extInflow->tSeries;
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_extInflow_tSeries for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_extInflow_tSeries_x1)
-    {
-        // printf("   nodef_extInflow_tSeries_x1 attr = 11 \n");
-        tseries_idx = Node[node_idx].extInflow->tSeries;
-        if (tseries_idx >= 0)
-            *value = Tseries[tseries_idx].x1;
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_extInflow_tSeries_x1 for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_extInflow_tSeries_x2)
-    {
-        // printf("   nodef_extInflow_tSeries_x2 attr = 12 \n");
-        tseries_idx = Node[node_idx].extInflow->tSeries;
-        if (tseries_idx >= 0)
-            *value = Tseries[tseries_idx].x2;
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting tseries_idx for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_extInflow_basePat)
-    {
-        printf("   nodef_extInflow_basePat attr = 13 \n");
-        if (Node[node_idx].extInflow)
-        {
-            *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->basePat);
-            printf("%g \n",Node[node_idx].extInflow->cFactor);
-            printf("%d \n",Node[node_idx].extInflow->basePat);
-        }    
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_extInflow_basePat for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_extInflow_basePat_type)
-    {
-        //printf("   nodef_extInflow_basePat_type attr = 14 \n");
-        bpat = Node[node_idx].extInflow->basePat;
-        
-        //printf(" bpat %d",bpat);
-        if (bpat >= 0) // baseline pattern exists
-            *value = Pattern[bpat].type;
-        else
-        {
-            *value = bpat;  // brh changed to bpat (-1) because API_NULL_VALUE_I does not have scope for where its needed
-            //*value = API_NULL_VALUE_I;
-            //printf("  bpat = %d \n", bpat);
-            //printf("  location 3098705 problem with basePatType \n");
-            // brh20211207s  commenting this so that it moves through with null result
-            //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            //return api_err_wrong_type;
-            // brh20211207e
-        }
-    }
-    else if (attr == nodef_extInflow_baseline)
-    {
-        // printf("   nodef_extInflow_baseline attr = 15 \n");
-        if (Node[node_idx].extInflow)
-        {
-            //printf(" in api baseline %f \n",Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
-            *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
-        }
-        else
-            *value = 0;
-    }
-    else if (attr == nodef_extInflow_sFactor)
-    {
-        // printf("   nodef_extInflow_sFactor attr = 16 \n");
-        if (Node[node_idx].extInflow)
-            *value = Node[node_idx].extInflow->sFactor;
-        else
-            *value = 1;
-    }
-    else if (attr == nodef_has_extInflow)
-    {
-        // printf("   nodef_has_extInflow attr = 17 \n");
-        if (Node[node_idx].extInflow)
-        {
-            *value = 1;
-        }
-        else
-            *value = 0;
-    }
-    else if (attr == nodef_dwfInflow_monthly_pattern)
-    {
-        // printf("   nodef_dwInflow_monthly_pattern attr = 18 \n");
-        if (Node[node_idx].dwfInflow)
-            *value = Node[node_idx].dwfInflow->patterns[0];
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_dwfInflow_monthly_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_dwfInflow_daily_pattern)
-    {
-        // printf("   nodef_dwdInflow_daily_pattern attr = 19 \n");
-        if (Node[node_idx].dwfInflow)
-        {
-            *value = Node[node_idx].dwfInflow->patterns[1];
-        }
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_dwfInflow_daily_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_dwfInflow_hourly_pattern)
-    {
-        // printf("   nodef_dwInflow_hourly_pattern attr = 20 \n");
-        if (Node[node_idx].dwfInflow)
-            *value = Node[node_idx].dwfInflow->patterns[2];
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_dwfInflow_hourly_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_dwfInflow_weekend_pattern)
-    {
-        // printf("   nodef_dwInflow_weekend_pattern attr = 21 \n");
-        if (Node[node_idx].dwfInflow)
-            *value = Node[node_idx].dwfInflow->patterns[3];
-        else
-        {
-            *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_dwfInflow_weekend_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
-        }
-    }
-    else if (attr == nodef_dwfInflow_avgvalue)
-    {
-        // printf("   nodef_dwInflow_avgvalue attr = 22 \n");
-        if (Node[node_idx].dwfInflow)
-            *value = CFTOCM(Node[node_idx].dwfInflow->avgValue);
-        else
-            *value = 0;
-    }
-    else if (attr == nodef_has_dwfInflow)
-    {
-        // printf("   nodef_has_dwfInflow attr = 23 \n");
-        if (Node[node_idx].dwfInflow)
-            *value = 1;
-        else
-            *value = 0;
-    }
-    // brh20211207s
-    //else if (attr == node_depth)
-    else if (attr == nodef_newDepth)
+    switch (attr) {
 
-    {
-        // printf("   node_depth = 24 \n");
-        // printf("   nodef_newDepth attr = 24 \n");
-    // brh20211207e
-        *value = FTTOM(Node[node_idx].newDepth);
-    }         
-    else if (attr == nodef_inflow)
-    {
-        // printf("   nodef_inflow attr = 26 \n");
-        *value = CFTOCM(Node[node_idx].inflow);
+        case nodef_type :
+            *value = Node[node_idx].type;
+            break;
+
+        case nodef_outfall_type  :
+            switch (Node[node_idx].type) {
+                case OUTFALL :
+                    *value = Outfall[Node[node_idx].subIndex].type;
+                    break;
+                default :    
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting nodef_outfall_type for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;
+            }
+            break;   
+
+        case nodef_invertElev  :
+            *value = FTTOM(Node[node_idx].invertElev);
+            break;
+
+        case nodef_fullDepth  :
+            *value = FTTOM(Node[node_idx].fullDepth);
+            break;      
+
+        case nodef_initDepth  :
+            switch (Node[node_idx].type) {
+                case OUTFALL :
+                    error = api_get_headBC(node_idx, StartDateTime, value);
+                    if (error) return error;
+                    *value -= FTTOM(Node[node_idx].invertElev);
+                    break;
+                default :
+                    *value = FTTOM(Node[node_idx].initDepth);
+            }
+            break;
+
+        case nodef_StorageConstant  :
+            switch (Node[node_idx].type) {
+                case STORAGE :
+                    *value = Storage[Node[node_idx].subIndex].aConst;
+                    break;
+                default :
+                    *value = -1;
+            }
+            break; 
+
+        case nodef_StorageCoeff :
+            switch (Node[node_idx].type) {
+                case STORAGE :
+                    *value = Storage[Node[node_idx].subIndex].aCoeff;
+                    break;
+                default :
+                    *value = -1;
+            }
+            break;
+
+        case nodef_StorageExponent  :
+            switch (Node[node_idx].type) {
+                case STORAGE :
+                    *value = Storage[Node[node_idx].subIndex].aExpon;
+                    break;
+                default :
+                    *value = -1;
+            }
+            break;   
+
+        case nodef_StorageCurveID  :
+            switch (Node[node_idx].type) {
+                case STORAGE :
+                    *value = Storage[Node[node_idx].subIndex].aCurve + 1;
+                    break;
+                default :
+                    *value = -1;
+            }
+            break;
+
+        case nodef_extInflow_tSeries :
+            if (Node[node_idx].extInflow)
+                *value = Node[node_idx].extInflow->tSeries;
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_extInflow_tSeries for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;   
+
+        case nodef_extInflow_tSeries_x1  :
+            tseries_idx = Node[node_idx].extInflow->tSeries;
+            if (tseries_idx >= 0)
+                *value = Tseries[tseries_idx].x1;
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_extInflow_tSeries_x1 for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+        case nodef_extInflow_tSeries_x2  :
+            tseries_idx = Node[node_idx].extInflow->tSeries;
+            if (tseries_idx >= 0)
+                *value = Tseries[tseries_idx].x2;
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting tseries_idx for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;     
+
+        case nodef_extInflow_basePat_idx  :
+            if (Node[node_idx].extInflow)
+            {
+                *value = Node[node_idx].extInflow->basePat;
+                //*value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->basePat); // BRH20211221 HACK THIS IS WRONG
+                //printf("%g \n",Node[node_idx].extInflow->cFactor);
+                //printf("%d \n",Node[node_idx].extInflow->basePat);
+            }    
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_extInflow_basePat for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+        case nodef_extInflow_basePat_type  :
+            bpat = Node[node_idx].extInflow->basePat;
+            //printf(" bpat %d",bpat);
+            if (bpat >= 0) // baseline pattern exists
+                *value = Pattern[bpat].type;
+            else
+            {
+                *value = bpat;  // brh changed to bpat (-1) because API_NULL_VALUE_I does not have scope for where its needed
+                //*value = API_NULL_VALUE_I;
+                //printf("  bpat = %d \n", bpat);
+                //printf("  location 3098705 problem with basePatType \n");
+                // brh20211207s  commenting this so that it moves through with null result
+                //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                //return api_err_wrong_type;
+                // brh20211207e
+            }
+            break;   
+
+        case nodef_extInflow_baseline :
+            if (Node[node_idx].extInflow)
+                *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
+            else
+                *value = 0;
+            break;
+
+        case nodef_extInflow_sFactor  :
+            if (Node[node_idx].extInflow)
+                *value = Node[node_idx].extInflow->sFactor;
+            else
+                *value = 1;
+            break;      
+
+        case nodef_has_extInflow :
+            if (Node[node_idx].extInflow)
+                *value = 1;
+            else
+                *value = 0;
+            break;   
+
+        case nodef_dwfInflow_monthly_pattern  :
+            if (Node[node_idx].dwfInflow)
+                *value = Node[node_idx].dwfInflow->patterns[0];
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_dwfInflow_monthly_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+        case nodef_dwfInflow_daily_pattern :
+            if (Node[node_idx].dwfInflow)
+                *value = Node[node_idx].dwfInflow->patterns[1];
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_dwfInflow_daily_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;    
+
+        case nodef_dwfInflow_hourly_pattern  :
+            if (Node[node_idx].dwfInflow)
+                *value = Node[node_idx].dwfInflow->patterns[2];
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_dwfInflow_hourly_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+        case nodef_dwfInflow_weekend_pattern  :
+            if (Node[node_idx].dwfInflow)
+                *value = Node[node_idx].dwfInflow->patterns[3];
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Extracting node_dwfInflow_weekend_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;   
+
+        case nodef_dwfInflow_avgvalue  :
+            if (Node[node_idx].dwfInflow)
+                *value = CFTOCM(Node[node_idx].dwfInflow->avgValue);
+            else
+                *value = 0;
+            break;
+
+        case nodef_has_dwfInflow  :
+            if (Node[node_idx].dwfInflow)
+                *value = 1;
+            else
+                *value = 0;
+            break;      
+
+        case nodef_newDepth  :
+            *value = FTTOM(Node[node_idx].newDepth);
+            break;
+
+        case nodef_inflow  :
+            *value = CFTOCM(Node[node_idx].inflow);
+            break;   
+
+        case nodef_volume  :
+            *value = CFTOCM(Node[node_idx].newVolume);
+            break;
+
+        case nodef_overflow  :
+            *value = CFTOCM(Node[node_idx].overflow);
+            break;     
+
+        case nodef_rptFlag  :
+            if (Node[node_idx].rptFlag)
+                *value = 1;
+            else
+                *value = 0;
+            break;
+
+        default :
+            printf(" ****** api_get_nodef_attribute called without supported attr at 3979874 %d ",attr);
+            *value = API_NULL_VALUE_I;
     }
-    else if (attr == nodef_volume)
-    {
-        // printf("   nodef_volume attr = 27 \n");
-        *value = CFTOCM(Node[node_idx].newVolume);
-    }    
-    else if (attr == nodef_overflow)
-    {
-        // printf("   nodef_overflow attr = 28 \n");
-        *value = CFTOCM(Node[node_idx].overflow);
-    }
-    // brh20211207s
-    else if (attr = nodef_rptFlag)
-    {
-        // printf("    nodef_rptFlag attr = 29 \n");
-        if (Node[node_idx].rptFlag)
-            *value = 1;
-        else
-            *value = 0;
-    }
-    // brh20211207e
-    else
-    {
-        printf(" ****** api_get_nodef_attribute called without supported attr at 3979874 %d ",attr);
-        *value = API_NULL_VALUE_I;
-    } 
+
+    // if (attr == nodef_type)
+    // {
+    //     // printf("    nodef_type attr = 2 \n");
+    //     *value = Node[node_idx].type;
+    // }
+    // else if (attr == nodef_outfall_type)
+    // {
+    //     // printf("    nodef_outfall_type attr = 3 \n");
+    //     if (Node[node_idx].type == OUTFALL)
+    //     {
+    //         *value = Outfall[Node[node_idx].subIndex].type;
+    //     }
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting nodef_outfall_type for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_invertElev)
+    // {
+    //     // printf("    nodef_invertElev attr = 4 \n");
+    //     *value = FTTOM(Node[node_idx].invertElev);
+    // }
+    // else if (attr == nodef_fullDepth)
+    // {
+    //     // printf("   nodef_fullDepth attr = 25 \n ");
+    //     *value = FTTOM(Node[node_idx].fullDepth);
+    // }
+    // else if (attr == nodef_initDepth)
+    // {
+    //     // printf("    nodef_initDepth attr attr = 5 \n");
+    //     if (Node[node_idx].type == OUTFALL)
+    //     {
+    //         // printf("   *** call api_get_headBC \n");
+    //         error = api_get_headBC(node_idx, StartDateTime, value);
+    //         if (error) return error;
+    //         *value -= FTTOM(Node[node_idx].invertElev);
+    //     }
+    //     else
+    //         *value = FTTOM(Node[node_idx].initDepth);
+    // }
+    // else if (attr == nodef_StorageConstant)
+    // {
+    //     // printf("   nodef_StorageConstant attr = 6 \n");
+    //     if (Node[node_idx].type == STORAGE)
+    //         *value = Storage[Node[node_idx].subIndex].aConst;
+    //     else
+    //         *value = -1;
+    // }
+    // else if (attr == nodef_StorageCoeff)
+    // {
+    //     // printf("   nodef_storage_Coeff attr = 7 \n");
+    //     if (Node[node_idx].type == STORAGE)
+    //         *value = Storage[Node[node_idx].subIndex].aCoeff;
+    //     else
+    //         *value = -1;
+    // }
+    // else if (attr == nodef_StorageExponent)
+    // {
+    //     // printf("   nodef_StorageExponent attr = 8 \n");
+    //     if (Node[node_idx].type == STORAGE)
+    //         *value = Storage[Node[node_idx].subIndex].aExpon;
+    //     else
+    //         *value = -1;
+    // }
+    // else if (attr == nodef_StorageCurveID)
+    // {
+    //     // printf("   nodef_StorageCurveID attr = 9 \n");
+    //     if (Node[node_idx].type == STORAGE)
+    //         *value = Storage[Node[node_idx].subIndex].aCurve + 1;
+    //     else
+    //         *value = -1;
+    // }
+    // else if (attr == nodef_extInflow_tSeries)
+    // {
+    //     //printf("   nodef_extInflow_tSeries attr = 10 \n");
+    //     //printf("    %d \n ",Node[node_idx].extInflow->tSeries);
+    //     if (Node[node_idx].extInflow)
+    //         *value = Node[node_idx].extInflow->tSeries;
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_extInflow_tSeries for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_extInflow_tSeries_x1)
+    // {
+    //     // printf("   nodef_extInflow_tSeries_x1 attr = 11 \n");
+    //     tseries_idx = Node[node_idx].extInflow->tSeries;
+    //     if (tseries_idx >= 0)
+    //         *value = Tseries[tseries_idx].x1;
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_extInflow_tSeries_x1 for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_extInflow_tSeries_x2)
+    // {
+    //     // printf("   nodef_extInflow_tSeries_x2 attr = 12 \n");
+    //     tseries_idx = Node[node_idx].extInflow->tSeries;
+    //     if (tseries_idx >= 0)
+    //         *value = Tseries[tseries_idx].x2;
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting tseries_idx for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_extInflow_basePat)
+    // {
+    //     //printf("   nodef_extInflow_basePat attr = 13 \n");
+    //     if (Node[node_idx].extInflow)
+    //     {
+    //         *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->basePat);
+    //         printf("%g \n",Node[node_idx].extInflow->cFactor);
+    //         printf("%d \n",Node[node_idx].extInflow->basePat);
+    //     }    
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_extInflow_basePat for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_extInflow_basePat_type)
+    // {
+    //     //printf("   nodef_extInflow_basePat_type attr = 14 \n");
+    //     bpat = Node[node_idx].extInflow->basePat;
+        
+    //     //printf(" bpat %d",bpat);
+    //     if (bpat >= 0) // baseline pattern exists
+    //         *value = Pattern[bpat].type;
+    //     else
+    //     {
+    //         *value = bpat;  // brh changed to bpat (-1) because API_NULL_VALUE_I does not have scope for where its needed
+    //         //*value = API_NULL_VALUE_I;
+    //         //printf("  bpat = %d \n", bpat);
+    //         //printf("  location 3098705 problem with basePatType \n");
+    //         // brh20211207s  commenting this so that it moves through with null result
+    //         //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         //return api_err_wrong_type;
+    //         // brh20211207e
+    //     }
+    // }
+    // else if (attr == nodef_extInflow_baseline)
+    // {
+    //     // printf("   nodef_extInflow_baseline attr = 15 \n");
+    //     if (Node[node_idx].extInflow)
+    //     {
+    //         //printf(" in api baseline %f \n",Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
+    //         *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
+    //     }
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == nodef_extInflow_sFactor)
+    // {
+    //     // printf("   nodef_extInflow_sFactor attr = 16 \n");
+    //     if (Node[node_idx].extInflow)
+    //         *value = Node[node_idx].extInflow->sFactor;
+    //     else
+    //         *value = 1;
+    // }
+    // else if (attr == nodef_has_extInflow)
+    // {
+    //     // printf("   nodef_has_extInflow attr = 17 \n");
+    //     if (Node[node_idx].extInflow)
+    //     {
+    //         *value = 1;
+    //     }
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == nodef_dwfInflow_monthly_pattern)
+    // {
+    //     // printf("   nodef_dwInflow_monthly_pattern attr = 18 \n");
+    //     if (Node[node_idx].dwfInflow)
+    //         *value = Node[node_idx].dwfInflow->patterns[0];
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_dwfInflow_monthly_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_dwfInflow_daily_pattern)
+    // {
+    //     // printf("   nodef_dwdInflow_daily_pattern attr = 19 \n");
+    //     if (Node[node_idx].dwfInflow)
+    //     {
+    //         *value = Node[node_idx].dwfInflow->patterns[1];
+    //     }
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_dwfInflow_daily_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_dwfInflow_hourly_pattern)
+    // {
+    //     // printf("   nodef_dwInflow_hourly_pattern attr = 20 \n");
+    //     if (Node[node_idx].dwfInflow)
+    //         *value = Node[node_idx].dwfInflow->patterns[2];
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_dwfInflow_hourly_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_dwfInflow_weekend_pattern)
+    // {
+    //     // printf("   nodef_dwInflow_weekend_pattern attr = 21 \n");
+    //     if (Node[node_idx].dwfInflow)
+    //         *value = Node[node_idx].dwfInflow->patterns[3];
+    //     else
+    //     {
+    //         *value = API_NULL_VALUE_I;
+    //         sprintf(errmsg, "Extracting node_dwfInflow_weekend_pattern for NODE %s, which doesn't have a dwfInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+    //         api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+    //         return api_err_wrong_type;
+    //     }
+    // }
+    // else if (attr == nodef_dwfInflow_avgvalue)
+    // {
+    //     // printf("   nodef_dwInflow_avgvalue attr = 22 \n");
+    //     if (Node[node_idx].dwfInflow)
+    //         *value = CFTOCM(Node[node_idx].dwfInflow->avgValue);
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == nodef_has_dwfInflow)
+    // {
+    //     // printf("   nodef_has_dwfInflow attr = 23 \n");
+    //     if (Node[node_idx].dwfInflow)
+    //         *value = 1;
+    //     else
+    //         *value = 0;
+    // }
+    // // brh20211207s
+    // //else if (attr == node_depth)
+    // else if (attr == nodef_newDepth)
+
+    // {
+    //     // printf("   node_depth = 24 \n");
+    //     // printf("   nodef_newDepth attr = 24 \n");
+    // // brh20211207e
+    //     *value = FTTOM(Node[node_idx].newDepth);
+    // }         
+    // else if (attr == nodef_inflow)
+    // {
+    //     // printf("   nodef_inflow attr = 26 \n");
+    //     *value = CFTOCM(Node[node_idx].inflow);
+    // }
+    // else if (attr == nodef_volume)
+    // {
+    //     // printf("   nodef_volume attr = 27 \n");
+    //     *value = CFTOCM(Node[node_idx].newVolume);
+    // }    
+    // else if (attr == nodef_overflow)
+    // {
+    //     // printf("   nodef_overflow attr = 28 \n");
+    //     *value = CFTOCM(Node[node_idx].overflow);
+    // }
+    // // brh20211207s
+    // else if (attr = nodef_rptFlag)
+    // {
+    //     // printf("    nodef_rptFlag attr = 29 \n");
+    //     if (Node[node_idx].rptFlag)
+    //         *value = 1;
+    //     else
+    //         *value = 0;
+    // }
+    // // brh20211207e
+    // else
+    // {
+    //     printf(" ****** api_get_nodef_attribute called without supported attr at 3979874 %d ",attr);
+    //     *value = API_NULL_VALUE_I;
+    // } 
     return 0;
 }
 
@@ -764,140 +1024,339 @@ int DLLEXPORT api_get_linkf_attribute(
     error = check_api_is_initialized("api_get_linkf_attribute");
     if (error) return error;
 
-    if (attr == linkf_subIndex)
-        *value = Link[link_idx].subIndex;
-    else if (attr == linkf_type)
-        *value = Link[link_idx].type;
-    else if (attr == linkf_node1)
-        *value = Link[link_idx].node1;
-    else if (attr == linkf_node2)
-        *value = Link[link_idx].node2;
-    else if (attr == linkf_offset1)
-        *value = FTTOM(Link[link_idx].offset1);
-    else if (attr == linkf_offset2)
-        *value = FTTOM(Link[link_idx].offset2);
-    else if (attr == linkf_xsect_type)
-        *value = Link[link_idx].xsect.type;
-    else if (attr == linkf_xsect_wMax)
-        *value = FTTOM(Link[link_idx].xsect.wMax);
-    else if (attr == linkf_xsect_yBot)
-        *value = FTTOM(Link[link_idx].xsect.yBot);
-    else if (attr == linkf_xsect_yFull)
-        *value = FTTOM(Link[link_idx].xsect.yFull);
-    else if (attr == linkf_q0)
-        *value = CFTOCM(Link[link_idx].q0);
-    // brh20211207s duplicate ov above    
-    // rm else if (attr == linkf_type)
-    // rm    *value =  Link[link_idx].type;
-    // brh20211207e
-    else if (attr == linkf_pump_type)
-        *value =  Pump[Link[link_idx].subIndex].type;
-    else if (attr == linkf_orifice_type)
-        *value = Orifice[Link[link_idx].subIndex].type;
-    else if (attr == linkf_outlet_type)
-        *value = Outlet[Link[link_idx].subIndex].curveType;
-    else if (attr == linkf_weir_type)
-        *value = Weir[Link[link_idx].subIndex].type;
-    else if (attr == linkf_conduit_roughness)
-    {
-        if (Link[link_idx].type == CONDUIT)
-            *value = Conduit[Link[link_idx].subIndex].roughness;
-        else
-            *value = 0;
-    }
-    else if (attr == linkf_conduit_length)
-    {
-        if (Link[link_idx].type == CONDUIT)
-            *value = FTTOM(Conduit[Link[link_idx].subIndex].length);
+    switch (attr) {
 
-        else if (Link[link_idx].type == ORIFICE)
-            *value = 0.01;
-        else if (Link[link_idx].type == WEIR)
-            *value = 0.01;
-        else if (Link[link_idx].type == OUTLET)
-            *value = 0.01;
-        else if (Link[link_idx].type == PUMP)
-            *value = 0.01;
-        else
-            *value = 0;
+        case linkf_subIndex :
+            *value = Link[link_idx].subIndex;
+            break;
+
+        case linkf_type : 
+            *value = Link[link_idx].type;
+            break;
+
+        case linkf_node1 :
+            *value = Link[link_idx].node1;
+            break;
+
+        case linkf_node2 : 
+            *value = Link[link_idx].node2;
+            break;
+
+        case linkf_offset1 :
+            *value = FTTOM(Link[link_idx].offset1);
+            break;
+
+        case linkf_offset2 : 
+            *value = FTTOM(Link[link_idx].offset2);
+            break;
+
+        case linkf_xsect_type :
+            *value = Link[link_idx].xsect.type;
+            break;
+
+        case linkf_xsect_wMax :
+            *value = FTTOM(Link[link_idx].xsect.wMax); 
+            break;
+
+        case linkf_xsect_yBot :
+            *value = FTTOM(Link[link_idx].xsect.yBot);
+            break;
+
+        case linkf_xsect_yFull : 
+            *value = FTTOM(Link[link_idx].xsect.yFull);
+            break;
+
+        case linkf_q0 :
+            *value = CFTOCM(Link[link_idx].q0);
+            break;
+
+        case linkf_pump_type : 
+            *value =  Pump[Link[link_idx].subIndex].type;
+            break;
+        case linkf_orifice_type  :
+            *value = Orifice[Link[link_idx].subIndex].type;
+            break;
+
+        case linkf_outlet_type : 
+            *value = Outlet[Link[link_idx].subIndex].curveType;
+            break;
+
+        case linkf_weir_type : 
+            *value = Weir[Link[link_idx].subIndex].type;
+            break;
+
+        case linkf_conduit_roughness :
+            switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = Conduit[Link[link_idx].subIndex].roughness;
+                    break;
+                default :
+                    *value = 0;
+            }    
+            break;
+
+        case linkf_conduit_length : 
+            switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = FTTOM(Conduit[Link[link_idx].subIndex].length);
+                    break;
+                case ORIFICE :
+                    *value = 0.01;
+                    break;
+                case WEIR :
+                    *value = 0.01;
+                case OUTLET :
+                    *value = 0.01;
+                    break;
+                case PUMP :
+                    *value = 0.01;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_weir_end_contractions :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].endCon;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_curveid :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].cdCurve+1;
+                    break;
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].pumpCurve+1;
+                    break;
+                case OUTLET :
+                    *value = Outlet[Link[link_idx].subIndex].qCurve+1;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_discharge_coeff1 :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].cDisch1;
+                    break;
+                case ORIFICE :
+                    *value = Orifice[Link[link_idx].subIndex].cDisch;
+                    break;
+                case OUTLET :
+                    *value = Outlet[Link[link_idx].subIndex].qCoeff;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_discharge_coeff2 :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].cDisch2;
+                    break;
+                case OUTLET :
+                    *value = Outlet[Link[link_idx].subIndex].qExpon;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_weir_side_slope :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].slope;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_flow :
+            *value = CFTOCM(Link[link_idx].newFlow);
+            break;
+
+        case linkf_depth :
+            *value = FTTOM(Link[link_idx].newDepth);
+            break;
+
+        case linkf_volume :
+            *value = CFTOCM(Link[link_idx].newVolume);
+            break;
+
+        case linkf_froude :
+            *value = Link[link_idx].froude;
+            break;
+
+        case linkf_setting :
+            *value = Link[link_idx].setting;
+            break;
+
+        case linkf_left_slope :
+            *value = api->double_vars[api_left_slope][link_idx];
+            break;
+
+        case linkf_right_slope :
+            *value = api->double_vars[api_right_slope][link_idx];
+            break;
+
+        case linkf_geometry :
+            printf(" ****** api_get_linkf_attribute called for unsupported attr = linkf_geometry at 2875 %d ",attr);
+            break;
+            case linkf_rptFlag :
+                if (Link[link_idx].rptFlag)
+                    *value = 1;
+                else
+                    *value = 0; 
+            break;        
+        default :             
+            printf(" ****** api_get_linke_attribute called without supported attr at 837954 %d ",attr);
+            *value = API_NULL_VALUE_I;               
     }
-    else if (attr == linkf_weir_end_contractions)
-    {
-        if (Link[link_idx].type == WEIR)
-            *value = Weir[Link[link_idx].subIndex].endCon;
-        else
-            *value = 0;
-    }
-    else if (attr == linkf_curveid)
-    {
-        if (Link[link_idx].type == WEIR)
-            *value = Weir[Link[link_idx].subIndex].cdCurve+1;
-        else if (Link[link_idx].type == PUMP)
-            *value = Pump[Link[link_idx].subIndex].pumpCurve+1;
-        else if (Link[link_idx].type == OUTLET)
-            *value = Outlet[Link[link_idx].subIndex].qCurve+1;
-        else
-            *value = 0;
-    }
-    else if (attr == linkf_discharge_coeff1)
-    {
-        if (Link[link_idx].type == WEIR)
-            *value = Weir[Link[link_idx].subIndex].cDisch1;
-        else if (Link[link_idx].type == ORIFICE)
-            *value = Orifice[Link[link_idx].subIndex].cDisch;
-        else if (Link[link_idx].type == OUTLET)
-            *value = Outlet[Link[link_idx].subIndex].qCoeff;
-        else
-            *value = 0;
-    }
-    else if (attr == linkf_discharge_coeff2)
-    {
-        if (Link[link_idx].type == WEIR)
-            *value = Weir[Link[link_idx].subIndex].cDisch2;
-        else if (Link[link_idx].type == OUTLET)
-            *value = Outlet[Link[link_idx].subIndex].qExpon;
-        else
-            *value = 0;
-    }
-    else if (attr == linkf_weir_side_slope)
-    {
-        if (Link[link_idx].type == WEIR)
-            *value = Weir[Link[link_idx].subIndex].slope;
-        else
-            *value = 0;
-    }
-    else if (attr == linkf_flow)
-        *value = CFTOCM(Link[link_idx].newFlow);
-    else if (attr == linkf_depth)
-        *value = FTTOM(Link[link_idx].newDepth);
-    else if (attr == linkf_volume)
-        *value = CFTOCM(Link[link_idx].newVolume);
-    else if (attr == linkf_froude)
-        *value = Link[link_idx].froude;
-    else if (attr == linkf_setting)
-        *value = Link[link_idx].setting;
-    else if (attr == linkf_left_slope)
-        *value = api->double_vars[api_left_slope][link_idx];
-    else if (attr == linkf_right_slope)
-        *value = api->double_vars[api_right_slope][link_idx];
-    // brh 20211207s
-    else if (attr == linkf_geometry)  
-    {
-        printf(" ****** api_get_linkf_attribute called for unsupported attr = linkf_geometry at 2875 %d ",attr); 
-    }    
-    else if (attr == linkf_rptFlag)
-    {
-        if (Link[link_idx].rptFlag)
-            *value = 1;
-        else
-            *value = 0;   
-    }        
-    // brh 20211207e    
-    else
-    {
-        printf(" ****** api_get_linke_attribute called without supported attr at 837954 %d ",attr);
-        *value = API_NULL_VALUE_I;
-    }    
+
+    // if (attr == linkf_subIndex)
+    //     *value = Link[link_idx].subIndex;
+    // else if (attr == linkf_type)
+    //     *value = Link[link_idx].type;
+    // else if (attr == linkf_node1)
+    //     *value = Link[link_idx].node1;
+    // else if (attr == linkf_node2)
+    //     *value = Link[link_idx].node2;
+    // else if (attr == linkf_offset1)
+    //     *value = FTTOM(Link[link_idx].offset1);
+    // else if (attr == linkf_offset2)
+    //     *value = FTTOM(Link[link_idx].offset2);
+    // else if (attr == linkf_xsect_type)
+    //     *value = Link[link_idx].xsect.type;
+    // else if (attr == linkf_xsect_wMax)
+    //     *value = FTTOM(Link[link_idx].xsect.wMax);
+    // else if (attr == linkf_xsect_yBot)
+    //     *value = FTTOM(Link[link_idx].xsect.yBot);
+    // else if (attr == linkf_xsect_yFull)
+    //     *value = FTTOM(Link[link_idx].xsect.yFull);
+    // else if (attr == linkf_q0)
+    //     *value = CFTOCM(Link[link_idx].q0);
+    // // brh20211207s duplicate ov above    
+    // // rm else if (attr == linkf_type)
+    // // rm    *value =  Link[link_idx].type;
+    // // brh20211207e
+    // else if (attr == linkf_pump_type)
+    //     *value =  Pump[Link[link_idx].subIndex].type;
+    // else if (attr == linkf_orifice_type)
+    //     *value = Orifice[Link[link_idx].subIndex].type;
+    // else if (attr == linkf_outlet_type)
+    //     *value = Outlet[Link[link_idx].subIndex].curveType;
+    // else if (attr == linkf_weir_type)
+    //     *value = Weir[Link[link_idx].subIndex].type;
+    // else if (attr == linkf_conduit_roughness)
+    // {
+    //     if (Link[link_idx].type == CONDUIT)
+    //         *value = Conduit[Link[link_idx].subIndex].roughness;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_conduit_length)
+    // {
+    //     if (Link[link_idx].type == CONDUIT)
+    //         *value = FTTOM(Conduit[Link[link_idx].subIndex].length);
+
+    //     else if (Link[link_idx].type == ORIFICE)
+    //         *value = 0.01;
+    //     else if (Link[link_idx].type == WEIR)
+    //         *value = 0.01;
+    //     else if (Link[link_idx].type == OUTLET)
+    //         *value = 0.01;
+    //     else if (Link[link_idx].type == PUMP)
+    //         *value = 0.01;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_weir_end_contractions)
+    // {
+    //     if (Link[link_idx].type == WEIR)
+    //         *value = Weir[Link[link_idx].subIndex].endCon;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_curveid)
+    // {
+    //     if (Link[link_idx].type == WEIR)
+    //         *value = Weir[Link[link_idx].subIndex].cdCurve+1;
+    //     else if (Link[link_idx].type == PUMP)
+    //         *value = Pump[Link[link_idx].subIndex].pumpCurve+1;
+    //     else if (Link[link_idx].type == OUTLET)
+    //         *value = Outlet[Link[link_idx].subIndex].qCurve+1;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_discharge_coeff1)
+    // {
+    //     if (Link[link_idx].type == WEIR)
+    //         *value = Weir[Link[link_idx].subIndex].cDisch1;
+    //     else if (Link[link_idx].type == ORIFICE)
+    //         *value = Orifice[Link[link_idx].subIndex].cDisch;
+    //     else if (Link[link_idx].type == OUTLET)
+    //         *value = Outlet[Link[link_idx].subIndex].qCoeff;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_discharge_coeff2)
+    // {
+    //     if (Link[link_idx].type == WEIR)
+    //         *value = Weir[Link[link_idx].subIndex].cDisch2;
+    //     else if (Link[link_idx].type == OUTLET)
+    //         *value = Outlet[Link[link_idx].subIndex].qExpon;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_weir_side_slope)
+    // {
+    //     if (Link[link_idx].type == WEIR)
+    //         *value = Weir[Link[link_idx].subIndex].slope;
+    //     else
+    //         *value = 0;
+    // }
+    // else if (attr == linkf_flow)
+    //     *value = CFTOCM(Link[link_idx].newFlow);
+    // else if (attr == linkf_depth)
+    //     *value = FTTOM(Link[link_idx].newDepth);
+    // else if (attr == linkf_volume)
+    //     *value = CFTOCM(Link[link_idx].newVolume);
+    // else if (attr == linkf_froude)
+    //     *value = Link[link_idx].froude;
+    // else if (attr == linkf_setting)
+    //     *value = Link[link_idx].setting;
+    // else if (attr == linkf_left_slope)
+    //     *value = api->double_vars[api_left_slope][link_idx];
+    // else if (attr == linkf_right_slope)
+    //     *value = api->double_vars[api_right_slope][link_idx];
+    // // brh 20211207s
+    // else if (attr == linkf_geometry)  
+    // {
+    //     printf(" ****** api_get_linkf_attribute called for unsupported attr = linkf_geometry at 2875 %d ",attr); 
+    // }    
+    // else if (attr == linkf_rptFlag)
+    // {
+    //     if (Link[link_idx].rptFlag)
+    //         *value = 1;
+    //     else
+    //         *value = 0;   
+    // }        
+    // // brh 20211207e    
+    // else
+    // {
+    //     printf(" ****** api_get_linke_attribute called without supported attr at 837954 %d ",attr);
+    //     *value = API_NULL_VALUE_I;
+    // }    
     return 0;
 }
 //===============================================================================
@@ -917,7 +1376,7 @@ int DLLEXPORT api_get_object_name(
     int object_idx, char* object_name, int object_type)
 //===============================================================================
 {
-    int error, i;
+    int error, ii;
     int obj_len = -1;
 
     error = check_api_is_initialized("api_get_object_name");
@@ -925,18 +1384,37 @@ int DLLEXPORT api_get_object_name(
     error = api_get_object_name_len(object_idx, object_type, &obj_len);
     if (error) return error;
 
+    // switch (object_type) {
+    //     case NODE :
+    //         for(ii=0; ii<obj_len; ii++)
+    //         {
+    //             object_name[ii] = Node[object_idx].ID[ii];
+    //         }
+    //         break;
+    //     case LINK :
+    //         for(ii=0; ii<obj_len; ii++)
+    //         {
+    //             object_name[ii] = Link[object_idx].ID[ii];
+    //         }
+    //     default :
+    //         strcpy(object_name, "");
+    //         sprintf(errmsg, "OBJECT_TYPE %d [api.c -> api_get_object_name]", object_type);
+    //         api_report_writeErrorMsg(api_err_not_developed, errmsg);
+    //         return api_err_not_developed;
+    // }
+
     if (object_type == NODE)
     {
-        for(i=0; i<obj_len; i++)
+        for(ii=0; ii<obj_len; ii++)
         {
-            object_name[i] = Node[object_idx].ID[i];
+            object_name[ii] = Node[object_idx].ID[ii];
         }
     }
     else if (object_type == LINK)
     {
-        for(i=0; i<obj_len; i++)
+        for(ii=0; ii<obj_len; ii++)
         {
-            object_name[i] = Link[object_idx].ID[i];
+            object_name[ii] = Link[object_idx].ID[ii];
         }
     }
     else
@@ -961,53 +1439,87 @@ int DLLEXPORT api_get_object_name_len(
         return error;
     }
 
-    if (object_type == NODE)
-    {
-        *len = strlen(Node[object_idx].ID);
-        return 0;
+    switch (object_type) {
+        case NODE :
+            *len = strlen(Node[object_idx].ID);
+            return 0;
+            break;
+        case LINK :
+            *len = strlen(Link[object_idx].ID);
+            return 0;
+            break;
+        default :
+            *len = API_NULL_VALUE_I;
+            sprintf(errmsg, "OBJECT_TYPE %d [api.c -> api_get_object_name_len]", object_type);
+            api_report_writeErrorMsg(api_err_not_developed, errmsg);
+            return api_err_not_developed;
     }
-    else if (object_type == LINK)
-    {
-        *len = strlen(Link[object_idx].ID);
-        return 0;
-    }
-    else
-    {
-        *len = API_NULL_VALUE_I;
-        sprintf(errmsg, "OBJECT_TYPE %d [api.c -> api_get_object_name_len]", object_type);
-        api_report_writeErrorMsg(api_err_not_developed, errmsg);
-        return api_err_not_developed;
-    }
+
+    // if (object_type == NODE)
+    // {
+    //     *len = strlen(Node[object_idx].ID);
+    //     return 0;
+    // }
+    // else if (object_type == LINK)
+    // {
+    //     *len = strlen(Link[object_idx].ID);
+    //     return 0;
+    // }
+    // else
+    // {
+    //     *len = API_NULL_VALUE_I;
+    //     sprintf(errmsg, "OBJECT_TYPE %d [api.c -> api_get_object_name_len]", object_type);
+    //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
+    //     return api_err_not_developed;
+    // }
 }
 //===============================================================================
 int DLLEXPORT api_get_num_table_entries(
     int table_idx, int table_type, int* num_entries)
 //===============================================================================
 {
-    double x, y;
+    double xx, yy;
     int success;
 
     *num_entries = 0;
     // printf("1 Number of entries in Curve %d\n", *num_entries);
-    if (table_type == CURVE)
-    {
-        // ERROR handling
-        if (table_idx >= Nobjects[CURVE] || Nobjects[CURVE] == 0) return -1;
-        success = table_getFirstEntry(&Curve[table_idx], &x, &y); // first values in the table
-        (*num_entries)++;
-        while (success)
-        {
-            success = table_getNextEntry(&(Curve[table_idx]), &x, &y);
-            if (success) (*num_entries)++;
-            // printf("0 Number of entries in Curve %d\n", *num_entries);
-        }
+
+    switch (table_type) {
+        case CURVE :
+            // ERROR handling
+            if (table_idx >= Nobjects[CURVE] || Nobjects[CURVE] == 0) return -1;
+            success = table_getFirstEntry(&Curve[table_idx], &xx, &yy); // first values in the table
+            (*num_entries)++;
+            while (success)
+            {
+                success = table_getNextEntry(&(Curve[table_idx]), &xx, &yy);
+                if (success) (*num_entries)++;
+                // printf("0 Number of entries in Curve %d\n", *num_entries);
+            }    
+            break;
+        default :
+            return -1;
     }
-    else
-    {
-        return -1;
-    }
-    // printf("Number of entries in Curve %d\n", *num_entries);
-    // printf("SUCCESS %d\n", success);
+
+    // if (table_type == CURVE)
+    // {
+    //     // ERROR handling
+    //     if (table_idx >= Nobjects[CURVE] || Nobjects[CURVE] == 0) return -1;
+    //     success = table_getFirstEntry(&Curve[table_idx], &x, &y); // first values in the table
+    //     (*num_entries)++;
+    //     while (success)
+    //     {
+    //         success = table_getNextEntry(&(Curve[table_idx]), &x, &y);
+    //         if (success) (*num_entries)++;
+    //         // printf("0 Number of entries in Curve %d\n", *num_entries);
+    //     }
+    // }
+    // else
+    // {
+    //     return -1;
+    // }
+    // // printf("Number of entries in Curve %d\n", *num_entries);
+    // // printf("SUCCESS %d\n", success);
 
     return 0;
 }
@@ -1021,63 +1533,111 @@ int DLLEXPORT api_get_table_attribute(
     error = check_api_is_initialized("api_get_table_attribute");
     if (error) return error;
 
-    if (attr == table_ID)
-        *value = table_idx;
-    else if (attr == table_type)
-        *value = Curve[table_idx].curveType;
-    else if (attr == table_refers_to)
-        *value = Curve[table_idx].refersTo;
-    else
-    {
-        *value = API_NULL_VALUE_I;
-        sprintf(errmsg, "attr %d [api.c -> api_get_table_attribute]", attr);
-        api_report_writeErrorMsg(api_err_not_developed, errmsg);
-        return api_err_not_developed;
+    switch (attr) {
+        case table_ID :
+            *value = table_idx;
+            break;
+        case table_type :
+            *value = Curve[table_idx].curveType;
+            break;
+        case table_refers_to :
+            *value = Curve[table_idx].refersTo;
+            break;
+        default :
+            *value = API_NULL_VALUE_I;
+            sprintf(errmsg, "attr %d [api.c -> api_get_table_attribute]", attr);
+            api_report_writeErrorMsg(api_err_not_developed, errmsg);
+            return api_err_not_developed;
     }
+
+    // if (attr == table_ID)
+    //     *value = table_idx;
+    // else if (attr == table_type)
+    //     *value = Curve[table_idx].curveType;
+    // else if (attr == table_refers_to)
+    //     *value = Curve[table_idx].refersTo;
+    // else
+    // {
+    //     *value = API_NULL_VALUE_I;
+    //     sprintf(errmsg, "attr %d [api.c -> api_get_table_attribute]", attr);
+    //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
+    //     return api_err_not_developed;
+    // }
     return 0;
 }
 
 //===============================================================================
 int DLLEXPORT api_get_first_entry_table(
-    int table_idx, int table_type, double* x, double* y)
+    int table_idx, int table_type, double* xx, double* yy)
 //===============================================================================
 {
     int success;
 
-    if (table_type == CURVE)
-        success = table_getFirstEntry(&(Curve[table_idx]), x, y);
-    else if (table_type == TSERIES)
-        success = table_getFirstEntry(&(Tseries[table_idx]), x, y);
-    else
-        return 0;
+    switch (table_type) {
+        case CURVE :
+            success = table_getFirstEntry(&(Curve[table_idx]), xx, yy);
+            break;
+        case TSERIES :
+            success = table_getFirstEntry(&(Tseries[table_idx]), xx, yy);
+            break;          
+        default :
+            return 0;
+    }
+    // if (table_type == CURVE)
+    //     success = table_getFirstEntry(&(Curve[table_idx]), x, y);
+    // else if (table_type == TSERIES)
+    //     success = table_getFirstEntry(&(Tseries[table_idx]), x, y);
+    // else
+    //     return 0;
+
     return success;
 }
 
 //===============================================================================
 int DLLEXPORT api_get_next_entry_table(
-    int table_idx, int table_type, double* x, double* y)
+    int table_idx, int table_type, double* xx, double* yy)
 //===============================================================================
 {
     int success;
 
-    if (table_type == TSERIES)
-    {
-        success = table_getNextEntry(&(Tseries[table_idx]), &(Tseries[table_idx].x2), &(Tseries[table_idx].y2));
-        if (success)
-        {
-            *x = Tseries[table_idx].x2;
-            *y = Tseries[table_idx].y2;
-        }
+    switch (table_type) {
+        case TSERIES :
+            success = table_getNextEntry(&(Tseries[table_idx]), &(Tseries[table_idx].x2), &(Tseries[table_idx].y2));
+            if (success)
+            {
+                *xx = Tseries[table_idx].x2;
+                *yy = Tseries[table_idx].y2;
+            }
+            break;
+        case CURVE :
+            success = table_getNextEntry(&(Curve[table_idx]), &(Curve[table_idx].x2), &(Curve[table_idx].y2));
+            if (success)
+            {
+                *xx = Curve[table_idx].x2;
+                *yy = Curve[table_idx].y2;
+            }
+            break;
+        default :
+            return 0;
     }
-    else if (table_type == CURVE)
-    {
-        success = table_getNextEntry(&(Curve[table_idx]), &(Curve[table_idx].x2), &(Curve[table_idx].y2));
-        if (success)
-        {
-            *x = Curve[table_idx].x2;
-            *y = Curve[table_idx].y2;
-        }
-    }
+    // if (table_type == TSERIES)
+    // {
+    //     success = table_getNextEntry(&(Tseries[table_idx]), &(Tseries[table_idx].x2), &(Tseries[table_idx].y2));
+    //     if (success)
+    //     {
+    //         *x = Tseries[table_idx].x2;
+    //         *y = Tseries[table_idx].y2;
+    //     }
+    // }
+    // else if (table_type == CURVE)
+    // {
+    //     success = table_getNextEntry(&(Curve[table_idx]), &(Curve[table_idx].x2), &(Curve[table_idx].y2));
+    //     if (success)
+    //     {
+    //         *x = Curve[table_idx].x2;
+    //         *y = Curve[table_idx].y2;
+    //     }
+    // }
 
     return success;
 }
@@ -1582,16 +2142,16 @@ int api_load_vars()
 {
     char  line[MAXLINE+1];        // line from input data file
     char  wLine[MAXLINE+1];       // working copy of input line
-    int sect, i, j, k, error;
+    int sect, ii, jj, kk, error;
     int found = 0;
-    double x[4];
+    double xx[4];
 
     error = check_api_is_initialized("api_load_vars");
     if (error) return error;
 
-    for (i = 0; i < NUM_API_DOUBLE_VARS; i++)
+    for (ii = 0; ii < NUM_API_DOUBLE_VARS; ii++)
     {
-        api->double_vars[i] = (double*) calloc(Nobjects[LINK], sizeof(double));
+        api->double_vars[ii] = (double*) calloc(Nobjects[LINK], sizeof(double));
     }
 
     rewind(Finp.file);
@@ -1615,17 +2175,17 @@ int api_load_vars()
             if (sect == s_XSECTION)
             {
                 found = 1;
-                j = project_findObject(LINK, Tok[0]);
-                k = findmatch(Tok[1], XsectTypeWords);
-                if ( k == TRAPEZOIDAL )
+                jj = project_findObject(LINK, Tok[0]);
+                kk = findmatch(Tok[1], XsectTypeWords);
+                if ( kk == TRAPEZOIDAL )
                 {
                     // --- parse and save geometric parameters
-                    for (i = 2; i <= 5; i++)
-                        getDouble(Tok[i], &x[i-2]);
+                    for (ii = 2; ii <= 5; ii++)
+                        getDouble(Tok[ii], &xx[ii-2]);
 
                     // --- extract left and right slopes for trapezoidal channel
-                    api->double_vars[api_left_slope][j] = x[2];
-                    api->double_vars[api_right_slope][j] = x[3];
+                    api->double_vars[api_left_slope] [jj] = xx[2];
+                    api->double_vars[api_right_slope][jj] = xx[3];
                 }
             }
         }
@@ -1747,7 +2307,7 @@ int check_api_is_initialized(
 }
 //===============================================================================
 int getTokens(
-    char *s)
+    char *ss)
 //===============================================================================
 // Copy pasted getTokens from src/input.c to ensure independence
 // from the original EPA-SWMM code. In the original code
@@ -1763,39 +2323,39 @@ int getTokens(
 //           in CONSTS.H. Text between quotes is treated as a single token.
 //
 {
-    int  len, m, n;
-    char *c;
+    int  len, mm, nn;
+    char *cc;
 
     // --- begin with no tokens
-    for (n = 0; n < MAXTOKS; n++) Tok[n] = NULL;
-    n = 0;
+    for (nn = 0; nn < MAXTOKS; nn++) Tok[nn] = NULL;
+    nn = 0;
 
     // --- truncate s at start of comment
-    c = strchr(s,';');
-    if (c) *c = '\0';
-    len = strlen(s);
+    cc = strchr(ss,';');
+    if (cc) *cc = '\0';
+    len = strlen(ss);
 
     // --- scan s for tokens until nothing left
-    while (len > 0 && n < MAXTOKS)
+    while (len > 0 && nn < MAXTOKS)
     {
-        m = strcspn(s,SEPSTR);              // find token length
-        if (m == 0) s++;                    // no token found
+        mm = strcspn(ss,SEPSTR);              // find token length
+        if (mm == 0) ss++;                    // no token found
         else
         {
-            if (*s == '"')                  // token begins with quote
+            if (*ss == '"')                  // token begins with quote
             {
-                s++;                        // start token after quote
+                ss++;                        // start token after quote
                 len--;                      // reduce length of s
-                m = strcspn(s,"\"\n");      // find end quote or new line
+                mm = strcspn(ss,"\"\n");      // find end quote or new line
             }
-            s[m] = '\0';                    // null-terminate the token
-            Tok[n] = s;                     // save pointer to token
-            n++;                            // update token count
-            s += m+1;                       // begin next token
+            ss[mm] = '\0';                    // null-terminate the token
+            Tok[nn] = ss;                     // save pointer to token
+            nn++;                            // update token count
+            ss += mm+1;                       // begin next token
         }
-        len -= m+1;                         // update length of s
+        len -= mm+1;                         // update length of s
     }
-    return(n);
+    return(nn);
 }
 //===============================================================================
 // EOF
