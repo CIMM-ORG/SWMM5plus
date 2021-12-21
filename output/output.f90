@@ -773,8 +773,8 @@ contains
             setting%Output%OutputFacesExist = .false.
         end if
 
-        if (setting%Output%Verbose) write(*,"(A,i5)") &
-            '**************************************************** Storing Time Level #',thisLevel
+        !if (setting%Output%Verbose) write(*,"(A,i5)") &
+        !    '**************************************************** Storing Time Level #',thisLevel
 
         !% --- if storage limit is reached, combine the output, write to file,
         !% --- and reset the storage time level

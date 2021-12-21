@@ -121,13 +121,14 @@ contains
         end if
 
         !% --- initialize the API with the SWMM-C code
-        !if (setting%Output%Verbose) print *, "begin interface between SWMM-C and 5+"
+        if (setting%Output%Verbose) print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        !if (setting%Output%Verbose) print *, "begin link-node processing"
+        if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
+        if (setting%Output%Verbose) print *, "begin initialize globals"
         !% --- initialize globals that are run-time dependent
         call init_globals()
 
@@ -140,18 +141,18 @@ contains
         end if
 
         !% --- store the SWMM-C curves in equivalent Fortran arrays
-        !if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
+        if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
         call init_curves()
 
         !% --- break the link-node system into partitions for multi-processor operation
-        !if (setting%Output%Verbose) print *, "begin link-node partitioning"
+        if (setting%Output%Verbose) print *, "begin link-node partitioning"
         call init_partitioning()
 
         sync all 
         
         !% --- translate the link-node system into a finite-volume network
         if (setting%Simulation%useHydraulics) then 
-            !if (setting%Output%Verbose) print *, "begin network definition"
+            if (setting%Output%Verbose) print *, "begin network definition"
             call network_define_toplevel ()
         else 
             write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
@@ -168,7 +169,7 @@ contains
         !% --- initialize the subcatchments connecting to SWMM-C
         if (setting%Simulation%useHydrology) then 
             if (SWMM_N_subcatch > 0) then
-                !if (setting%Output%Verbose) print *, "begin subcatchment initialization"
+                if (setting%Output%Verbose) print *, "begin subcatchment initialization"
                 call init_subcatchment()
             else 
                write(*,'(A)') 'setting.Simulation.useHydrology requested, but no subcatchments found.'
@@ -183,16 +184,18 @@ contains
 
         !% --- initialize boundary conditions
         if (setting%Simulation%useHydraulics) then
-            !if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
+            if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
             call init_bc()
         else 
             write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
             write(*,*) '...this presently is not supported in SWMM5+'
             stop 309875
-        end if                                     
+        end if  
+        
+        
 
         !% --- initialize the output reports
-        !if (setting%Output%Verbose) print *, "begin initializing output report"
+        if (setting%Output%Verbose) print *, "begin initializing output report"
         call init_report()
 
         !% --- set up initial conditions in the FV network
@@ -475,7 +478,7 @@ contains
         ! print *, 'printing number of connections up and down on each node'
         do ii = 1,N_node
 
-            print *, ii, node%I(ii, ni_N_link_u),  node%I(ii, ni_N_link_d)
+            !print *, ii, node%I(ii, ni_N_link_u),  node%I(ii, ni_N_link_d)
 
             if (node%I(ii, ni_N_link_u) > max_up_branch_per_node) then
                 write(*,*) 'FATAL ERROR IN INPUT FILE'
@@ -911,7 +914,7 @@ contains
         if (icrash) return
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        
         if (setting%Profile%useYN) call util_profiler_start (pfc_init_bc)
 
         call pack_nodes()
@@ -934,6 +937,7 @@ contains
             BC%flowI(:, bi_elem_idx) = nullvalueI
             BC%flowR_timeseries = nullValueR
         end if
+        !print *, 'here ddd'
         if (N_headBC > 0) then
             BC%headI = nullvalueI
             BC%headI(:,bi_fetch) = 1
@@ -964,6 +968,7 @@ contains
                     BC%flowI(ii, bi_idx) = ii
                     BC%flowYN(ii, bYN_read_input_file) = .true.
 
+                    !% HACK Pattern needs checking --- the following may be wrong! brh20211221
                     !% check whether there is a pattern (-1 is no pattern) for this inflow
                     SWMMbasepatType = &
                         interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat_type)
@@ -979,20 +984,12 @@ contains
                     !% BC does not have fixed value if its associated with dwfInflow
                     !% or if extInflow has tseries or pattern
                     BC%flowI(ii, bi_subcategory) = BCQ_tseries
-                    !print *, ii, nidx, node%YN(nidx, nYN_has_dwfInflow)
                     if (.not. node%YN(nidx, nYN_has_dwfInflow)) then !% extInflow only
                         !% brh 20211216 modified the following for basepatType == -1 rather than basepat /= -1
                         if ((SWMMtseriesIdx == -1) .and. (SWMMbasepatType == -1)) then
                             BC%flowI(ii, bi_subcategory) = BCQ_fixed
-                            !print *, 'subcategory aaa' 
-                            !print *, ii, BC%flowI(ii, bi_subcategory), BCQ_fixed
-                            !print *, reverseKey(BC%flowI(ii, bi_subcategory)), reverseKey(BCQ_fixed)
-                            !print *, ' '
                         end if
                     end if
-
-                    !print *, ii, BCQ_fixed, BC%flowI(ii, bi_subcategory), BCQ_tseries
-                    !stop 398705
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
                     stop

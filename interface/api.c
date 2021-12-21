@@ -200,11 +200,10 @@ double DLLEXPORT api_get_TotalDuration()
 int DLLEXPORT api_get_flowBC(
     int node_idx, double current_datetime, double* flowBC)
 //===============================================================================
-
 {
-    int ptype, pcount, i, j, p;
-    int yy, mm, dd;
-    int h, m, s, dow, attr;
+    int ptype, pcount, ii, jj, pp;
+    int tyear, tmonth, tday;
+    int thour, tmin, tsec, tweekday, attr;
     double val;
     double x, y, next_datetime;
     double bline, sfactor;
@@ -212,64 +211,76 @@ int DLLEXPORT api_get_flowBC(
     double total_extinflow = 0;
 
     *flowBC = 0;
-    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
-    datetime_decodeTime(current_datetime, &h, &m, &s);
-    dow = datetime_dayOfWeek(current_datetime);
+    datetime_decodeDate(current_datetime, &tyear, &tmonth, &tday);
+    datetime_decodeTime(current_datetime, &thour, &tmin,   &tsec);
+    tweekday = datetime_dayOfWeek(current_datetime);
+
+    // handle dry weather inflows
     attr = nodef_has_dwfInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
     if (val == 1) { // node_has_dwfInflow 
-        for(i=0; i<4; i++)
+        for(ii=0; ii<4; ii++)
         {
-            j = Node[node_idx].dwfInflow->patterns[i];
-            if (j > 0)
+            // jj is the pattern #
+            jj = Node[node_idx].dwfInflow->patterns[ii];
+            if (jj > 0)
             {
-                ptype = Pattern[j].type;
+                ptype = Pattern[jj].type;
                 if (ptype == MONTHLY_PATTERN)
-                    total_factor *= Pattern[j].factor[mm-1];
+                    total_factor *= Pattern[jj].factor[tmonth-1];
                 else if (ptype == DAILY_PATTERN)
-                    total_factor *= Pattern[j].factor[dow-1];
+                    total_factor *= Pattern[jj].factor[tweekday-1];
                 else if (ptype == HOURLY_PATTERN)
-                    total_factor *= Pattern[j].factor[h];
+                    total_factor *= Pattern[jj].factor[thour];
                 else if (ptype == WEEKEND_PATTERN)
                 {
-                    if ((dow == 1) || (dow == 7))
-                        total_factor *= Pattern[j].factor[h];
+                    if ((tweekday == 1) || (tweekday == 7))
+                        total_factor *= Pattern[jj].factor[thour];
                 }
             }
         }
         *flowBC += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
     }
 
+    // handle external inflows
     attr = nodef_has_extInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
     if (val == 1) { // node_has_extInflow
-        p = Node[node_idx].extInflow->basePat; // pattern
+        // pp is the pattern #
+        pp = Node[node_idx].extInflow->basePat; // pattern
         bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
-        if (p >= 0)
+        if (pp >= 0)
         {
-            ptype = Pattern[p].type;
             if (ptype == MONTHLY_PATTERN)
-                total_extinflow += Pattern[j].factor[mm-1] * bline;
+            {
+                //total_extinflow += Pattern[j].factor[mm-1] * bline;  //brh20211221
+                total_extinflow += Pattern[pp].factor[tmonth-1] * bline;  //brh20211221
+            } 
             else if (ptype == DAILY_PATTERN)
-                total_extinflow += Pattern[j].factor[dow-1] * bline;
+                //total_extinflow += Pattern[j].factor[dow-1] * bline; //brh20211221
+                total_extinflow += Pattern[pp].factor[tweekday-1] * bline;//brh20211221
             else if (ptype == HOURLY_PATTERN)
-                total_extinflow += Pattern[j].factor[h] * bline;
+                //total_extinflow += Pattern[j].factor[h] * bline;  /brh20211221
+                total_extinflow += Pattern[pp].factor[thour] * bline;   //brh20211221
             else if (ptype == WEEKEND_PATTERN)
             {
-                if ((dow == 1) || (dow == 7))
-                    total_extinflow += Pattern[j].factor[h] * bline;
+                if ((tweekday == 1) || (tweekday == 7))
+                    //total_extinflow += Pattern[j].factor[h] * bline;
+                    //total_extinflow += Pattern[j].factor[h] * bline;
+                    total_extinflow += Pattern[pp].factor[thour] * bline; //brh20211221
+                    total_extinflow += Pattern[pp].factor[thour] * bline; //brh20211221
             }
         }
         else if (bline > 0)
         {
             total_extinflow += bline;
         }
-
-        j = Node[node_idx].extInflow->tSeries; // tseries
+        // jj is the time series
+        jj = Node[node_idx].extInflow->tSeries; // tseries
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
-        if (j >= 0)
+        if (jj >= 0)
         {
-            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
+            total_extinflow += table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor;
         }
         *flowBC += total_extinflow;
     }
@@ -556,6 +567,7 @@ int DLLEXPORT api_get_nodef_attribute(
         // printf("   nodef_extInflow_baseline attr = 15 \n");
         if (Node[node_idx].extInflow)
         {
+            //printf(" in api baseline %f \n",Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
             *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
         }
         else
