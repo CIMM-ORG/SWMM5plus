@@ -77,7 +77,7 @@ int DLLEXPORT api_finalize()
     //  Output: None
     //  Purpose: Closes the link with the EPA-SWMM library
 {
-    int i;
+    int ii;
 
      //printf("\n in api finalize \n");
 
@@ -95,10 +95,10 @@ int DLLEXPORT api_finalize()
     swmm_close();
 
     // frees double variables in API
-    for (i = 0; i < NUM_API_DOUBLE_VARS; i++)
+    for (ii = 0; ii < NUM_API_DOUBLE_VARS; ii++)
     {
-        if (api->double_vars[i] != NULL)
-            free(api->double_vars[i]);
+        if (api->double_vars[ii] != NULL)
+            free(api->double_vars[ii]);
     }
 
     // // frees integer variables in API --- these do not exist brh20211217
@@ -118,6 +118,7 @@ double DLLEXPORT api_run_step()
 //===============================================================================
 {
     swmm_step(&(api->elapsedTime));
+
     return api->elapsedTime;
 }
 
@@ -138,16 +139,18 @@ int DLLEXPORT api_get_node_results(
     //  Purpose: Closes the link with the SWMM C library
     //
 {
-    int j, error;
+    int jj, error;
 
     error = check_api_is_initialized("api_get_node_results");
     if (error != 0) return error;
 
-    j = project_findObject(NODE, node_name);
-    *inflow = Node[j].inflow;
-    *overflow = Node[j].overflow;
-    *depth = Node[j].newDepth;
-    *volume = Node[j].newVolume;
+    jj = project_findObject(NODE, node_name);
+
+    *inflow   = Node[jj].inflow;
+    *overflow = Node[jj].overflow;
+    *depth    = Node[jj].newDepth;
+    *volume   = Node[jj].newVolume;
+
     return 0;
 }
 
@@ -156,14 +159,17 @@ int DLLEXPORT api_get_link_results(
     char* link_name, float* flow, float* depth, float* volume)
 //===============================================================================
 {
-    int j, error;
+    int jj, error;
 
     error = check_api_is_initialized("api_get_link_results");
     if (error != 0) return error;
-    j = project_findObject(LINK, link_name);
-    *flow = Link[j].newFlow;
-    *depth = Link[j].newDepth;
-    *volume = Link[j].newVolume;
+
+    jj = project_findObject(LINK, link_name);
+
+    *flow   = Link[jj].newFlow;
+    *depth  = Link[jj].newDepth;
+    *volume = Link[jj].newVolume;
+
     return 0;
 }
 
@@ -175,19 +181,15 @@ int DLLEXPORT api_get_link_results(
 //===============================================================================
 double DLLEXPORT api_get_start_datetime()
 //===============================================================================
-
 {
     return StartDateTime;
 }
-
 //===============================================================================
 double DLLEXPORT api_get_end_datetime()
 //===============================================================================
-
 {
     return EndDateTime;
 }
-
 //===============================================================================
 double DLLEXPORT api_get_TotalDuration()
 //===============================================================================
@@ -195,7 +197,6 @@ double DLLEXPORT api_get_TotalDuration()
 {
     return TotalDuration;
 }
-
 //===============================================================================
 int DLLEXPORT api_get_flowBC(
     int node_idx, double current_datetime, double* flowBC)
@@ -205,7 +206,6 @@ int DLLEXPORT api_get_flowBC(
     int tyear, tmonth, tday;
     int thour, tmin, tsec, tweekday, attr;
     double val;
-    double x, y, next_datetime;
     double bline, sfactor;
     double total_factor = 1;
     double total_extinflow = 0;
@@ -226,16 +226,38 @@ int DLLEXPORT api_get_flowBC(
             if (jj > 0)
             {
                 ptype = Pattern[jj].type;
-                if (ptype == MONTHLY_PATTERN)
-                    total_factor *= Pattern[jj].factor[tmonth-1];
-                else if (ptype == DAILY_PATTERN)
-                    total_factor *= Pattern[jj].factor[tweekday-1];
-                else if (ptype == HOURLY_PATTERN)
-                    total_factor *= Pattern[jj].factor[thour];
-                else if (ptype == WEEKEND_PATTERN)
-                {
-                    if ((tweekday == 1) || (tweekday == 7))
+                // if (ptype == MONTHLY_PATTERN)
+                //     total_factor *= Pattern[jj].factor[tmonth-1];
+                // else if (ptype == DAILY_PATTERN)
+                //     total_factor *= Pattern[jj].factor[tweekday-1];
+                // else if (ptype == HOURLY_PATTERN)
+                //     total_factor *= Pattern[jj].factor[thour];
+                // else if (ptype == WEEKEND_PATTERN)
+                // {
+                //     if ((tweekday == 1) || (tweekday == 7))
+                //         total_factor *= Pattern[jj].factor[thour];
+                // }
+                switch(ptype) {
+                    case MONTHLY_PATTERN :
+                        total_factor *= Pattern[jj].factor[tmonth-1];
+                        break;
+                    case DAILY_PATTERN :
+                        total_factor *= Pattern[jj].factor[tweekday-1];
+                        break;
+                    case HOURLY_PATTERN :
                         total_factor *= Pattern[jj].factor[thour];
+                        break;
+                    case WEEKEND_PATTERN :
+                        {
+                        if ((tweekday == 1) || (tweekday == 7))
+                            total_factor *= Pattern[jj].factor[thour];
+                        break;
+                        }
+                    default :
+                        {
+                        printf(" unexpected default reached in api_get_flowBC at A -- needs debugging");
+                        return -1;
+                        }
                 }
             }
         }
@@ -245,36 +267,62 @@ int DLLEXPORT api_get_flowBC(
     // handle external inflows
     attr = nodef_has_extInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
+    //printf("\n here node_idx %d \n",node_idx);
+    //printf(" val = %f \n ",val);
+    //printf(" MONTHLY %d \n ", MONTHLY_PATTERN);
     if (val == 1) { // node_has_extInflow
         // pp is the pattern #
         pp = Node[node_idx].extInflow->basePat; // pattern
+        //printf(" base pat %d \n ",pp);
         bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
+        //printf(" bline %f \n ",bline);
         if (pp >= 0)
         {
-            if (ptype == MONTHLY_PATTERN)
-            {
-                //total_extinflow += Pattern[j].factor[mm-1] * bline;  //brh20211221
-                total_extinflow += Pattern[pp].factor[tmonth-1] * bline;  //brh20211221
-            } 
-            else if (ptype == DAILY_PATTERN)
-                //total_extinflow += Pattern[j].factor[dow-1] * bline; //brh20211221
-                total_extinflow += Pattern[pp].factor[tweekday-1] * bline;//brh20211221
-            else if (ptype == HOURLY_PATTERN)
-                //total_extinflow += Pattern[j].factor[h] * bline;  /brh20211221
-                total_extinflow += Pattern[pp].factor[thour] * bline;   //brh20211221
-            else if (ptype == WEEKEND_PATTERN)
-            {
-                if ((tweekday == 1) || (tweekday == 7))
-                    //total_extinflow += Pattern[j].factor[h] * bline;
-                    //total_extinflow += Pattern[j].factor[h] * bline;
-                    total_extinflow += Pattern[pp].factor[thour] * bline; //brh20211221
-                    total_extinflow += Pattern[pp].factor[thour] * bline; //brh20211221
+            ptype = Pattern[pp].type;
+            // if (ptype == MONTHLY_PATTERN)
+            // {
+            //     //total_extinflow += Pattern[j].factor[mm-1] * bline;  //brh20211221
+            //     total_extinflow += Pattern[pp].factor[tmonth-1] * bline;  //brh20211221
+            // } 
+            // else if (ptype == DAILY_PATTERN)
+            //     //total_extinflow += Pattern[j].factor[dow-1] * bline; //brh20211221
+            //     total_extinflow += Pattern[pp].factor[tweekday-1] * bline;//brh20211221
+            // else if (ptype == HOURLY_PATTERN)
+            //     //total_extinflow += Pattern[j].factor[h] * bline;  /brh20211221
+            //     total_extinflow += Pattern[pp].factor[thour] * bline;   //brh20211221
+            // else if (ptype == WEEKEND_PATTERN)
+            // {
+            //     if ((tweekday == 1) || (tweekday == 7))
+            //         //total_extinflow += Pattern[j].factor[h] * bline;
+            //         total_extinflow += Pattern[pp].factor[thour] * bline; //brh20211221
+            // }
+            switch(ptype) {
+                case MONTHLY_PATTERN :
+                    total_extinflow += Pattern[pp].factor[tmonth-1] * bline;
+                    break;
+                case DAILY_PATTERN :
+                    total_extinflow += Pattern[pp].factor[tweekday-1] * bline;
+                    break;
+                case HOURLY_PATTERN :
+                    total_extinflow += Pattern[pp].factor[thour] * bline;
+                    break;
+                case WEEKEND_PATTERN :
+                    {
+                    if ((tweekday == 1) || (tweekday == 7))
+                        total_extinflow += Pattern[pp].factor[thour] * bline;
+                    break;
+                    }
+                default :
+                    printf(" unexpected default reached in api_get_flowBC at B -- needs debugging");
+                    return -1;
             }
         }
-        else if (bline > 0)
+        else if (bline > 0)  // no pattern, but baseline inflow provided
         {
             total_extinflow += bline;
         }
+
+        // external inflow from time series are added to baseline and pattern
         // jj is the time series
         jj = Node[node_idx].extInflow->tSeries; // tseries
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
@@ -282,6 +330,8 @@ int DLLEXPORT api_get_flowBC(
         {
             total_extinflow += table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor;
         }
+
+        // add the external inflows to the dry weather flows stored in flowBC
         *flowBC += total_extinflow;
     }
     return 0;
@@ -294,7 +344,7 @@ int DLLEXPORT api_get_headBC(
 {
     int ii = Node[node_idx].subIndex;
 
-//      printf("  in api_get_headBC with outfall %d \n",Outfall[ii].type);
+//     printf("  in api_get_headBC with outfall %d \n",Outfall[ii].type);
 //     printf("     node_idx = %d \n",node_idx);
 //     printf("     subIdx   = %d \n",ii);
 //     printf("     FIXED_OUTFALL = %d \n",FIXED_OUTFALL);
