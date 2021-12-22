@@ -196,6 +196,7 @@ module define_settings
     type RealTimeType
         integer (kind=8):: ClockStart = 0
         integer (kind=8):: ClockLoopStart= 0
+        integer (kind=8):: ClockLoopEnd = 0
         integer (kind=8):: ClockNow  = 0
         integer (kind=8):: ClockCountRate = 0
     end type RealTimeType
