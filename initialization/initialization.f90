@@ -441,6 +441,7 @@ contains
             link%R(ii,lr_InitialUpstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth)
             !write(*,*) 'api_nodef_initDepth 2'
             link%R(ii,lr_InitialDnstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth)
+            
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
             link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
             link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)

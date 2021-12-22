@@ -849,8 +849,9 @@ module face
                 case (AC)
                     thisCol => col_elemP(ep_CC_AC)
                 case (dummy)
-                    print *, 'error - the QinterpWithLocalHeadGradient has not been coded for diagnostic elements'
-                    stop 58704
+                    ! print *, 'error - the QinterpWithLocalHeadGradient has not been coded for diagnostic elements'
+                    ! stop 58704
+                    return
                 case default
                     print *, 'error, this default case should not be reached'
                     stop 2394
@@ -882,7 +883,7 @@ module face
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%face) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine face_head_average_on_element
 !%
 !%==========================================================================

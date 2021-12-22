@@ -122,7 +122,7 @@ contains
         ! stop 39705
 
         !% print result
-        if (setting%Debug%File%network_define) then
+        ! if (setting%Debug%File%network_define) then
             print*
             print*, '===================================================================' //&
             '==================================================================='
@@ -170,7 +170,7 @@ contains
             '==================================================================='
             print*
             !call execute_command_line('')
-        end if
+        ! end if
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
@@ -1805,17 +1805,23 @@ contains
 
         integer, intent(in)  :: LinkIdx
         real(8)              :: BranchLength
+        real(8), pointer     :: elem_nominal_length, elem_shorten_cof
 
         character(64) :: subroutine_name = 'init_network_nJm_branch_length'
         !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        elem_nominal_length => setting%Discretization%NominalElemLength
+        elem_shorten_cof    => setting%Discretization%LinkShortingFactor
+
         !% find the length of the junction branch
         if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then
             BranchLength = link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength)
         elseif (link%I(LinkIdx,li_length_adjusted) == BothSideAdjust) then
             BranchLength = (link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength))/twoR
+        elseif (link%I(LinkIdx,li_length_adjusted) == DiagAdjust) then
+            BranchLength = elem_shorten_cof * elem_nominal_length
         end if
 
         if (setting%Debug%File%network_define) &

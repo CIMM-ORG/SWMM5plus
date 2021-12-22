@@ -325,6 +325,7 @@ module define_globals
     integer, parameter   :: NoAdjust       = 1   !% no link length adjustment has done
     integer, parameter   :: OneSideAdjust  = 2   !% one sided link length adjustment has done
     integer, parameter   :: BothSideAdjust = 3   !% both sided link length adjustment has done
+    integer, parameter   :: DiagAdjust     = 4   !% if the connected link is an diagnostic element
 
     ! default for edge and non-edge node
     integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element

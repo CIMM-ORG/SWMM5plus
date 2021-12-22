@@ -51,10 +51,15 @@ contains
                 Adjustment_flag = Adjustment_flag + oneI
             end if
 
-            link%R(ii,lr_AdjustedLength) = temp_length
-            link%I(ii,li_length_adjusted) = Adjustment_flag
-            !% set the new element length based on the adjusted link length
-            link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
+            if ((link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe)) then
+                link%R(ii,lr_AdjustedLength) = temp_length
+                link%I(ii,li_length_adjusted) = Adjustment_flag
+                !% set the new element length based on the adjusted link length
+                link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
+            else
+                link%R(ii,lr_AdjustedLength) = link%R(ii,lr_ElementLength)
+                link%I(ii,li_length_adjusted) = DiagAdjust
+            end if
         end do
 
         if (setting%Debug%File%discretization)  &
