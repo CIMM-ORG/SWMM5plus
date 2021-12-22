@@ -122,7 +122,7 @@ contains
         ! stop 39705
 
         !% print result
-        ! if (setting%Debug%File%network_define) then
+        if (setting%Debug%File%network_define) then
             print*
             print*, '===================================================================' //&
             '==================================================================='
@@ -170,7 +170,7 @@ contains
             '==================================================================='
             print*
             !call execute_command_line('')
-        ! end if
+        end if
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
