@@ -205,6 +205,8 @@ contains
         end do
 
         !print *, 'finished timeloop'
+        call system_clock(count=cval,count_rate=crate,count_max=cmax)
+        setting%Time%Real%ClockLoopEnd = cval
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

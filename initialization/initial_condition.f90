@@ -126,7 +126,11 @@ contains
 
         !%-------------------------------------------------------------------
         !% Closing
+<<<<<<< HEAD
             if (setting%Debug%File%initial_condition) then
+=======
+        if (setting%Debug%File%initial_condition) then
+>>>>>>> c8b52aa2ab36bc7deba0d7835f02011d7c8138fc
             print*, '----------------------------------------------------'
             print*, 'image = ', this_image()
             print*, '.....................elements.......................'

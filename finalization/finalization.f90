@@ -1,7 +1,7 @@
 module finalization
 
     use define_settings, only: setting
-    use define_globals, only: timer
+    use define_globals
     use interface
     use utility_deallocate
     use utility_profiler
@@ -27,7 +27,9 @@ contains
         !% Final output and cleanup
         !%-------------------------------------------------------------------
         !% Declarations:
+            real(8) :: looptime
             logical :: isLastStep
+            character(16) :: timevalue
             character(64) :: subroutine_name = 'finalize_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -66,11 +68,31 @@ contains
 
         call cpu_time(setting%Time%CPU%EpochFinishSeconds)
 
+        looptime = real(setting%Time%Real%ClockLoopEnd - setting%Time%Real%ClockLoopStart,kind=8)
+        looptime = looptime / real(setting%Time%Real%ClockCountRate,8)
+        if (looptime <= 90.0) then
+            timevalue = 'seconds'
+        else
+            looptime = looptime / sixtyR
+            timevalue = 'minutes'
+            if (looptime > 90.0) then 
+                looptime = looptime / sixtyR
+                timevalue = 'hours'
+                if (looptime > 48.0) then
+                    looptime = looptime / twentyfourR
+                    timevalue = 'days'
+                end if
+            end if
+        end if
+
+
+
         !--------------------------------------------------------------------
         !% Closing
         write(*, "(A,i5,A,G0.6,A)") &
             new_line(" ") // 'Processor ', this_image(), " | Simulation Time = ", &
             (setting%Time%CPU%EpochFinishSeconds - setting%Time%CPU%EpochStartSeconds), " [s]"
+        write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in time-marching : ',looptime, ' ',trim(timevalue)    
         write(*,"(A)") '========================= SWMM5+ finished =================================='
         write(*,"(A)") ''
 
