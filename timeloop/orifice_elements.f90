@@ -161,7 +161,7 @@ module orifice_elements
             case (circular)
                 FullArea = pi * (onehalfR * EffectiveFullDepth) ** twoR
                 AoverL   = onefourthR * EffectiveFullDepth
-            case (rectangular)
+            case (rectangular_closed)
                 FullArea = EffectiveFullDepth * RectangularBreadth
                 AoverL   = FullArea / (twoR * (EffectiveFullDepth + RectangularBreadth))
             case default
@@ -267,7 +267,7 @@ module orifice_elements
 
         !% set geometry
         select case (GeometryType)
-            case (rectangular)
+            case (rectangular_closed)
                 Area      =  RectangularBreadth * Depth
                 Volume    = Area * Length !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth

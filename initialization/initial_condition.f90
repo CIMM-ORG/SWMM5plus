@@ -126,7 +126,7 @@ contains
 
         !%-------------------------------------------------------------------
         !% Closing
-            if (setting%Debug%File%initial_condition) then
+            ! if (setting%Debug%File%initial_condition) then
             print*, '----------------------------------------------------'
             print*, 'image = ', this_image()
             print*, '.....................elements.......................'
@@ -156,8 +156,8 @@ contains
             print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
             print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
             ! call execute_command_line('')
-            end if
-            
+            ! end if
+            stop
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -201,7 +201,7 @@ contains
 
             call init_IC_get_flow_roughness_from_linkdata (thisLink)
 
-            call init_IC_get_elemtype_from_linkdata(thisLink)
+            call init_IC_get_elemtype_from_linkdata (thisLink)
 
             call init_IC_get_geometry_from_linkdata (thisLink)
         
@@ -861,10 +861,10 @@ contains
 
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
-            case (lRectangular, lRectangular_closed)  !% brh20211219 added Rect_closed
+            case (lRectangular_closed)  !% brh20211219 added Rect_closed
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
-                    elemSI(:,ei_geometryType)          = rectangular
+                    elemI(:,ei_geometryType)          = rectangular_closed
 
                     !% real data
                     elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
