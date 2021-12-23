@@ -258,6 +258,8 @@ module define_globals
     integer :: SWMM_N_link
     integer :: SWMM_N_node
     integer :: SWMM_N_pollutant
+    integer :: SWMM_N_control
+    integer :: SWMM_N_divider
     integer :: N_link
     integer :: N_node
     integer :: N_headBC

@@ -58,7 +58,7 @@ contains
         end if !% brh20211208    
 
         !% --- shut down EPA SWMM-C and delete the API
-        print *, 'calling interface finalize'
+        !print *, 'calling interface finalize'
         call interface_finalize()
 
         !% --- close all the allocated data

@@ -737,7 +737,14 @@ contains
         !% brh20211208s
         !% if there are no links, the system cannot be partitioned
         if (N_link == 0) then
-            write(*,*) '*** WARNING no conduit/channel links found, using SWMM hydrology only'
+            write(*,*) '******************************************************'
+            write(*,*) '*                    FATAL ERROR                     *'
+            write(*,*) '* The SWMM input file does not include any links.    *'
+            write(*,*) '* The SWMM5+ code requires at least one link to run. *'
+            write(*,*) '* This run was stopped without any output.           *'
+            write(*,*) '******************************************************'
+            stop 9705322
+            !write(*,*) '*** WARNING no conduit/channel links found, using SWMM hydrology only'
             setting%Simulation%useHydraulics = .false.
             return
         end if

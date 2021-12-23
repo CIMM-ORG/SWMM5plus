@@ -400,6 +400,88 @@ int DLLEXPORT api_get_headBC(
 }
 
 //===============================================================================
+int DLLEXPORT api_get_SWMM_controls(
+    int*  flow_units,
+    int*  route_model,
+    int*  allow_ponding,
+    int*  inertial_damping,
+    int*  num_threads,
+    int*  skip_steady_state,
+    int*  force_main_eqn,
+    int*  max_trials,
+    int*  normal_flow_limiter,
+    int*  surcharge_method,
+    int*  tempdir_provided,
+    double* variable_step,
+    double* lengthening_step,
+    double* route_step,
+    double* min_route_step,
+    double* min_surface_area,
+    double* min_slope,
+    double* head_tol,
+    double* sys_flow_tol,
+    double* lat_flow_tol)
+//===============================================================================
+// Note, at this time this only gets the SWMM controls that are important to hydraulics
+{
+    int error;
+
+    error = check_api_is_initialized("api_get_SWMM_controls");
+    if (error) return error;
+
+    *flow_units = FlowUnits;
+
+    *route_model = RouteModel;
+
+    *allow_ponding = AllowPonding;
+
+    *inertial_damping = InertDamping;
+
+    *num_threads = NumThreads;
+
+    *skip_steady_state = SkipSteadyState;
+
+    *force_main_eqn = ForceMainEqn;
+
+    *max_trials = MaxTrials;
+
+    *normal_flow_limiter = NormalFlowLtd;
+
+    *surcharge_method = SurchargeMethod;
+
+    *tempdir_provided = 0;
+    if (strlen(TempDir) >0)
+        *tempdir_provided = 1;
+    
+    *variable_step = CourantFactor;
+
+    *lengthening_step = LengtheningStep;
+
+    *route_step = RouteStep;
+    
+    *min_route_step = MinRouteStep;
+
+    *min_surface_area = MinSurfArea;
+
+    *min_slope = MinSlope;
+
+    *head_tol = HeadTol;
+
+    *sys_flow_tol = SysFlowTol;
+
+    *lat_flow_tol = LatFlowTol;
+
+
+    //printf(" RouteModel = %d \n",RouteModel);
+
+    //printf(" \n tempdir len is %ld \n ",strlen(TempDir));
+    //printf(" courant factor %f \n", CourantFactor);
+    //printf("\n testing variable %s \n",TempDir);
+
+
+    return 0;
+}
+//===============================================================================
 int DLLEXPORT api_get_SWMM_times(
     double* starttime_epoch,
     double* endtime_epoch,

@@ -134,6 +134,52 @@ module interface
             real(c_double),        intent(inout) :: headBC
         end function api_get_headBC
         !% -------------------------------------------------------------------------------
+        integer(c_int) function api_get_SWMM_controls( &
+            flow_units, &
+            route_model, &
+            allow_ponding, &
+            inertial_damping, &
+            num_threads, &
+            skip_steady_state, &
+            force_main_eqn, &
+            max_trials, &
+            normal_flow_limiter, &
+            surcharge_method, &
+            tempdir_provided, &
+            variable_step, &
+            lengthening_step, &
+            route_step, &
+            min_route_step, &
+            min_surface_area, &
+            min_slope, &
+            head_tol, &
+            sys_flow_tol, &
+            lat_flow_tol ) &
+            BIND(C, name="api_get_SWMM_controls")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), intent(inout) :: flow_units
+            integer(c_int), intent(inout) :: route_model
+            integer(c_int), intent(inout) :: allow_ponding
+            integer(c_int), intent(inout) :: inertial_damping
+            integer(c_int), intent(inout) :: num_threads
+            integer(c_int), intent(inout) :: skip_steady_state
+            integer(c_int), intent(inout) :: force_main_eqn
+            integer(c_int), intent(inout) :: max_trials
+            integer(c_int), intent(inout) :: normal_flow_limiter
+            integer(c_int), intent(inout) :: surcharge_method
+            integer(c_int), intent(inout) :: tempdir_provided
+            real(c_double), intent(inout) :: variable_step
+            real(c_double), intent(inout) :: lengthening_step
+            real(c_double), intent(inout) :: route_step
+            real(c_double), intent(inout) :: min_route_step
+            real(c_double), intent(inout) :: min_surface_area
+            real(c_double), intent(inout) :: min_slope
+            real(c_double), intent(inout) :: head_tol
+            real(c_double), intent(inout) :: sys_flow_tol
+            real(c_double), intent(inout) :: lat_flow_tol
+        end function api_get_SWMM_controls
+        !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_times &
             (starttime_epoch, endtime_epoch, report_start_datetime, report_step, &
              hydrology_step, hydrology_dry_step, hydraulic_step, total_duration) &
@@ -344,6 +390,7 @@ module interface
     procedure(api_get_end_datetime),           pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),                 pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),                 pointer :: ptr_api_get_headBC
+    procedure(api_get_SWMM_controls),          pointer :: ptr_api_get_SWMM_controls
     procedure(api_get_SWMM_times),             pointer :: ptr_api_get_SWMM_times
     procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
     procedure(api_get_nodef_attribute),        pointer :: ptr_api_get_nodef_attribute
@@ -425,40 +472,38 @@ contains
 
         SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
 
-        SWMM_N_pollutant = get_num_objects(API_POLLUT)
-        if (SWMM_N_pollutant > 0) then
-            write(*,*) ' '
-            write(*,*) '*************************************************************'
-            write(*,*) '*                                                           *'
-            write(*,*) '*  WARNING WARNING WARNING WARNING WARNING WARNING WARNING  *'
-            write(*,*) '*                                                           *'
-            write(*,*) '* The SWMM input file contains one or more pollutants.      *'
-            write(*,*) '* The current version of SWMM5+ does not support pollutants *'
-            write(*,*) '* The simulation will be run, but pollutants will not       *'
-            write(*,*) '* be included in the hydraulic computations.                *'
-            write(*,*) '*************************************************************'
-        end if
-
-               
+                
         if ((N_link == 200) .AND. (N_node == 200)) then
+            print *, '********************************************************************'
+            print *, '*                        FATAL ERROR                               *'
+            print *, '* The SWMM code has detected a parse error for the *.inp file.     *'
+            print *, '* Something appears to be misalligned or missing. This might be    *'
+            print *, '* connections between nodes and links that are missing or not      *'
+            print *, '* allowed, or something as simple as a missing [ around a keyword, *'
+            print *, '* e.g., JUNCTIONS] instead of [JUNCTIONS]. This also occurs when   *'
+            print *, '* the wrong words are used, e.g., if TRUE is used instead of YES   *'
+            print *, '*  for ALLOW_PONDING.                                              *'
+            print *, '*                                                                  *'
+            print *, '* Suggest you use the SWMM GUI to adjust and edit the *.inp file.  *'
+            print *, '*                                                                  *'
+            print *, '* Note that this error can be erroneously returned if you have a   *'
+            print *, '* system with exactly 200 nodes and exactly 200 links.             *'
+            print *, '********************************************************************'
             print *, ''
-            print *, 'BUG WARNING location ',980879,' in ',subroutine_name
-            print *, '...if the SWMM code detects a parse error for the *.inp file then the ...'
-            print *, '...get_num_objects function returns an error code 200 (SWMM parse error)... '
-            print *, '...that is stored instead of the names of nodes and links...'
-            print *, '...this has unexpected errors.'
-            print *, ''
-            print *, SWMM_N_link, SWMM_N_node
-            print *, 'ERROR (input file): Appears to be parse error in the input file...'
-            print *, '...where some links/nodes are either not connected or not identified...'
-            print *, '...This can happen if nodes are renamed and some of the conduit connection did not get changed...'
-            print *, '...This error might have been tripped accidently if the system has exactly...'
-            print *, '...200 nodes and 200 links.'
-            stop 2398760
+            stop 309786
+            !% HACK -- developer's note:
+            !% Unfortunately, the parse error returns a code of 200 in the get_num_objects()
+            !% function, which is appears as SWMM_N_link=200 and SWMM_N_node=200. As it is
+            !% relatively unlikely that a system will have exactly 200 of each, we are 
+            !% simply calling the error condition when this happens.  We need to fix the
+            !% API so that the error condition is correctly represented.
         end if
 
         !% --- get the time start, end, and interval data from SWMM-C input file
         call interface_get_SWMM_times()
+
+        !% --- get the controls from the SWMM-C input file
+        call interface_get_SWMM_controls()
 
         !%----------------------------------------------------------------------
         !% closing
@@ -1614,20 +1659,301 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
+    subroutine interface_get_SWMM_controls()
+        !%---------------------------------------------------------------------
+        !% Description
+        !% gets control variables that have been input in the SWMM-C *.inp
+        !% file and have been processed by SWMM-C
+        !%---------------------------------------------------------------------
+            integer       :: flow_units, route_model, allow_ponding
+            integer       :: inertial_damping, num_threads, skip_steady_state
+            integer       :: force_main_eqn, max_trials, normal_flow_limiter
+            integer       :: surcharge_method, tempdir_provided
+            real(8)       :: variable_step, lengthening_step, route_step
+            real(8)       :: min_route_step, min_surface_area, min_slope
+            real(8)       :: head_tol, sys_flow_tol, lat_flow_tol
+            integer       :: error, ii
+            integer, parameter  :: nset = 30
+            logical       :: thisWarning(1:nset)
+            character(64) :: thisProblem(1:nset)
+            character(30) :: thisVariable(1:nset)
+            character(64) :: subroutine_name = 'interface_get_SWMM_controls'
+        !%----------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !   %----------------------------------------------------------------------
+
+        call load_api_procedure("api_get_SWMM_controls")
+
+        error = ptr_api_get_SWMM_controls( &
+            flow_units,  &
+            route_model, &
+            allow_ponding, &
+            inertial_damping, &
+            num_threads, &
+            skip_steady_state, &
+            force_main_eqn, &
+            max_trials, &
+            normal_flow_limiter, &
+            surcharge_method, &
+            tempdir_provided, &
+            variable_step, &
+            lengthening_step, &
+            route_step, &
+            min_route_step, &
+            min_surface_area, &
+            min_slope, &
+            head_tol, &
+            sys_flow_tol, &
+            lat_flow_tol)
+
+        call print_api_error(error, subroutine_name)
+
+        !% check for pollutants
+        SWMM_N_pollutant = get_num_objects(API_POLLUT)
+
+        !% check for controls
+        SWMM_N_control = get_num_objects(API_CONTROL)
+        
+        SWMM_N_divider = get_num_objects(API_DIVIDER)
+
+        thisWarning(:) = .false.
+        thisVariable(:) = ''
+
+        !% Units are always CMS for SWMM5+
+        !% HACK there might be issues with hydrology input in CFS
+        ii = 1;
+        select case(flow_units)
+        case(3)
+            !% continue with CMS units
+            thisWarning(ii) = .false.
+        case default
+            thisWarning(ii) = .true.
+            thisVariable(ii) = 'FLOW_UNITS'
+            thisProblem(ii) = 'CMS is used in SWMM5+ computation and output.'
+        end select
+
+        !% Routing model is always DYNWAVE for SWMM5+
+        ii=ii+1
+        select case (route_model)
+        case (4)
+            thisWarning(ii) = .false.
+        case default
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'FLOW_ROUTING'
+            thisProblem(ii)  = 'is set to DYNWAVE'
+        end select
+
+        !% Ponding is not allowed as of 20211223
+        ii=ii+1
+        select case (allow_ponding)
+        case (0)
+            thisWarning(ii) = .false.
+        case (1)
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'ALLOW_PONDING'
+            thisProblem(ii)  = 'is set to NO.'
+        case default
+        end select
+
+        !% Inertial damping is never used in SWMM5+
+        ii=ii+1
+        select case (inertial_damping)
+        case (0)
+            thisWarning(ii) = .false.
+        case default
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'INERTIAL_DAMPING'
+            thisProblem(ii)  = 'is set to NONE.'
+        end select
+
+        !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
+        ii=ii+1
+        select case (num_threads)
+        case (1)
+            thisWarning(ii) = .false.
+        case default
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'NUM_THREADS'
+            thisProblem(ii)  = 'is ignored.'
+        end select
+
+        !% SWMM5+ does not recognize steady state conditions as of 20211223
+        ii=ii+1
+        if (skip_steady_state) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'SKIP_STEADY_STATE'
+            thisProblem(ii)  = 'is ignored.'
+        end if
+
+        !% Force mains are not supported in SWMM5+ as of 20211223
+        ii=ii+1
+        select case (force_main_eqn)
+        case default
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'FORCE_MAIN_EQUATION'
+            thisProblem(ii)  = 'is ignored.'
+        end select
+
+        !% Max trials is irrelevant
+        ii=ii+1
+        thisWarning(ii)  = .true.
+        thisVariable(ii) = 'MAX_TRIALS'
+        thisProblem(ii)  = 'is ignored.'
+
+        !% Normal flow limiters not yet implemented
+        ii=ii+1
+        thisWarning(ii)  = .true.
+        thisVariable(ii) = 'NORMAL_FLOW_LIMITED'
+        thisProblem(ii)  = 'have not been implemented, use NORMAL outfalls with caution.'
+
+        !% only SLOT is allowed for surcharge method -- handled by JSON file
+        ii=ii+1
+        select case (surcharge_method)
+        case (1)
+            !% SLOT is specified
+            thisWarning(ii) = .false.
+        case default
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'SURCHARGE_METHOD'
+            thisProblem(ii)  = 'is changed to SLOT (set in JSON file).'
+        end select
+
+        if (tempdir_provided ==1) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'TEMPDIR'
+            thisProblem(ii)  = 'is ignored.'
+        end if
+
+        !% Variable time step in SWMM5+ does not use external controls
+        ii=ii+1
+        if (variable_step .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'VARIABLE_STEP'
+            thisProblem(ii)  = 'is ignored in the SWMM5+ variable step computation.'
+        end if
+
+        !% Dynamic lengthening of pipe not used in SWMM5+ as of 20211223
+        ii=ii+1
+        if (lengthening_step .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'LENGTHENING_STEP'
+            thisProblem(ii)  = 'is set off (0)'
+        end if
+
+        !% User-set routing time step is not allowed
+        ii=ii+1
+        if (route_step .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'ROUTING_STEP'
+            thisProblem(ii)  = 'is ignored.'
+        end if
+
+        !% Minimum time steps are set through the json file
+        ii=ii+1
+        if (min_route_step .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'MIN_ROUTE_STEP'
+            thisProblem(ii)  = 'is ignored (alternative in json file).'
+        end if
+
+        !% Minimum surface area for nodes is not used
+        ii=ii+1
+        if (min_surface_area .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = 'MIN_SURFAREA'
+            thisProblem(ii)  = 'is ignored.'
+        end if
+
+        !% Minimum slope is never used (default of 0.0 is ignored)
+        ii=ii+1
+        thisWarning(ii)  = .true.
+        thisVariable(ii) = 'MIN_SLOPE'
+        thisProblem(ii)  = 'is ignored.'
+
+        !% Head Tolerance is irrelevant 
+        ii=ii+1
+        thisWarning(ii)  = .true.
+        thisVariable(ii) = 'HEAD_TOL'
+        thisProblem(ii)  = 'is ignored.'
+
+        !% System Flow Tolerance is not used
+        ii=ii+1
+        thisWarning(ii)  = .true.
+        thisVariable(ii) = 'SYS_FLOW_TOL'
+        thisProblem(ii)  = 'is ignored.'
+
+        !% Lateral in/out Flow Tolerance is not used
+        ii=ii+1
+        thisWarning(ii)  = .true.
+        thisVariable(ii) = 'LAT_FLOW_TOL'
+        thisProblem(ii)  = 'is ignored.'
+
+        !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20211223
+        ii=ii+1
+        if (SWMM_N_pollutant > 0) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = '[POLLUTANTS]'
+            thisProblem(ii)  = 'are ignored in routing'
+        end if
+
+        !% Controls in hydraulics not supported in SWMM5+ as of 20211223
+        ii=ii+1
+        if (SWMM_N_control > 0) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = '[CONTROL]'
+            thisProblem(ii)  = 'all ignored in routing.'
+        end if
+
+        !% Dividers are not used in SWMM5+ as we do not support Kinematic Wave
+        ii=ii+1
+        if (SWMM_N_divider > 0) then
+            thisWarning(ii)  = .true.
+            thisVariable(ii) = '[DIVIDER]'
+            thisProblem(ii)  = 'are ignored.'
+        end if
+
+        if (any(thisWarning)) then
+            write(*,*) ' '
+            write(*,'(A)') '*******************************************************************'
+            write(*,'(A)') '**                          WARNING'
+            write(*,'(A)') '** The following from the SWMM *.inp file values or code defaults  '
+            write(*,'(A)') '** are ignored or changed in SWMM5+ due to present code limitations.'
+            do ii=1,nset
+                if (thisWarning(ii)) then
+                    write(*,"(A,A,A,A)") '**    ',trim(thisVariable(ii)),'--',trim(thisProblem(ii))
+                end if
+            end do
+            write(*,'(A)') '*******************************************************************'
+        end if
+
+        !%----------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine interface_get_SWMM_controls    
+!%
+!%=============================================================================
+!%=============================================================================
+!%
     subroutine interface_get_SWMM_times()
         !%---------------------------------------------------------------------
         !% Description:
+        !% gets the time variables that have been input in the SWMM-C *.inp
+        !% file and have been processed by SWMM-C
         !%---------------------------------------------------------------------
-        integer                :: error
-        real(c_double), target :: reportStart_epoch, RouteStep 
-        real(c_double), target :: starttime_epoch, endtime_epoch
-        real(c_double), target :: TotalDuration
-        integer(c_int), target :: reportStep, WetStep, DryStep
-        character(64)          :: subroutine_name = 'interface_get_SWMM_times'
+            integer                :: error
+            real(c_double), target :: reportStart_epoch, RouteStep 
+            real(c_double), target :: starttime_epoch, endtime_epoch
+            real(c_double), target :: TotalDuration
+            integer(c_int), target :: reportStep, WetStep, DryStep
+            character(64)          :: subroutine_name = 'interface_get_SWMM_times'
         !%----------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  &
+        !% Preliminaries
+            if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%----------------------------------------------------------------------
 
         !% --- reportStart is given in epoch datetime
         !% --- reportStep and hydroStep are given in integer seconds
@@ -1657,12 +1983,10 @@ contains
         setting%SWMMinput%DryStep               = DryStep
         setting%SWMMinput%TotalDuration         = TotalDuration
 
-        !print *, '............'
-        !print *, 'in ',trim(subroutine_name), starttime_epoch, endtime_epoch, setting%SWMMinput%EndEpoch
-        !print *, '............'
-
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%----------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine interface_get_SWMM_times
 !%
 !%=============================================================================
@@ -1800,7 +2124,7 @@ contains
             case ("api_initialize")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
             case ("api_finalize")
-                print *, '9781053 calling api_finalize'
+                !print *, '9781053 calling api_finalize'
                 call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
             case ("api_get_nodef_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_nodef_attribute)
@@ -1828,6 +2152,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
             case ("api_get_headBC")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
+            case ("api_get_SWMM_controls")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_controls)
             case ("api_get_SWMM_times")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_times)
             case ("api_get_next_entry_tseries")
