@@ -5,7 +5,8 @@ module utility_datetime
                                api_hourly, &
                                api_weekend, &
                                api_monthly
-    use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR
+    use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR, &
+        sixtyR, twentyfourR
 
     implicit none
 
@@ -16,6 +17,7 @@ module utility_datetime
     public :: util_datetime_secs_to_epoch
     public :: util_datetime_decodedate
     public :: util_datetime_decodetime
+    public :: util_datetime_display_time
 
 
     contains
@@ -160,6 +162,37 @@ module utility_datetime
         call util_datetime_divmod(mins, 60, h, m)
         if (h > 23) h = 0
     end subroutine util_datetime_decodetime
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_datetime_display_time (thistime, outunits)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% Converts input in seconds to an output (seconds, minute, hours, 
+        !% days) that has a display of the form XX.xx.
+        !%-------------------------------------------------------------------
+        !% Declarations;
+            real(8), intent(inout)       :: thistime  !% must be time in seconds
+            character(*), intent(inout)  :: outunits
+        !%-------------------------------------------------------------------
+        if (thistime <= 90.0) then
+            outunits = 'seconds'
+            !% thistime is unchanged
+        else
+            thistime = thistime / sixtyR
+            outunits = 'minutes'
+            if (thistime > 90.0) then 
+                thistime = thistime / sixtyR
+                outunits = 'hours'
+                if (thistime > 48.0) then
+                    thistime = thistime / twentyfourR
+                    outunits = 'days'
+                end if
+            end if
+        end if
+
+    end subroutine util_datetime_display_time   
 !%
 !%==========================================================================
 !% PRIVATE

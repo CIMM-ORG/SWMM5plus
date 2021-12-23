@@ -192,15 +192,6 @@ module define_settings
         real(8) :: Maximum = 10.0 ! m/s
     end type LimiterVelocityType
 
-    !% setting%Time%Real
-    type RealTimeType
-        integer (kind=8):: ClockStart = 0
-        integer (kind=8):: ClockLoopStart= 0
-        integer (kind=8):: ClockLoopEnd = 0
-        integer (kind=8):: ClockNow  = 0
-        integer (kind=8):: ClockCountRate = 0
-    end type RealTimeType
-
     !% setting%Output%Report
     type ReportType
         logical :: useSWMMinpYN = .true.
@@ -249,6 +240,27 @@ module define_settings
         !    integer :: swmm5_output_linkI_file
         !    integer :: swmm5_output_nodeR_file
         !    integer :: swmm5_output_nodeI_file
+    end type
+
+    !% setting%Time%WallClock
+    type WallClockType
+        integer (kind=8):: Start = 0
+        integer (kind=8):: Now  = 0
+        integer (kind=8):: End = 0
+        integer (kind=8):: CountRate = 0
+        integer (kind=8):: HydraulicsStart= 0
+        integer (kind=8):: HydraulicsStop = 0
+        integer (kind=8):: HydraulicsCumulative = 0
+        integer (kind=8):: LoopOutputStart = 0
+        integer (kind=8):: LoopOutputStop = 0
+        integer (kind=8):: LoopOutputCumulative = 0
+        integer (kind=8):: HydrologyStart = 0
+        integer (kind=8):: HydrologyStop  = 0
+        integer (kind=8):: HydrologyCumulative = 0
+        integer (kind=8):: TimeMarchStart = 0
+        integer (kind=8):: TimeMarchEnd = 0
+        integer (kind=8):: InitializationEnd = 0
+        integer (kind=8):: FinalOutputStart = 0
     end type
 
     !% setting%Weir% ...Transverse, SideFlow, VNotch, Trapezoidal
@@ -479,6 +491,8 @@ module define_settings
         logical :: Warning = .true.
         integer :: LastLevel = 0
         integer :: MaxExpectedLevels = 0
+        integer :: NumberOfWriteSteps = 0
+        integer :: NumberOfTimeLevelSaved = 0
         integer :: StoredLevels = 100        
         integer :: StoredFileNames = 2
         type(CommandLineType) :: CommandLine
@@ -510,6 +524,7 @@ module define_settings
 
     !% setting%Simulation
     type SimulationType
+        logical :: stopAfterInitializionYN = .false.
         logical :: useHydrology = .true.
         logical :: useHydraulics = .true.
     end type SimulationType
@@ -568,7 +583,7 @@ module define_settings
         real(8)            :: EndEpoch   = nullvalueR
         type(TimeStepType) :: Hydraulics
         type(TimeStepType) :: Hydrology
-        type(RealTimeType) :: Real
+        type(WallClockType):: WallClock
         type(CPUTimeType)  :: CPU
     end type TimeType
 
@@ -1598,10 +1613,10 @@ contains
         !% do not read          Time.Hydrology.NextTime
         !% do not read          Time.Hydrology.Step
 
-        !% do not read          Time.Real.ClockStart
-        !% do not read          Time.Real.ClockLoopStart
-        !% do not read          Time.Real.ClockNow
-        !% do not read          Time.Real.ClockCountRate
+        !% do not read          Time.WallClock.ClockStart
+        !% do not read          Time.WallClock.ClockLoopStart
+        !% do not read          Time.WallClock.ClockNow
+        !% do not read          Time.WallClock.ClockCountRate
 
         !% do not read          Time.CPU.EpochStartSeconds
         !% do not read          Time.CPU.EpochNowSeconds

@@ -80,6 +80,9 @@ contains
         !% Description:
         !% provides setup of the multi-level output
         !%-------------------------------------------------------------------
+            integer :: nMaxElem, nMaxFace
+            integer :: allocation_status
+            character(len=99) :: emsg
         !%-------------------------------------------------------------------
 
         !% --- compute the N_OutElem for each image
@@ -96,6 +99,15 @@ contains
         call util_allocate_outputML_times ()
         !% --- create storage for output binary filenames
         call util_allocate_outputML_filenames ()
+
+        !% allocations that were previously made in output.f90  brh20211223
+        nMaxElem = maxval(N_OutElem)
+        allocate(thisElementOut(nMaxElem), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'thisElementOut')
+
+        nMaxFace = maxval(N_OutFace)
+        allocate(thisFaceOut(nMaxFace), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'thisFaceOut')
 
     end subroutine outputML_setup
 !%
@@ -731,12 +743,12 @@ contains
             if (setting%Debug%File%output) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
-
         !% --- do not execute if ML output is suppressed
         if (setting%Output%Report%suppress_MultiLevel_Output) return
         !%--------------------------------------------------------------------
         !% --- increment the stored time level counter
         setting%Output%LastLevel = setting%Output%LastLevel+1
+        setting%Output%NumberOfTimeLevelSaved = setting%Output%NumberOfTimeLevelSaved +1
         thisLevel => setting%Output%LastLevel
 
         !% --- store the time for this data
@@ -779,6 +791,7 @@ contains
         !% --- if storage limit is reached, combine the output, write to file,
         !% --- and reset the storage time level
         if ((thisLevel == setting%Output%StoredLevels) .or. (isLastStep)) then
+            setting%Output%NumberOfWriteSteps = setting%Output%NumberOfWriteSteps+1
             call outputML_combine_and_write_data (thisLevel, isLastStep)
             thisLevel = 0
         end if
@@ -795,6 +808,11 @@ contains
         !% Description:
         !% combine all the stored output data
         !%-----------------------------------------------------------------------------
+        !% OpenCoarrays has problems with array-based transfers, which is really
+        !% really really slow! Use .false. here unless there are problems with
+        !% the output.
+        logical :: OpenCoarraysMethod = .false.
+
         integer, intent(in) :: nLevel      !% number of time levels to be written in this file
         logical, intent(in) :: isLastStep  !% is this the last step of model run
         integer :: nTotalElem , nTotalFace !% total number of elements/faces to be written
@@ -802,17 +820,20 @@ contains
         integer, pointer ::  nWritten   !% number of files written (# of calls to this procedure)
         integer, pointer ::  nTotalTimeLevels  !% sum of all the time levels written in all files
 
-        integer, allocatable :: thisE(:), thisF(:)
+        integer, pointer :: thiSE(:), thisF(:)
+
+        !integer, allocatable :: thisE(:), thisF(:)
 
         integer :: nMaxElem, nMaxFace
 
-        integer :: allocation_status, deallocation_status, ios
+        !integer :: allocation_status, deallocation_status
+        integer ::  ios
         integer :: Lasti, firstIdx, lastIdx, npack, ii,  kk, mm, pp
         integer ::  thisUnit  !% file unit numbers
 
         integer :: dimvector(3)    !% used to store (nTotalElem, nType, nLevel)
         character(len=256) :: file_name
-        character(len=99)  :: emsg
+        !character(len=99)  :: emsg
         character(len=5) :: thisnum
         character(len=16) :: str_header
         character(64)    :: subroutine_name = 'outputML_combine_and_write_data'
@@ -837,8 +858,9 @@ contains
         nTypeElem  = size(output_types_elemR)
 
         nMaxElem = maxval(N_OutElem)
-        allocate(thisE(nMaxElem), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg, 'thisE')
+        thisE => thisElementOut(1:nMaxElem)
+        !allocate(thisE(nMaxElem), stat=allocation_status, errmsg=emsg)
+        !call util_allocate_check(allocation_status, emsg, 'thisE')
         thisE(:) = nullvalueI
 
         !% --- combine the data from all images
@@ -854,27 +876,38 @@ contains
 
             !% --- store the GLOBAL indexes for elements, SWMM links and SWMM nodes
             !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                OutElemFixedI(kk,oefi_elem_Gidx)      = elemI(thisE(kk-Lasti),ei_Gidx)[ii]
-                OutElemFixedI(kk,oefi_link_Gidx_SWMM) = elemI(thisE(kk-Lasti),ei_link_Gidx_SWMM)[ii]
-                OutElemFixedI(kk,oefi_node_Gidx_SWMM) = elemI(thisE(kk-Lasti),ei_node_Gidx_SWMM)[ii]
-            end do !%kk
+            if (OpenCoarraysMethod) then
+                do kk=Lasti+1,Lasti+npack
+                    OutElemFixedI(kk,oefi_elem_Gidx)      = elemI(thisE(kk-Lasti),ei_Gidx)[ii]
+                    OutElemFixedI(kk,oefi_link_Gidx_SWMM) = elemI(thisE(kk-Lasti),ei_link_Gidx_SWMM)[ii]
+                    OutElemFixedI(kk,oefi_node_Gidx_SWMM) = elemI(thisE(kk-Lasti),ei_node_Gidx_SWMM)[ii]
+                end do !%kk
+            else
+                OutElemFixedI(Lasti+1:Lasti+npack,oefi_elem_Gidx)      = elemI(thisE(Lasti+1-Lasti:Lasti+npack-Lasti),ei_Gidx)[ii]
+                OutElemFixedI(Lasti+1:Lasti+npack,oefi_link_Gidx_SWMM) = elemI(thisE(Lasti+1-Lasti:Lasti+npack-Lasti),ei_link_Gidx_SWMM)[ii]
+                OutElemFixedI(Lasti+1:Lasti+npack,oefi_node_Gidx_SWMM) = elemI(thisE(Lasti+1-Lasti:Lasti+npack-Lasti),ei_node_Gidx_SWMM)[ii]
+            end if
 
             !% --- store the real data
             !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                do mm=1,nTypeElem
-                    do pp=1,nLevel
-                        OutElemDataR(kk,mm,pp) =  elemOutR(kk-Lasti,mm,pp)[ii]
-                    end do !% pp
-                end do !% mm
-            end do !% kk
+            if (OpenCoarraysMethod) then
+                do kk=Lasti+1,Lasti+npack
+                    do mm=1,nTypeElem
+                        do pp=1,nLevel
+                            OutElemDataR(kk,mm,pp) =  elemOutR(kk-Lasti,mm,pp)[ii]
+                        end do !% pp
+                    end do !% mm
+                end do !% kk
+            else
+                OutElemDataR(Lasti+1      :Lasti+npack      ,1:nTypeElem,1:nLevel) &
+                 =  elemOutR(Lasti+1-Lasti:Lasti+npack-Lasti,1:nTypeElem,1:nLevel)[ii]
+            end if
             !% increment Lasti for the next image
             Lasti = Lasti + npack
         end do !% images
 
-        deallocate(thisE, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'thisE')
+        !deallocate(thisE, stat=deallocation_status, errmsg=emsg)
+        !call util_deallocate_check(deallocation_status, emsg, 'thisE')
 
         !% --------------------------------------
         !% --- ELEMENT INDEX DATA
@@ -883,8 +916,9 @@ contains
         nTypeFace = size(output_types_faceR)
 
         nMaxFace = maxval(N_OutFace)
-        allocate(thisF(nMaxFace), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg, 'thisF')
+        thisF => thisFaceOut(1:nMaxFace)
+        !allocate(thisF(nMaxFace), stat=allocation_status, errmsg=emsg)
+        !call util_allocate_check(allocation_status, emsg, 'thisF')
         thisF(:) = nullvalueI
 
         Lasti = 0 !% counter of the last element or face that has been stored
@@ -897,20 +931,30 @@ contains
 
             !% --- store the GLOBAL indexes for faces, SWMM links and SWMM nodes
             !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                OutFaceFixedI(kk,offi_face_Gidx)      = faceI(thisF(kk-Lasti),fi_Gidx)[ii]
-                OutFaceFixedI(kk,offi_node_Gidx_SWMM) = faceI(thisF(kk-Lasti),fi_node_idx_SWMM)[ii]
-            end do !% kk
+            if (OpenCoarraysMethod) then
+                do kk=Lasti+1,Lasti+npack
+                    OutFaceFixedI(kk,offi_face_Gidx)      = faceI(thisF(kk-Lasti),fi_Gidx)[ii]
+                    OutFaceFixedI(kk,offi_node_Gidx_SWMM) = faceI(thisF(kk-Lasti),fi_node_idx_SWMM)[ii]
+                end do !% kk
+            else
+                OutFaceFixedI(Lasti+1:Lasti+npack,offi_face_Gidx)      = faceI(thisF(Lasti+1-Lasti:Lasti+npack-Lasti),fi_Gidx)[ii]
+                OutFaceFixedI(Lasti+1:Lasti+npack,offi_node_Gidx_SWMM) = faceI(thisF(Lasti+1-Lasti:Lasti+npack-Lasti),fi_node_idx_SWMM)[ii]
+            end if
 
             !% --- store the real data
             !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                do mm=1,nTypeFace
-                    do pp=1,nLevel
-                        OutFaceDataR(kk,mm,pp) =  faceOutR(kk-Lasti,mm,pp)[ii]
-                    end do !% pp
-                end do !% mm
-            end do !% kk
+            if (OpenCoarraysMethod) then
+                do kk=Lasti+1,Lasti+npack
+                    do mm=1,nTypeFace
+                        do pp=1,nLevel
+                            OutFaceDataR(kk,mm,pp) =  faceOutR(kk-Lasti,mm,pp)[ii]
+                        end do !% pp
+                    end do !% mm
+                end do !% kk
+            else
+                OutFaceDataR(Lasti+1:Lasti+npack            ,1:nTypeFace,1:nLevel) &
+                 =  faceOutR(Lasti+1-Lasti:Lasti+npack-Lasti,1:nTypeFace,1:nLevel)[ii]
+            end if
 
             !% increment Lasti for the next image
             Lasti = Lasti + npack

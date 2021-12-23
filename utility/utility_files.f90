@@ -174,7 +174,7 @@ contains
                         need2arg = .true.
                         print *, 'ERROR (USER/CODE): hard coded test cases (-t option) are not available or need to be revised'
                         stop 63897
-                    case ('-v','-von','-voff','-w','-won','-woff')  ! single argument settings
+                    case ('-R','-v','-von','-voff','-w','-won','-woff')  ! single argument settings
                         need2arg = .false.
                     case default
                         write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
@@ -209,6 +209,8 @@ contains
                 case ('-t')  !% hard coded test cases
                     print *, 'hard coded test cases need to be revised'
                     stop 63897
+                case ('-R')  !% Review -- stop after initialization to review
+                    setting%Simulation%stopAfterInitializionYN = .true.
                 case ('-v','-von')  ! setting.Verbose   on
                     setting%Output%Verbose = .true.
                 case ('-voff')  ! setting.Verbose  off

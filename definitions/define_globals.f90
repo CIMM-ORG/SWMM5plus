@@ -197,6 +197,7 @@ module define_globals
     !% (outface, dataindex)
     integer, allocatable, target :: OutFaceFixedI(:,:)
 
+    integer, allocatable, target :: thisElementOut(:), thisFaceOut(:)
 
     !% Profiling Timer
     type(wall_clk) :: timer

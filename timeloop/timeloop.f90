@@ -11,6 +11,7 @@ module timeloop
     use utility_output
     use boundary_conditions
     use utility_profiler
+    use utility_datetime
     use interface, &
         only: interface_export_link_results, &
               interface_get_subcatch_runoff, &
@@ -67,9 +68,6 @@ contains
 
             if (setting%Output%Verbose) &
                 write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-            !call system_clock(setting%Time%Real%ClockLoopStart)
-            call system_clock(count=cval,count_rate=crate,count_max=cmax)
-            setting%Time%Real%ClockLoopStart = cval
         !%--------------------------------------------------------------------
         !% Aliases
             useHydrology       => setting%Simulation%useHydrology
@@ -120,6 +118,11 @@ contains
             doHydrology = .false.
         endif 
 
+        if (this_image()==1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%TimeMarchStart = cval
+        end if 
+        
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         !% The loop starts at t = setting%Time%Start
         !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
@@ -129,6 +132,11 @@ contains
             if (doHydrology) call tl_hydrology()
 
             if (doHydraulics) then        
+
+                if (this_image()==1) then
+                    call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                    setting%Time%WallClock%HydraulicsStart = cval
+                end if 
 
                 !% HACK -- much of the following needs to be combined into an upper level BC subroutine
 
@@ -144,9 +152,7 @@ contains
                 !% get updated boundary conditions
                 !% ***** BUGCHECK -- the lateral flowrate is cumulative of BC and hydrology, 
                 !% ***** so check that it is zeroed before the first BC added.
-                call bc_update()
-
-            
+                call bc_update() 
 
                 !% HACK put lateral here for now -- moved from face_interpolation.
                 !% set lateral to zero
@@ -180,9 +186,28 @@ contains
                 !% perform hydraulic routing
                 call tl_hydraulics()
 
+                if (this_image()==1) then
+                    call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                    setting%Time%WallClock%HydraulicsStop = cval
+                    setting%Time%WallClock%HydraulicsCumulative &
+                        = setting%Time%WallClock%HydraulicsCumulative &
+                        + setting%Time%WallClock%HydraulicsStop &
+                        - setting%Time%WallClock%HydraulicsStart
+                end if 
+
             end if
 
+
             if (setting%Output%Report%provideYN) then 
+
+                sync all
+
+                !% set a time tick
+                if (this_image()==1) then
+                    call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                    setting%Time%WallClock%LoopOutputStart = cval
+                end if
+
                 !% Results must be reported before the "do"counter increments
                 !call util_output_report()  --- this is a stub for future use
 
@@ -191,10 +216,38 @@ contains
                     (.not. setting%Output%Report%suppress_MultiLevel_Output) ) then
                     call outputML_store_data (.false.)
                 end if
+
+                sync all
+
+                !% end the time tick and record net time in output processing
+                if (this_image()==1) then
+                    call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                    setting%Time%WallClock%LoopOutputStop = cval
+                    setting%Time%WallClock%LoopOutputCumulative &
+                         = setting%Time%WallClock%LoopOutputCumulative &
+                         + setting%Time%WallClock%LoopOutputStop  &
+                         - setting%Time%WallClock%LoopOutputStart
+                end if
             end if    
+
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%HydraulicsStart = cval
+            end if 
 
             !% increment the time step and counters for the next time loop
             call tl_increment_counters(doHydraulics, doHydrology)
+
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%HydraulicsStop = cval
+                setting%Time%WallClock%HydraulicsCumulative &
+                    = setting%Time%WallClock%HydraulicsCumulative &
+                    + setting%Time%WallClock%HydraulicsStop &
+                    - setting%Time%WallClock%HydraulicsStart
+            end if 
+
+            !% check for a crash
             if (icrash) then
                 if ((setting%Output%Report%provideYN) .and. &
                 (.not. setting%Output%Report%suppress_MultiLevel_Output)) then
@@ -205,8 +258,12 @@ contains
         end do
 
         !print *, 'finished timeloop'
-        call system_clock(count=cval,count_rate=crate,count_max=cmax)
-        setting%Time%Real%ClockLoopEnd = cval
+        sync all
+
+        if (this_image() == 1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%TimeMarchEnd= cval
+        end if
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -224,12 +281,18 @@ contains
         !% Declarations
             integer :: ii
             real(8), pointer :: sRunoff(:)
+            integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'tl_hydrology'
         !%------------------------------------------------------------------
         !% Preliminaries
             if (icrash) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            !% wall clock tick
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%HydrologyStart = cval
+            end if 
         !%------------------------------------------------------------------              
         !% Aliases
             sRunoff => subcatchR(:,sr_RunoffRate_baseline)  
@@ -246,6 +309,16 @@ contains
             sRunoff(ii) = interface_get_subcatch_runoff(ii-1)  
         end do
 
+        !%------------------------------------------------------------------   
+        !% wall clock tick
+        if (this_image()==1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%HydrologyStop = cval
+            setting%Time%WallClock%HydrologyCumulative  &
+                = setting%Time%WallClock%HydrologyCumulative &
+                + setting%Time%WallClock%HydrologyStop &
+                - setting%Time%WallClock%HydrologyStart
+        end if 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_hydrology
@@ -681,7 +754,7 @@ contains
             integer (kind=8) :: execution_realtime
             integer(kind=8) :: cval, crate, cmax
             real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
-            character(3) :: timeunit
+            character(8) :: timeunit
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
@@ -692,23 +765,23 @@ contains
         step          => setting%Time%Step
         interval      => setting%Output%CommandLine%interval
 
-        !call system_clock(count=setting%Time%Real%ClockNow)
-        call system_clock(count=cval,count_rate=crate,count_max=cmax)
-        setting%Time%Real%ClockNow = cval
+        if (this_image() == 1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%Now = cval
 
-        ! estimate the remaining time
-        execution_realtime = (setting%Time%Real%ClockNow - setting%Time%Real%ClockLoopStart)
-        seconds_to_completion =  (    (real(execution_realtime,kind=8))                     &
-                                   /  (real(setting%Time%Real%ClockCountRate,kind=8))  )    &
-                               * (    (setting%Time%End - setting%Time%Now)                 &
-                                   /  (setting%Time%Now - setting%Time%Start) )
-
+            ! estimate the remaining time
+            execution_realtime = (setting%Time%WallClock%Now - setting%Time%WallClock%TimeMarchStart)
+            seconds_to_completion =  (    (real(execution_realtime,kind=8))                     &
+                                       /  (real(setting%Time%WallClock%CountRate,kind=8))  )    &
+                                   * (    (setting%Time%End - setting%Time%Now)                 &
+                                       /  (setting%Time%Now - setting%Time%Start) )
+        end if
             
         !rint *,'++++++++++++++++++++++'
-        !print *, (setting%Time%Real%ClockNow - setting%Time%Real%ClockLoopStart ) / setting%Time%Real%ClockCountRate  
+        !print *, (setting%Time%WallClock%ClockNow - setting%Time%WallClock%ClockLoopStart ) / setting%Time%WallClock%ClockCountRate  
         !print *,'++++++++++++++++++++++'                                         
-        !print *, 'setting%Time%Real%EpochTimeLoopStartSeconds ',setting%Time%Real%ClockLoopStart     
-        !print *, 'setting%Time%Real%EpochNowSeconds           ',setting%Time%Real%ClockNow                                  
+        !print *, 'setting%Time%WallClock%EpochTimeLoopStartSeconds ',setting%Time%WallClock%ClockLoopStart     
+        !print *, 'setting%Time%WallClock%EpochNowSeconds           ',setting%Time%WallClock%ClockNow                                  
         !print *, 'execution_realtime ',execution_realtime    
         !print *, 'seconds_to_completion ',  seconds_to_completion      
         !stop 487566
@@ -716,41 +789,45 @@ contains
         if (setting%Output%Verbose) then
             if (this_image() == 1) then
                 if (mod(step,interval) == 0) then
-                    ! translate time in seconds into something more useful
-                    if (timeNow  < sixtyR) then
-                        thistime = timeNow
-                        timeunit = 's  '
-                    elseif (timeNow >= sixtyR .and. timeNow < seconds_per_hour) then
-                        thistime = timeNow / sixtyR
-                        timeunit = 'min'
-                    elseif (timeNow >= seconds_per_hour .and. timeNow < 3.0*seconds_per_day) then
-                        thistime = timeNow / seconds_per_hour
-                        timeunit = 'hr '
-                    elseif (timeNow >= 3.0 * seconds_per_day) then
-                        thistime = timeNow / seconds_per_day
-                        timeunit = 'day'
-                    endif
+                    thistime = timeNow
+                    call util_datetime_display_time (thistime, timeunit)
+                    ! ! translate time in seconds into something more useful
+                    ! if (timeNow  < sixtyR) then
+                    !     thistime = timeNow
+                    !     timeunit = 's  '
+                    ! elseif (timeNow >= sixtyR .and. timeNow < seconds_per_hour) then
+                    !     thistime = timeNow / sixtyR
+                    !     timeunit = 'min'
+                    ! elseif (timeNow >= seconds_per_hour .and. timeNow < 3.0*seconds_per_day) then
+                    !     thistime = timeNow / seconds_per_hour
+                    !     timeunit = 'hr '
+                    ! elseif (timeNow >= 3.0 * seconds_per_day) then
+                    !     thistime = timeNow / seconds_per_day
+                    !     timeunit = 'day'
+                    ! endif
 
                     ! write a time counter
                     write(*,"(A12,i8,a17,F9.2,a1,a3,a6,f9.2,a3)") &
                         'time step = ',step,'; model time = ',thistime, &
-                        ' ',timeunit,'; dt = ',dt,' s'
+                        ' ',trim(timeunit),'; dt = ',dt,' s'
 
                     ! write estimate of time remaining
-                    if (seconds_to_completion < sixtyR) then
-                        timeunit = 's  '
-                        time_to_completion = seconds_to_completion
-                    elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
-                        timeunit = 'min'
-                        time_to_completion = seconds_to_completion / sixtyR
-                    elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
-                        timeunit = 'hr '
-                        time_to_completion = seconds_to_completion / seconds_per_hour
-                    else
-                        timeunit = 'day'
-                        time_to_completion = seconds_to_completion / seconds_per_day
-                    endif
-                    write(*,"(A9,F6.2,A1,A3,A28)") 'estimate ',time_to_completion,' ',timeunit,' clock time until completion'
+                    thistime = seconds_to_completion
+                    call util_datetime_display_time (thistime, timeunit)
+                    ! if (seconds_to_completion < sixtyR) then
+                    !     timeunit = 's  '
+                    !     time_to_completion = seconds_to_completion
+                    ! elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
+                    !     timeunit = 'min'
+                    !     time_to_completion = seconds_to_completion / sixtyR
+                    ! elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
+                    !     timeunit = 'hr '
+                    !     time_to_completion = seconds_to_completion / seconds_per_hour
+                    ! else
+                    !     timeunit = 'day'
+                    !     time_to_completion = seconds_to_completion / seconds_per_day
+                    ! endif
+                    write(*,"(A9,F6.2,A1,A3,A28)") 'estimate ',thistime,' ',timeunit,' clock time until completion'
                     print *
                 endif
             endif

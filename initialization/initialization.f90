@@ -252,6 +252,16 @@ contains
         
         !%------------------------------------------------------------------- 
         !% Closing
+            call init_timer_stop ()
+            if (setting%Simulation%stopAfterInitializionYN) then
+                write(*,*) ' '
+                write(*,*) '********************************************************'
+                write(*,*) '** Stopping after initialization for review due to -R **'
+                write(*,*) '** as command-line argument. Remove the -R from the   **'
+                write(*,*) '** command line to rerun with full simulation.        **'
+                write(*,*) '********************************************************'
+                stop 333578
+            end if
             if (icrash) then  !% if crash in initialization, write the output and exit
                 if (setting%Output%Report%provideYN) then 
                     call outputML_store_data (.true.)
@@ -277,14 +287,31 @@ contains
         !% store CPU clock start time
         call cpu_time(setting%Time%CPU%EpochStartSeconds)
 
-        !% get the Real time (epoch in computer clock count)
-        call system_clock(count=cval,count_rate=crate,count_max=cmax)
+        !% get the Wall clock time
+        if (this_image() == 1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%CountRate = crate
+            setting%Time%WallClock%Start = cval
+        end if
 
-        setting%Time%Real%ClockCountRate = crate
-        setting%Time%Real%ClockStart = cval
+        
 
 
     end subroutine init_model_timer
+!%
+!%==========================================================================
+!%==========================================================================
+!   
+    subroutine init_timer_stop ()
+
+        integer(kind=8) :: crate, cmax, cval
+        
+        if (this_image() == 1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%InitializationEnd = cval
+        end if
+
+    end subroutine init_timer_stop
 !%
 !%==========================================================================
 !%==========================================================================
