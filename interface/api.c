@@ -385,9 +385,11 @@ int DLLEXPORT api_get_headBC(
         //     return api_err_not_developed;
         
         case FREE_OUTFALL:
+            *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
             return 0;
 
         case NORMAL_OUTFALL:
+            *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
             return 0;
 
         default:
