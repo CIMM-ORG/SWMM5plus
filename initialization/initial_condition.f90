@@ -156,10 +156,10 @@ contains
             print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
             print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
             ! call execute_command_line('')
-            end if
-            
-            if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        end if
+ 
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_toplevel
 !%

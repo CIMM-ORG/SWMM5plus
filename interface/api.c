@@ -1660,6 +1660,53 @@ int DLLEXPORT api_get_first_entry_table(
     switch (table_type) {
         case CURVE :
             success = table_getFirstEntry(&(Curve[table_idx]), xx, yy);
+            printf("...success, %d \n",success);
+            printf("...curveType, %d \n",Curve[table_idx].curveType);
+            // unit conversion depending on the type of curve
+            switch (Curve[table_idx].curveType) {
+                case STORAGE_CURVE:
+                    *xx = FTTOM(*xx);
+                    *yy = FT2TOM2(*yy);
+                    break;
+                case DIVERSION_CURVE:
+                    *xx = CFTOCM(*xx);
+                    *yy = CFTOCM(*yy);
+                    break;
+                case TIDAL_CURVE:
+                    *yy = FTTOM(*yy);
+                    break;
+                case RATING_CURVE:
+                    *xx = FTTOM(*xx);
+                    *yy = CFTOCM(*yy);
+                    break;
+                case SHAPE_CURVE:
+                    *xx = FTTOM(*xx);
+                    *yy = FTTOM(*yy);
+                    break;
+                case CONTROL_CURVE:
+                    break;
+                case WEIR_CURVE:
+                    *xx = FTTOM(*xx);
+                    break;
+                case PUMP1_CURVE:
+                    *xx = CFTOCM(*xx);
+                    *yy = CFTOCM(*yy);
+                    break;
+                case PUMP2_CURVE:
+                    *xx = FTTOM(*xx);
+                    *yy = CFTOCM(*yy);
+                    break;
+                case PUMP3_CURVE:
+                    *xx = FTTOM(*xx);
+                    *yy = CFTOCM(*yy);
+                    break;
+                case PUMP4_CURVE:
+                    *xx = FTTOM(*xx);
+                    *yy = CFTOCM(*yy);
+                    break;
+                default:
+                    return 0;
+            }
             break;
         case TSERIES :
             success = table_getFirstEntry(&(Tseries[table_idx]), xx, yy);
@@ -1689,8 +1736,45 @@ int DLLEXPORT api_get_next_entry_table(
             success = table_getNextEntry(&(Tseries[table_idx]), &(Tseries[table_idx].x2), &(Tseries[table_idx].y2));
             if (success)
             {
-                *xx = Tseries[table_idx].x2;
-                *yy = Tseries[table_idx].y2;
+                // unit conversion depending on the type of curve
+            switch (Curve[table_idx].curveType) {
+                case STORAGE_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = FT2TOM2(Tseries[table_idx].y2);
+                case DIVERSION_CURVE:
+                    *xx = CFTOCM(Tseries[table_idx].x2);
+                    *yy = CFTOCM(Tseries[table_idx].y2);
+                case TIDAL_CURVE:
+                    *xx = Tseries[table_idx].x2;
+                    *yy = FTTOM(Tseries[table_idx].y2);
+                case RATING_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = CFTOCM(Tseries[table_idx].y2);
+                case CONTROL_CURVE:
+                    *xx = Tseries[table_idx].x2;
+                    *yy = Tseries[table_idx].y2;
+                case SHAPE_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = FTTOM(Tseries[table_idx].y2);
+                case WEIR_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = Tseries[table_idx].y2;
+                case PUMP1_CURVE:
+                    *xx = CFTOCM(Tseries[table_idx].x2);
+                    *yy = CFTOCM(Tseries[table_idx].y2);
+                case PUMP2_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = CFTOCM(Tseries[table_idx].y2);
+                case PUMP3_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = CFTOCM(Tseries[table_idx].y2);
+                case PUMP4_CURVE:
+                    *xx = FTTOM(Tseries[table_idx].x2);
+                    *yy = CFTOCM(Tseries[table_idx].y2);
+                default:
+                    *xx = Tseries[table_idx].x2;
+                    *yy = Tseries[table_idx].y2;
+                }
             }
             break;
         case CURVE :

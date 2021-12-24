@@ -387,9 +387,9 @@ contains
             !% --- normal flow at outlet   
             else if (BC%headI(ii,bi_subcategory) == BCH_normal) then
 
-                !% for normal dnBC, if the node has a invert,
+                !% for normal dnBC, if the connecting link has an offset,
                 !% the depth in the node is zero
-                if (node%R(nodeIdx,nr_Zbottom) > zeroR) then
+                if (link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
                     BC%headRI(ii) = faceR(faceIdx,fr_Zbottom)
                 else
                     if (elemI(elemUpIdx,ei_elementType) == CC) then
@@ -404,9 +404,10 @@ contains
             !% --- free overflow at outlet
             else if (BC%headI(ii,bi_subcategory) == BCH_free) then
 
-                !% for free dnBC, if the node has a invert,
+                !% for free dnBC, if the connecting link has an offset,
                 !% the depth in the node is zero
-                if (node%R(nodeIdx,nr_Zbottom) > zeroR) then
+                ! print*, link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset), 'outlet offset'
+                if (link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
                     BC%headRI(ii) = faceR(faceIdx,fr_Zbottom)
                 else
                     if (elemI(elemUpIdx,ei_elementType) == CC) then
@@ -419,7 +420,6 @@ contains
                         BC%headRI(ii) =  faceR(faceIdx,fr_Zbottom)
                     end if
                 end if
-             
             !% --- error in specifying outlet    
             else
                 call util_print_warning("Error (bc.f08): Unknown downstream boundary condition type at " &
@@ -460,7 +460,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         BreadthMax   => elemR(elemIdx,er_BreadthMax)
         grav         => setting%constant%gravity
 
-        Q2g = Flowrate**twoR / grav
+        Q2g = (Flowrate**twoR) / grav
 
         if (Q2g == zeroR) then
             criticalDepth =  zeroR
@@ -475,7 +475,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                     critDepthEstimate = min(1.01*(Q2g/FullDepth)**onefourthR, FullDepth)
 
                     !% find ratio of conduit area to equiv. circular area
-                    ratio = FullArea/((pi/fourR)*FullDepth**twoR)
+                    ratio = FullArea/(pi/fourR*(FullDepth**twoR))
 
                     if ((ratio >= onehalfR) .and. (ratio <= twoR)) then
                         criticalDepth = bc_critDepth_enum (elemIdx, Flowrate, critDepthEstimate)
