@@ -21,6 +21,7 @@ module initial_condition
     use geometry !BRHbugfix 20210813
     use circular_conduit
     use storage_geometry
+    use adjust
 
     implicit none
 
@@ -77,7 +78,7 @@ contains
         call init_IC_set_SmallVolumes ()
 
         !% --- initialize slots
-        !if (setting%Output%Verbose) print *, 'begin update_auxiliary_variables'
+        !if (setting%Output%Verbose) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
         !% --- get the velocity and any other derived data
@@ -91,6 +92,12 @@ contains
         !% --- update all the auxiliary variables
         !if (setting%Output%Verbose) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (solver)
+
+        !% --- set all the near-zero volumes
+        if (setting%ZeroValue%UseZeroValues) then
+            call adjust_zerovolumes_identify_all ()
+            call adjust_zerovolume_setvalues_all ()
+        end if
         
         !% --- initialize old head 
         !%     HACK - make into a subroutine if more variables need initializing

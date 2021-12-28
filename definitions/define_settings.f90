@@ -546,10 +546,15 @@ module define_settings
     type SolverType
         logical :: PreissmannSlot = .true.
         logical :: QinterpWithLocalHeadGradient = .true.
+        logical :: SubtractReferenceHead = .true.
         integer :: MomentumSourceMethod = T00
         integer :: SolverSelect = ETM
         real(8) :: SwitchFractionDn = 0.8
         real(8) :: SwitchFractionUp = 0.9
+        real(8) :: QHgradFactor = 0.5
+        real(8) :: ReferenceHead = zeroR
+        real(8) :: AverageZbottom = zeroR
+        real(8) :: MaxZbottom = zeroR
         real(8), dimension(2) :: crk2 = [0.5, 1.0]
     end type SolverType
 
@@ -1489,6 +1494,16 @@ contains
         call json%get('Solver.QinterpWithLocalHeadGradient', logical_value, found)
         if (found) setting%Solver%QinterpWithLocalHeadGradient = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.QinterpWithLocalHeadGradient not found'
+        
+        !%                       Solver.QHgradFactor
+        call json%get('Solver.QHgradFactor', real_value, found)
+        if (found)  setting%Solver%QHgradFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.QHgradFactor not found'
+
+        !%                       Solver.SubtractReferenceHead
+        call json%get('Solver.SubtractReferenceHead', logical_value, found)
+        if (found) setting%Solver%SubtractReferenceHead = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SubtractReferenceHead not found'
         
         !%                       Solver.MomentumSourceMethod                  
         call json%get('Solver.MomentumSourceMethod', c, found)

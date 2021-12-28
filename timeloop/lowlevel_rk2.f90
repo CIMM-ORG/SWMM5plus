@@ -327,6 +327,11 @@ module lowlevel_rk2
             case (T00)
                 elemR(thisP,outCol) = grav * ( &
                     ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) )
+
+                    ! print *, 'faup : ', fAup(idn(thisP(1:2)))
+                    ! print *, 'fadn : ', fAdn(iup(thisP(1:2)))
+                    ! print *, 'head : ', eHead(thisP(1:2))
+
             case (T10)
                 elemR(thisP,outCol) = grav * onehalfR *  ( &
                     +fAup(idn(thisP)) * fHdn(iup(thisP))   &

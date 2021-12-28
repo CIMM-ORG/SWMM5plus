@@ -85,6 +85,8 @@ contains
 
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             end if
+
+            !stop 398705
     end subroutine bc_update
 !%
 !%==========================================================================
@@ -346,6 +348,7 @@ contains
                 write(*,*), 'CODE ERROR? unexpected else in BC'
                 stop 9870985    
             end if
+
         end do
 
         do ii=1, N_headBC

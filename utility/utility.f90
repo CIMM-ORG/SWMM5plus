@@ -20,6 +20,7 @@ module utility
     public :: util_print_programheader
     public :: util_count_node_types
     public :: util_sign_with_ones
+    public :: util_sign_with_ones_or_zero
     public :: util_print_warning
     public :: util_linspace
 
@@ -98,6 +99,30 @@ module utility
         outarray = sign(outarray,inarray)
 
     end function util_sign_with_ones
+
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    function util_sign_with_ones_or_zero &
+        (inarray) result (outarray)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% returns is an array of real ones with the sign of the inarray argument
+        !% for non-zero inarray. For zero inarray returns zero.
+        !%-----------------------------------------------------------------------------
+        real(8),intent(in) :: inarray(:)
+        real(8)            :: outarray(size(inarray,1))
+        !%-----------------------------------------------------------------------------
+        outarray = oneR
+        outarray = sign(outarray,inarray)
+
+        !% brh 20211227 
+        where(inarray == zeroR)
+            outarray = zeroI
+        end where
+
+    end function util_sign_with_ones_or_zero
 
     !%
     !%==========================================================================

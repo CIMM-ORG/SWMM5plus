@@ -53,7 +53,7 @@ contains
         !% Calls all the initialization subroutines
         !%-------------------------------------------------------------------
         !% Declarations
-            integer :: ii
+            integer :: ii,jj
             integer, pointer :: Npack, thisP(:)
             integer, allocatable :: tempP(:)
             character(64) :: subroutine_name = 'initialize_toplevel'
@@ -191,8 +191,6 @@ contains
             write(*,*) '...this presently is not supported in SWMM5+'
             stop 309875
         end if  
-        
-        
 
         !% --- initialize the output reports
         if (setting%Output%Verbose) print *, "begin initializing output report"
@@ -222,7 +220,35 @@ contains
             write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
             write(*,*) '...this presently is not supported in SWMM5+'
             stop 9378975
-        end if                                   
+        end if                     
+        
+
+
+        !print *, 'z_bottom', elemR(:,er_Zbottom)
+        !do ii=1,size(elemR,1)
+        !    print *, elemR(ii,er_Zbottom), reverseKey(elemI(ii,ei_elementType))
+        !end do
+
+        !% get the minimum head in any element to use as the reference
+        
+        ! if (setting%Solver%SubtractReferenceHead) then
+        !     Npack => npack_elemP(ep_ALLtm)
+        !     if (Npack > zeroI) then
+        !         thisP => elemP(1:Npack,ep_ALLtm)
+        !         setting%Solver%ReferenceHead  = minval(elemR(thisP,er_Head))
+        !         setting%Solver%MaxZbottom     = maxval(elemR(thisP,er_Head))
+        !         setting%Solver%AverageZbottom = sum(elemR(thisP,er_Head)) / Npack
+        !     call co_min(setting%Solver%ReferenceHead)
+        ! end if
+        ! do ii=1,Npack
+        !     jj = elemP(ii,ep_ALLtm)
+        !     print *, jj, elemR(jj,er_Zbottom), reverseKey(elemI(jj,ei_elementType))
+        ! end do
+        ! stop 457834
+
+        ! print *, 'area elem  ',elemR(1:2, er_Area)
+        ! print *, 'area face d',faceR(1:2, fr_Area_d)
+        ! print *, 'area face u',faceR(1:2, fr_Area_u)
 
         !% --- setup the multi-level finite-volume output
         !%        Ideally, this should be a procedure accessed in the output module, 

@@ -59,7 +59,7 @@ module update
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
 
         !% adjust velocity with limiters and small volume treatment
-        call adjust_velocity (whichTM, er_Velocity, er_Volume)
+        call adjust_velocity (whichTM)
 
         !print *, '---- in ',subroutine_name,'   y03'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '

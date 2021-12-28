@@ -7,6 +7,7 @@ module face
     use adjust
     use jump
     use utility_profiler
+    use utility, only: util_sign_with_ones
 
 
     implicit none
@@ -37,7 +38,7 @@ module face
         !% Declarations
             integer, intent(in)  :: faceCol, whichTM
             integer, pointer :: Npack
-            logical :: isBConly
+            logical :: isBConly, isTM
             
             character(64) :: subroutine_name = 'face_interpolation'
         !%-------------------------------------------------------------------
@@ -50,88 +51,59 @@ module face
         !%--------------------------------------------------------------------
         isBConly = .false.
 
-        !print *, 'in ',trim(subroutine_name),' -------------------'    
-        ! print *, faceR(:,fr_Flowrate)
-        ! print *, ' '
-        !print *, size(faceR,DIM=1)
-        !print *, size(elemR,DIM=1)
+        !% --- the whichTM is dummy for diagnostic elements,
+        !%     For diagnostic element we don't want to call the Q_HeadGradient term.
+        if (whichTM == dummy) then
+            isTM = .false.
+        else
+            isTM = .true.
+        end if
 
         Npack => npack_faceP(faceCol)
         if (Npack > 0) then
-            !% face reconstruction of all the interior faces
+            !% --- face reconstruction of all the interior faces
             call face_interpolation_interior (faceCol, Npack)
         end if
 
         Npack => npack_facePS(faceCol)
         if (Npack > 0) then
             sync all
-            !% face reconstruction of all the shared faces
+            !% --- face reconstruction of all the shared faces
             call face_interpolation_shared (faceCol, Npack)
             sync all
         end if
 
-        ! print *, ' '
-        ! print *, 'before BC'
-        ! print *, faceR(:,fr_Flowrate)
-        ! print *, ' '
-
         call face_interpolate_bc (isBConly)
 
-        !print *, 'before Qinterp'
-        !print *, faceR(:,fr_Flowrate)
-        !print *, ' '
+        !% --- adjust face flowrate for QinterpWithLocalHeadGradient method
+        !%     only for Time-Marching elements
+        if ((setting%Solver%QinterpWithLocalHeadGradient) .and. (isTM)) then 
 
-        !% adjust face flowrate for QinterpWithLocalHeadGradient method
-        if (setting%Solver%QinterpWithLocalHeadGradient) then 
-        
-            ! print *, 'in ',trim(subroutine_name)
-            ! print *,' aaaa'
-            ! !print *, faceR(8,fr_Head_u)
-            ! !stop 39780
-            ! ! print *, faceR(1:8,fr_Head_u)
-            ! ! print *, ' '
-            ! ! print *, faceR(1:8,fr_Head_d)
-            ! ! print *, ' '
-            ! print *, elemR(7,er_HeadAvg), elemR(7,er_Head)
+            call adjust_values (whichTM)
 
-            !% compute the average head for the elements updated before call to face_interpolation
+            !% --- compute the average head for the elements updated before call to face_interpolation
             call face_head_average_on_element (whichTM)
-
-            ! print *, ' bbbb'
-            ! print *, elemR(7,er_HeadAvg), elemR(7,er_Head)
-            ! stop 39705
 
             Npack => npack_faceP(faceCol)
             if (Npack > 0) then 
-                !% Add the Q gradient term to the flowrate for interior faces
+                !% --- Add the Q gradient term to the flowrate for interior faces
                 call face_Q_HeadGradient_interior (faceCol, Npack)      
             end if
-
-            !print *, ' cccc'
-            !print *, faceR(:,fr_Flowrate)
 
             Npack => npack_facePS(faceCol)
             if (Npack > 0) then
                 sync all
-                !% add the Q gradient term to the flowrate for shared faces
+                !% --- add the Q gradient term to the flowrate for shared faces
                 call face_Q_HeadGradient_shared (faceCol, Npack)
                 sync all
             end if
 
-            !% need another call to face_interpolate so that the Q_HeadGradient
-            !% does not change the upper boundary inflow conditon
+            !% --- need another call to face_interpolate so that the Q_HeadGradient
+            !%     does not change the upper boundary inflow conditon
             isBConly = .true.
             call face_interpolate_bc (isBConly)
 
-            !print *, ' dddd'
-            !print *, faceR(:,fr_Flowrate)
-            !print *, ' '
-            !stop 398705
         end if
-        
-        !print *, 'at end'
-        !print *, faceR(:,fr_Flowrate)
-        !stop 877386
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -209,20 +181,28 @@ module face
             fdn       => elemI(:,ei_Mface_dL)   
             idx_fBC   => faceP(1:npack_faceP(fp_BCup),fp_BCup)
             idx_fJ1   => faceP(1:npack_faceP(fp_J1),  fp_J1)
-            idx_fBoth => faceP(1:npack_faceP(fp_J1),  fp_J1_BCup)
+            idx_fBoth => faceP(1:npack_faceP(fp_J1_BCup),  fp_J1_BCup)
             idx_P     => BC%P%BCup(:)
         !%-------------------------------------------------------------------
         !% enforce stored inflow BC    
         faceR(idx_fBC, fr_Flowrate) = BC%flowRI(idx_P)
+
+        ! print *, 'fbc', idx_fBC
+        ! print *, 'fj1', idx_fJ1
+        ! print *, 'fboth',idx_fBoth
+        ! print *, 'fp', idx_P
+
+        ! stop 398705
 
         !% enforce zero flow on J1 faces
         faceR(idx_fJ1, fr_Flowrate) = zeroR
         faceR(idx_fJ1, fr_Velocity_u) = zeroR
         faceR(idx_fJ1, fr_Velocity_d) = zeroR
 
+        !rint *, 'face here ',faceR(idx_fBC,fr_Flowrate)
         !print *, 'in 22975 ',trim(subroutine_name)
         !print *, idx_P
-        !print *, idx_fBC
+        !rint *, idx_fBC
         !print *, BC%flowRI(idx_P(1))
         !print *, faceR(idx_fBC(1), fr_Flowrate)
         !print *, BC%flowRI(:)
@@ -296,6 +276,12 @@ module face
                 faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)
             endwhere
         end if
+
+        ! print *, 'is bc only? ',isBConly
+        ! print *, faceR(1:3,fr_Area_u)
+        ! print *, faceR(1:3,fr_Area_d)
+        ! print *, elemR(1:2, er_Area)
+        ! print *, elemI(1,ei_Mface_uL), idx_fBC
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -901,7 +887,7 @@ module face
             integer, intent(in) :: faceCol, Npack
             integer, pointer :: thisP(:), eup(:), edn(:)
             real(8), pointer :: fQ(:), eArea(:), eHead(:), eHeadAvg(:)
-            real(8), pointer :: eLength(:), dt, grav 
+            real(8), pointer :: eLength(:), dt, grav, qfac 
             character(64) :: subroutine_name = 'face_interp_Q_HeadGradeint'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -920,7 +906,8 @@ module face
             eHeadAvg => elemR(:,er_HeadAvg)
             eLength  => elemR(:,er_Length)
             dt       => setting%Time%Hydraulics%Dt
-            grav => setting%constant%gravity
+            grav     => setting%constant%gravity
+            qfac     => setting%Solver%QHgradFactor
 
         ! print *, ' '
         ! print *, 'in dQ term'
@@ -936,15 +923,37 @@ module face
         ! print *,  eHeadAvg(7)
         ! print *, ' ' 
         !%-------------------------------------------------------------------
-        !% adds term dt * grav A [ (dh/dx) - (dh_avg/dx) ]
-        fQ(thisP) = fQ(thisP) + dt * grav *                                         &
-            (                                                                       &
-                +( eArea(eup(thisP)) * ( eHead(eup(thisP)) - eHeadAvg(eup(thisP)) ) &
-                    / ( onehalfR * eLength(eup(thisP) ) ) )                         &
-                -( eArea(edn(thisP)) * ( eHead(edn(thisP)) - eHeadAvg(edn(thisP)) ) &
-                    / ( onehalfR * eLength(edn(thisP) ) ) )                         &
-            ) 
+        !% adds term dt * grav A [ (dh/dx) - (dh_avg/dx) ] where not zerovolume
+        ! where (.not. elemYN(thisP,eYN_isNearZeroVolume))
+        !     fQ(thisP) = fQ(thisP) + qfac * dt * grav *                                         &
+        !         (                                                                       &
+        !             +( eArea(eup(thisP)) * ( eHead(eup(thisP)) - eHeadAvg(eup(thisP)) ) &
+        !                 / ( onehalfR * eLength(eup(thisP) ) ) )                         &
+        !             -( eArea(edn(thisP)) * ( eHead(edn(thisP)) - eHeadAvg(edn(thisP)) ) &
+        !                 / ( onehalfR * eLength(edn(thisP) ) ) )                         &
+        !         ) 
+        ! end where
 
+        !% --- for downstream flow
+        where (.not. elemYN(eup(thisP),eYN_isNearZeroVolume))
+            fQ(thisP) = fQ(thisP) + qfac * dt * grav                                    &
+               *( util_sign_with_ones(fQ(thisP)) + oneR ) * onehalfR                    &
+               *(                                                                       &
+                    +( eArea(eup(thisP)) * ( eHead(eup(thisP)) - eHeadAvg(eup(thisP)) ) &
+                        / ( onehalfR * eLength(eup(thisP) ) ) )                         &
+                ) 
+        end where
+
+        !% --- for upstream flow
+        where (.not. elemYN(edn(thisP),eYN_isNearZeroVolume))
+            fQ(thisP) = fQ(thisP) + qfac * dt * grav                                    &
+               *( util_sign_with_ones(fQ(thisP)) - oneR ) * onehalfR                    &
+               *(                                                                       &
+                    -( eArea(edn(thisP)) * ( eHead(edn(thisP)) - eHeadAvg(edn(thisP)) ) &
+                        / ( onehalfR * eLength(edn(thisP) ) ) )                         &
+                ) 
+        end where
+      
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%face) &

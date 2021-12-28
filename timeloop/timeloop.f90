@@ -60,6 +60,9 @@ contains
             real(8), pointer :: Qlateral(:), Qrate(:)
             integer, pointer :: thisCol, npack, thisP(:), thisBC(:)
             integer, pointer :: sImage(:), eIdx(:)
+
+            integer, allocatable :: tempP(:)
+
         !%--------------------------------------------------------------------
         !% Preliminaries
             if (icrash) return
@@ -128,11 +131,15 @@ contains
         !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
         do while (setting%Time%Now <= (setting%Time%End - dtTol))
 
+            !print *, elemYN(1:12,eYN_isNearZeroVolume)
+
             !% store the runoff from hydrology on a hydrology step
             if (doHydrology) call tl_hydrology()
 
+            !% --- main hydraulics time steop
             if (doHydraulics) then        
 
+                !% --- set a clock tick for hydraulic loop evaluation
                 if (this_image()==1) then
                     call system_clock(count=cval,count_rate=crate,count_max=cmax)
                     setting%Time%WallClock%HydraulicsStart = cval
@@ -140,16 +147,7 @@ contains
 
                 !% HACK -- much of the following needs to be combined into an upper level BC subroutine
 
-                ! do mm =1,N_elem(1)
-                !     print *, mm, elemR(mm,er_Flowrate)
-                ! end do
-
-                !do mm=1,N_face(1)
-                !    print *, mm, faceR(mm,fr_Flowrate)
-                !end do
-                !stop 397085
-
-                !% get updated boundary conditions
+                !% --- get updated boundary conditions
                 !% ***** BUGCHECK -- the lateral flowrate is cumulative of BC and hydrology, 
                 !% ***** so check that it is zeroed before the first BC added.
                 call bc_update() 
@@ -159,22 +157,22 @@ contains
                 Qlateral => elemR(:,er_FlowrateLateral)
                 Qlateral(:) = zeroR 
         
-                !% add inflow BC to lateral inflow
+                !% --- add lateral inflow BC to lateral inflow accumulator
                 npack   => npack_elemP(ep_BClat)
-                !% note that thisP and thisBC must be the same size or there is something wrong
+                !% --- note that thisP and thisBC must be the same size or there is something wrong
                 thisP   => elemP(1:npack,ep_BClat)
                 thisBC  => BC%P%BClat
                 Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
 
-                !% add subcatchment inflows
+                !% --- add subcatchment inflows
                 if (useHydrology) then 
                     sImage => subcatchI(:,si_runoff_P_image)
                     eIdx   => subcatchI(:,si_runoff_elemIdx)
-                    !% using the full runoff rate for this period
+                    !% --- using the full runoff rate for this period
                     Qrate => subcatchR(:,sr_RunoffRate_baseline)
 
                     do mm = 1,SWMM_N_subcatch
-                        !% only if this image holds this node
+                        !% --- only if this image holds this node
                         if (this_image() .eq. sImage(mm)) then
                             Qlateral(eIdx(mm)) = Qlateral(eIdx(mm)) + Qrate(mm)
                         end if
@@ -183,9 +181,10 @@ contains
                     !% continue
                 end if
 
-                !% perform hydraulic routing
+                !% --- perform hydraulic routing
                 call tl_hydraulics()
 
+                !% --- close the clock tick for hydraulic loop evaluation
                 if (this_image()==1) then
                     call system_clock(count=cval,count_rate=crate,count_max=cmax)
                     setting%Time%WallClock%HydraulicsStop = cval
@@ -197,12 +196,12 @@ contains
 
             end if
 
-
+            !% --- handle output reporting
             if (setting%Output%Report%provideYN) then 
 
                 sync all
 
-                !% set a time tick
+                !% set a time tick for output timing
                 if (this_image()==1) then
                     call system_clock(count=cval,count_rate=crate,count_max=cmax)
                     setting%Time%WallClock%LoopOutputStart = cval
@@ -219,7 +218,7 @@ contains
 
                 sync all
 
-                !% end the time tick and record net time in output processing
+                !% close the time tick for output timing
                 if (this_image()==1) then
                     call system_clock(count=cval,count_rate=crate,count_max=cmax)
                     setting%Time%WallClock%LoopOutputStop = cval
@@ -230,14 +229,25 @@ contains
                 end if
             end if    
 
+            !% --- restart the hydraulics time tick
             if (this_image()==1) then
                 call system_clock(count=cval,count_rate=crate,count_max=cmax)
                 setting%Time%WallClock%HydraulicsStart = cval
             end if 
 
-            !% increment the time step and counters for the next time loop
+            !% ---increment the time step and counters for the next time loop
             call tl_increment_counters(doHydraulics, doHydrology)
 
+            !% --- check for a crash
+            if (icrash) then
+                if ((setting%Output%Report%provideYN) .and. &
+                (.not. setting%Output%Report%suppress_MultiLevel_Output)) then
+                    call outputML_store_data (.true.)
+                end if
+                exit
+            end if
+
+            !% --- close the hydraulics time tick
             if (this_image()==1) then
                 call system_clock(count=cval,count_rate=crate,count_max=cmax)
                 setting%Time%WallClock%HydraulicsStop = cval
@@ -246,20 +256,12 @@ contains
                     + setting%Time%WallClock%HydraulicsStop &
                     - setting%Time%WallClock%HydraulicsStart
             end if 
+            
+        end do  !% end of time loop
 
-            !% check for a crash
-            if (icrash) then
-                if ((setting%Output%Report%provideYN) .and. &
-                (.not. setting%Output%Report%suppress_MultiLevel_Output)) then
-                    call outputML_store_data (.true.)
-                end if
-                exit
-            end if
-        end do
-
-        !print *, 'finished timeloop'
         sync all
 
+        !% --- close the timemarch time tick
         if (this_image() == 1) then
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%TimeMarchEnd= cval
@@ -355,6 +357,17 @@ contains
         !%      be in geometry routines.
         elemYN(:,eYN_IsAdhocFlowrate) = .false.
 
+        ! print *, ' '
+        ! print *, ' ------------------'
+        ! print *, 'in hydraulics '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% call the RK2 time-march, depending on the type of solver
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
@@ -371,6 +384,13 @@ contains
                 stop 1001 !% need error statement
         end select
 
+        ! print *, 'end  hydraulics '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+
+        !print *, 'in hydraulics ',faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+
         !%-------------------------------------------------------------------
         !% closing
             if (setting%Debug%File%timeloop) &
@@ -378,13 +398,128 @@ contains
     end subroutine tl_hydraulics
 !%
 !%==========================================================================
+
 !%==========================================================================
+!%
+    subroutine tl_increment_counters(doHydraulics, doHydrology)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% increments the hydrology and hydraulics step counters and
+        !%-------------------------------------------------------------------
+        !% Declarations
+            logical, intent(inout) :: doHydraulics, doHydrology
+            logical, pointer       :: useHydrology, useHydraulics
+            real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
+            real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
+            real(8)                :: nextTime, nextTimeLocal
+            real(8), pointer       :: dtTol, timeNow, dtHydraulics
+            integer                :: minImg
+            integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
+            character(64)          :: subroutine_name = 'tl_increment_counters'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%--------------------------------------------------------------------
+        !% Aliases
+            hydraulicStep => setting%Time%Hydraulics%Step
+            hydrologyStep => setting%Time%Hydrology%Step
+            dtHydraulics  => setting%Time%Hydraulics%Dt
+            timeNow       => setting%Time%Now
+            step          => setting%Time%Step
+            reportStep    => setting%Output%Report%ThisStep
+            dtTol         => setting%Time%DtTol
+
+            nextHydraulicsTime => setting%Time%Hydraulics%NextTime
+            nextHydrologyTime  => setting%Time%Hydrology%NextTime
+
+            lastHydraulicsTime => setting%Time%Hydraulics%LastTime
+            lastHydrologyTime  => setting%Time%Hydrology%LastTime
+
+            useHydrology  => setting%Simulation%useHydrology
+            useHydraulics => setting%Simulation%useHydraulics
+        !%--------------------------------------------------------------------
+
+        !% --- get the timestep and the next time for hydraulics
+        if (doHydraulics) then
+            call tl_update_hydraulics_timestep()
+        else
+            nextHydraulicsTime = setting%Time%End + tenR*DtTol
+        end if    
+
+
+        !% --- The NextHydrologyTime is updated in SWMM, here we just need to
+        !%     provide a large number if hydrology isn't used
+        if (.not. useHydrology) then
+            nextHydrologyTime = setting%Time%End + tenR*DtTol
+        else
+            !% --- SWMM-C will not return a next hydrology time that is
+            !%     beyond the end of the simulation, so we need a special
+            !%     treatment for this case
+            if ((nextHydrologyTime .eq. lastHydrologyTime) .and. &
+                (timeNow > setting%Time%Start)) then 
+                nextHydrologyTime = setting%Time%End + tenR*DtTol
+            end if
+        end if
+
+        !% --- Ensure that all processors use the same time step.
+        !% --- find the minimum hydraulics time and store accross all processors
+        call co_min(nextHydraulicsTime)
+        !% --- take the nextTime as the minimum of either the Hydrology or Hydraulics time
+        !%     done on a single processor because they all should have identical nextHydrologyTIme
+        nextTime = min(nextHydraulicsTime, nextHydrologyTime)
+
+        !% --- note there is no need to broadcast across processors since co_min
+        !%     ensures that each processor gets the min value.
+
+        !% --- update the time step for the local processor (all have the same nextTime and lastHydraulicsTime)
+        dtHydraulics = nextTime - lastHydraulicsTime
+
+        doHydrology  = (abs(nextTime - nextHydrologyTime)  <= dtTol) .and. useHydrology
+        doHydraulics = (abs(nextTime - nextHydraulicsTime) <= dtTol) .and. useHydraulics
+
+        !nextTimeLocal = nextTime
+        !% Get the smallest nextTime across all the processors, and make that the
+        !% nextTime on all processors
+        !call co_min(dt)
+        !call co_min(nextTime)
+
+        ! if (nextTime == nextTimeLocal) then
+        !     minImg = this_image()
+        ! else
+        !     minImg = -1
+        ! end if
+        ! call co_max(minImg)
+        ! call co_broadcast(doHydraulics, minImg)
+        ! call co_broadcast(doHydrology, minImg)
+
+        if (util_output_must_report()) reportStep = reportStep + 1
+        if (doHydraulics) hydraulicStep = hydraulicStep + 1
+        if (doHydrology)  hydrologyStep = hydrologyStep + 1
+
+        step    = step + 1
+        timeNow = nextTime !timeNow + dt
+
+        !print *, 'timeNow  in tl_increment_counters',timeNow
+
+        call tl_command_line_step_output()
+
+        if (doHydraulics) LastHydraulicsTime = NextHydraulicsTime
+        if (doHydrology)  LastHydrologyTime  = NextHydrologyTime
+
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        end subroutine tl_increment_counters
+!%
+!%==========================================================================
+    !%==========================================================================
 !%
     subroutine tl_update_hydraulics_timestep()
         !%------------------------------------------------------------------
         !% Description:
         !% updates the timestep (dt) for hydraulics and computes the
-        !% setting.Time.Hydraulics.NextTime
+        !% setting.Time.Hydraulics.NextTime for the current processor
         !%------------------------------------------------------------------
         !% Declarations
             logical, pointer :: matchHydrologyStep, useHydrology
@@ -548,117 +683,6 @@ contains
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulics_timestep
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine tl_increment_counters(doHydraulics, doHydrology)
-        !%-------------------------------------------------------------------
-        !% Description:
-        !% increments the hydrology and hydraulics step counters and
-        !%-------------------------------------------------------------------
-        !% Declarations
-            logical, intent(inout) :: doHydraulics, doHydrology
-            logical, pointer       :: useHydrology, useHydraulics
-            real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
-            real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
-            real(8)                :: nextTime, nextTimeLocal
-            real(8), pointer       :: dtTol, timeNow, dtHydraulics
-            integer                :: minImg
-            integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
-            character(64)          :: subroutine_name = 'tl_increment_counters'
-        !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (icrash) return
-            if (setting%Debug%File%timeloop) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%--------------------------------------------------------------------
-        !% Aliases
-            hydraulicStep => setting%Time%Hydraulics%Step
-            hydrologyStep => setting%Time%Hydrology%Step
-            dtHydraulics  => setting%Time%Hydraulics%Dt
-            timeNow       => setting%Time%Now
-            step          => setting%Time%Step
-            reportStep    => setting%Output%Report%ThisStep
-            dtTol         => setting%Time%DtTol
-
-            nextHydraulicsTime => setting%Time%Hydraulics%NextTime
-            nextHydrologyTime  => setting%Time%Hydrology%NextTime
-
-            lastHydraulicsTime => setting%Time%Hydraulics%LastTime
-            lastHydrologyTime  => setting%Time%Hydrology%LastTime
-
-            useHydrology  => setting%Simulation%useHydrology
-            useHydraulics => setting%Simulation%useHydraulics
-        !%--------------------------------------------------------------------
-
-        !% get the timestep and the next time for hydraulics
-        if (doHydraulics) then
-            call tl_update_hydraulics_timestep()
-        else
-            nextHydraulicsTime = setting%Time%End + tenR*DtTol
-        end if    
-
-        !% brh20211209s the hydrology is updated as a setting in tl_hydrology
-        !rm nextTimeHydrology = (hydrologyStep + 1) * setting%Time%Hydrology%Dt
-
-        !% The NextHydrologyTime is updated in SWMM, here we just need to
-        !% provide a large number if hydrology isn't used
-        if (.not. useHydrology) then
-            nextHydrologyTime = setting%Time%End + tenR*DtTol
-        else
-            !% SWMM-C will not return a next hydrology time that is
-            !% beyond the end of the simulation, so we need a special
-            !% treatment for this case
-            if ((nextHydrologyTime .eq. lastHydrologyTime) .and. &
-                (timeNow > setting%Time%Start)) then 
-                nextHydrologyTime = setting%Time%End + tenR*DtTol
-            end if
-        end if
-
-        !print *, 'last times ',lastHydraulicsTime, lastHydrologyTime
-        !print *, 'next times ',nextHydraulicsTime, nextHydrologyTime
-
-        !% find the minimum hydraulics time and store accross all processors
-        call co_min(nextHydraulicsTime)
-        !% take the nextTime as the minimum of either the Hydrology or Hydraulics time
-        nextTime = min(nextHydraulicsTime, nextHydrologyTime)
-
-        doHydrology  = (abs(nextTime - nextHydrologyTime)  <= dtTol) .and. useHydrology
-        doHydraulics = (abs(nextTime - nextHydraulicsTime) <= dtTol) .and. useHydraulics
-
-        !nextTimeLocal = nextTime
-        !% Get the smallest nextTime across all the processors, and make that the
-        !% nextTime on all processors
-        !call co_min(dt)
-        !call co_min(nextTime)
-
-        ! if (nextTime == nextTimeLocal) then
-        !     minImg = this_image()
-        ! else
-        !     minImg = -1
-        ! end if
-        ! call co_max(minImg)
-        ! call co_broadcast(doHydraulics, minImg)
-        ! call co_broadcast(doHydrology, minImg)
-
-        if (util_output_must_report()) reportStep = reportStep + 1
-        if (doHydraulics) hydraulicStep = hydraulicStep + 1
-        if (doHydrology)  hydrologyStep = hydrologyStep + 1
-
-        step    = step + 1
-        timeNow = nextTime !timeNow + dt
-
-        !print *, 'timeNow  in tl_increment_counters',timeNow
-
-        call tl_command_line_step_output()
-
-        if (doHydraulics) LastHydraulicsTime = NextHydraulicsTime
-        if (doHydrology)  LastHydrologyTime  = NextHydrologyTime
-
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        end subroutine tl_increment_counters
 !%
 !%==========================================================================
 !%==========================================================================

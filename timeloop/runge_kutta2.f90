@@ -46,8 +46,30 @@ module runge_kutta2
         istep=1
         call rk2_step_ETM (istep)
 
+
+        ! print *, ' '
+        ! print *, 'after RK1step  '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         call update_auxiliary_variables (ETM)
+
+        ! print *, ' '
+        ! print *, 'after aux  '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
 
         !% --- junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
@@ -59,24 +81,95 @@ module runge_kutta2
             call ll_momentum_solve_JB (ETM)
         end if
 
+        ! print *, ' '
+        ! print *, 'after junction '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
+
         !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
+
+        ! print *, ' '
+        ! print *, 'after FR '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
 
         !% --- RK2 solution step  -- all face interpolation
         call face_interpolation(fp_all,ETM)
 
+        ! print *, ' '
+        ! print *, 'after face '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
+        ! print *, ' '
+        ! print *, 'after diag '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_values (ETM)
+
+        ! print *, ' '
+        ! print *, 'after adjust '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
 
         !% --- RK2 solution step -- RK2 second step for ETM
         istep=2
         call rk2_step_ETM (istep)
 
+        ! print *, ' '
+        ! print *, 'after  2nd step '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         call update_auxiliary_variables(ETM)
+
+        ! print *, ' '
+        ! print *, 'after aux'!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
 
         !% --- junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
@@ -88,18 +181,69 @@ module runge_kutta2
             call ll_momentum_solve_JB (ETM)
         end if
 
+        ! print *, ' '
+        ! print *, 'after junction '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
+        ! print *, ' '
+        ! print *, 'after Fr '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- RK2 solution step -- update all faces
         call face_interpolation(fp_all,ETM)
+        
+        ! print *, ' '
+        ! print *, 'after face 2 '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
 
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
+        ! print *, ' '
+        ! print *, 'after diag '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
         !% --- RK2 solution step -- make ad hoc adjustments
         call adjust_values (ETM)
 
+        ! print *, ' '
+        ! print *, 'after adjst 2 '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
+        ! print *, 'is small ',elemYN(1:3,eYN_isNearZeroVolume)
+        ! print *, 'volum ', elemR(1:3,er_Volume)
+        ! print *, 'vel   ', elemR(1:3,er_Velocity)
+        ! print *, 'head  ', elemR(1:3,er_Head)
+        ! print *, 'depth ', elemR(1:3,er_Depth)
+        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
+        ! print *, 'Qf    ', faceR(1:3,fr_Flowrate)
+
+        !stop 397063
         !%-----------------------------------------------------------------
         !% closing
             if (setting%Debug%File%runge_kutta2)  &
@@ -309,7 +453,10 @@ module runge_kutta2
         endif
 
         !% adjust elements with near-zero volume
-        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_ETM))
+        !% don't call this here as we need to ensure the momentum
+        !% is not suddenly updated just because the volume is during
+        !% the RK steps.
+        !call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_ETM))
 
     end subroutine rk2_continuity_step_ETM
 !%
@@ -382,16 +529,28 @@ module runge_kutta2
         !%
         if (icrash) return
         if (Npack > 0) then
+            !print *, '... vel    :',elemR(1:2,er_Velocity)
+
             !% momentum K source terms for different methods for ETM
             call ll_momentum_Ksource_CC (er_Ksource, thisPackCol, Npack)
+            !print *, '... Ksource :',elemR(1:2,er_Ksource)
+
             !% Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
+            !print *, '... sM      :',elemR(1:2,er_SourceMomentum)
+
             !% Common Gamma for momentum on channels and conduits for  ETM
             call ll_momentum_gamma_CC (er_GammaM, thisPackCol, Npack)
+            !print *, '... gamma   :',elemR(1:2,er_GammaM)
+
             !% Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
+            !print *, '... vel     :',elemR(1:2,er_Velocity)
+
             !% velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
+            !print *, '... vel     :',elemR(1:2,er_Velocity)
+
         end if
 
         !% junction branch momentum source

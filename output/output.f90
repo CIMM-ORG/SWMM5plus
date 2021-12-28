@@ -791,6 +791,7 @@ contains
         !% --- if storage limit is reached, combine the output, write to file,
         !% --- and reset the storage time level
         if ((thisLevel == setting%Output%StoredLevels) .or. (isLastStep)) then
+            
             setting%Output%NumberOfWriteSteps = setting%Output%NumberOfWriteSteps+1
             call outputML_combine_and_write_data (thisLevel, isLastStep)
             thisLevel = 0
@@ -859,8 +860,6 @@ contains
 
         nMaxElem = maxval(N_OutElem)
         thisE => thisElementOut(1:nMaxElem)
-        !allocate(thisE(nMaxElem), stat=allocation_status, errmsg=emsg)
-        !call util_allocate_check(allocation_status, emsg, 'thisE')
         thisE(:) = nullvalueI
 
         !% --- combine the data from all images
@@ -871,11 +870,13 @@ contains
             !% --- get the number of packed LOCAL element indexes
             npack = npack_elemP(ep_Output_Elements)[ii]
 
+            if (npack == 0) cycle !% if no elements to output, Lasti is unchanged
+
             !% --- store the coarray elements on this image
             thisE(1:npack) = elemP(1:npack,ep_Output_Elements)[ii]
 
             !% --- store the GLOBAL indexes for elements, SWMM links and SWMM nodes
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
+            !%     Open Coarrays doesn't support these type of array statements
             if (OpenCoarraysMethod) then
                 do kk=Lasti+1,Lasti+npack
                     OutElemFixedI(kk,oefi_elem_Gidx)      = elemI(thisE(kk-Lasti),ei_Gidx)[ii]
@@ -883,31 +884,28 @@ contains
                     OutElemFixedI(kk,oefi_node_Gidx_SWMM) = elemI(thisE(kk-Lasti),ei_node_Gidx_SWMM)[ii]
                 end do !%kk
             else
-                OutElemFixedI(Lasti+1:Lasti+npack,oefi_elem_Gidx)      = elemI(thisE(Lasti+1-Lasti:Lasti+npack-Lasti),ei_Gidx)[ii]
-                OutElemFixedI(Lasti+1:Lasti+npack,oefi_link_Gidx_SWMM) = elemI(thisE(Lasti+1-Lasti:Lasti+npack-Lasti),ei_link_Gidx_SWMM)[ii]
-                OutElemFixedI(Lasti+1:Lasti+npack,oefi_node_Gidx_SWMM) = elemI(thisE(Lasti+1-Lasti:Lasti+npack-Lasti),ei_node_Gidx_SWMM)[ii]
+                OutElemFixedI(Lasti+1:Lasti+npack,oefi_elem_Gidx)      = elemI(thisE(1:npack),ei_Gidx)[ii]
+                OutElemFixedI(Lasti+1:Lasti+npack,oefi_link_Gidx_SWMM) = elemI(thisE(1:npack),ei_link_Gidx_SWMM)[ii]
+                OutElemFixedI(Lasti+1:Lasti+npack,oefi_node_Gidx_SWMM) = elemI(thisE(1:npack),ei_node_Gidx_SWMM)[ii]
             end if
 
             !% --- store the real data
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
+            !%     Open Coarrays doesn't support these type of array statements
             if (OpenCoarraysMethod) then
-                do kk=Lasti+1,Lasti+npack
+                do pp=1,nLevel
                     do mm=1,nTypeElem
-                        do pp=1,nLevel
+                        do kk=Lasti+1,Lasti+npack
                             OutElemDataR(kk,mm,pp) =  elemOutR(kk-Lasti,mm,pp)[ii]
-                        end do !% pp
+                        end do !% kk
                     end do !% mm
-                end do !% kk
+                end do !% pp
             else
-                OutElemDataR(Lasti+1      :Lasti+npack      ,1:nTypeElem,1:nLevel) &
-                 =  elemOutR(Lasti+1-Lasti:Lasti+npack-Lasti,1:nTypeElem,1:nLevel)[ii]
+                OutElemDataR(Lasti+1:Lasti+npack,1:nTypeElem,1:nLevel) &
+                 =  elemOutR(      1:npack      ,1:nTypeElem,1:nLevel)[ii]
             end if
             !% increment Lasti for the next image
             Lasti = Lasti + npack
         end do !% images
-
-        !deallocate(thisE, stat=deallocation_status, errmsg=emsg)
-        !call util_deallocate_check(deallocation_status, emsg, 'thisE')
 
         !% --------------------------------------
         !% --- ELEMENT INDEX DATA
@@ -917,46 +915,47 @@ contains
 
         nMaxFace = maxval(N_OutFace)
         thisF => thisFaceOut(1:nMaxFace)
-        !allocate(thisF(nMaxFace), stat=allocation_status, errmsg=emsg)
-        !call util_allocate_check(allocation_status, emsg, 'thisF')
         thisF(:) = nullvalueI
 
         Lasti = 0 !% counter of the last element or face that has been stored
         do ii = 1,num_images()
+
             !% --- get the packed LOCAL face indexes
             npack = npack_faceP(fp_Output_Faces)[ii]
+
+            if (npack == 0) cycle !% if no elements to output, Lasti is unchanged
 
             !% --- store the coarray elements on this image
             thisF(1:npack) = faceP(1:npack,fp_Output_Faces)[ii]
 
             !% --- store the GLOBAL indexes for faces, SWMM links and SWMM nodes
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
+            !%     Open Coarrays doesn't support these type of array statements
             if (OpenCoarraysMethod) then
                 do kk=Lasti+1,Lasti+npack
                     OutFaceFixedI(kk,offi_face_Gidx)      = faceI(thisF(kk-Lasti),fi_Gidx)[ii]
                     OutFaceFixedI(kk,offi_node_Gidx_SWMM) = faceI(thisF(kk-Lasti),fi_node_idx_SWMM)[ii]
                 end do !% kk
             else
-                OutFaceFixedI(Lasti+1:Lasti+npack,offi_face_Gidx)      = faceI(thisF(Lasti+1-Lasti:Lasti+npack-Lasti),fi_Gidx)[ii]
-                OutFaceFixedI(Lasti+1:Lasti+npack,offi_node_Gidx_SWMM) = faceI(thisF(Lasti+1-Lasti:Lasti+npack-Lasti),fi_node_idx_SWMM)[ii]
+                OutFaceFixedI(Lasti+1:Lasti+npack,offi_face_Gidx)      = faceI(thisF(1:npack),fi_Gidx)[ii]
+                OutFaceFixedI(Lasti+1:Lasti+npack,offi_node_Gidx_SWMM) = faceI(thisF(1:npack),fi_node_idx_SWMM)[ii]
             end if
 
             !% --- store the real data
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
+            !%     Open Coarrays doesn't support these type of array statements
             if (OpenCoarraysMethod) then
-                do kk=Lasti+1,Lasti+npack
+                do pp=1,nLevel
                     do mm=1,nTypeFace
-                        do pp=1,nLevel
+                        do kk=Lasti+1,Lasti+npack
                             OutFaceDataR(kk,mm,pp) =  faceOutR(kk-Lasti,mm,pp)[ii]
-                        end do !% pp
+                        end do !% kk
                     end do !% mm
-                end do !% kk
+                end do !% pp
             else
                 OutFaceDataR(Lasti+1:Lasti+npack            ,1:nTypeFace,1:nLevel) &
                  =  faceOutR(Lasti+1-Lasti:Lasti+npack-Lasti,1:nTypeFace,1:nLevel)[ii]
             end if
 
-            !% increment Lasti for the next image
+            !% --- increment Lasti for the next image
             Lasti = Lasti + npack
         end do !% images()
 

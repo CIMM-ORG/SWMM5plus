@@ -2316,10 +2316,18 @@ contains
         !%---------------------------------------------------------------------
 
         if (error /= 0) then
-            write(*, "(A,i5,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name &
-                // " (see SWMM report file for more details)"
-            write(*, "(A)") "Report File Path: " // trim(setting%File%rpt_file)
-            stop 
+            write(*,*)
+            write(*,*)
+            write(*,*) "************************************************************"
+            write(*,*) "*   EPA-SWMM USER INPUT FATAL ERROR, SIMULATION STOPPED    *"
+            write(*,*) "************************************************************"
+            write(*,*) "EPA-SWMM Error Code: ", error
+            write(*,*) "Failure occurred in subroutine: "// trim(subroutine_name)
+            write(*,*) "See SWMM error list in report file, located at: "
+            write(*,*) trim(setting%File%rpt_file)
+            write(*,*) "SWMM User Manual (Appendix E) has details on error codes."
+            write(*,*)
+            stop 63455
         end if
     end subroutine print_api_error
 !%

@@ -23,6 +23,8 @@ module adjust
     public :: adjust_limit_by_zerovalues_singular
     public :: adjust_velocity
     public :: adjust_face_dynamic_limit
+    public :: adjust_zerovolumes_identify_all
+    public :: adjust_zerovolume_setvalues_all
    
 
     contains
@@ -70,10 +72,10 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_values
-    !%
-    !%==========================================================================
-    !%==========================================================================  
-    !%    
+!%
+!%==========================================================================
+!%==========================================================================  
+!%    
     subroutine adjust_limit_by_zerovalues (geocol, geozero, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -117,10 +119,10 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_limit_by_zerovalues
-    !%
-    !%==========================================================================  
-    !%==========================================================================  
-    !%    
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%    
     subroutine adjust_limit_by_zerovalues_singular (eIdx, geocol, geozero)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -151,11 +153,11 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_limit_by_zerovalues_singular
-    !%
-    !%==========================================================================  
-    !%==========================================================================  
-    !%
-    subroutine adjust_velocity (whichTM, velocityCol, volumeCol)
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%
+    subroutine adjust_velocity (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% employs velocity limiters and small volume treatments to limit 
@@ -163,7 +165,7 @@ module adjust
         !% The "velocityCol" is the velocity column in elemR that is adjusted
         !% The "volumeCol" is the volume column in elemR that is adjusted
         !%-----------------------------------------------------------------------------   
-        integer, intent(in) ::whichTM, velocityCol, volumeCol
+        integer, intent(in) ::whichTM
         integer, pointer :: thisCol_all, thisSmallVolumeCol, thisVelocityCol
         integer, pointer :: Npack
         character(64) :: subroutine_name = 'adjust_velocity'
@@ -179,21 +181,20 @@ module adjust
                 thisCol_all        => col_elemP(ep_CC_ALLtm)
                 ! thisCol_all        => col_elemP(ep_ALLtm)
                 thisSmallVolumeCol => col_elemP(ep_smallvolume_ALLtm)
-                thisVelocityCol    => col_elemR(er_Velocity)
             case (ETM)
                 !% HACK: small velocity adjustment should only be done for CC elements
                 !% since the velocity is solved there
                 thisCol_all        => col_elemP(ep_CC_ETM)
                 ! thisCol_all        => col_elemP(ep_ETM)
                 thisSmallVolumeCol => col_elemP(ep_smallvolume_ETM)
-                thisVelocityCol    => col_elemR(er_Velocity)        
+                !thisVelocityCol    => col_elemR(er_Velocity)        
             case (AC)
                 !% HACK: small velocity adjustment should only be done for CC elements
                 !% since the velocity is solved there
                 thisCol_all        => col_elemP(ep_CC_AC)
                 ! thisCol_all        => col_elemP(ep_AC)
                 thisSmallVolumeCol => col_elemP(ep_smallvolume_AC)    
-                thisVelocityCol    => col_elemR(er_Velocity)        
+                !thisVelocityCol    => col_elemR(er_Velocity)        
             case default
                 print *, 'error, default case should not be reached.'
                 stop 8368
@@ -204,7 +205,7 @@ module adjust
             Npack => npack_elemP(thisCol_all) 
             if (Npack > 0) then   
                 call adjust_smallvolumes_reset_old (Npack,thisCol_all)  
-                call adjust_smallvolumes_identify (Npack, thisCol_all, volumeCol)        
+                call adjust_smallvolumes_identify (Npack, thisCol_all, er_Volume)        
                 call adjust_smallvolumes_pack (Npack, thisCol_all, thisSmallVolumeCol)        
             end if
         end if
@@ -214,7 +215,7 @@ module adjust
             Npack => npack_elemP(thiscol_all)
             if (Npack > 0) then 
                 call adjust_velocity_limiter_reset_old (Npack, thiscol_all) 
-                call adjust_velocity_limiter (Npack, thiscol_all, velocityCol) 
+                call adjust_velocity_limiter (Npack, thiscol_all, er_Velocity) 
             end if
         end if
         
@@ -228,20 +229,24 @@ module adjust
         !             (Npack, thisSmallVolumeCol, velocityCol)
         !     end if
         ! end if
-        
+    
+        !print *, elemYN(1:2,eYN_isNearZeroVolume)
+        !print *, 'in adjust ',elemR(1:2,er_Flowrate)
+
         !% for extremely small volumes set velocity to zero
         if (setting%ZeroValue%UseZeroValues) then
              call adjust_zero_velocity_at_zero_volume    &
-                (Npack, thiscol_all, velocityCol, volumeCol)
+                (Npack, thiscol_all)
         end if
+        !print *, 'in adjust ',elemR(1:2,er_Flowrate)
         
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_velocity
-    !%
-    !%==========================================================================  
-    !%==========================================================================  
-    !%
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%
     subroutine adjust_face_dynamic_limit (facePackCol, isInterior)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -327,11 +332,95 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_face_dynamic_limit
-    !%
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================   
-    !%  
+!%
+!%  
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine adjust_zerovolumes_identify_all()
+        !%----------------------------------------------------------------------
+        !% Description
+        !% identifies all the zero volumes (without regard to TM or Diagnostic)
+        !%----------------------------------------------------------------------
+        !% Declarations:
+        !%----------------------------------------------------------------------
+            logical, pointer :: isZeroVolume(:)
+            real(8), pointer :: volume(:)
+        !%----------------------------------------------------------------------
+        !% Preliminaries
+        !%----------------------------------------------------------------------
+        !% Aliases
+            volume       => elemR(:,er_Volume)
+            isZeroVolume => elemYN(:,eYN_isNearZeroVolume)
+        !%----------------------------------------------------------------------
+
+        where (volume .le. setting%ZeroValue%Volume)
+            isZeroVolume = .true.
+        endwhere
+
+        !%----------------------------------------------------------------------
+        !% Closing
+    end subroutine adjust_zerovolumes_identify_all
+!%  
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine adjust_zerovolume_setvalues_all ()
+        !%----------------------------------------------------------------------
+        !% Description
+        !% sets all the values in near zero-volume cells
+        !%----------------------------------------------------------------------
+        !% DeclarationsP
+            logical, pointer :: isZeroVolume(:)
+            integer, pointer :: fdn(:), fup(:)
+            integer :: ii
+        !%----------------------------------------------------------------------
+        !% Preliminaries
+        !%----------------------------------------------------------------------
+        !% Aliases
+            isZeroVolume => elemYN(:,eYN_isNearZeroVolume)
+            fdn => elemI(:,ei_Mface_dL)
+            fup => elemI(:,ei_Mface_uL)
+        !%----------------------------------------------------------------------
+        
+        where (isZeroVolume)
+            elemR(:,er_Area)            = setting%ZeroValue%Area
+            elemR(:,er_Depth)           = setting%ZeroValue%Depth
+            elemR(:,er_dHdA)            = oneR / setting%ZeroValue%TopWidth
+            elemR(:,er_ell)             = setting%ZeroValue%Depth
+            elemR(:,er_Flowrate)        = zeroR
+            elemR(:,er_FroudeNumber)    = zeroR
+            elemR(:,er_Head)            = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
+            elemR(:,er_HeadAvg)         = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
+            elemR(:,er_HydDepth)        = setting%ZeroValue%Depth
+            elemR(:,er_HydRadius)       = setting%ZeroValue%Depth
+            elemR(:,er_Perimeter)       = setting%ZeroValue%TopWidth
+            elemR(:,er_Topwidth)        = setting%ZeroValue%TopWidth
+            elemR(:,er_Velocity)        = zeroR
+            elemR(:,er_Volume)          = setting%ZeroValue%Volume
+            elemR(:,er_WaveSpeed)       = zeroR
+        endwhere
+
+        !% On the upstream face set the downstream value
+        where ((isZeroVolume) .and. (elemI(:,ei_Mface_uL) .ne. nullValueI))
+            faceR(fup,fr_Area_d)        = setting%ZeroValue%Area
+            faceR(fup,fr_Head_d)        = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
+        end where
+
+        !% On the downstream face set the upstream value
+        where ((isZeroVolume) .and. (elemI(:,ei_Mface_dL) .ne. nullValueI))
+            faceR(fdn,fr_Area_u)        = setting%ZeroValue%Area
+            faceR(fdn,fr_Head_u)        = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
+        end where
+
+        !%----------------------------------------------------------------------
+        !% Closing    
+    end subroutine adjust_zerovolume_setvalues_all    
+!%     
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================   
+!%  
     subroutine adjust_Vshaped_flowrate (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -401,10 +490,17 @@ module adjust
                 w_dQ     => elemR(:,er_InterpWeight_dQ)
                 isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
 
+                !print *, ' face Q ',faceFlow(mapUp(thisP(1)))
+                !print *, ' elem Q ',elemFlow(thisP(1))
+                !print *, ' face Q ',faceFlow(mapDn(thisP(1)))
 
                 !% identify the V-shape condition
-                where  ( (util_sign_with_ones(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
-                        *(util_sign_with_ones(faceFlow(mapDn(thisP)) - elemFlow(thisP))) > 0)
+
+                !where  ( (util_sign_with_ones(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
+                !        *(util_sign_with_ones(faceFlow(mapDn(thisP)) - elemFlow(thisP))) > 0)
+
+                where  ( (util_sign_with_ones_or_zero(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
+                        *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP))) > 0)
 
                     !% averaging based on interpolation weights
                     elemFlow(thisP) =  (oneR - coef) * elemFlow(thisP) &
@@ -427,10 +523,10 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_Vshaped_flowrate
-    !%
-    !%==========================================================================  
-    !%==========================================================================  
-    !%
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%
     subroutine adjust_Vshaped_head_surcharged (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -511,9 +607,9 @@ module adjust
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine
         !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine adjust_smallvolumes_reset_old (Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -536,32 +632,33 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine  adjust_smallvolumes_reset_old
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine adjust_smallvolumes_identify (Npack, thisCol, thisVolumeCol)
-        !%  
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine adjust_smallvolumes_identify (Npack, thisCol, thisVolumeCol) 
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Identifies the small volumes
-        !%-----------------------------------------------------------------------------        
-        integer, intent(in) :: Npack, thisCol, thisVolumeCol   
-        integer, pointer :: thisP(:)
-        real(8), pointer :: volume(:), smallvolume(:), svRatio(:)
-        logical, pointer :: isSmallVol(:)
+        !% Identifies the small volumes out of a packed set
+        !%-----------------------------------------------------------------------------   
+        !% Declarations     
+            integer, intent(in) :: Npack, thisCol, thisVolumeCol   
+            integer, pointer :: thisP(:)
+            real(8), pointer :: volume(:), smallvolume(:), svRatio(:)
+            logical, pointer :: isSmallVol(:)
+            character(64) :: subroutine_name = 'adjust_smallvolumes_identify'
         !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_smallvolumes_identify'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Preliminaries
+            if (icrash) return              
+            if (setting%Debug%File%adjust) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------  
-        thisP       => elemP(1:Npack,thisCol)
-        volume      => elemR(:,thisVolumeCol)
-        smallvolume => elemR(:,er_SmallVolume)
-        svRatio     => elemR(:,er_SmallVolumeRatio)
-        isSmallVol  => elemYN(:,eYN_isSmallVolume)
+        !% Aliases
+            thisP       => elemP(1:Npack,thisCol)
+            volume      => elemR(:,thisVolumeCol)
+            smallvolume => elemR(:,er_SmallVolume)
+            svRatio     => elemR(:,er_SmallVolumeRatio)
+            isSmallVol  => elemYN(:,eYN_isSmallVolume)
         !%----------------------------------------------------------------------------- 
  
         !% Find the small volume elements and set the SV ratio
@@ -577,10 +674,10 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_smallvolumes_identify
-    !%  
-    !%==========================================================================
-    !%==========================================================================
-    !%
+
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine adjust_smallvolumes_pack (Npack, thisColP, thisNewPackCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -745,15 +842,17 @@ module adjust
     !%==========================================================================
     !%
     subroutine adjust_zero_velocity_at_zero_volume &
-        (Npack, thisCol, thisVelocityCol, thisVolumeCol)
+        (Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% sets velocity to zero in near-zero volume s
+        !% sets zeros to
+        !%  velocity, flowrate, and head gradient across a zero-volume element
         !%-----------------------------------------------------------------------------    
-        integer, intent(in) :: Npack, thisCol, thisVelocityCol, thisVolumeCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: velocity(:), volume(:)
+        integer, intent(in) :: Npack, thisCol
+        integer, pointer :: thisP(:), fup(:), fdn(:)
+        real(8), pointer :: velocity(:), volume(:), flowrate(:), head(:)
+        real(8), pointer :: fHeadUp(:), fHeadDn(:)
         logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
@@ -763,13 +862,24 @@ module adjust
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%----------------------------------------------------------------------------- 
         thisP    => elemP(1:Npack,thisCol)
-        volume   => elemR(:,thisVolumeCol)
-        velocity => elemR(:,thisVelocityCol)
+        volume   => elemR(:,er_Volume)
+        velocity => elemR(:,er_Velocity)
+        flowrate => elemR(:,er_Flowrate)
+        head     => elemR(:,er_Head)
+        fup      => elemI(:,ei_Mface_uL)
+        fdn      => elemI(:,ei_Mface_dL)
+        fHeadUp  => faceR(:,fr_Head_u)
+        fHeadDn  => faceR(:,fr_Head_d) 
         isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
         !%----------------------------------------------------------------------------- 
 
         where (volume(thisP) <= setting%ZeroValue%Volume)
             velocity(thisP) = zeroR
+            flowrate(thisP) = zeroR   !% brh20211227
+            !% the head on the upstream side of the downstream face
+            fHeadUp(fdn(thisP)) = head(thisP)
+            !% the head onthe downstream side of the usptream fzce
+            fHeadDn(fup(thisP)) = head(thisP)
             isAdhocFlowrate(thisP) = .true.
         endwhere    
 
