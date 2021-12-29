@@ -52,10 +52,10 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 100,
+        "StoredLevels" : 5000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 10
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : false,

@@ -683,7 +683,7 @@ contains
     setting%Weir%Transverse%SideFlowWeirCrestExponent = 1.0
     setting%Weir%Transverse%VillemonteCorrectionExponent = 0.385
 
-    setting%Weir%SideFlow%WeirExponent = 167
+    setting%Weir%SideFlow%WeirExponent = 1.67
     setting%Weir%SideFlow%WeirContractionFactor = 0.1
     setting%Weir%SideFlow%SideFlowWeirCrestExponent = 0.83
     setting%Weir%SideFlow%VillemonteCorrectionExponent = 0.385

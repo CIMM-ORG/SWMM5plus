@@ -200,7 +200,7 @@ module weir_elements
                     ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)        
                     SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
                 endif
-            
+
                 Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
                         CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
 

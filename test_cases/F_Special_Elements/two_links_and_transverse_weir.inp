@@ -67,7 +67,7 @@ C2               J3               Out1             100        0.015      0      
 [WEIRS]
 ;;Name           From Node        To Node          Type         CrestHt    Qcoeff     Gated    EndCon   EndCoeff   Surcharge  RoadWidth  RoadSurf   Coeff. Curve
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- -------- ---------- ---------- ---------- ---------- ----------------
-TRANSVERSE       J2               J3               TRANSVERSE   0          3.33       NO       0        0          YES       
+TRANSVERSE       J2               J3               TRANSVERSE   0          1.84       NO       0        0          YES       
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   

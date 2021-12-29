@@ -592,14 +592,16 @@ contains
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
 
-                    ! Bottom width + (lslope + rslope) * BankFullDepth
-                    elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
-                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
-                                                link%R(thisLink,lr_BreadthScale)
+                                                max(link%R(thisLink,lr_BreadthScale), twoR)
+
+                    ! Bottom width + (lslope + rslope) * BankFullDepth
+                    elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
+                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
+                    
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
