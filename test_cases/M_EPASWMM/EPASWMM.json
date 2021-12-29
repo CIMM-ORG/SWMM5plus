@@ -143,6 +143,17 @@
         },
         "SetupYN"  : true,
         "OutputYN" : true
+    },
+    "Solver" : {
+        "SubtractReferenceHead" : true,
+        "PreissmannSlot" : true,
+        "QinterpWithLocalHeadGradient" : true,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "QHgradFactor"      : 0.5,
+        "ReferenceHead"     : 0.0
     }
 }
  
