@@ -698,6 +698,10 @@ contains
     setting%Weir%Trapezoidal%SideFlowWeirCrestExponent = 1.0
     setting%Weir%Trapezoidal%VillemonteCorrectionExponent = 0.385
 
+    Setting%Orifice%SharpCrestedWeirCoefficient = 0.414
+    Setting%Orifice%TransverseWeirExponent = 1.5
+    Setting%Orifice%VillemonteCorrectionExponent = 0.385
+
     end subroutine define_settings_default
 !%
 !%==========================================================================
