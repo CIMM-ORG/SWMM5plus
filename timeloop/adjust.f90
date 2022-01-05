@@ -19,12 +19,26 @@ module adjust
     private
 
     public :: adjust_values
-    public :: adjust_limit_by_zerovalues
-    public :: adjust_limit_by_zerovalues_singular
-    public :: adjust_velocity
-    public :: adjust_face_dynamic_limit
-    public :: adjust_zerovolumes_identify_all
-    public :: adjust_zerovolume_setvalues_all
+
+    public :: adjust_limit_by_zerovalues  !% used in geometry
+    public :: adjust_limit_by_zerovalues_singular  !% used in geometry
+    public :: adjust_limit_velocity_max
+
+
+
+    public :: adjust_smallvolume_facevalues
+
+    public :: adjust_zerodepth_facevalues
+
+    
+    !public :: adjust_zerodepth_setvalues
+    
+
+    public :: adjust_zerodepth_identify_all
+    public :: adjust_smalldepth_identify_all
+    public :: adjust_zerodepth_bypack 
+    public :: adjust_smalldepth_bypack
+    public :: adjust_zerodepth_fluxes
    
 
     contains
@@ -33,17 +47,17 @@ module adjust
 !%==========================================================================
 !%
     subroutine adjust_values (whichTM)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Performs ad-hoc adjustments that may be needed for stability
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM  !% indicates which Time marching method
-        character(64) :: subroutine_name = 'adjust_values'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-              
+        !%------------------------------------------------------------------
+            integer, intent(in) :: whichTM  !% indicates which Time marching method
+            character(64) :: subroutine_name = 'adjust_values'
+        !%------------------------------------------------------------------
+            if (icrash) return
+            if (setting%Debug%File%adjust) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------      
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%ApplyYN) then   
             select case (setting%Adjust%Flowrate%Approach)
@@ -73,47 +87,45 @@ module adjust
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_values
 !%
-!%==========================================================================
+!%========================================================================== 
 !%==========================================================================  
-!%    
+!%        
     subroutine adjust_limit_by_zerovalues (geocol, geozero, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Applies either the ZeroValue limiter (geozero) or zeroR as a lower limit to the
-        !% geometry variable in elemR(:,geocol)
+        !% This applies a zero value limiter for a packed array that is not
+        !% a priori limited to zero value elements
         !%-----------------------------------------------------------------------------
+        !logical, intent(in) :: isreset
         integer, intent(in) :: geocol, thisCol
         real(8), intent(in) :: geozero
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: geovalue(:)    
-        logical, pointer :: NearZeroVolume(:)   
+        !logical, pointer :: NearZeroDepth(:),   isSmallDepth(:)   
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        Npack    => npack_elemP(thisCol)  
-        geovalue => elemR(:,geocol)
-        NearZeroVolume => elemYN(:,eYN_isNearZeroVolume)
+        Npack        => npack_elemP(thisCol)  
+        geovalue     => elemR(:,geocol)
+        !isZeroDepth  => elemYN(:,eYN_isZeroDepth)
+        !isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
-            !% reset the NearZeroVolumes
-            NearZeroVolume(thisP) = .false.
-            
-            if (setting%ZeroValue%UseZeroValues) then
-                where (geovalue(thisP) < geozero)
+            where (geovalue(thisP) < geozero)
                     geovalue(thisP) = geozero
-                    NearZeroVolume(thisP) = .true.
-                endwhere
-            else
-                where (geovalue(thisP) < zeroR)
-                    geovalue(thisP) = zeroR
-                    NearZeroVolume(thisP) = .true.
-                endwhere  
-            end if
+            endwhere
+            ! if (isreset) then
+            !     NearZeroDepth(thisP) = .false.
+            !     where (geovalue(thisP) <= geozero)
+            !         NearZeroDepth(thisP) = .true.
+            !         isSmallDepth(thisP) = .false.
+            !     end where
+            ! end if
         end if    
 
         if (setting%Debug%File%adjust) &
@@ -140,15 +152,9 @@ module adjust
         !%-----------------------------------------------------------------------------
         geovalue => elemR(:,geocol)
         !%-----------------------------------------------------------------------------
-        if (setting%ZeroValue%UseZeroValues) then
-            if (geovalue(eIdx) < geozero) then
-                geovalue(eIdx) = geozero
-            end if
-        else
-            if (geovalue(eIdx) < zeroR) then
-                geovalue(eIdx) = zeroR
-            end if 
-        end if 
+        if (geovalue(eIdx) < geozero) then
+            geovalue(eIdx) = geozero
+        end if
 
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -157,289 +163,513 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine adjust_velocity (whichTM)
-        !%-----------------------------------------------------------------------------
+    subroutine adjust_limit_velocity_max (whichTM)
+        !%------------------------------------------------------------------
         !% Description:
         !% employs velocity limiters and small volume treatments to limit 
-        !% destabilizing velocities.
-        !% The "velocityCol" is the velocity column in elemR that is adjusted
-        !% The "volumeCol" is the volume column in elemR that is adjusted
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) ::whichTM
-        integer, pointer :: thisCol_all, thisSmallVolumeCol, thisVelocityCol
-        integer, pointer :: Npack
-        character(64) :: subroutine_name = 'adjust_velocity'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        select case (whichTM)
-            case (ALLtm)
-                !% HACK: small velocity adjustment should only be done for CC elements
-                !% since the velocity is solved there
-                thisCol_all        => col_elemP(ep_CC_ALLtm)
-                ! thisCol_all        => col_elemP(ep_ALLtm)
-                thisSmallVolumeCol => col_elemP(ep_smallvolume_ALLtm)
-            case (ETM)
-                !% HACK: small velocity adjustment should only be done for CC elements
-                !% since the velocity is solved there
-                thisCol_all        => col_elemP(ep_CC_ETM)
-                ! thisCol_all        => col_elemP(ep_ETM)
-                thisSmallVolumeCol => col_elemP(ep_smallvolume_ETM)
-                !thisVelocityCol    => col_elemR(er_Velocity)        
-            case (AC)
-                !% HACK: small velocity adjustment should only be done for CC elements
-                !% since the velocity is solved there
-                thisCol_all        => col_elemP(ep_CC_AC)
-                ! thisCol_all        => col_elemP(ep_AC)
-                thisSmallVolumeCol => col_elemP(ep_smallvolume_AC)    
-                !thisVelocityCol    => col_elemR(er_Velocity)        
-            case default
-                print *, 'error, default case should not be reached.'
-                stop 8368
-        end select
-        
-        !% reset the small volumes for flow/velocity limit computations
-        if (setting%SmallVolume%UseSmallVolumesYN) then
-            Npack => npack_elemP(thisCol_all) 
-            if (Npack > 0) then   
-                call adjust_smallvolumes_reset_old (Npack,thisCol_all)  
-                call adjust_smallvolumes_identify (Npack, thisCol_all, er_Volume)        
-                call adjust_smallvolumes_pack (Npack, thisCol_all, thisSmallVolumeCol)        
-            end if
-        end if
-        
+        !% destabilizing large velocities.
+        !%------------------------------------------------------------------  
+            integer, intent(in) :: whichTM
+            integer, pointer :: thisCol_all, Npack, thisP(:)
+            real(8), pointer :: vMax, velocity(:)
+            character(64) :: subroutine_name = 'adjust_velocity'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (.not. setting%Limiter%Velocity%UseLimitMaxYN) return
+            if (icrash) return
+            if (setting%Debug%File%adjust) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            !% small velocity adjustment should only be done for CC elements
+            !% since the velocity is solved there,
+            select case (whichTM)
+                case (ALLtm)
+                    thisCol_all => col_elemP(ep_CC_ALLtm)
+                case (ETM)
+                    thisCol_all => col_elemP(ep_CC_ETM)       
+                case (AC)
+                    thisCol_all => col_elemP(ep_CC_AC)        
+                case default
+                    print *, 'error, default case should not be reached.'
+                    stop 8368
+            end select
+        !%-------------------------------------------------------------------
+        !% Aliases
+            Npack     => npack_elemP(thisCol_all)
+            if (Npack < 1) return
+            thisP     => elemP(1:Npack,thisCol_all)
+            velocity  => elemR(:,er_Velocity)
+            vMax      => setting%Limiter%Velocity%Maximum
+        !%------------------------------------------------------------------ 
         !% apply ad-hoc velocity limiter
-        if (setting%Limiter%Velocity%UseLimitMaxYN) then
-            Npack => npack_elemP(thiscol_all)
-            if (Npack > 0) then 
-                call adjust_velocity_limiter_reset_old (Npack, thiscol_all) 
-                call adjust_velocity_limiter (Npack, thiscol_all, er_Velocity) 
-            end if
-        end if
-        
-        !% For small volumes, compute a velocity that is blended from
-        !% the update value and a Chezy-Manning computed using the 
-        !% free surface slope of the element
-        ! if (setting%SmallVolume%UseSmallVolumesYN) then
-        !     Npack => npack_elemP(thisSmallVolumeCol)
-        !     if (Npack > 0) then
-        !         call adjust_velocity_smallvolume_blended    &
-        !             (Npack, thisSmallVolumeCol, velocityCol)
-        !     end if
-        ! end if
-    
-        !print *, elemYN(1:2,eYN_isNearZeroVolume)
-        !print *, 'in adjust ',elemR(1:2,er_Flowrate)
-
-        !% for extremely small volumes set velocity to zero
-        if (setting%ZeroValue%UseZeroValues) then
-             call adjust_zero_velocity_at_zero_volume    &
-                (Npack, thiscol_all)
-        end if
-        !print *, 'in adjust ',elemR(1:2,er_Flowrate)
-        
+        where (abs(velocity(thisP)) > vMax)
+            velocity(thisP) = sign( 0.99 * vMax, velocity(thisP) )
+        endwhere 
+        !%------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_velocity
+    end subroutine adjust_limit_velocity_max
 !%
 !%==========================================================================  
-!%==========================================================================  
-!%
-    subroutine adjust_face_dynamic_limit (facePackCol, isInterior)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% This subroutine calculates the face valocity and adjusts for limiter
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: facePackCol
-        logical, intent(in) :: isInterior
-        integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: f_area_u(:), f_area_d(:), f_velocity_u(:), f_velocity_d(:)
-        real(8), pointer :: f_flowrate(:), zeroValue, vMax
-        character(64) :: subroutine_name = 'adjust_face_dynamic_limit'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        f_area_u     => faceR(:,fr_Area_u)
-        f_area_d     => faceR(:,fr_Area_d)
-        f_velocity_u => faceR(:,fr_Velocity_u)
-        f_velocity_d => faceR(:,fr_Velocity_d)
-        f_flowrate   => faceR(:,fr_Flowrate)
-        zeroValue    => setting%ZeroValue%Area
-        vMax         => setting%Limiter%Velocity%Maximum
-        !%-----------------------------------------------------------------------------
-        if (isInterior) then
-            !% face velocity calculation at the interior faces
-            Npack => npack_faceP(facePackCol)
-            thisP => faceP(1:Npack,facePackCol)
-        else
-            !% face velocity calculation at the shared faces
-            Npack => npack_facePS(facePackCol)
-            thisP => facePS(1:Npack,facePackCol)
-        end if
-
-        if (Npack > 0) then
-            if (setting%ZeroValue%UseZeroValues) then
-                !% ensure face area_u is not smaller than zerovalue
-                where (f_area_u(thisP) < zeroValue)
-                    f_area_u(thisP) = zeroValue
-                endwhere
-                !% ensure face area_d is not smaller than zerovalue
-                where (f_area_d(thisP) < zeroValue)
-                    f_area_d(thisP) = zeroValue
-                endwhere
-
-                where (f_area_u(thisP) >= zeroValue)
-                    f_velocity_u(thisP) = f_flowrate(thisP)/f_area_u(thisP)
-                endwhere
-
-                where (f_area_d(thisP) >= zeroValue)
-                    f_velocity_d(thisP) = f_flowrate(thisP)/f_area_d(thisP)
-                endwhere
-            else
-                where (f_area_u(thisP) < zeroR)
-                    f_area_u(thisP) = zeroR
-                endwhere 
-
-                where (f_area_d(thisP) < zeroValue)
-                    f_area_d(thisP) = zeroR
-                endwhere 
-
-                where (f_area_u(thisP) >= zeroR)
-                    f_velocity_u(thisP) = f_flowrate(thisP)/f_area_u(thisP)
-                endwhere
-
-                where (f_area_d(thisP) >= zeroR)
-                    f_velocity_d(thisP) = f_flowrate(thisP)/f_area_d(thisP)
-                endwhere
-            end if
-
-            !%  limit high velocities
-            if (setting%Limiter%Velocity%UseLimitMaxYN) then
-                where(abs(f_velocity_u(thisP))  > vMax)
-                    f_velocity_u(thisP) = sign(0.99 * vMax, f_velocity_u(thisP))
-                endwhere
-
-                where(abs(f_velocity_d(thisP))  > vMax)
-                    f_velocity_d(thisP) = sign(0.99 * vMax, f_velocity_d(thisP))
-                endwhere
-            end if
-        end if
-        
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_face_dynamic_limit
-!%
-!%  
-!%==========================================================================
 !%==========================================================================
 !%
-    subroutine adjust_zerovolumes_identify_all()
+    subroutine adjust_smallvolume_facevalues (whichTM)
         !%----------------------------------------------------------------------
         !% Description
-        !% identifies all the zero volumes (without regard to TM or Diagnostic)
+        !% sets the face fluxes to the CM for outflows from a smallvolume element
+        !% call with thisCol=0 to do all elements
         !%----------------------------------------------------------------------
         !% Declarations:
-        !%----------------------------------------------------------------------
-            logical, pointer :: isZeroVolume(:)
-            real(8), pointer :: volume(:)
+            integer, intent(in) :: whichTM
+            logical, pointer :: isSmallVol(:)
+            integer, pointer :: fdn(:), fup(:), thisP(:)
+            integer, pointer :: Npack, thisCol
+            integer :: ii
+            real(8), pointer :: fQ(:), eQ(:)
         !%----------------------------------------------------------------------
         !% Preliminaries
         !%----------------------------------------------------------------------
         !% Aliases
-            volume       => elemR(:,er_Volume)
-            isZeroVolume => elemYN(:,eYN_isNearZeroVolume)
+            select case (whichTM)
+            case (ALLtm)
+                thisCol => col_elemP(ep_CC_ALLtm)
+            case (ETM)
+                thisCol => col_elemP(ep_CC_ETM)    
+            case (AC)
+                thisCol => col_elemP(ep_CC_AC)       
+            case default
+                print *, 'error, default case should not be reached.'
+                stop 83655
+            end select
+            isSmallVol => elemYN(:,eYN_isSmallDepth)
+            fdn        => elemI(:,ei_Mface_dL)
+            fup        => elemI(:,ei_Mface_uL)
+            fQ         => faceR(:,fr_Flowrate)
+            eQ         => elemR(:,er_Flowrate)
+            Npack      => npack_elemP(thisCol)
+            if (Npack .le. 0) return
+            thisP => elemP(1:Npack,thisCol)
         !%----------------------------------------------------------------------
+        
+        !% --- a small volume can have an inflow from faces interpolated faces
+        !%     but the outflow is limited to the CM outflow
+        !%     Note the following will seg fault if used on JB or JM cells
 
-        where (volume .le. setting%ZeroValue%Volume)
-            isZeroVolume = .true.
+        where ( isSmallVol(thisP) )
+            !% set the downstream face flowrate to zero or keep the value if it is negative (inflow)
+            fQ(fdn(thisP)) = onehalfR * ( fQ(fdn(thisP)) - abs( fQ(fdn(thisP)) ) )
+        end where
+
+    
+        !% if the value is now zero, use the element value for the face flux
+        where ( (isSmallVol(thisP)) .and. ( abs(faceR(fdn(thisP),fr_flowrate)) < setting%Eps%Velocity) )
+            fQ(fdn(thisP)) = eQ(thisP)
+        end where
+
+
+        where (isSmallVol(thisP)) 
+            !% set the upstream face flowrate to zero or keep the value if it is positive (inflow)    
+            fQ(fup(thisP)) = onehalfR * ( fQ(fup(thisP)) + abs( fQ(fup(thisP))) )
+        end where
+
+        !% if the value is now zero, use the element value for the face flux
+        where ( (isSmallVol(thisP)) .and. ( abs(faceR(fup(thisP),fr_flowrate)) < setting%Eps%Velocity) )
+            fQ(fup(thisP)) = eQ(thisP)
+        end where
+
+    end subroutine adjust_smallvolume_facevalues
+!%   
+!%==========================================================================    
+!%==========================================================================
+!%
+    subroutine adjust_zerodepth_identify_all()
+        !%------------------------------------------------------------------
+        !% Description
+        !% identifies all the zero depths (without regard to TM or Diagnostic)
+        !%------------------------------------------------------------------
+        !% Declarations:
+        !%------------------------------------------------------------------
+            logical, pointer :: isZeroDepth(:), isAdHocQ(:), isSmallDepth(:)
+            real(8), pointer :: depth0
+            real(8), pointer :: eDepth(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            depth0       => setting%ZeroValue%Depth
+            eDepth       => elemR(:,er_Depth)
+            isZeroDepth  => elemYN(:,eYN_isZeroDepth)
+            isSmallDepth => elemYN(:,eYN_isSmallDepth)
+        !%------------------------------------------------------------------
+
+        isZeroDepth = .false.
+
+        where (eDepth .le. depth0)
+            isZeroDepth   = .true.
+            isSmallDepth = .false.
         endwhere
 
         !%----------------------------------------------------------------------
         !% Closing
-    end subroutine adjust_zerovolumes_identify_all
+    end subroutine adjust_zerodepth_identify_all
 !%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_smalldepth_identify_all()
+        !%------------------------------------------------------------------
+        !% Description
+        !% identifies all the small depths (without regard to TM or Diagnostic)
+        !%------------------------------------------------------------------
+        !% Declarations:
+        !%------------------------------------------------------------------
+            logical, pointer :: isZeroDepth(:), isAdHocQ(:), isSmallDepth(:)
+            real(8), pointer :: depth0, depthS
+            real(8), pointer :: eDepth(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+        !%------------------------------------------------------------------
+        !% Aliases
+            depth0       => setting%ZeroValue%Depth
+            depthS       => setting%SmallDepth%DepthCutoff
+            eDepth       => elemR(:,er_Depth)
+            isSmallDepth => elemYN(:,eYN_isSmallDepth)
+        !%------------------------------------------------------------------
+
+        isSmallDepth = .false.
+
+        where ((eDepth .le. depthS) .and. (eDepth > depth0) )
+            isSmallDepth   = .true.
+        endwhere
+
+        !%----------------------------------------------------------------------
+        !% Closing
+    end subroutine adjust_smalldepth_identify_all
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_zerodepth_bypack (thisCol)
+        !% -----------------------------------------------------------------
+        !% Description:
+        !% thisCol must be one of the ZeroDepth packed arrays that identifies
+        !% all the (near) zero depth locations.
+        !% -----------------------------------------------------------------
+            integer, intent(in)  :: thisCol
+            integer, pointer :: npack, thisP(:)
+        !% -----------------------------------------------------------------
+        !% Aliases
+            npack   => npack_elemP(thisCol)
+            if (npack < 1) return
+            thisP   => elemP(1:npack,thisCol)
+        !% -----------------------------------------------------------------
+
+        elemR(thisP,er_Area)         = setting%ZeroValue%Area
+        elemR(thisP,er_Depth)        = setting%ZeroValue%Depth
+        elemR(thisP,er_dHdA)         = oneR / setting%ZeroValue%TopWidth
+        elemR(thisP,er_ell)          = setting%ZeroValue%Depth
+        elemR(thisP,er_Flowrate)     = zeroR
+        elemR(thisP,er_FroudeNumber) = zeroR
+        elemR(thisP,er_HydDepth)     = setting%ZeroValue%Depth
+        elemR(thisP,er_Perimeter)    = setting%ZeroValue%TopWidth + setting%ZeroValue%Depth
+        elemR(thisP,er_HydRadius)    = setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth)
+        elemR(thisP,er_TopWidth)     = setting%ZeroValue%TopWidth
+        elemR(thisP,er_Velocity)     = zeroR
+        elemR(thisP,er_WaveSpeed)    = zeroR
+        elemR(thisP,er_Head)    = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+        elemR(thisP,er_HeadAvg) = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+
+        !% only reset volume when it gets too small
+        where (elemR(thisP,er_Volume) < setting%ZeroValue%Volume)
+            elemR(thisP,er_Volume) = (oneR + onetenthR) * setting%ZeroValue%Volume 
+        end where
+        
+    end subroutine adjust_zerodepth_bypack  
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_smalldepth_bypack ()
+        !% -----------------------------------------------------------------
+        !% Description
+        !% uses the ep_SmallDepth_CC_ALLtm pack to set the velocity and
+        !% flowrate on all small volumes
+        !% -----------------------------------------------------------------
+            integer          :: thisCol
+            integer, pointer :: npack, thisP(:)
+            real(8), pointer :: Area(:), BottomSlope(:), CMvelocity(:)
+            real(8), pointer :: Flowrate(:), HydRadius(:), ManningsN(:)
+            real(8), pointer :: Velocity(:), VelocityBlend(:), svRatio(:)
+            real(8), pointer :: SmallVolume(:), Volume(:)
+        !% -----------------------------------------------------------------
+            thisCol = ep_SmallDepth_CC_ALLtm
+            npack     => npack_elemP(thisCol)
+            if (npack < 1) return
+            thisP     => elemP(1:npack,thisCol)
+            Area          => elemR(:,er_Area)
+            BottomSlope   => elemR(:,er_BottomSlope)
+            CMvelocity    => elemR(:,er_SmallVolume_CMvelocity) 
+            Flowrate      => elemR(:,er_Flowrate)
+            HydRadius     => elemR(:,er_HydRadius)
+            ManningsN     => elemR(:,er_SmallVolume_ManningsN)   
+            SmallVolume   => elemR(:,er_SmallVolume)  
+            svRatio       => elemR(:,er_SmallVolumeRatio)
+            Velocity      => elemR(:,er_Velocity)
+            VelocityBlend => elemR(:,er_Temp01)
+            Volume        => elemR(:,er_Volume)
+        !% -----------------------------------------------------------------          
+        !% define the small volume ratio
+        svRatio(thisP) = Volume(thisP) / SmallVolume(thisP)       
+        
+        !% use the larger of available roughness values
+        ManningsN(thisP) = setting%SmallDepth%ManningsN
+        where (ManningsN(thisP) < elemR(thisP,er_Roughness))
+            ManningsN(thisP) = elemR(thisP,er_Roughness)
+        endwhere    
+
+        !% absolute chezy-manning velocity based on slope
+        CMvelocity(thisP) = ( HydRadius(thisP)**(twothirdR) ) * sqrt(abs(BottomSlope(thisP))) / ManningsN(thisP)
+                    
+        !% assign direction to CM velocity.
+        CMvelocity(thisP) = sign(CMvelocity(thisP), BottomSlope(thisP))
+
+        !% blend the computed velocity with CM velocity
+        VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
+                            + (oneR - svRatio(thisP)) * CMvelocity(thisP)
+
+        !% use the smaller velocity value, with the sign of the CM velocity
+        Velocity(thisP) = min(abs(CMvelocity(thisP)), velocity(thisP))
+        Velocity(thisP) = sign(Velocity(thisP),CMvelocity(thisP))
+
+        Flowrate(thisP) = Area(thisP) * Velocity(thisP)
+
+        !% -----------------------------------------------------------------
+        !% reset the temporary storage
+        VelocityBlend(thisP) = nullvalueR
+
+    end subroutine adjust_smalldepth_bypack   
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_zerodepth_fluxes(thisCol)
+        !% -----------------------------------------------------------------
+        !% Description:
+        !% thisCol must be one of the ZeroDepth packed arrays that identifies
+        !% all the (near) zero depth locations.
+        !% -----------------------------------------------------------------
+            integer, intent(in)  :: thisCol
+            integer, pointer :: npack, thisP(:)
+        !% -----------------------------------------------------------------
+        !% Aliases
+            npack   => npack_elemP(thisCol)
+            if (npack < 1) return
+            thisP   => elemP(1:npack,thisCol)
+        !% -----------------------------------------------------------------
+
+        elemR(thisP,er_Velocity) = zeroR
+        elemR(thisP,er_Flowrate) = zeroR
+
+
+    end subroutine
+!%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine adjust_zerovolume_setvalues_all ()
+    ! subroutine adjust_zerodepth_setvalues (thisCol)
+    !     !%----------------------------------------------------------------------
+    !     !% Description
+    !     !% sets all the values in near zero-depth cells
+    !     !%----------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: thisCol
+    !         logical, pointer :: isZeroDepth(:)
+    !         integer, pointer :: fdn(:), fup(:), thisP(:)
+    !         integer          :: Npack
+    !         integer :: ii
+    !     !%----------------------------------------------------------------------
+    !     !% Preliminaries
+    !     !%----------------------------------------------------------------------
+    !     !% Aliases
+    !         isZeroDepth => elemYN(:,eYN_isZeroDepth)
+    !         fdn         => elemI(:,ei_Mface_dL)
+    !         fup         => elemI(:,ei_Mface_uL)
+    !     !%----------------------------------------------------------------------
+
+    !     !% --- set up for either the entire array or a packed section   
+    !     if (thisCol == zeroI) then
+    !         Npack = N_elem(this_image())
+    !         thisP => elemI(1:Npack,ei_Lidx)
+    !     else
+    !         Npack = npack_elemP(thisCol)
+    !         if (Npack > 0) then
+    !             thisP => elemP(1:Npack,thisCol)
+    !         else
+    !             return
+    !         end if
+    !     end if
+      
+    !     !% HACK the following where statements were broken up as having too many
+    !     !% statements between where's caused a segmentation fault for large systems.  
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_Area)            = setting%ZeroValue%Area
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_Depth)           = setting%ZeroValue%Depth
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_dHdA)            = oneR / setting%ZeroValue%TopWidth
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_ell)             = setting%ZeroValue%Depth
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_Flowrate)        = zeroR
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_FroudeNumber)    = zeroR
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_HydDepth)        = setting%ZeroValue%Depth
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_Perimeter)       = setting%ZeroValue%TopWidth + setting%ZeroValue%Depth
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_HydRadius)       = setting%ZeroValue%Area  / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth)
+    !     end where
+    !     where (isZeroDepth(thisP))            
+    !         elemR(thisP,er_Topwidth)        = setting%ZeroValue%TopWidth
+    !     end where
+    !     where (isZeroDepth(thisP))            
+    !         elemR(thisP,er_Velocity)        = zeroR
+    !     end where
+    !     where (isZeroDepth(thisP))            
+    !         elemR(thisP,er_WaveSpeed)       = zeroR
+    !     end where
+    !     where (isZeroDepth(thisP))            
+    !         !% zerodepth forces the interpolation to use the neighbor, but later
+    !         !% sets the fluxes so that only inward fluxes apply (see adjust_zerodepth_facevalues)
+    !         !% Note that weights_uH and dH are unchanged on purpose!
+    !         elemR(thisP,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
+    !     end where
+    !     where (isZeroDepth(thisP))           
+    !         elemR(thisP,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
+    !     end where
+    !     where (isZeroDepth(thisP))            
+    !         elemR(thisP,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Maximum
+    !     end where
+    !     where (isZeroDepth(thisP))            
+    !         elemR(thisP,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Maximum
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_Head)            = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+    !     end where
+    !     where (isZeroDepth(thisP))
+    !         elemR(thisP,er_HeadAvg)         = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+    !     end where
+
+    !     !% don't reset the volume unless it gets smaller than 10% of zero value
+    !     where (elemR(thisP,er_Volume) < setting%ZeroValue%Volume / tenR)
+    !         elemR(thisP,er_Volume) = setting%ZeroValue%Volume
+    !     end where
+
+    !     call adjust_zerodepth_facevalues (thisCol)
+
+    !     !%----------------------------------------------------------------------
+    !     !% Closing    
+
+
+    ! end subroutine adjust_zerodepth_setvalues    
+!%     
+!%==========================================================================
+!%==========================================================================
+!%   
+    subroutine adjust_zerodepth_facevalues (thisCol)
         !%----------------------------------------------------------------------
         !% Description
-        !% sets all the values in near zero-volume cells
+        !% sets the face fluxes to zero for outflows from a zerodepth element
+        !% call with thisCol=0 to do all elements
         !%----------------------------------------------------------------------
-        !% DeclarationsP
-            logical, pointer :: isZeroVolume(:)
-            integer, pointer :: fdn(:), fup(:)
+        !% Declarations:
+            integer, intent(in) :: thisCol
+            logical, pointer :: isZeroDepth(:)
+            integer, pointer :: fdn(:), fup(:), thisP(:)
+            integer          :: Npack
             integer :: ii
         !%----------------------------------------------------------------------
         !% Preliminaries
         !%----------------------------------------------------------------------
         !% Aliases
-            isZeroVolume => elemYN(:,eYN_isNearZeroVolume)
+            isZeroDepth => elemYN(:,eYN_isZeroDepth)
             fdn => elemI(:,ei_Mface_dL)
             fup => elemI(:,ei_Mface_uL)
         !%----------------------------------------------------------------------
-        
-        where (isZeroVolume)
-            elemR(:,er_Area)            = setting%ZeroValue%Area
-            elemR(:,er_Depth)           = setting%ZeroValue%Depth
-            elemR(:,er_dHdA)            = oneR / setting%ZeroValue%TopWidth
-            elemR(:,er_ell)             = setting%ZeroValue%Depth
-            elemR(:,er_Flowrate)        = zeroR
-            elemR(:,er_FroudeNumber)    = zeroR
-            elemR(:,er_Head)            = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
-            elemR(:,er_HeadAvg)         = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
-            elemR(:,er_HydDepth)        = setting%ZeroValue%Depth
-            elemR(:,er_HydRadius)       = setting%ZeroValue%Depth
-            elemR(:,er_Perimeter)       = setting%ZeroValue%TopWidth
-            elemR(:,er_Topwidth)        = setting%ZeroValue%TopWidth
-            elemR(:,er_Velocity)        = zeroR
-            elemR(:,er_Volume)          = setting%ZeroValue%Volume
-            elemR(:,er_WaveSpeed)       = zeroR
-        endwhere
 
-        !% On the upstream face set the downstream value
-        where ((isZeroVolume) .and. (elemI(:,ei_Mface_uL) .ne. nullValueI))
-            faceR(fup,fr_Area_d)        = setting%ZeroValue%Area
-            faceR(fup,fr_Head_d)        = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
+        !% --- set up for either the entire array or a packed section   
+        if (thisCol == zeroI) then
+            Npack = N_elem(this_image())
+            thisP => elemI(1:Npack,ei_Lidx)
+        else
+            Npack = npack_elemP(thisCol)
+            if (Npack > 0) then
+                thisP => elemP(1:Npack,thisCol)
+            else
+                return
+            end if
+        end if
+
+        !% On the upstream face set the downstream element values for area and head
+        where ((isZeroDepth(thisP)) .and. (fup(thisP) .ne. nullValueI))
+            faceR(fup(thisP),fr_Area_d)        = setting%ZeroValue%Area
+            faceR(fup(thisP),fr_Head_d)        = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
         end where
 
-        !% On the downstream face set the upstream value
-        where ((isZeroVolume) .and. (elemI(:,ei_Mface_dL) .ne. nullValueI))
-            faceR(fdn,fr_Area_u)        = setting%ZeroValue%Area
-            faceR(fdn,fr_Head_u)        = setting%ZeroValue%Depth + elemR(:,er_Zbottom)
+        !% On the downstream face set the upstream element values for area and head
+        where ((isZeroDepth(thisP)) .and. (fdn(thisP) .ne. nullValueI))
+            faceR(fdn(thisP),fr_Area_u)        = setting%ZeroValue%Area
+            faceR(fdn(thisp),fr_Head_u)        = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+        end where
+            
+        !% a zero volume can only have an inflow from faces (no outflow)...
+        where ( (isZeroDepth(thisP)) .and. (fdn(thisP) .ne. nullvalueI) )
+            !% set the downstream face flowrate to zero or keep the value if it is negative
+            faceR(fdn(thisP),fr_Flowrate) &
+                = onehalfR * ( faceR(fdn(thisP),fr_Flowrate) - abs(faceR(fdn(thisP),fr_Flowrate)) )
         end where
 
-        !%----------------------------------------------------------------------
-        !% Closing    
-    end subroutine adjust_zerovolume_setvalues_all    
+        where ( (isZeroDepth(thisP)) .and. (fup(thisP) .ne. nullvalueI) )
+            !% set the upstream face flowrate to zero or keep the value if it is positive    
+            faceR(fup(thisP),fr_Flowrate) &
+                = onehalfR * ( faceR(fup(thisP),fr_Flowrate) + abs(faceR(fup(thisP),fr_Flowrate)) )
+        end where
+
+    end subroutine adjust_zerodepth_facevalues
 !%     
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================   
 !%  
     subroutine adjust_Vshaped_flowrate (whichTM)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
-        !% Performs 
-        !%-----------------------------------------------------------------------------    
-        integer, intent(in) :: whichTM
-        integer, pointer :: thisCol, Npack
-        integer, pointer :: thisP(:), mapUp(:), mapDn(:)
-        real(8), pointer :: coef, vMax
-        real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:), w_uQ(:), w_dQ(:), elemArea(:)
-        logical, pointer :: isAdhocFlowrate(:)
-        !%-----------------------------------------------------------------------------  
-        character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return       
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------  
-        select case (whichTM)
+        !% Removes V-shape between faces and element center by averaging
+        !% the face fluxes
+        !%------------------------------------------------------------------   
+            integer, intent(in) :: whichTM
+            integer, pointer :: thisCol, Npack
+            integer, pointer :: thisP(:), mapUp(:), mapDn(:)
+            real(8), pointer :: coef, vMax
+            real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:)
+            real(8), pointer ::  w_uQ(:), w_dQ(:), elemArea(:), Vvalue(:)
+            logical, pointer :: isSmallDepth(:), isNearZeroDepth(:)
+            character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
+        !%------------------------------------------------------------------
+        !% Preliminaries    
+            if (setting%Adjust%Flowrate%Coef .le. zeroR) return
+            if (icrash) return       
+            if (setting%Debug%File%adjust) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Aliases        
+            select case (whichTM)
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm)
             case (ETM)
@@ -449,79 +679,65 @@ module adjust
             case default
                 print *, 'error, this default case should not be reached'
                 stop 9239
-        end select
-        
-        !% HACK: below is the original code.
-        !% I think the v-shape adjustment should only be called for CC elements
-        !% because flowrate is only solved for CC elements
-        !% calling the adjustment for JB elements will result in segmentation fault
-        !% because JB elements will a ha nullvale for upstream/downstream face map 
-        !% since if a JB will always connected to a JM which does not has any faces.
+            end select
 
-        ! select case (whichTM)
-        !     case (ALLtm)
-        !         thisCol => col_elemP(ep_CCJB_ALLtm)
-        !     case (ETM)
-        !         thisCol => col_elemP(ep_CCJB_ETM)
-        !     case (AC)
-        !         thisCol => col_elemP(ep_CCJB_AC)
-        !     case default
-        !         print *, 'error, this default case should not be reached'
-        !         stop 9239
-        ! end select
-    
-        !% coefficient for the blending adjustment (between 0.0 and 1.0)
-        !% if coef == 1 then the V-shape element flowrate is replaced by the weighted
-        !% average of its faces.
-        coef => setting%Adjust%Flowrate%Coef
-        vMax => setting%Limiter%Velocity%Maximum
-        if (coef > zeroR) then      
             Npack => npack_elemP(thisCol)
+            if (Npack .le. 0) return
+            
+            thisP    => elemP(1:Npack,thisCol)
+            mapUp    => elemI(:,ei_Mface_uL)
+            mapDn    => elemI(:,ei_Mface_dL)   
+            faceFlow => faceR(:,fr_Flowrate)  
+            elemFlow => elemR(:,er_Flowrate)    
+            elemVel  => elemR(:,er_Velocity)
+            elemArea => elemR(:,er_Area)
+            w_uQ     => elemR(:,er_InterpWeight_uQ)
+            w_dQ     => elemR(:,er_InterpWeight_dQ)
+            Vvalue   => elemR(:,er_Temp01)
+            isSmallDepth   => elemYN(:,eYN_isSmallDepth)
+            isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
+            coef => setting%Adjust%Flowrate%Coef
+            vMax => setting%Limiter%Velocity%Maximum
+        !%-----------------------------------------------------------------
+        !% coef is the blending adjustment (between 0.0 and 1.0)
+        !% if coef == 1 then the V-shape element flowrate is replaced by 
+        !% average of its faces. If coef < 1 then average value is blended
+        !% with the present value of Q.
 
-            if (Npack > 0) then
-                thisP    => elemP(1:Npack,thisCol)
-                mapUp    => elemI(:,ei_Mface_uL)
-                mapDn    => elemI(:,ei_Mface_dL)   
-                faceFlow => faceR(:,fr_Flowrate)  
-                elemFlow => elemR(:,er_Flowrate)    
-                elemVel  => elemR(:,er_Velocity)
-                elemArea => elemR(:,er_Area)
-                w_uQ     => elemR(:,er_InterpWeight_uQ)
-                w_dQ     => elemR(:,er_InterpWeight_dQ)
-                isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
+        !print *, 'made it here in adjust velocity'
+    
+        !% the Vvalue returns...
+        !%  -1.0 if the element Q is between the face Q (not v-shaped)
+        !%  +1.0 if the element Q is outside of the two face Q (v-shaped)
+        !%  0.0 if the element Q is equal to one of the face Q (not v-shaped)
+        Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
+                        *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))    
 
-                !print *, ' face Q ',faceFlow(mapUp(thisP(1)))
-                !print *, ' elem Q ',elemFlow(thisP(1))
-                !print *, ' face Q ',faceFlow(mapDn(thisP(1)))
+        where     ( (Vvalue(thisP) > zeroR)        &
+            .and.   (.not. isSmallDepth  (thisP))   &
+            .and.   (.not. isNearZeroDepth(thisP))  )
 
-                !% identify the V-shape condition
+            !% averaging based on interpolation weights
+            elemFlow(thisP) =  (oneR - coef) * elemFlow(thisP) &
+                + coef *                                       &
+                    (  w_uQ(thisP) * faceflow(mapDn(thisP))    &
+                     + w_dQ(thisP) * faceflow(mapUp(thisP)) )  &
+                / ( w_uQ(thisP) + w_dQ(thisP) )
 
-                !where  ( (util_sign_with_ones(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
-                !        *(util_sign_with_ones(faceFlow(mapDn(thisP)) - elemFlow(thisP))) > 0)
-
-                where  ( (util_sign_with_ones_or_zero(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
-                        *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP))) > 0)
-
-                    !% averaging based on interpolation weights
-                    elemFlow(thisP) =  (oneR - coef) * elemFlow(thisP) &
-                        + coef *                                       &
-                            (  w_uQ(thisP) * faceflow(mapDn(thisP))    &
-                             + w_dQ(thisP) * faceflow(mapUp(thisP)) )  &
-                        / ( w_uQ(thisP) + w_dQ(thisP) )
-
-                    !% reset the velocity      
-                    elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
-                endwhere
+            !% reset the velocity      
+            elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        endwhere
                 
-                where (abs(elemVel(thisP)) > vMax)
-                    elemVel(thisP) = sign( 0.99 * vMax, elemVel(thisP) )
-                    isAdhocFlowrate(thisP) = .true.
-                endwhere 
-            end if
-        end if
+        where (abs(elemVel(thisP)) > vMax)
+            elemVel(thisP) = sign( 0.99 * vMax, elemVel(thisP) )
+        endwhere 
         
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            !% clear the temporary Vvalue array
+            Vvalue(thisP) = nullvalueR
+            if (setting%Debug%File%adjust) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_Vshaped_flowrate
 !%
 !%==========================================================================  
@@ -572,7 +788,7 @@ module adjust
         ! end select   
     
         !% coefficient for the blending adjustment (between 0.0 and 1.0)
-        !% if coef == 1 then the V-shape element flowrate is replaced by the weighted
+        !% if coef == 1 then the V-shape element flowrate is replaced by 
         !% average of its faces.
         coef => setting%Adjust%Head%Coef
         
@@ -610,284 +826,254 @@ module adjust
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine adjust_smallvolumes_reset_old (Npack, thisCol)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% nulls any prior storage of small volumes
-        !%----------------------------------------------------------------------------- 
-        integer, intent(in) :: Npack, thisCol  
-        integer, pointer :: thisP(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_smallvolumes_reset_old'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        thisP => elemP(1:Npack,thisCol)
-        !%----------------------------------------------------------------------------- 
-        elemYN(thisP,eYN_IsSmallVolume) = .false.
-        elemR(thisP,er_SmallVolumeRatio) = nullvalueR
-        
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine  adjust_smallvolumes_reset_old
+! subroutine adjust_smallvolumes_reset_old (Npack, thisCol)
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% nulls any prior storage of small volumes
+    !     !%----------------------------------------------------------------------------- 
+    !         integer, intent(in) :: Npack, thisCol  
+    !         integer, pointer :: thisP(:)
+    !     !%-----------------------------------------------------------------------------
+    !         character(64) :: subroutine_name = 'adjust_smallvolumes_reset_old'
+    !     !%-----------------------------------------------------------------------------
+    !         if (Npack .le. 0) return
+    !         if (icrash) return              
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%-----------------------------------------------------------------------------
+    !     !% Aliases       
+    !         thisP => elemP(1:Npack,thisCol)
+    !     !%----------------------------------------------------------------------------- 
+
+    !     elemYN(thisP,eYN_isSmallDepth) = .false.
+    !     elemR(thisP,er_SmallVolumeRatio) = nullvalueR
+
+    !     !%-----------------------------------------------------------------------------
+    !     if (setting%Debug%File%adjust) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine  adjust_smallvolumes_reset_old
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine adjust_smallvolumes_identify (Npack, thisCol, thisVolumeCol) 
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Identifies the small volumes out of a packed set
-        !%-----------------------------------------------------------------------------   
-        !% Declarations     
-            integer, intent(in) :: Npack, thisCol, thisVolumeCol   
-            integer, pointer :: thisP(:)
-            real(8), pointer :: volume(:), smallvolume(:), svRatio(:)
-            logical, pointer :: isSmallVol(:)
-            character(64) :: subroutine_name = 'adjust_smallvolumes_identify'
-        !%-----------------------------------------------------------------------------
-        !% Preliminaries
-            if (icrash) return              
-            if (setting%Debug%File%adjust) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------  
-        !% Aliases
-            thisP       => elemP(1:Npack,thisCol)
-            volume      => elemR(:,thisVolumeCol)
-            smallvolume => elemR(:,er_SmallVolume)
-            svRatio     => elemR(:,er_SmallVolumeRatio)
-            isSmallVol  => elemYN(:,eYN_isSmallVolume)
-        !%----------------------------------------------------------------------------- 
+! subroutine adjust_smallvolumes_identify (Npack, thisCol, thisVolumeCol) 
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Identifies the small volumes out of a packed set
+    !     !%------------------------------------------------------------------ 
+    !     !% Declarations     
+    !         integer, intent(in) :: Npack, thisCol, thisVolumeCol   
+    !         integer, pointer :: thisP(:)
+    !         real(8), pointer :: volume(:), smallvolume(:), svRatio(:)
+    !         logical, pointer :: isSmallVol(:), isNearZeroDepth(:)
+    !         character(64) :: subroutine_name = 'adjust_smallvolumes_identify'
+    !     !%-----------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (Npack .le. 0) return
+    !         if (icrash) return              
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%----------------------------------------------------------------- 
+    !     !% Aliases
+    !         thisP       => elemP(1:Npack,thisCol)
+    !         volume      => elemR(:,thisVolumeCol)
+    !         smallvolume => elemR(:,er_SmallVolume)
+    !         svRatio     => elemR(:,er_SmallVolumeRatio)
+    !         isSmallVol  => elemYN(:,eYN_isSmallDepth)
+    !         isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
+
+    !     !%-------------------------------------------------------------------
  
-        !% Find the small volume elements and set the SV ratio
-        where (volume(thisP) < smallvolume(thisP))
-            isSmallVol(thisP) = .true.
-            svRatio(thisP) = volume(thisP) / smallvolume(thisP)
-        endwhere
-        !% for the elements that are near-zero, set the SV ratio to zero, This ensures only Chezy-Manning is used for solution
-        where (volume(thisP) .le. setting%Zerovalue%Volume )
-            sVratio(thisP) = zeroR
-        endwhere
+    !     !% Find the small volume elements and set the SV ratio
+    !     where (volume(thisP) < smallvolume(thisP))
+    !         isSmallVol(thisP) = .true.
+    !         svRatio(thisP) = volume(thisP) / smallvolume(thisP)
+    !     endwhere
+    
+    !     where (isNearZeroDepth(thisP))
+    !         !% for the elements that are near-zero let the zerovolume algorithm handle it
+    !         isSmallVol(thisP) = .false.
+    !     endwhere
         
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_smallvolumes_identify
-
+    !     !%------------------------------------------------------------------
+    !     if (setting%Debug%File%adjust) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine adjust_smallvolumes_identify
+!%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine adjust_smallvolumes_pack (Npack, thisColP, thisNewPackCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% packs an array for smallvolumes
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: Npack, thisColP, thisNewPackCol
-        integer, pointer :: thisP(:), eIdx(:)
-        integer :: newpack
-        logical, pointer :: isSmallVol(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_smallvolumes_pack'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        thisP      => elemP(1:Npack,thisColP)
-        eIdx       => elemI(:,ei_Lidx)
-        isSmallVol => elemYN(:,eYN_isSmallVolume)
-        !%-----------------------------------------------------------------------------
-        newpack = count(elemYN(thisP,eYN_issmallvolume))
-        npack_elemP(thisNewPackCol) = newpack  
+    ! subroutine adjust_smallvolumes_pack (Npack, thisColP, thisNewPackCol)
+    !     !%  
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% packs an array for smallvolumes
+    !     !%------------------------------------------------------------------
+    !         integer, intent(in) :: Npack, thisColP, thisNewPackCol
+    !         integer, pointer    :: thisP(:), eIdx(:)
+    !         integer             :: newpack
+    !         logical, pointer    :: isSmallVol(:)
+    !         character(64) :: subroutine_name = 'adjust_smallvolumes_pack'
+    !     !%------------------------------------------------------------------
+    !         if (Npack .le. 0) return
+    !         if (icrash) return              
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
+    !         thisP      => elemP(1:Npack,thisColP)
+    !         eIdx       => elemI(:,ei_Lidx)
+    !         isSmallVol => elemYN(:,eYN_isSmallDepth)
+    !     !%------------------------------------------------------------------
+
+    !     newpack = count(elemYN(thisP,eYN_isSmallDepth))
+    !     npack_elemP(thisNewPackCol) = newpack  
     
-        if (newpack > 0) then
-            !% extract the set of small volumes.
-            elemP(1:newpack,thisNewPackCol) = pack(eIdx(thisP), isSmallVol(thisP) )
-        end if
+    !     if (newpack > 0) then
+    !         !% extract the set of small volumes.
+    !         elemP(1:newpack,thisNewPackCol) = pack(eIdx(thisP), isSmallVol(thisP) )
+    !     end if
 
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_smallvolumes_pack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine adjust_velocity_limiter_reset_old (Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-         !% removes ad-hoc flowrate designation
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: Npack, thisCol
-        integer, pointer :: thisP(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_velocity_limiter_reset_old'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        thisP => elemP(1:Npack,thisCol)
-        !%-----------------------------------------------------------------------------
+    !     !% error checking
+    !     if (any(elemR(elemP(1:newpack,thisNewPackCol) ,er_SmallVolume) == nullValueR)) then
+    !         print *, 'FATAL ERROR -- CODE PROBLEM'
+    !         print *, 'SmallVolume value that is set to nullvalueR.'
+    !         print *, 'This is likely a failure to have one of the cross-sections shapes'
+    !         print *, 'initialized in init_IC_set_SmallVolumes'
+    !         print *, 'CODE FIX IS NEEDED/'
+    !         stop 448795
+    !     end if
 
-        elemYN(thisP,eYN_IsAdhocFlowrate) = .false.
-    
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_velocity_limiter_reset_old
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine adjust_velocity_limiter (Npack, thisPackCol, thisVelocityCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Ad hoc limit of velocity to 99% of maximum allowed
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: Npack, thisPackCol, thisVelocityCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: velocity(:), vMax
-        logical, pointer :: isAdhocFlowrate(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_velocity_limiter'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        thisP           => elemP(1:Npack,thisPackCol)
-        velocity        => elemR(:,thisVelocityCol)
-        isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
-        vMax            => setting%Limiter%Velocity%Maximum
-        !%-----------------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     if (setting%Debug%File%adjust) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine adjust_smallvolumes_pack
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+! subroutine adjust_velocity_smallvolume_blended &
+    !     (Npack, thisCol)
+    !     !%  
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% blends computed velocity with Chezy-Manning solution for small volumes 
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: Npack, thisCol
+    !         integer, pointer :: thisP(:), fup(:), fdn(:)
+    !         real(8), pointer :: fheadUp(:), fheadDn(:), length(:), area(:), HydRadius(:)
+    !         real(8), pointer :: velocity(:), ManningsN(:), headslope(:), CMvelocity(:)
+    !         real(8), pointer :: velocityBlend(:), svRatio(:), flowrate(:)
+    !         character(64) :: subroutine_name = 'adjust_velocity_smallvolume_blended'
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (Npack .le. 0) return
+    !         if (icrash) return              
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
+    !     !% Aliases
+    !         thisP     => elemP(1:Npack,thisCol) !% only elements with small volumes
+    !         fup       => elemI(:,ei_Mface_uL)
+    !         fdn       => elemI(:,ei_Mface_dL)
+    !         fheadUp   => faceR(:,fr_Head_u)
+    !         fheadDn   => faceR(:,fr_Head_d)
+    !         length    => elemR(:,er_Length)
+    !         area      => elemR(:,er_Area)
+    !         HydRadius => elemR(:,er_HydRadius)
+    !         velocity  => elemR(:,er_Velocity)
+    !         flowrate  => elemR(:,er_Flowrate)
+    !         ManningsN => elemR(:,er_SmallVolume_ManningsN)
+    !         headslope => elemR(:,er_SmallVolume_HeadSlope)
+    !         CMvelocity => elemR(:,er_SmallVolume_CMvelocity)    
+    !         svRatio    => elemR(:,er_SmallVolumeRatio)
+    !         velocityBlend => elemR(:,er_Temp01)
+    !     !%----------------------------------------------------------------------
+    !     !% Adjust ManningsN for small volume CM velocity.
+    !     !% Use the larger of the actual roughness or the setting% value
 
-        where (abs(velocity(thisP)) > vMax)
-            velocity(thisP) = sign( 0.99 * vMax, velocity(thisP) )
-            isAdhocFlowrate(thisP) = .true.
-        endwhere 
+    !     ManningsN(thisP) = setting%SmallDepth%ManningsN
+    !     where (ManningsN(thisP) < elemR(thisP,er_Roughness))
+    !         ManningsN(thisP) = elemR(thisP,er_Roughness)
+    !     endwhere
 
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_velocity_limiter
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine adjust_velocity_smallvolume_blended (Npack, thisCol, thisVelocityCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% blends computed velocity with Chezy-Manning solution for small volumes 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: Npack, thisCol, thisVelocityCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: fheadUp(:), fheadDn(:), length(:), area(:), HydRadius(:)
-        real(8), pointer :: velocity(:), ManningsN(:), headslope(:), CMvelocity(:)
-        real(8), pointer :: velocityBlend(:), svRatio(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_velocity_smallvolume_blended'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        thisP     => elemP(1:Npack,thisCol) !% only elements with small volumes
-        fheadUp   => faceR(:,fr_Head_d)
-        fheadDn   => faceR(:,fr_Head_u)
-        length    => elemR(:,er_Length)
-        area      => elemR(:,er_Area)
-        HydRadius => elemR(:,er_HydRadius)
-        velocity  => elemR(:,thisVelocityCol)
-        ManningsN => elemR(:,er_SmallVolume_ManningsN)
-        headslope => elemR(:,er_SmallVolume_HeadSlope)
-        CMvelocity => elemR(:,er_SmallVolume_CMvelocity)    
-        svRatio    => elemR(:,er_SmallVolumeRatio)
-        velocityBlend => elemR(:,er_Temp01)
-        !%-----------------------------------------------------------------------------
-        !% Adjust ManningsN for small volume CM velocity.
-        !% Use the larger of the actual roughness or the setting% value
-        ManningsN(thisP) = setting%SmallVolume%ManningsN
-        where (ManningsN(thisP) < elemR(thisP,er_Roughness))
-            ManningsN(thisP) = elemR(thisP,er_Roughness)
-        endwhere
+    !     !% slope of the piezometric head
+    !     headslope(thisP) = (fheadDn(fup(thisP)) - fheadUp(fdn(thisP))) / length(thisP)
 
-        !% slope of the piezometric head
-        headslope(thisP) = (fheadUp(thisP) - fheadDn(thisP)) / length(thisP)
-
-        !% absolute chezy-manning velocity based on slope
-        CMvelocity(thisP) = ( HydRadius(thisP)**(twothirdR) ) * sqrt(abs(headslope(thisP))) / ManningsN(thisP)
+    !     !% absolute chezy-manning velocity based on slope
+    !     CMvelocity(thisP) = ( HydRadius(thisP)**(twothirdR) ) * sqrt(abs(headslope(thisP))) / ManningsN(thisP)
                     
-        !% assign direction to CM velocity.
-        CMvelocity(thisP) = sign(CMvelocity(thisP), headslope(thisP))
+    !     !% assign direction to CM velocity.
+    !     CMvelocity(thisP) = sign(CMvelocity(thisP), headslope(thisP))
 
-        !% blend the computed velocity with CM velocity
-        velocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
-                            + (oneR - svRatio(thisP)) * CMvelocity(thisP)
+    !     !% blend the computed velocity with CM velocity
+    !     velocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
+    !                         + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
-        !% use the smaller velocity value, with the sign of the CM velocity
-        velocity(thisP) = min(abs(CMvelocity(thisP)), velocity(thisP))
-        velocity(thisP) = sign(velocity(thisP),CMvelocity(thisP))
+    !     !% use the smaller velocity value, with the sign of the CM velocity
+    !     velocity(thisP) = min(abs(CMvelocity(thisP)), velocity(thisP))
+    !     velocity(thisP) = sign(velocity(thisP),CMvelocity(thisP))
 
-        elemYN(thisP,eYN_IsAdhocFlowrate) = .true.
+    !     flowrate(thisP) = area(thisP) * velocity(thisP)
 
-        velocityBlend(thisP) = nullvalueR
+    !     !%----------------------------------------------------------------------
+    !     !% Closing
+    !     !% reset the temporary storage
+    !         velocityBlend(thisP) = nullvalueR
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine adjust_velocity_smallvolume_blended
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+! subroutine adjust_zero_velocity_at_zero_depth &
+    !     (Npack, thisCol)
+    !     !%  
+    !     !%----------------------------------------------------------------------
+    !     !% Description:
+    !     !% sets zeros to
+    !     !%  velocity, flowrate, and head gradient across a zero-volume element
+    !     !%----------------------------------------------------------------------  
+    !         integer, intent(in) :: Npack, thisCol
+    !         integer, pointer :: thisP(:), fup(:), fdn(:)
+    !         real(8), pointer :: velocity(:), depth(:), flowrate(:), head(:)
+    !         real(8), pointer :: fHeadUp(:), fHeadDn(:)
+    !         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
+    !     !%----------------------------------------------------------------------
+    !         if (Npack .le. 0) return
+    !         if (icrash) return              
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%--------------------------------------------------------------------
+    !         thisP    => elemP(1:Npack,thisCol)
+    !         depth    => elemR(:,er_Depth)
+    !         velocity => elemR(:,er_Velocity)
+    !         flowrate => elemR(:,er_Flowrate)
+    !         head     => elemR(:,er_Head)
+    !         fup      => elemI(:,ei_Mface_uL)
+    !         fdn      => elemI(:,ei_Mface_dL)
+    !         fHeadUp  => faceR(:,fr_Head_u)
+    !         fHeadDn  => faceR(:,fr_Head_d) 
+    !     !%------------------------------------------------------------------- 
 
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_velocity_smallvolume_blended
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine adjust_zero_velocity_at_zero_volume &
-        (Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% sets zeros to
-        !%  velocity, flowrate, and head gradient across a zero-volume element
-        !%-----------------------------------------------------------------------------    
-        integer, intent(in) :: Npack, thisCol
-        integer, pointer :: thisP(:), fup(:), fdn(:)
-        real(8), pointer :: velocity(:), volume(:), flowrate(:), head(:)
-        real(8), pointer :: fHeadUp(:), fHeadDn(:)
-        logical, pointer :: isAdhocFlowrate(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%----------------------------------------------------------------------------- 
-        thisP    => elemP(1:Npack,thisCol)
-        volume   => elemR(:,er_Volume)
-        velocity => elemR(:,er_Velocity)
-        flowrate => elemR(:,er_Flowrate)
-        head     => elemR(:,er_Head)
-        fup      => elemI(:,ei_Mface_uL)
-        fdn      => elemI(:,ei_Mface_dL)
-        fHeadUp  => faceR(:,fr_Head_u)
-        fHeadDn  => faceR(:,fr_Head_d) 
-        isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
-        !%----------------------------------------------------------------------------- 
+    !     !% set the velocity and flowrate to zero and the head
+    !     !% differenc across the element to zero.
+    !     where (depth(thisP) .le. setting%ZeroValue%Depth)
+    !         velocity(thisP) = zeroR
+    !         flowrate(thisP) = zeroR  
+    !         !% the head on the upstream side of the downstream face
+    !         fHeadUp(fdn(thisP)) = head(thisP)
+    !         !% the head on the downstream side of the usptream face
+    !         fHeadDn(fup(thisP)) = head(thisP)
+    !     endwhere    
 
-        where (volume(thisP) <= setting%ZeroValue%Volume)
-            velocity(thisP) = zeroR
-            flowrate(thisP) = zeroR   !% brh20211227
-            !% the head on the upstream side of the downstream face
-            fHeadUp(fdn(thisP)) = head(thisP)
-            !% the head onthe downstream side of the usptream fzce
-            fHeadDn(fup(thisP)) = head(thisP)
-            isAdhocFlowrate(thisP) = .true.
-        endwhere    
-
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_zero_velocity_at_zero_volume
-    !%
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+    !     !%------------------------------------------------------------------- 
+    !     if (setting%Debug%File%adjust) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine adjust_zero_velocity_at_zero_depth
+!%
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
 end module adjust

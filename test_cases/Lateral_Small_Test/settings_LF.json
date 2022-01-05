@@ -55,21 +55,22 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 10
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : false,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
-            "isHeadOut"         : false,
+            "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
             "isVelocityOut"     : false,
-            "isVolumeOut"       : false,
+            "isVolumeOut"       : true,
             "isWaveSpeedOut"    : false
         },
         "Report" : {
@@ -89,16 +90,16 @@
         "useHydraulics" : true
     },
     "SmallVolume" : {
-        "UseSmallVolumesYN" : true
+        "DepthCutoff" : 0.02,
+        "ManningsN" : 0.2
     },
     "Solver" : {
         "PreissmannSlot" : true,
-        "QinterpWithLocalHeadGradient" : true,
+        "SubtractReferenceHead" : true,
         "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "QHgradFactor"      : 1.0
+        "SwitchFractionUp" : 0.9
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
@@ -115,11 +116,17 @@
             "Dt" : 600.0
         }
     },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.3,
+        "decreaseFactor" : 0.8,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 1
+    },
     "ZeroValue" : {
         "UseZeroValues" : true,
-        "Area" : 1e-4,
-        "Depth" : 1e-4,
-        "Topwidth" : 1e-0,
-        "Volume" : 1e-2
+        "Depth" : 5e-4
     }
 }

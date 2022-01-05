@@ -16,7 +16,7 @@ START_DATE           01/01/2000
 START_TIME           00:00:00
 REPORT_START_DATE    01/01/2000
 REPORT_START_TIME    00:00:00
-END_DATE             01/01/2000
+END_DATE             01/13/2000
 END_TIME             00:05:00
 SWEEP_START          01/01
 SWEEP_END            12/31
@@ -201,19 +201,19 @@ DRY_ONLY         NO
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
 630008206      FLOW      630008206      FLOW      1.0      1.0            
 630008205      FLOW      630008205      FLOW      1.0      1.0            
-;;1465840_8      FLOW      1465840_8      FLOW      1.0      1.0            
-;;1465840_7      FLOW      1465840_7      FLOW      1.0      1.0            
-;;1465840_6      FLOW      1465840_6      FLOW      1.0      1.0            
-;;1465840_5      FLOW      1465840_5      FLOW      1.0      1.0            
-;;1465840_4      FLOW      1465840_4      FLOW      1.0      1.0            
-;;1465840_3      FLOW      1465840_3      FLOW      1.0      1.0            
-;;1465840_2      FLOW      1465840_2      FLOW      1.0      1.0            
-;;1465840_1      FLOW      1465840_1      FLOW      1.0      1.0            
-;;1465840_0      FLOW      1465840_0      FLOW      1.0      1.0            
-;;1465864_3      FLOW      1465864_3      FLOW      1.0      1.0            
-;;1465864_2      FLOW      1465864_2      FLOW      1.0      1.0            
-;;1465864_1      FLOW      1465864_1      FLOW      1.0      1.0            
-;;1465864_0      FLOW      1465864_0      FLOW      1.0      1.0  
+1465840_8      FLOW      1465840_8      FLOW      1.0      1.0            
+1465840_7      FLOW      1465840_7      FLOW      1.0      1.0            
+1465840_6      FLOW      1465840_6      FLOW      1.0      1.0            
+1465840_5      FLOW      1465840_5      FLOW      1.0      1.0            
+1465840_4      FLOW      1465840_4      FLOW      1.0      1.0            
+1465840_3      FLOW      1465840_3      FLOW      1.0      1.0            
+1465840_2      FLOW      1465840_2      FLOW      1.0      1.0            
+1465840_1      FLOW      1465840_1      FLOW      1.0      1.0            
+1465840_0      FLOW      1465840_0      FLOW      1.0      1.0            
+1465864_3      FLOW      1465864_3      FLOW      1.0      1.0            
+1465864_2      FLOW      1465864_2      FLOW      1.0      1.0            
+1465864_1      FLOW      1465864_1      FLOW      1.0      1.0            
+1465864_0      FLOW      1465864_0      FLOW      1.0      1.0  
       
 
 [TIMESERIES]
@@ -221,19 +221,19 @@ DRY_ONLY         NO
 ;;-------------- ---------- ---------- ----------
 630008206      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/630008206.dat"
 630008205      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/630008205.dat"
-;;1465840_8      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_8.dat"
-;;1465840_7      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_7.dat"
-;;1465840_6      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_6.dat"
-;;1465840_5      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_5.dat"
-;;1465840_4      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_4.dat"
-;;1465840_3      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_3.dat"
-;;1465840_2      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_2.dat"
-;;1465840_1      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_1.dat"
-;;1465840_0      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_0.dat"
-;;1465864_3      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_3.dat"
-;;1465864_2      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_2.dat"
-;;1465864_1      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_1.dat"
-;;1465864_0      FILE      "/home/bhodges//SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_0.dat"
+1465840_8      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_8.dat"
+1465840_7      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_7.dat"
+1465840_6      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_6.dat"
+1465840_5      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_5.dat"
+1465840_4      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_4.dat"
+1465840_3      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_3.dat"
+1465840_2      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_2.dat"
+1465840_1      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_1.dat"
+1465840_0      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465840_0.dat"
+1465864_3      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_3.dat"
+1465864_2      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_2.dat"
+1465864_1      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_1.dat"
+1465864_0      FILE      "/home/bhodges//SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/1465864_0.dat"
 
 
 [REPORT]

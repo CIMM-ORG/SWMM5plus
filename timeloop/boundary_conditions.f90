@@ -42,6 +42,10 @@ contains
         !% Gets boundary flow and head data from SWMM-C and stores in the BC structure
         call bc_step()
 
+        ! print *, 'in bcupdate AAA'
+        ! print *, faceR(47:48,fr_Head_u)
+        ! print *, faceR(47:48,fr_Head_d)
+
         if (N_flowBC > 0 .or. N_headBC > 0) then
             !% interpolate the BC in time
             !print *, 'in 223563 ',trim(subroutine_name)
@@ -50,10 +54,20 @@ contains
 
             call bc_interpolate()
 
+            ! print *, 'in bcupdate BBB'
+            ! print *, faceR(47:48,fr_Head_u)
+            ! print *, faceR(47:48,fr_Head_d)
+    
+
             !print *, 'in 4789615 ',trim(subroutine_name)
             !write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
 
             call face_interpolate_bc(isBConly) ! broadcast interpolation to face & elem arrays
+
+            ! print *, 'in bcupdate CCC'
+            ! print *, faceR(47:48,fr_Head_u)
+            ! print *, faceR(47:48,fr_Head_d)
+    
 
             !print *, 'in 836673 ',trim(subroutine_name)
             !    write(*,'(8f9.2)') faceR(1:N_elem(1)+1,fr_Flowrate)
@@ -270,17 +284,36 @@ contains
         if (BC%headIdx(bc_idx) == 0) then ! First fetch
 
             BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
-            BC%headR_timeseries(bc_idx, 1, br_value) = interface_get_headBC(bc_idx, setting%Time%Start)
+            BC%headR_timeseries(bc_idx, 1, br_value) &
+                 = interface_get_headBC(bc_idx, setting%Time%Start) &
+                 - setting%Solver%ReferenceHead
+
+            ! print *, ' '
+            ! print *, 'in AAA ',trim(subroutine_name)
+            ! print *, setting%Solver%ReferenceHead, BC%headR_timeseries(bc_idx, 1, br_value)
+
 
         else ! last value becomes first
             BC%headR_timeseries(bc_idx, 1, br_time) = BC%headR_timeseries(bc_idx, NN, br_time)
-            BC%headR_timeseries(bc_idx, 1, br_value) = BC%headR_timeseries(bc_idx, NN, br_value)
+            BC%headR_timeseries(bc_idx, 1, br_value)  &
+                = BC%headR_timeseries(bc_idx, NN, br_value)
+
+                ! print *, ' '
+                ! print *, 'in BBB ',trim(subroutine_name)
+                ! print *, setting%Solver%ReferenceHead, BC%headR_timeseries(bc_idx, 1, br_value)    
         end if
 
         do ii = 2, NN
             new_head_time = min(setting%Time%End, interface_get_next_head_time(bc_idx, setting%Time%Start))
             BC%headR_timeseries(bc_idx, ii, br_time) = new_head_time
-            BC%headR_timeseries(bc_idx, ii, br_value) = interface_get_headBC(bc_idx, new_head_time)
+            BC%headR_timeseries(bc_idx, ii, br_value) &
+                 = interface_get_headBC(bc_idx, new_head_time) &
+                 - setting%Solver%ReferenceHead
+
+            ! print *, ' '
+            ! print *, 'in CCC ',trim(subroutine_name)
+            ! print *, setting%Solver%ReferenceHead, BC%headR_timeseries(bc_idx, 1, br_value)
+
             if (new_head_time == setting%Time%End) exit
         end do
         BC%headIdx(bc_idx) = 2

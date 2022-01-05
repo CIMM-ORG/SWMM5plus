@@ -43,12 +43,13 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 5000
         },
         "DataOut" :{
             "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
@@ -76,8 +77,12 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
+    "Solver" : {
+        "SubtractReferenceHead" : false
+    },    
     "SmallVolume" : {
-        "UseSmallVolumesYN" : true
+        "DepthCutoff" : 0.02,
+        "ManningsN" : 0.2
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
@@ -93,5 +98,16 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.3,
+        "NstepsForCheck" : 1
+    },
+    "ZeroValue" : {
+        "UseZeroValues" : true,
+        "Depth" : 5e-4
     }
 }

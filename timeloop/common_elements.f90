@@ -31,26 +31,20 @@ module common_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         real(8), pointer :: Flowrate, Area, Velocity, Vmax
-        logical, pointer :: isAdHocFlowrate
         !%-----------------------------------------------------------------------------
         if (icrash) return
         Vmax     => setting%Limiter%Velocity%Maximum
         Velocity => elemR(eIdx,er_Velocity)
         Flowrate => elemR(eIdx,er_Flowrate)
         Area     => elemR(eIdx,er_Area)
-        isAdHocFlowrate => elemYN(eIdx,eYN_IsAdHocFlowrate)
         !%-----------------------------------------------------------------------------
 
         Velocity = Flowrate / Area
         
         !% Velocity limiter
-        elemYN(eIdx,eYN_IsAdHocFlowrate) = .true.
         if (setting%Limiter%Velocity%UseLimitMaxYN) then
             if (abs(Velocity) > Vmax) then
                 Velocity = sign(0.99*Vmax,Velocity)
-                isAdHocFlowrate = .true.
-            else
-                isAdHocFlowrate = .false.
             end if
         end if
         

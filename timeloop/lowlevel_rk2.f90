@@ -64,6 +64,10 @@ module lowlevel_rk2
 
         elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
 
+        !print *, 'in ll_continuity_netflowrate_CC'
+        !print *, fQ(iup(ietmp(3))), fQ(idn(ietmp(3))), eQlat(ietmp(3))
+        !print *, elemR(ietmp(3),outCol)
+
     end subroutine ll_continuity_netflowrate_CC
 !%
 !%==========================================================================
@@ -74,25 +78,32 @@ module lowlevel_rk2
         !% Description:
         !% compute net flowrates for junction mains
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol, thisCol, Npack
-        real(8), pointer :: fQ(:), eQlat(:)
-        integer, pointer :: thisP(:), iup(:), idn(:)
+            integer, intent(in) :: outCol, thisCol, Npack
+            real(8), pointer :: branchQ(:), eQlat(:)
+            integer, pointer :: thisP(:), isbranch(:)
+            integer :: ii
         !%-----------------------------------------------------------------------------
-        thisP => elemP(1:Npack,thisCol)
-        fQ    => faceR(:,fr_Flowrate)
-        eQlat => elemR(:,er_FlowrateLateral)
-        iup   => elemI(:,ei_Mface_uL)
-        idn   => elemI(:,ei_Mface_dL)
+            thisP   => elemP(1:Npack,thisCol)
+            branchQ => elemR(:,er_Flowrate)
+            eQlat   => elemR(:,er_FlowrateLateral)
+            isbranch => elemSI(:,esi_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
-
         !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
         !% downstream branches
-
-        elemR(thisP,outCol) =  &
-            +fQ(iup(thisP+1)) - fQ(idn(thisP+2)) &
-            +fQ(iup(thisP+3)) - fQ(idn(thisP+4)) &
-            +fQ(iup(thisP+5)) - fQ(idn(thisP+6)) &
-            +eQlat(thisP)
+        elemR(thisP,outCol) = eQlat(thisP)
+        do ii = 1,max_branch_per_node,2
+            elemR(thisP,outCol) = elemR(thisP,outCol) &
+                + real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii  ) &
+                - real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
+            !print *, ii, real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii), real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
+        end do
+    
+        ! print *, 'in ll_continuity_netflowrate_JM'
+        ! print *, elemR(thisP,outCol)
+        ! print *, thisP
+        ! print *, branchQ(thisP+1), branchQ(thisP+2), branchQ(thisP+3)
+        ! print *, branchQ(thisP+4), branchQ(thisP+5), branchQ(thisP+6)
+        ! print *, eQlat(thisP)
     end subroutine ll_continuity_netflowrate_JM
 !%
 !%==========================================================================
@@ -116,6 +127,9 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
 
         elemR(thisP,outCol) = VolumeN0(thisP) + crk(istep) * dt * Csource(thisP)
+
+       !print *, 'in ll_continuity_volume'
+       !print *, VolumeN0(1), crk(istep)* dt * Csource(1), elemR(1,outCol)
 
     end subroutine ll_continuity_volume_CCJM_ETM
 !%
@@ -345,6 +359,10 @@ module lowlevel_rk2
                 stop 2382
             !% Error
         end select
+
+        !print *, 'in ll_momentum_Ksource_CC'
+        !print *, elemR(1,outCol), fAup(idn(1))* eHead(1) * grav, fAdn(iup(1)) * eHead(1) * grav
+
     end subroutine ll_momentum_Ksource_CC
 !%
 !%==========================================================================
@@ -399,6 +417,15 @@ module lowlevel_rk2
                     - fAup(idn(thisP)) * fHup(idn(thisP))  &
                     ) &
                 + eKsource(thisP)
+
+
+        !print *, 'in ll_momentum_source_CC'
+        !print *, fQ(iup(1)), fUdn(iup(1))
+        !print *, fQ(idn(1)), fUup(idn(1))
+        !print *,  fQ(iup(1)) * fUdn(iup(1)) - fQ(idn(1)) * fUup(idn(1))
+        !print *,  (fAdn(iup(1)) * fHdn(iup(1))  - fAup(idn(1)) * fHup(idn(1)) ) * grav
+        !print *,   eKsource(1)
+        !print *,  elemR(1,outCol)
 
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -473,6 +500,10 @@ module lowlevel_rk2
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
+        !print *, 'in ll_momentum_solve_CC'
+        !print *, elemR(1,outCol)
+        !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)        
+
     end subroutine ll_momentum_solve_CC
 !%
 !%==========================================================================
@@ -495,11 +526,6 @@ module lowlevel_rk2
         !% compute velocity
 
         elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
-
-        !% zero out velocities in those cells with near zero volumes
-        where (elemYN(thisP,eYN_isNearZeroVolume))
-            elemR(thisP,inoutCol) = zeroR
-        endwhere
 
         ! print*
         ! print*, 'in ll_momentum_velocity_CC'
@@ -686,14 +712,14 @@ module lowlevel_rk2
         integer, intent(in) :: whichTM
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
-        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:)
+        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:), fFlowMax(:)
         real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax
-        real(8), pointer :: eVolume(:), dt, headC, grav
-        logical, pointer :: isAdhocFlowrate(:)
+        real(8), pointer :: eVolume(:), dt, headC, grav, epsH
         integer :: ii, kk, tB
         real(8) :: dHead
         integer, pointer :: iFaceUp(:), iFaceDn(:)
         integer, pointer :: tFup, tFdn
+        logical, pointer :: isZeroDepth(:)
         !%-----------------------------------------------------------------------------
         !%
         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
@@ -703,18 +729,21 @@ module lowlevel_rk2
         eVolume      => elemR(:,er_Volume)
 
         fFlow        => faceR(:,fr_Flowrate)
+        fFlowMax     => faceR(:,fr_Flowrate_Max)
         iFaceUp      => elemI(:,ei_Mface_uL)
         iFaceDn      => elemI(:,ei_Mface_dL)
 
         eHead        => elemR(:,er_Head)
         fHead_u      => faceR(:,fr_Head_u)
         fHead_d      => faceR(:,fr_Head_d)
-        vMax         => setting%Limiter%Velocity%Maximum
-        isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
 
+        isZeroDepth  => elemYN(:,eYN_isZeroDepth)
+
+        vMax         => setting%Limiter%Velocity%Maximum
         dt           => setting%Time%Hydraulics%Dt
         headC        => setting%Junction%HeadCoef
         grav         => setting%constant%gravity
+        epsH         => setting%Eps%Head
         !%-----------------------------------------------------------------------------
         !%
         select case (whichTM)
@@ -733,22 +762,38 @@ module lowlevel_rk2
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisColP_JM)
             do ii=1,Npack
-                tM => thisP(ii)
+                tM => thisP(ii)  !% JM junction main ID
                 ! handle the upstream branches
                 do kk=1,max_branch_per_node,2
-                    tB = tM + kk
+                    tB = tM + kk  !% JB branch ID
                     if (BranchExists(tB)==1) then
                         ! head difference across the branch
                         tFup => iFaceUp(tB)
-                        dHead = fHead_u(tFup) - eHead(tB) !% using elem to face
-                        if (dHead >= zeroR) then
+                        !% use the downstream face, so that near-zero is handled
+                        dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
+                        !write(*,"(A,3f12.5)") 'dHead ',dHead, fHead_d(tFup), eHead(tB)
+                        if (dHead > epsH) then
+                            !print *, 'dhead greater than zero'
                             ! downstream flow in an upstream branch use upstream values
                             eFlow(tB) = headC * eArea(tB) * sqrt(twoR * grav * dHead)
+                            !% use the minimum of the flow in JB, the max flow on face
+                            eFlow(tB) = min(eFlow(tB),fFlowMax(tFup))
+                            !% if the minimum is a negative flow, use zero
+                            eFlow(tB) = max(eFlow(tB),zeroR)
+                        elseif (dHead < -epsH) then
+                            if (isZeroDepth(tM)) then !% JM is zero depth
+                                eFlow(tB) = zeroR
+                            else
+                                !print *, 'dhead less than zero'
+                                ! upstream flow in an upstream branch
+                                eFlow(tB) = - headC * eArea(tB) * sqrt(twoR * grav * (-dHead))
+                                ! if outflow, limit negative flowrate by 1/3 main junction volume
+                                eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) )
+                            end if
                         else
-                            ! upstream flow in an upstream branch
-                            eFlow(tB) = - headC * eArea(tB) * sqrt(twoR * grav * (-dHead))
-                            ! if outflow, limit negative flowrate by 1/3 main volume
-                            eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) )
+                            !print *, 'dhead equal zero'
+                            eFlow(tB) = zeroR
+                            !% no change to zero volume status
                         end if
 
                         !% HACK: Fix for velocity blowup due to small areas
@@ -760,27 +805,48 @@ module lowlevel_rk2
 
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
-                            isAdhocFlowrate(tB) = .true.
                         end if
+
+                        !print *, 'flowrate here up',eFlow(tB)
 
                     end if
                 end do
                 !% handle the downstream branches
                 do kk=2,max_branch_per_node,2
+                    !print *, kk ,'in junction branch'
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
+                        !print *, kk, 'in junction branch'
                         tFdn => iFaceDn(tB)
-                        dHead = eHead(tB) - fHead_d(tFdn) !% using elem to face
-                        if (dHead < zeroR) then
+                        !% use the upstream face so that near-zero is handled
+                        dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
+                        !write(*,"(A,3f12.5)") 'dHead ',dHead, fHead_u(tFdn), eHead(tB)
+                        !print *, dHead, 'head in JB'
+                        if (dHead < -epsH) then  !% inflow
+                            !print *, 'dhead less than zero'
                             ! upstream flow in a downstream branch use downstream values
                             eFlow(tB) =  - eArea(tB) * sqrt(twoR * grav * (-dHead) ) !BRH bugfix 20210829
+                            !% use the smaller negative flow (max) as baseline
+                            eFlow(tB) = max(eFlow(tB),fFlowMax(tFdn))
+                            !% if flow is poistive, then use zero
+                            eFlow(tB) = min(eFlow(tB),zeroR)
+                        elseif (dHead > epsH) then  !% outflow
+                            !print *, 'dhead greater than zero'
+                            if (isZeroDepth(tM)) then  !% JM is zero depth
+                                eFlow(tB) = zeroR
+                            else
+                                ! downstream flow in an downstream branch
+                                eFlow(tB) =  + eArea(tB) * sqrt(twoR * grav * dHead )
+                                ! if outflow, limit flowrate by 1/3 main junction volume
+                                eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )
+                            end if
                         else
-                            ! downstream flow in an downstream branch
-                            eFlow(tB) =  + eArea(tB) * sqrt(twoR * grav * dHead )
-                            ! if outflow, limit flowrate by 1/3 main volume
-                            eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )
+                            !print *, 'dhead equal zero'
+                            eFlow(tB) = zeroR
+                            !% no change to zerovolume status
                         end if
 
+                        !print *, eFlow(tB), 'flow in JB'
                         !% HACK: Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
                             eVelocity(tB) = zeroR
@@ -790,8 +856,9 @@ module lowlevel_rk2
 
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
-                            isAdhocFlowrate(tB) = .true.
                         end if
+
+                        !print *, 'flowrate here dn ',eFlow(tB)
 
                     end if
                 end do
@@ -945,8 +1012,6 @@ module lowlevel_rk2
         real(8), pointer :: eVolume(:), eVelocity(:), eArea(:), Msource(:), eFlow(:)
         real(8), pointer :: vMax
 
-        logical, pointer :: isAdhocFlowrate(:)
-
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
         !%
@@ -964,7 +1029,6 @@ module lowlevel_rk2
 
         vMax            => setting%Limiter%Velocity%Maximum
         BranchExists    => elemSI(:,esi_JunctionBranch_Exists)
-        isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
         eVolume         => elemR(:,er_Volume)
         eVelocity       => elemR(:,er_Velocity)
         eArea           => elemR(:,er_Area)
@@ -986,7 +1050,6 @@ module lowlevel_rk2
                         end if
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
-                            isAdhocFlowrate(tB) = .true.
                         end if
                         eFlow(tB) = eVelocity(tB) * eArea(tB)
                     end if

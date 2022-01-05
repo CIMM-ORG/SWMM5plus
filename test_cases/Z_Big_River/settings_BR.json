@@ -40,15 +40,16 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 1,
+        "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 10
+            "interval" : 100
         },
         "DataOut" :{
             "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
@@ -75,9 +76,6 @@
     "Simulation" : {
         "useHydrology" : false,
         "useHydraulics" : true
-    },
-    "SmallVolume" : {
-        "UseSmallVolumesYN" : true
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
