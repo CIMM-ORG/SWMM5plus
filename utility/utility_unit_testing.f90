@@ -763,16 +763,16 @@ contains
       end if
 
 
-      !% checking elemP(:,ep_smallvolume_AC) indexes
+      !% checking elemP(:,ep_SmallDepth_CC_ALLtm) indexes
 
 
-      min_val = minval(elemP(:,ep_smallvolume_AC)) - 1
-      max_val = maxval(elemP(:,ep_smallvolume_AC))
+      min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm)) - 1
+      max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_smallvolume_AC),mask=elemP(:,ep_smallvolume_AC)>min_val)
+         min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm),mask=elemP(:,ep_SmallDepth_CC_ALLtm)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -781,25 +781,25 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_smallvolume_AC) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_SmallDepth_CC_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_smallvolume_AC)) then
-         print *, "ERROR:::: elemP(:,ep_smallvolume_AC) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm)) then
+         print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_smallvolume_AC) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_SmallDepth_CC_ALLtm) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_smallvolume_ALLtm) indexes
+      !% checking elemP(:,ep_SmallDepth_CC_ALLtm) indexes
 
 
-      min_val = minval(elemP(:,ep_smallvolume_ALLtm)) - 1
-      max_val = maxval(elemP(:,ep_smallvolume_ALLtm))
+      min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm)) - 1
+      max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_smallvolume_ALLtm),mask=elemP(:,ep_smallvolume_ALLtm)>min_val)
+         min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm),mask=elemP(:,ep_SmallDepth_CC_ALLtm)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -808,24 +808,24 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_smallvolume_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_SmallDepth_CC_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_smallvolume_Alltm)) then
-         print *, "ERROR:::: elemP(:,ep_smallvolume_ALLtm) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm)) then
+         print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_smallvolume_ALLtm) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_SmallDepth_CC_ALLtm) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_smallvolume_ETM) indexes
+      !% checking elemP(:,ep_SmallDepth_CC_ALLtm) indexes
 
-      min_val = minval(elemP(:,ep_smallvolume_ETM)) - 1
-      max_val = maxval(elemP(:,ep_smallvolume_ETM))
+      min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm)) - 1
+      max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_smallvolume_ETM),mask=elemP(:,ep_smallvolume_ETM)>min_val)
+         min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm),mask=elemP(:,ep_SmallDepth_CC_ALLtm)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -834,13 +834,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_smallvolume_ETM) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_SmallDepth_CC_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_smallvolume_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_smallvolume_ETM) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm)) then
+         print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_smallvolume_ETM) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_SmallDepth_CC_ALLtm) is unique. This_image ::", this_image()
       end if
 
 

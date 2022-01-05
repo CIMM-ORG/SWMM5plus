@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 20.00
+        "NominalElemLength" : 5.00
     },
     "Limiter" : {
         "BC" : {
@@ -75,9 +75,6 @@
     "Simulation" : {
         "useHydrology" : false,
         "useHydraulics" : true
-    },
-    "SmallVolume" : {
-        "UseSmallVolumesYN" : true
     },
     "TestCase" : {
         "UseTestCaseYN" : false,

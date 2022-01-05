@@ -1914,7 +1914,7 @@ contains
             thisProblem(ii)  = 'are ignored.'
         end if
 
-        if (any(thisWarning)) then
+        if ((any(thisWarning)) .and. (this_image() == 1) ) then
             write(*,*) ' '
             write(*,'(A)') '*******************************************************************'
             write(*,'(A)') '**                          WARNING'

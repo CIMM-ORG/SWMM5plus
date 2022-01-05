@@ -216,6 +216,11 @@
         !% keys for minimum element size adjustment
         enumerator :: ElemLengthAdjust         !% only adjust the element length and set it to user defined min
         enumerator :: RawElemLength            !% keep the raw data and do not adjust
+        !% data types used for ZeroValues
+        enumerator :: DepthValue
+        enumerator :: VolumeValue
+        enumerator :: AreaValue
+        enumerator :: undefinedKey
         enumerator :: keys_lastplusone
     end enum
 
@@ -409,6 +414,10 @@
         reverseKey(Pump4Curve) = 'Pump4Curve'
         reverseKey(ElemLengthAdjust) = 'ElemLengthAdjust'
         reverseKey(RawElemLength) = 'RawElemLength'
+        reverseKey(DepthValue)  = 'DepthValue'
+        reverseKey(VolumeValue) = 'VolumeValue'
+        reverseKey(AreaValue)   = 'AreaValue'
+        reverseKey(undefinedKey)= 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 
         !%------------------------------------------------------------------
@@ -452,6 +461,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(ALL)) , ALL
         write(*,'(A," = ",i4)') trim(reverseKey(ALLtm)) , ALLtm
         write(*,'(A," = ",i4)') trim(reverseKey(arch)) , arch
+        write(*,'(A," = ",i4)') trim(reverseKey(AreaValue)), AreaValue
         write(*,'(A," = ",i4)') trim(reverseKey(ArtificalStorage)) , ArtificalStorage
         write(*,'(A," = ",i4)') trim(reverseKey(AverageElements)) , AverageElements
         write(*,'(A," = ",i4)') trim(reverseKey(basket_handle)) , basket_handle
@@ -479,6 +489,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(ControlCurve)) , ControlCurve
         write(*,'(A," = ",i4)') trim(reverseKey(custom)) , custom
         write(*,'(A," = ",i4)') trim(reverseKey(Default)) , Default
+        write(*,'(A," = ",i4)') trim(reverseKey(DepthValue)), DepthValue
         write(*,'(A," = ",i4)') trim(reverseKey(diagnostic)) , diagnostic
         write(*,'(A," = ",i4)') trim(reverseKey(DiversionCurve)) , DiversionCurve
         write(*,'(A," = ",i4)') trim(reverseKey(doesnotexist)) , doesnotexist
@@ -612,9 +623,11 @@
         write(*,'(A," = ",i4)') trim(reverseKey(type2_Pump)) , type2_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(type3_Pump)) , type3_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(type4_Pump)) , type4_Pump
+        write(*,'(A," = ",i4)') trim(reverseKey(undefinedKey)) , undefinedKey
         write(*,'(A," = ",i4)') trim(reverseKey(VariableSlot)) , VariableSlot
         write(*,'(A," = ",i4)') trim(reverseKey(vert_ellipse)) , vert_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
+        write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue
         write(*,'(A," = ",i4)') trim(reverseKey(vshape)) , vshape
         write(*,'(A," = ",i4)') trim(reverseKey(vshape_surcharge_only)) , vshape_surcharge_only
         write(*,'(A," = ",i4)') trim(reverseKey(weir)) , weir

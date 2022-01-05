@@ -313,6 +313,7 @@ module define_indexes
         enumerator :: er_Area_N0                    !% cross-sectional flow area (time N)
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
+        enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
@@ -356,7 +357,6 @@ module define_indexes
         enumerator :: er_SlotHydRadius              !% slot hydraulic radius        
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
-        enumerator :: er_SmallVolume_HeadSlope      !% head slope between faces for computing Chezy-Manning on small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
@@ -417,9 +417,9 @@ module define_indexes
         enumerator :: ep_NonSurcharged_AC           !% all surcharged with AC
         enumerator :: ep_NonSurcharged_ALLtm        !% all time march nonsurcharged
         enumerator :: ep_NonSurcharged_ETM          !% all surcharged with ETM
-        enumerator :: ep_smallvolume_AC             !% small volume cells with AC
-        enumerator :: ep_smallvolume_ALLtm          !% small volume with any time march
-        enumerator :: ep_smallvolume_ETM            !% small volume cells with ETM
+        enumerator :: ep_SmallDepth_CC_ALLtm        !% small depth conduit cells with any time march
+        enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
+        enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
         enumerator :: ep_Surcharged_AC              !% all surcharged with AC
         enumerator :: ep_Surcharged_ALLtm           !% all time march surcharged
         enumerator :: ep_Surcharged_ETM             !% all surcharged with ETM
@@ -431,7 +431,7 @@ module define_indexes
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements    
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
-        enumerator :: ep_CC_Q_NOTsmallvolume        !% all Q conduits used for CFL computation (added brh20211210)
+        enumerator :: ep_CC_Q_NOTsmalldepth        !% all Q conduits used for CFL computation 
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemP = ep_lastplusone-1
@@ -464,10 +464,9 @@ module define_indexes
 
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
-        enumerator :: eYN_isAdhocFlowrate               !% TRUE is use of ad hoc flowrate algorithm
-        enumerator :: eYN_isSmallVolume                 !% TRUE is use small volume algorithm
+        enumerator :: eYN_isSmallDepth                 !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow
-        enumerator :: eYN_isNearZeroVolume              !% TRUE if volume qualifies as "near zero"
+        enumerator :: eYN_isZeroDepth              !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
@@ -727,17 +726,17 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_faceI =  fi_lastplusone-1
 
-    !%-------------------------------------------------------------------------
-    !% Define the column indexes for faceM(:,:) arrays
-    !% These are for the full arrays of face mapping data
-    !%-------------------------------------------------------------------------
-    enum, bind(c)
-        enumerator :: fm_all = 1
-        enumerator :: fm_dummy
-        enumerator :: fm_lastplusone !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceM =  fm_lastplusone-1
+    ! !%-------------------------------------------------------------------------
+    ! !% Define the column indexes for faceM(:,:) arrays
+    ! !% These are for the full arrays of face mapping data
+    ! !%-------------------------------------------------------------------------
+    ! enum, bind(c)
+    !     enumerator :: fm_all = 1
+    !     enumerator :: fm_dummy
+    !     enumerator :: fm_lastplusone !% must be last enum item
+    ! end enum
+    ! !% note, this must be changed to whatever the last enum element is!
+    ! integer, target :: Ncol_faceM =  fm_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceR(:,:) arrays
@@ -748,6 +747,8 @@ module define_indexes
         enumerator :: fr_Area_u                 !% cross-sectional area on upstream side of face
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
+        enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
+        enumerator :: fr_Flowrate_Max           !% maximum flowrate based on upstream element
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
         enumerator :: fr_Zbottom                !% zbottom of faces
@@ -768,7 +769,7 @@ module define_indexes
     integer, target :: Ncol_faceR =  fr_lastplusone-1
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for faceP(:,:) arrays
+    !% Define the column indexes for faceP(:,:) and facePS(:,:) arrays
     !% These are for the packed array of face data
     !%-------------------------------------------------------------------------
     enum, bind(c)

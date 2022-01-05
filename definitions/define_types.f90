@@ -92,17 +92,17 @@ module define_types
     end type LinkPack
 
     type NodeArray
-        integer,      allocatable :: I(:,:)   !% integer data for nodes
-        real(8),      allocatable :: R(:,:)   !% real data for nodes
-        logical,      allocatable :: YN(:,:)  !% logical data for nodes
+        integer,      allocatable :: I(:,:)[:]   !% integer data for nodes
+        real(8),      allocatable :: R(:,:)[:]   !% real data for nodes
+        logical,      allocatable :: YN(:,:)[:]  !% logical data for nodes
         type(string), allocatable :: Names(:) !% names for nodes retrieved from EPA-SWMM
         type(NodePack)            :: P        !% packs for nodes
     end type NodeArray
 
     type LinkArray
-        integer,      allocatable :: I(:,:)   !% integer data for links
-        real(8),      allocatable :: R(:,:)   !% real data for links
-        logical,      allocatable :: YN(:,:)  !% logical data for links
+        integer,      allocatable :: I(:,:)[:]   !% integer data for links
+        real(8),      allocatable :: R(:,:)[:]   !% real data for links
+        logical,      allocatable :: YN(:,:)[:]  !% logical data for links
         type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
         type(LinkPack)            :: P        !% pack for links
     end type LinkArray

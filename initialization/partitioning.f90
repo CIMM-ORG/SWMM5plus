@@ -32,38 +32,61 @@ contains
 !
 subroutine init_partitioning_method()
     ! --------------------------------------------------------
-    !
     ! Description:
     !   The purpose of this subroutine is to check which partitioning
     !   algorithm should be used, then call that algorithm, then
     !   check that the output is correct (if debug == true)
-    !
     !---------------------------------------------------------
         logical :: partition_correct
         integer :: connectivity, ii, nn
         real(8) :: part_size_balance
         character(64) :: subroutine_name = 'init_partitioning_method'
     !% --------------------------------------------------------
-    if (icrash) return
-    call util_allocate_partitioning_arrays()
+        if (icrash) return
+    !% --------------------------------------------------------
+    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
-    !% Determine which partitioning method is being used
-    !print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
-    if (setting%Partitioning%PartitioningMethod == Default) then
-        if (setting%Output%Verbose) print*, "...Using Default Partitioning"
-        call init_partitioning_default()
-    else if (setting%Partitioning%PartitioningMethod == Random) then
-        if (setting%Output%Verbose) print*, "...Using Random Partitioning"
-        call init_partitioning_random()
-    else if (setting%Partitioning%PartitioningMethod == BLink) then
-        if (setting%Output%Verbose) print*, "...Using Balanced Link Partitioning"
-        call init_partitioning_linkbalance()
-    else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Output%Verbose) print*, "...Using BIPquick Partitioning"
-        call init_partitioning_BIPquick()
+    !% the allcoation should probably should only be for image=1
+    !% but we need to then be careful with deallocation
+    call util_allocate_partitioning_arrays() 
+
+    !% --- check for using a single processor or multiprocessor
+    if ( num_images() == 1 ) then
+        node%I(:, ni_P_image) = oneI
+        node%I(:, ni_P_is_boundary) = zeroI
+        link%I(:, li_P_image) = oneI
+        if (setting%Output%Verbose) print*, "... Using one processor, bypassing partitioning"
     else
-        print *, "Error, partitioning method not supported"
-        stop 87095
+        !% --- confine the partitioning computations to a single image
+        if (this_image() == 1) then
+            !% Determine which partitioning method is being used
+            !print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
+            if (setting%Partitioning%PartitioningMethod == Default) then
+                if (setting%Output%Verbose) print*, "...Using Default Partitioning"
+                call init_partitioning_default()
+            else if (setting%Partitioning%PartitioningMethod == Random) then
+                if (setting%Output%Verbose) print*, "...Using Random Partitioning"
+                call init_partitioning_random()
+            else if (setting%Partitioning%PartitioningMethod == BLink) then
+                if (setting%Output%Verbose) print*, "...Using Balanced Link Partitioning"
+                call init_partitioning_linkbalance()
+            else if (setting%Partitioning%PartitioningMethod == BQuick) then
+                if (setting%Output%Verbose) print*, "...Using BIPquick Partitioning"
+                call init_partitioning_BIPquick()
+            else
+                print *, "Error, partitioning method not supported"
+                stop 87095
+            end if
+        end if
+        sync all
+        !% broadcast partitioning results to all images
+        call co_broadcast(node%I, source_image=1)
+        call co_broadcast(node%R, source_image=1)
+        call co_broadcast(node%YN, source_image=1)
+        call co_broadcast(link%I, source_image=1)
+        call co_broadcast(link%R, source_image=1)
+        call co_broadcast(link%YN, source_image=1)
+        sync all
     end if
 
     if (setting%Debug%File%partitioning) then
@@ -103,6 +126,7 @@ subroutine init_partitioning_method()
     N_link = count(link%I(:,li_idx) /= nullvalueI)
 
     call util_deallocate_partitioning_arrays()
+
 end subroutine init_partitioning_method
 !
 !==========================================================================

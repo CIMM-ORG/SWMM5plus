@@ -74,7 +74,7 @@ DRY_ONLY         NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             T1               FLOW     1.0      1.0      10000   
+1                FLOW             T1               FLOW     1.0      1.0      1000   
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     

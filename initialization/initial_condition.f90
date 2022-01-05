@@ -22,6 +22,10 @@ module initial_condition
     use circular_conduit
     use storage_geometry
     use adjust
+    use interface, only: interface_get_nodef_attribute
+    use utility_profiler
+    use utility_allocate
+    use utility_deallocate
 
     implicit none
 
@@ -41,9 +45,10 @@ contains
         !% set up the initial conditions for all the elements
         !%------------------------------------------------------------------
         !% Declaratins:
-            integer          :: ii
-            integer, pointer :: solver
+            integer          :: ii, iblank
+            integer, pointer :: whichTM
             integer, allocatable :: tempP(:)  !% for debugging
+            integer, pointer :: thisCol, npack, thisP(:)
             character(64)    :: subroutine_name = 'init_IC_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -51,85 +56,131 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% Aliases
-            solver => setting%Solver%SolverSelect
+            whichTM => setting%Solver%SolverSelect
         !%-------------------------------------------------------------------
         !% --- get data that can be extracted from links
-        !if (setting%Output%Verbose) print *,'begin init_IC_from_linkdata'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
         !% --- get data that can be extracted from nodes
-        !if (setting%Output%Verbose) print *,'begin init_IC_from_nodedata'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
         call init_IC_from_nodedata ()
-        
+
+        !% --- identify the small and zero depths (must be done before pack)
+        call adjust_smalldepth_identify_all ()
+        call adjust_zerodepth_identify_all ()
+
         !% ---zero out the lateral inflow column
-        !if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
         !% --- update time marching type
-        !if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
-        call init_IC_solver_select (solver)
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
+        call init_IC_solver_select (whichTM)
 
         !% --- set up all the static packs and masks
-        !if (setting%Output%Verbose) print *, 'begin pack_mask arrays_all'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
+        !% --- initialize zerovalues for other than depth (must be done after pack)
+        call init_IC_ZeroValues_nondepth ()
+
+         !% --- set all the zero and small volumes
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust_zerodepth_bypack'
+        call adjust_zerodepth_bypack(ep_ZeroDepth_CC_ALLtm)
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust_zerodepth_bypack'
+        call adjust_zerodepth_bypack(ep_ZeroDepth_JM_ALLtm)
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust_smalldepth_bypack'
+        call adjust_smalldepth_bypack ()
+
+        !% --- get the bottom slope
+        call init_IC_bottom_slope ()
+
+        if (this_image() == 1) then
+            print *, 'zero value volume ',setting%ZeroValue%Volume
+            print *, 'zero value depth  ',setting%ZeroValue%Depth
+            print *, 'zero value area   ',setting%ZeroValue%Area
+        end if
+
         !% --- set small volume values in elements
-        !if (setting%Output%Verbose) print *, 'begin init_IC_set_SmallVolumes'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
         !% --- initialize slots
-        !if (setting%Output%Verbose) print *, 'begin init_IC_slot'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
         !% --- get the velocity and any other derived data
         !%     These are data needed before bc and aux variables are updated
-        !if (setting%Output%Verbose) print *, 'begin init_IC_derived_data'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
+        !% --- set the reference head (based on Zbottom values)
+        !%     this must be called before bc_update() so that
+        !%     the timeseries for head begins correctly
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
+        call init_reference_head()
+
+        !% --- remove the reference head values from arrays
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
+        call init_subtract_reference_head()
+
+        !% --- initialize boundary conditions
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
+        call init_bc()
+
         !% --- update the BC so that face interpolation works in update_aux...
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
 
-        !% --- update all the auxiliary variables
-        !if (setting%Output%Verbose) print *, 'begin update_aux_variables'
-        call update_auxiliary_variables (solver)
+        !% --- storing dummy values for branches that are invalid
+        call init_IC_branch_dummy_values ()
+    
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
+        call update_auxiliary_variables (whichTM)
 
-        !% --- set all the near-zero volumes
-        if (setting%ZeroValue%UseZeroValues) then
-            call adjust_zerovolumes_identify_all ()
-            call adjust_zerovolume_setvalues_all ()
-        end if
-        
         !% --- initialize old head 
         !%     HACK - make into a subroutine if more variables need initializing
         !%     after update_aux_var
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust head setting'
         elemR(:,er_Head_N0) = elemR(:,er_Head)
 
         !% --- update diagnostic interpolation weights
         !%     (the interpolation weights of diagnostic elements
         !%     stays the same throughout the simulation. Thus, they
         !%     are only needed to be set at the top of the simulation)
-        !if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
         call init_IC_diagnostic_interpolation_weights()
 
         !% --- set small values to diagnostic element interpolation sets
-        !%     Neede so that junk values does not mess up the first interpolation
-        !if (setting%Output%Verbose) print *, 'begin  init_IC_small_values_diagnostic_elements'
+        !%     Needed so that junk values does not mess up the first interpolation
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
         !% --- update faces
-        !if (setting%Output%Verbose) print *, 'begin face_interpolation '
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_all,ALLtm)
 
         !% --- update the initial condition in all diagnostic elements
-        !if (setting%Output%Verbose) print *, 'begin diagnostic_toplevel'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel ()
 
         !% ---populate er_ones columns with ones
-        !if (setting%Output%Verbose) print *, 'begin init_IC_oneVectors'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
+
+        !% --- initialized the max face flowrate
+        call face_flowrate_max_interior (fp_all)
+        call face_flowrate_max_shared   (fp_all)
 
         !% Notes on initial conditions brh20211215
         !% dHdA is not initialized in channels except where timemarch is AC
+
+        ! print *, elemR(1:3,er_SmallVolume)
+        ! print *, elemR(1:3,er_Volume)
+        ! print *, setting%ZeroValue%Volume
+        ! print *, setting%ZeroValue%Depth * elemR(1,er_BreadthMax) * elemR(1,er_Length)
+        ! stop 38579
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -180,9 +231,12 @@ contains
         !% get the initial depth, flowrate, and geometry data from links
         !%------------------------------------------------------------------
         !% Declarations:
-            integer                                     :: ii, image, pLink
-            integer, pointer                            :: thisLink
+            integer                                     :: ii, pLink, npack
+            integer, pointer                            :: thisLink, eIdx(:)
             integer, dimension(:), allocatable, target  :: packed_link_idx
+            integer, dimension(:) , allocatable, target :: ePack
+            integer           :: allocation_status, deallocation_status
+            character(len=99) ::              emsg
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -190,14 +244,15 @@ contains
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
-        !% Setting the local image value
-        image = this_image()
-
         !% pack all the link indexes in an image
-        packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == image))
+        packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == this_image()))
 
         !% find the number of links in an image
         pLink = size(packed_link_idx)
+
+        ! !% allocate an array for packed comparison
+        ! allocate(ePack(N_elem(this_image())), stat=allocation_status, errmsg=emsg)
+        ! call util_allocate_check(allocation_status, emsg, 'ePack')
 
         !% cycle through the links in an image
         do ii = 1,pLink
@@ -216,12 +271,21 @@ contains
             !% does not need to be done on a link-by-link basis.
             !call init_IC_get_channel_conduit_velocity (thisLink) 
 
+            if ((setting%Output%Verbose) .and. (this_image() == 1)) then
+                if (mod(ii,1000) == 0) then
+                    print *, '... handling link ',ii
+                end if
+            end if
+
         end do
 
         !%------------------------------------------------------------------
         !% Closing
             !% deallocate the temporary array
             deallocate(packed_link_idx)
+            ! deallocate(ePack, stat=deallocation_status, errmsg=emsg)
+            ! call util_deallocate_check(deallocation_status, emsg, 'ePack')
+
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
@@ -231,16 +295,14 @@ contains
 !
     subroutine init_IC_get_depth_from_linkdata (thisLink)
         !--------------------------------------------------------------------------
-        !
         !% get the initial depth data from links
-        !
         !--------------------------------------------------------------------------
 
             integer, intent(in) :: thisLink
 
             integer             :: mm, ei_max
             real(8)             :: kappa
-            integer, pointer    :: LdepthType
+            integer, pointer    :: LdepthType, thisP(:)
             real(8), pointer    :: DepthUp, DepthDn
 
             character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
@@ -332,7 +394,7 @@ contains
             case default
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected initial depth type, ', LdepthType,'  in link, ', thisLink
-                stop
+                stop 83753
 
         end select
 
@@ -375,9 +437,7 @@ contains
 !
     subroutine init_IC_get_elemtype_from_linkdata (thisLink)
         !--------------------------------------------------------------------------
-        !
         !% get the geometry data from links
-        !
         !--------------------------------------------------------------------------
 
             integer, intent(in) :: thisLink
@@ -432,7 +492,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'pumps are not handeled yet'
-                stop
+                stop 77364
 
             case (lOutlet)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -445,7 +505,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                stop 65343
 
         end select
 
@@ -459,19 +519,16 @@ contains
 !
     subroutine init_IC_get_geometry_from_linkdata (thisLink)
         !--------------------------------------------------------------------------
-        !
         !% get the geometry data from links
-        !
         !--------------------------------------------------------------------------
 
             integer, intent(in) :: thisLink
             integer, pointer    :: linkType
-
             character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -508,7 +565,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                stop 99834
 
         end select
 
@@ -595,6 +652,7 @@ contains
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
                                 elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
+            
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
@@ -612,7 +670,7 @@ contains
 
                 print*, 'In, ', subroutine_name
                 print*, 'Only rectangular channel geometry is handeled at this moment'
-                stop
+                stop 98734
 
         end select
 
@@ -708,7 +766,7 @@ contains
 
             print*, 'In, ', subroutine_name
             print*, 'Only rectangular, and circular conduit geometry is handeled at this moment'
-            stop
+            stop 88734433
 
         end select
 
@@ -811,7 +869,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown weir type, ', specificWeirType,'  in network'
-                stop
+                stop 99834
 
         end select
 
@@ -859,7 +917,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice type, ', specificOrificeType,'  in network'
-                stop
+                stop 8863411
 
         end select
 
@@ -955,7 +1013,7 @@ contains
                 else
                     print*, 'In ', subroutine_name
                     print*, 'error: unknown orifice type, ', specificOutletType,'  in network'
-                    stop
+                    stop 82564
                 end if
             end if 
         end do
@@ -967,47 +1025,47 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine init_IC_get_channel_conduit_velocity (thisLink)
-        !% brh 20211216 obsolete -- replaced with init_IC_derived_values()
-        !%-----------------------------------------------------------------
-        !% Description:
-        !% get the velocity of channel and conduits
-        !% and sell all other velocity to zero
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: thisLink
-            integer, pointer    :: specificWeirType
-            character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            if (icrash) return
-            if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%------------------------------------------------------------------
+    ! subroutine init_IC_get_channel_conduit_velocity (thisLink, ePack, npack)
+    !     !% brh 20211216 obsolete -- replaced with init_IC_derived_values()
+    !     !%-----------------------------------------------------------------
+    !     !% Description:
+    !     !% get the velocity of channel and conduits
+    !     !% and sell all other velocity to zero
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: thisLink
+    !         integer, pointer    :: specificWeirType
+    !         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !         if (icrash) return
+    !         if (setting%Debug%File%initial_condition) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
 
-        !% HACK: this might not be right
-        where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-                (elemR(:,er_area)               .gt. zeroR ) .and. &
-                (elemI(:,ei_elementType)        == CC      ) )
+    !     !% HACK: this might not be right
+    !     where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+    !             (elemR(:,er_area)               .gt. zeroR ) .and. &
+    !             (elemI(:,ei_elementType)        == CC      ) )
 
-            elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
-            elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
-            elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
+    !         elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
+    !         elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
+    !         elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
 
-        elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-                    (elemR(:,er_area)               .le. zeroR ) .and. &
-                    (elemI(:,ei_elementType)        == CC    ) )
+    !     elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+    !                 (elemR(:,er_area)               .le. zeroR ) .and. &
+    !                 (elemI(:,ei_elementType)        == CC    ) )
 
-            elemR(:,er_Velocity)    = zeroR
-            elemR(:,er_Velocity_N0) = zeroR
-            elemR(:,er_Velocity_N1) = zeroR
+    !         elemR(:,er_Velocity)    = zeroR
+    !         elemR(:,er_Velocity_N0) = zeroR
+    !         elemR(:,er_Velocity_N1) = zeroR
 
-        endwhere
+    !     endwhere
 
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     if (setting%Debug%File%initial_condition) &
+    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-    end subroutine init_IC_get_channel_conduit_velocity
+    ! end subroutine init_IC_get_channel_conduit_velocity
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1057,14 +1115,10 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine init_IC_get_junction_data (thisJunctionNode)
-        !
+    subroutine init_IC_get_junction_data (thisJunctionNode)        
         !--------------------------------------------------------------------------
-        !
         !% get data for the multi branch junction elements
-        !
         !--------------------------------------------------------------------------
-        !
         integer, intent(in) :: thisJunctionNode
 
         integer              :: ii, jj, JMidx, JBidx
@@ -1162,11 +1216,15 @@ contains
                 elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
                 !print *, 'here 39705 head ',elemR(JBidx,er_Head)
                 elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
-                !print *, 'here 98847 depth',elemR(JBidx,er_Depth)
-                if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
-                    elemR(JBidx,er_Depth) = setting%ZeroValue%depth
-                    elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
+                if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
+                    elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
+                    elemR(JBidx,er_Depth) = zeroR
                 end if
+                !print *, 'here 98847 depth',elemR(JBidx,er_Depth)
+                !if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
+                !    elemR(JBidx,er_Depth) = setting%ZeroValue%depth
+                !    elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
+                !end if
 
                 !print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
                 !% JB elements initialized for momentum
@@ -1352,49 +1410,32 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             logical, pointer :: isSmallVol(:)
-            integer, pointer :: eType(:)
-            integer, allocatable :: tempP(:) !% debugging
+            integer, pointer :: npack, thisP(:)
             real(8), pointer :: area(:), flowrate(:), velocity(:)
+            integer          :: thisCol
         !%------------------------------------------------------------------
         !% Preliminaries
         !%------------------------------------------------------------------
         !% Aliases
-            area      => elemR(:,er_Area)
+            thisCol    = ep_CC_Q_NOTsmalldepth
+            npack      => npack_elemP(thisCol)
+            thisP      => elemP(1:npack,thisCol)
+            area       => elemR(:,er_Area)
             flowrate   => elemR(:,er_Flowrate)
             velocity   => elemR(:,er_Velocity)
-            eType      => elemI(:,ei_elementType)
-            isSmallVol => elemYN(:,eYN_isSmallVolume)
         !%------------------------------------------------------------------
-
         
+        elemR(:,er_Velocity) = zeroR
 
-        !% Initialize velocity from flowrate and area
-        where ((eType == CC) .and. (flowrate .ne. nullvalueR) .and. (.not. isSmallVol))
-            velocity = flowrate / area
-        endwhere
+        if (npack < 1) return
+        velocity(thisP) = flowrate(thisP) / area(thisP)
 
-        where ((eType == CC) .and. (flowrate .ne. nullvalueR) .and. (isSmallVol))
-            velocity = zeroR
-        endwhere
-
-        where ((eType == JB) .and. (flowrate .ne. nullvalueR) .and. (.not. isSmallVol))
-            velocity = flowrate / area
-        endwhere
-
-        where ((eType == JB) .and. (flowrate .ne. nullvalueR) .and. (isSmallVol))
-            velocity = zeroR
-        endwhere
-
-        where (eType == JM)
-            velocity = zeroR
-        endwhere
-
+        where (velocity(thisP) > setting%Limiter%Velocity%Maximum)
+            velocity(thisP) = zeroR
+        end where
+        
         elemR(:,er_Velocity_N0) = velocity
         elemR(:,er_Velocity_N1) = velocity
-
-        !tempP = pack(elemI(:,ei_Lidx),elemI(:,ei_elementType)== CC)
-        !print *, elemR(tempP,er_Head_N0)
-        !deallocate(tempP)
 
         !%------------------------------------------------------------------
         !% Closing
@@ -1534,144 +1575,592 @@ contains
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
         endwhere
 
-        !% Branch elements have invariant interpolation weights so are computed here
-        !% These are designed so that the face of a JB gets the flowrate from the
-        !% adjacent CC conduit or channel, but the geometry and head are from the JB.
-        Npack => npack_elemP(ep_JM_ALLtm)
-        if (Npack > 0) then
-            thisP  => elemP(1:Npack,ep_JM_ALLtm)
-            do ii=1,Npack
-                tM => thisP(ii) !% junction main ID
-                do kk=1,max_branch_per_node
-                    tB = tM + kk !% junction branch ID
-                    elemR(tB,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
-                    elemR(tB,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
-                    elemR(tB,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
-                    elemR(tB,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
-                    elemR(tB,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
-                    elemR(tB,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
-                end do
-            end do
-        end if
+        ! !% brh 20220204 -- ccommenting this approach
+        ! !% Branch elements have invariant interpolation weights so are computed here
+        ! !% These are designed so that the face of a JB gets the flowrate from the
+        ! !% adjacent CC conduit or channel, but the geometry and head are from the JB.
+        ! Npack => npack_elemP(ep_JM_ALLtm)
+        ! if (Npack > 0) then
+        !     thisP  => elemP(1:Npack,ep_JM_ALLtm)
+        !     do ii=1,Npack
+        !         tM => thisP(ii) !% junction main ID
+        !         do kk=1,max_branch_per_node
+        !             tB = tM + kk !% junction branch ID
+        !             elemR(tB,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
+        !             elemR(tB,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
+        !             elemR(tB,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
+        !             elemR(tB,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
+        !             elemR(tB,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
+        !             elemR(tB,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
+        !         end do
+        !     end do
+        ! end if
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_diagnostic_interpolation_weights
-!
-!==========================================================================
-!==========================================================================
-!
+
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_branch_dummy_values ()    
+        !%------------------------------------------------------------------
+        !% Description:
+        !% assigns dummy values that non-zero and not excessivley large 
+        !% to the velocity, depth, area, etc. of non-valid junction branches
+        !% This allows these branches to be used in array computations 
+        !% without causing either divide by zero or overflow/underflow.
+        !%------------------------------------------------------------------
+            integer, pointer :: npack, thisP(:), BranchExists(:)
+            integer :: thisCol, ii
+        !%------------------------------------------------------------------
+            thisCol = ep_JM
+            npack   => npack_elemP(thisCol)
+            if (npack < 1) return
+            thisP         => elemP(1:npack,thisCol)
+            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+        !%------------------------------------------------------------------
+
+        do ii=1,max_branch_per_node
+            where (BranchExists(thisP+ii) == 0)
+                elemR(thisP+ii,er_Area) = 0.33333
+                elemR(thisP+ii,er_Depth) = 0.33333
+                elemR(thisP+ii,er_Flowrate) = 0.33333
+                elemR(thisP+ii,er_Head) = 0.33333
+                elemR(thisP+ii,er_Velocity) = 0.33333
+                elemR(thisP+ii,er_Volume) = 0.33333 
+            end where
+        end do
+
+    end subroutine init_IC_branch_dummy_values
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_IC_set_SmallVolumes ()
-        !--------------------------------------------------------------------------
-        !
-        !% set the small volume values in elements
-        !
-        !--------------------------------------------------------------------------
-
+        !%------------------------------------------------------------------
+        !% set the small volume values in elements that are used with
+        !% the small depth cutoff to change the time-marching solution
+        !% The ratio of the (fixed)small volume to the actual volume is 
+        !% used to blend the CM small-volume solution with the SVE solution.
+        !%------------------------------------------------------------------
+        !% Declarations:
             character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
-
-        !--------------------------------------------------------------------------
+            !logical, pointer    :: useSmallVolumes
+            real(8), pointer    :: depthCutoff, smallVolume(:), length(:)
+            real(8), pointer    :: theta(:), radius(:), rectB(:)
+            real(8), pointer    :: trapB(:), trapL(:), trapR(:)
+            integer, pointer    :: geoType(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Aliases
+            !useSmallVolumes  => setting%SmallDepth%UseSmallVolumesYN
+            depthCutoff      => setting%SmallDepth%DepthCutoff
+            geoType          => elemI(1:N_elem(this_image()),ei_geometryType)
+            smallVolume      => elemR(1:N_elem(this_image()),er_SmallVolume)
+            length           => elemR(1:N_elem(this_image()),er_Length)
+            rectB            => elemSGR(1:N_elem(this_image()),esgr_Rectangular_Breadth)
+            radius           => elemSGR(1:N_elem(this_image()),esgr_Circular_Radius)
+            trapL            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_LeftSlope)
+            trapR            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_RightSlope)
+            trapB            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_Breadth)
+            theta            => elemR(1:N_elem(this_image()),er_Temp01)
+        !%------------------------------------------------------------------
+        elemR(:,er_SmallVolume) = zeroR
+        !if (.not. useSmallVolumes) return
 
-        if (setting%SmallVolume%UseSmallVolumesYN) then
-            where (elemI(:,ei_geometryType) == rectangular)
-                elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,esgr_Rectangular_Breadth) * &
-                    elemR(:,er_Length)
+        ! !% Check consistency
+        ! if (.not. setting%ZeroValue%UseZeroValues) then
+        !     write(*,*) 'WARNING -- SmallVolume algorithm requires UseZeroValues, which was off.'
+        !     write(*,*) 'The UseZeroValues has been turned on.'
+        !     setting%ZeroValue%UseZeroValues = .true.
+        ! end if
 
-            elsewhere (elemI(:,ei_geometryType) == trapezoidal)
-                elemR(:,er_SmallVolume) = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
-                    (elemSGR(:,esgr_Trapezoidal_LeftSlope) + elemSGR(:,esgr_Trapezoidal_RightSlope)) * &
-                    setting%SmallVolume%DepthCutoff) * setting%SmallVolume%DepthCutoff
-
-            elsewhere (elemI(:,ei_geometryType) == circular)
-                ! HACK: not the correct small volume according to geometry. But it will work for now
-                elemR(:,er_SmallVolume) = pi * (setting%SmallVolume%DepthCutoff / twoR) ** twoR
-            endwhere
-        else
-            elemR(:,er_SmallVolume) = zeroR
+        !% Check if size of depth cutoff is large enough
+        if (depthCutoff .le. tenR * setting%ZeroValue%Depth) then
+            if (this_image() == 1) then
+                write(*,*) ' '
+                write(*,*) '***************************************************************** '
+                write(*,*) '** WARNING -- SmallVolume depth cutoff was too small ', depthCutoff
+                write(*,*) '** Resetting to ', max(tenR * setting%ZeroValue%Depth, 0.001)
+                write(*,*) '** The SmallVolume depth cutoff must be 10x the zero depth cutoff ' 
+                write(*,*) '***************************************************************** '
+                write(*,*) ' '
+            end if
+            depthCutoff = max(tenR * setting%ZeroValue%Depth, 0.001)
         end if
 
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% error checking for circular pipes
+        theta = zeroR ! temporary use of theta space for comparison, this isn't theta!
+        where (geoType == circular)
+            theta = radius - depthCutoff
+        end where
+        if (any(theta < zeroR)) then
+            print *, 'FATAL ERROR'
+            print *, 'Small Volume depth cutoff ',depthCutoff
+            print *, 'is larger or equal to radius of the smallest pipe '
+            print *, 'Small Volume depth cutoff must be smaller than the radius.'
+            stop 398705
+        end if
+                
+        !% rectangular conduit
+        where (geoType == rectangular)
+            smallVolume = depthCutoff * length * rectB
+        end where
+             
+        !% trapezoidal conduit    
+        where (geoType == trapezoidal)
+            smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
+        end where
+
+        !% circular conduit
+        where (geoType == circular)
+            theta = twoR * acos ( (radius - depthCutoff) / radius )
+            smallVolume = length * (radius**2) * (theta - sin(theta)) * onehalfR
+        end where   
+
+        !% small volume gives null, which should fail on every other cross-section    
+        !elsewhere
+        !    elemR(:,er_SmallVolume) = nullvalueR     
+        !endwhere
+
+ 
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_SmallVolumes
 !
 !==========================================================================
 !==========================================================================
 !
     subroutine init_IC_set_zero_lateral_inflow ()
-        !--------------------------------------------------------------------------
-        !
+        !%-----------------------------------------------------------------
         !% set all the lateral inflows to zero before start of a simulation
-        !
-        !--------------------------------------------------------------------------
+        !%-----------------------------------------------------------------
 
-            character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
+        elemR(:,er_FlowrateLateral) = zeroR
 
-        !--------------------------------------------------------------------------
-            if (icrash) return
-            if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        elemR(1:size(elemR,1)-1,er_FlowrateLateral) = zeroR
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_zero_lateral_inflow
 !
 !==========================================================================
 !==========================================================================
 !
     subroutine init_IC_oneVectors ()
-        !--------------------------------------------------------------------------
-        !
-        !% set all the lateral inflows to zero before start of a simulation
-        !
-        !--------------------------------------------------------------------------
+        !%-----------------------------------------------------------------
+        !% set up a vector of real ones (useful in sign functions)
+        !%-----------------------------------------------------------------
 
-            character(64)       :: subroutine_name = 'init_IC_oneVectors'
+        elemR(:,er_ones) = oneR
 
-        !--------------------------------------------------------------------------
-            if (icrash) return
-            if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        elemR(1:size(elemR,1)-1,er_ones) = oneR
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_oneVectors
 !
 !==========================================================================
 !==========================================================================
 !
     subroutine init_IC_slot ()
-        !--------------------------------------------------------------------------
-        !
+        !%-----------------------------------------------------------------
         !% set all the slot values to zero before start of a simulation
-        !
-        !--------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------
             character(64)       :: subroutine_name = 'init_IC_slot'
-
-        !--------------------------------------------------------------------------
+        !------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+        !------------------------------------------------------------------
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !------------------------------------------------------------------
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_slot
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_reference_head ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes the reference head 
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: Npack, thisP(:)
+            integer :: er_set(5), esr_set(8), fr_set(3)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------   
+        !% Aliases
+            !% --- use only the time-marching elements to set reference head
+            Npack => npack_elemP(ep_ALLtm)
+            thisP => elemP(1:Npack,ep_ALLtm)
+        !%------------------------------------------------------------------  
+
+        !% --- Get the reference head  
+        if (Npack > zeroI) then      
+            if (setting%Solver%SubtractReferenceHead) then
+                setting%Solver%ReferenceHead  = minval(elemR(thisP,er_Zbottom))
+                setting%Solver%ReferenceHead  &
+                    = real(floor(setting%Solver%ReferenceHead),8) 
+            else
+                setting%Solver%ReferenceHead = zeroR
+            end if
+            setting%Solver%MaxZbottom     = maxval(elemR(thisP,er_Zbottom))
+            setting%Solver%MinZbottom     = minval(elemR(thisP,er_Zbottom))
+            setting%Solver%AverageZbottom =    sum(elemR(thisP,er_Zbottom)) / Npack
+        end if
+        !% set the min and max over all the processors.
+        call co_min(setting%Solver%ReferenceHead)
+        call co_max(setting%Solver%MaxZbottom)
+        call co_min(setting%Solver%MinZbottom)
+        call co_max(setting%Solver%AverageZbottom)
+
+        !% --- bug checking
+        if (this_image() == 1) then
+            write(*,*) 'reference head   ',setting%Solver%ReferenceHead
+            write(*,*) 'max z bottom     ',setting%Solver%MaxZbottom
+            write(*,*) 'average z bottom ',setting%Solver%AverageZbottom
+            write(*,*) 'min z bottom     ',setting%Solver%MinZbottom
+        end if
+  
+        !%------------------------------------------------------------------    
+        !% Closing 
+    end subroutine init_reference_head
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_subtract_reference_head ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% removes reference head from Z values in all arrays
+        !% except for BC, which is done in bc_fetch()
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: Npack, thisP(:)
+            integer :: er_set(5), esr_set(8), fr_set(3)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------   
+        !% Aliases
+            !% --- use only the time-marching elements to set reference head
+            Npack => npack_elemP(ep_ALLtm)
+            thisP => elemP(1:Npack,ep_ALLtm)
+        !%------------------------------------------------------------------   
+        !% list of indexes using Z reference
+                ! er_Head
+                ! er_Head_N0
+                ! er_Zbottom
+                ! er_ZbreadthMax
+                ! er_Zcrown
+                ! esr_Weir_NominalDownstreamHead
+                ! esr_Weir_Zcrown
+                ! esr_Weir_Zcrest
+                ! esr_Orifice_NominalDownstreamHead
+                ! esr_Orifice_Zcrown
+                ! esr_Orifce_Zcrest
+                ! esr_Outlet_NominalDownstreamHead
+                ! esr_Outlet_Zcrest
+                ! fr_Head_u
+                ! fr_Head_d
+                ! fr_Zbottom
+
+        !% --- subtract the reference head from elemR
+        er_set = (/er_Head,        &
+                  er_Head_N0,     &
+                  er_Zbottom,      &
+                  er_ZbreadthMax, &
+                  er_Zcrown/)
+        where (elemR(:,er_set) .ne. nullValueR)        
+            elemR(:,er_set) = elemR(:,er_set) - setting%Solver%ReferenceHead
+        endwhere
+
+        !% --- subtract the reference head from elemSR
+        esr_set = (/esr_Weir_NominalDownstreamHead,    &
+                   esr_Weir_Zcrown,                   &
+                   esr_Weir_Zcrest,                   &
+                   esr_Orifice_NominalDownstreamHead, &
+                   esr_Orifice_Zcrown,                &
+                   esr_Orifice_Zcrest,                &
+                   esr_Outlet_NominalDownstreamHead,  &
+                   esr_Outlet_Zcrest/)
+        where (elemSR(:,esr_set) .ne. nullValueR)        
+               elemSR(:,esr_set) = elemSR(:,esr_set) - setting%Solver%ReferenceHead
+        endwhere
+
+        !% --- subtract the refence head from faceR
+        fr_set = (/fr_Head_u, &
+                  fr_Head_d, &
+                  fr_Zbottom/)
+        where (faceR(:,fr_set) .ne. nullValueR)        
+               faceR(:,fr_set) = faceR(:,fr_set) - setting%Solver%ReferenceHead
+        endwhere          
+
+        !%------------------------------------------------------------------    
+        !% Closing 
+    end subroutine init_subtract_reference_head
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_bc()
+        !%-----------------------------------------------------------------------------
+        !%
+        !% Description:
+        !%    Initializes boundary connditions
+        !%
+        !% Notes:
+        !%    The structures are general enough to support 3 types of BCs:
+        !%
+        !%    BCup: updstream boundary condition which can be inflow or head BC
+        !%    BCdn: downstream boundary condition which can be inflow or head BC
+        !%    BClat: lateral inflow coming into and nJ2 or nJm node.
+        !%
+        !%    However, the code only supports inflow BCs for BCup and BClat,
+        !%    and head BCs for BCdn, mimimcking EPA-SWMM 5.13 functionalities.
+        !%    Further developments allowing other types of inflow and head BCs,
+        !%    should store the respective BC in either the BC%inflowX or the
+        !%    BC%headX arrays defining the corresponding type of BC (i.e., BCup,
+        !%    BCdn, and BClat) in the BC%xI(:,bi_category) column.
+        !%
+        !%-----------------------------------------------------------------------------
+        integer :: ii, nidx, ntype, counter_bc_er
+        integer :: SWMMtseriesIdx, SWMMbasepatType
+        character(64) :: subroutine_name = "init_bc"
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        
+        if (setting%Profile%useYN) call util_profiler_start (pfc_init_bc)
+
+        call pack_nodes()
+        call util_allocate_bc()
+
+        ! do ii=1,size(BC%flowI,DIM=1)
+        !     write(*,"(10i8)"), BC%flowI(ii,bi_idx), BC%flowI(ii,bi_node_idx), BC%flowI(ii,bi_face_idx), &
+        !     BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_category), BC%flowI(ii,bi_subcategory), BC%flowI(ii,bi_fetch)
+        ! end do 
+        ! stop 39766
+
+        !% Convention to denote that xR_timeseries arrays haven't been fetched
+        if (N_flowBC > 0) then
+            BC%flowI(:,bi_fetch) = 1
+            BC%flowIdx(:) = 0
+            !% Convention to denote association between nodes and face/elements
+            !% BCup and BCdn BCs are associated with faces, thus bi_elem_idx is null
+            !% BClat BCs are associated with elements, thus bi_face_idx is null
+            BC%flowI(:, bi_face_idx) = nullvalueI
+            BC%flowI(:, bi_elem_idx) = nullvalueI
+            BC%flowR_timeseries = nullValueR
+        end if
+        !print *, 'here ddd'
+        if (N_headBC > 0) then
+            BC%headI = nullvalueI
+            BC%headI(:,bi_fetch) = 1
+            BC%headIdx(:) = 0
+            BC%headR_timeseries = nullValueR
+        end if
+
+        !% Initialize Inflow BCs
+        if (N_flowBC > 0) then
+            do ii = 1, N_flowBC
+                nidx = node%P%have_flowBC(ii)
+                ntype = node%I(nidx, ni_node_type)
+
+                !% Handle Inflow BCs (BCup and BClat only)
+                if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
+                    if ((ntype == nJm) .or. (ntype == nJ2)) then
+                        BC%flowI(ii, bi_category) = BClat
+                        BC%flowI(ii, bi_elem_idx) = node%I(nidx, ni_elemface_idx) !% elem idx
+                    else if (ntype == nBCup) then
+                        BC%flowI(ii, bi_category) = BCup
+                        BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
+                    else
+                        print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
+                        stop 739845
+                    end if
+
+                    BC%flowI(ii, bi_node_idx) = nidx
+                    BC%flowI(ii, bi_idx) = ii
+                    BC%flowYN(ii, bYN_read_input_file) = .true.
+
+                    !% HACK Pattern needs checking --- the following may be wrong! brh20211221
+                    !% check whether there is a pattern (-1 is no pattern) for this inflow
+                    SWMMbasepatType = &
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat_type)
+                    !% brh20211216 should be _type?    
+                    !rm nbasepat = &
+                    !rm    interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat)
+                    
+                    !% check whether there is a time series 
+                    !% (-1 is none, >0 is index, API_NULL_VALUE_I is error, which crashes API)
+                    SWMMtseriesIdx = &
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+
+                    !% BC does not have fixed value if its associated with dwfInflow
+                    !% or if extInflow has tseries or pattern
+                    BC%flowI(ii, bi_subcategory) = BCQ_tseries
+                    if (.not. node%YN(nidx, nYN_has_dwfInflow)) then !% extInflow only
+                        !% brh 20211216 modified the following for basepatType == -1 rather than basepat /= -1
+                        if ((SWMMtseriesIdx == -1) .and. (SWMMbasepatType == -1)) then
+                            BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                        end if
+                    end if
+                else
+                    print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
+                    stop 826549
+                end if
+            end do
+        end if
+
+        !% Initialize Head BCs
+        if (N_headBC > 0) then
+            do ii = 1, N_headBC
+                nidx = node%P%have_headBC(ii)
+                ntype = node%I(nidx, ni_node_type)
+
+                if (ntype == nBCdn) then
+                    BC%headI(ii, bi_category) = BCdn
+                    BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
+                else
+                    print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
+                    stop 57635
+                end if
+
+                BC%headI(ii, bi_idx) = ii
+                BC%headI(ii, bi_node_idx) = nidx
+
+                if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_FREE_OUTFALL) then
+                    BC%headI(ii, bi_subcategory) = BCH_free
+                    BC%headYN(ii, bYN_read_input_file) = .false.
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_NORMAL_OUTFALL) then
+                    BC%headI(ii, bi_subcategory) = BCH_normal
+                    BC%headYN(ii, bYN_read_input_file) = .false.
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_FIXED_OUTFALL) then
+                    BC%headI(ii, bi_subcategory) = BCH_fixed
+                    BC%headYN(ii, bYN_read_input_file) = .true.
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_TIDAL_OUTFALL) then
+                    BC%headI(ii, bi_subcategory) = BCH_tidal
+                    BC%headYN(ii, bYN_read_input_file) = .true.
+                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_TIMESERIES_OUTFALL) then
+                    BC%headI(ii, bi_subcategory) = BCH_tseries
+                    BC%headYN(ii, bYN_read_input_file) = .true.
+                end if
+            end do
+        end if
+        
+        call bc_step()
+        call pack_bc()
+
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_init_bc)
+
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_bc
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_bottom_slope ()
+        !%------------------------------------------------------------------ 
+        !% Description:
+        !% computes the bottom slope of all channel and conduit elements
+        !%------------------------------------------------------------------
+        integer, pointer :: npack, thisP(:), fup(:), fdn(:)
+        integer          :: thisCol
+        real(8), pointer :: slope(:), length(:), fZbottom(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisCol = ep_CC_ALLtm
+            npack   => npack_elemP(thisCol)
+            if (npack < 1) return
+            thisP   => elemP(1:npack,thisCol)
+            fup     => elemI(:,ei_Mface_uL)
+            fdn     => elemI(:,ei_Mface_dL)
+            slope   => elemR(:,er_BottomSlope)
+            length  => elemR(:,er_Length)
+            fZbottom => faceR(:,fr_Zbottom)
+        !%------------------------------------------------------------------
+        
+        slope(thisP) =  (fZbottom(fup(thisP)) - fZbottom(fdn(thisP))) / length(thisP)
+
+        !%------------------------------------------------------------------
+    end subroutine init_IC_bottom_slope    
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_ZeroValues_nondepth ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% ensures consistent initialization of zero values. Uses the 
+        !% detha the primary setting, then sets the other
+        !% values for consistency
+        !% Assumes that Topwidth value is set.
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), pointer :: area, topwidth, volume, depth, length
+            integer, pointer :: Npack, thisP(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            area     => setting%ZeroValue%Area
+            topwidth => setting%ZeroValue%Topwidth
+            volume   => setting%ZeroValue%Volume
+            depth    => setting%ZeroValue%Depth
+            length   => setting%Discretization%NominalElemLength
+        !%------------------------------------------------------------------
+        if (.not. setting%ZeroValue%UseZeroValues) return
+
+        Npack => npack_elemP(ep_ALLtm)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,ep_ALLtm)
+            !% the zero topwidth is 5% of the max breadth
+            topwidth = minval(elemR(thisP,er_BreadthMax)) / twentyR
+            !% the zerovalue area is the product of zerovalue depth and topwidth
+            area = topwidth * depth
+            !% the zero value volume uses 5% of the volume at minimum depth
+            volume = area * minval(elemR(thisP,er_Length)) / twentyR
+            !print *, topwidth, area, depth, volume, minval(elemR(thisP,er_Length))
+        else
+            print *, 'unexpected error -- no time-marching elements found '
+            stop 398733
+        end if
+
+        if (depth < 1e-16) then
+            print *, 'error, setting%ZeroValue%Depth is too small'
+            stop 3987095
+        end if
+
+        if (topwidth < 1e-16) then
+            print *, 'error, setting%ZeroValue%TopWidth is too small'
+            stop 3987095
+        end if
+
+        if (area < 1e-16) then
+            print *, 'error, setting%ZeroValue%Area is too small'
+            stop 93764
+        end if
+
+        if (volume < 1e-16) then
+            print *, 'error, setting%ZeroValue%Volume is too small'
+            stop 77395
+        end if
+
+        !%------------------------------------------------------------------
+        !% Closing
+    end subroutine init_IC_ZeroValues_nondepth
+!%
+!%==========================================================================    
+!% END MODULE
+!%==========================================================================
+!%
 end module initial_condition

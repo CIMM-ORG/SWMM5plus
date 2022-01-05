@@ -46,6 +46,7 @@ contains
         !% finalize the profiler and print times
         if (setting%Profile%useYN) call util_profiler_print_summary()
 
+        sync all
         if (this_image()==1) then
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%FinalOutputStart = cval
@@ -55,26 +56,25 @@ contains
             if ((setting%Output%Report%provideYN) .and. &
                 (.not. setting%Output%Report%suppress_MultiLevel_Output)) then    
 
-                write(*,*) 'beginning final conversion of output (this can be slow)...'
+                if (this_image() == 1) write(*,*) 'beginning final conversion of output (this can be slow)...'
                 !% write a final combined multi-level files
                 call outputML_store_data (.true.)
 
+                if (this_image() == 1)  write(*,*) 'starting write of control file'
                 !% write the control file for the stored mult-level files
                 call outputML_write_control_file ()
 
                 sync all
 
+                if (this_image() == 1) write(*,*) 'starting convert elements'
                 call outputML_convert_elements_to_linknode_and_write ()
             end if
 
         end if !% brh20211208    
 
         !% --- shut down EPA SWMM-C and delete the API
-        !print *, 'calling interface finalize'
+        if (this_image() == 1) print *, 'calling interface finalize'
         call interface_finalize()
-
-        !% --- close all the allocated data
-        call util_deallocate_network_data()
 
         sync all
 
@@ -138,9 +138,17 @@ contains
             write(*,*) ' '
             write(*,"(A,i9)") ' Number of serial writes to file     = ',setting%Output%NumberOfWriteSteps
             write(*,"(A,i9)") ' Total number of time levels written = ',setting%Output%NumberOfTimeLevelSaved
+            write(*,"(A,2i9)") ' Total number of SWMM links, nodes = ',SWMM_N_link, SWMM_N_node
+            write(*,"(A,2i9)") ' Total number of FV elements       = ',sum(N_elem)
             write(*,"(A)") '========================= SWMM5+ finished =================================='
             write(*,"(A)") ''
         end if
+
+
+        !% --- close all the allocated data
+        print *, 'calling deallocate'
+        call util_deallocate_network_data()
+
 
     end subroutine finalize_toplevel
 !%

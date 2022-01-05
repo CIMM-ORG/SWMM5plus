@@ -42,6 +42,7 @@ module geometry
             integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
             integer, pointer :: thisColP_JM, thisColP_JB, thisColP_ClosedElems
+            logical :: isreset
             integer, allocatable :: tempP(:) !% debugging
             character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
@@ -92,26 +93,52 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
+        !print *, '--------01', elemR(1,er_Depth), elemR(1,er_Volume)
         !% assign all geometry for surcharged elements CC, JM (and JB?)
         call geo_surcharged (thisColP_surcharged)
+
+        !print *, '......aaa ', elemR(1,er_Depth), elemR(1,er_Volume)
+        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
 
         !% reset all zero or near-zero volumes in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged)
 
+        !print *, '......bbb ', elemR(1,er_Depth), elemR(1,er_Volume)
+        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
+
         !% compute the depth on all non-surcharged elements of CC and JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
+
+        
+
+        !print *, '......ccc ', elemR(1,er_Depth), elemR(1,er_Volume)
+        !print *, '           ',elemR(ietmp,er_Depth)
+        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
+        !write(*,"(A,5e12.5)") 'depth ',elemR(ietmp,er_Depth)
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged)
 
+      
+
+        !print *, '......ddd ', elemR(1,er_Depth), elemR(1,er_Volume)
+        !print *, '           ',elemR(ietmp,er_Depth)
+        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
+
         !% compute the head on all non-surcharged elements of CC and JM
         call geo_head_from_depth (thisColP_NonSurcharged)
+
+        
+        !print *, '......eee ', elemR(1,er_Depth)
 
         !% limit volume for incipient surcharge. This is done after depth is computed
         !% so that the "depth" algorithm can include depths greater than fulldepth
         !% as a way to handle head for incipient surcharge.
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
 
+       
+
+        !print *, '......fff ', elemR(1,er_Depth)
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
@@ -120,48 +147,274 @@ module geometry
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
            
+        !print *, '......ggg ', elemR(1,er_Depth)
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
 
+        !print *, '......hhh ', elemR(1,er_Depth)
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
+        !print *, '......iii ', elemR(1,er_Depth)
+        !% reset all zero or near-zero areas in non-surcharged CC and JM
+        call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged)
+
+        !print *, '......jjj ', elemR(1,er_Depth)
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
+        !print *, '......kkk ', elemR(1,er_Depth)
+        !% reset all zero or near-zero topwidth in non-surcharged CC and JM
+        !% but do not change the eYN(:,eYN_isZeroDepth) mask
+        call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged)
+
+        !print *, '......lll ', elemR(1,er_Depth)
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
+        !print *, '......mmm ', elemR(1,er_Depth)
         !% compute hyddepth
         call geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
 
+        !print *, '......nnn ', elemR(1,er_Depth)
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
+        !print *, '......ooo ', elemR(1,er_Depth)
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
 
+        !print *, '......ppp ', elemR(1,er_Depth)
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell (thisColP_all)
 
+        !print *, '......qqq ', elemR(1,er_Depth)
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
 
+        !print *, '......rrr ', elemR(1,er_Depth)
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
 
+        !print *, '......zzz ', elemR(1,er_Depth)
+
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geometry_toplevel
 
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_assign_JB (whichTM, thisColP_JM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Assigns geometry for head, depth, area and volume for JB (junction branches)
+        !% When the main head is higher than the branch, this applies
+        !% the main head to the branch with an adjustment for head loss.
+        !% When the main head is below the branch, this sets the
+        !% branch head to the bottom elevation plus a depth implied!%------------------------------------------------------------------
+        !% by a Froude number of one.
+        !%
+        !% Note that the JB works in an inverse form from the other geometry computations.
+        !% That is, for CC, JM we have volume a priori and then compute area, depth etc.
+        !% However, for JB we get head then depth diagnostically and must compute area,
+        !% etc. before we can get volume.
+        !%
+        !% 20210611 -- this is written in a simple loop form. See notes in draft SWMM5+
+        !% NewCode Framework document on possible changes for a packed vector form.
+        !% It is not clear that the number of junctions would make the change useful.
+        !%
+        !% HACK
+        !% The following are NOT assigned on JB
+        !% FullHydDepth, FullPerimeter, FullVolume, Roughness
+        !%
+        !% The following initializations are unknown as of 20211215
+        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
+        !% SmallVolume_xxx,
+        !%-------------------------------------------------------------------
+            integer, intent(in) :: whichTM, thisColP_JM
+            integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
+            real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
+            real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
+            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
+            real(8), pointer :: zCrown(:), fullarea(:), fulldepth(:), fullperimeter(:)
+            real(8), pointer :: fullhyddepth(:)
+            real(8), pointer :: grav
+            integer :: tB, ii, kk
+        !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
+        !real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
+
+        !% thisColP_JM is the column for the junction mains of a particular
+        !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
+            integer, allocatable :: tempP(:)
+            character(64) :: subroutine_name = 'geo_assign_JB'
+        !%---------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
+        !%----------------------------------------------------------------------
+        !% Aliases
+            Npack         => npack_elemP(thisColP_JM)
+            area          => elemR(:,er_Area)
+            depth         => elemR(:,er_Depth)
+            dHdA          => elemR(:,er_dHdA)
+            ell           => elemR(:,er_ell)
+            head          => elemR(:,er_Head)
+            hyddepth      => elemR(:,er_HydDepth)
+            hydradius     => elemR(:,er_HydRadius)
+            length        => elemR(:,er_Length)
+            perimeter     => elemR(:,er_Perimeter)
+            topwidth      => elemR(:,er_Topwidth)
+            velocity      => elemR(:,er_Velocity)
+            volume        => elemR(:,er_Volume)
+            zBtm          => elemR(:,er_Zbottom)
+            zCrown        => elemR(:,er_Zcrown)
+            fullarea      => elemR(:,er_FullArea)
+            fulldepth     => elemR(:,er_FullDepth)
+            fullhyddepth  => elemR(:,er_FullHydDepth)
+            fullperimeter => elemR(:,er_FullPerimeter)
+            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
+            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            thisSolve     => elemI(:,ei_tmType)
+            grav => setting%Constant%gravity
+        !%------------------------------------------------------------------
+
+        if (Npack > 0) then
+            thisP  => elemP(1:Npack,thisColP_JM)
+            !% cycle through the all the main junctions and each of its branches
+            do ii=1,Npack
+                tM => thisP(ii) !% junction main ID
+                !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
+                if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
+                    !% cycle through the possible junction branches
+                    do kk=1,max_branch_per_node
+                        tB = tM + kk !% junction branch ID
+                        if (BranchExists(tB) == 1) then
+                            !% only when a branch exists.
+                            if ( head(tM) > zBtm(tB) ) then
+                                !% for main head above branch bottom entrance use a head
+                                !% loss approach. The branchsign and velocity sign ensure
+                                !% the headloss is added to an inflow and subtracted at
+                                !% an outflow
+                                !% Note this is a time-lagged velocity as the JB velocity
+                                !% is not updated until after face interpolation                                
+                                head(tB) = head(tM)  + branchsign(kk) * sign(oneR,velocity(tB)) &
+                                    * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
+                            else
+                                !% for main head below the branch bottom entrance we assign a
+                                !% Froude number of one on an inflow to the junction main. Note
+                                !% an outflow from a junction main for this case gets head
+                                !% of z_bottom of the branch (zero depth).
+                                !% Note this is a time-lagged velocity as the JB velocity
+                                !% is not updated until after face interpolation
+                                head(tB) = zBtm(tB)  &
+                                    + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
+                                    *(velocity(tB)**twoR) / grav
+                            end if
+                           
+                            
+                            !% compute provisional depth
+                            depth(tB) = head(tB) - zBtm(tB)
+                            
+                            if (depth(tB) .ge. fulldepth(tB)) then
+                                !% surcharged or incipient surcharged
+                                depth(tB)     = fulldepth(tB)
+                                area(tB)      = fullarea(tB)
+                                hyddepth(tB)  = fullhyddepth(tB)
+                                perimeter(tB) = fullperimeter(tB)
+                                topwidth(tB)  = setting%ZeroValue%Topwidth
+                                hydRadius(tB) = fulldepth(tB) / fullperimeter(tB)
+                                dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+                            elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
+                                !% negligible depth is treated with ZeroValues
+                                depth(tB)     = setting%ZeroValue%Depth
+                                area(tB)      = setting%ZeroValue%Area
+                               
+                                ! HACK fix
+                                !f (elemI(tB,ei_geometryType) == rectangular)  then
+                                !    topwidth(tB) = elemSGR(tB,esgr_Rectangular_Breadth)
+                                !else
+                                    topwidth(tB)  = setting%ZeroValue%Topwidth
+                                !end if
+                                !% HACK
+                                hyddepth(tB)  = setting%ZeroValue%Area / topwidth(tB)
+                                ! hyddepth(tB)  = setting%ZeroValue%Area / setting%ZeroValue%Topwidth
+                                !% HACK
+                                perimeter(tB) = topwidth(tB) + setting%ZeroValue%Depth
+                                ! perimeter(tB) = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
+                                hydRadius(tB) = setting%ZeroValue%Area / perimeter(tB)
+                                !% HACK
+                                dHdA(tB)      = oneR / topwidth(tB)
+                                ! dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+                            elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
+                                !% negative depth is treated as exactly zero
+                                depth(tB) = zeroR
+                                area(tB)  = zeroR
+                                topwidth(tB) = zeroR
+                                hydDepth(tB) = zeroR
+                                perimeter(tB) = zeroR
+                                hydRadius(tB) = zeroR
+                                dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+                                !dHdA(tB)      = setting%ZeroValue%Topwidth
+                            else
+                                !% not surcharged and non-negligible depth
+                                select case (elemI(tB,ei_geometryType))
+                                    case (rectangular)
+                                        area(tB)     = rectangular_area_from_depth_singular (tB)
+                                        topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
+                                        hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
+                                        perimeter(tB)= rectangular_perimeter_from_depth_singular (tB)
+                                        hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
+                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
+                                        dHdA(tB)     = oneR / topwidth(tB)
+                                    case (trapezoidal)
+                                        area(tB)     = trapezoidal_area_from_depth_singular (tB)
+                                        topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
+                                        hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
+                                        perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB)
+                                        hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
+                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
+                                        dHdA(tB)     = oneR / topwidth(tB)
+                                    case (circular)
+                                        area(tB)     = circular_area_from_depth_singular (tB)
+                                        topwidth(tB) = circular_topwidth_from_depth_singular (tB)
+                                        hydDepth(tB) = circular_hyddepth_from_topwidth_singular (tB)
+                                        hydRadius(tB)= circular_hydradius_from_depth_singular (tB)
+                                        perimeter(tB)= circular_perimeter_from_hydradius_singular (tB)
+                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for circular
+                                        dHdA(tB)     = oneR / topwidth(tB)
+                                    case default
+                                        print *, 'error, case default should not be reached'
+                                        print *, 'in ',trim(subroutine_name), ' with stop commented out <<<<<<<<<<<<<<<<<<<<<<<'
+                                        !stop 3998
+                                end select
+                            end if
+                            volume(tB) = area(tB) * length(tB)
+                        end if
+                    end do
+                end if
+            end do
+        end if
+        !% Note, the above can only be made a concurrent loop if we replace the tM
+        !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
+        !% difficult to read.
+
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
+
+        if (setting%Debug%File%geometry) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine geo_assign_JB
+!%
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================
@@ -328,208 +581,7 @@ module geometry
     end subroutine geo_head_from_depth
 !%
 !%==========================================================================
-!%==========================================================================
-!%
-    subroutine geo_assign_JB (whichTM, thisColP_JM)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Assigns geometry for head, depth, area and volume for JB (junction branches)
-        !% When the main head is higher than the branch, this applies
-        !% the main head to the branch with an adjustment for head loss.
-        !% When the main head is below the branch, this sets the
-        !% branch head to the bottom elevation plus a depth implied!%------------------------------------------------------------------
-        !% by a Froude number of one.
-        !%
-        !% Note that the JB works in an inverse form from the other geometry computations.
-        !% That is, for CC, JM we have volume a priori and then compute area, depth etc.
-        !% However, for JB we get head then depth diagnostically and must compute area,
-        !% etc. before we can get volume.
-        !%
-        !% 20210611 -- this is written in a simple loop form. See notes in draft SWMM5+
-        !% NewCode Framework document on possible changes for a packed vector form.
-        !% It is not clear that the number of junctions would make the change useful.
-        !%
-        !% HACK
-        !% The following are NOT assigned on JB
-        !% FullHydDepth, FullPerimeter, FullVolume, Roughness
-        !%
-        !% The following initializations are unknown as of 20211215
-        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
-        !% SmallVolume_xxx,
-        !%-------------------------------------------------------------------
-        integer, intent(in) :: whichTM, thisColP_JM
-        integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
-        real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
-        real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
-        real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
-        real(8), pointer :: zCrown(:), fullarea(:), fulldepth(:), fullperimeter(:)
-        real(8), pointer :: fullhyddepth(:)
-        real(8), pointer :: grav
-        integer :: tB, ii, kk
-        !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
-        !real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
-
-        !% thisColP_JM is the column for the junction mains of a particular
-        !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
-        integer, allocatable :: tempP(:)
-        character(64) :: subroutine_name = 'geo_assign_JB'
-        !%---------------------------------------------------------------------
-        !% Preliminaries
-            if (icrash) return
-            if (setting%Debug%File%geometry) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-            if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
-        !%----------------------------------------------------------------------
-        !% Aliases
-            Npack         => npack_elemP(thisColP_JM)
-            area          => elemR(:,er_Area)
-            depth         => elemR(:,er_Depth)
-            dHdA          => elemR(:,er_dHdA)
-            ell           => elemR(:,er_ell)
-            head          => elemR(:,er_Head)
-            hyddepth      => elemR(:,er_HydDepth)
-            hydradius     => elemR(:,er_HydRadius)
-            length        => elemR(:,er_Length)
-            perimeter     => elemR(:,er_Perimeter)
-            topwidth      => elemR(:,er_Topwidth)
-            velocity      => elemR(:,er_Velocity)
-            volume        => elemR(:,er_Volume)
-            zBtm          => elemR(:,er_Zbottom)
-            zCrown        => elemR(:,er_Zcrown)
-            fullarea      => elemR(:,er_FullArea)
-            fulldepth     => elemR(:,er_FullDepth)
-            fullhyddepth  => elemR(:,er_FullHydDepth)
-            fullperimeter => elemR(:,er_FullPerimeter)
-            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
-            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
-            thisSolve     => elemI(:,ei_tmType)
-            grav => setting%Constant%gravity
-        !%------------------------------------------------------------------
-
-        if (Npack > 0) then
-            thisP  => elemP(1:Npack,thisColP_JM)
-            !% cycle through the all the main junctions and each of its branches
-            do ii=1,Npack
-                tM => thisP(ii) !% junction main ID
-                !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
-                if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
-                    !% cycle through the possible junction branches
-                    do kk=1,max_branch_per_node
-                        tB = tM + kk !% junction branch ID
-                        if (BranchExists(tB) == 1) then
-                            !% only when a branch exists.
-                            if ( head(tM) > zBtm(tB) ) then
-                                !% for main head above branch bottom entrance use a head
-                                !% loss approach. The branchsign and velocity sign ensure
-                                !% the headloss is added to an inflow and subtracted at
-                                !% an outflow
-                                !% Note this is a time-lagged velocity as the JB velocity
-                                !% is not updated until after face interpolation                                
-                                head(tB) = head(tM)  + branchsign(kk) * sign(oneR,velocity(tB)) &
-                                    * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
-                            else
-                                !% for main head below the branch bottom entrance we assign a
-                                !% Froude number of one on an inflow to the junction main. Note
-                                !% an outflow from a junction main for this case gets head
-                                !% of z_bottom of the branch (zero depth).
-                                !% Note this is a time-lagged velocity as the JB velocity
-                                !% is not updated until after face interpolation
-                                head(tB) = zBtm(tB)  &
-                                    + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
-                                    *(velocity(tB)**twoR) / grav
-                            end if
-                           
-                            !% compute provisional depth
-                            depth(tB) = head(tB) - zBtm(tB)
-                            if (depth(tB) .ge. fulldepth(tB)) then
-                                !% surcharged or incipient surcharged
-                                depth(tB)     = fulldepth(tB)
-                                area(tB)      = fullarea(tB)
-                                hyddepth(tB)  = fullhyddepth(tB)
-                                perimeter(tB) = fullperimeter(tB)
-                                topwidth(tB)  = setting%ZeroValue%Topwidth
-                                hydRadius(tB) = fulldepth(tB) / fullperimeter(tB)
-                                dHdA(tB)      = setting%ZeroValue%Topwidth
-                            elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
-                                !% negligible depth is treated with ZeroValues
-                                depth(tB)     = setting%ZeroValue%Depth
-                                area(tB)      = setting%ZeroValue%Area
-                                ! HACK fix
-                                if (elemI(tB,ei_geometryType) == rectangular)  then
-                                    topwidth(tB) = elemSGR(tB,esgr_Rectangular_Breadth)
-                                else
-                                    topwidth(tB)  = setting%ZeroValue%Topwidth
-                                end if
-                                !% HACK
-                                hyddepth(tB)  = setting%ZeroValue%Area / topwidth(tB)
-                                ! hyddepth(tB)  = setting%ZeroValue%Area / setting%ZeroValue%Topwidth
-                                !% HACK
-                                perimeter(tB) = topwidth(tB) + setting%ZeroValue%Depth
-                                ! perimeter(tB) = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
-                                hydRadius(tB) = setting%ZeroValue%Area / perimeter(tB)
-                                !% HACK
-                                dHdA(tB)      = oneR / topwidth(tB)
-                                ! dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
-                            elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
-                                !% negative depth is treated as exactly zero
-                                depth(tB) = zeroR
-                                area(tB)  = zeroR
-                                topwidth(tB) = zeroR
-                                hydDepth(tB) = zeroR
-                                perimeter(tB) = zeroR
-                                hydRadius(tB) = zeroR
-                                !dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
-                                dHdA(tB)      = setting%ZeroValue%Topwidth
-                            else
-                                !% not surcharged and non-negligible depth
-                                select case (elemI(tB,ei_geometryType))
-                                    case (rectangular)
-                                        area(tB)     = rectangular_area_from_depth_singular (tB)
-                                        topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
-                                        hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
-                                        perimeter(tB)= rectangular_perimeter_from_depth_singular (tB)
-                                        hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
-                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
-                                        dHdA(tB)     = oneR / topwidth(tB)
-                                    case (trapezoidal)
-                                        area(tB)     = trapezoidal_area_from_depth_singular (tB)
-                                        topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
-                                        hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
-                                        perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB)
-                                        hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
-                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
-                                        dHdA(tB)     = oneR / topwidth(tB)
-                                    case (circular)
-                                        area(tB)     = circular_area_from_depth_singular (tB)
-                                        topwidth(tB) = circular_topwidth_from_depth_singular (tB)
-                                        hydDepth(tB) = circular_hyddepth_from_topwidth_singular (tB)
-                                        hydRadius(tB)= circular_hydradius_from_depth_singular (tB)
-                                        perimeter(tB)= circular_perimeter_from_hydradius_singular (tB)
-                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for circular
-                                        dHdA(tB)     = oneR / topwidth(tB)
-                                    case default
-                                        print *, 'error, case default should not be reached'
-                                        print *, 'in ',trim(subroutine_name), ' with stop commented out <<<<<<<<<<<<<<<<<<<<<<<'
-                                        !stop 3998
-                                end select
-                            end if
-                            volume(tB) = area(tB) * length(tB)
-                        end if
-                    end do
-                end if
-            end do
-        end if
-        !% Note, the above can only be made a concurrent loop if we replace the tM
-        !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
-        !% difficult to read.
-
-        if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
-
-        if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_assign_JB
-!%
-!%==========================================================================
+!
 !%==========================================================================
 !%
     subroutine geo_area_from_volume (thisColP)
@@ -561,10 +613,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_area_from_volume
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_topwidth_from_depth &
         (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------

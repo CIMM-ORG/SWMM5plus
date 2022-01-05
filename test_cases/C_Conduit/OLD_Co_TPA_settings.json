@@ -183,8 +183,7 @@
         "MinimumArea" : 0.005,
         "MinimumHydRadius" : 0.009,
         "MinimumPerimeter" : 0.52,
-        "MinimumTopwidth" : 0.5,
-        "UseSmallVolumesYN" : false
+        "MinimumTopwidth" : 0.5
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",

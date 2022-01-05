@@ -210,7 +210,7 @@ contains
                     print *, 'hard coded test cases need to be revised'
                     stop 63897
                 case ('-R')  !% Review -- stop after initialization to review
-                    setting%Simulation%stopAfterInitializionYN = .true.
+                    setting%Simulation%stopAfterInitializationYN = .true.
                 case ('-v','-von')  ! setting.Verbose   on
                     setting%Output%Verbose = .true.
                 case ('-voff')  ! setting.Verbose  off

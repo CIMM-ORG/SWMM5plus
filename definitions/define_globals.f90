@@ -23,14 +23,17 @@ module define_globals
     ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
-    !% HACK brh -- element indexes for junction test
-    !integer :: ietmp(7) = (/99,100,102,101,103,208,209/)
-    !integer :: iftmp(6) = (/100,101,1,1,102,207/)
 
-    integer :: ietmp(7) = (/  21, 22, 23, 24, 25, 26, 27/)
-    integer :: iftmp(6) = (/    21, 22, 23, 24, 25, 26/)
+    !% At junction for lateral small test
+    integer :: ietmp(5) = (/  13, 15, 14, 16, 38/)
+    integer :: iftmp(2) = (/   14, 15/)
+
+    !integer :: ietmp(5) = (/  1, 2, 3, 4, 5/)
+    !integer :: iftmp(2) = (/   1, 2/)
 
     integer :: temptime(6) !used for temporary time debugging
+
+    integer(kind=8) :: irecCount = 0
 
 !% ===================================================================================
 !% VARIABLES
@@ -55,6 +58,8 @@ module define_globals
     !integer, parameter :: max_dn_branch_per_node = 3 
     !integer, parameter :: max_branch_per_node = 6
 
+    !% note that these must always be matched with the same
+    !% number of up and down nodes. 
     integer, parameter :: max_up_branch_per_node = 5   !% ADDBRANCH
     integer, parameter :: max_dn_branch_per_node = 5   !% ADDBRANCH
     integer, parameter :: max_branch_per_node = 10      !% ADDBRANCH
@@ -101,9 +106,9 @@ module define_globals
     integer, allocatable, target :: N_elem(:)
     integer, allocatable, target :: N_face(:)
     integer, allocatable, target :: N_unique_face(:)
-    !% output elements on each image (coarray)
+    !% output elements on each image
     integer, allocatable, target :: N_OutElem(:)[:]
-    !% output nodes on each image (coarray)
+    !% output nodes on each image
     integer, allocatable, target :: N_OutFace(:)[:]
 
     !%  elems in coarray
@@ -126,7 +131,7 @@ module define_globals
     logical, allocatable, target :: faceYN(:,:)[:]      !% coarray for faces logical data
     integer, allocatable, target :: faceP(:,:)[:]       !% coarray for faces pack array
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
-    logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
+    !logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
     real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
     !% subcatchments -- NOT coarray
@@ -199,6 +204,10 @@ module define_globals
 
     integer, allocatable, target :: thisElementOut(:), thisFaceOut(:)
 
+    integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
+    integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
+    integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+    
     !% Profiling Timer
     type(wall_clk) :: timer
 
@@ -225,12 +234,14 @@ module define_globals
     real(8), parameter :: sixR = 6.0
     real(8), parameter :: eightR = 8.0
     real(8), parameter :: tenR = 10.0
+    real(8), parameter :: twentyR = 20.0
     real(8), parameter :: twentyfourR = 24.0
     real(8), parameter :: sixtyR = 60.0
     real(8), parameter :: onehundredR = 100.0
     real(8), parameter :: onethousandR = 1000.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
+    real(8), parameter :: onetenthR = oneR / tenR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
     real(8), parameter :: onefourthR = oneR / fourR

@@ -49,6 +49,7 @@
             "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
@@ -76,9 +77,6 @@
         "useHydrology" : true,
         "useHydraulics" : true
     },
-    "SmallVolume" : {
-        "UseSmallVolumesYN" : true
-    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -93,5 +91,8 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "ZeroValue" : {
+        "Depth" : 5e-4
     }
 }

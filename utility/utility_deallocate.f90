@@ -41,12 +41,16 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
+        !print *, 'call util_deallocate_linknode() ',this_image()
         call util_deallocate_linknode()
 
+        !print *, 'call util_deallocate_elemX_faceX() ', this_image()
         call util_deallocate_elemX_faceX()
 
+        !print *, 'call util_deallocate_columns() ', this_image()
         call util_deallocate_columns()
 
+        !print *, 'call util_deallocate_bc() ', this_image()
         call util_deallocate_bc()
 
         !%-------------------------------------------------------------------
@@ -229,43 +233,56 @@ contains
         !%-------------------------------------------------------------------
 
         !==== elem deallocation ====
+        !print *, 'elemR'
         deallocate(elemR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemR')
 
+        !print *, 'elemI'
         deallocate(elemI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemI')
 
+        !print *, 'elemYN'
         deallocate(elemYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemYN')
 
+        !print *, 'elemP'
         deallocate(elemP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemP')
 
+        !print *, 'elemPGetm'
         deallocate(elemPGetm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemPGetm')
 
+        !print *, 'elemPGac'
         deallocate(elemPGac, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemPGac')
 
+        !print *, 'elemPGalltm'
         deallocate(elemPGalltm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemPGalltm')
 
+        !print *, 'elemSI'
         deallocate(elemSI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemSI')
 
+        !print *, 'elemSR'
         deallocate(elemSR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemSR')
 
         !==== face deallocation ====
+        !print *, 'faceR'
         deallocate(faceR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceR')
 
+        !print *, 'faceI'
         deallocate(faceI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceI')
 
+        !print *, 'faceYN'
         deallocate(faceYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceYN')
 
+        !print *, 'faceP'
         deallocate(faceP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceP')
 
@@ -343,8 +360,8 @@ contains
         deallocate(col_faceI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'col_faceI')
         !==== col_faceM ====
-        deallocate(col_faceM, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'col_faceM')
+       ! deallocate(col_faceM, stat=deallocation_status, errmsg=emsg)
+       ! call util_deallocate_check(deallocation_status, emsg, 'col_faceM')
         !==== col_faceP ====
         deallocate(npack_faceP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'npack_faceP')

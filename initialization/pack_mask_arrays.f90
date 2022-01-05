@@ -23,6 +23,7 @@ module pack_mask_arrays
     public :: pack_bc
     public :: pack_element_outputML
     public :: pack_face_outputML
+    public :: pack_small_and_zero_depth_elements
 
 contains
 !
@@ -42,7 +43,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         
-        call mask_faces_whole_array_static()
+        !call mask_faces_whole_array_static()
         
         call pack_geometry_alltm_elements()
         
@@ -61,7 +62,8 @@ contains
         call pack_dynamic_interior_faces()
         
         call pack_dynamic_shared_faces()
-        !brh20211006 call pack_link_node_output()
+
+        call pack_small_and_zero_depth_elements
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -207,36 +209,34 @@ contains
 !==========================================================================
 !
     subroutine pack_element_outputML ()
-        !--------------------------------------------------------------------------
+        !%-----------------------------------------------------------------
+        !% Description:
         !% creates a pack for elemR, elemI, elemYN for output elements
-        !--------------------------------------------------------------------------
-        logical, pointer :: isElemOut(:)
-        integer, pointer :: eIdx(:), ptype, npack
-        character(64) :: subroutine_name = 'pack_element_outputML'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        !% don't do this is output is suppressed
-        if (setting%Output%Report%suppress_MultiLevel_Output) return
-
-        eIdx => elemI(:,ei_Lidx)
-
-        !% logical control on output for each element
-        isElemOut => elemYN(:,eYN_isOutput)
-
-        !% pointers for storage of type and npack storage
-        ptype => col_elemP(ep_Output_Elements)
-        npack => npack_elemP(ptype)
-
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            logical, pointer :: isElemOut(:)
+            integer, pointer :: eIdx(:), ptype, npack
+            character(64) :: subroutine_name = 'pack_element_outputML'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (icrash) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            eIdx => elemI(:,ei_Lidx)
+            !% logical control on output for each element
+            isElemOut => elemYN(:,eYN_isOutput)
+            ptype => col_elemP(ep_Output_Elements)
+            npack => npack_elemP(ptype)
+        !%------------------------------------------------------------------
         !% count the output elements to be packed
         npack = count(isElemOut)
 
         !% output the true element indexes into a pack
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,isElemOut)
-            setting%Output%OutputElementsExist = .true.
         else 
-            !% if there are no output elements, suppress the output
-            setting%Output%OutputElementsExist = .false.       
+            !% continue     
         end if    
 
     end subroutine pack_element_outputML        
@@ -245,37 +245,35 @@ contains
 !==========================================================================
 !    
     subroutine pack_face_outputML ()
-        !--------------------------------------------------------------------------
+        !%-----------------------------------------------------------------
+        !% Description:
         !% packed arrays faceR, faceI, faceYN output elements
-        !--------------------------------------------------------------------------
-        !--------------------------------------------------------------------------
-        logical, pointer :: isFaceOut(:)
-        integer, pointer :: fIdx(:), ptype, npack
-        character(64) :: subroutine_name = 'pack_face_outputML'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        !% don't do this is output is suppressed
-        if (setting%Output%Report%suppress_MultiLevel_Output) return
-
-        fIdx => faceI(:,fi_Lidx)
-
-        !% logical control on output for each element
-        isFaceOut => faceYN(:,fYN_isFaceOut)
-
-        !% pointers for storage of type and npack storage
-        ptype => col_faceP(fp_Output_Faces)
-        npack => npack_faceP(ptype)
-
-        !% count the output elements to be packed
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            logical, pointer :: isFaceOut(:)
+            integer, pointer :: fIdx(:), ptype, npack
+            character(64) :: subroutine_name = 'pack_face_outputML'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (icrash) return
+        !%-----------------------------------------------------------------
+        !% Aliases:
+            fIdx => faceI(:,fi_Lidx)
+            !% logical control on output for each element
+            isFaceOut => faceYN(:,fYN_isFaceOut)
+            !% pointers for storage of type and npack storage
+            ptype => col_faceP(fp_Output_Faces)
+            npack => npack_faceP(ptype)
+        !%-----------------------------------------------------------------
+        !% count the output faces to be packed
         npack = count(isFaceOut)
 
         !% output the true element indexes into a pack
         if (npack > 0) then
             faceP(1:npack,ptype) = pack(fIdx,isFaceOut)
-            setting%Output%OutputFacesExist = .true. 
         else 
-            !% if there are no output face
-            setting%Output%OutputFacesExist = .false.    
+            !% continue    
         end if  
 
     end subroutine pack_face_outputML
@@ -284,30 +282,30 @@ contains
 ! PRIVATE
 !==========================================================================
 !
-    subroutine mask_faces_whole_array_static()
-        !--------------------------------------------------------------------------
-        !% find all the faces except boundary and null faces
-        !--------------------------------------------------------------------------
-        integer, pointer :: mcol
-        character(64) :: subroutine_name = 'mask_faces_whole_array_static'
-        !--------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! subroutine mask_faces_whole_array_static()
+    !     !--------------------------------------------------------------------------
+    !     !% find all the faces except boundary and null faces
+    !     !--------------------------------------------------------------------------
+    !     integer, pointer :: mcol
+    !     character(64) :: subroutine_name = 'mask_faces_whole_array_static'
+    !     !--------------------------------------------------------------------------
+    !     if (icrash) return
+    !     if (setting%Debug%File%pack_mask_arrays) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        mcol => col_faceM(fm_all)
+    !     mcol => col_faceM(fm_all)
 
-        faceM(:,mcol) = ( &
-            (faceI(:,fi_BCtype) == doesnotexist) &
-            .and. &
-            (.not. faceYN(:,fYN_isnull))  &
-            .and. &
-            (.not. faceYN(:,fYN_isSharedFace)) &
-            )
+    !     faceM(:,mcol) = ( &
+    !         (faceI(:,fi_BCtype) == doesnotexist) &
+    !         .and. &
+    !         (.not. faceYN(:,fYN_isnull))  &
+    !         .and. &
+    !         (.not. faceYN(:,fYN_isSharedFace)) &
+    !         )
 
-        if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine mask_faces_whole_array_static
+    !     if (setting%Debug%File%pack_mask_arrays) &
+    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine mask_faces_whole_array_static
 !
 !==========================================================================
 !==========================================================================
@@ -1229,7 +1227,7 @@ contains
         eIdx => elemI(:,ei_Lidx)
 
         !% ep_AC
-        !% - all elements that use AC
+    !% - all elements that use AC
         ptype => col_elemP(ep_AC)
         npack => npack_elemP(ptype)
         npack = count( &
@@ -1240,7 +1238,7 @@ contains
         end if
 
         !print *, 'CC_AC'
-        !% ep_CC_AC
+    !% ep_CC_AC
         !% - all channel conduit elements that use AC
         ptype => col_elemP(ep_CC_AC)
         npack => npack_elemP(ptype)
@@ -1256,7 +1254,7 @@ contains
         end if
 
         !print *, 'CC_ETM'
-        !% ep_CC_ETM
+    !% ep_CC_ETM
         !% - all channel conduit elements that use ETM
         ptype => col_elemP(ep_CC_ETM)
         npack => npack_elemP(ptype)
@@ -1273,7 +1271,7 @@ contains
         end if
 
         !print *, 'CC_H_ETM'
-        !% ep_CC_H_ETM
+    !% ep_CC_H_ETM
         !% - all channel conduit elements that have head time march using ETM
         ptype => col_elemP(ep_CC_H_ETM)
         npack => npack_elemP(ptype)
@@ -1293,7 +1291,7 @@ contains
         end if
 
         !print *, 'CC_Q_AC'
-        !% ep_CC_Q_AC
+    !% ep_CC_Q_AC
         !% - all channel conduit elements that have flow time march using AC
         ptype => col_elemP(ep_CC_Q_AC)
         npack => npack_elemP(ptype)
@@ -1313,7 +1311,7 @@ contains
         end if
 
         !print *, 'CC_Q_ETM'
-        !% ep_CC_Q_ETM
+    !% ep_CC_Q_ETM
         !% - all channel conduit elements elements that have flow time march using ETM
         ptype => col_elemP(ep_CC_Q_ETM)
         npack => npack_elemP(ptype)
@@ -1333,7 +1331,7 @@ contains
         end if
 
         !print *, 'CCJB_AC'
-        !% ep_CCJB_AC
+    !% ep_CCJB_AC
         !% - all channel conduit or junction branch elements elements that are AC
         ptype => col_elemP(ep_CCJB_AC)
         npack => npack_elemP(ptype)
@@ -1358,7 +1356,7 @@ contains
         end if
 
         !print *, 'CC_AC_surcharged'
-        !% ep_CC_AC_surcharged
+    !% ep_CC_AC_surcharged
         !% - all channel conduit elements elements that are AC and surcharged
         ptype => col_elemP(ep_CC_AC_surcharged)
         npack => npack_elemP(ptype)
@@ -1383,7 +1381,7 @@ contains
         end if
 
         !print *, 'CCJB_AC_surcharged'
-        !% ep_CCJB_AC_surcharged
+    !% ep_CCJB_AC_surcharged
         !% - all channel conduit or junction branch elements elements that are AC and surcharged
         ptype => col_elemP(ep_CCJB_AC_surcharged)
         npack => npack_elemP(ptype)
@@ -1412,7 +1410,7 @@ contains
         end if
 
         !print *, 'CC_ALLtm_surcharged'
-        !% ep_CC_ALLtm_surcharged
+    !% ep_CC_ALLtm_surcharged
         !% - all channel conduit elements with any time march and surcharged
         ptype => col_elemP(ep_CC_ALLtm_surcharged)
         npack => npack_elemP(ptype)
@@ -1445,7 +1443,7 @@ contains
         end if
 
         !print *, 'CCJB_ALLtm_surcharged'
-        !% ep_CCJB_ALLtm_surcharged
+    !% ep_CCJB_ALLtm_surcharged
         !% - all channel conduit or junction branch elements with any time march and surcharged
         ptype => col_elemP(ep_CCJB_ALLtm_surcharged)
         npack => npack_elemP(ptype)
@@ -1481,7 +1479,7 @@ contains
                 (elemYN(:,eYN_isSurcharged)))
         end if
 
-        !% ep_CCJB_eETM_i_fAC
+    !% ep_CCJB_eETM_i_fAC
         !% conduits, channels, and junction branches that are ETM and have
         !% an adjacent face that is AC
         ptype => col_elemP(ep_CCJB_eETM_i_fAC)
@@ -1507,7 +1505,7 @@ contains
             end if
         end do
 
-        !% ep_CCJB_ETM
+    !% ep_CCJB_ETM
         !% - all channel conduit or junction branch that are ETM
         ptype => col_elemP(ep_CCJB_ETM)
         npack => npack_elemP(ptype)
@@ -1534,7 +1532,7 @@ contains
         end if
 
         !print *, 'CC_ETM_surcharged'
-        !% ep_CC_ETM_surcharged
+    !% ep_CC_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
         ptype => col_elemP(ep_CC_ETM_surcharged)
         npack => npack_elemP(ptype)
@@ -1561,7 +1559,7 @@ contains
         end if
 
         !print *, 'CCJB_ETM_surcharged'
-        !% ep_CCJB_ETM_surcharged
+    !% ep_CCJB_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
         ptype => col_elemP(ep_CCJB_ETM_surcharged)
         npack => npack_elemP(ptype)
@@ -1592,7 +1590,7 @@ contains
         end if
 
         !print *, 'CCJM_H_AC_open'
-        !% ep_CCJM_H_AC_open
+    !% ep_CCJM_H_AC_open
         !% - all channel conduit or junction main elements solving head with AC and are non-surcharged
         ptype => col_elemP(ep_CCJM_H_AC_open)
         npack => npack_elemP(ptype)
@@ -1627,7 +1625,7 @@ contains
         end if
 
         !print *, 'CCJM_H_ETM'
-        !% ep_CCJM_H_ETM
+    !% ep_CCJM_H_ETM
         !% - all channel conduit or junction main that use head solution with ETM
         ptype => col_elemP(ep_CCJM_H_ETM)
         npack => npack_elemP(ptype)
@@ -1658,7 +1656,7 @@ contains
         end if
 
         !print *, 'ETM'
-        !% ep_ETM
+    !% ep_ETM
         !% - all elements that use ETM
         ptype => col_elemP(ep_ETM)
         npack => npack_elemP(ptype)
@@ -1671,7 +1669,7 @@ contains
         end if
 
         !print *, 'JM_AC'
-        !% ep_JM_AC
+    !% ep_JM_AC
         !% - all elements that are junction mains and use AC
         ptype => col_elemP(ep_JM_AC)
         npack => npack_elemP(ptype)
@@ -1688,7 +1686,7 @@ contains
         end if
 
         !print *, 'JB_AC'
-        !% ep_JB_AC
+    !% ep_JB_AC
         !% - all elements that are junction mains and use AC
         ptype => col_elemP(ep_JB_AC)
         npack => npack_elemP(ptype)
@@ -1705,7 +1703,7 @@ contains
         end if
 
         !print *, 'JM_ETM'
-        !% ep_JM_ETM
+    !% ep_JM_ETM
         !% - all elements that are junction mains and ETM
         ptype => col_elemP(ep_JM_ETM)
         npack => npack_elemP(ptype)
@@ -1723,7 +1721,7 @@ contains
         end if
 
         !print *, 'JB_ETM'
-        !% ep_JB_ETM
+    !% ep_JB_ETM
         !% - all elements that are junction mains and ETM
         ptype => col_elemP(ep_JB_ETM)
         npack => npack_elemP(ptype)
@@ -1741,7 +1739,7 @@ contains
         end if
 
         !print *, 'NonSurcharged_AC'
-        !% ep_NonSurcharged_AC
+    !% ep_NonSurcharged_AC
         !% - all AC elements that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_AC)
         npack => npack_elemP(ptype)
@@ -1758,7 +1756,7 @@ contains
         end if
 
         !print *,'NonSurcharged_ALLtm'
-        !% ep_NonSurcharged_ALLtm
+    !% ep_NonSurcharged_ALLtm
         !% -- elements with any time march that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_ALLtm)
         npack => npack_elemP(ptype)
@@ -1784,7 +1782,7 @@ contains
         end if
 
         !print *, 'NonSurcharged_ETM'
-        !% ep_NonSurcharged_ETM
+    !% ep_NonSurcharged_ETM
         !% -- elements with ETM time march that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_ETM)
         npack => npack_elemP(ptype)
@@ -1801,97 +1799,10 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
-        !% brh 20211210
-        !print *, 'CC_Q_NOTsmallvolume'
-        !% ep_CC_Q_NOTsmallvolume
-        !% Flow solution that are NOT small volume
-        !% -- needed to limit where CFL is computed
-        ptype => col_elemP(ep_CC_Q_NOTsmallvolume)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallVolume))     )
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallVolume))     )
-        end if
-
-
-
-        !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
-        !print *, 'smallvolume_AC'
-        !% ep_smallvolume_AC
-        !% - all small volumes that are AC
-        ptype => col_elemP(ep_smallvolume_AC)
-        npack => npack_elemP(ptype)
-
-        npack = count( &
-                (elemYN(:,eYN_isSmallVolume)) &
-                .and. &
-                (elemI(:,ei_tmType) == AC))
-
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemYN(:,eYN_isSmallVolume)) &
-                .and. &
-                (elemI(:,ei_tmType) == AC))
-        end if
-
-        !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
-        !print *, 'smallvolume_ALLtm'
-        !% ep_smallvolume_ALLtm
-        !% - all small volumes that are any time march
-        ptype => col_elemP(ep_smallvolume_ALLtm)
-        npack => npack_elemP(ptype)
-
-        npack = count( &
-                (elemYN(:,eYN_isSmallVolume)) &
-                .and. &
-                (   &
-                    (elemI(:,ei_tmType) == AC) &
-                    .or. &
-                    (elemI(:,ei_tmType) == ETM) &
-                ))
-
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemYN(:,eYN_isSmallVolume)) &
-                .and. &
-                (   &
-                    (elemI(:,ei_tmType) == AC) &
-                    .or. &
-                    (elemI(:,ei_tmType) == ETM) &
-                ))
-        end if
-
-        !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
-        !print *, 'smallvolume_ETM'
-        !% ep_smallvolume_ETM
-        !% - all small volumes that are ETM
-        ptype => col_elemP(ep_smallvolume_ETM)
-        npack => npack_elemP(ptype)
-
-        npack = count( &
-                (elemYN(:,eYN_isSmallVolume)) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM))
-
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemYN(:,eYN_isSmallVolume)) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM))
-        end if
+       
 
         !print *,'Surcharged_AC'
-        !% ep_Surcharged_AC
+    !% ep_Surcharged_AC
         !% - all AC elements that are surcharged
         ptype => col_elemP(ep_Surcharged_AC)
         npack => npack_elemP(ptype)
@@ -1909,7 +1820,7 @@ contains
         end if
 
         !print *, 'Surcharged_ALLtm'
-        !% ep_Surcharged_ALLtm
+    !% ep_Surcharged_ALLtm
         !% - all elements of any time march that are surcharged
         ptype => col_elemP(ep_Surcharged_ALLtm)
         npack => npack_elemP(ptype)
@@ -1935,7 +1846,7 @@ contains
         end if
 
         !print *, 'Surcharged_ETM'
-        !% ep_Surcharged_ETM
+    !% ep_Surcharged_ETM
         !% - all ETM elements that are surcharged
         ptype => col_elemP(ep_Surcharged_ETM)
         npack => npack_elemP(ptype)
@@ -1955,16 +1866,140 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_dynamic_elements
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine pack_small_and_zero_depth_elements ()
+        !%-----------------------------------------------------------------
+        !% dynamic packing of elements with small and zero depths
+        !%-----------------------------------------------------------------
+        integer, pointer :: ptype, npack, eIdx(:)
+        !%-----------------------------------------------------------------
+        !%-----------------------------------------------------------------
+        
+        eIdx => elemI(:,ei_Lidx)
+
+    !% ep_SmallDepth_CC_ALLtm
+        !% - all small depth that are CC and any time march
+        ptype => col_elemP(ep_SmallDepth_CC_ALLtm)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == ETM) &
+                    .or. &
+                    (elemI(:,ei_tmType) == AC) &
+                ) )
+
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == ETM) &
+                    .or. &
+                    (elemI(:,ei_tmType) == AC) &
+                ) )
+        end if
+
+    !% ep_ZeroDepth_CC_ALLtm
+        !% - all zero depth that are CC and any time march
+        ptype => col_elemP(ep_ZeroDepth_CC_ALLtm)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemYN(:,eYN_isZeroDepth)) &
+                .and. &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == ETM) &
+                    .or. &
+                    (elemI(:,ei_tmType) == AC) &
+                ) )
+
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemYN(:,eYN_isZeroDepth)) &
+                .and. &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == ETM) &
+                    .or. &
+                    (elemI(:,ei_tmType) == AC) &
+                ) )
+        end if
+
+    !% ep_ZeroDepth_JM_ALLtm
+        !% - all Zero depth that are JM for any TM
+        ptype => col_elemP(ep_ZeroDepth_JM_ALLtm)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemYN(:,eYN_isZeroDepth)) &
+                .and. &
+                (elemI(:,ei_elementType) == JM) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == ETM) &
+                    .or. &
+                    (elemI(:,ei_tmType) == AC) &
+                ) )
+
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemYN(:,eYN_isZeroDepth)) &
+                .and. &
+                (elemI(:,ei_elementType) == JM) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == ETM) &
+                    .or. &
+                    (elemI(:,ei_tmType) == AC) &
+                ) )
+        end if
+
+         
+        !print *, 'CC_Q_NOTsmalldepth'
+    !% ep_CC_Q_NOTsmalldepth
+        !% Flow solution that are NOT small volume
+        !% -- needed to limit where CFL is computed
+        ptype => col_elemP(ep_CC_Q_NOTsmalldepth)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_QeqType) == time_march) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth))     )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_QeqType) == time_march) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth))     )
+        end if
+
+
+    end subroutine pack_small_and_zero_depth_elements
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine pack_static_interior_faces()
         !--------------------------------------------------------------------------
         !% packed arrays for static faces
         !--------------------------------------------------------------------------
         integer :: ii, image
-
         integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
 
         character(64) :: subroutine_name = 'pack_static_interior_faces'

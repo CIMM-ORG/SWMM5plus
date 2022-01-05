@@ -31,10 +31,11 @@ module utility
 !%==========================================================================
 !%
     subroutine util_print_programheader ()
+        if (this_image() .ne. 1) return
         write(*,*) " "
         write(*,*) "*********************************************************************"
         write(*,*) "*                            SWMM5+                                 *"
-        write(*,*) "*                   beta 0.1 release 2021-01-xx                     *"
+        write(*,*) "*                   beta 0.1 release 2022-01-xx                     *"
         write(*,*) "*  A public-domain, finite-volume hydraulics engine for EPA SWMM.   *"
         write(*,*) "*                        developed by CIMM                          *"
         write(*,*) "*                                                                   *"
@@ -124,18 +125,19 @@ module utility
 
     end function util_sign_with_ones_or_zero
 
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
 
     subroutine util_print_warning(msg,async)
+        !%------------------------------------------------------------------
         !% Used for opening up the warning files and writing to the file
-
-        character(len = *), intent(in) :: msg
-        logical, optional, intent(in) :: async
-        logical :: async_actual
-
+        !%------------------------------------------------------------------
+            character(len = *), intent(in) :: msg
+            logical, optional, intent(in) :: async
+            logical :: async_actual
+        !%------------------------------------------------------------------
         if (present(async)) then
             async_actual = async
         else
@@ -147,14 +149,11 @@ module utility
             print *, "Warning: "//trim(msg)
         end if
 
-
     end subroutine util_print_warning
-
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     function util_linspace(startPoint,endPoint,N) result(outArray)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -179,7 +178,7 @@ module utility
 
     end function util_linspace
 
-    !%==========================================================================
-    !% END OF MODULE
-    !%==========================================================================
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
 end module utility

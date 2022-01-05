@@ -71,6 +71,7 @@
     "Eps" : {
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1,
+        "Velocity"   : 1e-6
     },
     "FaceInterp" : {
         "DownJBFaceInterp" : "dynamic"
@@ -144,6 +145,7 @@
             "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
@@ -177,26 +179,20 @@
     },
     "Simulation" : {
         "useHydrology" : true,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "stopAfterInitializationYN" : false
     },
     "SmallVolume" : {
-        "UseSmallVolumesYN" : true,
         "DepthCutoff" : 0.01,
-        "ManningsN" : 0.01,
-        "MinimumArea" : 0.005,
-        "MinimumHydRadius" : 0.009,
-        "MinimumPerimeter" : 0.52,
-        "MinimumTopwidth" : 0.5
+        "ManningsN" : 0.1
     },
     "Solver" : {
-        "SubtractReferenceHead" : true,
         "PreissmannSlot" : true,
-        "QinterpWithLocalHeadGradient" : true,
+        "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "QHgradFactor"      : 0.5,
         "ReferenceHead"     : 0.0
     },
     "TestCase" : {

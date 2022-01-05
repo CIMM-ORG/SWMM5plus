@@ -28,6 +28,7 @@ module utility_allocate
     character(len=99) ::              emsg
 
     ! public members
+    public :: util_allocate_secondary_coarrays
     public :: util_allocate_linknode
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
@@ -49,6 +50,41 @@ contains
 !%
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine util_allocate_secondary_coarrays ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% allocates and initializes secondary coarrays (i.e., not the
+        !% primary coarrays of elemX, faceX, etc.)
+        !%------------------------------------------------------------------
+
+        !% --- allocate a coarray for the number of output elements on each image
+        !%     the array is first used in outputML_size_OutElem_by_image
+        allocate(N_OutElem(num_images())[*], stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'N_OutElem')
+        N_OutElem = zeroI
+
+        !% --- similar coarray for number of faces that will be output for each image
+        allocate(N_OutFace(num_images())[*], stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'N_OutFace')
+        N_OutFace = zeroI
+
+        !% --- allocate coarrays for the setting%Output%... controls
+        allocate(setting%Output%ElementsExist_byImage(num_images())[*], &
+                stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'setting%Output%ElementsExist_byImage')
+        setting%Output%ElementsExist_byImage = .false.
+
+        allocate(setting%Output%FacesExist_byImage(num_images())[*], &
+                stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'setting%Output%FacesExist_byImage')
+        setting%Output%FacesExist_byImage = .false.
+
+    !%------------------------------------------------------------------ 
+    end subroutine util_allocate_secondary_coarrays
+!%    
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_linknode()
@@ -78,27 +114,27 @@ contains
             additional_rows = num_images() - 1
         end if
 
-        allocate(node%I(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
+        allocate(node%I(N_node + additional_rows, Ncol_nodeI)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'node%I')
         node%I(:,:) = nullvalueI
 
-        allocate(link%I(SWMM_N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
+        allocate(link%I(SWMM_N_link + additional_rows, Ncol_linkI)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'link%I')
         link%I(:,:) = nullvalueI
 
-        allocate(node%R(N_node + additional_rows, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
+        allocate(node%R(N_node + additional_rows, Ncol_nodeR)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'node%R')
         node%R(:,:) = nullvalueR
 
-        allocate(link%R(SWMM_N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
+        allocate(link%R(SWMM_N_link + additional_rows, Ncol_linkR)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'link%R')
         link%R(:,:) = nullvalueR
 
-        allocate(node%YN(N_node + additional_rows, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
+        allocate(node%YN(N_node + additional_rows, Ncol_nodeYN)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'node%YN')
         node%YN(:,:) = nullvalueL
 
-        allocate(link%YN(SWMM_N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
+        allocate(link%YN(SWMM_N_link + additional_rows, Ncol_linkYN)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'link%YN')
         link%YN(:,:) = nullvalueL
 
@@ -325,10 +361,10 @@ contains
         call util_allocate_check(allocation_status, emsg, 'facePS')
         facePS(:,:) = nullvalueI
 
-        ncol=> Ncol_faceM
-        allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg, 'faceM')
-        faceM(:,:) = nullvalueL
+        ! ncol=> Ncol_faceM
+        ! allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        ! call util_allocate_check(allocation_status, emsg, 'faceM')
+        ! faceM(:,:) = nullvalueL
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -365,7 +401,7 @@ contains
         call util_allocate_col_elemWDR
         call util_allocate_col_elemYN
         call util_allocate_col_faceI
-        call util_allocate_col_faceM
+        !call util_allocate_col_faceM
         call util_allocate_col_faceP
         call util_allocate_col_facePS
         call util_allocate_col_faceR
@@ -556,25 +592,28 @@ contains
 !%==========================================================================
 !%
     subroutine util_allocate_outputML_elemtypes ()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Description:
         !% allocates the output type arrays for the element data that are output
-        !%-----------------------------------------------------------------------------
-        integer            :: allocation_status
-        character(len=99)  :: emsg
-        character(64)       :: subroutine_name = 'util_allocate_outputML_elemtypes'
-        !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !% --- don't execute if no output elements
-        if (.not. setting%Output%OutputElementsExist) return
-
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer            :: allocation_status
+            character(len=99)  :: emsg
+            character(64)       :: subroutine_name = 'util_allocate_outputML_elemtypes'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (.not. setting%Output%ElementsExist_global) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
         !% --- bug check
         if (N_OutTypeElem < 1) then
             write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
-                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
-                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem
-                write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputElementsExist
-                stop
+            write(*,"(A)") '... which should have caused Output.ElementsExist_glboal = .false.'
+            write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem
+            write(*,"(A,i8)") '... etting%Output%ElementsExist_glboal ', setting%Output%ElementsExist_global
+            stop
         end if
 
         !% --- allocate the output types for elements
@@ -586,7 +625,6 @@ contains
         allocate(output_typeProcessing_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'output_typeProcessing_elemR')
         output_typeProcessing_elemR(:) = nullvalueI
-
 
         !% --- allocate the output typeNames
         allocate(output_typeNames_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
@@ -608,33 +646,37 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_typeUnits_withTime_elemR')
         output_typeUnits_withTime_elemR(:) = ""
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_elemtypes
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_outputML_facetypes ()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Description:
         !% allocates the output type arrays for the face data that are output
-        !%-----------------------------------------------------------------------------
-        integer            :: allocation_status
-        character(len=99)  :: emsg
-        character(64)       :: subroutine_name = 'util_allocate_outputML_facetypes'
-        !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% --- don't execute if no output faces
-        if (.not. setting%Output%OutputFacesExist) return
-
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer            :: allocation_status
+            character(len=99)  :: emsg
+            character(64)       :: subroutine_name = 'util_allocate_outputML_facetypes'
+        !%-------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (.not. setting%Output%FacesExist_global) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
         !% --- bug check
         if (N_OutTypeFace < 1) then
             write(*,"(A)") 'ERROR (code) the N_OutTypeFace is less than 1 (i.e. no output types selected)'
-                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
+                write(*,"(A)") '... which should have caused Output.ElementsExist_global = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeFace      ', N_OutTypeFace
-                write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputFacesExist
+                write(*,"(A,i8)") '... etting%Output%ElementsExist_byImage ', setting%Output%FacesExist_global
                 stop
         end if
 
@@ -668,28 +710,31 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_typeUnits_withTime_faceR')
         output_typeUnits_withTime_faceR(:) = ""
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_facetypes
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_outputML_times ()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Description:
         !% allocates the output time array for multi-level output
-        !%-----------------------------------------------------------------------------
-        integer            :: allocation_status
-        integer, pointer   :: nLevel
-        character(len=99)  :: emsg
-        character(64)      :: subroutine_name = 'utility_allocate_outputtype'
-        !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% --- don't do this is output is suppressed
-        if (setting%Output%Report%suppress_MultiLevel_Output) return
-
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer            :: allocation_status
+            integer, pointer   :: nLevel
+            character(len=99)  :: emsg
+            character(64)      :: subroutine_name = 'utility_allocate_outputtype'
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
         nLevel => setting%Output%StoredLevels
 
         !% --- bug check
@@ -705,28 +750,31 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_times')
         output_times(:) = nullvalueR
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_times
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_outputML_filenames ()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Description:
         !% allocates the output filename array for multi-level output
-        !%-----------------------------------------------------------------------------
-        integer, pointer   :: nLevel
-        integer            :: allocation_status
-        character(len=99)  :: emsg
-        character(64)      :: subroutine_name = 'utility_allocate_outputML_filenames'
-        !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% --- don't do this is output is suppressed
-        if (setting%Output%Report%suppress_MultiLevel_Output) return
-
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer   :: nLevel
+            integer            :: allocation_status
+            character(len=99)  :: emsg
+            character(64)      :: subroutine_name = 'utility_allocate_outputML_filenames'
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
         nLevel => setting%Output%StoredFileNames
 
         !% --- bug check
@@ -742,30 +790,30 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_binary_filenames')
         output_binary_filenames(:) = "null"
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing:
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_filenames
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_outputML_storage ()
-        !%-----------------------------------------------------------------------------
+        !%-------------------------------------------------------------------
         !% Description:
         !% Creates multi-time-level storage for output data
-        !%-----------------------------------------------------------------------------
-        integer, pointer  :: nLevel, nType, nMaxLevel
-        integer           :: nElem, nFace, nTotal
-        integer           :: allocation_status
-        character(len=99) :: emsg
-        character(64)     :: subroutine_name = ' util_allocate_outputML_storage'
-        !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% --- don't do this is output is suppressed
-        if (setting%Output%Report%suppress_MultiLevel_Output) return
-
+        !%-------------------------------------------------------------------
+            integer, pointer  :: nLevel, nTypeElem, nTypeFace, nMaxLevel
+            integer           :: nTotalElem, nTotalFace, nMaxElem, nMaxFace
+            integer           :: allocation_status
+            character(len=99) :: emsg
+            character(64)     :: subroutine_name = ' util_allocate_outputML_storage'
+        !%--------------------------------------------------------------------
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%--------------------------------------------------------------------
         !% --- shorthand for the stored levels
         nLevel => setting%Output%StoredLevels
 
@@ -776,6 +824,8 @@ contains
                 ceiling((setting%Time%End - setting%Output%Report%StartTime) &
                       /setting%Output%Report%TimeInterval)
         else
+            !% NOTE -- the suppress option needs to always be invoked consistently
+            !% across all processor images.
             write (*,"(A)") 'The Report Interval (SWMM inp file REPORT_STEP) is less than zero.'
             write (*,"(A)") 'This will suppress multi-level output files'
             setting%Output%Report%suppress_MultiLevel_Output = .true.
@@ -784,8 +834,10 @@ contains
 
         !% --- check and adjust stored level output so as not to waste memory
         if ( setting%Output%StoredLevels > setting%Output%MaxExpectedLevels+ 2) then
-            write (*,"(A,i5)") '... Changing output levels stored before writing; originally: ',setting%Output%StoredLevels 
-            write (*,"(A,i5)") '               Now using the max expected output time levels: ',setting%Output%MaxExpectedLevels
+            if (this_image() == 1) then
+                write (*,"(A,i5)") '... Changing output levels stored before writing; originally: ',setting%Output%StoredLevels 
+                write (*,"(A,i5)") '               Now using the max expected output time levels: ',setting%Output%MaxExpectedLevels
+            end if
         end if
 
         !% --- bug check
@@ -797,128 +849,158 @@ contains
             stop
         end if
 
-        if (setting%Output%OutputElementsExist) then
+        !% --- Allocation for Local Element Output
+        if (setting%Output%ElementsExist_global) then
             !% --- shortand for the output types
-            nType => N_OutTypeElem
+            nTypeElem => N_OutTypeElem
             !print*, nType, 'nType in image = ', this_image()
+
             !% --- bug check
-            if (nType < 1) then
+            if (nTypeElem < 1) then
                 write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
-                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
+                write(*,"(A)") '... which requires Output.ElementsExist_global = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeElem       ', N_OutTypeElem
-                write(*,"(A,L)") '... etting%Output%sOutputElementsExist =', setting%Output%OutputElementsExist
-                stop
+                write(*,"(A,L)") '... setting%Output%sElementsExist_global =', setting%Output%ElementsExist_global
+                stop 984754
             end if
 
             !% --- set the maximum number of output elements in any image
-            nElem = maxval(N_OutElem(:))
+            nMaxElem = maxval(N_OutElem(:))
 
             !% --- bug check
-            if (nElem < 1) then
+            if (nMaxElem < 1) then
                 write(*,"(A)") 'ERROR (code) the maximum number of elements output from an image, ...'
                 write(*,"(A)") '... maxval(N_OutElem(images)), is less than 1...'
-                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
-                write(*,"(A,L)") '... setting%Output%OutputElementsExist =', setting%Output%OutputElementsExist
+                write(*,"(A)") '... which should have caused Output.ElementsExist_global = .false.'
+                write(*,"(A,L)") '... setting%Output%ElementsExist_byImage =', setting%Output%ElementsExist_global
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop
+                stop 387053
             end if
 
-            !% allocate the multi-level element storage for each image
-            allocate(elemOutR(nElem, nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            !% --- allocate the local  multi-level element storage for each image
+            !%    note that EVERY image allocates this array based on the maximum 
+            !%    number of elements on ANY image, even if the local image has zero
+            !%    output elements
+            allocate(elemOutR(nMaxElem, nTypeElem, nLevel)[*], stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'elemOutR')
             elemOutR(:,:,:) = nullvalueR
 
             !% ----------------------------
             !% --- Allocate the Element combined storage from all images for stored time steps
             !% ----------------------------
-
             !% --- get the total number of output elements on all images
-            nTotal = sum(N_OutElem(:))
-
+            nTotalElem = sum(N_OutElem(:))
             !% allocate the full network multi-level output array to one processor
             if (this_image() == 1) then
-                !% --- get space for combined element data
-                allocate(OutElemDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+                !% --- get space for combined element data on image(1)
+                allocate(OutElemDataR(nTotalElem,nTypeElem,nLevel), stat=allocation_status, errmsg=emsg)
                 call util_allocate_check(allocation_status, emsg, 'OutElemDataR')
                 OutElemDataR(:,:,:) = nullvalueR
 
-                !brh rm !% --- get space for the indexes to the elemR() etc array
-                !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
-                !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
-                !brh rm OutElemGidx(:) = nullvalueI
-
-                !% --- get space for integer data for OutElemFixedI
-                allocate(OutElemFixedI(nTotal,Ncol_oefi), stat=allocation_status, errmsg=emsg)
+                !% --- get space for integer data for OutElemFixedI on image(1)
+                allocate(OutElemFixedI(nTotalElem,Ncol_oefi), stat=allocation_status, errmsg=emsg)
                 call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
                 OutElemFixedI(:,:) = nullvalueI
-            end if
 
+                !% --- allocation needed for dummy space element conversion on image(1)
+                allocate(thisElementOut(nMaxElem), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'thisElementOut')
+                thisElementOut(:) = nullvalueI
+            end if
         end if
 
-        if (setting%Output%OutputFacesExist) then
+        !% --- Allocation for Faces output
+        if (setting%Output%FacesExist_global) then
 
             !% --- shortand for the output types
-            nType => N_OutTypeFace
+            nTypeFace => N_OutTypeFace
 
             !% --- bug check
-            if (nType < 1) then
+            if (nTypeFace < 1) then
                 write(*,"(A)") 'ERROR (code) the N_OutTypeFace is less than 1 (i.e. no output types selected)'
-                write(*,"(A)") '... which should have caused Output.OutputFacseExist = .false.'
+                write(*,"(A)") '... which should have caused Output.OutputFacseExist_global = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeNFaces     ', N_OutTypeFace
-                write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
-                stop
+                write(*,"(A,L)") '... setting%Output%FacesExist_global =', setting%Output%FacesExist_global
+                stop 883753
             end if
 
-
             !% --- set the maximum number of output faces in any image
-            nFace = maxval(N_OutFace(:))
+            nMaxFace = maxval(N_OutFace(:))
 
             !% --- bug check
-            if (nFace < 1) then
+            if (nMaxFace < 1) then
                 write(*,"(A)") 'ERROR (code) the maximum number of faces output from an image, ...'
                 write(*,"(A)") '... maxval(N_OutFace(images)), is less than 1...'
-                write(*,"(A)") '... which should have caused Output.OutputFacesExist = .false.'
-                write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
+                write(*,"(A)") '... which should have caused Output.FacesExist_global = .false.'
+                write(*,"(A,L)") '... setting%Output%FacesExist_byImage =', setting%Output%FacesExist_global
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop
+                stop 448723
             end if
 
             !% allocate the multi-level element storage for each image
-            allocate(faceOutR(nFace,nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            !%    note that EVERY image allocates this array based on the maximum 
+            !%    number of faces on ANY image, even if the local image has zero
+            !%    output faces
+            allocate(faceOutR(nMaxFace,nTypeFace,nLevel)[*], stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'faceOutR')
             faceOutR(:,:,:) = nullvalueR
 
             !% ----------------------------
             !% --- Allocate the Face combined storage from all images for stored time steps
             !% ----------------------------
-
             !% --- get the total number of output elements on all images
-            nTotal = sum(N_OutFace(:))
+            nTotalFace = sum(N_OutFace(:))
 
             !% allocate the full network multi-level output array to one processor
             if (this_image() == 1) then
                 !% --- get space for combined element data
-                allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+                allocate(OutFaceDataR(nTotalFace,nTypeFace,nLevel), stat=allocation_status, errmsg=emsg)
                 call util_allocate_check(allocation_status, emsg, 'OutFaceDataR')
                 OutFaceDataR(:,:,:) = nullvalueR
 
-                !brh rm !% --- get space for the indexes to the elemR() etc array
-                !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
-                !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
-                !brh rm  OutFaceGidx(:) = nullvalueI
-
                 !% --- get space for integer data for OutElemFixedI
-                allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
+                allocate(OutFaceFixedI(nTotalFace,Ncol_offi), stat=allocation_status, errmsg=emsg)
                 call util_allocate_check(allocation_status, emsg, 'OutFaceFixedI')
                 OutFaceFixedI(:,:) = nullvalueI
+
+                !% --- allocation needed for dummy space face conversion on image(1)
+                allocate(thisFaceOut(nMaxFace), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'thisFaceOut')
+                thisFaceOut(:) = nullvalueI
+
+                
+
             end if
+        end if
+
+        if (     (setting%Output%ElementsExist_global)    &
+            .or. (setting%Output%FacesExist_global)    ) then
+            !% --- allocate space for storing the number of elements in each link (including non-output links)
+            !% --- note this MUST be the size of the SWMM_N_link so that we can later pack indexes
+            allocate(SWMMlink_num_elements(SWMM_N_link), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'SWMMlink_num_elements')
+            SWMMlink_num_elements(:) = 0
+
+            !% --- allocate space for storing the number of elements in each node (including non-output nodes)
+            !% --- note this MUST be the size of the SWMM_N_node so that we can later pack indexes
+            allocate(SWMMnode_num_elements(SWMM_N_node), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'SWMMnode_num_elements')
+            SWMMnode_num_elements(:) = 0
+
+            !% --- allocate space for storing the number of faces in each node (including non-output node)
+            !% --- this should be one for all faces. It is allocate to be able to create common output routines
+            allocate(SWMMnode_num_faces(SWMM_N_node), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'SWMMnode_num_faces')
+            SWMMnode_num_faces(:) = 0
 
         end if
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_storage
 !%
 !%==========================================================================
@@ -1441,38 +1523,38 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine util_allocate_col_faceM()
-        !-----------------------------------------------------------------------------
-        !
-        ! Description:
-        !   the col_faceM is a vector of the columns in the faceR arrays
-        !   that correspond to the enumerated fM_... array_index parameter
-        !
-        !-----------------------------------------------------------------------------
+    ! subroutine util_allocate_col_faceM()
+    !     !-----------------------------------------------------------------------------
+    !     !
+    !     ! Description:
+    !     !   the col_faceM is a vector of the columns in the faceR arrays
+    !     !   that correspond to the enumerated fM_... array_index parameter
+    !     !
+    !     !-----------------------------------------------------------------------------
 
-        integer, pointer    :: ncol
-        integer             :: ii
-        character(64)       :: subroutine_name = 'util_allocate_col_faceM'
+    !     integer, pointer    :: ncol
+    !     integer             :: ii
+    !     character(64)       :: subroutine_name = 'util_allocate_col_faceM'
 
-        !-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !-----------------------------------------------------------------------------
+    !     if (icrash) return
+    !     if (setting%Debug%File%utility_allocate) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% define the maximum number of columns as
-        ncol => Ncol_faceM
+    !     !% define the maximum number of columns as
+    !     ncol => Ncol_faceM
 
-        !% allocate an array for storing the column
-        allocate( col_faceM(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg, 'col_faceM')
+    !     !% allocate an array for storing the column
+    !     allocate( col_faceM(ncol)[*], stat=allocation_status, errmsg= emsg)
+    !     call util_allocate_check (allocation_status, emsg, 'col_faceM')
 
-        !% this array can be used as a pointer target in defining masks
-        col_faceM(:) = [(ii,ii=1,ncol)]
+    !     !% this array can be used as a pointer target in defining masks
+    !     col_faceM(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     if (setting%Debug%File%utility_allocate) &
+    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-    end subroutine util_allocate_col_faceM
+    ! end subroutine util_allocate_col_faceM
 !
 !==========================================================================
 !==========================================================================

@@ -76,9 +76,6 @@
         "useHydrology" : true,
         "useHydraulics" : true
     },
-    "SmallVolume" : {
-        "UseSmallVolumesYN" : true
-    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""

@@ -135,6 +135,7 @@ module define_settings
         logical :: isAreaOut         = .true.
         logical :: isDepthOut        = .true.
         logical :: isFlowrateOut     = .true.
+        logical :: isFluxConsOut     = .true.
         logical :: isFroudeNumberOut = .false.
         logical :: isHeadOut         = .true.
         logical :: isHydRadiusOut    = .false.
@@ -153,7 +154,7 @@ module define_settings
         integer :: TotalInflows = 50
     end type LimiterArraySizeType
 
-    !% setting%Limiter%BC
+    !% setting%Limiter%BC -- not presently used brh20220101
     type LimiterBCType
         logical :: UseInflowLimiterYN = .true.
         integer :: Approach = FroudeNumber
@@ -169,12 +170,12 @@ module define_settings
     !% setting%Limiter%Dt
     type LimiterDtType
         logical :: UseLimitMinYN = .true.
-        real(8) :: Minimum     = 1e-6
+        real(8) :: Minimum     = 1e-3
     end type LimiterDtType
 
-    !% setting%Limiter%Flowrate
+    !% setting%Limiter%Flowrate -- presently not used brh20220101
     type LimiterFlowrateType
-        logical :: UseFaceVolumeTransportYN = .true.
+        logical :: UseFaceVolumeTransportYN = .true.  !% obsolete?
         ! Fraction of usptream volume that can be
         ! transported in on time step
         real(8) :: FaceVolumeTransport = 0.5
@@ -218,28 +219,8 @@ module define_settings
         integer :: out_file
         integer :: rpt_file
         integer :: setting_file
-        !integer :: links_input_file
-        !integer :: nodes_input_file
-        ! integer :: debug_setup_linkR_file
-        ! integer :: debug_setup_linkI_file
-        ! integer :: debug_setup_nodeR_file
-        ! integer :: debug_setup_nodeI_file
-        ! integer :: debug_setup_nodeYN_file
-        ! !integer :: outputML_combined_file
         integer :: outputML_filename_file
         integer :: outputML_control_file
-
-        !     integer :: debug_output_linkR_file
-        !     integer :: debug_output_linkI_file
-        !     integer :: debug_output_nodeR_file
-        !     integer :: debug_output_nodeI_file
-        !     integer :: debug_output_nodeYN_file
-        !     integer :: debug_output_elemR_file
-        !     integer :: debug_output_faceR_file
-        !    integer :: swmm5_output_linkR_file
-        !    integer :: swmm5_output_linkI_file
-        !    integer :: swmm5_output_nodeR_file
-        !    integer :: swmm5_output_nodeI_file
     end type
 
     !% setting%Time%WallClock
@@ -390,6 +371,10 @@ module define_settings
         real(8) :: FroudeJump = 0.1
         !% Fractional increase in depth under froude limitation
         real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
+        !% small velocity
+        real(8) :: Velocity = 1.0e-6
+        !% small head difference (tolerance for no flow)
+        real(8) :: Head = 1.0e-6
     end type EpsilonType
 
     !% setting%FaceInterp
@@ -427,27 +412,6 @@ module define_settings
         !% file handling
         integer              :: last_unit = 1000 !% starting point for assigning unit numbers
         type(UnitNumberType) :: UnitNumber
-
-        !% for csv dump output
-        ! character(len=256) :: debug_setup_link_folder = ""
-        ! character(len=256) :: debug_setup_node_folder = ""
-        ! character(len=256) :: debug_output_link_folder = ""
-        ! character(len=256) :: debug_output_node_folder = ""
-        ! character(len=256) :: debug_output_elemR_folder = ""
-        ! character(len=256) :: debug_output_faceR_folder = ""
-        ! character(len=256) :: debug_output_summary_folder = ""
-        ! character(len=256) :: swmm5_output_link_folder = ""
-        ! character(len=256) :: swmm5_output_node_folder = ""
-        ! character(len=256) :: links_input_file = "links_input.csv"
-        ! character(len=256) :: nodes_input_file = "nodes_input.csv"
-        ! character(len=256) :: debug_setup_linkR_file = "linkR.csv"
-        ! character(len=256) :: debug_setup_linkI_file = "linkI.csv"
-        ! character(len=256) :: debug_setup_nodeR_file = "nodeR.csv"
-        ! character(len=256) :: debug_setup_nodeI_file = "nodeI.csv"
-        ! character(len=256) :: debug_setup_nodeYN_file = "nodeYN.csv"
-        
-        !logical :: links_input_file_exist = .false.
-        !logical :: nodes_input_file_exist = .false.
     end type FileType
 
     ! setting%Junction
@@ -461,12 +425,12 @@ module define_settings
 
     ! setting%Limiter
     type LimiterType
-        type(LimiterBCType)           :: BC
+        type(LimiterBCType)           :: BC  !% not used
         type(LimiterChannelType)      :: Channel
-        type(LimiterFlowrateType)     :: Flowrate
+        type(LimiterFlowrateType)     :: Flowrate  !% not used
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
-        type(LimiterArraySizeType)    :: ArraySize
+        type(LimiterArraySizeType)    :: ArraySize  !% not used
         type(LimiterDtType)           :: Dt
     end type LimiterType
 
@@ -485,8 +449,10 @@ module define_settings
     !% setting%Output
     type OutputType
         logical :: UseFileNameFile = .false.
-        logical :: OutputElementsExist = .false.
-        logical :: OutputFacesExist = .false.
+        logical, allocatable :: ElementsExist_byImage(:)[:]
+        logical, allocatable :: FacesExist_byImage(:)[:]
+        logical :: ElementsExist_global
+        logical :: FacesExist_global
         logical :: Verbose = .true.
         logical :: Warning = .true.
         integer :: LastLevel = 0
@@ -495,6 +461,9 @@ module define_settings
         integer :: NumberOfTimeLevelSaved = 0
         integer :: StoredLevels = 100        
         integer :: StoredFileNames = 2
+        integer :: ElemHeadIndex = 0
+        integer :: FaceUpHeadIndex = 0
+        integer :: faceDnHeadIndex = 0
         type(CommandLineType) :: CommandLine
         type(DataOutType) :: DataOut
         type(ReportType) :: Report
@@ -524,37 +493,32 @@ module define_settings
 
     !% setting%Simulation
     type SimulationType
-        logical :: stopAfterInitializionYN = .false.
+        logical :: stopAfterInitializationYN = .false.
         logical :: useHydrology = .true.
         logical :: useHydraulics = .true.
     end type SimulationType
 
-    ! setting%SmallVolume
-    type SmallVolumeType
+    ! setting%SmallDepth
+    type SmallDepthType
         ! Dont using small volumes for weir case.
         ! Needed to be changed later SmallVolumeType
-        logical :: UseSmallVolumesYN = .true.
+        !logical :: UseSmallVolumesYN = .true.
         real(8) :: DepthCutoff = 0.01 ! m
-        real(8) :: ManningsN = 0.01
-        real(8) :: MinimumArea = 0.005 ! m^2
-        real(8) :: MinimumHydRadius = 0.009 ! m
-        real(8) :: MinimumPerimeter = 0.52 ! m
-        real(8) :: MinimumTopwidth = 0.5 ! m
-    end type SmallVolumeType
+        real(8) :: ManningsN = 0.1
+    end type SmallDepthType
 
     ! setting%Solver
     type SolverType
         logical :: PreissmannSlot = .true.
-        logical :: QinterpWithLocalHeadGradient = .true.
-        logical :: SubtractReferenceHead = .true.
+        logical :: SubtractReferenceHead = .false.
         integer :: MomentumSourceMethod = T00
         integer :: SolverSelect = ETM
         real(8) :: SwitchFractionDn = 0.8
         real(8) :: SwitchFractionUp = 0.9
-        real(8) :: QHgradFactor = 0.5
         real(8) :: ReferenceHead = zeroR
         real(8) :: AverageZbottom = zeroR
         real(8) :: MaxZbottom = zeroR
+        real(8) :: MinZbottom = zeroR
         real(8), dimension(2) :: crk2 = [0.5, 1.0]
     end type SolverType
 
@@ -612,14 +576,15 @@ module define_settings
         integer :: LastCheckStep = 0
     end type VariableDTType
 
-    ! setting%ZeroValue
-    ! Note that zerovalue.depth = zerovalue.area/zerovalue.topwidth
+    !% setting%ZeroValue
+    !% Note that Depth is the setting users should change
     type ZerovalueType
         logical :: UseZeroValues = .true.
-        real(8) :: Area = 1.0e-6 ! m^2
-        real(8) :: Depth = 1.0e-4 ! m
-        real(8) :: Topwidth = 1.0e-2 ! m
-        real(8) :: Volume = 1.0e-4 ! m^3
+        real(8) :: Area = 1.0e-3 ! m^2 -- set by code
+        real(8) :: Depth = 1.0e-3 ! m
+        real(8) :: Topwidth = 1.0 ! m -- set by code
+        real(8) :: Volume = 1.0e-2 ! m^3 -- set by code
+        real(8) :: VolumeResetLevel !m^3 -- set by code
     end type ZerovalueType
 
     !%===================================================================
@@ -648,7 +613,7 @@ module define_settings
         type(PreissmannSlotType) :: PreissmannSlot
         type(ProfileType)        :: Profile
         type(SimulationType)     :: Simulation
-        type(SmallVolumeType)    :: SmallVolume ! controls for small volumes
+        type(SmallDepthType)     :: SmallDepth! controls for small (non-zero) depths
         type(SolverType)         :: Solver ! switch for solver
         type(SWMMinputType)      :: SWMMinput ! storage of SWMM *.inp data
         type(TestCaseType)       :: TestCase
@@ -896,7 +861,7 @@ contains
                 write(*,"(A)") 'Error - json file - setting.Adjust.Flowrate.Approach of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
                 write(*,"(A)") '...vshape '
-                stop 98705
+                stop 987051
             end if
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Adjust.Flowrate.Approach not found'
@@ -1228,8 +1193,8 @@ contains
         if (found)setting%Output%UseFileNameFile = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.UseFileNameFile not found'
        
-        !% do not read           OutputElementsExist
-        !% do not read           OutputFacesExist
+        !% do not read           ElementsExist_byImage
+        !% do not read           FacesExist_byImage
 
         !%                       Output.Verbose
         call json%get('Output.Verbose', logical_value, found)
@@ -1280,6 +1245,11 @@ contains
         call json%get('Output.DataOut.isFlowrateOut', logical_value, found)
         if (found) setting%Output%DataOut%isFlowrateOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateOut not found'
+
+        !%                       Dataout.isFluxConsOut
+        call json%get('Output.DataOut.isFluxConsOut', logical_value, found)
+        if (found) setting%Output%DataOut%isFluxConsOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isFluxConsOut not found'
         
         !%                       Dataout.isFroudeNumberOut
         call json%get('Output.DataOut.isFroudeNumberOut', logical_value, found)
@@ -1446,42 +1416,22 @@ contains
         call json%get('Simulation.useHydraulics', logical_value, found)
         if (found) setting%Simulation%useHydraulics = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.useHydraulics not found'
+
+        !%                       stopAfterInitializationYN
+        call json%get('Simulation.stopAfterInitializationYN', logical_value, found)
+        if (found) setting%Simulation%stopAfterInitializationYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.stopAfterInitializationYN not found'
   
-    !% SmallVolume. =====================================================================
-        !%                       UseSmallVolumesYN
-        call json%get('SmallVolume.UseSmallVolumesYN', logical_value, found)
-        if (found) setting%SmallVolume%UseSmallVolumesYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.UseSmallVolumesYN not found'
-        
+    !% SmallVolume. =====================================================================    
         !%                       DepthCutoff
         call json%get('SmallVolume.DepthCutoff', real_value, found)
-        if (found) setting%SmallVolume%DepthCutoff = real_value
+        if (found) setting%SmallDepth%DepthCutoff = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.DepthCutoff not found'
         
         !%                       ManningsN
         call json%get('SmallVolume.ManningsN', real_value, found)
-        if (found) setting%SmallVolume%ManningsN = real_value
+        if (found) setting%SmallDepth%ManningsN = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.ManningsN not found'
-        
-        !%                       MinimumArea
-        call json%get('SmallVolume.MinimumArea', real_value, found)
-        if (found) setting%SmallVolume%MinimumArea = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.MinimumArea not found'
-       
-        !%                       MinimumHydRadius
-        call json%get('SmallVolume.MinimumHydRadius', real_value, found)
-        if (found) setting%SmallVolume%MinimumHydRadius = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.MinimumHydRadius not found'
-        
-        !%                       MinimumPerimeter
-        call json%get('SmallVolume.MinimumPerimeter', real_value, found)
-        if (found) setting%SmallVolume%MinimumPerimeter = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.MinimumPerimeter not found'
-        
-        !%                       MinimumTopwidth
-        call json%get('SmallVolume.MinimumTopwidth', real_value, found)
-        if (found)  setting%SmallVolume%MinimumTopwidth = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.MinimumTopwidth not found'
         
 
     !% Solver. =====================================================================
@@ -1489,16 +1439,6 @@ contains
         call json%get('Solver.PreissmannSlot', logical_value, found)
         if (found) setting%Solver%PreissmannSlot = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot not found'
-     
-        !%                       Solver.QinterpWithLocalHeadGradient
-        call json%get('Solver.QinterpWithLocalHeadGradient', logical_value, found)
-        if (found) setting%Solver%QinterpWithLocalHeadGradient = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.QinterpWithLocalHeadGradient not found'
-        
-        !%                       Solver.QHgradFactor
-        call json%get('Solver.QHgradFactor', real_value, found)
-        if (found)  setting%Solver%QHgradFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.QHgradFactor not found'
 
         !%                       Solver.SubtractReferenceHead
         call json%get('Solver.SubtractReferenceHead', logical_value, found)
@@ -1554,6 +1494,8 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SwitchFractionUp not found'
 
         !% do not read           Solver.crk2
+
+        !% do not read          Solver.ReferenceHead
 
     !% TestCase.  =====================================================================
         !%                       TestCase.UseTestCaseYN
@@ -1781,6 +1723,8 @@ contains
         call json%get('ZeroValue.Volume', real_value, found)
         if (found) setting%ZeroValue%Volume = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Volume not found'
+
+        !% do not read VolumeResetLevel
 
     !% Debug.File =====================================================================
         !%                       
