@@ -1660,8 +1660,8 @@ int DLLEXPORT api_get_first_entry_table(
     switch (table_type) {
         case CURVE :
             success = table_getFirstEntry(&(Curve[table_idx]), xx, yy);
-            printf("...success, %d \n",success);
-            printf("...curveType, %d \n",Curve[table_idx].curveType);
+            // printf("...success, %d \n",success);
+            // printf("...curveType, %d \n",Curve[table_idx].curveType);
             // unit conversion depending on the type of curve
             switch (Curve[table_idx].curveType) {
                 case STORAGE_CURVE:
@@ -1736,53 +1736,67 @@ int DLLEXPORT api_get_next_entry_table(
             success = table_getNextEntry(&(Tseries[table_idx]), &(Tseries[table_idx].x2), &(Tseries[table_idx].y2));
             if (success)
             {
-                // unit conversion depending on the type of curve
-            switch (Curve[table_idx].curveType) {
-                case STORAGE_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = FT2TOM2(Tseries[table_idx].y2);
-                case DIVERSION_CURVE:
-                    *xx = CFTOCM(Tseries[table_idx].x2);
-                    *yy = CFTOCM(Tseries[table_idx].y2);
-                case TIDAL_CURVE:
-                    *xx = Tseries[table_idx].x2;
-                    *yy = FTTOM(Tseries[table_idx].y2);
-                case RATING_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = CFTOCM(Tseries[table_idx].y2);
-                case CONTROL_CURVE:
-                    *xx = Tseries[table_idx].x2;
-                    *yy = Tseries[table_idx].y2;
-                case SHAPE_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = FTTOM(Tseries[table_idx].y2);
-                case WEIR_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = Tseries[table_idx].y2;
-                case PUMP1_CURVE:
-                    *xx = CFTOCM(Tseries[table_idx].x2);
-                    *yy = CFTOCM(Tseries[table_idx].y2);
-                case PUMP2_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = CFTOCM(Tseries[table_idx].y2);
-                case PUMP3_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = CFTOCM(Tseries[table_idx].y2);
-                case PUMP4_CURVE:
-                    *xx = FTTOM(Tseries[table_idx].x2);
-                    *yy = CFTOCM(Tseries[table_idx].y2);
-                default:
-                    *xx = Tseries[table_idx].x2;
-                    *yy = Tseries[table_idx].y2;
-                }
+                *xx = Tseries[table_idx].x2;
+                *yy = Tseries[table_idx].y2;
             }
             break;
         case CURVE :
             success = table_getNextEntry(&(Curve[table_idx]), &(Curve[table_idx].x2), &(Curve[table_idx].y2));
             if (success)
             {
-                *xx = Curve[table_idx].x2;
-                *yy = Curve[table_idx].y2;
+                    // unit conversion depending on the type of curve
+            switch (Curve[table_idx].curveType) {
+                case STORAGE_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = FT2TOM2(Curve[table_idx].y2);
+                    // printf("...xx, %f \n",*xx);
+                    // printf("...yy, %f \n",*yy);
+                    break;
+                case DIVERSION_CURVE:
+                    *xx = CFTOCM(Curve[table_idx].x2);
+                    *yy = CFTOCM(Curve[table_idx].y2);
+                    break;
+                case TIDAL_CURVE:
+                    *xx = Curve[table_idx].x2;
+                    *yy = FTTOM(Curve[table_idx].y2);
+                    break;
+                case RATING_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = CFTOCM(Curve[table_idx].y2);
+                    break;
+                case CONTROL_CURVE:
+                    *xx = Curve[table_idx].x2;
+                    *yy = Curve[table_idx].y2;
+                    break;
+                case SHAPE_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = FTTOM(Curve[table_idx].y2);
+                    break;
+                case WEIR_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = Curve[table_idx].y2;
+                    break;
+                case PUMP1_CURVE:
+                    *xx = CFTOCM(Curve[table_idx].x2);
+                    *yy = CFTOCM(Curve[table_idx].y2);
+                    break;
+                case PUMP2_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = CFTOCM(Curve[table_idx].y2);
+                    break;break;
+                case PUMP3_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = CFTOCM(Curve[table_idx].y2);
+                    break;
+                case PUMP4_CURVE:
+                    *xx = FTTOM(Curve[table_idx].x2);
+                    *yy = CFTOCM(Curve[table_idx].y2);
+                    break;
+                default:
+                    *xx = Curve[table_idx].x2;
+                    *yy = Curve[table_idx].y2;
+                    break;
+                }
             }
             break;
         default :

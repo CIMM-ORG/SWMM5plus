@@ -648,7 +648,7 @@ contains
     setting%Weir%Transverse%SideFlowWeirCrestExponent = 1.0
     setting%Weir%Transverse%VillemonteCorrectionExponent = 0.385
 
-    setting%Weir%SideFlow%WeirExponent = 167
+    setting%Weir%SideFlow%WeirExponent = 1.67
     setting%Weir%SideFlow%WeirContractionFactor = 0.1
     setting%Weir%SideFlow%SideFlowWeirCrestExponent = 0.83
     setting%Weir%SideFlow%VillemonteCorrectionExponent = 0.385
@@ -662,6 +662,10 @@ contains
     setting%Weir%Trapezoidal%WeirContractionFactor = 1.0
     setting%Weir%Trapezoidal%SideFlowWeirCrestExponent = 1.0
     setting%Weir%Trapezoidal%VillemonteCorrectionExponent = 0.385
+
+    Setting%Orifice%SharpCrestedWeirCoefficient = 0.414
+    Setting%Orifice%TransverseWeirExponent = 1.5
+    Setting%Orifice%VillemonteCorrectionExponent = 0.385
 
     end subroutine define_settings_default
 !%

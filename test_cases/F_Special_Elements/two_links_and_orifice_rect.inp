@@ -64,17 +64,17 @@ Out1             0          FIXED      1                NO
 C1               J1               J2               100        0.015      0          0          2.4599     0         
 C2               J3               Out1             100        0.015      0          0          2.4599     0         
 
-[WEIRS]
-;;Name           From Node        To Node          Type         CrestHt    Qcoeff     Gated    EndCon   EndCoeff   Surcharge  RoadWidth  RoadSurf   Coeff. Curve
-;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- -------- ---------- ---------- ---------- ---------- ----------------
-TRANSVERSE       J2               J3               TRANSVERSE   0          1.84       NO       0        0          YES       
+[ORIFICES]
+;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
+;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
+O1               J2               J3               SIDE         0          0.65       NO       0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1               RECT_OPEN    4                2          0          0          1                    
-C2               RECT_OPEN    4                2          0          0          1                    
-TRANSVERSE       RECT_OPEN    4                2          0          0         
+C1               CIRCULAR     2                0          0          0          1                    
+C2               CIRCULAR     2                0          0          0          1                    
+O1               RECT_CLOSED  2                2          0          0
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

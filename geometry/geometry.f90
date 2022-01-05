@@ -220,7 +220,8 @@ module geometry
         !% When the main head is higher than the branch, this applies
         !% the main head to the branch with an adjustment for head loss.
         !% When the main head is below the branch, this sets the
-        !% branch head to the bottom elevation plus a depth implied!%------------------------------------------------------------------
+        !% branch head to the bottom elevation plus a depth implied
+        !%------------------------------------------------------------------
         !% by a Froude number of one.
         !%
         !% Note that the JB works in an inverse form from the other geometry computations.
