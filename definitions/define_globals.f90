@@ -23,16 +23,16 @@ module define_globals
     ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
-    !% debugging SJ -- 1 processor
-    integer :: ietmp(5) = (/ 630, 631, 385, 386, 387 /)
-    integer :: iftmp(4) = (/ 631, 397, 398, 399 /)
-    integer :: debug_image
-
-
-    !% debugging SJ -- 1 processor
-    ! integer :: ietmp(5) = (/ 9975, 9976, 9977, 9978, 9979 /)
-    ! integer :: iftmp(4) = (/ 10563, 10564, 10565, 10566 /)
+    ! !% debugging SJ -- 1 processor
+    ! integer :: ietmp(5) = (/ 630, 631, 385, 386, 387 /)
+    ! integer :: iftmp(4) = (/ 631, 397, 398, 399 /)
     ! integer :: debug_image
+
+
+    !% debugging SJ -- 1 processor
+    integer :: ietmp(5) = (/ 9975, 9976, 9977, 9978, 9979 /)
+    integer :: iftmp(4) = (/ 10563, 10564, 10565, 10566 /)
+    integer :: debug_image
 
     !% 16 processor, image 6
     !integer :: ietmp(5) = (/ 192, 193, 194, 195, 196 /)
