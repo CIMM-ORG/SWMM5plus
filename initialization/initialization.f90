@@ -57,6 +57,9 @@ contains
             integer, pointer :: Npack, thisP(:)
             integer, allocatable :: tempP(:)
             character(64) :: subroutine_name = 'initialize_toplevel'
+            !% temporary debugging
+            integer    :: elemInLink(1000)
+            integer    :: thislink_idx, thislink_image
         !%-------------------------------------------------------------------
         !% Preliminaries
             if (icrash) return
@@ -242,7 +245,45 @@ contains
                 write(*,*) '...this presently is not supported in SWMM5+'
             end if
             stop 9378975
-        end if                     
+        end if          
+        
+       
+        ! call util_find_elements_in_link ('1567',thislink_idx, debug_image, elemInLink)
+
+        ! if (this_image() == debug_image) then
+        !     if (elemInLink(1) .ne. 9977) then
+        !     !if (elemInLink(1) .ne. 194) then
+        !         call co_broadcast(elemInLink(1),source_image=debug_image)
+        !    end if
+        ! end if
+
+        ! print *, elemInLink(1)
+        ! !stop 398705
+        ! !if (elemInLink(1) .ne. 194) stop 87854
+        ! if (elemInLink(1) .ne. 385) stop 87854
+        ! if (this_image() == 1) then
+        ! ii = 385
+        ! print *, ii, 'type = ',reverseKey(elemI(ii,ei_elementType))
+        ! print *, 'fup ', elemI(ii,ei_Mface_uL)
+        ! print *, 'fdn ', elemI(ii,ei_Mface_dL)
+
+        ! ii = 397
+        ! print *, 'eUp ', faceI(ii,fi_Melem_uL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_uL),ei_elementType))
+        ! ii = 398
+        ! print *, 'edn ', faceI(ii,fi_Melem_dL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_dL),ei_elementType))
+        
+        ! ii = 631
+        ! print *, 'fUp ', elemI(ii,ei_Mface_uL)
+        ! ii = 386
+        ! print *, 'fdn ', elemI(ii,ei_Mface_dL)
+
+        ! ii = 631
+        ! print *, 'eUp ', faceI(ii,fi_Melem_uL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_uL),ei_elementType))
+        ! ii = 399
+        ! print *, 'edn ', faceI(ii,fi_Melem_dL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_dL),ei_elementType))
+        ! end if
+
+        ! stop 385858
 
         !% --- setup the multi-level finite-volume output
         !%        Ideally, this should be a procedure accessed in the output module, 

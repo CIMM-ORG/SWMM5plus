@@ -35,7 +35,7 @@ module runge_kutta2
         !%------------------------------------------------------------------
         !% Declarations:
             integer :: istep, ii, iblank
-            logical :: iprint = .false.
+            logical :: iprint = .true.
             logical :: isreset
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
@@ -45,47 +45,51 @@ module runge_kutta2
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
         
+                if ((setting%Time%Now > 360418) .and. (this_image() == debug_image)) then 
+                     iprint = .false.
+                else
+                    iprint = .false.
+                end if
+
                 !print *, '000 ',elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
                     print *, 'time now ',setting%Time%Now ,'================================'
-                    print *, '000 ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, '000 ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, '000 ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), &
-                                        !  faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), &
-                                        !        elemR(ietmp(2),er_Flowrate),  &
-                                        !  faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), &
-                                        !        elemR(ietmp(3),er_Flowrate)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                   
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- RK2 solution step -- single time advance step for CC and JM
@@ -94,42 +98,42 @@ module runge_kutta2
 
                 !print *, 'AAA ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'AAA ',  elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'AAA ',  elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'AAA ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- RK2 solution step -- update all non-diagnostic aux variables
@@ -137,43 +141,42 @@ module runge_kutta2
 
                 !print *, 'BBB ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'BBB ',  elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'BBB ',  elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'BBB ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A, 5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% update zero/small depth fluxes before JB computation
@@ -187,43 +190,42 @@ module runge_kutta2
 
                 !print *, 'BBB2', faceR(iftmp(1),fr_Flowrate_Max), elemR(ietmp(2),er_Flowrate)
                 if (iprint) then
-                    print *, 'BBB2',  elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'BBB2',  elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'BBB2',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A, 5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- junction branch flowrate and velocity update
@@ -238,43 +240,42 @@ module runge_kutta2
 
                 !print *, 'CCC ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'CCC ',  elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'CCC ',  elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'CCC ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- compute element Froude number for JB
@@ -282,43 +283,42 @@ module runge_kutta2
 
                 !print *, 'DDD ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'DDD ',  elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'DDD ',  elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'DDD ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                   
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% update zero/small depth fluxes on Junctions
@@ -326,43 +326,42 @@ module runge_kutta2
 
                 !print *, 'EEE ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'EEE ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'EEE ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'EEE ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if 
 
         !% --- RK2 solution step  -- all face interpolation
@@ -370,43 +369,42 @@ module runge_kutta2
  
                 !print *, 'FFF ', elemR(ietmp(2),er_InterpWeight_uQ)              
                 if (iprint) then
-                    print *, 'FFF ',  elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'FFF ',  elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'FFF ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                   ! write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
                 !stop 39705994
@@ -416,43 +414,42 @@ module runge_kutta2
 
                 !print *, 'GGG ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'GGG ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'GGG ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'GGG ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- RK2 solution step  -- make ad hoc adjustments
@@ -460,44 +457,42 @@ module runge_kutta2
 
                 !print *, 'HHH ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'HHH ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'HHH ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'HHH ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    ! write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                   
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
@@ -505,44 +500,42 @@ module runge_kutta2
 
                !print *, 'HHH2', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'HHH2', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'HHH2', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'HHH2',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    ! write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                    elemR(ietmp(1),er_Head), ' | ',&
-                                                    faceR(iftmp(1),fr_Head_u), &
-                                                    faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                    elemR(ietmp(2),er_Head), &
-                                                    elemR(ietmp(3),er_Head), &
-                                                    elemR(ietmp(4),er_Head), ' | ', &
-                                                    faceR(iftmp(2),fr_Head_u), &
-                                                    faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                    elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                    faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                    elemR(ietmp(2),er_Flowrate), &
-                                                    elemR(ietmp(3),er_Flowrate), &
-                                                    elemR(ietmp(4),er_flowrate), ' | ', &
-                                                    faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                    elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                   
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                 elemR(ietmp(1),er_Head), ' | ',&
+                    !                                 faceR(iftmp(1),fr_Head_u), &
+                    !                                 faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                 elemR(ietmp(2),er_Head), &
+                    !                                 elemR(ietmp(3),er_Head), &
+                    !                                 elemR(ietmp(4),er_Head), ' | ', &
+                    !                                 faceR(iftmp(2),fr_Head_u), &
+                    !                                 faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                 elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                 elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                 faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                 elemR(ietmp(2),er_Flowrate), &
+                    !                                 elemR(ietmp(3),er_Flowrate), &
+                    !                                 elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                 faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                 elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --------------------------------------------------------------------------
@@ -552,43 +545,43 @@ module runge_kutta2
 
                 !print *, 'III ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'III ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'III ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'III ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    ! write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
+                    ! !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
                 end if
 
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
@@ -596,43 +589,42 @@ module runge_kutta2
 
                 !print *, 'JJJ ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'JJJ ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'JJJ ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'JJJ ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                   !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                 
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- update zero/small depth fluxes before JB computation
@@ -656,43 +648,42 @@ module runge_kutta2
 
                 !print *, 'KKK ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'KKK ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'KKK ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'KKK ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                   ! write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                   
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- compute element Froude number for JB
@@ -700,43 +691,42 @@ module runge_kutta2
 
                 !print *, 'LLL ',elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'LLL ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'LLL ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'LLL ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                  
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% update zero and small volumes before face interpolation
@@ -756,43 +746,42 @@ module runge_kutta2
 
                 !print *, 'MMM ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'MMM ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'MMM ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'MMM ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+               
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- RK2 solution step -- update all faces
@@ -801,43 +790,42 @@ module runge_kutta2
 
                 !print *, 'NNN ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'NNN ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'NNN ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'NNN ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                  
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !% --- RK2 solution step -- update diagnostic elements and faces
@@ -845,43 +833,42 @@ module runge_kutta2
 
                 !print *, 'OOO ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'OOO ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'OOO ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'OOO ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    ! print *, 'head'
-                    ! print *, faceR(elemI(ietmp(2),ei_Mface_uL),fr_Head_d), elemR(ietmp(2),er_Head), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Head_u)
-                    !write(*,"(A,5f12.5)") 'volume ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    !write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                    elemR(ietmp(1),er_Depth), ' | ',&
-                    faceR(iftmp(1),fr_HydDepth_u), &
-                    faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(2),er_Depth), &
-                    elemR(ietmp(3),er_Depth), &
-                    elemR(ietmp(4),er_Depth), ' | ', &
-                    faceR(iftmp(2),fr_HydDepth_u), &
-                    faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                    elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+            
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                             ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    ! elemR(ietmp(1),er_Depth), ' | ',&
+                    ! faceR(iftmp(1),fr_HydDepth_u), &
+                    ! faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(2),er_Depth), &
+                    ! elemR(ietmp(3),er_Depth), &
+                    ! elemR(ietmp(4),er_Depth), ' | ', &
+                    ! faceR(iftmp(2),fr_HydDepth_u), &
+                    ! faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    ! elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
   
         !% --- experimental face flux correction term (NEED SHARED)
@@ -891,6 +878,48 @@ module runge_kutta2
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_values (ETM)
 
+        !print *, 'OOO2', elemR(ietmp(2),er_InterpWeight_uQ)
+        if (iprint) then
+            !print *, 'OOO2', elemYN(ietmp,eYN_isZeroDepth)
+            print *, 'OOO2',  elemYN(ietmp,eYN_isSmallDepth)
+            write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+            write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+            write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+            write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+            
+            ! write(*,"(A,f12.5,'                              ',3f12.5,'                              ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+            ! write(*,"(A,f12.5,'                              ',3f12.5,'                              ',f12.5)") 'smallvol ',elemR(ietmp,er_SmallVolume)
+            ! write(*,"(A,f12.5)") 'zero vol ',setting%ZeroValue%Volume
+            ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+            !                                   elemR(ietmp(1),er_Depth), ' | ',&
+            !                                   faceR(iftmp(1),fr_HydDepth_u), &
+            !                                   faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+            !                                   elemR(ietmp(2),er_Depth), &
+            !                                   elemR(ietmp(3),er_Depth), &
+            !                                   elemR(ietmp(4),er_Depth), ' | ', &
+            !                                   faceR(iftmp(2),fr_HydDepth_u), &
+            !                                   faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+            !                                   elemR(ietmp(5),er_Head)
+            ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+            !                                   elemR(ietmp(1),er_Head), ' | ',&
+            !                                   faceR(iftmp(1),fr_Head_u), &
+            !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+            !                                   elemR(ietmp(2),er_Head), &
+            !                                   elemR(ietmp(3),er_Head), &
+            !                                   elemR(ietmp(4),er_Head), ' | ', &
+            !                                   faceR(iftmp(2),fr_Head_u), &
+            !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+            !                                   elemR(ietmp(5),er_Head)
+            ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+            !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+            !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+            !                                   elemR(ietmp(2),er_Flowrate), &
+            !                                   elemR(ietmp(3),er_Flowrate), &
+            !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+            !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+            !                                   elemR(ietmp(5),er_flowrate)
+        end if
+
         !% readjust for small/zero depths so that V filter 
         !% does not affect these.
         call adjust_zerodepth_bypack (ep_ZeroDepth_CC_ALLtm)
@@ -899,42 +928,44 @@ module runge_kutta2
 
                 !print *, 'PPP ', elemR(ietmp(2),er_InterpWeight_uQ)
                 if (iprint) then
-                    print *, 'PPP ', elemYN(ietmp,eYN_isZeroDepth)
+                    !print *, 'PPP ', elemYN(ietmp,eYN_isZeroDepth)
                     print *, 'PPP ',  elemYN(ietmp,eYN_isSmallDepth)
-                    !write(*,"(A,5f12.5)") 'Q ',elemR(ietmp(1),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_uL),fr_Flowrate), elemR(ietmp(2),er_Flowrate), faceR(elemI(ietmp(2),ei_Mface_dL),fr_Flowrate), elemR(ietmp(3),er_Flowrate)
-                    !write(*,"(A,5f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                   ! write(*,"(A,5f12.5)") 'velocity ',elemR(ietmp,er_Velocity)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                              ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
-                    write(*,"(A,f12.5,'                              ',3f12.5,'                              ',f12.5)") 'smallvol ',elemR(ietmp,er_SmallVolume)
-                    write(*,"(A,f12.5)") 'zero vol ',setting%ZeroValue%Volume
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
-                                                      elemR(ietmp(1),er_Depth), ' | ',&
-                                                      faceR(iftmp(1),fr_HydDepth_u), &
-                                                      faceR(iftmp(1),fr_HydDepth_d), ' | ',&
-                                                      elemR(ietmp(2),er_Depth), &
-                                                      elemR(ietmp(3),er_Depth), &
-                                                      elemR(ietmp(4),er_Depth), ' | ', &
-                                                      faceR(iftmp(2),fr_HydDepth_u), &
-                                                      faceR(iftmp(2),fr_HydDepth_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
-                                                      elemR(ietmp(1),er_Head), ' | ',&
-                                                      faceR(iftmp(1),fr_Head_u), &
-                                                      faceR(iftmp(1),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(2),er_Head), &
-                                                      elemR(ietmp(3),er_Head), &
-                                                      elemR(ietmp(4),er_Head), ' | ', &
-                                                      faceR(iftmp(2),fr_Head_u), &
-                                                      faceR(iftmp(2),fr_Head_d), ' | ',&
-                                                      elemR(ietmp(5),er_Head)
-                    write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
-                                                      elemR(ietmp(1),er_Flowrate), ' | ',&
-                                                      faceR(iftmp(1),fr_Flowrate), ' | ',&
-                                                      elemR(ietmp(2),er_Flowrate), &
-                                                      elemR(ietmp(3),er_Flowrate), &
-                                                      elemR(ietmp(4),er_flowrate), ' | ', &
-                                                      faceR(iftmp(2),fr_flowrate), ' | ',&
-                                                      elemR(ietmp(5),er_flowrate)
+                    write(*, "(A,5f12.5)") 'Qelat ', elemR(ietmp,er_FlowrateLateral)
+                    write(*, "(A,5f12.5)") 'Qe    ', elemR(ietmp,er_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qf          ', faceR(iftmp,fr_Flowrate)
+                    write(*, "(A,4f12.5)") 'Qfcons      ', faceR(iftmp,fr_Flowrate_Conservative)
+                    
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                              ',f12.5)") 'volume   ',elemR(ietmp,er_Volume)
+                    ! write(*,"(A,f12.5,'                              ',3f12.5,'                              ',f12.5)") 'smallvol ',elemR(ietmp,er_SmallVolume)
+                    ! write(*,"(A,f12.5)") 'zero vol ',setting%ZeroValue%Volume
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'D        ',&
+                    !                                   elemR(ietmp(1),er_Depth), ' | ',&
+                    !                                   faceR(iftmp(1),fr_HydDepth_u), &
+                    !                                   faceR(iftmp(1),fr_HydDepth_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Depth), &
+                    !                                   elemR(ietmp(3),er_Depth), &
+                    !                                   elemR(ietmp(4),er_Depth), ' | ', &
+                    !                                   faceR(iftmp(2),fr_HydDepth_u), &
+                    !                                   faceR(iftmp(2),fr_HydDepth_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,2f12.5,A,3f12.5,A,2f12.5,A,f12.5)") 'H        ',&
+                    !                                   elemR(ietmp(1),er_Head), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Head_u), &
+                    !                                   faceR(iftmp(1),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(2),er_Head), &
+                    !                                   elemR(ietmp(3),er_Head), &
+                    !                                   elemR(ietmp(4),er_Head), ' | ', &
+                    !                                   faceR(iftmp(2),fr_Head_u), &
+                    !                                   faceR(iftmp(2),fr_Head_d), ' | ',&
+                    !                                   elemR(ietmp(5),er_Head)
+                    ! write(*,"(A,f12.5,A,'      ',f12.5,'      ',A,3f12.5,A,'      ',f12.5,'      ',A,f12.5)") 'Q        ',&
+                    !                                   elemR(ietmp(1),er_Flowrate), ' | ',&
+                    !                                   faceR(iftmp(1),fr_Flowrate), ' | ',&
+                    !                                   elemR(ietmp(2),er_Flowrate), &
+                    !                                   elemR(ietmp(3),er_Flowrate), &
+                    !                                   elemR(ietmp(4),er_flowrate), ' | ', &
+                    !                                   faceR(iftmp(2),fr_flowrate), ' | ',&
+                    !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
         !%-----------------------------------------------------------------

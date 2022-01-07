@@ -713,20 +713,35 @@ module adjust
         Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
                         *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))    
 
+        ! if (this_image() == debug_image) then
+        !     print *, ' in adjust ',Vvalue(ietmp(2)), setting%Time%Now
+        !     print *, faceFlow(mapUp(ietmp(2))), elemFlow(ietmp(2)), faceFlow(mapDn(ietmp(2)))
+        ! end if
+
         where     ( (Vvalue(thisP) > zeroR)        &
             .and.   (.not. isSmallDepth  (thisP))   &
             .and.   (.not. isNearZeroDepth(thisP))  )
 
             !% averaging based on interpolation weights
-            elemFlow(thisP) =  (oneR - coef) * elemFlow(thisP) &
-                + coef *                                       &
-                    (  w_uQ(thisP) * faceflow(mapDn(thisP))    &
-                     + w_dQ(thisP) * faceflow(mapUp(thisP)) )  &
-                / ( w_uQ(thisP) + w_dQ(thisP) )
+            !% this had problems with lateral inflow conditions that
+            ! !% change the interpolation weights -- brh 20220207
+            ! elemFlow(thisP) =  (oneR - coef) * elemFlow(thisP) &
+            !     + coef *                                       &
+            !         (  w_uQ(thisP) * faceflow(mapDn(thisP))    &
+            !          + w_dQ(thisP) * faceflow(mapUp(thisP)) )  &
+            !     / ( w_uQ(thisP) + w_dQ(thisP) )
+
+            !% simple linear interpolation
+            elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
+                + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
 
             !% reset the velocity      
             elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
         endwhere
+
+        ! if (this_image() == debug_image) then
+        !     print *, faceFlow(mapUp(ietmp(2))), elemFlow(ietmp(2)), faceFlow(mapDn(ietmp(2)))
+        ! end if
                 
         where (abs(elemVel(thisP)) > vMax)
             elemVel(thisP) = sign( 0.99 * vMax, elemVel(thisP) )

@@ -23,6 +23,7 @@ module utility
     public :: util_sign_with_ones_or_zero
     public :: util_print_warning
     public :: util_linspace
+    public :: util_find_elements_in_link
 
     contains
 !%
@@ -177,7 +178,59 @@ module utility
         end do
 
     end function util_linspace
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_find_elements_in_link (thislinkname, thislink_idx, thislink_image, elemInLink)
+        !%-------------------------------------------------------------------
+        !% Description: 
+        !% Finds the element indexes for the SWMM link with the name "thislinkname"
+        !% stores the element indexes in the array elemInLink and
+        !% returns the link index in link%I(:) and the image that host the link.
+        !% Not efficiently written, but only purpose is for use in debugging.
+        !%-------------------------------------------------------------------
+            character(*), intent(in)   :: thislinkname
+            integer, intent(inout)     :: elemInLink(:)
+            integer, intent(inout)     :: thislink_idx, thislink_image
+            integer ::  ii, jj, ecount
+        !%-------------------------------------------------------------------
+        elemInLink = 0
+        thislink_idx = 0
+        thislink_image = 0
 
+        !% find the link idx and image for the input "thislinkname"
+        if (this_image() == 1) then
+            do ii = 1,size(link%I,dim=1)
+                if (link%Names(ii)%str == thislinkname) then
+                    print *, ii, trim(link%Names(ii)%str), ' ' ,trim(thislinkname), ' ',link%I(ii,li_P_image)
+                    thislink_idx = ii
+                    thislink_image = link%I(ii,li_P_image)
+                end if
+            end do
+        end if
+        !% broadcast result to all images
+        call co_broadcast(thislink_idx,  source_image=1)
+        call co_broadcast(thislink_image,source_image=1)
+        sync all
+
+    
+        !% for the image that hosts the link, cycle through to find the elements in the link
+        if (this_image() == thislink_image) then
+            ecount = 1
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_SWMM) == thislink_idx) then
+                    elemInLink(ecount) = ii
+                    print *, ii, ' is elem #'
+                    ecount = ecount + 1
+                end if
+            end do
+        end if
+        call co_broadcast(elemInLink,source_image=thislink_image)
+        sync all
+
+    end subroutine util_find_elements_in_link
+!%   
 !%==========================================================================
 !% END OF MODULE
 !%==========================================================================
