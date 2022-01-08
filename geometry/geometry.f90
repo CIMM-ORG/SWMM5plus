@@ -509,6 +509,14 @@ module geometry
         if (Npack > 0) then
             call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
+
+        !% JM with artificial storage
+        thisCol => col_elemPGx(epg_JM_artificial_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_artificial_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
   
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

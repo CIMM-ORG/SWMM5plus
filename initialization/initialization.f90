@@ -247,6 +247,8 @@ contains
             stop 9378975
         end if          
         
+        !% initialize volume conservation storage for debugging
+        elemR(:,er_VolumeConservation) = zeroR        
        
         ! call util_find_elements_in_link ('1567',thislink_idx, debug_image, elemInLink)
 

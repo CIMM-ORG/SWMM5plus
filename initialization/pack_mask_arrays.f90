@@ -510,6 +510,44 @@ contains
                 ))
         end if
 
+
+        !% junction main with artificial storage relationship
+        ptype => col_elemPGalltm(epg_JM_artificial_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_alltm_elements

@@ -44,6 +44,11 @@ module runge_kutta2
             if (setting%Debug%File%runge_kutta2) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
+
+        !% HACK ensure that the conservative flux terms are exactly zero in the entire array
+        !% so that we can be confident of conservation computation. This should be
+        !% moved to start of timeloop rather than inside the RK
+        faceR(:,fr_Flowrate_Conservative) = zeroR  
         
                 if ((setting%Time%Now > 360418) .and. (this_image() == debug_image)) then 
                      iprint = .false.
@@ -968,6 +973,7 @@ module runge_kutta2
                     !                                   elemR(ietmp(5),er_flowrate)
                 end if
 
+        call rk2_volume_conservation ()        
         !%-----------------------------------------------------------------
         !% closing
             if (setting%Debug%File%runge_kutta2)  &
@@ -1503,7 +1509,7 @@ module runge_kutta2
             fQcons => faceR(:,fr_Flowrate_Conservative)
             fQ     => faceR(:,fr_Flowrate)
         !%------------------------------------------------------------------
- 
+
         !% handle the flux faces of the time-marching elements
         if (NpackE > 0) then
             fQcons(fup(thisP)) = fQ(fup(thisP))
@@ -1519,6 +1525,59 @@ module runge_kutta2
         !% Closing
         !%
     end subroutine rk2_store_conservative_fluxes
+!%   
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine rk2_volume_conservation ()
+    ! !%------------------------------------------------------------------
+    ! !% Description:
+    ! !% Computes the cumulative mass conservation
+    ! !%------------------------------------------------------------------
+    ! !% Declarations:
+    !     real(8), pointer :: eCons(:), fQ(:), eQLat(:), HeadNew(:), HeadOld(:), dt
+    !     integer, pointer :: thisCol, npack, fdn(:), fup(:)
+    !     integer :: ii
+    ! !%------------------------------------------------------------------
+    ! !% Preliminaries:
+
+    !     !% HACK --- this is not packed for a specific TM type, but
+    !     !% does all the elements
+    ! !%------------------------------------------------------------------
+    ! !% Aliases:
+    !     fQ      => faceR(:,fr_Flowrate_Conservative)
+    !     eCons   => elemR(:,er_VolumeConservation)
+    !     eQLat   => elemR(:,er_FlowrateLateral)
+    !     Length  => elemR(:,er_Length)
+    !     TopWidth=> elemR(:,er_Topwidth)
+    !     HeadOld => elemR(:,er_Head_N0)  
+    !     fup     => elemI(:,ei_Mface_uL)
+    !     fdn     => elemI(:,ei_Mface_dL)
+    !     dt      => setting%Time%Hydraulics%Dt
+
+    !     BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+    ! !%------------------------------------------------------------------
+    !     thisCol => col_elemP(ep_CC)
+    !     npack   => npack_elemP(thisCol)
+    !     if (npack > 1) then
+    !         thisP = elemP(1:npack,thisCol)
+    !         ! sum of the net inflow and lateral flow should be the change in volume from head
+    !         eCons(thisP) = Cons(thisP) + fQ(fup(thisP)) - fQ(fdn(thisP)) &
+    !             + eQlat(thisP) - (HeadNew(thisP) - HeadOld(thisP)) * Length(thisP) * TopWidth(thisP)
+    !     end if
+
+    !     thisCol => col_elemP(ep_JM)
+    !     npack   => npack_elemP(thisCol)
+    !     if (npack > 1) then
+    !         eCons(thisP) = Cons(thisP) + eQlat(thisP) - (HeadNew(thisP) - HeadOld(thisP))
+    !         do ii=1,max_branch_per_node,2
+    !             eCons(thisP) = eCons(thisP) + real(BranchExists(thisP),8) * eCons(thisP+ii) &
+    !                                         - real(BranchExists(thisP),8) * eCons(thisP+1+ii)
+    !         end do
+    !     end if
+
+
+    end subroutine rk2_volume_conservation
 !%==========================================================================
 !%==========================================================================
 !%

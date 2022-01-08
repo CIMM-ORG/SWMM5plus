@@ -376,6 +376,7 @@ module define_indexes
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
         enumerator :: er_ZbreadthMax                !% elevation at maximum breadth
         enumerator :: er_Zcrown                     !% inside crown elevation of closed conduit (static)
+        enumerator :: er_VolumeConservation         !% 
         enumerator :: er_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemR = er_lastplusone-1
@@ -448,6 +449,7 @@ module define_indexes
         enumerator :: epg_CCJM_circular_nonsurcharged        !% CC and JM circular conduits that are not surcharged
         enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_artificial_nonsurcharged        !% JM with artificial storage
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
@@ -547,6 +549,7 @@ module define_indexes
         enumerator ::  esr_Storage_Constant = 1
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
+        enumerator ::  esr_Storage_Plane_Area
         enumerator ::  esr_Storage_lastplusone !% must be last enum item
     end enum
 

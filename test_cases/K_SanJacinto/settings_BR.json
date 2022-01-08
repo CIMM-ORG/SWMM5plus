@@ -40,7 +40,7 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 100,
+        "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
             "interval" : 1000

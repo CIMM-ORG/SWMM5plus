@@ -19,6 +19,7 @@ module storage_geometry
 
     public :: storage_functional_depth_from_volume
     public :: storage_tabular_depth_from_volume
+    public :: storage_artificial_depth_from_volume
     public :: storage_integrate_area_vs_depth_curve
     public :: storage_interpolate_volume_from_depth_singular
     public :: storage_create_curve
@@ -76,11 +77,11 @@ module storage_geometry
         !% Description:
         !% Only applies on JM that has storage (or non-surcharged trapezoidal conduits)
         !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP, curveID
-        real(8), pointer :: depth, volume
-        real(8), pointer :: aConst, aCoeff, aExpon
-        integer :: ii
+            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, pointer :: thisP, curveID
+            real(8), pointer :: depth, volume
+            real(8), pointer :: aConst, aCoeff, aExpon
+            integer :: ii
         !%-----------------------------------------------------------------------------
 
         !% HACK: Find out a way to code this without do loop
@@ -97,6 +98,33 @@ module storage_geometry
 
     end subroutine storage_tabular_depth_from_volume
 !%  
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine storage_artificial_depth_from_volume (elemPGx, Npack, thisCol)
+        !%  
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% Computes depth from volume for a junction that does not have SWMM
+        !% geometry specified using the storage plane area
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, pointer :: thisP(:)
+            real(8), pointer :: depth(:), pArea(:), volume(:)
+        !%-------------------------------------------------------------------
+        !% Aliases
+            thisP  => elemPGx(1:Npack,thisCol)
+            depth  => elemR(:,er_Depth)
+            pArea  => elemSR(:,esr_Storage_Plane_Area)
+            volume => elemR(:,er_Volume)
+        !%-------------------------------------------------------------------
+
+        depth(thisP) = volume / pArea
+       
+        !%-------------------------------------------------------------------
+    end subroutine storage_artificial_depth_from_volume
+!%    
 !%==========================================================================
 !%==========================================================================
 !%
@@ -194,6 +222,7 @@ module storage_geometry
     end subroutine storage_create_curve
 !%  
 !%==========================================================================
+
 !%==========================================================================
 !%
 !%

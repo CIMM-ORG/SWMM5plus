@@ -1077,9 +1077,7 @@ contains
 !%
     subroutine init_IC_from_nodedata ()
         !--------------------------------------------------------------------------
-        !
         !% get the initial depth, and geometry data from nJm nodes
-        !
         !--------------------------------------------------------------------------
 
             integer                       :: ii, image, pJunction
@@ -1128,6 +1126,7 @@ contains
 
         integer              :: ii, jj, JMidx, JBidx
         integer, pointer     :: BranchIdx, geometryType, JmType, curveID
+        integer              :: nbranches
         real(8), allocatable :: integrated_volume(:)
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
@@ -1136,6 +1135,7 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        !print *, 'inside ',trim(subroutine_name)
         !%................................................................
         !% Junction main
         !%................................................................
@@ -1162,9 +1162,9 @@ contains
             end if
         else
             !%-----------------------------------------------------------------------
-            !% HACK: Junction main with artifical storage are rectangular
+            !% HACK: Junction main with artificial storage are rectangular
             !%-----------------------------------------------------------------------
-            elemSI(JMidx,esi_JunctionMain_Type) = ArtificalStorage
+            elemSI(JMidx,esi_JunctionMain_Type) = ArtificialStorage
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
 
@@ -1345,26 +1345,41 @@ contains
 
         select case (JmType)
 
-            case (ArtificalStorage)
+            case (ArtificialStorage)
 
+                !% the JM characteristic length is the sum of the two longest branches
                 elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
                                              elemR(JMidx+5,er_Length)) + &
                                          max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
                                              elemR(JMidx+6,er_Length))
 
-                !% HACK: finding the average breadth. This will not work for channels with other than rectangular geometry.
-                !% we need to generalize this
-                elemSGR(JMidx,esgr_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,esgr_Rectangular_Breadth) + &
-                                                           elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,esgr_Rectangular_Breadth) + &
-                                                           elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,esgr_Rectangular_Breadth) + &
-                                                           elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,esgr_Rectangular_Breadth) + &
-                                                           elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,esgr_Rectangular_Breadth) + &
-                                                           elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &
-                                                           elemR(JMidx,er_Length)
+                !% obsolete                             
+                ! elemSGR(JMidx,esgr_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,esgr_Rectangular_Breadth) + &
+                !                                            elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,esgr_Rectangular_Breadth) + &
+                !                                            elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,esgr_Rectangular_Breadth) + &
+                !                                            elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,esgr_Rectangular_Breadth) + &
+                !                                            elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,esgr_Rectangular_Breadth) + &
+                !                                            elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &
+                !                                            elemR(JMidx,er_Length)
 
-                !% Volume
-                !% rectangular volume depends on characteristic length and breadth.
-                elemR(JMidx,er_Volume) =   elemSGR(JMidx,esgr_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
+                !% Plane area is the sum of the branch plane areas 
+                !% HACK -- investigate using average
+                nbranches = 0
+                elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
+                do ii=1,max_branch_per_node                                                    
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                       +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                     &
+                            * elemR(  JMidx+ii,er_Length)                                        &
+                            * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
+                    !nbranches = nbranches + elemSI(JMidx+ii,esi_JunctionBranch_Exists)
+                end do 
+                !elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area) &
+                !                                      / real(nbranches,8)
+
+
+                !% Volume depends on plane area and depth
+                !elemR(JMidx,er_Volume) =   elemSGR(JMidx,esgr_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
+                elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
 
                 elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
                 elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
@@ -1391,6 +1406,8 @@ contains
                 call storage_interpolate_volume_from_depth_singular (JMidx)
 
             case default
+                !% IMPORTANT -- if any other new type is defined, make sure that
+                !% subroutine geo_depth_from_volume is updated
                 print*, 'In, ', subroutine_name
                 print*, 'error: unknown junction main type, ', JmType
                 stop 54895
