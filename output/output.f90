@@ -435,6 +435,7 @@ contains
             character(64)        :: subroutine_name = 'outputML_element_outtype_selection'
         !%------------------------------------------------------------------
             if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (.not. setting%Output%ElementsExist_global) return 
             if (setting%Debug%File%output) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -631,6 +632,7 @@ contains
         !%------------------------------------------------------------------
         !% Preliminaries:
             if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (.not. setting%Output%FacesExist_global) return
             if (setting%Debug%File%output) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
