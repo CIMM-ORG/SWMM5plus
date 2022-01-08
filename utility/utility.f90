@@ -24,6 +24,8 @@ module utility
     public :: util_print_warning
     public :: util_linspace
     public :: util_find_elements_in_link
+    public :: util_accumulate_volume_conservation
+    public :: util_total_volume_conservation
 
     contains
 !%
@@ -232,6 +234,140 @@ module utility
 
     end subroutine util_find_elements_in_link
 !%   
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine util_accumulate_volume_conservation ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes/stores the cumulative mass conservation for each CC and JM
+        !% element that is NOT small volume or zero depth
+        !% HACK -- JM not completed
+        !% HACK -- need a separate volume cons for the small/zero losses
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
+            integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
+            integer, pointer :: fdn(:), fup(:), BranchExists(:)
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisColCC => col_elemP(ep_CC_Q_NOTsmalldepth)
+            fQ      => faceR(:,fr_Flowrate_Conservative)
+            eCons   => elemR(:,er_VolumeConservation)
+            eQLat   => elemR(:,er_FlowrateLateral)
+            VolNew  => elemR(:,er_Volume)  
+            VolOld  => elemR(:,er_Volume_N0)  
+            fup     => elemI(:,ei_Mface_uL)
+            fdn     => elemI(:,ei_Mface_dL)
+            dt      => setting%Time%Hydraulics%Dt
+            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        !%------------------------------------------------------------------
+        !% --- for the CC elements
+        npack   => npack_elemP(thisColCC)
+        if (npack > 0) then
+            thisP => elemP(1:npack,thisColCC)
+            !% --- sum of the net inflow and lateral flow should be the change in volume from head
+            !% --- for output, use an accumulator
+            eCons(thisP) = eCons(thisP)                                            &
+                         + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
+                         - (VolNew(thisP) - VolOld(thisP))
+
+            !% --- for debugging, switch to using non-cumulative            
+            !eCons(thisP) = dt * (fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP)) &
+            !              - (VolNew(thisP) - VolOld(thisP))      
+                          
+            ! do ii = 1,size(thisP)
+            !     if (abs(eCons(thisP(ii))) > 1.0) then
+            !         print *, ii, thisP(ii), this_image()
+            !         print *,  eCons(thisP(ii))
+            !         print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
+            !         print *, VolNew(thisP(ii)), VolOld(thisP(ii))
+            !         stop 358783
+            !     end if
+            ! end do              
+        end if
+
+        !% HACK -- need an equivalent of the ep_CC_Q_NOTsmall depth for JM
+        !% to make this work
+
+        ! !% for the JM elements
+        ! npack   => npack_elemP(thisColJM)
+        ! if (npack > 0) then
+        !     thisP => elemP(1:npack,thisColJM)
+        !     eCons(thisP) = eCons(thisP) + eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))
+        !     do ii=1,max_branch_per_node,2
+        !         eCons(thisP) = eCons(thisP)                                           &
+        !                      + dt * ( real(BranchExists(thisP),8) * fQ(fup(thisP+ii)) &
+        !                     - real(BranchExists(thisP),8) * fQ(fdn(thisP+ii+1)) )
+        !     end do
+        ! end if
+
+        !%------------------------------------------------------------------
+
+    end subroutine util_accumulate_volume_conservation
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_total_volume_conservation (volume_nonconservation)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes total volume non-conservation of all time-marching elements
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(inout) :: volume_nonconservation
+            integer, pointer       :: npack, thisP(:), thisCol
+            real(8), save          :: vstore[*]
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+        !%------------------------------------------------------------------
+    
+        !% for CC elements of any TM
+        vstore = zeroR
+        thisCol => col_elemP(ep_CC_ALLtm)
+        npack   => npack_elemP(thisCol)
+        if (npack > 0) then
+            thisP => elemP(1:npack,thisCol)
+            vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
+            do ii = 1,npack
+                if (abs(elemR(thisP(ii),er_VolumeConservation)) > 1.0) then
+                    print *, thisP(ii), elemR(thisP(ii),er_VolumeConservation)
+                end if
+            end do
+        end if
+       ! print *, 'in util total_volume conservation ',vstore, this_image()
+
+        !% HACK -- the JM elements aren't finished yet
+        ! !% for JM ETM elements
+        ! thisCol =>col_elemP(ep_JM_ETM) 
+        ! npack   => npack_elemP(thisCol)
+        ! if (npack > 0) then
+        !     thisP => elemP(1:npack,thisCol)
+        !     vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
+        ! end if
+
+        ! !% for JJ AC elements
+        ! thisCol =>col_elemP(ep_JM_AC) 
+        ! npack   => npack_elemP(thisCol)
+        ! if (npack > 0) then
+        !     thisP => elemP(1:npack,thisCol)
+        !     vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
+        ! end if
+
+        ! sync all
+        call co_sum(vstore, result_image=1)
+
+        volume_nonconservation = vstore
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine util_total_volume_conservation
+!%
 !%==========================================================================
 !% END OF MODULE
 !%==========================================================================

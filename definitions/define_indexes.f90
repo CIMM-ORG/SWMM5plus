@@ -376,7 +376,7 @@ module define_indexes
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
         enumerator :: er_ZbreadthMax                !% elevation at maximum breadth
         enumerator :: er_Zcrown                     !% inside crown elevation of closed conduit (static)
-        enumerator :: er_VolumeConservation         !% 
+        enumerator :: er_VolumeConservation         !% cumulative volume conservation
         enumerator :: er_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemR = er_lastplusone-1

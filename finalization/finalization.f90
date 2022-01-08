@@ -2,7 +2,9 @@ module finalization
 
     use define_settings, only: setting
     use define_globals
+    use define_indexes
     use interface
+    use utility
     use utility_datetime
     use utility_deallocate
     use utility_profiler
@@ -32,7 +34,7 @@ contains
             integer :: ii
             real(8) :: total_time,timemarch_time, hydraulics_time
             real(8) :: hydrology_time, loopoutput_time, initialization_time
-            real(8) :: lastoutput_time, shared_time
+            real(8) :: lastoutput_time, shared_time, volume_nonconservation
             logical :: isLastStep
             character(8) :: total_units, timemarch_units, hydraulics_units
             character(8) :: hydrology_units, loopoutput_units, initialization_units
@@ -45,6 +47,9 @@ contains
         !--------------------------------------------------------------------
         !% --- finalize the profiler and print times
         if (setting%Profile%useYN) call util_profiler_print_summary()
+
+        !% --- compute total volume non-conservation
+        call util_total_volume_conservation (volume_nonconservation)
 
         sync all
         if (this_image()==1) then
@@ -147,6 +152,8 @@ contains
             sync all
 
             if (this_image() == 1) then
+                write(*,*) ' '
+                write(*,"(A,e12.3)")' Total volume non-conservation (m^3)              = ',volume_nonconservation
                 write(*,*) ' '
                 write(*,"(A,i9)")  ' Number of serial writes to output files          = ',setting%Output%NumberOfWriteSteps
                 write(*,"(A,i9)")  ' Total number of time levels written              = ',setting%Output%NumberOfTimeLevelSaved

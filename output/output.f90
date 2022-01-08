@@ -454,6 +454,7 @@ contains
         if (setting%Output%DataOut%isTopWidthOut)       N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVelocityOut)       N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeOut)         N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumeConsOut)     N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isWaveSpeedOut)      N_OutTypeElem =  N_OutTypeElem + 1
 
         if (N_OutTypeElem == 0) then
@@ -575,6 +576,14 @@ contains
             ii = ii+1
             output_types_elemR(ii) = er_Volume
             output_typenames_elemR(ii) = 'Volume'
+            output_typeUnits_elemR(ii) = 'm^3'
+            output_typeProcessing_elemR(ii) = SumElements
+        end if
+        !% --- Cumulative volume conservation
+        if (setting%Output%DataOut%isVolumeConsOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_VolumeConservation
+            output_typenames_elemR(ii) = 'VolumeConservation'
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
         end if
@@ -821,7 +830,7 @@ contains
         !% --- increment the stored time level counter
         setting%Output%LastLevel              = setting%Output%LastLevel +1
         setting%Output%NumberOfTimeLevelSaved = setting%Output%NumberOfTimeLevelSaved +1
-        
+
         !% --- store the time for this data
         output_times(thisLevel) = setting%Time%Now
 
@@ -832,21 +841,22 @@ contains
         if (setting%Output%ElementsExist_byImage(this_image())) then
             !% --- get the pack size of output elements
             Npack => npack_elemP(ep_Output_Elements)
-            !% --- set of output elements
-            thisP => elemP(1:Npack,ep_Output_Elements)
-            !% --- set of output types
-            thisType => output_types_elemR(:)
-            !% --- vector store
-            elemOutR(1:Npack,:,thisLevel) = elemR(thisP,thisType)
-            !% --- correct head to report in same reference base as the *.inp file
-            if (setting%Solver%SubtractReferenceHead) then
-                if (setting%Output%ElemHeadIndex > 0) then
-                    elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
-                  = elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
-                  + setting%Solver%ReferenceHead
+            if (Npack > 0) then
+                !% --- set of output elements
+                thisP => elemP(1:Npack,ep_Output_Elements)
+                !% --- set of output types
+                thisType => output_types_elemR(:)
+                !% --- vector store
+                elemOutR(1:Npack,:,thisLevel) = elemR(thisP,thisType)
+                !% --- correct head to report in same reference base as the *.inp file
+                if (setting%Solver%SubtractReferenceHead) then
+                    if (setting%Output%ElemHeadIndex > 0) then
+                        elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
+                    = elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
+                    + setting%Solver%ReferenceHead
+                    end if
                 end if
             end if
-            !% no action
         end if
 
         !% null the storage  (array exists in all images)
@@ -856,31 +866,28 @@ contains
         if (setting%Output%FacesExist_byImage(this_image())) then
             !% --- get the pack size of faces
             Npack => npack_faceP(fp_Output_Faces)
-            !% --- set of output faces
-            thisP => faceP(1:Npack,fp_Output_Faces)
-            !% --- set of output types
-            thisType => output_types_faceR(:)
-            !% --- vector store
-            faceOutR(1:Npack,:,thisLevel) = faceR(thisP,thisType)
-            !% --- correct head to report in same reference base as the *.inp file
-            if (setting%Solver%SubtractReferenceHead) then
-                if (setting%Output%FaceUpHeadIndex > 0) then
-                    faceOutR(1:Npack,setting%Output%FaceUpHeadIndex,thisLevel)  &
-                  = faceOutR(1:Npack,setting%Output%FaceUpHeadIndex,thisLevel)  &
-                  + setting%Solver%ReferenceHead
-                end if
-                if (setting%Output%FaceDnHeadIndex > 0) then
-                    faceOutR(1:Npack,setting%Output%FaceDnHeadIndex,thisLevel)  &
-                  = faceOutR(1:Npack,setting%Output%FaceDnHeadIndex,thisLevel)  &
-                  + setting%Solver%ReferenceHead
+            if (Npack > 0) then
+                !% --- set of output faces
+                thisP => faceP(1:Npack,fp_Output_Faces)
+                !% --- set of output types
+                thisType => output_types_faceR(:)
+                !% --- vector store
+                faceOutR(1:Npack,:,thisLevel) = faceR(thisP,thisType)
+                !% --- correct head to report in same reference base as the *.inp file
+                if (setting%Solver%SubtractReferenceHead) then
+                    if (setting%Output%FaceUpHeadIndex > 0) then
+                        faceOutR(1:Npack,setting%Output%FaceUpHeadIndex,thisLevel)       &
+                            = faceOutR(1:Npack,setting%Output%FaceUpHeadIndex,thisLevel)  &
+                            + setting%Solver%ReferenceHead
+                    end if
+                    if (setting%Output%FaceDnHeadIndex > 0) then
+                        faceOutR(1:Npack,setting%Output%FaceDnHeadIndex,thisLevel)        &
+                            = faceOutR(1:Npack,setting%Output%FaceDnHeadIndex,thisLevel)  &
+                            + setting%Solver%ReferenceHead
+                    end if
                 end if
             end if
-        else
-            !% no action
         end if
-
-        !if (setting%Output%Verbose) write(*,"(A,i5)") &
-        !    '**************************************************** Storing Time Level #',thisLevel
 
         !% --- if storage limit is reached, combine the output, write to file,
         !% --- and reset the storage time level

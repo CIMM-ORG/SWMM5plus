@@ -43,7 +43,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 100
         },
         "DataOut" :{
             "isAreaOut"         : false,
@@ -59,6 +59,7 @@
             "isTopWidthOut"     : false,
             "isVelocityOut"     : false,
             "isVolumeOut"       : false,
+            "isVolumeConsOut"   : true,
             "isWaveSpeedOut"    : false
         },
         "Report" : {

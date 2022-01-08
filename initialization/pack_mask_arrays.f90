@@ -2008,8 +2008,8 @@ contains
          
         !print *, 'CC_Q_NOTsmalldepth'
     !% ep_CC_Q_NOTsmalldepth
-        !% Flow solution that are NOT small volume
-        !% -- needed to limit where CFL is computed
+        !% Flow solution that are NOT small volume or zero depth
+        !% -- needed to limit where CFL is computed and volume conservation
         ptype => col_elemP(ep_CC_Q_NOTsmalldepth)
         npack => npack_elemP(ptype)
         npack = count( &
@@ -2017,14 +2017,18 @@ contains
                 .and. &
                 (elemI(:,ei_QeqType) == time_march) &
                 .and. &
-                (.not. elemYN(:,eYN_isSmallDepth))     )
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
                 (elemI(:,ei_QeqType) == time_march) &
                 .and. &
-                (.not. elemYN(:,eYN_isSmallDepth))     )
+                (.not. elemYN(:,eYN_isSmallDepth))   &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
         end if
 
 

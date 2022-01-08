@@ -26,30 +26,25 @@ module update
 !%==========================================================================
     !%
     subroutine update_auxiliary_variables (whichTM)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
+        !% Updates the variables dependent on the TM solution of volume
+        !% and velocity
+        !%------------------------------------------------------------------
+        !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching method
             integer, pointer :: thisCol_all, thisCol_JM
             character(64) :: subroutine_name = 'update_auxiliary_variables'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Preliminaries:
             if (icrash) return
             if (setting%Debug%File%update) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !%
         !% update the head (non-surcharged) and geometry
-
-        !print *, '---- in ',subroutine_name,  elemR(ietmp(2),er_InterpWeight_uQ)
-    
         call geometry_toplevel (whichTM)
-
-
-       
-        !print *, '...aaa ',elemR(ietmp(2),er_InterpWeight_uQ)
 
         !% Store the head as the average head
         !% note the average head is only needed if solver uses 
@@ -61,11 +56,6 @@ module update
 
         !% adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
-
-        !print *, '...bbb ', elemR(ietmp(2),er_InterpWeight_uQ)
-
-        !print *, '---- in ',subroutine_name,'   y03'
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
 
         !% set packed column for updated elements
         select case (whichTM)
@@ -88,39 +78,20 @@ module update
         !% The JB flowrate is not updated until after face interpolation
         call update_CC_element_flowrate (thisCol_all)
 
-        !print *, '...ccc ', elemR(ietmp(2),er_InterpWeight_uQ)
-       
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
-
         !% compute element Froude numbers for CC, JM
         call update_Froude_number_element (thisCol_all)
-
-        !print *, '...ddd ', elemR(ietmp(2),er_InterpWeight_uQ)
-
-        !print *, '---- in ',subroutine_name,'   y05'
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
-
-        !print *, '---- in ',subroutine_name,'   y07'
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
 
         !% compute element face interpolation weights on CC, JM
         call update_CCtm_interpweights(thisCol_all, whichTM)
 
-        !print *, '...ddd2', elemR(ietmp(2),er_InterpWeight_uQ)
-
         call update_JB_interpweights (thisCol_JM)
 
-        !print *, '...eee ', elemR(ietmp(2),er_InterpWeight_uQ)
+        !%------------------------------------------------------------------
+        !% Closing:
+            if (setting%Profile%useYN) call util_profiler_stop (pfc_update_auxiliary_variables)
 
-        !print *, '---- in ',subroutine_name,'   y06'
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
-
-        if (setting%Profile%useYN) call util_profiler_stop (pfc_update_auxiliary_variables)
-
-        !print *, '...fff ', elemR(ietmp(2),er_InterpWeight_uQ)
-
-        if (setting%Debug%File%update)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
+             if (setting%Debug%File%update)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine update_auxiliary_variables
     !%
 !%==========================================================================

@@ -145,6 +145,7 @@ module define_settings
         logical :: isTopWidthOut     = .false.
         logical :: isVelocityOut     = .true.
         logical :: isVolumeOut       = .true.
+        logical :: isVolumeConsOut   = .true.
         logical :: isWaveSpeedOut    = .false.
     end type DataOutType
 
@@ -506,7 +507,7 @@ module define_settings
         ! Dont using small volumes for weir case.
         ! Needed to be changed later SmallVolumeType
         !logical :: UseSmallVolumesYN = .true.
-        real(8) :: DepthCutoff = 0.01 ! m
+        real(8) :: DepthCutoff = 0.02 ! m
         real(8) :: ManningsN = 0.1
     end type SmallDepthType
 

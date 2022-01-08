@@ -225,7 +225,7 @@ contains
                 !print *, "begin initial conditions"
                 if (this_image() == 1) then
                     if ((N_link > 5000) .or. (N_node > 5000)) then
-                        write(*,"(A)") "... setting initial conditions -- may take several minutes for big systems ..."
+                        write(*,"(A)") " ... setting initial conditions -- may take several minutes for big systems ..."
                         write(*,"(A,i8,A,i8,A)") "      SWMM system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
                         write(*,"(A,i8,A)")      "      FV system has   ", sum(N_elem(:)), " elements"
                     else 
@@ -1050,7 +1050,7 @@ contains
             setting%Output%Report%TimeInterval = setting%SWMMinput%ReportTimeInterval
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
                 write(*,*) ' '
-                write(*,"(A)") '... using report start time and time interval from SWMM input file (*.inp)'
+                write(*,"(A)") ' ... using report start time and time interval from SWMM input file (*.inp)'
                 write(*,*) ' '
             end if
         else 

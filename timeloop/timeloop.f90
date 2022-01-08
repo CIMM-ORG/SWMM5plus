@@ -8,6 +8,7 @@ module timeloop
     use pack_mask_arrays
     use runge_kutta2
     use hydrology
+    use utility
     use utility_output
     use boundary_conditions
     use utility_profiler
@@ -43,7 +44,6 @@ contains
         !%     Loops over all the major time-stepping routines
         !%-------------------------------------------------------------------
         !% Declarations
-
             integer          :: ii, additional_rows, iblank
             logical          :: isTLfinished
             logical          :: doHydraulics, doHydrology
@@ -105,8 +105,6 @@ contains
         !% get the initial dt and the next hydraulics time
         if (useHydraulics) then
             call tl_update_hydraulics_timestep()
-            !print *, dtHydraulics
-            !stop 398705
         else
             !% NOTE -- WORKING WITHOUT SWMM5+ HYDRAULICS IS NOT SUPPORTED 
             !% the following is stub routines.
@@ -136,12 +134,7 @@ contains
         !% The loop starts at t = setting%Time%Start
         !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
         do while (setting%Time%Now <= (setting%Time%End - dtTol))
-
-            !print *, 'at top of loop ', setting%Time%Now 
-            
-            !print *, elemYN(ietmp,eYN_isZeroDepth)
-            !print *, 'small vol ', setting%ZeroValue%Volume
-            !print *, elemR(ietmp,er_Volume)
+            !write(*,"(A)") ' ... beginning time loop'
 
             !% --- push the old values down the stack 
             call tl_save_previous_values()
@@ -151,8 +144,6 @@ contains
 
             !% --- main hydraulics time steop
             if (doHydraulics) then       
-                
-                !print *, '===========================================', timeNow
 
                 !% --- set a clock tick for hydraulic loop evaluation
                 if (this_image()==1) then
@@ -179,8 +170,6 @@ contains
                 thisBC  => BC%P%BClat
                 Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
 
-                !write(*,"('Q lateral ',4f10.5)") Qlateral(ietmp)
-
                 !% --- add subcatchment inflows
                 if (useHydrology) then 
                     sImage => subcatchI(:,si_runoff_P_image)
@@ -200,96 +189,6 @@ contains
 
                 !% --- perform hydraulic routing
                 call tl_hydraulics()
-
-
-                ! print *, ' '
-                ! print *, ' ------------------'
-                ! print *, 'at end of hydraulics '
-                ! do ii=1,size(elemI,1)
-                !     print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_SWMM), elemI(ii,ei_node_Gidx_SWMM)
-                ! end do
-
-                ! print *, 1, elemR(1,er_Head), elemR(1,er_Zbottom)
-                ! print *, 2, elemR(2,er_Head), elemR(2,er_Zbottom)
-                ! print *, 3, elemR(3,er_Head), elemR(3,er_Zbottom)
-                ! print *, 4, elemR(4,er_Head), elemR(4,er_Zbottom)
-                ! print *, 5, elemR(5,er_Head), elemR(5,er_Zbottom)
-                ! print *, 6, elemR(6,er_Head), elemR(6,er_Zbottom)
-                ! print *, 7, elemR(7,er_Head), elemR(7,er_Zbottom)
-                ! print *, 8, elemR(8,er_Head), elemR(8,er_Zbottom)
-                ! print *, 9, elemR(9,er_Head), elemR(9,er_Zbottom)
-                ! print *, 10, elemR(10,er_Head), elemR(10,er_Zbottom)
-                ! print *, 11, elemR(11,er_Head), elemR(11,er_Zbottom)
-                ! print *, 12, elemR(12,er_Head), elemR(12,er_Zbottom)
-                ! print *, 13, elemR(13,er_Head), elemR(13,er_Zbottom)
-                ! print *, 15, elemR(15,er_Head), elemR(15,er_Zbottom)
-                ! print *, 14, elemR(14,er_Head), elemR(14,er_Zbottom)
-                ! print *, 16, elemR(16,er_Head), elemR(16,er_Zbottom)
-                ! print *, 38, elemR(38,er_Head), elemR(38,er_Zbottom)
-                ! print *, 39, elemR(39,er_Head), elemR(39,er_Zbottom)
-                ! print *, 40, elemR(40,er_Head), elemR(40,er_Zbottom)
-                ! print *, 41, elemR(41,er_Head), elemR(41,er_Zbottom)
-                ! print *, 42, elemR(42,er_Head), elemR(42,er_Zbottom)
-                ! print *, 43, elemR(43,er_Head), elemR(43,er_Zbottom)
-                ! print *, 44, elemR(44,er_Head), elemR(44,er_Zbottom)
-                ! print *, 45, elemR(45,er_Head), elemR(45,er_Zbottom)
-                ! print *, 46, elemR(46,er_Head), elemR(46,er_Zbottom)
-                ! print *, 47, elemR(47,er_Head), elemR(47,er_Zbottom)
-                ! print *, 48, elemR(48,er_Head), elemR(48,er_Zbottom)
-                ! print *, 49, elemR(49,er_Head), elemR(49,er_Zbottom)
-                ! print *, 50, elemR(50,er_Head), elemR(50,er_Zbottom)
-                ! print *, 51, elemR(51,er_Head), elemR(51,er_Zbottom)
-                ! print *, 52, elemR(52,er_Head), elemR(52,er_Zbottom)
-                
-                ! ii = 15
-                ! ii = elemI(ii,ei_Mface_uL)
-                ! print *, ii, ' face_up'
-                ! ii = 15
-                ! print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_SWMM), elemI(ii,ei_node_Gidx_SWMM)
-                ! ii=14 
-                ! print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_SWMM), elemI(ii,ei_node_Gidx_SWMM)
-                ! ii=16
-                ! print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_SWMM), elemI(ii,ei_node_Gidx_SWMM)
-                ! ii = elemI(ii,ei_Mface_dL)
-                ! print *, ii, ' face down'
-
-                ! stop 38795
-                ! print *, link%Names(11)%str  !% this is element 52?
-                ! ii = 11
-
-                ! print *, 'elem  i-1   :  ',faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
-
-                ! print *, 'face  i-1/2 :  ',elemI(ii,ei_Mface_uL)
-
-                ! print *, 'elem  i= 11  :  ',elemI(ii,ei_Lidx)
-
-                ! print *, 'face  i+1/2 :  ',elemI(ii,ei_Mface_dL)
-
-                ! print *, 'elem  i+1   :  ',faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
-            
-                ! ii = 12
-                ! print *, 'face  i+3/2 :  ',elemI(ii,ei_Mface_dL)
-                
-                ! ii= 13
-                ! print *, 'elem, i+2   :  ',faceI(ii,fi_Melem_dL)
-
-                ! ii = 13
-                ! print *, 'face  i+5/2 :  ',elemI(ii,ei_Mface_dL)
-
-                ! ii=15
-                ! print *, elemI(ii,ei_Mface_uL)
-                ! stop 397805
-
-                ! print *, ' '
-                ! print *,' ======================================================================='
-                ! ii=51
-                ! write(*,"(A,6f12.5)") 'flow ', faceR(elemI(ii,ei_Mface_uL),fr_Flowrate),&
-                !                                elemR(ii,er_Flowrate), &
-                !                                faceR(elemI(ii,ei_Mface_dL),fr_Flowrate)
-                ! print *,' ======================================================================='
-                ! print *, ' '
-        
-        
 
                 !% --- close the clock tick for hydraulic loop evaluation
                 sync all
@@ -323,7 +222,6 @@ contains
                     (.not. setting%Output%Report%suppress_MultiLevel_Output) ) then
                     call outputML_store_data (.false.)
                 end if
-
                 sync all
 
                 !% close the time tick for output timing
@@ -363,10 +261,9 @@ contains
                     = setting%Time%WallClock%HydraulicsCumulative &
                     + setting%Time%WallClock%HydraulicsStop &
                     - setting%Time%WallClock%HydraulicsStart
-            end if 
-            
-            !stop 987325
+            end if
 
+            !print *, 'end of time loop'
         end do  !% end of time loop
 
         sync all
@@ -460,126 +357,11 @@ contains
         !% --- repack all the dynamic arrays
         call pack_dynamic_arrays()
 
-        !% moved above hydrology 20211229
-        !% --- push the old values down the stack for AC solver
-        !call tl_save_previous_values()
-
-
-
-        ! print *, ' '
-        ! print *, ' ------------------'
-        ! print *, 'in hydraulics '
-        ! do ii=1,size(elemI,1)
-        !     print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_SWMM), elemI(ii,ei_node_Gidx_SWMM)
-        ! end do
-        ! !print *, link%Names(27)%str  !% this is element 38
-        ! ii = 13
-
-        ! kk = faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
-        ! print *, 'elem  i-1   :  ',kk , reverseKey(elemI(kk,ei_elementType))
-
-        ! print *, 'face  i-1/2 :  ',elemI(ii,ei_Mface_uL)
-
-        ! kk = elemI(ii,ei_Lidx)
-        ! print *, 'elem  i= 13  :  ',kk , reverseKey(elemI(kk,ei_elementType))
-
-        ! print *, 'face  i+1/2 :  ',elemI(ii,ei_Mface_dL)
-
-        ! kk = faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
-        ! print *, 'elem  i+1   :  ',kk , reverseKey(elemI(kk,ei_elementType))
-       
-        ! ii = 15
-        ! print *, 'face  i+3/2 :  ',elemI(ii,ei_Mface_dL)
-        
-        ! ii= 7
-        ! print *, 'elem, i+2   :  ',faceI(ii,fi_Melem_dL)
-
-        ! ii = 8
-        ! print *, 'face  i+5/2 :  ',elemI(ii,ei_Mface_dL)
-        
-        ! stop 54554
-        
-        
-        ! print *, ' depth cutoff ',setting%SmallDepth%DepthCutoff
-        ! write(*, "('          ', 4(L3,'                                 '))")  &
-        !                     elemYN(ietmp(1),eYN_isZeroDepth), &
-        !                     elemYN(ietmp(2),eYN_isZeroDepth), &
-        !                     elemYN(ietmp(3),eYN_isZeroDepth), &
-        !                     elemYN(ietmp(4),eYN_isZeroDepth)
-        ! write(*, "('          ', 4(L3,'                                 '))")  &
-        !                     elemYN(ietmp(1),eYN_isSmallDepth), &
-        !                     elemYN(ietmp(2),eYN_isSmallDepth), &
-        !                     elemYN(ietmp(3),eYN_isSmallDepth), &
-        !                     elemYN(ietmp(4),eYN_isSmallDepth)
-
-        ! !write(*,"(f10.6)") faceR(elemI(ietmp(1),ei_Mface_uL),fr_Head_d)                    
-        ! write(*,"(i5,f10.5, '  |' ,2f10.5, '  |', f10.5, '  |', 2f10.5,'  |',f10.5 ,'  |',2f10.5,'  |',f10.5 )") &
-        !                     setting%Time%Step, &
-        !                     elemR(ietmp(1)  ,er_Head), &
-        !                     faceR(iftmp(1)  ,fr_Head_u), &
-        !                     faceR(iftmp(1)  ,fr_Head_d), &
-        !                     elemR(ietmp(2)  ,er_Head), &
-        !                     faceR(iftmp(2)  ,fr_Head_u), &
-        !                     faceR(iftmp(2)  ,fr_Head_d), &
-        !                     elemR(ietmp(3)  ,er_Head), &
-        !                     faceR(iftmp(3)  ,fr_Head_u), &
-        !                     faceR(iftmp(3)  ,fr_Head_d), &
-        !                     elemR(ietmp(4)  ,er_Head)
-
-        ! write(*,"('   Q ',f10.5, '  |' ,2f10.5, '  |', f10.5, '  |', 2f10.5,'  |',f10.5 ,'  |',2f10.5,'  |',f10.5 )") &
-        !                      elemR(ietmp(1)  ,er_Flowrate), &
-        !                      faceR(iftmp(1)  ,fr_Flowrate), &
-        !                      faceR(iftmp(1)  ,fr_Flowrate), &
-        !                      elemR(ietmp(2)  ,er_Flowrate), &
-        !                      faceR(iftmp(2)  ,fr_Flowrate), &
-        !                      faceR(iftmp(2)  ,fr_Flowrate), &
-        !                      elemR(ietmp(3)  ,er_Flowrate), &
-        !                      faceR(iftmp(3)  ,fr_Flowrate), &
-        !                      faceR(iftmp(3)  ,fr_Flowrate), &
-        !                      elemR(ietmp(4)  ,er_Flowrate)
-        ! write(*,"('Qcons',f10.5, '  |' ,2f10.5, '  |', f10.5, '  |', 2f10.5,'  |',f10.5 ,'  |',2f10.5,'  |',f10.5 )") &
-        !                      elemR(ietmp(1)  ,er_FlowrateLateral), &
-        !                      faceR(iftmp(1)  ,fr_Flowrate_Conservative), &
-        !                      faceR(iftmp(1)  ,fr_Flowrate_Conservative), &
-        !                      elemR(ietmp(2)  ,er_FlowrateLateral), &
-        !                      faceR(iftmp(2)  ,fr_Flowrate_Conservative), &
-        !                      faceR(iftmp(2)  ,fr_Flowrate_Conservative), &
-        !                      elemR(ietmp(3)  ,er_FlowrateLateral), &
-        !                      faceR(iftmp(3)  ,fr_Flowrate_Conservative), &
-        !                      faceR(iftmp(3)  ,fr_Flowrate_Conservative), &
-        !                      elemR(ietmp(4)  ,er_FlowrateLateral)                      
-
-        ! write(*,"('   D ',f10.5, '  |' ,2f10.5, '  |', f10.5, '  |', 2f10.5,'  |',f10.5 ,'  |',2f10.5,'  |',f10.5 )") &
-        !                      elemR(ietmp(1)  ,er_Depth), &
-        !                      faceR(iftmp(1)  ,fr_Head_u) - faceR(iftmp(1),fr_Zbottom), &
-        !                      faceR(iftmp(1)  ,fr_Head_d) - faceR(iftmp(1),fr_Zbottom), &
-        !                      elemR(ietmp(2)  ,er_Depth), &
-        !                      faceR(iftmp(2)  ,fr_Head_u) - faceR(iftmp(2),fr_Zbottom), &
-        !                      faceR(iftmp(2)  ,fr_Head_d) - faceR(iftmp(2),fr_Zbottom), &
-        !                      elemR(ietmp(3)  ,er_Depth), &
-        !                      faceR(iftmp(3)  ,fr_Head_u) - faceR(iftmp(3),fr_Zbottom), &
-        !                      faceR(iftmp(3)  ,fr_Head_d) - faceR(iftmp(3),fr_Zbottom), &
-        !                      elemR(ietmp(4)  ,er_Depth)    
-
-        ! write(*,"(' Vol ',f10.5, '  |' ,2f10.5, '  |', f10.5, '  |', 2f10.5,'  |',f10.5 ,'  |',2f10.5,'  |',f10.5 )") &
-        !                      elemR(ietmp(1)  ,er_Volume), &
-        !                      0.0, &
-        !                      0.0, &
-        !                      elemR(ietmp(2)  ,er_Volume), &
-        !                      0.0, &
-        !                      0.0, &
-        !                      elemR(ietmp(3)  ,er_Volume), &
-        !                      0.0, &
-        !                      0.0, &
-        !                      elemR(ietmp(4)  ,er_Volume)   
-
-        
-
         !% call the RK2 time-march, depending on the type of solver
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
                 !% dual-method, ETM for open channel, AC for surcharge
-                call rk2_toplevel_ETMAC()
+                call rk2_toplevel_ETMAC() 
             case (ETM)
                 !% ETM with Preissmann slot for surcharge
                 call rk2_toplevel_ETM()
@@ -589,18 +371,9 @@ contains
             case DEFAULT
                 print *, 'error, code should not be reached.'
                 stop 1001 !% need error statement
-        end select
+        end select    
 
-        ! print *, 'end  hydraulics '!  ,faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
-        ! print *, 'is small ',elemYN(1:3,eYN_isZeroDepth)
-        ! print *, 'depth ', elemR(1:3,er_Depth)
-        ! print *, 'Q     ', elemR(1:3,er_Flowrate)
-
-        !print *, 'in hydraulics ',faceR(1,fr_Flowrate), faceR(23,fr_Flowrate)
-
-        ! write(*,"(10f11.5)") elemR(ietmp(1:2),er_Depth), &
-        !     elemR(ietmp(3)  ,er_Depth), &
-        !     elemR(ietmp(3)  ,er_Depth)  
+        call util_accumulate_volume_conservation () 
 
         !%-------------------------------------------------------------------
         !% closing

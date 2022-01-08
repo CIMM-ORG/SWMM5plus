@@ -74,36 +74,45 @@ module lowlevel_rk2
 !%==========================================================================
 !%
     subroutine ll_continuity_netflowrate_JM (outCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% compute net flowrates for junction mains
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations:
             integer, intent(in) :: outCol, thisCol, Npack
-            real(8), pointer :: branchQ(:), eQlat(:)
-            integer, pointer :: thisP(:), isbranch(:)
-            integer :: ii
-        !%-----------------------------------------------------------------------------
-            thisP   => elemP(1:Npack,thisCol)
-            branchQ => elemR(:,er_Flowrate)
-            eQlat   => elemR(:,er_FlowrateLateral)
+            real(8), pointer :: branchQ(:), eQlat(:), fQ(:)
+            integer, pointer :: thisP(:), isbranch(:), fup(:), fdn(:)
+            integer :: ii, jj
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            branchQ  => elemR(:,er_Flowrate)
+            eQlat    => elemR(:,er_FlowrateLateral)
             isbranch => elemSI(:,esi_JunctionBranch_Exists)
-        !%-----------------------------------------------------------------------------
+            fQ       => faceR(:,fr_Flowrate)
+            fup      => elemI(:,ei_Mface_uL)
+            fdn      => elemI(:,ei_Mface_dL)
+        !%------------------------------------------------------------------
         !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
         !% downstream branches
         elemR(thisP,outCol) = eQlat(thisP)
+
+        ! !% approach using branch Q
+        ! do ii = 1,max_branch_per_node,2
+        !     elemR(thisP,outCol) = elemR(thisP,outCol)                 &
+        !         + real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii  )  &
+        !         - real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
+        ! end do
+
+        !% approach using face Q up/dn of branch (mass conservative)
         do ii = 1,max_branch_per_node,2
             elemR(thisP,outCol) = elemR(thisP,outCol) &
-                + real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii  ) &
-                - real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
-            !print *, ii, real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii), real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
+                + real(isbranch(thisP+ii  ),8) * fQ(fup(thisP+ii)) &
+                - real(isbranch(thisP+ii+1),8) * fQ(fdn(thisP+ii+1))
         end do
-    
-        ! print *, 'in ll_continuity_netflowrate_JM'
-        ! print *, elemR(thisP,outCol)
-        ! print *, thisP
-        ! print *, branchQ(thisP+1), branchQ(thisP+2), branchQ(thisP+3)
-        ! print *, branchQ(thisP+4), branchQ(thisP+5), branchQ(thisP+6)
-        ! print *, eQlat(thisP)
+
+
+        !%-----------------------------------------------------------------
     end subroutine ll_continuity_netflowrate_JM
 !%
 !%==========================================================================
@@ -1131,13 +1140,20 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
+        !%------------------------------------------------------------------
+        !% Declarations:
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+        !%------------------------------------------------------------------
+    
+    
+        !%------------------------------------------------------------------
+        !% Closing:
 
 !%==========================================================================
 !% END OF MODULE

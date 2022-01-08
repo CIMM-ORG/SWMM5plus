@@ -93,52 +93,26 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
-        !print *, '--------01', elemR(1,er_Depth), elemR(1,er_Volume)
         !% assign all geometry for surcharged elements CC, JM (and JB?)
         call geo_surcharged (thisColP_surcharged)
-
-        !print *, '......aaa ', elemR(1,er_Depth), elemR(1,er_Volume)
-        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
 
         !% reset all zero or near-zero volumes in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged)
 
-        !print *, '......bbb ', elemR(1,er_Depth), elemR(1,er_Volume)
-        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
-
         !% compute the depth on all non-surcharged elements of CC and JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
-
-        
-
-        !print *, '......ccc ', elemR(1,er_Depth), elemR(1,er_Volume)
-        !print *, '           ',elemR(ietmp,er_Depth)
-        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
-        !write(*,"(A,5e12.5)") 'depth ',elemR(ietmp,er_Depth)
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged)
 
-      
-
-        !print *, '......ddd ', elemR(1,er_Depth), elemR(1,er_Volume)
-        !print *, '           ',elemR(ietmp,er_Depth)
-        !write(*,"(5e12.5)") elemR(ietmp,er_Volume), setting%ZeroValue%Volume
-
         !% compute the head on all non-surcharged elements of CC and JM
         call geo_head_from_depth (thisColP_NonSurcharged)
-
-        
-        !print *, '......eee ', elemR(1,er_Depth)
 
         !% limit volume for incipient surcharge. This is done after depth is computed
         !% so that the "depth" algorithm can include depths greater than fulldepth
         !% as a way to handle head for incipient surcharge.
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
 
-       
-
-        !print *, '......fff ', elemR(1,er_Depth)
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
@@ -147,64 +121,50 @@ module geometry
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
            
-        !print *, '......ggg ', elemR(1,er_Depth)
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
 
-        !print *, '......hhh ', elemR(1,er_Depth)
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
-        !print *, '......iii ', elemR(1,er_Depth)
         !% reset all zero or near-zero areas in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged)
 
-        !print *, '......jjj ', elemR(1,er_Depth)
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        !print *, '......kkk ', elemR(1,er_Depth)
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
         call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged)
 
-        !print *, '......lll ', elemR(1,er_Depth)
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        !print *, '......mmm ', elemR(1,er_Depth)
         !% compute hyddepth
         call geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        !print *, '......nnn ', elemR(1,er_Depth)
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
-        !print *, '......ooo ', elemR(1,er_Depth)
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
 
-        !print *, '......ppp ', elemR(1,er_Depth)
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell (thisColP_all)
 
-        !print *, '......qqq ', elemR(1,er_Depth)
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
 
-        !print *, '......rrr ', elemR(1,er_Depth)
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
-
-        !print *, '......zzz ', elemR(1,er_Depth)
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -459,19 +419,21 @@ module geometry
 !%==========================================================================
 !%
     subroutine geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% This solves nonsurcharged CCJM elements because of PGx arrays
         !% The elemPGx determines whether this is ALLtm, ETM or AC elements
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-        integer, pointer :: Npack, thisCol
-
-        character(64) :: subroutine_name = 'geo_depth_from_volume'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return
-        if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer :: Npack, thisCol
+            character(64) :: subroutine_name = 'geo_depth_from_volume'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------    
         !% cycle through different geometries
         !% RECTANGULAR
         thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -517,9 +479,10 @@ module geometry
             call storage_artificial_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-  
-        if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_depth_from_volume
 !%
 !%==========================================================================
