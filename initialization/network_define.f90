@@ -1924,9 +1924,10 @@ contains
             do ii = 1,N_elem(this_image())
                 if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
                     if (setting%Output%Verbose) then
-                        print*, 'In, ', subroutine_name
-                        print*, 'Small element detected at ElemIdx = ', elementIdx(ii), ' in image = ',this_image()
-                        print*, 'Element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
+                        !print*, 'In, ', subroutine_name
+                        print *, ' '
+                        write(*,"(A,i8,A,i5)") '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
+                        write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
                     end if
                     elementLength(ii) = MinElemLength
                 end if

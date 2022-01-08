@@ -1915,17 +1915,19 @@ contains
         end if
 
         if ((any(thisWarning)) .and. (this_image() == 1) ) then
-            write(*,*) ' '
-            write(*,'(A)') '*******************************************************************'
-            write(*,'(A)') '**                          WARNING'
-            write(*,'(A)') '** The following from the SWMM *.inp file values or code defaults  '
-            write(*,'(A)') '** are ignored or changed in SWMM5+ due to present code limitations.'
+            write(*,'(A)') ' '
+            write(*,'(A)') ' '
+            write(*,'(A)') ' *******************************************************************'
+            write(*,'(A)') ' **                          WARNING'
+            write(*,'(A)') ' ** The following from the SWMM *.inp file values or code defaults  '
+            write(*,'(A)') ' ** are ignored or changed in SWMM5+ due to present code limitations.'
             do ii=1,nset
                 if (thisWarning(ii)) then
-                    write(*,"(A,A,A,A)") '**    ',trim(thisVariable(ii)),'--',trim(thisProblem(ii))
+                    write(*,"(A,A,A,A)") ' **    ',trim(thisVariable(ii)),'--',trim(thisProblem(ii))
                 end if
             end do
             write(*,'(A)') '*******************************************************************'
+            write(*,*) ' '
         end if
 
         !%----------------------------------------------------------------------

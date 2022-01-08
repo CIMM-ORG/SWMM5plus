@@ -59,11 +59,11 @@ contains
             whichTM => setting%Solver%SolverSelect
         !%-------------------------------------------------------------------
         !% --- get data that can be extracted from links
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
         !% --- get data that can be extracted from nodes
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
         call init_IC_from_nodedata ()
 
         !% --- identify the small and zero depths (must be done before pack)
@@ -71,15 +71,15 @@ contains
         call adjust_zerodepth_identify_all ()
 
         !% ---zero out the lateral inflow column
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
         !% --- update time marching type
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
         call init_IC_solver_select (whichTM)
 
         !% --- set up all the static packs and masks
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
@@ -96,47 +96,48 @@ contains
         !% --- get the bottom slope
         call init_IC_bottom_slope ()
 
-        if (this_image() == 1) then
-            print *, 'zero value volume ',setting%ZeroValue%Volume
-            print *, 'zero value depth  ',setting%ZeroValue%Depth
-            print *, 'zero value area   ',setting%ZeroValue%Area
-        end if
+        ! if (this_image() == 1) then
+        !     print *, 'zero value volume ',setting%ZeroValue%Volume
+        !     print *, 'zero value depth  ',setting%ZeroValue%Depth
+        !     print *, 'zero value area   ',setting%ZeroValue%Area
+        ! end if
 
         !% --- set small volume values in elements
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
         !% --- initialize slots
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
         !% --- get the velocity and any other derived data
         !%     These are data needed before bc and aux variables are updated
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
         !% --- set the reference head (based on Zbottom values)
         !%     this must be called before bc_update() so that
         !%     the timeseries for head begins correctly
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
         call init_reference_head()
 
         !% --- remove the reference head values from arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
         call init_subtract_reference_head()
 
         !% --- initialize boundary conditions
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
 
         !% --- update the BC so that face interpolation works in update_aux...
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
 
         !% --- storing dummy values for branches that are invalid
         call init_IC_branch_dummy_values ()
     
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
+        !% --- set all the auxiliary (dependent) variables
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
 
         !% --- initialize old head 
@@ -154,19 +155,19 @@ contains
 
         !% --- set small values to diagnostic element interpolation sets
         !%     Needed so that junk values does not mess up the first interpolation
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
         !% --- update faces
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_all,ALLtm)
 
         !% --- update the initial condition in all diagnostic elements
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel ()
 
         !% ---populate er_ones columns with ones
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
         !% --- initialized the max face flowrate
@@ -175,12 +176,6 @@ contains
 
         !% Notes on initial conditions brh20211215
         !% dHdA is not initialized in channels except where timemarch is AC
-
-        ! print *, elemR(1:3,er_SmallVolume)
-        ! print *, elemR(1:3,er_Volume)
-        ! print *, setting%ZeroValue%Volume
-        ! print *, setting%ZeroValue%Depth * elemR(1,er_BreadthMax) * elemR(1,er_Length)
-        ! stop 38579
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -1846,12 +1841,12 @@ contains
         call co_max(setting%Solver%AverageZbottom)
 
         !% --- bug checking
-        if (this_image() == 1) then
-            write(*,*) 'reference head   ',setting%Solver%ReferenceHead
-            write(*,*) 'max z bottom     ',setting%Solver%MaxZbottom
-            write(*,*) 'average z bottom ',setting%Solver%AverageZbottom
-            write(*,*) 'min z bottom     ',setting%Solver%MinZbottom
-        end if
+        ! if (this_image() == 1) then
+        !     write(*,*) 'reference head   ',setting%Solver%ReferenceHead
+        !     write(*,*) 'max z bottom     ',setting%Solver%MaxZbottom
+        !     write(*,*) 'average z bottom ',setting%Solver%AverageZbottom
+        !     write(*,*) 'min z bottom     ',setting%Solver%MinZbottom
+        ! end if
   
         !%------------------------------------------------------------------    
         !% Closing 

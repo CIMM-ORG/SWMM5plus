@@ -835,7 +835,7 @@ contains
         !% --- check and adjust stored level output so as not to waste memory
         if ( setting%Output%StoredLevels > setting%Output%MaxExpectedLevels+ 2) then
             if (this_image() == 1) then
-                write (*,"(A,i5)") '... Changing output levels stored before writing; originally: ',setting%Output%StoredLevels 
+                write (*,"(A,i5)") '... changing output levels stored before writing; originally: ',setting%Output%StoredLevels 
                 write (*,"(A,i5)") '               Now using the max expected output time levels: ',setting%Output%MaxExpectedLevels
             end if
         end if

@@ -1159,7 +1159,7 @@ contains
         end if
 
         if (setting%Output%Verbose) write(*,"(A,i5)") &
-            '************************************************* finished writing file #', nWritten
+            '      finished writing file #', nWritten
 
         !% --- close the unformatted unit
         close(thisUnit)
@@ -1385,7 +1385,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"               
             !% --- HACK -- need to change this to an input variable if making this independent
             verbose = setting%Output%Verbose
-            if (verbose) write(*,*) '**** Beginning unformatted file conversion and multi-level output processing ****'
+            if (verbose) write(*,"(A)") '      beginning unformatted file conversion and multi-level output processing ...'
         !% -------------------------------------------------------------
         !% --- CONTROL FILE
         !% --- open and read the control file
@@ -1470,7 +1470,7 @@ contains
             !% -----------------------------------
                 thisFile = trim(output_binary_filenames_all(ii))
 
-                if (verbose) write(*,"(A)") 'reading file :',trim(thisFile)
+                if (verbose) write(*,"(A,A,A)") '      reading file: ',trim(thisFile),' ...'
 
                 open(newunit=thisUnit, file=thisFile, form='unformatted', &
                     action='read', iostat=ios)
@@ -2549,7 +2549,7 @@ contains
 
                 !print *, 'OOO '
         end do !% ii
-        if (verbose) write(*,*) '**** Finished writing output files ****'
+        if (verbose) write(*,"(A)") '      finished writing output files'
 
         !% ----------------------------
         !% --- DEALLOCATE LOCAL STORAGE

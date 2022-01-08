@@ -88,10 +88,8 @@ module face
 
         Npack => npack_facePS(faceCol)
         if (Npack > 0) then
-            sync all
             !% --- face reconstruction of all the shared faces
             call face_interpolation_shared (faceCol, Npack)
-            sync all
         end if
 
         call face_interpolate_bc (isBConly)
@@ -252,7 +250,16 @@ module face
             logical, pointer    :: isGhostUp, isGhostDn
             real(8), pointer    :: eQ(:), fQmax(:)
             integer             :: ii
+            integer(kind=8) :: crate, cmax, cval
         !%------------------------------------------------------------------
+        !% Preliminaries:
+            !% start the shared timer
+            sync all
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStart = cval
+            end if 
+        !%------------------------------------------------------------------    
         !% Aliases
         !% note that aliases cannot be used where coarrays are invoked
             npack       => npack_facePS(facePackCol)
@@ -287,6 +294,17 @@ module face
         end do
 
         !%------------------------------------------------------------------
+        !% Closing
+        sync all
+        if (this_image()==1) then
+            !% stop the shared timer
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop = cval
+            setting%Time%WallClock%SharedCumulative &
+                    = setting%Time%WallClock%SharedCumulative &
+                    + setting%Time%WallClock%SharedStop &
+                    - setting%Time%WallClock%SharedStart
+        end if 
     end subroutine face_flowrate_max_shared
 !%
 !%==========================================================================
@@ -751,12 +769,19 @@ module face
             integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
             integer :: fFlowSet(1), eFlowSet(1)
+            integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
         !% Preliminaries   
             if (icrash) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            !% start the shared timer    
+            sync all    
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStart = cval
+            end if
         !%-------------------------------------------------------------------
         !% Face values are needed for
         !% Area_u, Area_d, Head_u, Head_d, Flowrate,
@@ -806,8 +831,21 @@ module face
         !% HACK needs jump computation for across shared faces
         ! print *, "HACK missing hydraulic jump that occurs on shared faces 36987"
 
-        if (setting%Debug%File%face) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% closing   
+            !% stop the shared timer
+            sync all
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStop = cval
+                setting%Time%WallClock%SharedCumulative &
+                        = setting%Time%WallClock%SharedCumulative &
+                        + setting%Time%WallClock%SharedStop &
+                        - setting%Time%WallClock%SharedStart
+            end if 
+
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine face_interpolation_shared
 !%
 !%==========================================================================

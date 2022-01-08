@@ -123,20 +123,20 @@ contains
             !% continue without profiler    
         end if
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
         !% --- initialize the coarrays that depend on number of images
         !%     and not on number of links/nodes, elements or faces.
         call util_allocate_secondary_coarrays ()
 
         !% --- initialize the API with the SWMM-C code
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         !% --- initialize globals that are run-time dependent
         call init_globals()
 
@@ -149,11 +149,11 @@ contains
         end if
 
         !% --- store the SWMM-C curves in equivalent Fortran arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
 
         !% --- break the link-node system into partitions for multi-processor operation
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
 
         sync all 
@@ -167,7 +167,7 @@ contains
         
         !% --- translate the link-node system into a finite-volume network
         if (setting%Simulation%useHydraulics) then 
-            if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin network definition"
+            !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin network definition"
             call network_define_toplevel ()
         else 
             if (this_image() == 1) then
@@ -216,7 +216,7 @@ contains
         ! end if  
 
         !% --- initialize the output reports
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
         call init_report()
 
         !% --- set up initial conditions in the FV network
@@ -225,9 +225,9 @@ contains
                 !print *, "begin initial conditions"
                 if (this_image() == 1) then
                     if ((N_link > 5000) .or. (N_node > 5000)) then
-                        print *, "... setting IC can takes several minutes for big systems."
-                        print *, "... This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
-                        print *, "... The finite-volume system is ", sum(N_elem(:)), " elements"
+                        write(*,"(A)") "... setting initial conditions -- may take several minutes for big systems ..."
+                        write(*,"(A,i8,A,i8,A)") "      SWMM system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
+                        write(*,"(A,i8,A)")      "      FV system has   ", sum(N_elem(:)), " elements"
                     else 
                         !% no need to write for small systems
                     end if
@@ -292,7 +292,7 @@ contains
         !%        but that caused linking problems due to pack/mask calls
         if (setting%Output%Report%provideYN) then 
             if (setting%Simulation%useHydraulics) then !% 
-                if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin setup of output files"
+                !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin setup of output files"
                 !% --- Get the output element and face locations
                 !print *, 'starting outputML_selection'
                 call outputML_selection ()                
@@ -1048,9 +1048,17 @@ contains
         if (setting%Output%Report%useSWMMinpYN) then 
             setting%Output%Report%StartTime    = util_datetime_epoch_to_secs(setting%SWMMinput%ReportStartTimeEpoch)
             setting%Output%Report%TimeInterval = setting%SWMMinput%ReportTimeInterval
-            if ((setting%Output%Verbose) .and. (this_image() == 1)) write(*,*) '... Using SWMM input file (*.inp) report start time and time interval.'
+            if ((setting%Output%Verbose) .and. (this_image() == 1)) then
+                write(*,*) ' '
+                write(*,"(A)") '... using report start time and time interval from SWMM input file (*.inp)'
+                write(*,*) ' '
+            end if
         else 
-            if ((setting%Output%Verbose) .and. (this_image() == 1)) write(*,*) '... Using *.json file report start time and time interval.'
+            if ((setting%Output%Verbose) .and. (this_image() == 1)) then
+                write(*,*) ' '
+                write(*,"(A)") '... using  report start time and time interval from *.json file'
+                write(*,*) ' '
+            end if
         end if
 
         !% if selected report time is before the start time

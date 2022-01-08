@@ -71,7 +71,7 @@ contains
 
             !if (setting%Output%Verbose) &
             !    write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-            if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin timeloop'
+            !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin timeloop'
         !%--------------------------------------------------------------------
         !% Aliases
             useHydrology       => setting%Simulation%useHydrology
@@ -609,7 +609,6 @@ contains
     end subroutine tl_hydraulics
 !%
 !%==========================================================================
-
 !%==========================================================================
 !%
     subroutine tl_increment_counters(doHydraulics, doHydrology)
@@ -1062,7 +1061,7 @@ contains
                     !     timeunit = 'day'
                     !     time_to_completion = seconds_to_completion / seconds_per_day
                     ! endif
-                    write(*,"(A9,F6.2,A1,A3,A28)") 'estimate ',thistime,' ',timeunit,' clock time until completion'
+                    write(*,"(A9,F6.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
                     print *
                 endif
             endif

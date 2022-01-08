@@ -36,7 +36,7 @@ module utility
         write(*,*) " "
         write(*,*) "*********************************************************************"
         write(*,*) "*                            SWMM5+                                 *"
-        write(*,*) "*                   beta 0.1 release 2022-01-xx                     *"
+        write(*,*) "*                   beta 0.1 release 2022-01-10                     *"
         write(*,*) "*  A public-domain, finite-volume hydraulics engine for EPA SWMM.   *"
         write(*,*) "*                        developed by CIMM                          *"
         write(*,*) "*                                                                   *"
@@ -57,12 +57,13 @@ module utility
         write(*,*) "*********************************************************************"
         write(*,*)
         write(*,"(A,i5,A)") "Simulation starts with ",num_images()," processors"
-        write(*,"(A)") 'Using the following files:'
-        write(*,"(A)") 'SWMM Input file   : '//trim(setting%File%inp_file)
-        write(*,"(A)") 'SWMM Report file  : '//trim(setting%File%rpt_file)
-        write(*,"(A)") 'SWMM Output file  : '//trim(setting%File%out_file)
-        write(*,"(A)") 'Output folder     : '//trim(setting%File%output_timestamp_subfolder )
-        write(*,"(A)") 'Settings file     : '//trim(setting%File%setting_file)
+        write(*,*) ' '
+        write(*,"(A)") 'Using the following files and folders:'
+        write(*,"(A)") '  SWMM Input file   : '//trim(setting%File%inp_file)
+        write(*,"(A)") '  SWMM Report file  : '//trim(setting%File%rpt_file)
+        write(*,"(A)") '  SWMM Output file  : '//trim(setting%File%out_file)
+        write(*,"(A)") '  Output folder     : '//trim(setting%File%output_timestamp_subfolder )
+        write(*,"(A)") '  Settings file     : '//trim(setting%File%setting_file)
     end subroutine util_print_programheader  
 !%
 !%==========================================================================

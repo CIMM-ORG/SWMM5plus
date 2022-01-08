@@ -76,7 +76,8 @@ contains
 
         call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
-        if (this_image() == 1) print*, "... Partitioning: Number of root nodes (downstream BC)", N_nBCdn
+        if ((this_image() == 1) .and. (setting%Output%Verbose) ) &
+            write(*,"(A,i5,A)") "      number of root nodes (downstream BC)", N_nBCdn, ' ...'
 
         !% Initialize the temporary arrays needed for BIPquick
         !print *, 'calling bip_initialize_arrays'
@@ -158,8 +159,8 @@ contains
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
 
-            if (setting%Output%Verbose) write(*,"(A,i5,A)") "BIPquick Sweep", image
-            if (setting%Output%Verbose) write(*,*) 'Please be patient, this is slow for big systems with lots of processors...'
+            if (setting%Output%Verbose) write(*,"(A,i5,A)") "      BIPquick Sweep", image, '; please be patient...'
+            !if (setting%Output%Verbose) write(*,*) '... please be patient, this is slow for big systems with lots of processors...'
 
             !print *, totalweight, size(B_nodeR,DIM=2), 'this image ',this_image()
 
@@ -845,7 +846,7 @@ contains
                 !% Mark this link as being partitioned
                 partitioned_links(jj) = .true.
 
-                print*, "Spanning link is", spanning_link
+                write(*,"(A,i8,A)") "         spanning link is", spanning_link, ' ...'
 
                 !% Only need one spanning link - if found, exit
                 exit
@@ -907,7 +908,7 @@ contains
             if ( abs((weight_range(twoI) - partition_threshold)/partition_threshold) &
                 < precision_matching_tolerance ) then
                 ideal_junction = link%I(jj, li_Mnode_d)
-                print*, "Ideal junction is", ideal_junction, node%Names(ideal_junction)%str
+                write(*,"(A,i8,A,A)") "         ideal junction is", ideal_junction, ' ', trim(node%Names(ideal_junction)%str)
 
                 exit
             end if

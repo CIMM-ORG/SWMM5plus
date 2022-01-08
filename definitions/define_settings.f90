@@ -238,6 +238,9 @@ module define_settings
         integer (kind=8):: HydrologyStart = 0
         integer (kind=8):: HydrologyStop  = 0
         integer (kind=8):: HydrologyCumulative = 0
+        integer (kind=8):: SharedStart = 0
+        integer (kind=8):: SharedStop = 0
+        integer (kind=8):: SharedCumulative = 0
         integer (kind=8):: TimeMarchStart = 0
         integer (kind=8):: TimeMarchEnd = 0
         integer (kind=8):: InitializationEnd = 0
