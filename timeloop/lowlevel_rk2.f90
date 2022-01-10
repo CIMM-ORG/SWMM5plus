@@ -97,7 +97,7 @@ module lowlevel_rk2
         !% downstream branches
         elemR(thisP,outCol) = eQlat(thisP)
 
-        ! !% approach using branch Q
+        !% approach using branch Q
         ! do ii = 1,max_branch_per_node,2
         !     elemR(thisP,outCol) = elemR(thisP,outCol)                 &
         !         + real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii  )  &

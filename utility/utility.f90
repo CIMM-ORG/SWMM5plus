@@ -23,9 +23,14 @@ module utility
     public :: util_sign_with_ones_or_zero
     public :: util_print_warning
     public :: util_linspace
-    public :: util_find_elements_in_link
+    
     public :: util_accumulate_volume_conservation
     public :: util_total_volume_conservation
+
+    public :: util_find_elements_in_link
+    public :: util_find_elements_in_junction_node
+    public :: util_find_neighbors_of_CC_element
+    public :: util_find_neighbors_of_JM_element
 
     contains
 !%
@@ -184,58 +189,6 @@ module utility
 !%
 !%==========================================================================
 !%==========================================================================
-!%
-    subroutine util_find_elements_in_link (thislinkname, thislink_idx, thislink_image, elemInLink)
-        !%-------------------------------------------------------------------
-        !% Description: 
-        !% Finds the element indexes for the SWMM link with the name "thislinkname"
-        !% stores the element indexes in the array elemInLink and
-        !% returns the link index in link%I(:) and the image that host the link.
-        !% Not efficiently written, but only purpose is for use in debugging.
-        !%-------------------------------------------------------------------
-            character(*), intent(in)   :: thislinkname
-            integer, intent(inout)     :: elemInLink(:)
-            integer, intent(inout)     :: thislink_idx, thislink_image
-            integer ::  ii, jj, ecount
-        !%-------------------------------------------------------------------
-        elemInLink = 0
-        thislink_idx = 0
-        thislink_image = 0
-
-        !% find the link idx and image for the input "thislinkname"
-        if (this_image() == 1) then
-            do ii = 1,size(link%I,dim=1)
-                if (link%Names(ii)%str == thislinkname) then
-                    print *, ii, trim(link%Names(ii)%str), ' ' ,trim(thislinkname), ' ',link%I(ii,li_P_image)
-                    thislink_idx = ii
-                    thislink_image = link%I(ii,li_P_image)
-                end if
-            end do
-        end if
-        !% broadcast result to all images
-        call co_broadcast(thislink_idx,  source_image=1)
-        call co_broadcast(thislink_image,source_image=1)
-        sync all
-
-    
-        !% for the image that hosts the link, cycle through to find the elements in the link
-        if (this_image() == thislink_image) then
-            ecount = 1
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_SWMM) == thislink_idx) then
-                    elemInLink(ecount) = ii
-                    print *, ii, ' is elem #'
-                    ecount = ecount + 1
-                end if
-            end do
-        end if
-        call co_broadcast(elemInLink,source_image=thislink_image)
-        sync all
-
-    end subroutine util_find_elements_in_link
-!%   
-!%==========================================================================
-!%==========================================================================
 !%    
     subroutine util_accumulate_volume_conservation ()
         !%------------------------------------------------------------------
@@ -254,7 +207,9 @@ module utility
         !% Preliminaries:
         !%------------------------------------------------------------------
         !% Aliases:
-            thisColCC => col_elemP(ep_CC_Q_NOTsmalldepth)
+            !thisColCC => col_elemP(ep_CC_Q_NOTsmalldepth)
+            thisColCC => col_elemP(ep_CC_ALLtm)
+            thisColJM => col_elemP(ep_JM_ALLtm)
             fQ      => faceR(:,fr_Flowrate_Conservative)
             eCons   => elemR(:,er_VolumeConservation)
             eQLat   => elemR(:,er_FlowrateLateral)
@@ -269,12 +224,15 @@ module utility
         npack   => npack_elemP(thisColCC)
         if (npack > 0) then
             thisP => elemP(1:npack,thisColCC)
+
+            where (.not. elemYN(thisP,eYN_isZeroDepth))
             !% --- sum of the net inflow and lateral flow should be the change in volume from head
             !% --- for output, use an accumulator
             eCons(thisP) = eCons(thisP)                                            &
                          + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
                          - (VolNew(thisP) - VolOld(thisP))
 
+            endwhere             
             !% --- for debugging, switch to using non-cumulative            
             !eCons(thisP) = dt * (fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP)) &
             !              - (VolNew(thisP) - VolOld(thisP))      
@@ -293,17 +251,26 @@ module utility
         !% HACK -- need an equivalent of the ep_CC_Q_NOTsmall depth for JM
         !% to make this work
 
-        ! !% for the JM elements
-        ! npack   => npack_elemP(thisColJM)
-        ! if (npack > 0) then
-        !     thisP => elemP(1:npack,thisColJM)
-        !     eCons(thisP) = eCons(thisP) + eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))
-        !     do ii=1,max_branch_per_node,2
-        !         eCons(thisP) = eCons(thisP)                                           &
-        !                      + dt * ( real(BranchExists(thisP),8) * fQ(fup(thisP+ii)) &
-        !                     - real(BranchExists(thisP),8) * fQ(fdn(thisP+ii+1)) )
-        !     end do
-        ! end if
+        !% for the JM elements
+        npack   => npack_elemP(thisColJM)
+        if (npack > 0) then
+            thisP => elemP(1:npack,thisColJM)
+
+            eCons(thisP) = eCons(thisP) + dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))
+
+            !% debug, compute just this time step conservation
+            !eCons(thisP) = dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))
+
+            do ii=1,max_branch_per_node,2
+                eCons(thisP) = eCons(thisP)                                           &
+                             + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii)) &
+                                    - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) )
+            end do
+            !print *, eCons(thisP), (VolNew(thisP) - VolOld(thisP)), dt * eQlat(thisP)
+            !print *, ' ', elemYN(thisP,eYN_isSmallDepth), elemYN(thisP,eYN_isZeroDepth)
+            !write(*,"(8f12.4)") VolNew(thisP), VolOld(thisP), dt * fQ(fup(thisP+1)), dt * fQ(fup(thisP+3)), dt*fQ(fdn(thisP+2))
+            !write(*,"(8f12.4)") VolNew(thisP) - VolOld(thisP), eCons(thisP)
+        end if
 
         !%------------------------------------------------------------------
 
@@ -343,23 +310,20 @@ module utility
        ! print *, 'in util total_volume conservation ',vstore, this_image()
 
         !% HACK -- the JM elements aren't finished yet
-        ! !% for JM ETM elements
-        ! thisCol =>col_elemP(ep_JM_ETM) 
-        ! npack   => npack_elemP(thisCol)
-        ! if (npack > 0) then
-        !     thisP => elemP(1:npack,thisCol)
-        !     vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
-        ! end if
+        !% for JM ETM elements
+        thisCol =>col_elemP(ep_JM_ALLtm) 
+        npack   => npack_elemP(thisCol)
+        if (npack > 0) then
+            thisP => elemP(1:npack,thisCol)
+            vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
+            do ii = 1,npack
+                if (abs(elemR(thisP(ii),er_VolumeConservation)) > 1.0) then
+                    print *, thisP(ii), elemR(thisP(ii),er_VolumeConservation)
+                end if
+            end do
+        end if
 
-        ! !% for JJ AC elements
-        ! thisCol =>col_elemP(ep_JM_AC) 
-        ! npack   => npack_elemP(thisCol)
-        ! if (npack > 0) then
-        !     thisP => elemP(1:npack,thisCol)
-        !     vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
-        ! end if
-
-        ! sync all
+        sync all
         call co_sum(vstore, result_image=1)
 
         volume_nonconservation = vstore
@@ -367,6 +331,259 @@ module utility
         !%------------------------------------------------------------------
         !% Closing:
     end subroutine util_total_volume_conservation
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_find_elements_in_link &
+        (thislinkname, thislink_idx, thislink_image, elemInLink, nElemInLink)
+        !%-------------------------------------------------------------------
+        !% Description: 
+        !% Finds the element indexes for the SWMM link with the name "thislinkname"
+        !% stores the element indexes in the array elemInLink and
+        !% returns the link index in link%I(:) and the image that host the link.
+        !% Not efficiently written, but only purpose is for use in debugging.
+        !%-------------------------------------------------------------------
+            character(*), intent(in)   :: thislinkname
+            integer, intent(inout)     :: elemInLink(:)
+            integer, intent(inout)     :: thislink_idx, thislink_image
+            integer, intent(inout)     :: nElemInLink
+            integer ::  ii, jj
+        !%-------------------------------------------------------------------
+        elemInLink = 0
+        thislink_idx = 0
+        thislink_image = 0
+
+        !% find the link idx and image for the input "thislinkname"
+        if (this_image() == 1) then
+            do ii = 1,size(link%I,dim=1)
+                if (link%Names(ii)%str == thislinkname) then
+                    write(*,"(A,A,A,i8,A,i6)")'link name ', trim(link%Names(ii)%str), ';  linkIdx= ', ii, ' On image = ',link%I(ii,li_P_image)
+                    thislink_idx = ii
+                    thislink_image = link%I(ii,li_P_image)
+                end if
+            end do
+        end if
+        !% broadcast result to all images
+        call co_broadcast(thislink_idx,  source_image=1)
+        call co_broadcast(thislink_image,source_image=1)
+        sync all
+
+    
+        !% for the image that hosts the link, cycle through to find the elements in the link
+        if (this_image() == thislink_image) then
+            nElemInLink = 0
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_SWMM) == thislink_idx) then
+                    nElemInLink = nElemInLink + 1
+                    elemInLink(nElemInLink) = ii
+                end if
+            end do
+            write(*,"(A,100i8)") 'elemIdx =',elemInLink(1:nElemInLink)
+        end if
+        call co_broadcast(elemInLink,source_image=thislink_image)
+        sync all
+
+    end subroutine util_find_elements_in_link
+!%   
+!%==========================================================================    
+!%==========================================================================
+!%
+    subroutine util_find_elements_in_junction_node &
+        (thisnodename, thisnode_idx, thisnode_image, elemJM_idx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Given the node name, this finds the node index, the image on
+        !% which it is an element, and the JM element index
+        !%
+        !%------------------------------------------------------------------
+        !% Declarations:
+            character(*), intent(in)   :: thisnodename
+            integer, intent(inout)     :: thisnode_idx, thisnode_image
+            integer, intent(inout)     :: elemJM_idx
+            integer ::  ii, jj
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+        !%------------------------------------------------------------------
+
+        thisnode_idx = 0
+        thisnode_image = 0
+
+        !% find the node idx and image for the input "thisnodename"
+        if (this_image() == 1) then
+            do ii = 1,size(node%I,dim=1)
+                !print *, ii, trim(node%Names(ii)%str)
+                if (node%Names(ii)%str == thisnodename) then
+                    write(*,"(A,A,A,i8,A,i6)")'node name ', trim(node%Names(ii)%str), ';  nodeIdx= ', ii, '; On image = ',node%I(ii,ni_P_image)
+                    thisnode_idx = ii
+                    thisnode_image = node%I(ii,ni_P_image)
+                    exit !% the first node found should be the JM
+                end if
+            end do
+        end if
+        !% broadcast result to all images
+        call co_broadcast(thisnode_idx,  source_image=1)
+        call co_broadcast(thisnode_image,source_image=1)
+        sync all
+
+        elemJM_idx =0
+        !% for the image that hosts the node, cycle through to find the element
+        if (this_image() == thisnode_image) then
+            do ii = 1,N_elem(this_image())
+                !print *, ii, elemI(ii,ei_node_Gidx_SWMM)
+                if (elemI(ii,ei_node_Gidx_SWMM) == thisnode_idx) then
+                    write (*,"(A,i8,A,A)") 'elemIdx= ',ii,'; type = ',reverseKey(elemI(ii,ei_elementType))
+                    elemJM_idx = ii
+                    exit !% the first should be the correct nodes
+                end if
+            end do
+        end if
+        call co_broadcast(elemJM_idx,source_image=thisnode_image)
+        sync all
+
+        if (elemJM_idx == 0) then
+            write(*,"(A,A)") 'No corresponding JM element found for the node ',trim(node%Names(thisnode_idx)%str)
+            write(*,"(A)") 'This implies the node is a nJ1 or nJ2 and is either a boundary or a face'
+        end if
+
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine util_find_elements_in_junction_node
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_find_neighbors_of_CC_element (eIdx, iset)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% For debugging, given an element ID that is CC, find the upstream faces
+        !% and elements. Output is in the form
+        !% (upstream element, upstream face, element, downstream face, downstream element)\
+        !% Note that this will not work across shared faces
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)    :: eIdx
+            integer, intent(inout) :: iset(5)
+            integer :: ifaceUp, ifaceDn, ielemUp, ielemDn
+            character(64) :: subroutine_name = 'util_find_neighbors_of_CC_element'
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (.not. (elemI(eIdx,ei_elementType) == CC)) then
+                write(*,"(A,A,A,i8,A,A)") 'in ',trim(subroutine_name), ': element ',eIdx, 'is of type ',reverseKey(elemI(eIdx,ei_elementType))
+                write(*,"(A)") 'but this procedure requires CC. Exiting with no result.'
+                return
+            end if
+        !%------------------------------------------------------------------
+        !% Aliases:
+        !%------------------------------------------------------------------
+
+        ifaceUp = elemI(eIdx,ei_Mface_uL)
+        ifaceDn = elemI(eIdx,ei_Mface_dL)
+        ielemUp = faceI(ifaceUp,fi_Melem_uL)
+        ielemDn = faceI(ifaceDn,fi_Melem_dL)
+
+        iset(1) = ielemUp
+        iset(2) = iFaceUp
+        iset(3) = eIdx
+        iset(4) = ifaceDn
+        iset(5) = ielemDn
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine util_find_neighbors_of_CC_element
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_find_neighbors_of_JM_element &
+        (eIdx, iUpSet, iDnSet, nUpBranch, nDnBranch)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% For debugging, given an element ID of type JM this finds the
+        !% faces and neighbor elements
+        !% Note that this will not work across shared faces
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)    :: eIdx
+            integer, intent(inout) :: iUpSet(max_up_branch_per_node,4)
+            integer, intent(inout) :: iDnSet(max_dn_branch_per_node,4)
+            integer, intent(inout) :: nUpBranch, nDnBranch
+            integer, dimension(max_up_branch_per_node) :: ifaceUp, ielemUp, eIdx_BranchUp
+            integer, dimension(max_dn_branch_per_node) :: ifaceDn, ielemDn, eIdx_BranchDn
+            integer :: ii
+            character(64) :: subroutine_name = 'util_find_neighbors_of_JM_element'
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (.not. (elemI(eIdx,ei_elementType) == JM)) then
+                write(*,"(A,A,A,i8,A,A)") 'in ',trim(subroutine_name), ': element ',eIdx, 'is of type ',reverseKey(elemI(eIdx,ei_elementType))
+                write(*,"(A)") 'but this procedure requires JM. Exiting with no result.'
+                return
+            end if
+        !%------------------------------------------------------------------
+        !% Aliases:
+        !%------------------------------------------------------------------
+
+        iUpSet = 0
+        iDnSet = 0
+
+        nUpBranch = 0
+        do ii=1,max_branch_per_node,2
+            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) > 0) then
+                nUpBranch = nUpBranch + 1
+                eIdx_BranchUp(nUpBranch) = eIdx + ii
+                ifaceUp(nUpBranch) = elemI(eIdx_BranchUp(nUpBranch),ei_Mface_uL)
+                ielemUp(nUpBranch) = faceI(ifaceUp(nUpBranch),fi_Melem_uL)
+            end if
+        end do    
+
+        nDnBranch = 0
+        do ii=2,max_branch_per_node,2
+            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) > 0) then
+                nDnBranch = nDnBranch + 1
+                eIdx_BranchDn(nDnBranch) = eIdx + ii
+                ifaceDn(nDnBranch) = elemI(eIdx_BranchDn(nDnBranch),ei_Mface_dL)
+                ielemDn(nDnBranch) = faceI(ifaceUp(nDnBranch),fi_Melem_dL)
+            end if
+        end do    
+
+        do ii=1,nUpBranch
+            iUpSet(ii,1) = ielemUp(ii)
+            iUpSet(ii,2) = ifaceUp(ii)
+            iUpset(ii,3) = eIdx_BranchUp(ii)
+            iUpSet(ii,4) = eIdx
+        end do
+
+        do ii=1,nDnBranch
+            iDnSet(ii,1) = eIdx
+            iDnset(ii,2) = eIdx_BranchDn(ii)
+            iDnSet(ii,3) = ifaceDn(ii)
+            iDnSet(ii,4) = ielemDn(ii)
+        end do
+            
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine util_find_neighbors_of_JM_element
+!%
+!%==========================================================================    
+!%==========================================================================
+!%
+        !%------------------------------------------------------------------
+        !% Description:
+        !%
+        !%------------------------------------------------------------------
+        !% Declarations:
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+        !%------------------------------------------------------------------
+    
+    
+        !%------------------------------------------------------------------
+        !% Closing:
 !%
 !%==========================================================================
 !% END OF MODULE

@@ -159,6 +159,21 @@ module runge_kutta2
         call adjust_zerodepth_bypack (ep_ZeroDepth_JM_ALLtm)
         call adjust_smalldepth_bypack ()   
 
+
+        ! write(*,*) ' ZZZ --------'
+
+        ! write(*,"(A,f12.4,A,f12.4)") 'Qf         ',faceR(iftmp2,fr_Flowrate)
+        ! write(*,"(A,2f12.4)")       'Qe2 ',elemR(ietmp2,er_Flowrate)
+        ! write(*,"(A,7f12.4)")       'Qe1 ',elemR(ietmp,er_Flowrate)
+        ! write(*,"(A,f12.4,A,f12.4)") 'Qf         ',faceR(iftmp(1),fr_Flowrate),'                        ',faceR(iftmp(2),fr_Flowrate),' ',faceR(iftmp(3),fr_Flowrate)
+
+
+        ! print *, ' '
+        ! write(*,"(A,f12.4,A,f12.4)") 'Hf         ',faceR(iftmp2,fr_Head_d)
+        ! write(*,"(A,2f12.4)")       'He2 ',elemR(ietmp2,er_Head)
+        ! write(*,"(A,7f12.4)")       'He1 ',elemR(ietmp,er_Head)
+        ! write(*,"(A,f12.4,A,f12.4,A,f12.4)") 'Hf         ',faceR(iftmp(1),fr_Head_d),'                     ',faceR(iftmp(2),fr_head_u), ' ',faceR(iftmp(3),fr_head_u)
+
         !%-----------------------------------------------------------------
         !% closing
             if (setting%Debug%File%runge_kutta2)  &

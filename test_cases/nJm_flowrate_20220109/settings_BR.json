@@ -46,19 +46,20 @@
             "interval" : 100
         },
         "DataOut" :{
-            "isAreaOut"         : true,
+            "isAreaOut"         : false,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
-            "isFluxConsOut"     : false,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
-            "isHeadOut"         : false,
+            "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
             "isVelocityOut"     : false,
-            "isVolumeOut"       : false,
+            "isVolumeOut"       : true,
+            "isVolumeConsOut"   : true,
             "isWaveSpeedOut"    : false
         },
         "Report" : {

@@ -510,8 +510,7 @@ contains
                 ))
         end if
 
-
-        !% junction main with artificial storage relationship
+        !% junction main with artificial storage relationship -- for ALL tm
         ptype => col_elemPGalltm(epg_JM_artificial_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -528,6 +527,7 @@ contains
                     .or. &
                     (elemI(:,ei_QeqType) == time_march) &
                 ))
+      
 
         if (npack > 0) then
             elemPGalltm(1:npack, ptype) = pack(eIdx, &
@@ -545,8 +545,6 @@ contains
                     (elemI(:,ei_QeqType) == time_march) &
                 ))
         end if
-
-
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -679,11 +677,8 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                (elemI(:,ei_tmType) == AC) &
+                )
 
         if (npack > 0) then
             elemPGac(1:npack, ptype) = pack(eIdx, &
@@ -695,11 +690,8 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                (elemI(:,ei_tmType) == AC) &
+                )
         end if
 
         !% junction main with functional geometry relationship
@@ -714,11 +706,8 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                (elemI(:,ei_tmType) == AC) &
+                )
 
         if (npack > 0) then
             elemPGac(1:npack, ptype) = pack(eIdx, &
@@ -730,12 +719,39 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                (elemI(:,ei_tmType) == AC) &
+                )
         end if
+
+        !% junction main with artificial storage relationship -- for AC
+        ptype => col_elemPGac(epg_JM_artificial_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( elemI(:,ei_tmType) == AC) &
+                )
+      
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( elemI(:,ei_tmType) == AC) &
+                )
+        end if       
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -871,11 +887,8 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                ( elemI(:,ei_tmType) == ETM) &
+                )
 
         if (npack > 0) then
             elemPGetm(1:npack, ptype) = pack(eIdx, &
@@ -887,11 +900,8 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                ( elemI(:,ei_tmType) == ETM) &
+                )
         end if
 
         !% junction main with functional geometry relationship
@@ -906,11 +916,8 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                ( elemI(:,ei_tmType) == ETM) &
+                )
 
         if (npack > 0) then
             elemPGetm(1:npack, ptype) = pack(eIdx, &
@@ -922,12 +929,40 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
+                ( elemI(:,ei_tmType) == ETM) &
+                )
         end if
+
+
+        !% junction main with artificial storage relationship -- for ETM
+        ptype => col_elemPGetm(epg_JM_artificial_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( elemI(:,ei_tmType) == ETM) &
+                )
+      
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( elemI(:,ei_tmType) == ETM) &
+                )
+        end if 
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

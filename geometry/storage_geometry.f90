@@ -120,7 +120,9 @@ module storage_geometry
             volume => elemR(:,er_Volume)
         !%-------------------------------------------------------------------
 
-        depth(thisP) = volume / pArea
+        depth(thisP) = volume(thisP) / pArea(thisP)
+
+        !print *, 'INSTORAGE ',volume(thisP)
        
         !%-------------------------------------------------------------------
     end subroutine storage_artificial_depth_from_volume

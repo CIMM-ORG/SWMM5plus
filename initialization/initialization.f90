@@ -58,8 +58,12 @@ contains
             integer, allocatable :: tempP(:)
             character(64) :: subroutine_name = 'initialize_toplevel'
             !% temporary debugging
-            integer    :: elemInLink(1000)
+            integer    :: elemInLink(100), nEleminLink, iset(5)
             integer    :: thislink_idx, thislink_image
+            integer    :: thisnode_idx, thisnode_image, elemJM_idx
+            integer    :: iUpSet(max_up_branch_per_node,4)
+            integer    :: iDnSet(max_dn_branch_per_node,4)
+            integer    :: nUpBranch, nDnBranch
         !%-------------------------------------------------------------------
         !% Preliminaries
             if (icrash) return
@@ -248,9 +252,44 @@ contains
         end if          
         
         !% initialize volume conservation storage for debugging
-        elemR(:,er_VolumeConservation) = zeroR        
+        elemR(:,er_VolumeConservation) = zeroR    
+        
+        ! ii=624
+        ! print *, 'face dn = ',elemI(ii,ei_Mface_dL)
+        ! print *, 'elem dn = ',faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
+        ! stop 387950
        
-        ! call util_find_elements_in_link ('1567',thislink_idx, debug_image, elemInLink)
+            ! !% debugging -- keep this stuff around to find an element with a given name
+            ! call util_find_elements_in_link &
+            !     ('1600',thislink_idx, thislink_image, elemInLink, nElemInLink)
+
+            ! print *, ' '
+            ! do ii=1,nElemInLink
+            !     call util_find_neighbors_of_CC_element (elemInLink(ii), iset)
+            !     print *, 'for elemID ',elemInLink(ii)
+            !     print *, iset
+            ! end do
+
+            ! print *, ' '
+            ! call util_find_elements_in_junction_node &
+            !     ('630011341', thisnode_idx, thisnode_image, elemJM_idx)
+            ! print *, ' '
+        
+            ! print *, ' '
+            ! call util_find_neighbors_of_JM_element &
+            !     (elemJM_idx, iUpSet, iDnSet, nUpBranch, nDnBranch)
+
+            ! print *, ' '
+            ! do ii=1,nUpBranch
+            !     write(*,"(A,5i8)") 'Up ',iUpSet(ii,:)
+            ! end do
+
+            ! print *, ' '
+            ! do ii=1,nDnBranch
+            !     write(*,"(A,5i8)") 'Dn ',iDnSet(ii,:)
+            ! end do
+
+        !!stop 88385
 
         ! if (this_image() == debug_image) then
         !     if (elemInLink(1) .ne. 9977) then
