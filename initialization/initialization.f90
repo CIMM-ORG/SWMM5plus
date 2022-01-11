@@ -127,9 +127,9 @@ contains
             !% continue without profiler    
         end if
 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
         !% --- initialize the coarrays that depend on number of images
         !%     and not on number of links/nodes, elements or faces.
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
         call util_allocate_secondary_coarrays ()
 
         !% --- initialize the API with the SWMM-C code
@@ -139,9 +139,9 @@ contains
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
-
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
+        
         !% --- initialize globals that are run-time dependent
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
 
         !% --- allocate storage for subcatchment arrays
@@ -254,14 +254,10 @@ contains
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
         
-        ! ii=624
-        ! print *, 'face dn = ',elemI(ii,ei_Mface_dL)
-        ! print *, 'elem dn = ',faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
-        ! stop 387950
        
             ! !% debugging -- keep this stuff around to find an element with a given name
-            ! call util_find_elements_in_link &
-            !     ('1600',thislink_idx, thislink_image, elemInLink, nElemInLink)
+            !  call util_find_elements_in_link &
+            !      ('9',thislink_idx, thislink_image, elemInLink, nElemInLink)
 
             ! print *, ' '
             ! do ii=1,nElemInLink
@@ -289,42 +285,12 @@ contains
             !     write(*,"(A,5i8)") 'Dn ',iDnSet(ii,:)
             ! end do
 
-        !!stop 88385
+            !print *, faceI(,fi_Melem_uL), 635, reverseKey(elemI(635,ei_elementType))
+            ! print *, elemI(625,ei_Mface_uL)
+            ! print *, faceI(elemI(625,ei_Mface_uL),fi_Melem_uL)
+             ! stop 88385
 
-        ! if (this_image() == debug_image) then
-        !     if (elemInLink(1) .ne. 9977) then
-        !     !if (elemInLink(1) .ne. 194) then
-        !         call co_broadcast(elemInLink(1),source_image=debug_image)
-        !    end if
-        ! end if
-
-        ! print *, elemInLink(1)
-        ! !stop 398705
-        ! !if (elemInLink(1) .ne. 194) stop 87854
-        ! if (elemInLink(1) .ne. 385) stop 87854
-        ! if (this_image() == 1) then
-        ! ii = 385
-        ! print *, ii, 'type = ',reverseKey(elemI(ii,ei_elementType))
-        ! print *, 'fup ', elemI(ii,ei_Mface_uL)
-        ! print *, 'fdn ', elemI(ii,ei_Mface_dL)
-
-        ! ii = 397
-        ! print *, 'eUp ', faceI(ii,fi_Melem_uL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_uL),ei_elementType))
-        ! ii = 398
-        ! print *, 'edn ', faceI(ii,fi_Melem_dL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_dL),ei_elementType))
-        
-        ! ii = 631
-        ! print *, 'fUp ', elemI(ii,ei_Mface_uL)
-        ! ii = 386
-        ! print *, 'fdn ', elemI(ii,ei_Mface_dL)
-
-        ! ii = 631
-        ! print *, 'eUp ', faceI(ii,fi_Melem_uL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_uL),ei_elementType))
-        ! ii = 399
-        ! print *, 'edn ', faceI(ii,fi_Melem_dL), 'type = ',reverseKey(elemI(faceI(ii,fi_Melem_dL),ei_elementType))
-        ! end if
-
-        ! stop 385858
+    
 
         !% --- setup the multi-level finite-volume output
         !%        Ideally, this should be a procedure accessed in the output module, 

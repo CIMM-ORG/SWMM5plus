@@ -79,19 +79,27 @@ contains
         call init_IC_solver_select (whichTM)
 
         !% --- set up all the static packs and masks
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         call init_IC_ZeroValues_nondepth ()
 
-         !% --- set all the zero and small volumes
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust_zerodepth_bypack'
-        call adjust_zerodepth_bypack(ep_ZeroDepth_CC_ALLtm)
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust_zerodepth_bypack'
-        call adjust_zerodepth_bypack(ep_ZeroDepth_JM_ALLtm)
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin adjust_smalldepth_bypack'
-        call adjust_smalldepth_bypack ()
+        !% --- set all the zero and small volumes
+        call adjust_zerodepth_identify_all ()
+        call adjust_smalldepth_identify_all ()
+        call pack_small_and_zero_depth_elements ()
+
+        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm)
+        call adjust_zerodepth_element_values (ep_ZeroDepth_JM_ALLtm)
+        call adjust_smalldepth_element_fluxes ()
+        call adjust_limit_velocity_max (ALLtm)
+        
+        call adjust_smalldepth_face_fluxes (.false.)
+        call adjust_zerodepth_face_fluxes_CC   (ep_ZeroDepth_CC_ALLtm,.false.)
+        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.false.)
+        
+        
 
         !% --- get the bottom slope
         call init_IC_bottom_slope ()
@@ -165,6 +173,11 @@ contains
         !% --- update the initial condition in all diagnostic elements
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel ()
+
+        !% --- ensure that small and zero depth faces are correct
+        call adjust_smalldepth_face_fluxes (.false.)
+        call adjust_zerodepth_face_fluxes_CC   (ep_ZeroDepth_CC_ALLtm,.false.)
+        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.false.)
 
         !% ---populate er_ones columns with ones
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'

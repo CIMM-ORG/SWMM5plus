@@ -225,14 +225,14 @@ module utility
         if (npack > 0) then
             thisP => elemP(1:npack,thisColCC)
 
-            where (.not. elemYN(thisP,eYN_isZeroDepth))
+            !where (.not. elemYN(thisP,eYN_isZeroDepth))
             !% --- sum of the net inflow and lateral flow should be the change in volume from head
             !% --- for output, use an accumulator
             eCons(thisP) = eCons(thisP)                                            &
                          + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
                          - (VolNew(thisP) - VolOld(thisP))
 
-            endwhere             
+            !endwhere             
             !% --- for debugging, switch to using non-cumulative            
             !eCons(thisP) = dt * (fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP)) &
             !              - (VolNew(thisP) - VolOld(thisP))      
@@ -301,26 +301,25 @@ module utility
         if (npack > 0) then
             thisP => elemP(1:npack,thisCol)
             vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
-            do ii = 1,npack
-                if (abs(elemR(thisP(ii),er_VolumeConservation)) > 1.0) then
-                    print *, thisP(ii), elemR(thisP(ii),er_VolumeConservation)
-                end if
-            end do
+            !do ii = 1,npack
+            !    if (abs(elemR(thisP(ii),er_VolumeConservation)) > 1.0) then
+            !        print *, thisP(ii), elemR(thisP(ii),er_VolumeConservation)
+            !    end if
+            !end do
         end if
        ! print *, 'in util total_volume conservation ',vstore, this_image()
 
-        !% HACK -- the JM elements aren't finished yet
         !% for JM ETM elements
         thisCol =>col_elemP(ep_JM_ALLtm) 
         npack   => npack_elemP(thisCol)
         if (npack > 0) then
             thisP => elemP(1:npack,thisCol)
             vstore = vstore + sum(elemR(thisP,er_VolumeConservation))
-            do ii = 1,npack
-                if (abs(elemR(thisP(ii),er_VolumeConservation)) > 1.0) then
-                    print *, thisP(ii), elemR(thisP(ii),er_VolumeConservation)
-                end if
-            end do
+            !do ii = 1,npack
+            !    if (abs(elemR(thisP(ii),er_VolumeConservation)) > 1.0) then
+            !        print *, thisP(ii), elemR(thisP(ii),er_VolumeConservation)
+            !    end if
+            !end do
         end if
 
         sync all

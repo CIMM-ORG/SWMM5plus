@@ -239,7 +239,7 @@ module update
             case (ALLtm)
                 thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
             case (ETM)
-                thisCol_ClosedElems => col_elemP(ep_Closed_Elements)
+                thisCol_ClosedElems =>  col_elemP(ep_Closed_Elements)
             case (AC)
                 thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
             case default
@@ -330,16 +330,19 @@ module update
 
         !% adjust upstream interpolation weights for downstream flow in presence of lateral inflows
         !% so that upstream interpolation is used
-        where ( (velocity(thisP) > zeroR) .and. (Qlateral > zeroR) )
+        !% HACK -- this probably could use an approach with some kind of ad hoc blend -- needs work
+        where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
             w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            w_uG(thisP) = setting%Limiter%InterpWeight%Maximum
+            !w_uH(thisP) = setting%Limiter%InterpWeight%Minimum !do not use!
         endwhere
 
         !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
-        where ( (velocity(thisP) < zeroR) .and. (Qlateral > zeroR) )
+        where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
+            !w_dH(thisP) = setting%Limiter%InterpWeight%Minimum ! do not use!
         endwhere
-
-        
 
 
         ! if (setting%FaceInterp%DownJBFaceInterp == dynamic) then

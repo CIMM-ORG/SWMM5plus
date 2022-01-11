@@ -26,19 +26,22 @@ module adjust
 
 
 
-    public :: adjust_smallvolume_facevalues
+    !public :: adjust_smallvolume_face_values
 
-    public :: adjust_zerodepth_facevalues
+    
 
     
     !public :: adjust_zerodepth_setvalues
     
 
     public :: adjust_zerodepth_identify_all
+    public :: adjust_zerodepth_element_values 
+    public :: adjust_zerodepth_face_fluxes_CC
+    public :: adjust_zerodepth_face_fluxes_JMJB
+
     public :: adjust_smalldepth_identify_all
-    public :: adjust_zerodepth_bypack 
-    public :: adjust_smalldepth_bypack
-    public :: adjust_zerodepth_fluxes
+    public :: adjust_smalldepth_element_fluxes
+    public :: adjust_smalldepth_face_fluxes
    
 
     contains
@@ -212,71 +215,71 @@ module adjust
 !%==========================================================================  
 !%==========================================================================
 !%
-    subroutine adjust_smallvolume_facevalues (whichTM)
-        !%----------------------------------------------------------------------
-        !% Description
-        !% sets the face fluxes to the CM for outflows from a smallvolume element
-        !% call with thisCol=0 to do all elements
-        !%----------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: whichTM
-            logical, pointer :: isSmallVol(:)
-            integer, pointer :: fdn(:), fup(:), thisP(:)
-            integer, pointer :: Npack, thisCol
-            integer :: ii
-            real(8), pointer :: fQ(:), eQ(:)
-        !%----------------------------------------------------------------------
-        !% Preliminaries
-        !%----------------------------------------------------------------------
-        !% Aliases
-            select case (whichTM)
-            case (ALLtm)
-                thisCol => col_elemP(ep_CC_ALLtm)
-            case (ETM)
-                thisCol => col_elemP(ep_CC_ETM)    
-            case (AC)
-                thisCol => col_elemP(ep_CC_AC)       
-            case default
-                print *, 'error, default case should not be reached.'
-                stop 83655
-            end select
-            isSmallVol => elemYN(:,eYN_isSmallDepth)
-            fdn        => elemI(:,ei_Mface_dL)
-            fup        => elemI(:,ei_Mface_uL)
-            fQ         => faceR(:,fr_Flowrate)
-            eQ         => elemR(:,er_Flowrate)
-            Npack      => npack_elemP(thisCol)
-            if (Npack .le. 0) return
-            thisP => elemP(1:Npack,thisCol)
-        !%----------------------------------------------------------------------
+    ! subroutine adjust_smallvolume_facevalues (whichTM)
+    !     !%----------------------------------------------------------------------
+    !     !% Description
+    !     !% sets the face fluxes to the CM for outflows from a smallvolume element
+    !     !% call with thisCol=0 to do all elements
+    !     !%----------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: whichTM
+    !         logical, pointer :: isSmallVol(:)
+    !         integer, pointer :: fdn(:), fup(:), thisP(:)
+    !         integer, pointer :: Npack, thisCol
+    !         integer :: ii
+    !         real(8), pointer :: fQ(:), eQ(:)
+    !     !%----------------------------------------------------------------------
+    !     !% Preliminaries
+    !     !%----------------------------------------------------------------------
+    !     !% Aliases
+    !         select case (whichTM)
+    !         case (ALLtm)
+    !             thisCol => col_elemP(ep_CC_ALLtm)
+    !         case (ETM)
+    !             thisCol => col_elemP(ep_CC_ETM)    
+    !         case (AC)
+    !             thisCol => col_elemP(ep_CC_AC)       
+    !         case default
+    !             print *, 'error, default case should not be reached.'
+    !             stop 83655
+    !         end select
+    !         isSmallVol => elemYN(:,eYN_isSmallDepth)
+    !         fdn        => elemI(:,ei_Mface_dL)
+    !         fup        => elemI(:,ei_Mface_uL)
+    !         fQ         => faceR(:,fr_Flowrate)
+    !         eQ         => elemR(:,er_Flowrate)
+    !         Npack      => npack_elemP(thisCol)
+    !         if (Npack .le. 0) return
+    !         thisP => elemP(1:Npack,thisCol)
+    !     !%----------------------------------------------------------------------
         
-        !% --- a small volume can have an inflow from faces interpolated faces
-        !%     but the outflow is limited to the CM outflow
-        !%     Note the following will seg fault if used on JB or JM cells
+    !     !% --- a small volume can have an inflow from faces interpolated faces
+    !     !%     but the outflow is limited to the CM outflow
+    !     !%     Note the following will seg fault if used on JB or JM cells
 
-        where ( isSmallVol(thisP) )
-            !% set the downstream face flowrate to zero or keep the value if it is negative (inflow)
-            fQ(fdn(thisP)) = onehalfR * ( fQ(fdn(thisP)) - abs( fQ(fdn(thisP)) ) )
-        end where
+    !     where ( isSmallVol(thisP) )
+    !         !% set the downstream face flowrate to zero or keep the value if it is negative (inflow)
+    !         fQ(fdn(thisP)) = onehalfR * ( fQ(fdn(thisP)) - abs( fQ(fdn(thisP)) ) )
+    !     end where
 
     
-        !% if the value is now zero, use the element value for the face flux
-        where ( (isSmallVol(thisP)) .and. ( abs(faceR(fdn(thisP),fr_flowrate)) < setting%Eps%Velocity) )
-            fQ(fdn(thisP)) = eQ(thisP)
-        end where
+    !     !% if the value is now zero, use the element value for the face flux
+    !     where ( (isSmallVol(thisP)) .and. ( abs(faceR(fdn(thisP),fr_flowrate)) < setting%Eps%Velocity) )
+    !         fQ(fdn(thisP)) = eQ(thisP)
+    !     end where
 
 
-        where (isSmallVol(thisP)) 
-            !% set the upstream face flowrate to zero or keep the value if it is positive (inflow)    
-            fQ(fup(thisP)) = onehalfR * ( fQ(fup(thisP)) + abs( fQ(fup(thisP))) )
-        end where
+    !     where (isSmallVol(thisP)) 
+    !         !% set the upstream face flowrate to zero or keep the value if it is positive (inflow)    
+    !         fQ(fup(thisP)) = onehalfR * ( fQ(fup(thisP)) + abs( fQ(fup(thisP))) )
+    !     end where
 
-        !% if the value is now zero, use the element value for the face flux
-        where ( (isSmallVol(thisP)) .and. ( abs(faceR(fup(thisP),fr_flowrate)) < setting%Eps%Velocity) )
-            fQ(fup(thisP)) = eQ(thisP)
-        end where
+    !     !% if the value is now zero, use the element value for the face flux
+    !     where ( (isSmallVol(thisP)) .and. ( abs(faceR(fup(thisP),fr_flowrate)) < setting%Eps%Velocity) )
+    !         fQ(fup(thisP)) = eQ(thisP)
+    !     end where
 
-    end subroutine adjust_smallvolume_facevalues
+    ! end subroutine adjust_smallvolume_facevalues
 !%   
 !%==========================================================================    
 !%==========================================================================
@@ -346,7 +349,7 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_zerodepth_bypack (thisCol)
+    subroutine adjust_zerodepth_element_values (thisCol)
         !% -----------------------------------------------------------------
         !% Description:
         !% thisCol must be one of the ZeroDepth packed arrays that identifies
@@ -361,8 +364,12 @@ module adjust
             thisP   => elemP(1:npack,thisCol)
         !% -----------------------------------------------------------------
 
+        !% only reset the depth if it is too small
+        where (elemR(thisP,er_Depth) .le. setting%ZeroValue%Depth)
+            elemR(thisP,er_Depth)    = setting%ZeroValue%Depth
+        end where
+
         elemR(thisP,er_Area)         = setting%ZeroValue%Area
-        elemR(thisP,er_Depth)        = setting%ZeroValue%Depth
         elemR(thisP,er_dHdA)         = oneR / setting%ZeroValue%TopWidth
         elemR(thisP,er_ell)          = setting%ZeroValue%Depth
         elemR(thisP,er_Flowrate)     = zeroR
@@ -375,34 +382,44 @@ module adjust
         elemR(thisP,er_WaveSpeed)    = zeroR
         elemR(thisP,er_Head)    = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
         elemR(thisP,er_HeadAvg) = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+        
 
         !% only reset volume when it gets too small
         where (elemR(thisP,er_Volume) < setting%ZeroValue%Volume)
             elemR(thisP,er_Volume) = (oneR + onetenthR) * setting%ZeroValue%Volume 
         end where
         
-    end subroutine adjust_zerodepth_bypack  
+        
+    end subroutine adjust_zerodepth_element_values 
 !%  
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_smalldepth_bypack ()
+    subroutine adjust_smalldepth_element_fluxes()
         !% -----------------------------------------------------------------
         !% Description
         !% uses the ep_SmallDepth_CC_ALLtm pack to set the velocity and
         !% flowrate on all small volumes
         !% -----------------------------------------------------------------
-            integer          :: thisCol
-            integer, pointer :: npack, thisP(:)
+        !% Declarations:
+            integer, pointer :: thisCol
+            integer, pointer :: npack, thisP(:), fdn(:), fup(:)
             real(8), pointer :: Area(:), BottomSlope(:), CMvelocity(:)
             real(8), pointer :: Flowrate(:), HydRadius(:), ManningsN(:)
             real(8), pointer :: Velocity(:), VelocityBlend(:), svRatio(:)
-            real(8), pointer :: SmallVolume(:), Volume(:)
+            real(8), pointer :: SmallVolume(:), Volume(:), faceFlow(:), faceFlowCons(:)
+            integer, target  :: pset(2)
+            real(8)          :: psign(2)
+            integer :: ii
         !% -----------------------------------------------------------------
-            thisCol = ep_SmallDepth_CC_ALLtm
-            npack     => npack_elemP(thisCol)
-            if (npack < 1) return
-            thisP     => elemP(1:npack,thisCol)
+        !% Preliminaries:   
+            !% local declarations to cycle through positive and negative slope sets
+            pset(1) = ep_SmallDepth_CC_ALLtm_posSlope
+            pset(2) = ep_SmallDepth_CC_ALLtm_negSlope
+            psign(1) = oneR
+            psign(2) = -oneR
+        !% -----------------------------------------------------------------    
+        !% Aliases    
             Area          => elemR(:,er_Area)
             BottomSlope   => elemR(:,er_BottomSlope)
             CMvelocity    => elemR(:,er_SmallVolume_CMvelocity) 
@@ -415,60 +432,223 @@ module adjust
             VelocityBlend => elemR(:,er_Temp01)
             Volume        => elemR(:,er_Volume)
         !% -----------------------------------------------------------------          
-        !% define the small volume ratio
-        svRatio(thisP) = Volume(thisP) / SmallVolume(thisP)       
+        do ii = 1,size(pset)
+            thisCol => col_elemP(pset(ii))
+            npack   => npack_elemP(thisCol)
+            if (npack < 1) cycle
+            thisP   => elemP(1:npack,thisCol)
+            
+            !% define the small volume ratio
+            svRatio(thisP) = Volume(thisP) / SmallVolume(thisP)       
         
-        !% use the larger of available roughness values
-        ManningsN(thisP) = setting%SmallDepth%ManningsN
-        where (ManningsN(thisP) < elemR(thisP,er_Roughness))
-            ManningsN(thisP) = elemR(thisP,er_Roughness)
-        endwhere    
+            !% use the larger of available roughness values
+            ManningsN(thisP) = setting%SmallDepth%ManningsN
+            ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))
+            ! where (ManningsN(thisP) < elemR(thisP,er_Roughness))
+            !     ManningsN(thisP) = elemR(thisP,er_Roughness)
+            ! endwhere    
 
-        !% absolute chezy-manning velocity based on slope
-        CMvelocity(thisP) = ( HydRadius(thisP)**(twothirdR) ) * sqrt(abs(BottomSlope(thisP))) / ManningsN(thisP)
+            !% chezy-manning velocity based on bottom slope
+            CMvelocity(thisP) = psign(ii) * ( HydRadius(thisP)**(twothirdR) ) &
+                        * sqrt(abs(BottomSlope(thisP))) / ManningsN(thisP)
                     
-        !% assign direction to CM velocity.
-        CMvelocity(thisP) = sign(CMvelocity(thisP), BottomSlope(thisP))
+            !% blend the computed velocity with CM velocity
+            VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
+                                + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
-        !% blend the computed velocity with CM velocity
-        VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
-                            + (oneR - svRatio(thisP)) * CMvelocity(thisP)
+            !% use the smaller velocity value, with the sign of the CM velocity
+            Velocity(thisP) = min(abs(CMvelocity(thisP)), velocity(thisP))
+            Velocity(thisP) = sign(Velocity(thisP),CMvelocity(thisP))
 
-        !% use the smaller velocity value, with the sign of the CM velocity
-        Velocity(thisP) = min(abs(CMvelocity(thisP)), velocity(thisP))
-        Velocity(thisP) = sign(Velocity(thisP),CMvelocity(thisP))
+            !% new flowrate
+            Flowrate(thisP) = Area(thisP) * Velocity(thisP)
 
-        Flowrate(thisP) = Area(thisP) * Velocity(thisP)
+            !% reset the temporary storage
+            VelocityBlend(thisP) = nullvalueR
+
+        end do
 
         !% -----------------------------------------------------------------
-        !% reset the temporary storage
-        VelocityBlend(thisP) = nullvalueR
-
-    end subroutine adjust_smalldepth_bypack   
+    end subroutine adjust_smalldepth_element_fluxes  
 !%  
-!%==========================================================================   
+!%========================================================================== 
 !%==========================================================================
 !%
-    subroutine adjust_zerodepth_fluxes(thisCol)
+    subroutine adjust_zerodepth_face_fluxes_CC (thisCol,ifixQCons)
         !% -----------------------------------------------------------------
         !% Description:
         !% thisCol must be one of the ZeroDepth packed arrays that identifies
-        !% all the (near) zero depth locations.
+        !% all the (near) zero depth element locations.
+        !% only applicable to CC, not JM or JB
+        !% if ifixQCons = .true. then the conservative fluxes are adjusted
         !% -----------------------------------------------------------------
             integer, intent(in)  :: thisCol
-            integer, pointer :: npack, thisP(:)
+            logical, intent(in)  :: ifixQCons
+            integer, pointer :: npack, thisP(:), fdn(:), fup(:)
+            real(8), pointer :: fQ(:), fQCons(:)
         !% -----------------------------------------------------------------
         !% Aliases
             npack   => npack_elemP(thisCol)
             if (npack < 1) return
             thisP   => elemP(1:npack,thisCol)
+            fdn     => elemI(:,ei_Mface_dL)
+            fup     => elemI(:,ei_Mface_uL)
+            fQ      => faceR(:,fr_Flowrate)
+            fQCons  => faceR(:,fr_Flowrate_Conservative)
         !% -----------------------------------------------------------------
+        !% choose either zero or an inflow
+        fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
+        fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
-        elemR(thisP,er_Velocity) = zeroR
-        elemR(thisP,er_Flowrate) = zeroR
+        !% reset the conservative fluxes
+        if (ifixQCons) then
+            fQCons(fup(thisP)) = fQ(fup(thisP))
+            fQCons(fdn(thisP)) = fQ(fdn(thisP))
+        end if
+
+        !% -----------------------------------------------------------------
+    end subroutine adjust_zerodepth_face_fluxes_CC        
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%    
+    subroutine adjust_zerodepth_face_fluxes_JMJB (thisCol, ifixQCons)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets zero depth values on branches and JM. Input column must
+        !% be a JM set
+        !% if ifixQCons = .true. then the conservative fluxes are adjusted
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)  :: thisCol
+            logical, intent(in)  :: ifixQCons
+            integer, pointer :: npack, thisP(:), fup(:), fdn(:), isBranch(:)
+            real(8), pointer :: fQ(:), fQCons(:)
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            npack => npack_elemp(thisCol)
+            if (npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisP => elemP(1:npack,thisCol)
+            fup   => elemI(:,ei_Mface_uL)
+            fdn   => elemI(:,ei_Mface_dL)
+            isbranch => elemSI(:,esi_JunctionBranch_Exists)
+            fQ    => faceR(:,fr_Flowrate)
+            fQCons=> faceR(:,fr_Flowrate_Conservative)
+        !%------------------------------------------------------------------
+        do ii=1,max_branch_per_node,2
+            fQ(fup(thisP+ii  )) = max(fQ(fup(thisP+ii  )),zeroR) * real(isbranch(thisP+ii  ),8)
+            fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)
+            
+        end do
+        if (ifixQCons) then
+            do ii=1,max_branch_per_node,2
+                fQCons(fup(thisP+ii  )) = fQ(fup(thisP+ii  ))
+                fQCons(fdn(thisP+ii+1)) = fQ(fdn(thisP+ii+1))
+            end do
+        end if
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+
+    end subroutine adjust_zerodepth_face_fluxes_JMJB
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_smalldepth_face_fluxes (ifixQCons)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets the face values around an element where the ad-hoc
+        !% small depth algorithm is used. Must be done after the small depth
+        !% element values have been set.
+        !% if ifixQCons = .true. then the conservative fluxes are adjusted
+        !%------------------------------------------------------------------
+        !% Declarations:
+            logical, intent(in) :: ifixQCons
+            integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
+            real(8), pointer :: faceQ(:), elemQ(:), fQCons(:), slope(:)
+            integer :: pset(2)
+            integer :: ii
+            logical :: istop = .false.
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+          ! % local declarations to cycle through positive and negative slope sets
+            pset(1) = ep_SmallDepth_CC_ALLtm_posSlope
+            pset(2) = ep_SmallDepth_CC_ALLtm_negSlope
+        !%------------------------------------------------------------------
+        !% Aliases:
+            faceQ  => faceR(:,fr_Flowrate)
+            fQCons => faceR(:,fr_Flowrate_Conservative)
+            elemQ  => elemR(:,er_Flowrate)
+            slope  => elemR(:,er_BottomSlope)
+            fdn    => elemI(:,ei_Mface_dL)
+            fup    => elemI(:,ei_Mface_uL)
+        !%------------------------------------------------------------------
+        do ii=1,size(pset)
+            thisCol   => col_elemP(pset(ii))
+            npack     => npack_elemP(thisCol)
+            if (npack < 1) cycle 
+            thisP     => elemP(1:npack,thisCol)
+
+            !% set the downstream face as minimum of small volume flow or the
+            !% (possibly negative) flow from the downstream element
+            !% the upstream is zero or the inflow. Need where to handle
+            !% elements with adverse slopes. Since this is a rare condition
+            !% (and static, we can probably pack for this.)
+            select case (ii)
+            case (1)
+                !% positive bottom slope
+                faceQ(fdn(thisP)) = min(elemQ(thisP)     , faceQ(fdn(thisP)) )      
+                faceQ(fup(thisP)) = max(faceQ(fup(thisP)), zeroR)
+            case (2)
+                !% negative bottom slope
+                faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), zeroR )
+                faceQ(fup(thisP)) = max(elemQ(thisP)     , faceQ(fup(thisP)) ) 
+            case default
+                print *, 'CODE ERROR -- default should not be reached'
+                stop 3784848
+            end select
+
+            if (ifixQCons) then
+                !% update the conservative face Q
+                fQCons(fdn(thisP)) = faceQ(fdn(thisP))
+                fQCons(fup(thisP)) = faceQ(fup(thisP))
+            end if
+       
+            
+        end do  
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine adjust_smalldepth_face_fluxes
+
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    ! subroutine adjust_zerodepth_element_values(thisCol)
+    !     !% -----------------------------------------------------------------
+    !     !% Description:
+    !     !% thisCol must be one of the ZeroDepth packed arrays that identifies
+    !     !% all the (near) zero depth locations.
+    !     !% -----------------------------------------------------------------
+    !         integer, intent(in)  :: thisCol
+    !         integer, pointer :: npack, thisP(:)
+    !     !% -----------------------------------------------------------------
+    !     !% Aliases
+    !         npack   => npack_elemP(thisCol)
+    !         if (npack < 1) return
+    !         thisP   => elemP(1:npack,thisCol)
+    !     !% -----------------------------------------------------------------
+
+    !     elemR(thisP,er_Velocity) = zeroR
+    !     elemR(thisP,er_Flowrate) = zeroR
 
 
-    end subroutine
+    ! end subroutine adjust_zerodepth_element_values
 !%
 !%==========================================================================
 !%==========================================================================
@@ -582,66 +762,66 @@ module adjust
 !%==========================================================================
 !%==========================================================================
 !%   
-    subroutine adjust_zerodepth_facevalues (thisCol)
-        !%----------------------------------------------------------------------
-        !% Description
-        !% sets the face fluxes to zero for outflows from a zerodepth element
-        !% call with thisCol=0 to do all elements
-        !%----------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: thisCol
-            logical, pointer :: isZeroDepth(:)
-            integer, pointer :: fdn(:), fup(:), thisP(:)
-            integer          :: Npack
-            integer :: ii
-        !%----------------------------------------------------------------------
-        !% Preliminaries
-        !%----------------------------------------------------------------------
-        !% Aliases
-            isZeroDepth => elemYN(:,eYN_isZeroDepth)
-            fdn => elemI(:,ei_Mface_dL)
-            fup => elemI(:,ei_Mface_uL)
-        !%----------------------------------------------------------------------
+    ! subroutine adjust_zerodepth_face_values (thisCol)
+    !     !%----------------------------------------------------------------------
+    !     !% Description
+    !     !% sets the face fluxes to zero for outflows from a zerodepth element
+    !     !% call with thisCol=0 to do all elements
+    !     !%----------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: thisCol
+    !         logical, pointer :: isZeroDepth(:)
+    !         integer, pointer :: fdn(:), fup(:), thisP(:)
+    !         integer          :: Npack
+    !         integer :: ii
+    !     !%----------------------------------------------------------------------
+    !     !% Preliminaries
+    !     !%----------------------------------------------------------------------
+    !     !% Aliases
+    !         isZeroDepth => elemYN(:,eYN_isZeroDepth)
+    !         fdn => elemI(:,ei_Mface_dL)
+    !         fup => elemI(:,ei_Mface_uL)
+    !     !%----------------------------------------------------------------------
 
-        !% --- set up for either the entire array or a packed section   
-        if (thisCol == zeroI) then
-            Npack = N_elem(this_image())
-            thisP => elemI(1:Npack,ei_Lidx)
-        else
-            Npack = npack_elemP(thisCol)
-            if (Npack > 0) then
-                thisP => elemP(1:Npack,thisCol)
-            else
-                return
-            end if
-        end if
+    !     !% --- set up for either the entire array or a packed section   
+    !     if (thisCol == zeroI) then
+    !         Npack = N_elem(this_image())
+    !         thisP => elemI(1:Npack,ei_Lidx)
+    !     else
+    !         Npack = npack_elemP(thisCol)
+    !         if (Npack > 0) then
+    !             thisP => elemP(1:Npack,thisCol)
+    !         else
+    !             return
+    !         end if
+    !     end if
 
-        !% On the upstream face set the downstream element values for area and head
-        where ((isZeroDepth(thisP)) .and. (fup(thisP) .ne. nullValueI))
-            faceR(fup(thisP),fr_Area_d)        = setting%ZeroValue%Area
-            faceR(fup(thisP),fr_Head_d)        = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
-        end where
+    !     !% On the upstream face set the downstream element values for area and head
+    !     where ((isZeroDepth(thisP)) .and. (fup(thisP) .ne. nullValueI))
+    !         faceR(fup(thisP),fr_Area_d)        = setting%ZeroValue%Area
+    !         faceR(fup(thisP),fr_Head_d)        = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+    !     end where
 
-        !% On the downstream face set the upstream element values for area and head
-        where ((isZeroDepth(thisP)) .and. (fdn(thisP) .ne. nullValueI))
-            faceR(fdn(thisP),fr_Area_u)        = setting%ZeroValue%Area
-            faceR(fdn(thisp),fr_Head_u)        = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
-        end where
+    !     !% On the downstream face set the upstream element values for area and head
+    !     where ((isZeroDepth(thisP)) .and. (fdn(thisP) .ne. nullValueI))
+    !         faceR(fdn(thisP),fr_Area_u)        = setting%ZeroValue%Area
+    !         faceR(fdn(thisp),fr_Head_u)        = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
+    !     end where
             
-        !% a zero volume can only have an inflow from faces (no outflow)...
-        where ( (isZeroDepth(thisP)) .and. (fdn(thisP) .ne. nullvalueI) )
-            !% set the downstream face flowrate to zero or keep the value if it is negative
-            faceR(fdn(thisP),fr_Flowrate) &
-                = onehalfR * ( faceR(fdn(thisP),fr_Flowrate) - abs(faceR(fdn(thisP),fr_Flowrate)) )
-        end where
+    !     !% a zero volume can only have an inflow from faces (no outflow)...
+    !     where ( (isZeroDepth(thisP)) .and. (fdn(thisP) .ne. nullvalueI) )
+    !         !% set the downstream face flowrate to zero or keep the value if it is negative
+    !         faceR(fdn(thisP),fr_Flowrate) &
+    !             = onehalfR * ( faceR(fdn(thisP),fr_Flowrate) - abs(faceR(fdn(thisP),fr_Flowrate)) )
+    !     end where
 
-        where ( (isZeroDepth(thisP)) .and. (fup(thisP) .ne. nullvalueI) )
-            !% set the upstream face flowrate to zero or keep the value if it is positive    
-            faceR(fup(thisP),fr_Flowrate) &
-                = onehalfR * ( faceR(fup(thisP),fr_Flowrate) + abs(faceR(fup(thisP),fr_Flowrate)) )
-        end where
+    !     where ( (isZeroDepth(thisP)) .and. (fup(thisP) .ne. nullvalueI) )
+    !         !% set the upstream face flowrate to zero or keep the value if it is positive    
+    !         faceR(fup(thisP),fr_Flowrate) &
+    !             = onehalfR * ( faceR(fup(thisP),fr_Flowrate) + abs(faceR(fup(thisP),fr_Flowrate)) )
+    !     end where
 
-    end subroutine adjust_zerodepth_facevalues
+    ! end subroutine adjust_zerodepth_face_values
 !%     
 !%==========================================================================
 !% PRIVATE

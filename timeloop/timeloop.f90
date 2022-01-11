@@ -187,6 +187,9 @@ contains
                     !% continue
                 end if
 
+                !write (*,*) ' '
+                !write(*,"(A,f12.2,A)") 'time loop ',timeNow, '=================================='
+
                 !% --- perform hydraulic routing
                 call tl_hydraulics()
 

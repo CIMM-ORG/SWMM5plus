@@ -418,7 +418,8 @@ module define_indexes
         enumerator :: ep_NonSurcharged_AC           !% all surcharged with AC
         enumerator :: ep_NonSurcharged_ALLtm        !% all time march nonsurcharged
         enumerator :: ep_NonSurcharged_ETM          !% all surcharged with ETM
-        enumerator :: ep_SmallDepth_CC_ALLtm        !% small depth conduit cells with any time march
+        enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
+        enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
         enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
         enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
         enumerator :: ep_Surcharged_AC              !% all surcharged with AC
@@ -444,9 +445,9 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels that are not surcharged
-        enumerator :: epg_CCJM_trapezoidal_nonsurcharged     !% CC and JM trapezoidal channels that are not surcharged
-        enumerator :: epg_CCJM_circular_nonsurcharged        !% CC and JM circular conduits that are not surcharged
+        enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
+        enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
+        enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
         enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JM_artificial_nonsurcharged        !% JM with artificial storage

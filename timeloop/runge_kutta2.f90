@@ -52,21 +52,89 @@ module runge_kutta2
         !% moved to start of timeloop rather than inside the RK
         faceR(:,fr_Flowrate_Conservative) = zeroR  
 
+                ! write(*,*) ' AAA --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! !write(*,"(A,7e12.4)")       'iWuQ  ',elemR(ietmp,er_InterpWeight_uQ)
+                ! !write(*,"(A,7e12.4)")       'iWdQ  ',elemR(ietmp,er_InterpWeight_dQ)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
         call rk2_step_ETM (istep)
 
+                ! write(*,*) ' BBB --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! !write(*,"(A,7e12.4)")       'iWuQ  ',elemR(ietmp,er_InterpWeight_uQ)
+                ! !write(*,"(A,7e12.4)")       'iWdQ  ',elemR(ietmp,er_InterpWeight_dQ)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+           
+
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         call update_auxiliary_variables (ETM)
 
-        !% update zero/small depth fluxes before JB computation
-        call adjust_zerodepth_fluxes (ep_ZeroDepth_CC_ALLtm) !HACK needs ETM instead of ALLtm
-        call adjust_smalldepth_bypack ()
+                ! write(*,*) ' CCC --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! !write(*,"(A,7e12.4)")       'iWuQ  ',elemR(ietmp,er_InterpWeight_uQ)
+                ! !write(*,"(A,7e12.4)")       'iWdQ  ',elemR(ietmp,er_InterpWeight_dQ)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+    
+
+        !% update zero/small depth on elements before JB computation (faces not needed)
+        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm) !HACK needs ETM instead of ALLtm
+        call adjust_smalldepth_element_fluxes ()
         call adjust_limit_velocity_max (ETM)
 
-        !% --- store the max flowrate allowed on a face, which is used for JB
+                ! write(*,*) ' DDD --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! !write(*,"(A,7e12.4)")       'iWuQ  ',elemR(ietmp,er_InterpWeight_uQ)
+                ! !write(*,"(A,7e12.4)")       'iWdQ  ',elemR(ietmp,er_InterpWeight_dQ)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+  
+
+        !% --- store the max flowrate allowed on a face based on elements, which is used for JB
         call face_flowrate_max_interior (fp_all)
         call face_flowrate_max_shared   (fp_all)
+
+                ! write(*,*) ' EEE --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! !write(*,"(A,7e12.4)")       'iWuQ  ',elemR(ietmp,er_InterpWeight_uQ)
+                ! !write(*,"(A,7e12.4)")       'iWdQ  ',elemR(ietmp,er_InterpWeight_dQ)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
 
         !% --- junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
@@ -81,37 +149,135 @@ module runge_kutta2
         !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
-        !% update zero/small depth fluxes on Junctions
-        call adjust_zerodepth_fluxes (ep_ZeroDepth_JM_ALLtm)
+        !% --- update zerodepth element values on Junctions JM
+        !%     not needed on CC as the small volume does not affect Q on JM
+        call adjust_zerodepth_element_values (ep_ZeroDepth_JM_ALLtm)
 
+                !  write(*,*) ' FFF --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! !write(*,"(A,7e12.4)")       'iWuQ  ',elemR(ietmp,er_InterpWeight_uQ)
+                ! !write(*,"(A,7e12.4)")       'iWdQ  ',elemR(ietmp,er_InterpWeight_dQ)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+                
+        
         !% --- RK2 solution step  -- all face interpolation
         call face_interpolation(fp_all,ETM)
+
+                ! write(*,*) ' GGG --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
+        !% --- reset for small depth and zero
+        call adjust_smalldepth_face_fluxes(.true.)
+        call adjust_zerodepth_face_fluxes_CC (ep_ZeroDepth_CC_ALLtm,.true.)
+        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.true.)
+
+                ! write(*,*) ' HHH --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
         !% --- RK2 solution step  -- make ad hoc adjustments
-        !call adjust_values (ETM) ? brh20220207 removed from 1st step
+        call adjust_values (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ETM)
+
+                ! write(*,*) ' III --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
         istep=2
         call rk2_step_ETM (istep)
 
+                ! write(*,*) ' JJJ --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         call update_auxiliary_variables(ETM)
 
+                ! write(*,*) ' KKK --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
         !% --- update zero/small depth fluxes before JB computation
-        call adjust_zerodepth_fluxes (ep_ZeroDepth_CC_ALLtm) !HACK needs ETM instead of ALLtm
-        call adjust_smalldepth_bypack ()
-        call adjust_limit_velocity_max (ETM)       
+        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm) !HACK needs ETM instead of ALLtm
+        call adjust_smalldepth_element_fluxes ()
+        call adjust_limit_velocity_max (ETM)    
+
+                !  write(*,*) ' LLL --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
         
         !% --- store the max flowrate allowed on a face, which is used for JB
         call face_flowrate_max_interior (fp_all)
         call face_flowrate_max_shared   (fp_all)
+
+                ! write(*,*) ' MMM --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
 
         !% --- junction branch flowrate and velocity update
         if (.not. setting%Junction%isDynamicYN) then
@@ -126,6 +292,17 @@ module runge_kutta2
         !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
 
+                ! write(*,*) ' PPP --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
         !% update zero and small volumes before face interpolation
         !% here we identify new zero/small prior to face interpolation
         !% so that we can make needed ad hoc adjustments. Note that
@@ -136,13 +313,52 @@ module runge_kutta2
         call adjust_zerodepth_identify_all ()
         call adjust_smalldepth_identify_all ()
         call pack_small_and_zero_depth_elements ()
-        call adjust_zerodepth_bypack (ep_ZeroDepth_CC_ALLtm)
-        call adjust_zerodepth_bypack (ep_ZeroDepth_JM_ALLtm)
-        call adjust_smalldepth_bypack ()
+        
+        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm)
+        call adjust_zerodepth_element_values (ep_ZeroDepth_JM_ALLtm) 
+        call adjust_smalldepth_element_fluxes ()
         call adjust_limit_velocity_max (ETM)
+
+                ! write(*,*) ' SSS --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
 
         !% --- RK2 solution step -- update all faces
         call face_interpolation(fp_all,ETM)
+
+                ! write(*,*) ' UUU --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+
+        !% --- reset for small depth and zero, but do not reset Conservative Flowrate
+        call adjust_smalldepth_face_fluxes(.false.)
+        call adjust_zerodepth_face_fluxes_CC   (ep_ZeroDepth_CC_ALLtm,.false.)
+        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.false.)
+
+                ! write(*,*) ' YYY --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
 
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
@@ -153,20 +369,27 @@ module runge_kutta2
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_values (ETM)
 
-        !% readjust for small/zero depths so that V filter 
-        !% does not affect these.
-        call adjust_zerodepth_bypack (ep_ZeroDepth_CC_ALLtm)
-        call adjust_zerodepth_bypack (ep_ZeroDepth_JM_ALLtm)
-        call adjust_smalldepth_bypack ()   
+        !% --- readjust for small/zero depths so that V filter 
+        !%     does not affect these (no need to reset faces)
+        !%     HACK -- this should be inside the adjust_values because
+        !%     its only needed if adjust_values is called.
+        call adjust_zerodepth_element_values(ep_ZeroDepth_CC_ALLtm)
+        call adjust_zerodepth_element_values(ep_ZeroDepth_JM_ALLtm)
+        call adjust_smalldepth_element_fluxes () 
 
 
-        ! write(*,*) ' ZZZ --------'
-
-        ! write(*,"(A,f12.4,A,f12.4)") 'Qf         ',faceR(iftmp2,fr_Flowrate)
-        ! write(*,"(A,2f12.4)")       'Qe2 ',elemR(ietmp2,er_Flowrate)
-        ! write(*,"(A,7f12.4)")       'Qe1 ',elemR(ietmp,er_Flowrate)
-        ! write(*,"(A,f12.4,A,f12.4)") 'Qf         ',faceR(iftmp(1),fr_Flowrate),'                        ',faceR(iftmp(2),fr_Flowrate),' ',faceR(iftmp(3),fr_Flowrate)
-
+                ! write(*,*) ' ZZZ --- '
+                ! print *, elemYN(ietmp,eYN_isSmallDepth)
+                ! print *, elemYN(ietmp,eYN_isZeroDepth)
+                ! write(*,"(A,7f12.4)")       'Vol   ',elemR(ietmp,er_Volume)
+                ! write(*,"(A,7f12.4)")       'He    ',elemR(ietmp,er_Head)
+                ! write(*,"(A,7f12.4)")       'De    ',elemR(ietmp,er_Depth)
+                ! write(*,"(A,7f12.4)")       'QeLat ',elemR(ietmp,er_FlowrateLateral)
+                ! write(*,"(A,7f12.4)")       'Qe    ',elemR(ietmp,er_Flowrate)
+                ! write(*,"(A,5f12.4)") 'Qf          ',faceR(iftmp,fr_Flowrate)
+                ! write(*,"(A,5f12.4)") 'QfCons      ',faceR(iftmp,fr_Flowrate_Conservative)
+            
+                ! print *, ' '
 
         ! print *, ' '
         ! write(*,"(A,f12.4,A,f12.4)") 'Hf         ',faceR(iftmp2,fr_Head_d)

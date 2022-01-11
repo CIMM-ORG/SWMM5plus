@@ -436,21 +436,21 @@ module geometry
         !%-------------------------------------------------------------------    
         !% cycle through different geometries
         !% RECTANGULAR
-        thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+        thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% TRAPEZOIDAL
-        thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% CIRCULAR
-        thisCol => col_elemPGx(epg_CCJM_circular_nonsurcharged)
+        thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
@@ -606,21 +606,21 @@ module geometry
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        Npack => npack_elemPGx(epg_CCJM_circular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_circular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
@@ -649,22 +649,22 @@ module geometry
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
-        Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% cycle through different geometries
-        Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        Npack => npack_elemPGx(epg_CCJM_circular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_circular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
@@ -694,23 +694,23 @@ module geometry
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
-        Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% cycle through different geometries
-        Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% cycle through different geometries
-        Npack => npack_elemPGx(epg_CCJM_circular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CCJM_circular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
