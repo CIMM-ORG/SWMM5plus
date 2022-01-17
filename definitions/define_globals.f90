@@ -23,6 +23,15 @@ module define_globals
     ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
+    integer :: ieBup1(3) = (/352, 623, 615 /)
+    integer :: ieBup2(5) = (/291, 292, 293,  611, 613/)
+    integer :: ieBdn(3)  = (/ 614 ,624, 210/)
+
+    integer :: ifBup1(2) = (/363, 620/)
+    integer :: ifBup2(4) = (/301, 302, 303, 618/)
+
+    integer :: ifBdn(2) = (/619, 218/)
+
     !integer :: ietmp(5) =  (/383, 384, 625, 626, 294 /)
     !integer :: iftmp(4) =     (/395, 396, 628, 304/)
 

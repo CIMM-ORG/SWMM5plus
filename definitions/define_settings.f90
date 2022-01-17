@@ -246,6 +246,15 @@ module define_settings
         integer (kind=8):: TimeMarchEnd = 0
         integer (kind=8):: InitializationEnd = 0
         integer (kind=8):: FinalOutputStart = 0
+        integer (kind=8):: SharedStart_A = 0
+        integer (kind=8):: SharedStop_A = 0
+        integer (kind=8):: SharedCumulative_A = 0
+        integer (kind=8):: SharedStart_B = 0
+        integer (kind=8):: SharedStop_B = 0
+        integer (kind=8):: SharedCumulative_B = 0
+        integer (kind=8):: SharedStart_C = 0
+        integer (kind=8):: SharedStop_C = 0
+        integer (kind=8):: SharedCumulative_C = 0
     end type
 
     !% setting%Weir% ...Transverse, SideFlow, VNotch, Trapezoidal
@@ -507,7 +516,7 @@ module define_settings
         ! Dont using small volumes for weir case.
         ! Needed to be changed later SmallVolumeType
         !logical :: UseSmallVolumesYN = .true.
-        real(8) :: DepthCutoff = 0.02 ! m
+        real(8) :: DepthCutoff = 0.03 ! m
         real(8) :: ManningsN = 0.1
     end type SmallDepthType
 
@@ -571,9 +580,9 @@ module define_settings
     !% setting%VariableDT
     type VariableDTType
         logical :: ApplyYN = .true.
-        real(8) :: CFL_hi_max = 0.7
-        real(8) :: CFL_target = 0.45
-        real(8) :: CFL_lo_max = 0.3
+        real(8) :: CFL_hi_max = 0.3
+        real(8) :: CFL_target = 0.22
+        real(8) :: CFL_lo_max = 0.1
         real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2 
         integer :: NstepsForCheck = 10

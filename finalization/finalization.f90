@@ -170,7 +170,15 @@ contains
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in hydraulics     : ',hydraulics_time, ' ',trim(hydraulics_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in communication  : ',shared_time, ' ',trim(shared_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in final output   : ',lastoutput_time, ' ',trim(lastoutput_units)    
+
+                ! print *, ' '
+                ! print *,  real(setting%Time%WallClock%SharedCumulative,kind=8) / real(setting%Time%WallClock%CountRate,kind=8)
+                ! print *,  real(setting%Time%WallClock%SharedCumulative_A,kind=8) / real(setting%Time%WallClock%CountRate,kind=8)
+                ! print *,  real(setting%Time%WallClock%SharedCumulative_B,kind=8) / real(setting%Time%WallClock%CountRate,kind=8)
+                ! print *,  real(setting%Time%WallClock%SharedCumulative_C,kind=8) / real(setting%Time%WallClock%CountRate,kind=8)
             end if
+
+
 
         end if
 

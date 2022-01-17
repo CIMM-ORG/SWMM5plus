@@ -23,6 +23,7 @@ module adjust
     public :: adjust_limit_by_zerovalues  !% used in geometry
     public :: adjust_limit_by_zerovalues_singular  !% used in geometry
     public :: adjust_limit_velocity_max
+    public :: adjust_JB_flux_to_equal_face
 
 
 
@@ -403,11 +404,12 @@ module adjust
         !% -----------------------------------------------------------------
         !% Declarations:
             integer, pointer :: thisCol
-            integer, pointer :: npack, thisP(:), fdn(:), fup(:)
+            integer, pointer :: npack, thisP(:), fdn(:), fup(:), oneArray(:)
             real(8), pointer :: Area(:), BottomSlope(:), CMvelocity(:)
             real(8), pointer :: Flowrate(:), HydRadius(:), ManningsN(:)
             real(8), pointer :: Velocity(:), VelocityBlend(:), svRatio(:)
             real(8), pointer :: SmallVolume(:), Volume(:), faceFlow(:), faceFlowCons(:)
+            real(8), pointer :: fHead_u(:), fHead_d(:), Length(:)
             integer, target  :: pset(2)
             real(8)          :: psign(2)
             integer :: ii
@@ -425,12 +427,18 @@ module adjust
             CMvelocity    => elemR(:,er_SmallVolume_CMvelocity) 
             Flowrate      => elemR(:,er_Flowrate)
             HydRadius     => elemR(:,er_HydRadius)
+            Length        => elemR(:,er_Length)
             ManningsN     => elemR(:,er_SmallVolume_ManningsN)   
             SmallVolume   => elemR(:,er_SmallVolume)  
             svRatio       => elemR(:,er_SmallVolumeRatio)
             Velocity      => elemR(:,er_Velocity)
             VelocityBlend => elemR(:,er_Temp01)
             Volume        => elemR(:,er_Volume)
+            fHead_d       => faceR(:,fr_Head_d)
+            fHead_u       => faceR(:,fr_Head_u)
+            oneArray      => elemI(:,er_ones)
+            fdn           => elemI(:,ei_Mface_dL)
+            fup           => elemI(:,ei_Mface_uL)
         !% -----------------------------------------------------------------          
         do ii = 1,size(pset)
             thisCol => col_elemP(pset(ii))
@@ -449,8 +457,13 @@ module adjust
             ! endwhere    
 
             !% chezy-manning velocity based on bottom slope
-            CMvelocity(thisP) = psign(ii) * ( HydRadius(thisP)**(twothirdR) ) &
-                        * sqrt(abs(BottomSlope(thisP))) / ManningsN(thisP)
+            !CMvelocity(thisP) = psign(ii) * ( HydRadius(thisP)**(twothirdR) ) &
+            !            * sqrt(abs(BottomSlope(thisP))) / ManningsN(thisP)
+
+            !% chezy-manning velocity based on head slop
+            CMvelocity(thisP) = sign( real(oneArray(thisP),8), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
+            *  ( HydRadius(thisP)**(twothirdR) ) &
+            * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) ) / ManningsN(thisP)
                     
             !% blend the computed velocity with CM velocity
             VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
@@ -554,6 +567,53 @@ module adjust
         !% Closing:
 
     end subroutine adjust_zerodepth_face_fluxes_JMJB
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_JB_flux_to_equal_face (whichTM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% makes the JB flowrate equal to the face flowrate
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM
+            integer :: thisCol, ii
+            integer, pointer :: npack, thisP(:), fdn(:), fup(:), isbranch(:)
+            real(8), pointer :: eQ(:), fQ(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            select case (whichTM)
+            case (ETM)
+                thisCol = ep_JM_ETM
+            case default
+                print *, 'CODE ERROR: case default not completed'
+                stop 398703
+            end select
+            npack => npack_elemP(thisCol)
+            if (npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP => elemP(1:npack,thisCol)
+            eQ    => elemR(:,er_Flowrate)
+            fQ    => faceR(:,fr_Flowrate)
+            fdn   => elemI(:,ei_Mface_dL)
+            fup   => elemI(:,ei_Mface_uL)
+            isbranch => elemSI(:,esi_JunctionBranch_Exists)
+        !%------------------------------------------------------------------
+        
+        !% assign the upstream face flux to the JB
+        do ii=1,max_branch_per_node,2
+            eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
+        end do
+
+        !% assign the downstream face flux to the JB
+        do ii=2,max_branch_per_node,2
+            eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
+        end do
+        
+
+    end subroutine adjust_JB_flux_to_equal_face
 !%  
 !%==========================================================================   
 !%==========================================================================
@@ -836,7 +896,7 @@ module adjust
             integer, intent(in) :: whichTM
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
-            real(8), pointer :: coef, vMax
+            real(8), pointer :: coef, vMax, Qlateral(:)
             real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:)
             real(8), pointer ::  w_uQ(:), w_dQ(:), elemArea(:), Vvalue(:)
             logical, pointer :: isSmallDepth(:), isNearZeroDepth(:)
@@ -874,6 +934,7 @@ module adjust
             w_uQ     => elemR(:,er_InterpWeight_uQ)
             w_dQ     => elemR(:,er_InterpWeight_dQ)
             Vvalue   => elemR(:,er_Temp01)
+            Qlateral => elemR(:,er_FlowrateLateral)
             isSmallDepth   => elemYN(:,eYN_isSmallDepth)
             isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
             coef => setting%Adjust%Flowrate%Coef
@@ -898,9 +959,11 @@ module adjust
         !     print *, faceFlow(mapUp(ietmp(2))), elemFlow(ietmp(2)), faceFlow(mapDn(ietmp(2)))
         ! end if
 
-        where     ( (Vvalue(thisP) > zeroR)        &
-            .and.   (.not. isSmallDepth  (thisP))   &
-            .and.   (.not. isNearZeroDepth(thisP))  )
+        where     ( (Vvalue(thisP) > zeroR)         &
+             .and.   (.not. isSmallDepth  (thisP))   &
+             .and.   (.not. isNearZeroDepth(thisP))  &
+         )
+        !   .and.   (Qlateral(thisP) .ne. zeroR) )
 
             !% averaging based on interpolation weights
             !% this had problems with lateral inflow conditions that

@@ -2233,11 +2233,19 @@ contains
         integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn, Nfaces
         integer, pointer :: c_image, N_shared_faces, thisP
         logical, pointer :: isUpGhost, isDnGhost
+        integer(kind=8) :: crate, cmax, cval
         character(64) :: subroutine_name = 'pack_static_shared_faces'
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        ! !% start the shared timer    
+        ! sync all    
+        ! if (this_image()==1) then
+        !     call system_clock(count=cval,count_rate=crate,count_max=cmax)
+        !     setting%Time%WallClock%SharedStart = cval
+        ! end if
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -2306,6 +2314,16 @@ contains
             end do
         end if
 
+        !% stop the shared timer
+        sync all
+        ! if (this_image()==1) then
+        !     call system_clock(count=cval,count_rate=crate,count_max=cmax)
+        !     setting%Time%WallClock%SharedStop = cval
+        !     setting%Time%WallClock%SharedCumulative &
+        !             = setting%Time%WallClock%SharedCumulative &
+        !             + setting%Time%WallClock%SharedStop &
+        !             - setting%Time%WallClock%SharedStart
+        ! end if 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_static_shared_faces
@@ -2326,13 +2344,20 @@ contains
         integer, pointer :: ptype, npack, fIdx(:), Nfaces
         integer, pointer :: N_shared_faces, thisP, eup, edn, gup, gdn, c_image
         logical, pointer :: isUpGhost, isDnGhost
+        integer(kind=8) :: crate, cmax, cval
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        sync all
+            
+        !% start the shared timer    
+        sync all    
+        if (this_image()==1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStart = cval
+            setting%Time%WallClock%SharedStart_B = cval
+        end if
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -2412,6 +2437,22 @@ contains
                 (faceI(1:Nfaces,fi_jump_type) == jump_from_downstream))
         end if
 
+        !% stop the shared timer
+        sync all
+        if (this_image()==1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop = cval
+            setting%Time%WallClock%SharedCumulative &
+                    = setting%Time%WallClock%SharedCumulative &
+                    + setting%Time%WallClock%SharedStop &
+                    - setting%Time%WallClock%SharedStart
+
+            setting%Time%WallClock%SharedStop_B = cval
+            setting%Time%WallClock%SharedCumulative_B &
+                    = setting%Time%WallClock%SharedCumulative_B &
+                    + setting%Time%WallClock%SharedStop_B &
+                    - setting%Time%WallClock%SharedStart_B            
+        end if 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_shared_faces

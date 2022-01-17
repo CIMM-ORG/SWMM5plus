@@ -188,7 +188,7 @@ contains
                 end if
 
                 !write (*,*) ' '
-                !write(*,"(A,f12.2,A)") 'time loop ',timeNow, '=================================='
+                !write(*,"(A,f12.2,A)") 'time loop ',timeNow/3600.0, '===================================================================='
 
                 !% --- perform hydraulic routing
                 call tl_hydraulics()

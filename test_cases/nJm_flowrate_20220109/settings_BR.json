@@ -43,13 +43,13 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 100
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : false,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
-            "isFluxConsOut"     : false,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,

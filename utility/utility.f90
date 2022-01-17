@@ -32,6 +32,8 @@ module utility
     public :: util_find_neighbors_of_CC_element
     public :: util_find_neighbors_of_JM_element
 
+    public :: util_CLprint
+
     contains
 !%
 !%==========================================================================
@@ -138,7 +140,6 @@ module utility
 !%==========================================================================
 !%==========================================================================
 !%
-
     subroutine util_print_warning(msg,async)
         !%------------------------------------------------------------------
         !% Used for opening up the warning files and writing to the file
@@ -202,7 +203,7 @@ module utility
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
             integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
             integer, pointer :: fdn(:), fup(:), BranchExists(:)
-            integer :: ii
+            integer :: ii,kk
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------
@@ -238,14 +239,17 @@ module utility
             !              - (VolNew(thisP) - VolOld(thisP))      
                           
             ! do ii = 1,size(thisP)
-            !     if (abs(eCons(thisP(ii))) > 1.0) then
-            !         print *, ii, thisP(ii), this_image()
+            !     if (abs(eCons(thisP(ii))) > 1.0e-4) then
+            !         print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
             !         print *,  eCons(thisP(ii))
             !         print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
-            !         print *, VolNew(thisP(ii)), VolOld(thisP(ii))
-            !         stop 358783
+            !         print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
+            !         do kk=1,num_images()
+            !             stop 358783
+            !         end do
             !     end if
-            ! end do              
+            ! end do    
+
         end if
 
         !% HACK -- need an equivalent of the ep_CC_Q_NOTsmall depth for JM
@@ -266,6 +270,26 @@ module utility
                              + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii)) &
                                     - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) )
             end do
+            
+            ! do ii = 1,size(thisP)
+            !     if (abs(eCons(thisP(ii))) > 1.0e-2) then
+            !         print *, ' '
+            !         print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
+            !         print *,  'net cons ',eCons(thisP(ii))
+            !         do kk = 1,max_branch_per_node,2
+            !             print *, 'branch ',kk, fQ(fup(thisP(ii)+kk)  ) * real(BranchExists(thisP(ii)+kk  ),8) ,  &
+            !                      fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
+            !         end do
+            !         print *, ' vol ', VolNew(thisP(ii)), VolOld(thisP(ii))
+            !         print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii)))
+            !         print *, 'net Q' , dt * (eQlat(thisP(ii)) + fQ(fup(thisP(ii)+1)  )+ fQ(fup(thisP(ii)+3)  )- fQ(fup(thisP(ii)+2)  ))
+            !         print *, ' '
+            !         do kk=1,num_images()
+            !             stop 358783
+            !         end do
+            !     end if
+            ! end do  
+
             !print *, eCons(thisP), (VolNew(thisP) - VolOld(thisP)), dt * eQlat(thisP)
             !print *, ' ', elemYN(thisP,eYN_isSmallDepth), elemYN(thisP,eYN_isZeroDepth)
             !write(*,"(8f12.4)") VolNew(thisP), VolOld(thisP), dt * fQ(fup(thisP+1)), dt * fQ(fup(thisP+3)), dt*fQ(fdn(thisP+2))
@@ -565,6 +589,95 @@ module utility
         !%------------------------------------------------------------------
         !% Closing:
     end subroutine util_find_neighbors_of_JM_element
+!%
+!%==========================================================================    
+!%==========================================================================
+!%
+    subroutine util_CLprint ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Used as a debugging write routine
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: ii
+            integer, pointer :: fup(:), fdn(:)
+            real(8), pointer :: dt
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:
+            fup => faceI(:,fi_Melem_uL)
+            fdn => faceI(:,fi_Melem_dL)
+            dt  => setting%Time%Hydraulics%Dt
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Closing:
+
+        ! if (this_image() == 2) then
+        !     print *, ' '
+        !     ii = 5428
+        !     print *, ii, reverseKey(elemI(ii,ei_elementType))
+        !     print *, elemYN(ii,eYN_isSmallDepth), elemYN(ii,eYN_isZeroDepth)
+        !     !print *, 'qlat ',elemR(ii,er_FlowrateLateral)
+        !     !print *, elemR(ii+1,er_Flowrate), elemR(ii+3, er_Flowrate), elemR(ii+2, er_Flowrate)
+        !     print *, faceR(fup(ii+1),fr_Flowrate), faceR(fup(ii+3),fr_Flowrate), faceR(fup(ii+2),fr_Flowrate)
+        !     !print *, faceR(fup(ii+1),fr_Flowrate_Conservative), faceR(fup(ii+3), fr_Flowrate_Conservative), faceR(fdn(ii+2), fr_Flowrate_Conservative)
+        !     print *, 'vol delta ',elemR(ii,er_Volume) - elemR(ii,er_Volume_N0)
+        !     !print *,   dt * faceR(fup(ii+1), fr_Flowrate_Conservative) &
+        !     !         + dt * faceR(fup(ii+3), fr_Flowrate_Conservative) &
+        !     !        - dt * faceR(fdn(ii+2), fr_Flowrate_Conservative)
+        !     print *,  dt * faceR(fup(ii+1), fr_Flowrate) &
+        !             + dt * faceR(fup(ii+3), fr_Flowrate) &
+        !             - dt * faceR(fdn(ii+2), fr_Flowrate)
+        ! end if
+
+        ! print *, elemYN(ieBup2,eYN_isSmallDepth)
+        ! print *, elemYN(ieBup2,eYN_isZeroDepth)
+        ! write(*,"(A,9(f10.4,A))") 'Q up2 ', &
+        !                                 elemR(ieBup2(1),er_Flowrate), ' | ', &
+        !                                 faceR(ifBup2(1),fr_Flowrate), ' | ', &
+        !                                 elemR(ieBup2(2),er_flowrate), ' | ', &
+        !                                 faceR(ifBup2(2),fr_Flowrate), ' | ', &
+        !                                 elemR(ieBup2(3),er_flowrate), ' | ', &
+        !                                 faceR(ifBup2(3),fr_Flowrate), ' | ', &
+        !                                 elemR(ieBup2(4),er_Flowrate), ' | ', &
+        !                                 faceR(ifBup2(4),fr_Flowrate), ' | ', &
+        !                                 elemR(ieBup2(5),er_Flowrate)
+
+        ! write(*,"(A,9(f10.4,A))") 'Q Con2', &
+        !                                 elemR(ieBup2(1),er_FlowrateLateral), ' | ', &
+        !                                 faceR(ifBup2(1),fr_Flowrate_Conservative), ' | ', &
+        !                                 elemR(ieBup2(2),er_FlowrateLateral), ' | ', &
+        !                                 faceR(ifBup2(2),fr_Flowrate_Conservative), ' | ', &
+        !                                 elemR(ieBup2(3),er_FlowrateLateral), ' | ', &
+        !                                 faceR(ifBup2(3),fr_Flowrate_Conservative), ' | ', &
+        !                                 elemR(ieBup2(4),er_FlowrateLateral), ' | ', &
+        !                                 faceR(ifBup2(4),fr_Flowrate_Conservative), ' | ', &
+        !                                 elemR(ieBup2(5),er_FlowrateLateral)
+
+        ! write(*,"(A,8(f10.4,A),2f10.4)") 'H     ', &
+        !                             elemR(ieBup2(1),er_Head),   ' | ', &
+        !                             faceR(ifBup2(1),fr_Head_u), ' | ', &
+        !                             elemR(ieBup2(2),er_Head),   ' | ', &
+        !                             faceR(ifBup2(2),fr_Head_u), ' | ', &
+        !                             elemR(ieBup2(3),er_Head),   ' | ', &
+        !                             faceR(ifBup2(3),fr_Head_u), ' | ', &
+        !                             elemR(ieBup2(4),er_Head),   ' | ', &
+        !                             faceR(ifBup2(4),fr_Head_u), ' | ', &
+        !                             elemR(ieBup2(5),er_Head), elemR(612,er_Head)
+
+        ! write(*,"(A,8(f10.4,A),2f10.4)") 'D     ', &
+        !                             elemR(ieBup2(1),er_Depth),   ' | ', &
+        !                             faceR(ifBup2(1),fr_HydDepth_u), ' | ', &
+        !                             elemR(ieBup2(2),er_Depth),   ' | ', &
+        !                             faceR(ifBup2(2),fr_HydDepth_u), ' | ', &
+        !                             elemR(ieBup2(3),er_Depth),   ' | ', &
+        !                             faceR(ifBup2(3),fr_HydDepth_u), ' | ', &
+        !                             elemR(ieBup2(4),er_Depth),   ' | ', &
+        !                             faceR(ifBup2(4),fr_HydDepth_u), ' | ', &
+        !                             elemR(ieBup2(5),er_Depth), elemR(612,er_Depth)
+
+    end subroutine util_CLprint    
 !%
 !%==========================================================================    
 !%==========================================================================

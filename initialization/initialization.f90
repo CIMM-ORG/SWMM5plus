@@ -257,14 +257,32 @@ contains
        
             ! !% debugging -- keep this stuff around to find an element with a given name
             !  call util_find_elements_in_link &
-            !      ('9',thislink_idx, thislink_image, elemInLink, nElemInLink)
+            !      ('12',thislink_idx, thislink_image, elemInLink, nElemInLink)
 
             ! print *, ' '
             ! do ii=1,nElemInLink
             !     call util_find_neighbors_of_CC_element (elemInLink(ii), iset)
             !     print *, 'for elemID ',elemInLink(ii)
+            !     print *, 'type       ',trim(reverseKey(elemI(elemInLink(ii),ei_elementType)))
             !     print *, iset
+            !     print *, 'type     ',trim(reverseKey(elemI(iset(1),ei_elementType))),'        face          ', &
+            !                          trim(reverseKey(elemI(iset(3),ei_elementType))),'        face          ', &
+            !                          trim(reverseKey(elemI(iset(5),ei_elementType)))
             ! end do
+
+            ! print *, trim(reverseKey(elemI(611,ei_elementType)))
+            ! print *, trim(reverseKey(elemI(612,ei_elementType)))
+            ! print *, trim(reverseKey(elemI(613,ei_elementType)))
+            ! print *, trim(reverseKey(elemI(614,ei_elementType)))
+
+            ! print *, 'upper elem'
+            ! print *, elemI(611,ei_Mface_uL)
+            ! print *, faceI(elemI(611,ei_Mface_uL),fi_Melem_uL)
+            ! print *, ' '
+            ! print *, ' lower elem'
+            ! print *, elemI(624,ei_Mface_dL)
+            ! print *, faceI(elemI(624,ei_Mface_dL),fi_Melem_dL)
+
 
             ! print *, ' '
             ! call util_find_elements_in_junction_node &
@@ -286,9 +304,11 @@ contains
             ! end do
 
             !print *, faceI(,fi_Melem_uL), 635, reverseKey(elemI(635,ei_elementType))
-            ! print *, elemI(625,ei_Mface_uL)
-            ! print *, faceI(elemI(625,ei_Mface_uL),fi_Melem_uL)
-             ! stop 88385
+            ! print *, elemI(292,ei_Mface_uL)
+            ! print *, faceI(elemI(292,ei_Mface_uL),fi_Melem_uL)
+
+            
+            !    stop 88385
 
     
 

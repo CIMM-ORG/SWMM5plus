@@ -106,7 +106,7 @@ module face
             ! Npack => npack_faceP(faceCol)
             ! if (Npack > 0) then 
             !     !% --- Add the Q gradient term to the flowrate for interior faces
-            !     call face_Q_HeadGradient_interior (faceCol, Npack, rkfac)      
+            !     call face_Q_HeadGradient_interior (faceCol, Npack, onehalfR)      
             ! end if
 
             ! Npack => npack_facePS(faceCol)
@@ -258,6 +258,7 @@ module face
             if (this_image()==1) then
                 call system_clock(count=cval,count_rate=crate,count_max=cmax)
                 setting%Time%WallClock%SharedStart = cval
+                !setting%Time%WallClock%SharedStart_A = cval
             end if 
         !%------------------------------------------------------------------    
         !% Aliases
@@ -304,6 +305,12 @@ module face
                     = setting%Time%WallClock%SharedCumulative &
                     + setting%Time%WallClock%SharedStop &
                     - setting%Time%WallClock%SharedStart
+
+            ! setting%Time%WallClock%SharedStop_A = cval
+            ! setting%Time%WallClock%SharedCumulative_A &
+            !         = setting%Time%WallClock%SharedCumulative_A &
+            !         + setting%Time%WallClock%SharedStop_A &
+            !         - setting%Time%WallClock%SharedStart_A                    
         end if 
     end subroutine face_flowrate_max_shared
 !%
@@ -781,6 +788,7 @@ module face
             if (this_image()==1) then
                 call system_clock(count=cval,count_rate=crate,count_max=cmax)
                 setting%Time%WallClock%SharedStart = cval
+                setting%Time%WallClock%SharedStart_C = cval
             end if
         !%-------------------------------------------------------------------
         !% Face values are needed for
@@ -842,6 +850,12 @@ module face
                         = setting%Time%WallClock%SharedCumulative &
                         + setting%Time%WallClock%SharedStop &
                         - setting%Time%WallClock%SharedStart
+
+                setting%Time%WallClock%SharedStop_C = cval
+                setting%Time%WallClock%SharedCumulative_C &
+                        = setting%Time%WallClock%SharedCumulative_C &
+                        + setting%Time%WallClock%SharedStop_C &
+                        - setting%Time%WallClock%SharedStart_C            
             end if 
 
             if (setting%Debug%File%face) &
@@ -907,12 +921,19 @@ module face
             integer, pointer :: thisP, eup, edn, connected_image, ghostUp, ghostDn
             logical, pointer :: isGhostUp, isGhostDn
             integer :: ii, jj   
+            integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interp_shared_set'
         !%--------------------------------------------------------------------
         !%  Preliminaries
             if (icrash) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+            sync all
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStart_A = cval
+            end if    
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces
         do ii = 1,Npack
@@ -970,6 +991,16 @@ module face
 
         !%--------------------------------------------------------------------
         !% Closing
+        sync all
+        if (this_image()==1) then
+            !% stop the shared timer
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop_A = cval
+            setting%Time%WallClock%SharedCumulative_A &
+                    = setting%Time%WallClock%SharedCumulative_A &
+                    + setting%Time%WallClock%SharedStop_A &
+                    - setting%Time%WallClock%SharedStart_A                    
+        end if 
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine face_interp_shared_set
@@ -1106,7 +1137,10 @@ module face
         end select
 
         !% --- adds term dt * grav A [ (dh/dx) - (dh_avg/dx) ] where not zerovolume
-        where ((.not. elemYN(eup(thisF),eYN_isZeroDepth)) .and. (eList(eup(thisF)) == oneI) )
+        where (      (.not. elemYN(eup(thisF),eYN_isZeroDepth   )        ) & 
+               .and. (.not. elemYN(eup(thisF),eYN_isSmallDepth  )        ) &
+               .and. (       elemR(eup(thisF),er_FlowrateLateral) > zeroR) &
+               .and. (       eList(eup(thisF))                    == oneI) )
             fQ(thisF) = fQ(thisF) + dt * grav *                                         &
                 (                                                                       &
                     +( eArea(eup(thisF)) * ( eHead(eup(thisF)) - eHeadAvg(eup(thisF)) ) &
@@ -1114,7 +1148,10 @@ module face
                 )                        
         end where
 
-        where ((.not. elemYN(eup(thisF),eYN_isZeroDepth)) .and. (eList(edn(thisF)) == oneI) )
+        where (       (.not. elemYN(edn(thisF),eYN_isZeroDepth   )        ) & 
+                .and. (.not. elemYN(edn(thisF),eYN_isSmallDepth  )        ) &
+                .and. (       elemR(edn(thisF),er_FlowrateLateral) > zeroR) &
+                .and. (       eList(edn(thisF))                    == oneI) )
             fQ(thisF) = fQ(thisF) + dt * grav *                                         &
                 (                                                                       &
                     -( eArea(edn(thisF)) * ( eHead(edn(thisF)) - eHeadAvg(edn(thisF)) ) &
@@ -1178,7 +1215,7 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    ! subroutine face_Q_HeadGradient_shared &
+! subroutine face_Q_HeadGradient_shared &
     !     (faceCol, Npack) 
     !     !%------------------------------------------------------------------
     !     !% Description:
@@ -1293,9 +1330,15 @@ module face
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: facePackCol, Npack, downstreamSet(:), upstreamSet(:)
         integer, pointer :: thisP(:)
+        integer(kind=8) :: crate, cmax, cval
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_copy_upstream_to_downstream'
         !%-----------------------------------------------------------------------------
+        sync all
+        if (this_image()==1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStart_B = cval
+        end if 
         if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1305,6 +1348,16 @@ module face
 
         faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
 
+        sync all
+        if (this_image()==1) then
+            !% stop the shared timer
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop_B = cval
+            setting%Time%WallClock%SharedCumulative_B &
+                    = setting%Time%WallClock%SharedCumulative_B &
+                    + setting%Time%WallClock%SharedStop_B &
+                    - setting%Time%WallClock%SharedStart_B                    
+        end if 
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine face_copy_upstream_to_downstream_shared

@@ -4,6 +4,7 @@ module lowlevel_rk2
     use define_globals
     use define_indexes
     use define_keys
+    use utility, only: util_sign_with_ones
 
     implicit none
 
@@ -37,6 +38,7 @@ module lowlevel_rk2
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
     public :: ll_junction_branch_flowrate_and_velocity
+    public :: ll_junction_branch_flowrate_and_velocity_packtest
     public :: ll_momentum_source_JB
     public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
@@ -111,6 +113,12 @@ module lowlevel_rk2
                 - real(isbranch(thisP+ii+1),8) * fQ(fdn(thisP+ii+1))
         end do
 
+        ! if (this_image() == 2) then
+        !     do ii=1,max_branch_per_node,2
+        !         print *, fQ(fup(5428+ii)),   real(isbranch(5428+ii  ),8)
+        !         print *, fQ(fdn(5428+ii+1)), real(isbranch(5428+ii+1),8)
+        !     end do
+        ! end if
 
         !%-----------------------------------------------------------------
     end subroutine ll_continuity_netflowrate_JM
@@ -136,6 +144,10 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
 
         elemR(thisP,outCol) = VolumeN0(thisP) + crk(istep) * dt * Csource(thisP)
+
+        ! if (this_image() == 2) then
+        !     write(*,"(A,4f12.4)") ' in ll source ', crk(istep) * dt * Csource(5428)
+        ! end if
 
        !print *, 'in ll_continuity_volume'
        !print *, VolumeN0(1), crk(istep)* dt * Csource(1), elemR(1,outCol)
@@ -712,20 +724,21 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_junction_branch_flowrate_and_velocity (whichTM)
+    subroutine ll_junction_branch_flowrate_and_velocity (whichTM, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Updates the flowrate and velocity on junction branches from face values
         !% obtained in the face interpolation
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM
+        integer, intent(in) :: whichTM, istep
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
         real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:), fFlowMax(:)
-        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax
-        real(8), pointer :: eVolume(:), dt, headC, grav, epsH
+        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
+        real(8), pointer :: eVolume(:), eLength(:), dt, headC, grav, epsH, crk(:)
+        real(8), pointer :: eRough(:)
         integer :: ii, kk, tB
-        real(8) :: dHead
+        real(8) :: dHead, gamma
         integer, pointer :: iFaceUp(:), iFaceDn(:)
         integer, pointer :: tFup, tFdn
         logical, pointer :: isZeroDepth(:)
@@ -736,6 +749,9 @@ module lowlevel_rk2
         eVelocity    => elemR(:,er_Velocity)
         eFlow        => elemR(:,er_Flowrate)
         eVolume      => elemR(:,er_Volume)
+        eLength      => elemR(:,er_Length)
+        eRH          => elemR(:,er_HydRadius)
+        eRough       => elemR(:,er_Roughness)
 
         fFlow        => faceR(:,fr_Flowrate)
         fFlowMax     => faceR(:,fr_Flowrate_Max)
@@ -748,6 +764,7 @@ module lowlevel_rk2
 
         isZeroDepth  => elemYN(:,eYN_isZeroDepth)
 
+        crk          => setting%Solver%crk2
         vMax         => setting%Limiter%Velocity%Maximum
         dt           => setting%Time%Hydraulics%Dt
         headC        => setting%Junction%HeadCoef
@@ -781,29 +798,51 @@ module lowlevel_rk2
                         !% use the downstream face, so that near-zero is handled
                         dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
                         !write(*,"(A,3f12.5)") 'dHead ',dHead, fHead_d(tFup), eHead(tB)
-                        if (dHead > epsH) then
-                            !print *, 'dhead greater than zero'
-                            ! downstream flow in an upstream branch use upstream values
-                            eFlow(tB) = headC * eArea(tB) * sqrt(twoR * grav * dHead)
-                            !% use the minimum of the flow in JB, the max flow on face
-                            eFlow(tB) = min(eFlow(tB),fFlowMax(tFup))
-                            !% if the minimum is a negative flow, use zero
-                            eFlow(tB) = max(eFlow(tB),zeroR)
-                        elseif (dHead < -epsH) then
-                            if (isZeroDepth(tM)) then !% JM is zero depth
-                                eFlow(tB) = zeroR
-                            else
-                                !print *, 'dhead less than zero'
-                                ! upstream flow in an upstream branch
-                                eFlow(tB) = - headC * eArea(tB) * sqrt(twoR * grav * (-dHead))
-                                ! if outflow, limit negative flowrate by 1/3 main junction volume
-                                eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) )
-                            end if
-                        else
-                            !print *, 'dhead equal zero'
+
+                        !print *, 'in JB ',tB 
+                        !print *, eRH(tB), eArea(tB), elemR(tB,er_Depth)
+
+                        gamma = oneR +  crk(istep) * dt * grav * abs(eFlow(tB)) * (eRough(tB)**2) &
+                                / (eArea(tB) * eRH(tB)**(4.0/3.0))
+
+                        ! print *, ' '
+                        ! print *, 'thishere ',tB, eFlow(tB)
+                        ! print *, dHead, eArea(tB), gamma
+                        ! print *, crk(istep), grav, eRough(tB)
+                        
+
+                        eFlow(tB) = (eFlow(tB) +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) ) 
+
+                        ! print *, eFlow(tB)
+                        ! print *, ' '
+
+                        if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
                             eFlow(tB) = zeroR
-                            !% no change to zero volume status
                         end if
+
+                                ! if (dHead > epsH) then
+                                !     !print *, 'dhead greater than zero'
+                                !     ! downstream flow in an upstream branch use upstream values
+                                !     eFlow(tB) = headC * eArea(tB) * sqrt(twoR * grav * dHead)
+                                !     !% use the minimum of the flow in JB, the max flow on face
+                                !     eFlow(tB) = min(eFlow(tB),fFlowMax(tFup))
+                                !     !% if the minimum is a negative flow, use zero
+                                !     eFlow(tB) = max(eFlow(tB),zeroR)
+                                ! elseif (dHead < -epsH) then
+                                !     if (isZeroDepth(tM)) then !% JM is zero depth
+                                !         eFlow(tB) = zeroR
+                                !     else
+                                !         !print *, 'dhead less than zero'
+                                !         ! upstream flow in an upstream branch
+                                !         eFlow(tB) = - headC * eArea(tB) * sqrt(twoR * grav * (-dHead))
+                                !         ! if outflow, limit negative flowrate by 1/3 main junction volume
+                                !         eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) )
+                                !     end if
+                                ! else
+                                !     !print *, 'dhead equal zero'
+                                !     eFlow(tB) = zeroR
+                                !     !% no change to zero volume status
+                                ! end if
 
                         !% HACK: Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
@@ -831,29 +870,48 @@ module lowlevel_rk2
                         dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
                         !write(*,"(A,3f12.5)") 'dHead ',dHead, fHead_u(tFdn), eHead(tB)
                         !print *, dHead, 'head in JB'
-                        if (dHead < -epsH) then  !% inflow
-                            !print *, 'dhead less than zero'
-                            ! upstream flow in a downstream branch use downstream values
-                            eFlow(tB) =  - eArea(tB) * sqrt(twoR * grav * (-dHead) ) !BRH bugfix 20210829
-                            !% use the smaller negative flow (max) as baseline
-                            eFlow(tB) = max(eFlow(tB),fFlowMax(tFdn))
-                            !% if flow is poistive, then use zero
-                            eFlow(tB) = min(eFlow(tB),zeroR)
-                        elseif (dHead > epsH) then  !% outflow
-                            !print *, 'dhead greater than zero'
-                            if (isZeroDepth(tM)) then  !% JM is zero depth
-                                eFlow(tB) = zeroR
-                            else
-                                ! downstream flow in an downstream branch
-                                eFlow(tB) =  + eArea(tB) * sqrt(twoR * grav * dHead )
-                                ! if outflow, limit flowrate by 1/3 main junction volume
-                                eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )
-                            end if
-                        else
-                            !print *, 'dhead equal zero'
+
+                        !eFlow(tB) = eFlow(tB) + dt * grav * eArea(tB) * dHead / eLength(tB) &
+                        
+                        gamma = oneR + crk(istep) * dt * grav * abs(eFlow(tB)) / (eArea(tB) * eRH(tB)**(4.0/3.0))
+
+    
+
+                        eFlow(tB) = (eFlow(tB) +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) ) / gamma
+
+                        
+                         
+                    
+                        if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
                             eFlow(tB) = zeroR
-                            !% no change to zerovolume status
                         end if
+
+                        !print *, 'in JB ',tB, eFlow(tB)
+
+                                !%% approach prior to 20220213
+                                ! if (dHead < -epsH) then  !% inflow
+                                !     !print *, 'dhead less than zero'
+                                !     ! upstream flow in a downstream branch use downstream values
+                                !     eFlow(tB) =  - eArea(tB) * sqrt(twoR * grav * (-dHead) ) !BRH bugfix 20210829
+                                !     !% use the smaller negative flow (max) as baseline
+                                !     eFlow(tB) = max(eFlow(tB),fFlowMax(tFdn))
+                                !     !% if flow is poistive, then use zero
+                                !     eFlow(tB) = min(eFlow(tB),zeroR)
+                                ! elseif (dHead > epsH) then  !% outflow
+                                !     !print *, 'dhead greater than zero'
+                                !     if (isZeroDepth(tM)) then  !% JM is zero depth
+                                !         eFlow(tB) = zeroR
+                                !     else
+                                !         ! downstream flow in an downstream branch
+                                !         eFlow(tB) =  + eArea(tB) * sqrt(twoR * grav * dHead )
+                                !         ! if outflow, limit flowrate by 1/3 main junction volume
+                                !         eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )
+                                !     end if
+                                ! else
+                                !     !print *, 'dhead equal zero'
+                                !     eFlow(tB) = zeroR
+                                !     !% no change to zerovolume status
+                                ! end if
 
                         !print *, eFlow(tB), 'flow in JB'
                         !% HACK: Fix for velocity blowup due to small areas
@@ -876,6 +934,140 @@ module lowlevel_rk2
         end if
 
     end subroutine ll_junction_branch_flowrate_and_velocity
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_junction_branch_flowrate_and_velocity_packtest (whichTM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the flowrate and velocity on junction branches from face values
+        !% obtained in the face interpolation
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: whichTM
+            integer, pointer :: thisColP_JM, nPack, npack2, thisP(:), thisZeroP(:)
+            integer, pointer :: fUp(:), fDn(:), BranchExists(:)
+            integer :: kk, ii, jj
+            real(8), pointer :: dHead(:), eHead(:), eFlow(:), eVol(:)
+            real(8), pointer :: eArea(:), eVelocity(:), fHead_d(:), fHead_u(:)
+            real(8), pointer :: fFlowMax(:), vMax, dt, headC, grav, epsH
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            select case (whichTM)
+            case (ALLtm)
+                thisColP_JM            => col_elemP(ep_JM_ALLtm)
+            case (ETM)
+                thisColP_JM            => col_elemP(ep_JM_ETM)
+            case (AC)
+                thisColP_JM            => col_elemP(ep_JM_AC)
+            case default
+                print *, 'error, case default should never be reached.'
+                stop 7659
+            end select
+            Npack => npack_elemP(thisColP_JM)
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisP     => elemP(1:Npack,thisColP_JM)
+            dHead     => elemR(:,er_Temp01)
+            eHead     => elemR(:,er_Head)
+            eFlow     => elemR(:,er_Flowrate)
+            eVol      => elemR(:,er_Volume)
+            eArea     => elemR(:,er_Area)
+            eVelocity => elemR(:,er_Velocity)
+            fUp       => elemI(:,ei_Mface_uL)
+            fDn       => elemI(:,ei_Mface_dL)
+
+            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+
+            fHead_d  => faceR(:,fr_Head_d)
+            fHead_u  => faceR(:,fr_Head_u)
+            fFlowMax => faceR(:,fr_Flowrate_Max)
+
+            vMax         => setting%Limiter%Velocity%Maximum
+            dt           => setting%Time%Hydraulics%Dt
+            headC        => setting%Junction%HeadCoef
+            grav         => setting%constant%gravity
+            epsH         => setting%Eps%Head
+        !%------------------------------------------------------------------
+        !% cycle through the upper branches  
+
+        dHead = zeroR    
+        do kk=1,max_branch_per_node,2
+            !% head gradient from upstream to downstream
+            dHead(thisP+kk) = (fHead_d(fUp(thisP+kk)) - eHead(thisP+kk)) * real(BranchExists(thisP+kk),8)
+            !% flow based on head gradient
+            eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
+                * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
+            !% adjust so that inflow and outflow are limited
+            where     (dHead(thisP+kk) > epsH)  
+                !% use the smaller (positive) of the JB flow and the max flow on the face
+                eFlow(thisP+kk) = min(eFlow(thisP+kk), fFlowMax(fup(thisP+kk)))
+                !% if the minimum is negative (i.e, fFlowMax < 0), use zero
+                eFlow(thisP+kk) = max(eFlow(thisP+kk),zeroR)
+            elsewhere (dHead(thisP+kk) < epSH)
+                !% if outflow, limit by 1/3 of the main junction volume
+                eFlow(thisP+kk) = max(eFlow(thisP+kk), -eVol(thisP)/ (threeR * dt))
+            elsewhere
+                eFlow(thisP+kk) = zeroR
+            endwhere
+        end do
+
+        !% cycle through the lower branches
+        dHead = zeroR    
+        do kk=2,max_branch_per_node,2
+            !% head gradient from upstream to downstream
+            dHead(thisP+kk) = (eHead(thisP+kk) - fHead_u(fDn(thisP+kk))) * real(BranchExists(thisP+kk),8)
+            !% flow based on with head gradient
+            eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
+               * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
+            !% adjust so that inflow andd outflow are limited
+            where     (dHead(thisP+kk) < -epsH)  !% inflow
+                !% use the larger (smaller negative flow rate) of the JB flow and the max flow on the face
+                eFlow(thisP+kk) = max(eFlow(thisP+kk), fFlowMax(fdn(thisP+kk)))
+                !% if the minimum is positive (outflow ) (i.e, fFlowMax > 0), use zero
+                eFlow(thisP+kk) = min(eFlow(thisP+kk),zeroR)
+            elsewhere (dHead(thisP+kk) > epSH) !% outflow
+                !% if outflow, limit by 1/3 of the main junction volume
+                eFlow(thisP+kk) = min(eFlow(thisP+kk), eVol(thisP)/ (threeR * dt))
+            elsewhere
+                eFlow(thisP+kk) = zeroR
+            endwhere
+        end do
+
+        !% second pack for the zero-depth JM  
+        npack2 => npack_elemP(ep_ZeroDepth_JM_ALLtm)  ! HACK -- do we need separate packfor AC, ETM and ALLtm?
+        if (npack2 > 0) then
+            thisZeroP => elemP(1:npack2,ep_ZeroDepth_JM_ALLtm)
+        end if
+
+        !% cycle through all the branches without reference to up or down
+        do kk=1,max_branch_per_node
+            !% fix for the zero depth JM
+            if (npack2 > 0) then
+                eFlow(thisZeroP+kk) = zeroR
+            end if
+
+            !% set the velocity
+            where (eArea(thisP+kk) .le. setting%ZeroValue%Area)
+                eVelocity(thisP+kk) = zeroR
+            elsewhere
+                eVelocity(thisP+kk) = eFlow(thisP+kk) / eArea(thisP+kk)
+            endwhere
+
+            where (abs(eVelocity(thisP+kk)) > vMax)
+                eVelocity(thisP+kk) = sign(0.99 * vMax, eVelocity(thisP+kk))
+            endwhere
+        end do
+
+        !% reset temp01 space
+        dHead = zeroR
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+
+    end subroutine ll_junction_branch_flowrate_and_velocity_packtest
 !%
 !%==========================================================================
 !%==========================================================================
@@ -945,6 +1137,15 @@ module lowlevel_rk2
                     if (BranchExists(tB)==1) then
                         ! head on the downstream side of the downstream face
                         fHead = fHead_d(iFaceDn(tB))
+
+                        ! elem(tB,er_SourceMoment) = ll_junction_branch_VU_test ( &
+                        !     elemR(tB,er_Volume), &
+                        !     elemR(tB,er_Velocity), &
+                        !     elemR(tB,er_Head),  &
+                        !     elemR(tB,er_length), &
+                        !     elemR(tB,er_WaveSpeed), &
+                        !     fHead, delt, kk, istep )
+                            
                         call ll_junction_branch_VU (&
                             fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
                     end if
@@ -954,6 +1155,17 @@ module lowlevel_rk2
 
     end subroutine ll_momentum_source_JB
 !%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_momentum_source_JB_packtest ()
+        !% to crate a packed version we need to first
+        !% create an elemental function for ll_junction_branch_VU
+
+        !% STUB ROUTINE
+
+    end subroutine ll_momentum_source_JB_packtest    
+!%       
 !%==========================================================================
 !%==========================================================================
 !%
@@ -989,7 +1201,6 @@ module lowlevel_rk2
         eHead        => elemR(:,er_Head)
         eWaveSpeed   => elemR(:,er_WaveSpeed)
         
-
         cLim         => setting%Junction%CFLlimit
         crk          => setting%Solver%crk2
         grav         => setting%constant%gravity
@@ -1007,12 +1218,31 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
+    ! pure function ll_junction_branch_VU_test &
+    !     (eVol, eVel, eHead, eLength, eWaveSpeed, fHead, delt, kk, istep)
+
+    !     real(8) :: ll_junction_branch_VU_test(:)
+    !     real(8), intent(in) :: eVol(:), eVel(:), eHead(:), fHead(:), eLength(:)
+    !     real(8), intent(in) :: eWaveSpeed(:)
+    !     integer, intent(in) :: kk, istep, delt
+
+    ! ll_junction_branch_VU_test = eVol * eVel                              &
+    !     - setting%Solver%crk2(istep) * branchsign(kk) * (eHead - fHead)   &
+    !     * setting%constant%gravity * eVol                                 &
+    !     / max(eLength, ( (abs(eVel) + abs(eWaveSpeed)) / (delt * setting%Junction%CFLlimit) ) )
+
+    ! end function ll_junction_branch_VU_test
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_solve_JB (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the velocity and flowrate on junction branches to finish the dynamic
         !% RK2 approach. Note that this assumes the JB volume and area have been updated
         !% from the JM water surface elevation in update_auxiliary_variables.
+        !% THE DYNAMIC APPROACH HAS BUGS 
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: whichTM
 

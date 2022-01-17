@@ -1325,6 +1325,9 @@ contains
                 !% this flowrate will always be lagged in junction branches
                 elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
 
+                !% Manning's n
+                elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
+
                 if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
                     elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
                 else
@@ -1370,8 +1373,7 @@ contains
                 !                                            elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &
                 !                                            elemR(JMidx,er_Length)
 
-                !% Plane area is the sum of the branch plane areas 
-                !% HACK -- investigate using average
+                !% Base level of plane area is the sum of the branch plane areas 
                 nbranches = 0
                 elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
                 do ii=1,max_branch_per_node                                                    
@@ -1381,6 +1383,12 @@ contains
                             * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
                     !nbranches = nbranches + elemSI(JMidx+ii,esi_JunctionBranch_Exists)
                 end do 
+                !% TEST -- increasing the area
+                elemSR(JMidx,esr_Storage_Plane_Area) = 2.0 * elemSR(JMidx,esr_Storage_Plane_Area) ! + elemR(JMidx,er_Length)**2
+
+                print *, '  '
+                print *, ' JUNCTION AREA ',elemSR(JMidx,esr_Storage_Plane_Area)
+                print *, ''
                 !elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area) &
                 !                                      / real(nbranches,8)
 
@@ -1712,18 +1720,18 @@ contains
         ! end if
 
         !% Check if size of depth cutoff is large enough
-        if (depthCutoff .le. tenR * setting%ZeroValue%Depth) then
-            if (this_image() == 1) then
-                write(*,*) ' '
-                write(*,*) '***************************************************************** '
-                write(*,*) '** WARNING -- SmallVolume depth cutoff was too small ', depthCutoff
-                write(*,*) '** Resetting to ', max(tenR * setting%ZeroValue%Depth, 0.001)
-                write(*,*) '** The SmallVolume depth cutoff must be 10x the zero depth cutoff ' 
-                write(*,*) '***************************************************************** '
-                write(*,*) ' '
-            end if
-            depthCutoff = max(tenR * setting%ZeroValue%Depth, 0.001)
-        end if
+        ! if (depthCutoff .le. tenR * setting%ZeroValue%Depth) then
+        !     if (this_image() == 1) then
+        !         write(*,*) ' '
+        !         write(*,*) '***************************************************************** '
+        !         write(*,*) '** WARNING -- SmallDepth cutoff was too small ', depthCutoff
+        !         write(*,*) '** Resetting to ', max(tenR * setting%ZeroValue%Depth, 0.001)
+        !         write(*,*) '** The SmallVolume depth cutoff must be 10x the zero depth cutoff ' 
+        !         write(*,*) '***************************************************************** '
+        !         write(*,*) ' '
+        !     end if
+        !     depthCutoff = max(tenR * setting%ZeroValue%Depth, 0.001)
+        ! end if
 
         !% error checking for circular pipes
         theta = zeroR ! temporary use of theta space for comparison, this isn't theta!
