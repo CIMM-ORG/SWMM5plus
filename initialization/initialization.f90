@@ -205,20 +205,6 @@ contains
 
         sync all
 
-        !% brh20211228 -- this contains both initialization of structure
-        !% and the initial conditions -- moved into the initial_condition.f90 so that
-        !% it can be done after the zbottom is initialized and the
-        !% referencehead is found.
-        ! !% --- initialize boundary conditions
-        ! if (setting%Simulation%useHydraulics) then
-        !     if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
-        !     call init_bc()
-        ! else 
-        !     write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
-        !     write(*,*) '...this presently is not supported in SWMM5+'
-        !     stop 309875
-        ! end if  
-
         !% --- initialize the output reports
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
         call init_report()
@@ -253,64 +239,6 @@ contains
         
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
-        
-       
-            ! !% debugging -- keep this stuff around to find an element with a given name
-            !  call util_find_elements_in_link &
-            !      ('12',thislink_idx, thislink_image, elemInLink, nElemInLink)
-
-            ! print *, ' '
-            ! do ii=1,nElemInLink
-            !     call util_find_neighbors_of_CC_element (elemInLink(ii), iset)
-            !     print *, 'for elemID ',elemInLink(ii)
-            !     print *, 'type       ',trim(reverseKey(elemI(elemInLink(ii),ei_elementType)))
-            !     print *, iset
-            !     print *, 'type     ',trim(reverseKey(elemI(iset(1),ei_elementType))),'        face          ', &
-            !                          trim(reverseKey(elemI(iset(3),ei_elementType))),'        face          ', &
-            !                          trim(reverseKey(elemI(iset(5),ei_elementType)))
-            ! end do
-
-            ! print *, trim(reverseKey(elemI(611,ei_elementType)))
-            ! print *, trim(reverseKey(elemI(612,ei_elementType)))
-            ! print *, trim(reverseKey(elemI(613,ei_elementType)))
-            ! print *, trim(reverseKey(elemI(614,ei_elementType)))
-
-            ! print *, 'upper elem'
-            ! print *, elemI(611,ei_Mface_uL)
-            ! print *, faceI(elemI(611,ei_Mface_uL),fi_Melem_uL)
-            ! print *, ' '
-            ! print *, ' lower elem'
-            ! print *, elemI(624,ei_Mface_dL)
-            ! print *, faceI(elemI(624,ei_Mface_dL),fi_Melem_dL)
-
-
-            ! print *, ' '
-            ! call util_find_elements_in_junction_node &
-            !     ('630011341', thisnode_idx, thisnode_image, elemJM_idx)
-            ! print *, ' '
-        
-            ! print *, ' '
-            ! call util_find_neighbors_of_JM_element &
-            !     (elemJM_idx, iUpSet, iDnSet, nUpBranch, nDnBranch)
-
-            ! print *, ' '
-            ! do ii=1,nUpBranch
-            !     write(*,"(A,5i8)") 'Up ',iUpSet(ii,:)
-            ! end do
-
-            ! print *, ' '
-            ! do ii=1,nDnBranch
-            !     write(*,"(A,5i8)") 'Dn ',iDnSet(ii,:)
-            ! end do
-
-            !print *, faceI(,fi_Melem_uL), 635, reverseKey(elemI(635,ei_elementType))
-            ! print *, elemI(292,ei_Mface_uL)
-            ! print *, faceI(elemI(292,ei_Mface_uL),fi_Melem_uL)
-
-            
-            !    stop 88385
-
-    
 
         !% --- setup the multi-level finite-volume output
         !%        Ideally, this should be a procedure accessed in the output module, 

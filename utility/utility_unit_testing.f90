@@ -766,56 +766,56 @@ contains
       !% checking elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) indexes
 
 
-      min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_posSlope)) - 1
-      max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm_posSlope))
-      ii = 0
+      ! min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_posSlope)) - 1
+      ! max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm_posSlope))
+      ! ii = 0
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_posSlope),mask=elemP(:,ep_SmallDepth_CC_ALLtm_posSlope)>min_val)
-      end do
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_posSlope),mask=elemP(:,ep_SmallDepth_CC_ALLtm_posSlope)>min_val)
+      ! end do
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
-
-
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) is only filled with nullvalueI. This_image ::", this_image()
-
-      else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm_posSLope)) then
-         print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) is not unique. This_image ::", this_image()
-
-      else
-         print *, "elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) is unique. This_image ::", this_image()
-      end if
-
-      !% checking elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) indexes
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_negSlope)) - 1
-      max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm_negSLope))
-      ii = 0
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) is only filled with nullvalueI. This_image ::", this_image()
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_negSlope),mask=elemP(:,ep_SmallDepth_CC_ALLtm_negSlope)>min_val)
-      end do
+      ! else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm_posSLope)) then
+      !    print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) is not unique. This_image ::", this_image()
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! else
+      !    print *, "elemP(:,ep_SmallDepth_CC_ALLtm_posSlope) is unique. This_image ::", this_image()
+      ! end if
+
+      ! !% checking elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) indexes
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) is only filled with nullvalueI. This_image ::", this_image()
+      ! min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_negSlope)) - 1
+      ! max_val = maxval(elemP(:,ep_SmallDepth_CC_ALLtm_negSLope))
+      ! ii = 0
 
-      else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm_negSlope)) then
-         print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) is not unique. This_image ::", this_image()
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_SmallDepth_CC_ALLtm_negSlope),mask=elemP(:,ep_SmallDepth_CC_ALLtm_negSlope)>min_val)
+      ! end do
 
-      else
-         print *, "elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) is unique. This_image ::", this_image()
-      end if
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
+
+
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) is only filled with nullvalueI. This_image ::", this_image()
+
+      ! else if (ii /= npack_elemP(ep_SmallDepth_CC_ALLtm_negSlope)) then
+      !    print *, "ERROR:::: elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) is not unique. This_image ::", this_image()
+
+      ! else
+      !    print *, "elemP(:,ep_SmallDepth_CC_ALLtm_negSlope) is unique. This_image ::", this_image()
+      ! end if
 
       ! !% checking elemP(:,ep_SmallDepth_CC_ALLtm) indexes
 

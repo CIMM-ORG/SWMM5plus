@@ -333,7 +333,7 @@ module define_indexes
         enumerator :: er_GammaM                     !% gamma momentum source term for AC solver
         enumerator :: er_Head                       !% piezometric head (latest) -- water surface elevation in open channel
         enumerator :: er_Head_N0                    !% piezometric head (time N)
-        enumerator :: er_HeadAvg                    !% average of head on faces of an element.
+        !enumerator :: er_HeadAvg                    !% average of head on faces of an element.
         enumerator :: er_HeadLastAC                 !% piezometric head at start of last AC step
         enumerator :: er_HeadStore                  !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_HydDepth                   !% hydraulic depth of flow
@@ -418,10 +418,17 @@ module define_indexes
         enumerator :: ep_NonSurcharged_AC           !% all surcharged with AC
         enumerator :: ep_NonSurcharged_ALLtm        !% all time march nonsurcharged
         enumerator :: ep_NonSurcharged_ETM          !% all surcharged with ETM
-        enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
-        enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
+        !enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
+        !enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
+        enumerator :: ep_SmallDepth_CC_ALLtm
+        enumerator :: ep_SmallDepth_CC_ETM
+        enumerator :: ep_SmallDepth_CC_AC
         enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
+        enumerator :: ep_ZeroDepth_CC_ETM
+        enumerator :: ep_ZeroDepth_CC_AC
         enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
+        enumerator :: ep_ZeroDepth_JM_ETM
+        enumerator :: ep_ZeroDepth_JM_AC
         enumerator :: ep_Surcharged_AC              !% all surcharged with AC
         enumerator :: ep_Surcharged_ALLtm           !% all time march surcharged
         enumerator :: ep_Surcharged_ETM             !% all surcharged with ETM

@@ -19,10 +19,10 @@
     enum, bind(c)
         !rm brh20211211 enumerator :: hydrology = 1         !% indicates hydrology loop
         !rm brh20211211 enumerator :: hydraulics            !% indicates hydraulics loop
-        enumerator :: ALLtm = 1                 !% indictes all time marching types
-        enumerator :: ETM                   !% Explicit time march
-        enumerator :: ETM_AC                !% Explicit time march and AC
-        enumerator :: AC                    !% AC
+        enumerator :: ALLtm = 1                 !% indicates elements using any time marching type
+        enumerator :: ETM                   !% Explicit time march elements or solver
+        enumerator :: ETM_AC                !% Explicit time march and AC solver
+        enumerator :: AC                    !% AC elements or solver
         enumerator :: CCJM                  !% channel, conduit or junction main
         enumerator :: ALL                   !% all elements
         !% different link and their geometry types (HACK: probably could be consolidated to element types)

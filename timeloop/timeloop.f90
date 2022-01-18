@@ -360,6 +360,10 @@ contains
         !% --- repack all the dynamic arrays
         call pack_dynamic_arrays()
 
+        !% --- ensure that the conservative flux terms are exactly zero in the entire array
+        !%     so that we can be confident of conservation computation. 
+        faceR(:,fr_Flowrate_Conservative) = zeroR  
+
         !% call the RK2 time-march, depending on the type of solver
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)

@@ -35,9 +35,7 @@ module runge_kutta2
         !% single RK2 step for explicit time advance of SVE
         !%------------------------------------------------------------------
         !% Declarations:
-            integer :: istep, ii, iblank
-            integer, pointer :: fup(:), fdn(:)
-            real(8), pointer :: dt
+            integer :: istep
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -46,239 +44,61 @@ module runge_kutta2
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
         !% Aliases
-            fup => elemI(:,ei_Mface_uL)
-            fdn => elemI(:,ei_Mface_dL)
-            dt => setting%Time%Hydraulics%Dt
-        
-        !% HACK ensure that the conservative flux terms are exactly zero in the entire array
-        !% so that we can be confident of conservation computation. This should be
-        !% moved to start of timeloop rather than inside the RK
-        faceR(:,fr_Flowrate_Conservative) = zeroR  
-
-                ! write(*,*) ' AAA --- '
-                ! call util_CLprint()
-        ! if (this_image() == 2) then
-        !     print *, ' '
-        !     print *, dt
-        !     write(*,'(A,4f12.4)') 'vol ',elemR(5428,er_Volume)
-        ! end if
-
-        
+        !%-----------------------------------------------------------------
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
         call rk2_step_ETM (istep)
 
-        call ll_junction_branch_flowrate_and_velocity(ETM,istep)
-
-                ! write(*,*) ' BBB --- '
-                ! call util_CLprint()
-           
-
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         call update_auxiliary_variables (ETM)
 
-                ! write(*,*) ' CCC --- '
-                ! call util_CLprint()
-                
-    
-
-        !% update zero/small depth on elements before JB computation (faces not needed)
-        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm) !HACK needs ETM instead of ALLtm
-        call adjust_smalldepth_element_fluxes ()
-        call adjust_limit_velocity_max (ETM)
-
-                ! write(*,*) ' DDD --- '
-                ! call util_CLprint()
-  
-
-        !% --- store the max flowrate allowed on a face based on elements, which is used for JB
-        !call face_flowrate_max_interior (fp_all)
-        !call face_flowrate_max_shared   (fp_all)
-
-               ! write(*,*) ' EEE --- '
-               ! call util_CLprint()
-          
-
-        ! !% --- junction branch flowrate and velocity update
-        ! if (.not. setting%Junction%isDynamicYN) then
-        !     !% --- for static JB solve both flow and velocity
-        !     call ll_junction_branch_flowrate_and_velocity (ETM, istep) 
-        !     !call ll_junction_branch_flowrate_and_velocity_packtest (ETM)
-        ! else
-        !     !% --- for dynamic junction just velocity because JB
-        !     !%     volume isn't  known until after head updated on JM 
-        !     call ll_momentum_solve_JB (ETM)
-        ! end if
-
-                !  write(*,*) ' EE2 --- '
-                !  call util_CLprint()
-                
-                
-
-        !% --- compute element Froude number for JB
-        call update_Froude_number_junction_branch (ep_JM_ETM) 
-
-        !% --- update zerodepth element values on Junctions JM
-        !%     not needed on CC as the small volume does not affect Q on JM
-        call adjust_zerodepth_element_values (ep_ZeroDepth_JM_ALLtm)
-
-                ! write(*,*) ' FFF --- '
-                ! call util_CLprint()
-                
-        
+        !% --- set the flagged zero and small depth cells (allow depth to change)
+        !%     This does not reset the zero/small depth packing
+        call adjust_zero_and_small_depth_elem (ETM, .false.)
+     
         !% --- RK2 solution step  -- all face interpolation
         call face_interpolation(fp_all,ETM)
 
-                ! write(*,*) ' GGG --- '
-                ! call util_CLprint()
-
-        !% --- reset for small depth and zero
-        call adjust_smalldepth_face_fluxes(.true.)
-        call adjust_zerodepth_face_fluxes_CC (ep_ZeroDepth_CC_ALLtm,.true.)
-        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.true.)
-        call adjust_JB_flux_to_equal_face (ETM)
-
-                !write(*,*) ' HHH --- '
-                !call util_CLprint()
+        !% --- set the zero and small depth fluxes
+        !%     This DOES store the conservative face fluxes
+        call adjust_zero_and_small_depth_face (ETM, .true.)
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
-        !% --- experimental face flux correction term (NEED SHARED)
-        !call face_FluxCorrection_interior (fp_all, ETM)
-
         !% --- RK2 solution step  -- make ad hoc adjustments
-        call adjust_values (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
+        call adjust_Vfilter (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ETM)
-
-        ! if (this_image() == 2) then
-        !     write(*,'(A, 4e12.4)')' Qflux    ', faceR(fup(5429),fr_Flowrate_Conservative), &
-        !                                         faceR(fdn(5430),fr_Flowrate_Conservative), &
-        !                                         faceR(fup(5431),fr_Flowrate_Conservative), &  
-        !                                         elemR(5428,er_FlowrateLateral)
-        !     print *, faceR(fup(5429),fr_Flowrate_Conservative), faceR(fup(5429),fr_Flowrate)
-        !     print *, faceR(fdn(5430),fr_Flowrate_Conservative), faceR(fdn(5430),fr_Flowrate)
-        !     print *, faceR(fup(5431),fr_Flowrate_Conservative), faceR(fup(5431),fr_Flowrate)
-        !     write(*,'(A,4f12.4)') 'net delta ',dt * (faceR(fup(5429),fr_Flowrate_Conservative) &
-        !                                            - faceR(fdn(5430),fr_Flowrate_Conservative) &
-        !                                            + faceR(fup(5431),fr_Flowrate_Conservative) &
-        !                                            + elemR(5428,er_FlowrateLateral) )
-        ! end if
-
-                ! write(*,*) ' III --- '
-                ! call util_CLprint()
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
         istep=2
         call rk2_step_ETM (istep)
-        call ll_junction_branch_flowrate_and_velocity(ETM,istep)
-
-                !write(*,*) ' JJJ --- '
-                !call util_CLprint()
 
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
-        call update_auxiliary_variables(ETM)
+        call update_auxiliary_variables(ETM)  
 
-                ! write(*,*) ' KKK --- '
-                ! call util_CLprint()
-
-        !% --- update zero/small depth fluxes before JB computation
-        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm) !HACK needs ETM instead of ALLtm
-        call adjust_smalldepth_element_fluxes ()
-        call adjust_limit_velocity_max (ETM)    
-
-                ! write(*,*) ' LLL --- '
-                ! call util_CLprint()
-                
-        
-        !% --- store the max flowrate allowed on a face, which is used for JB
-        !call face_flowrate_max_interior (fp_all)
-        !call face_flowrate_max_shared   (fp_all)
-
-                ! write(*,*) ' MMM --- '
-                !call util_CLprint()
-
-
-        ! !% --- junction branch flowrate and velocity update
-        ! if (.not. setting%Junction%isDynamicYN) then
-        !     !% --- static JB solve both flow and velocity
-        !     call ll_junction_branch_flowrate_and_velocity(ETM,istep) 
-        !     !call ll_junction_branch_flowrate_and_velocity_packtest (ETM)
-        ! else
-        !     !% --- for dynamic junction just velocity because JB
-        !     !%     volume isn't  known until after head updated on JM 
-        !     call ll_momentum_solve_JB (ETM)
-        ! end if
-
-        !% --- compute element Froude number for JB
-        call update_Froude_number_junction_branch (ep_JM_ETM) 
-
-                ! write(*,*) ' PPP --- '
-                ! call util_CLprint()
-
-        !% update zero and small volumes before face interpolation
-        !% here we identify new zero/small prior to face interpolation
-        !% so that we can make needed ad hoc adjustments. Note that
-        !% there is a 3-step process, identify the elements (creating
-        !% new "isZeroDepth" and "isSmallDepth" logical arrays, then
-        !% creating the packed arrays and using these to write the
-        !% adjustments
-        call adjust_zerodepth_identify_all ()
-        call adjust_smalldepth_identify_all ()
-        call pack_small_and_zero_depth_elements ()
-        
-        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm)
-        call adjust_zerodepth_element_values (ep_ZeroDepth_JM_ALLtm) 
-        call adjust_smalldepth_element_fluxes ()
-        call adjust_limit_velocity_max (ETM)
-
-                ! write(*,*) ' SSS --- '
-                ! call util_CLprint()
+        !% --- set the flagged zero and small depth cells (allow depth to change)
+        !%     This DOES reset the zero/small depth packing
+        call adjust_zero_and_small_depth_elem (ETM, .true.)
 
         !% --- RK2 solution step -- update all faces
         call face_interpolation(fp_all,ETM)
 
-                ! write(*,*) ' UUU --- '
-                ! call util_CLprint()
-              
-
-        !% --- reset for small depth and zero, but do not reset Conservative Flowrate
-        call adjust_smalldepth_face_fluxes(.false.)
-        call adjust_zerodepth_face_fluxes_CC   (ep_ZeroDepth_CC_ALLtm,.false.)
-        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.false.)
-        call adjust_JB_flux_to_equal_face (ETM)
-
-                ! write(*,*) ' YYY --- '
-                ! call util_CLprint()
-
+        !% --- set the zero and small depth fluxes
+        !%     This does not store the conservative face fluxes
+        call adjust_zero_and_small_depth_face (ETM, .false.)
         
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
-  
-        !% --- experimental face flux correction term (NEED SHARED)
-        !call face_FluxCorrection_interior (fp_all, ETM)
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
-        call adjust_values (ETM)
+        call adjust_Vfilter (ETM)
 
-        !% --- readjust for small/zero depths so that V filter 
-        !%     does not affect these (no need to reset faces)
-        !%     HACK -- this should be inside the adjust_values because
-        !%     its only needed if adjust_values is called.
-        call adjust_zerodepth_element_values(ep_ZeroDepth_CC_ALLtm)
-        call adjust_zerodepth_element_values(ep_ZeroDepth_JM_ALLtm)
-        call adjust_smalldepth_element_fluxes () 
-
-
-        ! if (this_image() == 2) then
-        !     write(*,'(A,4f12.4)') 'volumes ',elemR(5428,er_Volume), elemR(5428,er_Volume_N0)
-        !     write(*,'(A,4f12.4)') 'delta   ',elemR(5428,er_Volume) - elemR(5428,er_Volume_N0)
-        ! end if
-                !write(*,*) ' ZZZ --- ', elemYN(612,eYN_isSmallDepth), elemYN(612,eYN_isZeroDepth)
-                !call util_CLprint()
+        !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
+        call adjust_zero_and_small_depth_elem (ETM, .false.)
    
         !%-----------------------------------------------------------------
         !% closing
@@ -353,7 +173,7 @@ module runge_kutta2
         call diagnostic_toplevel ()
 
         !% step X -- make ad hoc adjustments
-        call adjust_values (ALLtm)
+        call adjust_Vfilter (ALLtm)
 
         !% step 6 -- RK2 step 2 for AC
         istep=2
@@ -399,10 +219,8 @@ module runge_kutta2
         !% step 9 -- update diagnostic elements and faces
         call diagnostic_toplevel
 
-        !call face_FluxCorrection_interior (fp_all, ALLtm)
-
         !% step X -- make ad hoc adjustments
-        call adjust_values (ALLtm)
+        call adjust_Vfilter (ALLtm)
 
         if (setting%Debug%File%runge_kutta2)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -430,6 +248,8 @@ module runge_kutta2
 
         !% perform the momentum step of the rk2 for ETM
         call rk2_momentum_step_ETM(istep)
+
+       
 
     end subroutine rk2_step_ETM
 !%
@@ -610,6 +430,8 @@ module runge_kutta2
             !print *, '... vel     :',elemR(1:3,er_Velocity)
 
         end if
+
+        call ll_junction_branch_flowrate_and_velocity(ETM,istep)
 
        ! write(*,"(5f12.7)") elemR(1,er_Velocity)
        ! stop 835783

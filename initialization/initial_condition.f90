@@ -45,8 +45,8 @@ contains
         !% set up the initial conditions for all the elements
         !%------------------------------------------------------------------
         !% Declaratins:
-            integer          :: ii, iblank
-            integer, pointer :: whichTM
+            integer          :: ii, iblank, whichTM
+            integer, pointer :: whichSolver
             integer, allocatable :: tempP(:)  !% for debugging
             integer, pointer :: thisCol, npack, thisP(:)
             character(64)    :: subroutine_name = 'init_IC_toplevel'
@@ -56,7 +56,17 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% Aliases
-            whichTM => setting%Solver%SolverSelect
+            whichSolver => setting%Solver%SolverSelect
+            select case (whichSolver)
+            case (ETM)
+                whichTM = ETM
+            case (AC)
+                whichTM = AC
+            case (ETM_AC)
+                whichTM = ALLtm
+            case default
+                print *, 'CODE ERROR -- unexpected case default'
+            end select      
         !%-------------------------------------------------------------------
         !% --- get data that can be extracted from links
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
@@ -76,39 +86,21 @@ contains
 
         !% --- update time marching type
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
-        call init_IC_solver_select (whichTM)
+        call init_IC_solver_select (whichSolver)
 
         !% --- set up all the static packs and masks
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         call init_IC_ZeroValues_nondepth ()
 
         !% --- set all the zero and small volumes
-        call adjust_zerodepth_identify_all ()
-        call adjust_smalldepth_identify_all ()
-        call pack_small_and_zero_depth_elements ()
-
-        call adjust_zerodepth_element_values (ep_ZeroDepth_CC_ALLtm)
-        call adjust_zerodepth_element_values (ep_ZeroDepth_JM_ALLtm)
-        call adjust_smalldepth_element_fluxes ()
-        call adjust_limit_velocity_max (ALLtm)
-        
-        call adjust_smalldepth_face_fluxes (.false.)
-        call adjust_zerodepth_face_fluxes_CC   (ep_ZeroDepth_CC_ALLtm,.false.)
-        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.false.)
-        
-        
+        call adjust_zero_and_small_depth_elem (ETM, .true.)
+        call adjust_zero_and_small_depth_face (ETM, .false.)
 
         !% --- get the bottom slope
         call init_IC_bottom_slope ()
-
-        ! if (this_image() == 1) then
-        !     print *, 'zero value volume ',setting%ZeroValue%Volume
-        !     print *, 'zero value depth  ',setting%ZeroValue%Depth
-        !     print *, 'zero value area   ',setting%ZeroValue%Area
-        ! end if
 
         !% --- set small volume values in elements
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
@@ -175,9 +167,7 @@ contains
         call diagnostic_toplevel ()
 
         !% --- ensure that small and zero depth faces are correct
-        call adjust_smalldepth_face_fluxes (.false.)
-        call adjust_zerodepth_face_fluxes_CC   (ep_ZeroDepth_CC_ALLtm,.false.)
-        call adjust_zerodepth_face_fluxes_JMJB (ep_ZeroDepth_JM_ALLtm,.false.)
+        call adjust_zero_and_small_depth_face (ETM, .false.)
 
         !% ---populate er_ones columns with ones
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
@@ -1315,7 +1305,7 @@ contains
                     case default
 
                         print *, 'In, ', subroutine_name
-                        print *, 'link found of type ',trim(reverseKey(lCircular))
+                        print *, 'link found of type ',trim(reverseKey(geometryType))
                         print *, 'Only rectangular, trapezoidal, and circular geometry is handeled at this time'
                         stop 308974
 
@@ -1344,66 +1334,62 @@ contains
             end if
         end do
 
-        !% HACK:
-        !% set initial conditions for junction main from the junction branch data
-        !% For the momentum we are simply using rectangular geometry as a damping pot for the junctions.
-        !% Goal is to ensure consistency with the links and mass conservation.
-        !% Need to replace how JM geometry is handled in timeloop before we change this.
-        !% length -- here uses the largest 2 input and output to get a maximum length
-
         !% get junction main geometry based on type
         JmType => elemSI(JMidx,esi_JunctionMain_Type)
 
         select case (JmType)
 
             case (ArtificialStorage)
-
                 !% the JM characteristic length is the sum of the two longest branches
                 elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
                                              elemR(JMidx+5,er_Length)) + &
                                          max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
                                              elemR(JMidx+6,er_Length))
 
-                !% obsolete                             
-                ! elemSGR(JMidx,esgr_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,esgr_Rectangular_Breadth) + &
-                !                                            elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,esgr_Rectangular_Breadth) + &
-                !                                            elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,esgr_Rectangular_Breadth) + &
-                !                                            elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,esgr_Rectangular_Breadth) + &
-                !                                            elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,esgr_Rectangular_Breadth) + &
-                !                                            elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &
-                !                                            elemR(JMidx,er_Length)
-
-                !% Base level of plane area is the sum of the branch plane areas 
-                nbranches = 0
+                !% --- Plane area is the sum of the branch plane area 
+                !%     This uses simplified geometry approximations as the junction main is only
+                !%     mass conservation only, which means its volume change can be approximated
+                !%     as if it is a rectangular box of Storage_Plane_Area x Depth
                 elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
-                do ii=1,max_branch_per_node                                                    
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                       +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                     &
-                            * elemR(  JMidx+ii,er_Length)                                        &
-                            * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
-                    !nbranches = nbranches + elemSI(JMidx+ii,esi_JunctionBranch_Exists)
-                end do 
-                !% TEST -- increasing the area
-                elemSR(JMidx,esr_Storage_Plane_Area) = 2.0 * elemSR(JMidx,esr_Storage_Plane_Area) ! + elemR(JMidx,er_Length)**2
-
-                print *, '  '
-                print *, ' JUNCTION AREA ',elemSR(JMidx,esr_Storage_Plane_Area)
-                print *, ''
-                !elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area) &
-                !                                      / real(nbranches,8)
-
+                select case (geometryType)
+                case (lRectangular,lRectangular_closed)
+                    do ii=1,max_branch_per_node                                                    
+                        elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                        +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
+                                * elemR(  JMidx+ii,er_Length)                                        &
+                                * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
+                    end do 
+                case (lTrapezoidal)
+                    do ii=1,max_branch_per_node                                                    
+                        elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                        +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
+                                * elemR(  JMidx+ii,er_Length)                                        &
+                                * elemSGR(JMidx+ii,esgr_Trapezoidal_Breadth) )
+                    end do 
+                case (lCircular)
+                    do ii=1,max_branch_per_node                                                    
+                        elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                        +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
+                                * elemR(  JMidx+ii,er_Length)                                        &
+                                * elemSGR(JMidx+ii,esgr_Circular_Diameter) )
+                    end do 
+                case default
+                    print *, 'In, ', subroutine_name
+                    print *, 'link found of type ',trim(reverseKey(geometryType))
+                    print *, 'Only rectangular, trapezoidal, and circular geometry is handeled at this time'
+                    stop 8733455
+                end select
 
                 !% Volume depends on plane area and depth
-                !elemR(JMidx,er_Volume) =   elemSGR(JMidx,esgr_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
                 elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
 
                 elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
                 elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
 
             case (FunctionalStorage)
-                elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth) +          &
-                    (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR)) * &
-                    elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
+                elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)          &
+                    + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
+                     * elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
 
                 elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
                 elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
@@ -1424,8 +1410,8 @@ contains
             case default
                 !% IMPORTANT -- if any other new type is defined, make sure that
                 !% subroutine geo_depth_from_volume is updated
-                print*, 'In, ', subroutine_name
-                print*, 'error: unknown junction main type, ', JmType
+                print *, 'In, ', subroutine_name
+                print *, 'error: unknown junction main type, ', JmType
                 stop 54895
 
         end select
@@ -1482,56 +1468,44 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_IC_solver_select (solver)
-        !--------------------------------------------------------------------------
-        !
+    subroutine init_IC_solver_select (whichSolver)
+        !%------------------------------------------------------------------
+        !% Desscription
         !% select the solver based on depth for all the elements
-        !
-        !--------------------------------------------------------------------------
-
-            integer, intent(in) :: solver
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichSolver
             character(64)       :: subroutine_name = 'init_IC_solver_select'
-
-        !--------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Preliminaries:
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-
-        select case (solver)
-
-            case (ETM)
-
-                where ( (elemI(:,ei_HeqType) == time_march) .or. &
-                        (elemI(:,ei_QeqType) == time_march) )
-
-                    elemI(:,ei_tmType) = ETM
-
-                endwhere
-
-            case (AC)
-
-                print*, 'In, ', subroutine_name
-                print*, 'AC solver is not handeled at this moment'
-                stop 83974
-
-            case (ETM_AC)
-
-                print*, 'In, ', subroutine_name
-                print*, 'ETM-AC solver is not handeled at this moment'
-                stop 2975
-            case default
-
-                print*, 'In, ', subroutine_name
-                print*, 'error: unknown solver, ', solver
-                stop 81878
-
+        !%------------------------------------------------------------------
+        select case (whichSolver)
+        case (ETM)
+            where ( (elemI(:,ei_HeqType) == time_march) .or. &
+                    (elemI(:,ei_QeqType) == time_march) )
+                elemI(:,ei_tmType) = ETM
+            endwhere
+        case (AC)
+            print*, 'In, ', subroutine_name
+            print*, 'AC solver is not handeled at this moment'
+            stop 83974
+        case (ETM_AC)
+            print*, 'In, ', subroutine_name
+            print*, 'ETM-AC solver is not handeled at this moment'
+            stop 2975
+        case default
+            print*, 'In, ', subroutine_name
+            print*, 'error: unknown solver, ', whichSolver
+            stop 81878
         end select
 
-
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_solver_select
 !
 !==========================================================================

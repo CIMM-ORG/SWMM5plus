@@ -946,7 +946,7 @@ module lowlevel_rk2
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: whichTM
-            integer, pointer :: thisColP_JM, nPack, npack2, thisP(:), thisZeroP(:)
+            integer, pointer :: thisColP_JM, thisCol2, nPack, npack2, thisP(:), thisZeroP(:)
             integer, pointer :: fUp(:), fDn(:), BranchExists(:)
             integer :: kk, ii, jj
             real(8), pointer :: dHead(:), eHead(:), eFlow(:), eVol(:)
@@ -957,10 +957,13 @@ module lowlevel_rk2
             select case (whichTM)
             case (ALLtm)
                 thisColP_JM            => col_elemP(ep_JM_ALLtm)
+                thisCol2               => col_elemP(ep_ZeroDepth_JM_ALLtm)
             case (ETM)
                 thisColP_JM            => col_elemP(ep_JM_ETM)
+                thisCol2               => col_elemP(ep_ZeroDepth_JM_ETM)
             case (AC)
                 thisColP_JM            => col_elemP(ep_JM_AC)
+                thisCol2               => col_elemP(ep_ZeroDepth_JM_AC)
             case default
                 print *, 'error, case default should never be reached.'
                 stop 7659
@@ -1037,9 +1040,9 @@ module lowlevel_rk2
         end do
 
         !% second pack for the zero-depth JM  
-        npack2 => npack_elemP(ep_ZeroDepth_JM_ALLtm)  ! HACK -- do we need separate packfor AC, ETM and ALLtm?
+        npack2 => npack_elemP(thisCol2)  ! HACK -- do we need separate packfor AC, ETM and ALLtm?
         if (npack2 > 0) then
-            thisZeroP => elemP(1:npack2,ep_ZeroDepth_JM_ALLtm)
+            thisZeroP => elemP(1:npack2,thisCol2)
         end if
 
         !% cycle through all the branches without reference to up or down

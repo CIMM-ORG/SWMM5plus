@@ -32,7 +32,7 @@ module update
         !% and velocity
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM  !% indicates which Time marching method
+            integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
             integer, pointer :: thisCol_all, thisCol_JM
             character(64) :: subroutine_name = 'update_auxiliary_variables'
         !%------------------------------------------------------------------
@@ -45,14 +45,6 @@ module update
         !%
         !% update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
-
-        !% Store the head as the average head
-        !% note the average head is only needed if solver uses 
-        !% method QinterpWithLocalHeadGradient, which updates
-        !% HeadAvg in the face_interpolation call
-        !% Here we set the average to the actual head to ensure we don't
-        !% have zero values anywhere
-        elemR(:,er_HeadAvg) = elemR(:,er_Head)
 
         !% adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
@@ -85,6 +77,9 @@ module update
         call update_CCtm_interpweights(thisCol_all, whichTM)
 
         call update_JB_interpweights (thisCol_JM)
+
+        !% --- compute element Froude number for JB
+        call update_Froude_number_junction_branch (thisCol_JM) 
 
         !%------------------------------------------------------------------
         !% Closing:
