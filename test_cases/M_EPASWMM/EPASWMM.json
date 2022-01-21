@@ -37,7 +37,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 5000
+            "interval" : 100
         },
         "DataOut" :{
             "isAreaOut"         : true,

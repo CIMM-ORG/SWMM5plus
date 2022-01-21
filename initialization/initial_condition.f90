@@ -655,7 +655,7 @@ contains
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
-                                                max(link%R(thisLink,lr_BreadthScale), twoR)
+                                                max(link%R(thisLink,lr_BreadthScale), fourR)
 
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
@@ -1241,7 +1241,7 @@ contains
                 else
                     elemYN(JBidx,eYN_canSurcharge)  = .false.
                     elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                                    link%R(BranchIdx,lr_BreadthScale)
+                                                    max(link%R(BranchIdx,lr_BreadthScale),fourR)
                 end if
                 elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
 
@@ -1895,17 +1895,41 @@ contains
             elemR(:,er_set) = elemR(:,er_set) - setting%Solver%ReferenceHead
         endwhere
 
-        !% --- subtract the reference head from elemSR
-        esr_set = (/esr_Weir_NominalDownstreamHead,    &
-                   esr_Weir_Zcrown,                   &
-                   esr_Weir_Zcrest,                   &
-                   esr_Orifice_NominalDownstreamHead, &
-                   esr_Orifice_Zcrown,                &
-                   esr_Orifice_Zcrest,                &
-                   esr_Outlet_NominalDownstreamHead,  &
-                   esr_Outlet_Zcrest/)
-        where (elemSR(:,esr_set) .ne. nullValueR)        
-               elemSR(:,esr_set) = elemSR(:,esr_set) - setting%Solver%ReferenceHead
+        ! !% --- subtract the reference head from elemSR
+        ! esr_set = (/esr_Weir_NominalDownstreamHead,    &
+        !            esr_Weir_Zcrown,                   &
+        !            esr_Weir_Zcrest,                   &
+        !            esr_Orifice_NominalDownstreamHead, &
+        !            esr_Orifice_Zcrown,                &
+        !            esr_Orifice_Zcrest,                &
+        !            esr_Outlet_NominalDownstreamHead,  &
+        !            esr_Outlet_Zcrest/)
+
+        ! where (elemSR(:,esr_set) .ne. nullValueR)        
+        !        elemSR(:,esr_set) = elemSR(:,esr_set) - setting%Solver%ReferenceHead
+        ! endwhere
+        
+        !% substract the reference head from weir elemSR
+        where (elemI(:,ei_elementType) == weir)      
+               elemSR(:,esr_Weir_NominalDownstreamHead) = elemSR(:,esr_Weir_NominalDownstreamHead) &
+                                                - setting%Solver%ReferenceHead
+               elemSR(:,esr_Weir_Zcrown) = elemSR(:,esr_Weir_Zcrown) - setting%Solver%ReferenceHead
+               elemSR(:,esr_Weir_Zcrest) = elemSR(:,esr_Weir_Zcrest) - setting%Solver%ReferenceHead
+        endwhere
+
+        !% substract the reference head from orifice elemSR
+        where (elemI(:,ei_elementType) == orifice)      
+               elemSR(:,esr_Orifice_NominalDownstreamHead) = elemSR(:,esr_Orifice_NominalDownstreamHead) &
+                                                - setting%Solver%ReferenceHead
+               elemSR(:,esr_Orifice_Zcrown) = elemSR(:,esr_Orifice_Zcrown) - setting%Solver%ReferenceHead
+               elemSR(:,esr_Orifice_Zcrest) = elemSR(:,esr_Orifice_Zcrest) - setting%Solver%ReferenceHead
+        endwhere
+
+        !% substract the reference head from outlet elemSR
+        where (elemI(:,ei_elementType) == outlet)      
+               elemSR(:,esr_Outlet_NominalDownstreamHead) = elemSR(:,esr_Outlet_NominalDownstreamHead) &
+                                                - setting%Solver%ReferenceHead
+               elemSR(:,esr_Outlet_Zcrest) = elemSR(:,esr_Outlet_Zcrest) - setting%Solver%ReferenceHead
         endwhere
 
         !% --- subtract the refence head from faceR

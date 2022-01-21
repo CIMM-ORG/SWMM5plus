@@ -16,14 +16,14 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/06/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/06/2021
-END_TIME             2:05:00
+END_TIME             06:00:00
 SWEEP_START          1/1
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:15:00
+REPORT_STEP          00:00:05
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
-ROUTING_STEP         0:00:30 
+ROUTING_STEP         00:00:01 
 
 INERTIAL_DAMPING     PARTIAL
 NORMAL_FLOW_LIMITED  BOTH
@@ -56,7 +56,7 @@ J4               0.1745       0          1          0          0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-J5               0          FREE                        NO                       
+J5               0          FIXED      1                 NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
