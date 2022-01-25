@@ -111,12 +111,14 @@ module geometry
         !% limit volume for incipient surcharge. This is done after depth is computed
         !% so that the "depth" algorithm can include depths greater than fulldepth
         !% as a way to handle head for incipient surcharge.
-        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
+        !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
+        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
-        call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
+        !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
+        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.false.) !% 20220124brh
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
@@ -488,14 +490,16 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_limit_incipient_surcharge (geocol, fullcol, thisColP)
+    subroutine geo_limit_incipient_surcharge (geocol, fullcol, thisColP, isVolume)  !% 20220124brh
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Sets volume limit to full volume for incipient surcharge.
+        !% Sets volume/depth limit to full volume for incipient surcharge.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP, geocol, fullcol
+        logical, intent(in) :: isVolume !% 20220124brh
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: geovalue(:), fullvalue(:)
+        real(8), pointer :: overflow(:)  !% 20220124brh
 
         character(64) :: subroutine_name = 'geo_limit_incipient_surcharge'
         !%-----------------------------------------------------------------------------
@@ -503,15 +507,28 @@ module geometry
         Npack      => npack_elemP(thisColP)
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)
+        overflow   => elemR(:,er_VolumeOverFlow)  !% 20220124brh
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (Npack > 0) then
             thisP      => elemP(1:Npack,thisColP)
-            where (geovalue(thisP) > fullvalue(thisP))
-                geovalue(thisP) = fullvalue(thisP)
-            endwhere
+             !% 20220124brh REWRITE START
+            if (isVolume) then
+                where (geovalue(thisP) > fullvalue(thisP))
+                    overflow(thisP) = geovalue(thisP) - fullvalue(thisP) + overflow(thisP)  !% 20220124brh
+                    geovalue(thisP) = fullvalue(thisP)
+                endwhere
+            else
+                where (geovalue(thisP) > fullvalue(thisP))
+                    geovalue(thisP) = fullvalue(thisP)
+                endwhere
+            end if
+            !% 20220124brh REWRITE END
+            !where (geovalue(thisP) > fullvalue(thisP))
+            !    geovalue(thisP) = fullvalue(thisP)
+            !endwhere
         end if
 
         if (setting%Debug%File%geometry) &

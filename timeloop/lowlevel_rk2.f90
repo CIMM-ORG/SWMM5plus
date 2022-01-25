@@ -145,6 +145,9 @@ module lowlevel_rk2
 
         elemR(thisP,outCol) = VolumeN0(thisP) + crk(istep) * dt * Csource(thisP)
 
+        !% reset the source
+        Csource(thisP) = zeroR
+
         ! if (this_image() == 2) then
         !     write(*,"(A,4f12.4)") ' in ll source ', crk(istep) * dt * Csource(5428)
         ! end if
@@ -179,6 +182,9 @@ module lowlevel_rk2
               ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
               / (oneR + crk * dtau * Cgamma(thisP) )
 
+        !% reset the source
+        Csource(thisP) = zeroR      
+
     end subroutine ll_continuity_volume_CCJM_AC_open
 !%
 !%==========================================================================
@@ -205,6 +211,9 @@ module lowlevel_rk2
         elemR(thisP ,outCol) = &
               ( eHeadM(thisP) + crk * dtau * Csource(thisP ) ) &
               / (oneR + crk * dtau * Cgamma(thisP ) )
+
+        !% reset the source
+        Csource(thisP) = zeroR      
 
     end subroutine ll_continuity_head_CCJM_AC_surcharged
 !%
@@ -797,54 +806,21 @@ module lowlevel_rk2
                         tFup => iFaceUp(tB)
                         !% use the downstream face, so that near-zero is handled
                         dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
-                        !write(*,"(A,3f12.5)") 'dHead ',dHead, fHead_d(tFup), eHead(tB)
 
-                        !print *, 'in JB ',tB 
-                        !print *, eRH(tB), eArea(tB), elemR(tB,er_Depth)
+                        gamma = oneR                                 &
+                                +   crk(istep) * dt * grav           &
+                                  * abs(eFlow(tB)) * (eRough(tB)**2) &
+                                  / (eArea(tB) * eRH(tB)**(fourthirdsR))
 
-                        gamma = oneR +  crk(istep) * dt * grav * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                / (eArea(tB) * eRH(tB)**(4.0/3.0))
-
-                        ! print *, ' '
-                        ! print *, 'thishere ',tB, eFlow(tB)
-                        ! print *, dHead, eArea(tB), gamma
-                        ! print *, crk(istep), grav, eRough(tB)
-                        
-
-                        eFlow(tB) = (eFlow(tB) +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) ) 
-
-                        ! print *, eFlow(tB)
-                        ! print *, ' '
+                        eFlow(tB) = (   eFlow(tB)                                                &
+                                      + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+                                    ) / gamma
 
                         if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
                             eFlow(tB) = zeroR
                         end if
 
-                                ! if (dHead > epsH) then
-                                !     !print *, 'dhead greater than zero'
-                                !     ! downstream flow in an upstream branch use upstream values
-                                !     eFlow(tB) = headC * eArea(tB) * sqrt(twoR * grav * dHead)
-                                !     !% use the minimum of the flow in JB, the max flow on face
-                                !     eFlow(tB) = min(eFlow(tB),fFlowMax(tFup))
-                                !     !% if the minimum is a negative flow, use zero
-                                !     eFlow(tB) = max(eFlow(tB),zeroR)
-                                ! elseif (dHead < -epsH) then
-                                !     if (isZeroDepth(tM)) then !% JM is zero depth
-                                !         eFlow(tB) = zeroR
-                                !     else
-                                !         !print *, 'dhead less than zero'
-                                !         ! upstream flow in an upstream branch
-                                !         eFlow(tB) = - headC * eArea(tB) * sqrt(twoR * grav * (-dHead))
-                                !         ! if outflow, limit negative flowrate by 1/3 main junction volume
-                                !         eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) )
-                                !     end if
-                                ! else
-                                !     !print *, 'dhead equal zero'
-                                !     eFlow(tB) = zeroR
-                                !     !% no change to zero volume status
-                                ! end if
-
-                        !% HACK: Fix for velocity blowup due to small areas
+                        !% Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
                             eVelocity(tB) = zeroR
                         else
@@ -854,8 +830,6 @@ module lowlevel_rk2
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
                         end if
-
-                        !print *, 'flowrate here up',eFlow(tB)
 
                     end if
                 end do
@@ -868,53 +842,21 @@ module lowlevel_rk2
                         tFdn => iFaceDn(tB)
                         !% use the upstream face so that near-zero is handled
                         dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
-                        !write(*,"(A,3f12.5)") 'dHead ',dHead, fHead_u(tFdn), eHead(tB)
-                        !print *, dHead, 'head in JB'
+                       
+                        gamma = oneR &
+                                +   crk(istep) * dt * grav          &
+                                  * abs(eFlow(tB)) * (eRough(tB)**2) &
+                                  / (eArea(tB) * eRH(tB)**(fourthirdsR))
+   
+                        eFlow(tB) = (   eFlow(tB)                                                &
+                                     +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+                                    ) / gamma
 
-                        !eFlow(tB) = eFlow(tB) + dt * grav * eArea(tB) * dHead / eLength(tB) &
-                        
-                        gamma = oneR + crk(istep) * dt * grav * abs(eFlow(tB)) / (eArea(tB) * eRH(tB)**(4.0/3.0))
-
-    
-
-                        eFlow(tB) = (eFlow(tB) +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) ) / gamma
-
-                        
-                         
-                    
                         if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
                             eFlow(tB) = zeroR
                         end if
 
-                        !print *, 'in JB ',tB, eFlow(tB)
-
-                                !%% approach prior to 20220213
-                                ! if (dHead < -epsH) then  !% inflow
-                                !     !print *, 'dhead less than zero'
-                                !     ! upstream flow in a downstream branch use downstream values
-                                !     eFlow(tB) =  - eArea(tB) * sqrt(twoR * grav * (-dHead) ) !BRH bugfix 20210829
-                                !     !% use the smaller negative flow (max) as baseline
-                                !     eFlow(tB) = max(eFlow(tB),fFlowMax(tFdn))
-                                !     !% if flow is poistive, then use zero
-                                !     eFlow(tB) = min(eFlow(tB),zeroR)
-                                ! elseif (dHead > epsH) then  !% outflow
-                                !     !print *, 'dhead greater than zero'
-                                !     if (isZeroDepth(tM)) then  !% JM is zero depth
-                                !         eFlow(tB) = zeroR
-                                !     else
-                                !         ! downstream flow in an downstream branch
-                                !         eFlow(tB) =  + eArea(tB) * sqrt(twoR * grav * dHead )
-                                !         ! if outflow, limit flowrate by 1/3 main junction volume
-                                !         eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )
-                                !     end if
-                                ! else
-                                !     !print *, 'dhead equal zero'
-                                !     eFlow(tB) = zeroR
-                                !     !% no change to zerovolume status
-                                ! end if
-
-                        !print *, eFlow(tB), 'flow in JB'
-                        !% HACK: Fix for velocity blowup due to small areas
+                        !% Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
                             eVelocity(tB) = zeroR
                         else

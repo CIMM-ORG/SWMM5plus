@@ -371,6 +371,8 @@ module define_indexes
         enumerator :: er_Volume_N0                  !% volume (time N)
         enumerator :: er_Volume_N1                  !% volume (time N-1)
         enumerator :: er_VolumeLastAC               !% volume at start of last AC step
+        enumerator :: er_VolumeOverFlow             !% volume lost for overflow in this time step.  20220124brh
+        enumerator :: er_VolumeOverFlowTotal        !% total volume lost to overflow       20220124brh 
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_WaveSpeed                  !% wave speed in element
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
@@ -423,6 +425,9 @@ module define_indexes
         enumerator :: ep_SmallDepth_CC_ALLtm
         enumerator :: ep_SmallDepth_CC_ETM
         enumerator :: ep_SmallDepth_CC_AC
+        enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
+        enumerator :: ep_SmallDepth_JM_ETM    !% 20220122brh
+        enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
         enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
         enumerator :: ep_ZeroDepth_CC_ETM
         enumerator :: ep_ZeroDepth_CC_AC

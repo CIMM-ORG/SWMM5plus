@@ -201,6 +201,7 @@ module utility
         !%------------------------------------------------------------------
         !% Declarations:
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
+            real(8), pointer :: VolOver(:)
             integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
             integer, pointer :: fdn(:), fup(:), BranchExists(:)
             integer :: ii,kk
@@ -208,14 +209,14 @@ module utility
         !% Preliminaries:
         !%------------------------------------------------------------------
         !% Aliases:
-            !thisColCC => col_elemP(ep_CC_Q_NOTsmalldepth)
             thisColCC => col_elemP(ep_CC_ALLtm)
             thisColJM => col_elemP(ep_JM_ALLtm)
             fQ      => faceR(:,fr_Flowrate_Conservative)
             eCons   => elemR(:,er_VolumeConservation)
             eQLat   => elemR(:,er_FlowrateLateral)
             VolNew  => elemR(:,er_Volume)  
-            VolOld  => elemR(:,er_Volume_N0)  
+            VolOld  => elemR(:,er_Volume_N0) 
+            VolOver => elemR(:,er_VolumeOverFlow) 
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -231,69 +232,69 @@ module utility
             !% --- for output, use an accumulator
             eCons(thisP) = eCons(thisP)                                            &
                          + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
-                         - (VolNew(thisP) - VolOld(thisP))
+                         - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)
 
             !endwhere             
             !% --- for debugging, switch to using non-cumulative            
             !eCons(thisP) = dt * (fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP)) &
-            !              - (VolNew(thisP) - VolOld(thisP))      
+            !              - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)      
                           
-            ! do ii = 1,size(thisP)
-            !     if (abs(eCons(thisP(ii))) > 1.0e-4) then
-            !         print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
-            !         print *,  eCons(thisP(ii))
-            !         print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
-            !         print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
-            !         do kk=1,num_images()
-            !             stop 358783
-            !         end do
-            !     end if
-            ! end do    
+            do ii = 1,size(thisP)
+                if (abs(eCons(thisP(ii))) > 1.0e-4) then
+                    print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
+                    print *,  eCons(thisP(ii))
+                    print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
+                    print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
+                    print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
+                            - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
+                    print *, elemR(thisP(ii),er_VolumeOverFlow)
+                    do kk=1,num_images()
+                        stop 358783
+                    end do
+                end if
+            end do  
 
         end if
-
-        !% HACK -- need an equivalent of the ep_CC_Q_NOTsmall depth for JM
-        !% to make this work
 
         !% for the JM elements
         npack   => npack_elemP(thisColJM)
         if (npack > 0) then
             thisP => elemP(1:npack,thisColJM)
 
-            eCons(thisP) = eCons(thisP) + dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))
+            eCons(thisP) = eCons(thisP) + dt * eQlat(thisP) &
+                    - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
 
             !% debug, compute just this time step conservation
-            !eCons(thisP) = dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))
+            !eCons(thisP) = dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
 
             do ii=1,max_branch_per_node,2
-                eCons(thisP) = eCons(thisP)                                           &
-                             + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii)) &
-                                    - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) )
+                eCons(thisP) = eCons(thisP)                                                    &
+                             + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii))     &
+                                    - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) ) &
+                             - VolOver(thisP+ii  ) * real(BranchExists(thisP+ii  ),8)          &
+                             - VolOver(thisP+ii+1) * real(BranchExists(thisP+ii+1),8)                              
             end do
             
-            ! do ii = 1,size(thisP)
-            !     if (abs(eCons(thisP(ii))) > 1.0e-2) then
-            !         print *, ' '
-            !         print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
-            !         print *,  'net cons ',eCons(thisP(ii))
-            !         do kk = 1,max_branch_per_node,2
-            !             print *, 'branch ',kk, fQ(fup(thisP(ii)+kk)  ) * real(BranchExists(thisP(ii)+kk  ),8) ,  &
-            !                      fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
-            !         end do
-            !         print *, ' vol ', VolNew(thisP(ii)), VolOld(thisP(ii))
-            !         print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii)))
-            !         print *, 'net Q' , dt * (eQlat(thisP(ii)) + fQ(fup(thisP(ii)+1)  )+ fQ(fup(thisP(ii)+3)  )- fQ(fup(thisP(ii)+2)  ))
-            !         print *, ' '
-            !         do kk=1,num_images()
-            !             stop 358783
-            !         end do
-            !     end if
-            ! end do  
+            do ii = 1,size(thisP)
+                if (abs(eCons(thisP(ii))) > 1.0e-4) then
+                    print *, ' '
+                    print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
+                    print *, 'is zero =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
+                    print *,  'net cons ',eCons(thisP(ii))
+                    do kk = 1,max_branch_per_node,2
+                        print *, 'branch ',kk, fQ(fup(thisP(ii)+kk)  ) * real(BranchExists(thisP(ii)+kk  ),8) ,  &
+                                 fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
+                    end do
+                    print *, ' vol ', VolNew(thisP(ii)), VolOld(thisP(ii))
+                    print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii)))
+                    !print *, 'net Q' , dt * (eQlat(thisP(ii)) + fQ(fup(thisP(ii)+1)  )+ fQ(fup(thisP(ii)+3)  )- fQ(fup(thisP(ii)+2)  ))
+                    !print *, ' '
+                    do kk=1,num_images()
+                        stop 358783
+                    end do
+                end if
+            end do   
 
-            !print *, eCons(thisP), (VolNew(thisP) - VolOld(thisP)), dt * eQlat(thisP)
-            !print *, ' ', elemYN(thisP,eYN_isSmallDepth), elemYN(thisP,eYN_isZeroDepth)
-            !write(*,"(8f12.4)") VolNew(thisP), VolOld(thisP), dt * fQ(fup(thisP+1)), dt * fQ(fup(thisP+3)), dt*fQ(fdn(thisP+2))
-            !write(*,"(8f12.4)") VolNew(thisP) - VolOld(thisP), eCons(thisP)
         end if
 
         !%------------------------------------------------------------------
@@ -596,86 +597,23 @@ module utility
     subroutine util_CLprint ()
         !%------------------------------------------------------------------
         !% Description:
-        !% Used as a debugging write routine
+        !% Use for command-line write during debugging
         !%------------------------------------------------------------------
         !% Declarations:
             integer :: ii
             integer, pointer :: fup(:), fdn(:)
             real(8), pointer :: dt
+            real(8) :: hr
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------
         !% Aliases:
-            fup => faceI(:,fi_Melem_uL)
-            fdn => faceI(:,fi_Melem_dL)
+            fup => elemI(:,ei_Mface_uL)
+            fdn => elemI(:,ei_Mface_dL)
             dt  => setting%Time%Hydraulics%Dt
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         !% Closing:
-
-        ! if (this_image() == 2) then
-        !     print *, ' '
-        !     ii = 5428
-        !     print *, ii, reverseKey(elemI(ii,ei_elementType))
-        !     print *, elemYN(ii,eYN_isSmallDepth), elemYN(ii,eYN_isZeroDepth)
-        !     !print *, 'qlat ',elemR(ii,er_FlowrateLateral)
-        !     !print *, elemR(ii+1,er_Flowrate), elemR(ii+3, er_Flowrate), elemR(ii+2, er_Flowrate)
-        !     print *, faceR(fup(ii+1),fr_Flowrate), faceR(fup(ii+3),fr_Flowrate), faceR(fup(ii+2),fr_Flowrate)
-        !     !print *, faceR(fup(ii+1),fr_Flowrate_Conservative), faceR(fup(ii+3), fr_Flowrate_Conservative), faceR(fdn(ii+2), fr_Flowrate_Conservative)
-        !     print *, 'vol delta ',elemR(ii,er_Volume) - elemR(ii,er_Volume_N0)
-        !     !print *,   dt * faceR(fup(ii+1), fr_Flowrate_Conservative) &
-        !     !         + dt * faceR(fup(ii+3), fr_Flowrate_Conservative) &
-        !     !        - dt * faceR(fdn(ii+2), fr_Flowrate_Conservative)
-        !     print *,  dt * faceR(fup(ii+1), fr_Flowrate) &
-        !             + dt * faceR(fup(ii+3), fr_Flowrate) &
-        !             - dt * faceR(fdn(ii+2), fr_Flowrate)
-        ! end if
-
-        ! print *, elemYN(ieBup2,eYN_isSmallDepth)
-        ! print *, elemYN(ieBup2,eYN_isZeroDepth)
-        ! write(*,"(A,9(f10.4,A))") 'Q up2 ', &
-        !                                 elemR(ieBup2(1),er_Flowrate), ' | ', &
-        !                                 faceR(ifBup2(1),fr_Flowrate), ' | ', &
-        !                                 elemR(ieBup2(2),er_flowrate), ' | ', &
-        !                                 faceR(ifBup2(2),fr_Flowrate), ' | ', &
-        !                                 elemR(ieBup2(3),er_flowrate), ' | ', &
-        !                                 faceR(ifBup2(3),fr_Flowrate), ' | ', &
-        !                                 elemR(ieBup2(4),er_Flowrate), ' | ', &
-        !                                 faceR(ifBup2(4),fr_Flowrate), ' | ', &
-        !                                 elemR(ieBup2(5),er_Flowrate)
-
-        ! write(*,"(A,9(f10.4,A))") 'Q Con2', &
-        !                                 elemR(ieBup2(1),er_FlowrateLateral), ' | ', &
-        !                                 faceR(ifBup2(1),fr_Flowrate_Conservative), ' | ', &
-        !                                 elemR(ieBup2(2),er_FlowrateLateral), ' | ', &
-        !                                 faceR(ifBup2(2),fr_Flowrate_Conservative), ' | ', &
-        !                                 elemR(ieBup2(3),er_FlowrateLateral), ' | ', &
-        !                                 faceR(ifBup2(3),fr_Flowrate_Conservative), ' | ', &
-        !                                 elemR(ieBup2(4),er_FlowrateLateral), ' | ', &
-        !                                 faceR(ifBup2(4),fr_Flowrate_Conservative), ' | ', &
-        !                                 elemR(ieBup2(5),er_FlowrateLateral)
-
-        ! write(*,"(A,8(f10.4,A),2f10.4)") 'H     ', &
-        !                             elemR(ieBup2(1),er_Head),   ' | ', &
-        !                             faceR(ifBup2(1),fr_Head_u), ' | ', &
-        !                             elemR(ieBup2(2),er_Head),   ' | ', &
-        !                             faceR(ifBup2(2),fr_Head_u), ' | ', &
-        !                             elemR(ieBup2(3),er_Head),   ' | ', &
-        !                             faceR(ifBup2(3),fr_Head_u), ' | ', &
-        !                             elemR(ieBup2(4),er_Head),   ' | ', &
-        !                             faceR(ifBup2(4),fr_Head_u), ' | ', &
-        !                             elemR(ieBup2(5),er_Head), elemR(612,er_Head)
-
-        ! write(*,"(A,8(f10.4,A),2f10.4)") 'D     ', &
-        !                             elemR(ieBup2(1),er_Depth),   ' | ', &
-        !                             faceR(ifBup2(1),fr_HydDepth_u), ' | ', &
-        !                             elemR(ieBup2(2),er_Depth),   ' | ', &
-        !                             faceR(ifBup2(2),fr_HydDepth_u), ' | ', &
-        !                             elemR(ieBup2(3),er_Depth),   ' | ', &
-        !                             faceR(ifBup2(3),fr_HydDepth_u), ' | ', &
-        !                             elemR(ieBup2(4),er_Depth),   ' | ', &
-        !                             faceR(ifBup2(4),fr_HydDepth_u), ' | ', &
-        !                             elemR(ieBup2(5),er_Depth), elemR(612,er_Depth)
 
     end subroutine util_CLprint    
 !%

@@ -298,7 +298,7 @@ module weir_elements
         integer, intent(in) :: eIdx
         real(8), pointer :: Head, Length, Zbottom,  Zcrown
         real(8), pointer :: Depth, Area, Volume, Topwidth, HydRadius
-        real(8), pointer :: Perimeter, HydDepth,  Zcrest
+        real(8), pointer :: Perimeter, HydDepth,  Zcrest, ell
         real(8), pointer :: RectangularBreadth, TrapezoidalBreadth
         real(8), pointer :: TriangularSideSlope, TrapezoidalLeftSlope, TrapezoidalRightSlope
         integer, pointer :: SpecificWeirType
@@ -316,6 +316,7 @@ module weir_elements
         Topwidth    => elemR(eIdx,er_Topwidth)
         Perimeter   => elemR(eIdx,er_Perimeter)
         HydDepth    => elemR(eIdx,er_HydDepth)
+        ell         => elemR(eIdx,er_ell) !
         HydRadius   => elemR(eIdx,er_HydRadius)
         Zcrest                  => elemSR(eIdx,esr_Weir_Zcrest)
         Zcrown                  => elemSR(eIdx,esr_Weir_Zcrown)
@@ -343,6 +344,7 @@ module weir_elements
                 Volume    = Area * Length  !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
                 HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
+                ell       = Head - Zbottom
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
                 
@@ -351,6 +353,7 @@ module weir_elements
                 Volume    = Area * Length
                 Topwidth  = RectangularBreadth
                 HydDepth  = Depth
+                ell       = Head - Zbottom
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
             
@@ -361,6 +364,7 @@ module weir_elements
                 Topwidth  = TrapezoidalBreadth + Depth &
                             * (TrapezoidalLeftSlope + TrapezoidalRightSlope)
                 HydDepth  = Area / Topwidth
+                ell       = Head - Zbottom
                 Perimeter = TrapezoidalBreadth + Depth &
                                 * (sqrt(oneR + (TrapezoidalLeftSlope**twoR)) &
                                 + sqrt(oneR + (TrapezoidalRightSlope**twoR)))
@@ -382,6 +386,7 @@ module weir_elements
         call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_ell,       setting%ZeroValue%Depth) 
         call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume)

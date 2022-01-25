@@ -1913,6 +1913,34 @@ contains
                         (elemI(:,ei_tmType) == AC) &
                     ) )
             end if
+            !% ep_SmallDepth_JM_ALLtm
+            !% - all Small depth that are JM and any time march
+            ptype => col_elemP(ep_SmallDepth_JM_ALLtm)
+            npack => npack_elemP(ptype)
+
+            npack = count( &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    ( &
+                        (elemI(:,ei_tmType) == ETM) &
+                        .or. &
+                        (elemI(:,ei_tmType) == AC) &
+                    ) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    ( &
+                        (elemI(:,ei_tmType) == ETM) &
+                        .or. &
+                        (elemI(:,ei_tmType) == AC) &
+                    ) )
+            end if
             
             !% ep_ZeroDepth_CC_ALLtm
             !% - all zero depth that are CC and any time march
@@ -1993,7 +2021,30 @@ contains
                     .and. &
                     (elemI(:,ei_tmType) == ETM))
             end if
-            
+
+             !% BeginNew 20220122brh
+            !% ep_SmallDepth_JM_ETM
+            !% - all Small depth that are JM and ETM time march
+            ptype => col_elemP(ep_SmallDepth_JM_ETM)
+            npack => npack_elemP(ptype)
+
+            npack = count( &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    (elemI(:,ei_tmType) == ETM) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    (elemI(:,ei_tmType) == ETM))
+            end if
+            !% EndNew 20220122brh
+
             !% ep_ZeroDepth_CC_ETM
             !% - all zero depth that are CC and ETM time march
             ptype => col_elemP(ep_ZeroDepth_CC_ETM)
@@ -2037,7 +2088,92 @@ contains
             end if
 
         case (AC)
-            stop 938753
+                !% BeginNew 20220122brh
+            !% ep_SmallDepth_CC_AC
+            !% - all Small depth that are CC and AC time march
+            ptype => col_elemP(ep_SmallDepth_CC_AC)
+            npack => npack_elemP(ptype)
+
+            npack = count( &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == CC) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == CC) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC))
+            end if
+
+            !% ep_SmallDepth_JM_AC
+            !% - all Small depth that are JM and AC time march
+            ptype => col_elemP(ep_SmallDepth_JM_AC)
+            npack => npack_elemP(ptype)
+
+            npack = count( &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC))
+            end if
+            
+            !% ep_ZeroDepth_CC_AC
+            !% - all zero depth that are CC and AC time march
+            ptype => col_elemP(ep_ZeroDepth_CC_AC)
+            npack => npack_elemP(ptype)
+
+            npack = count( &
+                    (elemYN(:,eYN_isZeroDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == CC) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemYN(:,eYN_isZeroDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == CC) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC) )
+            end if
+
+            !% ep_ZeroDepth_JM_AC
+            !% - all Zero depth that are JM for AC
+            ptype => col_elemP(ep_ZeroDepth_JM_AC)
+            npack => npack_elemP(ptype)
+
+            npack = count( &
+                    (elemYN(:,eYN_isZeroDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC))
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemYN(:,eYN_isZeroDepth)) &
+                    .and. &
+                    (elemI(:,ei_elementType) == JM) &
+                    .and. &
+                    (elemI(:,ei_tmType) == AC))
+            end if
+
+            !% EndNew 20220122brh
         case default
             print *, 'CODE ERROR -- unexpected case default'
             stop 3987053

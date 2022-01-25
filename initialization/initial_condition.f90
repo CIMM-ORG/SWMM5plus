@@ -623,6 +623,7 @@ contains
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                 endwhere
 
             case (lTrapezoidal)
@@ -667,6 +668,7 @@ contains
                                 (elemSGR(:,esgr_Trapezoidal_LeftSlope) + elemSGR(:,esgr_Trapezoidal_RightSlope)) * &
                                 elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                 endwhere
 
             case default
@@ -1266,6 +1268,7 @@ contains
                         elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
                         elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth)
                         elemR(JBidx,er_ZbreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom)
+                        elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
 
                     case (lTrapezoidal)
                         !% brh20211217, reviewed
@@ -1288,6 +1291,8 @@ contains
                                     + onehalfR * elemR(JBidx,er_FullDepth)                        &
                                        * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
                                            + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
+
+                        elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
                                   
                     case (lCircular)
                         elemI(JBidx,ei_geometryType) = circular
@@ -1302,6 +1307,7 @@ contains
 
                         elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
 
+                        elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
                     case default
 
                         print *, 'In, ', subroutine_name
@@ -1727,7 +1733,8 @@ contains
              
         !% trapezoidal conduit    
         where (geoType == trapezoidal)
-            smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
+            !rm smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
+            smallVolume = (trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff) * length !% 20220122brh
         end where
 
         !% circular conduit

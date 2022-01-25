@@ -42,6 +42,8 @@ module update
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%------------------------------------------------------------------
+        !% reset the overflow counter
+            elemR(:,er_VolumeOverFlow) = zeroR
         !%
         !% update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
@@ -415,6 +417,7 @@ module update
 
             !% use head interp as length-scaled
             w_uH(thisP+ii) = onehalfR * length(thisP+ii)
+            w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
         end do
 
     end subroutine update_JB_interpweights

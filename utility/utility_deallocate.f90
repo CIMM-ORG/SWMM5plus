@@ -174,10 +174,10 @@ contains
         end if
 
         !% Deallocate link/node names
-        do ii = 1, size(link%Names)
-            deallocate(link%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check(deallocation_status, emsg, 'link%Names(ii)%str')
-        end do
+        ! do ii = 1, size(link%Names)
+        !     deallocate(link%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
+        !     call util_deallocate_check(deallocation_status, emsg, 'link%Names(ii)%str')
+        ! end do
         do ii = 1, size(node%Names)
             deallocate(node%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg, 'node%Names(ii)%str')
@@ -187,8 +187,8 @@ contains
         deallocate(node%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node%Names')
 
-        deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'link%Names')
+        ! deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'link%Names')
 
     
         !% brh20211217 -- 

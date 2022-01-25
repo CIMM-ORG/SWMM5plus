@@ -60,7 +60,6 @@ module runge_kutta2
         call face_interpolation(fp_all,ETM)
 
         !% --- set the zero and small depth fluxes
-        !%     This DOES store the conservative face fluxes
         call adjust_zero_and_small_depth_face (ETM, .true.)
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
@@ -81,14 +80,12 @@ module runge_kutta2
         call update_auxiliary_variables(ETM)  
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
-        !%     This DOES reset the zero/small depth packing
-        call adjust_zero_and_small_depth_elem (ETM, .true.)
+        call adjust_zero_and_small_depth_elem (ETM, .false.)
 
         !% --- RK2 solution step -- update all faces
         call face_interpolation(fp_all,ETM)
 
         !% --- set the zero and small depth fluxes
-        !%     This does not store the conservative face fluxes
         call adjust_zero_and_small_depth_face (ETM, .false.)
         
         !% --- RK2 solution step -- update diagnostic elements and faces
@@ -98,7 +95,11 @@ module runge_kutta2
         call adjust_Vfilter (ETM)
 
         !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
-        call adjust_zero_and_small_depth_elem (ETM, .false.)
+        call adjust_zero_and_small_depth_elem (ETM, .true.)
+
+        !% --- accumulate the volume overflow
+        elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
+
    
         !%-----------------------------------------------------------------
         !% closing

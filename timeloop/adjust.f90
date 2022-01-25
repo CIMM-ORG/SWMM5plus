@@ -96,7 +96,7 @@ module adjust
         call adjust_smalldepth_face_fluxes     (whichTM,ifixQCons)
         call adjust_zerodepth_face_fluxes_CC   (whichTM,ifixQCons)
         call adjust_zerodepth_face_fluxes_JMJB (whichTM,ifixQCons)
-        if (ifixQCons) call adjust_JB_elem_flux_to_equal_face (whichTM)
+        call adjust_JB_elem_flux_to_equal_face (whichTM) !% 20220123brh
     
         !%------------------------------------------------------------------
         !% Closing:
@@ -498,22 +498,17 @@ module adjust
         !% Declarations:
             integer, intent(in) :: whichTM
             integer, pointer :: thisCol
-            integer, pointer :: npack, thisP(:), fdn(:), fup(:), oneArray(:)
-            real(8), pointer :: Area(:), BottomSlope(:), CMvelocity(:)
+            integer, pointer :: npack, thisP(:), fdn(:), fup(:)
+            real(8), pointer :: Area(:), CMvelocity(:)
             real(8), pointer :: Flowrate(:), HydRadius(:), ManningsN(:)
             real(8), pointer :: Velocity(:), VelocityBlend(:), svRatio(:)
             real(8), pointer :: SmallVolume(:), Volume(:), faceFlow(:), faceFlowCons(:)
-            real(8), pointer :: fHead_u(:), fHead_d(:), Length(:)
+            real(8), pointer :: fHead_u(:), fHead_d(:), Length(:), oneArray(:)
             integer, target  :: pset(2)
             real(8)          :: psign(2)
             integer :: ii
         !% -----------------------------------------------------------------
         !% Preliminaries:   
-            !% local declarations to cycle through positive and negative slope sets
-            ! pset(1) = ep_SmallDepth_CC_ALLtm_posSlope
-            ! pset(2) = ep_SmallDepth_CC_ALLtm_negSlope
-            ! psign(1) = oneR
-            ! psign(2) = -oneR
             select case (whichTM)
             case (ALLtm)
                 thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
@@ -528,63 +523,50 @@ module adjust
         !% -----------------------------------------------------------------    
         !% Aliases    
             Area          => elemR(:,er_Area)
-            BottomSlope   => elemR(:,er_BottomSlope)
             CMvelocity    => elemR(:,er_SmallVolume_CMvelocity) 
             Flowrate      => elemR(:,er_Flowrate)
             HydRadius     => elemR(:,er_HydRadius)
             Length        => elemR(:,er_Length)
-            ManningsN     => elemR(:,er_SmallVolume_ManningsN)   
+            ManningsN     => elemR(:,er_SmallVolume_ManningsN)  
+            oneArray      => elemR(:,er_ones) 
             SmallVolume   => elemR(:,er_SmallVolume)  
             svRatio       => elemR(:,er_SmallVolumeRatio)
-            Velocity      => elemR(:,er_Velocity)
+            !% use old velocity to prevent RK2 mid-step from affecting mid-step adjustment
+            Velocity      => elemR(:,er_Velocity_N0) 
             VelocityBlend => elemR(:,er_Temp01)
             Volume        => elemR(:,er_Volume)
             fHead_d       => faceR(:,fr_Head_d)
             fHead_u       => faceR(:,fr_Head_u)
-            oneArray      => elemI(:,er_ones)
             fdn           => elemI(:,ei_Mface_dL)
             fup           => elemI(:,ei_Mface_uL)
         !% -----------------------------------------------------------------          
-        !do ii = 1,size(pset)
-            !thisCol => col_elemP(pset(ii))
-            npack   => npack_elemP(thisCol)
-            if (npack < 1) return !cycle
-            thisP   => elemP(1:npack,thisCol)
-            
-            !% define the small volume ratio
-            svRatio(thisP) = Volume(thisP) / SmallVolume(thisP)       
+        npack   => npack_elemP(thisCol)
+        if (npack < 1) return 
+        thisP   => elemP(1:npack,thisCol)
         
-            !% use the larger of available roughness values
-            ManningsN(thisP) = setting%SmallDepth%ManningsN
-            ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))
-            ! where (ManningsN(thisP) < elemR(thisP,er_Roughness))
-            !     ManningsN(thisP) = elemR(thisP,er_Roughness)
-            ! endwhere    
+        !% --- define the small volume ratio, 
+        !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
+        svRatio(thisP) = max(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
+    
+        !% use the larger of available roughness values
+        ManningsN(thisP) = setting%SmallDepth%ManningsN
+        ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))   
 
-            !% chezy-manning velocity based on bottom slope
-            !CMvelocity(thisP) = psign(ii) * ( HydRadius(thisP)**(twothirdR) ) &
-            !            * sqrt(abs(BottomSlope(thisP))) / ManningsN(thisP)
+        !% chezy-manning velocity based on head slop
+        CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
+            * ( HydRadius(thisP)**(twothirdR) )                                              &
+            * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) )           &
+            / ManningsN(thisP)
+                
+        !% blend the computed velocity with CM velocity
+        VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
+                            + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
-            !% chezy-manning velocity based on head slop
-            CMvelocity(thisP) = sign( real(oneArray(thisP),8), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
-            *  ( HydRadius(thisP)**(twothirdR) ) &
-            * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) ) / ManningsN(thisP)
-                    
-            !% blend the computed velocity with CM velocity
-            VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
-                                + (oneR - svRatio(thisP)) * CMvelocity(thisP)
+        !% new flowrate
+        Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
 
-            !% use the smaller velocity value, with the sign of the CM velocity
-            Velocity(thisP) = min(abs(CMvelocity(thisP)), velocity(thisP))
-            Velocity(thisP) = sign(Velocity(thisP),CMvelocity(thisP))
-
-            !% new flowrate
-            Flowrate(thisP) = Area(thisP) * Velocity(thisP)
-
-            !% reset the temporary storage
-            VelocityBlend(thisP) = nullvalueR
-
-        !end do
+        !% reset the temporary storage
+        VelocityBlend(thisP) = nullvalueR
 
         !% -----------------------------------------------------------------
     end subroutine adjust_smalldepth_element_fluxes  
@@ -759,69 +741,49 @@ module adjust
             logical, intent(in) ::  ifixQCons
             integer, intent(in) :: whichTM
             integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
-            real(8), pointer :: faceQ(:), elemQ(:), fQCons(:), slope(:)
-            integer :: pset(2)
+            integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
+            real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
+            real(8), pointer :: dt, elemVol(:) !% 20220122brh
             integer :: ii
-            logical :: istop = .false.
         !%------------------------------------------------------------------
         !% Preliminaries:
-          ! % local declarations to cycle through positive and negative slope sets
-            !pset(1) = ep_SmallDepth_CC_ALLtm_posSlope
-            !pset(2) = ep_SmallDepth_CC_ALLtm_negSlope
             select case (whichTM)
             case (ALLtm)
-                thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
+                thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
+                thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
             case (ETM)
-                thisCol => col_elemP(ep_SmallDepth_CC_ETM)
+                thisCol   => col_elemP(ep_SmallDepth_CC_ETM)
+                thisColJM => col_elemP(ep_SmallDepth_JM_ETM) 
             case (AC)
-                thisCol => col_elemP(ep_SmallDepth_CC_AC)
+                thisCol   => col_elemP(ep_SmallDepth_CC_AC)
+                thisColJM => col_elemP(ep_SmallDepth_JM_AC)
             case default
                 print *, 'CODE ERROR -- unexpected case default'
                 stop 447833
             end select
-            npack     => npack_elemP(thisCol)
-            if (npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases:
-            faceQ  => faceR(:,fr_Flowrate)
-            fQCons => faceR(:,fr_Flowrate_Conservative)
-            elemQ  => elemR(:,er_Flowrate)
-            slope  => elemR(:,er_BottomSlope)
-            fdn    => elemI(:,ei_Mface_dL)
-            fup    => elemI(:,ei_Mface_uL)
-            thisP     => elemP(1:npack,thisCol)
+            faceQ     => faceR(:,fr_Flowrate)
+            fQCons    => faceR(:,fr_Flowrate_Conservative)
+            elemQ     => elemR(:,er_Flowrate)
+            elemVol   => elemR(:,er_Volume_N0)
+            isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            dt        => setting%Time%Hydraulics%Dt
+            fdn       => elemI(:,ei_Mface_dL)
+            fup       => elemI(:,ei_Mface_uL)
         !%------------------------------------------------------------------
-        !do ii=1,size(pset)
-            !thisCol   => col_elemP(pset(ii))
-            !npack     => npack_elemP(thisCol)
-            !if (npack < 1) cycle 
-            !thisP     => elemP(1:npack,thisCol)
-
-            !% set the downstream face as minimum of small volume flow or the
-            !% (possibly negative) flow from the downstream element
-            !% the upstream is zero or the inflow. Need where to handle
-            !% elements with adverse slopes. Since this is a rare condition
-            !% (and static, we can probably pack for this.)
-            ! select case (ii)
-            ! case (1)
-            !     !% positive bottom slope
-            !     faceQ(fdn(thisP)) = min(elemQ(thisP)     , faceQ(fdn(thisP)) )      
-            !     faceQ(fup(thisP)) = max(faceQ(fup(thisP)), zeroR)
-            ! case (2)
-            !     !% negative bottom slope
-            !     faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), zeroR )
-            !     faceQ(fup(thisP)) = max(elemQ(thisP)     , faceQ(fup(thisP)) ) 
-            ! case default
-            !     print *, 'CODE ERROR -- default should not be reached'
-            !     stop 3784848
-            ! end select
-
+        !% Handle the CC elements
+        npack => npack_elemP(thisCol)
+        if (npack > 0) then
+            thisP  => elemP(1:npack,thisCol)
             where (elemQ(thisP) .ge. zeroR)
                 !% --- flow in downstream direction
-                !%     downtream face value is minimum of the face value or element value
+                !%     downstream face value is minimum of the face value or element value
                 faceQ(fdn(thisP)) = min(elemQ(thisP)     , faceQ(fdn(thisP)) )      
                 !%     upstream face value is either the inflow from face or zero
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), zeroR)
+                 !% --- downstream outflow is limited to 1/3 the element volume 
+                faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), elemVol(thisP) / (threeR * dt) )   !% 20220122brh
             elsewhere
                 !% --- flow in upstream direction
                 !%     downstream face value is inflow (negative face flow) or zero
@@ -829,6 +791,8 @@ module adjust
                 !%     upstream face value is the inflow (faceQ > 0) or the larger (closer
                 !%     to zero) of the negative flowrate at face or element
                 faceQ(fup(thisP)) = max(elemQ(thisP)     , faceQ(fup(thisP)) ) 
+                !% --- upstream out flow is limited to 1/3 the element volume !% 20220122brh
+                faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
             endwhere
 
             if (ifixQCons) then
@@ -836,10 +800,47 @@ module adjust
                 fQCons(fdn(thisP)) = faceQ(fdn(thisP))
                 fQCons(fup(thisP)) = faceQ(fup(thisP))
             end if
-       
-            
-        !end do  
-    
+        
+        else
+            !% no CC elements
+        end if
+
+        !% Handle the JM elements
+        npackJM => npack_elemP(thisColJM)
+        if (npackJM > 0) then
+            thisJM => elemP(1:npackJM,thisColJM)
+            do ii = 1,max_branch_per_node,2
+                where (elemQ(thisJM+ii) .ge. zeroR)
+                    !% --- flow in downstream direction in upstream branch
+                    !%     upstream face value is either the inflow from face or zero if face is outflow
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), zeroR) * (real(isbranch(thisJM+ii),8))
+                elsewhere
+                    !% --- flow in upstream direction in upstream branch is the inflow (faceQ >0) or
+                    !%     the larger (closer to zero of the negative flowrate at face or element)
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), elemQ(thisJM+ii)) * (real(isbranch(thisJM+ii),8))
+                    !% --- outflow (-faceQ) is limited to 1/3 volume in junction
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), -elemVol(thisJM+ii) / (threeR * dt) )
+                endwhere
+                where (elemQ(thisJM+1+ii) .ge. zeroR)
+                    !% --- flow downstream direction in downstream branch 
+                    !%     downstream face value is the smaller of the face or branch values
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemQ(thisJM+1+ii))  * (real(isbranch(thisJM+1+ii),8))
+                    !% --- outflow (+faceQ) is limited to 1/3 volume in junction
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemVol(thisJM+1+ii) / (threeR * dt) )
+                elsewhere
+                    !% --- flow upstream direction in downstream branch
+                    !%     face flow is the inflow (negative direction) from downstream or zero.
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)),zeroR) * (real(isbranch(thisJM+1+ii),8))
+                endwhere
+
+                if (ifixQCons) then
+                    !% update the conservative face Q
+                    fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
+                    fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
+                end if
+            end do
+        end if
+        
         !%------------------------------------------------------------------
         !% Closing:
     end subroutine adjust_smalldepth_face_fluxes

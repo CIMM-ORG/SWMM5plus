@@ -503,21 +503,32 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         else
             select case (elemGeometry)
 
-                case (rectangular)
-                    criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
-                    
-                case default
-                    !% first estimate Critical Depth for an equivalent circular conduit
-                    critDepthEstimate = min(1.01*(Q2g/FullDepth)**onefourthR, FullDepth)
+            case (rectangular)
+                criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
+                
+            case (trapezoidal)
+                !% NEED TO CODE approach of Vatankha (2012)
+                !% non-dimensional discharge (epsilon_c)
+                !Qn = fourR * cbrt( (Flowrate**2))
+                print *, 'CODE ERROR -- trapezoidal geometry not done for critical depth'
+                stop 3987066
+    
+            case (circular)  
+                !% first estimate Critical Depth for an equivalent circular conduit
+                critDepthEstimate = min(1.01*(Q2g/FullDepth)**onefourthR, FullDepth)
 
-                    !% find ratio of conduit area to equiv. circular area
-                    ratio = FullArea/(pi/fourR*(FullDepth**twoR))
+                !% find ratio of conduit area to equiv. circular area
+                ratio = FullArea/(pi/fourR*(FullDepth**twoR))
 
-                    if ((ratio >= onehalfR) .and. (ratio <= twoR)) then
-                        criticalDepth = bc_critDepth_enum (elemIdx, Flowrate, critDepthEstimate)
-                    else
-                        criticalDepth = bc_critDepth_ridder (elemIdx, Flowrate, critDepthEstimate)
-                    end if
+                if ((ratio >= onehalfR) .and. (ratio <= twoR)) then
+                    criticalDepth = bc_critDepth_enum (elemIdx, Flowrate, critDepthEstimate)
+                else
+                    criticalDepth = bc_critDepth_ridder (elemIdx, Flowrate, critDepthEstimate)
+                end if
+
+            case default
+                print *, ' CODE ERROR - need geometry of type ',trim(reverseKey(elemGeometry)),' in critical depth computation'
+                stop 389753 
             end select
         end if
 
@@ -739,7 +750,7 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
 
         case default
             print*, 'In', subroutine_name
-            print*, 'This default case should not reach'
+            print*, 'CODE ERROR -- feometry not completed for ',trim(reverseKey(elemGeometry))
             stop 84198
      end select
 
