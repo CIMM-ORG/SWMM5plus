@@ -186,99 +186,104 @@ module weir_elements
         SubCorrectionRectangular = oneR
     
         select case (SpecificWeirType)
-            case (transverse_weir)
-                WeirExponent          => Setting%Weir%Transverse%WeirExponent
-                WeirContractionFactor => Setting%Weir%Transverse%WeirContractionFactor
-                VillemonteExponent    => Setting%Weir%Transverse%VillemonteCorrectionExponent
+        case (transverse_weir)
+            WeirExponent          => Setting%Weir%Transverse%WeirExponent
+            WeirContractionFactor => Setting%Weir%Transverse%WeirContractionFactor
+            VillemonteExponent    => Setting%Weir%Transverse%VillemonteCorrectionExponent
 
-                !% effective crest length due to contraction for tranverse weir             
-                CrestLength = max(zeroR, &
-                        RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta) 
+            !% effective crest length due to contraction for tranverse weir             
+            CrestLength = max(zeroR, &
+                    RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta) 
 
+            !% correction factor for nominal downstream submergence
+            if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
+                ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)        
+                SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
+            endif
+
+            Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
+                    CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
+
+        case (side_flow)
+            WeirExponent          => Setting%Weir%SideFlow%WeirExponent
+            WeirContractionFactor => Setting%Weir%SideFlow%WeirContractionFactor
+            WeirCrestExponent     => Setting%Weir%SideFlow%SideFlowWeirCrestExponent
+            VillemonteExponent    => Setting%Weir%SideFlow%VillemonteCorrectionExponent
+
+            !% effective crest length due to contraction for sideflow weir   
+            CrestLength = max(zeroR, &
+                    RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta)
+                    
+            if (FlowDirection > zeroR) then
+                
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)        
+                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest) 
                     SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
                 endif
+            
+                Flowrate = real(FlowDirection,8)  * SubCorrectionRectangular * (CrestLength ** &
+                    WeirCrestExponent) * CoeffRectangular * (EffectiveHeadDelta ** WeirExponent)
+            
+            else
+                !% under reverse flow condition, sideflow weir behaves like a transverse weir
+                !% correction factor for nominal downstream submergence
+                WeirExponent => Setting%Weir%Transverse%WeirExponent
 
+                if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
+                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)      
+                    SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
+                endif
+            
                 Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
-                        CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
+                    CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
 
-            case (side_flow)
-                WeirExponent          => Setting%Weir%SideFlow%WeirExponent
-                WeirContractionFactor => Setting%Weir%SideFlow%WeirContractionFactor
-                WeirCrestExponent     => Setting%Weir%SideFlow%SideFlowWeirCrestExponent
-                VillemonteExponent    => Setting%Weir%SideFlow%VillemonteCorrectionExponent
+            endif  
 
-                !% effective crest length due to contraction for sideflow weir   
-                CrestLength = max(zeroR, &
-                        RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta)
-                        
-                if (FlowDirection > zeroR) then
-                    
-                    !% correction factor for nominal downstream submergence
-                    if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                        ratio = (NominalDsHead - Zcrest) / (Head - Zcrest) 
-                        SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
-                    endif
-                
-                    Flowrate = real(FlowDirection,8)  * SubCorrectionRectangular * (CrestLength ** &
-                        WeirCrestExponent) * CoeffRectangular * (EffectiveHeadDelta ** WeirExponent)
-                
-                else
-                    !% under reverse flow condition, sideflow weir behaves like a transverse weir
-                    !% correction factor for nominal downstream submergence
-                    WeirExponent => Setting%Weir%Transverse%WeirExponent
+        case (trapezoidal_weir)
+            WeirExponentVNotch    => Setting%Weir%VNotch%WeirExponent
+            WeirExponent          => Setting%Weir%Trapezoidal%WeirExponent
+            WeirContractionFactor => Setting%Weir%Trapezoidal%WeirContractionFactor
+            WeirCrestExponent     => Setting%Weir%Trapezoidal%SideFlowWeirCrestExponent
+            VillemonteExponent    => Setting%Weir%Trapezoidal%VillemonteCorrectionExponent
 
-                    if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                        ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)      
-                        SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
-                    endif
-                
-                    Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
-                        CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
+            !% effective crest length due for trapezoidal weir
+            !% HACK: the crest length changes if there is control present
+            CrestLength = TrapezoidalBreadth
+            
+            !% correction factor for nominal downstream submergence
+            if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
+                ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)   
+                SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) **  VillemonteExponent)
+                SubCorrectionTriangular  = ((oneR - (ratio ** WeirExponentVNotch)) ** VillemonteExponent)
+            endif
 
-                endif  
+            Flowrate = real(FlowDirection,8) * &
+                    (SubCorrectionTriangular * CoeffTriangular * ((TrapezoidalLeftSlope + &
+                    TrapezoidalRightSlope) / twoR) * (EffectiveHeadDelta ** WeirExponentVNotch) &
+                    + &
+                    SubCorrectionRectangular * CoeffRectangular * CrestLength * &
+                    (EffectiveHeadDelta ** WeirExponent))
+                            
+        case (vnotch_weir)
+            WeirExponent          => Setting%Weir%VNotch%WeirExponent
+            WeirContractionFactor => Setting%Weir%VNotch%WeirContractionFactor
+            WeirCrestExponent     => Setting%Weir%VNotch%SideFlowWeirCrestExponent
+            VillemonteExponent    => Setting%Weir%VNotch%VillemonteCorrectionExponent
 
-            case (trapezoidal_weir)
-                WeirExponentVNotch    => Setting%Weir%VNotch%WeirExponent
-                WeirExponent          => Setting%Weir%Trapezoidal%WeirExponent
-                WeirContractionFactor => Setting%Weir%Trapezoidal%WeirContractionFactor
-                WeirCrestExponent     => Setting%Weir%Trapezoidal%SideFlowWeirCrestExponent
-                VillemonteExponent    => Setting%Weir%Trapezoidal%VillemonteCorrectionExponent
-
-                !% effective crest length due for trapezoidal weir
-                !% HACK: the crest length changes if there is control present
-                CrestLength = TrapezoidalBreadth
-                
-                !% correction factor for nominal downstream submergence
-                if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)   
-                    SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) **  VillemonteExponent)
-                    SubCorrectionTriangular  = ((oneR - (ratio ** WeirExponentVNotch)) ** VillemonteExponent)
-                endif
-
-                Flowrate = real(FlowDirection,8) * &
-                        (SubCorrectionTriangular * CoeffTriangular * ((TrapezoidalLeftSlope + &
-                        TrapezoidalRightSlope) / twoR) * (EffectiveHeadDelta ** WeirExponentVNotch) &
-                        + &
-                        SubCorrectionRectangular * CoeffRectangular * CrestLength * &
-                        (EffectiveHeadDelta ** WeirExponent))
-                             
-            case (vnotch_weir)
-                WeirExponent          => Setting%Weir%VNotch%WeirExponent
-                WeirContractionFactor => Setting%Weir%VNotch%WeirContractionFactor
-                WeirCrestExponent     => Setting%Weir%VNotch%SideFlowWeirCrestExponent
-                VillemonteExponent    => Setting%Weir%VNotch%VillemonteCorrectionExponent
-
-                !% correction factor for nominal downstream submergence
-                if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
-                    SubCorrectionTriangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
-                endif
-                
-                Flowrate = real(FlowDirection,8) * SubCorrectionTriangular * CoeffTriangular * &
-                        TriangularSideSlope * (EffectiveHeadDelta ** WeirExponent) 
+            !% correction factor for nominal downstream submergence
+            if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
+                ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
+                SubCorrectionTriangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
+            endif
+            
+            Flowrate = real(FlowDirection,8) * SubCorrectionTriangular * CoeffTriangular * &
+                    TriangularSideSlope * (EffectiveHeadDelta ** WeirExponent) 
+            
+        case default
+            print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
+            print *, 'which has key ',trim(reverseKey(specificWeirType))
+            stop 848555
 
         end Select
 
@@ -339,46 +344,49 @@ module weir_elements
         
         !% set geometry variables for weir types
         select case (SpecificWeirType) 
-            case (transverse_weir)
-                Area      = RectangularBreadth * Depth
-                Volume    = Area * Length  !% HACK this is not the correct volume in the element
-                Topwidth  = RectangularBreadth
-                HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
-                ell       = Head - Zbottom
-                Perimeter = Topwidth + twoR * HydDepth
-                HydRadius = Area / Perimeter
-                
-            case (side_flow)
-                Area      = RectangularBreadth * Depth
-                Volume    = Area * Length
-                Topwidth  = RectangularBreadth
-                HydDepth  = Depth
-                ell       = Head - Zbottom
-                Perimeter = Topwidth + twoR * HydDepth
-                HydRadius = Area / Perimeter
+        case (transverse_weir)
+            Area      = RectangularBreadth * Depth
+            Volume    = Area * Length  !% HACK this is not the correct volume in the element
+            Topwidth  = RectangularBreadth
+            HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
+            ell       = Head - Zbottom
+            Perimeter = Topwidth + twoR * HydDepth
+            HydRadius = Area / Perimeter
             
-            case (trapezoidal_weir)
-                Area      =  (TrapezoidalBreadth + onehalfR * &
-                             (TrapezoidalLeftSlope + TrapezoidalRightSlope) * Depth) * Depth 
-                Volume    = Area * Length
-                Topwidth  = TrapezoidalBreadth + Depth &
-                            * (TrapezoidalLeftSlope + TrapezoidalRightSlope)
-                HydDepth  = Area / Topwidth
-                ell       = Head - Zbottom
-                Perimeter = TrapezoidalBreadth + Depth &
-                                * (sqrt(oneR + (TrapezoidalLeftSlope**twoR)) &
-                                + sqrt(oneR + (TrapezoidalRightSlope**twoR)))
-                HydRadius = Area / Perimeter
-                
-            case (vnotch_weir)
-                Area      =  TriangularSideSlope * Depth ** twoR
-                Volume    = Area * Length
-                Topwidth  = twoR * TriangularSideSlope * Depth
-                HydDepth  = onehalfR * Depth
-                Perimeter = twoR * Depth * sqrt(oneR + (TriangularSideSlope ** twoR))
-                HydRadius = (TriangularSideSlope * Depth) &
-                             / (twoR * sqrt(oneR + (TriangularSideSlope ** twoR)))
-                
+        case (side_flow)
+            Area      = RectangularBreadth * Depth
+            Volume    = Area * Length
+            Topwidth  = RectangularBreadth
+            HydDepth  = Depth
+            ell       = Head - Zbottom
+            Perimeter = Topwidth + twoR * HydDepth
+            HydRadius = Area / Perimeter
+        
+        case (trapezoidal_weir)
+            Area      =  (TrapezoidalBreadth + onehalfR * &
+                            (TrapezoidalLeftSlope + TrapezoidalRightSlope) * Depth) * Depth 
+            Volume    = Area * Length
+            Topwidth  = TrapezoidalBreadth + Depth &
+                        * (TrapezoidalLeftSlope + TrapezoidalRightSlope)
+            HydDepth  = Area / Topwidth
+            ell       = Head - Zbottom
+            Perimeter = TrapezoidalBreadth + Depth &
+                            * (sqrt(oneR + (TrapezoidalLeftSlope**twoR)) &
+                            + sqrt(oneR + (TrapezoidalRightSlope**twoR)))
+            HydRadius = Area / Perimeter
+            
+        case (vnotch_weir)
+            Area      =  TriangularSideSlope * Depth ** twoR
+            Volume    = Area * Length
+            Topwidth  = twoR * TriangularSideSlope * Depth
+            HydDepth  = onehalfR * Depth
+            Perimeter = twoR * Depth * sqrt(oneR + (TriangularSideSlope ** twoR))
+            HydRadius = (TriangularSideSlope * Depth) &
+                            / (twoR * sqrt(oneR + (TriangularSideSlope ** twoR)))
+        case default
+            print *, 'CODE ERROR: unknown weir type, ', SpecificWeirType,'  in network'
+            print *, 'which has key ',trim(reverseKey(SpecificWeirType))
+            stop 3358223
         end select
 
         !% apply geometry limiters

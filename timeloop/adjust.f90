@@ -121,25 +121,25 @@ module adjust
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%ApplyYN) then   
             select case (setting%Adjust%Flowrate%Approach)
-                case (vshape)
-                    !% suppress v-shape over face/element/face
-                    call adjust_Vshaped_flowrate (whichTM)
-                case default
-                    print *, 'error, case default should not be reached'
-                    print *, 'ad hoc flowrate adjust is .true., but approach is not supported'
-                    stop 4973
-                end select
+            case (vshape)
+                !% suppress v-shape over face/element/face
+                call adjust_Vshaped_flowrate (whichTM)
+            case default
+                print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
+                print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
+                stop 4973
+            end select
         end if
         
         !% ad hoc adjustments to head
         if (setting%Adjust%Head%ApplyYN) then          
             select case (setting%Adjust%Head%Approach)
-                case (vshape_surcharge_only)
-                    call adjust_Vshaped_head_surcharged (whichTM)
-                case default
-                    print *, 'error, case default should not be reached'
-                    print *, 'ad hoc head adjust is .true. but approach is not supported'
-                    stop 9073
+            case (vshape_surcharge_only)
+                call adjust_Vshaped_head_surcharged (whichTM)
+            case default
+                print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
+                print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
+                stop 9073
             end select
         end if
         
@@ -249,7 +249,8 @@ module adjust
                 case (AC)
                     thisCol_all => col_elemP(ep_CC_AC)        
                 case default
-                    print *, 'error, default case should not be reached.'
+                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                    print *, 'which has key ',trim(reverseKey(whichTM))
                     stop 8368
             end select
         !%-------------------------------------------------------------------
@@ -448,7 +449,8 @@ module adjust
                     stop 94733
                 end select
             case default
-                print *, 'CODE ERROR -- unexpected case default'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 55873
             end select
         !% -----------------------------------------------------------------
@@ -517,7 +519,8 @@ module adjust
             case (AC)
                 thisCol => col_elemP(ep_SmallDepth_CC_AC)
             case default
-                print *, 'CODE ERROR -- unexpected case default'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                   print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 557345
             end select
         !% -----------------------------------------------------------------    
@@ -596,7 +599,8 @@ module adjust
             case (AC)
                 thisCol => col_elemP(ep_ZeroDepth_CC_AC)
             case default
-                print *, 'CODE ERROR -- unexpected default case'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 224875
             end select
             npack   => npack_elemP(thisCol)
@@ -648,7 +652,8 @@ module adjust
             case (AC)
                 thisCol => col_elemP(ep_ZeroDepth_JM_AC)
             case default
-                print *, 'CODE ERROR -- unexpected default case'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 224875
             end select
             npack => npack_elemp(thisCol)
@@ -698,7 +703,8 @@ module adjust
             case (ETM)
                 thisCol = ep_JM_ETM
             case default
-                print *, 'CODE ERROR: case default not completed'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 398703
             end select
             npack => npack_elemP(thisCol)
@@ -758,7 +764,8 @@ module adjust
                 thisCol   => col_elemP(ep_SmallDepth_CC_AC)
                 thisColJM => col_elemP(ep_SmallDepth_JM_AC)
             case default
-                print *, 'CODE ERROR -- unexpected case default'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 447833
             end select
         !%------------------------------------------------------------------
@@ -880,7 +887,8 @@ module adjust
             case (AC)
                 thisCol => col_elemP(ep_CC_AC)
             case default
-                print *, 'error, this default case should not be reached'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 9239
             end select
 
@@ -990,7 +998,8 @@ module adjust
             case (AC)
                 thisCol => col_elemP(ep_CC_AC_surcharged)
             case default
-                print *, 'error, this default case should not be reached'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 2394
         end select 
 

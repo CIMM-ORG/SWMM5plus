@@ -2175,7 +2175,8 @@ contains
 
             !% EndNew 20220122brh
         case default
-            print *, 'CODE ERROR -- unexpected case default'
+            print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            print *, 'which has key ',trim(reverseKey(whichTM))
             stop 3987053
         end select
         

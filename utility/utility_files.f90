@@ -178,7 +178,7 @@ contains
                         need2arg = .false.
                     case default
                         write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
-                        stop
+                        stop 87895
                 end select
             end if
 
@@ -221,7 +221,7 @@ contains
                     setting%Output%Warning = .false.
                 case default
                     write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
-                    stop
+                    stop 3897483
             end select
             ii = ii+1
         end do

@@ -211,21 +211,22 @@ subroutine init_partitioning_default()
 
         !% brh20211217 -- revised to add nJ1
         select case (node%I(ii, ni_node_type))
-            case (nBCup)
-                num_attributed_elements = num_attributed_elements + N_elem_nBCup
-            case (nBCdn)
-                num_attributed_elements = num_attributed_elements + N_elem_nBCdn
-            case (nStorage)
-                num_attributed_elements = num_attributed_elements + N_elem_nStorage
-            case (nJ1)
-                num_attributed_elements = num_attributed_elements + N_elem_nJ1
-            case (nJ2)
-                num_attributed_elements = num_attributed_elements + N_elem_nJ2
-            case (nJM)
-                num_attributed_elements = num_attributed_elements + N_elem_nJm
-            case default 
-                write(*,*) 'CODE ERROR, unexpected case default'
-                stop 1098226
+        case (nBCup)
+            num_attributed_elements = num_attributed_elements + N_elem_nBCup
+        case (nBCdn)
+            num_attributed_elements = num_attributed_elements + N_elem_nBCdn
+        case (nStorage)
+            num_attributed_elements = num_attributed_elements + N_elem_nStorage
+        case (nJ1)
+            num_attributed_elements = num_attributed_elements + N_elem_nJ1
+        case (nJ2)
+            num_attributed_elements = num_attributed_elements + N_elem_nJ2
+        case (nJM)
+            num_attributed_elements = num_attributed_elements + N_elem_nJm
+        case default 
+            print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
+            print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            stop 1098226
         end select
 
 
@@ -349,21 +350,22 @@ subroutine init_partitioning_random()
 
         !% brh20211217 -- revised to add nJ1
         select case (node%I(ii, ni_node_type))
-            case (nBCup)
-                elem_per_image(assigning_image) = elem_per_image(assigning_image)+ N_elem_nBCup
-            case (nBCdn)
-                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
-            case (nStorage)
-                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
-            case (nJ1)
-                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ1
-            case (nJ2)
-                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
-            case (nJM)
-                elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
-            case default 
-                write(*,*) 'CODE ERROR, unexpected case default'
-                stop 1098226
+        case (nBCup)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image)+ N_elem_nBCup
+        case (nBCdn)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
+        case (nStorage)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
+        case (nJ1)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ1
+        case (nJ2)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
+        case (nJM)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
+        case default 
+            print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
+            print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            stop 1098226
         end select
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
@@ -515,21 +517,22 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
 
         !% brh20211217 -- revised to add nJ1
         select case (node%I(ii, ni_node_type))
-            case (nBCup)
-                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
-            case (nBCdn)
-                elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nBCdn
-            case (nStorage)
-                elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nStorage
-            case (nJ1)
-                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ1
-            case (nJ2)
-                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
-            case (nJM)
-                elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
-            case default 
-                write(*,*) 'CODE ERROR, unexpected case default'
-                stop 73875
+        case (nBCup)
+            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
+        case (nBCdn)
+            elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nBCdn
+        case (nStorage)
+            elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nStorage
+        case (nJ1)
+            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ1
+        case (nJ2)
+            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
+        case (nJM)
+            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
+        case default 
+            print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
+            print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            stop 73875
         end select
     end do
 

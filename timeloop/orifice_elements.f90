@@ -90,27 +90,32 @@ module orifice_elements
         EffectiveHeadDelta         => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
         select case (SpecificOrificeType)
-            case (bottom_orifice)
-                if (Head <= Zcrest) then
-                    EffectiveHeadDelta = zeroR
-                elseif (NominalDownstreamHead > Zcrest) then
+        case (bottom_orifice)
+            if (Head <= Zcrest) then
+                EffectiveHeadDelta = zeroR
+            elseif (NominalDownstreamHead > Zcrest) then
+                EffectiveHeadDelta = Head - NominalDownstreamHead
+            else
+                EffectiveHeadDelta = Head - Zcrest
+            end if
+        case (side_orifice)
+            if (Head <= Zcrest) then
+                EffectiveHeadDelta = zeroR
+            elseif (Head < Zcrown) then
+                EffectiveHeadDelta = Head - Zcrest
+            else
+                Zmidpt = (Zcrown + Zcrest)/2.0
+                if (NominalDownstreamHead < Zmidpt) then
+                    EffectiveHeadDelta = Head - Zmidpt
+                else
                     EffectiveHeadDelta = Head - NominalDownstreamHead
-                else
-                    EffectiveHeadDelta = Head - Zcrest
                 end if
-            case (side_orifice)
-                if (Head <= Zcrest) then
-                    EffectiveHeadDelta = zeroR
-                elseif (Head < Zcrown) then
-                    EffectiveHeadDelta = Head - Zcrest
-                else
-                    Zmidpt = (Zcrown + Zcrest)/2.0
-                    if (NominalDownstreamHead < Zmidpt) then
-                        EffectiveHeadDelta = Head - Zmidpt
-                    else
-                        EffectiveHeadDelta = Head - NominalDownstreamHead
-                    end if
-                end if
+            end if
+        case default
+            print *, 'In ', subroutine_name
+            print *, 'CODE ERROR: unknown orifice type, ', SpecificOrificeType,'  in network'
+            print *, 'which has key ',trim(reverseKey(SpecificOrificeType))
+            stop 862295
         end select
 
         if (setting%Debug%File%orifice_elements)  &
@@ -166,29 +171,34 @@ module orifice_elements
                 AoverL   = FullArea / (twoR * (EffectiveFullDepth + RectangularBreadth))
             case default
                 print *, 'element idx = ',eIdx
-                print *, 'GeometryType = ',GeometryType
                 print *, 'SpecificOrificeType = ',SpecificOrificeType, ' ',reverseKey(SpecificOrificeType)
-                print *, 'error, case default should not be reached.'
+                print *, 'CODE ERROR geometry type unknown for # ', GeometryType
+                print *, 'which has key ',trim(reverseKey(GeometryType))
                 stop 5983
         end select
 
         !% find critical depth to determine weir/orifice flow
         select case (SpecificOrificeType)
-            case (bottom_orifice)
-                !% find critical height above opening where orifice flow turns into
-                !% weir flow for Bottom orifice = (C_orifice/C_weir)*(Area/Length)
-                !% where C_orifice = given orifice coeff, C_weir = weir_coeff/sqrt(2g),
-                !% Area is the area of the opening, and Length = circumference
-                !% of the opening. For a basic sharp crested weir, C_weir = 0.414.
-                CriticalDepth = DischargeCoeff / SharpCrestedWeirCoeff * AoverL
-                FractionCritDepth = min(EffectiveHeadDelta / CriticalDepth, oneR)
-            case (side_orifice)
-                CriticalDepth = EffectiveFullDepth
-                FractionCritDepth = min(((Head - Zcrest) / EffectiveFullDepth), oneR)
-                !% another adjustment to critical depth is needed
-                !% for weir coeff calculation for side orifice
-                CriticalDepth = onehalfR * CriticalDepth
-            end select
+        case (bottom_orifice)
+            !% find critical height above opening where orifice flow turns into
+            !% weir flow for Bottom orifice = (C_orifice/C_weir)*(Area/Length)
+            !% where C_orifice = given orifice coeff, C_weir = weir_coeff/sqrt(2g),
+            !% Area is the area of the opening, and Length = circumference
+            !% of the opening. For a basic sharp crested weir, C_weir = 0.414.
+            CriticalDepth = DischargeCoeff / SharpCrestedWeirCoeff * AoverL
+            FractionCritDepth = min(EffectiveHeadDelta / CriticalDepth, oneR)
+        case (side_orifice)
+            CriticalDepth = EffectiveFullDepth
+            FractionCritDepth = min(((Head - Zcrest) / EffectiveFullDepth), oneR)
+            !% another adjustment to critical depth is needed
+            !% for weir coeff calculation for side orifice
+            CriticalDepth = onehalfR * CriticalDepth
+        case default
+            print *, 'In ', subroutine_name
+            print *, 'CODE ERROR: unknown orifice type, ', SpecificOrificeType,'  in network'
+            print *, 'which has key ',trim(reverseKey(SpecificOrificeType))
+            stop 8863411
+        end select
 
         !% flow calculation conditions through an orifice
         if ((EffectiveHeadDelta == zeroR) .or. (FractionCritDepth <= zeroR)) then
@@ -209,6 +219,8 @@ module orifice_elements
         if ((FractionCritDepth < oneR) .and. (NominalDownstreamHead > Zcrest)) then
             ratio = (NominalDownstreamHead - Zcrest) / (Head - Zcrest)
             Flowrate = Flowrate * ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
+        else
+            !% no correction needed
         end if
 
         if (setting%Debug%File%orifice_elements) &
@@ -287,7 +299,8 @@ module orifice_elements
                 Perimeter   = min(Area / hydRadius, &
                         FullArea / (onefourthR * EffectiveFullDepth))
             case default
-                print *, 'error, the default case should not be reached'
+                print *, 'CODE ERROR geometry type unknown for # ', GeometryType
+                print *, 'which has key ',trim(reverseKey(GeometryType))
                 stop 9478
         end select
 

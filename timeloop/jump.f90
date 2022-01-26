@@ -219,18 +219,22 @@ module jump
         !%-----------------------------------------------------------------------------
 
         select case (jump_from)
-            case (jump_from_upstream)
-                !% enforce jump from upstream faces
-                !% so that downstream face is the downstream element value
-                faceR(thisP,fsetDn) = elemR(eDn(thisP),eset)
-                faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
-                faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
-            case (jump_from_downstream)
-                !% enforce jump from downstream faces
-                !%  so that upstream face is the upstream element value
-                faceR(thisP,fsetUp) = elemR(eUp(thisP),eset)
-                faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
-                faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
+        case (jump_from_upstream)
+            !% enforce jump from upstream faces
+            !% so that downstream face is the downstream element value
+            faceR(thisP,fsetDn) = elemR(eDn(thisP),eset)
+            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
+            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
+        case (jump_from_downstream)
+            !% enforce jump from downstream faces
+            !%  so that upstream face is the upstream element value
+            faceR(thisP,fsetUp) = elemR(eUp(thisP),eset)
+            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
+            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
+        case default
+            print *, 'CODE ERROR geometry type unknown for # ', jump_from
+            print *, 'which has key ',trim(reverseKey(jump_from))
+            stop 587834
         end select
         
     end subroutine jump_enforce

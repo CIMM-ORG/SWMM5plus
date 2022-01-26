@@ -577,15 +577,15 @@ contains
             else 
                 !% --- classify by number of links connected
                 select case (total_n_links)
-                    case (oneI)
-                        !write(*,*) '... is 1 junction is an upstream BC
-                        node%I(ii, ni_node_type) = nJ1
-                    case (twoI)
-                        !write(*,*) '... is 2 junction type'        
-                        node%I(ii, ni_node_type) = nJ2
-                    case default 
-                        !write(*,*) '... is 3+ junction type'
-                        node%I(ii, ni_node_type) = nJm
+                case (oneI)
+                    !write(*,*) '... is 1 junction is an upstream BC
+                    node%I(ii, ni_node_type) = nJ1
+                case (twoI)
+                    !write(*,*) '... is 2 junction type'        
+                    node%I(ii, ni_node_type) = nJ2
+                case default 
+                    !write(*,*) '... is 3+ junction type'
+                    node%I(ii, ni_node_type) = nJm
                 end select
             end if 
         
@@ -897,36 +897,39 @@ contains
             if (this_image() .eq. node%I(nodeIdx(ii), ni_P_image)) then
                 subcatchI(ii,si_runoff_P_image) = this_image()
                 select case (nodeType(nodeIdx(ii)))
-                    case (nJ2)
-                        !% for a node that is a face, the subcatch connects to the element
-                        !% upstream of the face, which is defined by ni_elemface_idx
-                        elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
-                    case (nJm)
-                        !% for a node that is a multi-branch junction, subcatch connects to 
-                        !% the element itself, which is defined by ni_elemface_idx
-                        elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
-                    case (nBCup,nJ1)
-                        !% for a node that is an upstream BC or dead end the subcatch connects 
-                        !% into the first element downstream of the face
-                        !% Here ni_elemface_idx holds the face index
-                        tface => node%I(nodeIdx(ii),ni_elemface_idx) 
-                        if (tface .ne. nullvalueI) then 
-                            elemIdx(ii) = faceI(tface,fi_Melem_dL)
-                        else
-                            elemIdx(ii) = nullvalueI
-                        end if
-                    case (nBCdn)
-                        !% for a node that is an downstreamstream BC, the subcatch connects 
-                        !% first element upstreamstream of the face
-                        !% into the Here ni_elemface_idx holds the face index
-                        tface => node%I(nodeIdx(ii),ni_elemface_idx)
-                        if (tface .ne. nullvalueI) then 
-                            elemIdx(ii) = faceI(tface,fi_Melem_uL)
-                        else
-                            elemIdx(ii) = nullvalueI
-                        end if
-                    case default 
-                        write(*,*) 'ERROR CODE: unexpected case default in '//trim(subroutine_name)
+                case (nJ2)
+                    !% for a node that is a face, the subcatch connects to the element
+                    !% upstream of the face, which is defined by ni_elemface_idx
+                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                case (nJm)
+                    !% for a node that is a multi-branch junction, subcatch connects to 
+                    !% the element itself, which is defined by ni_elemface_idx
+                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                case (nBCup,nJ1)
+                    !% for a node that is an upstream BC or dead end the subcatch connects 
+                    !% into the first element downstream of the face
+                    !% Here ni_elemface_idx holds the face index
+                    tface => node%I(nodeIdx(ii),ni_elemface_idx) 
+                    if (tface .ne. nullvalueI) then 
+                        elemIdx(ii) = faceI(tface,fi_Melem_dL)
+                    else
+                        elemIdx(ii) = nullvalueI
+                    end if
+                case (nBCdn)
+                    !% for a node that is an downstreamstream BC, the subcatch connects 
+                    !% first element upstreamstream of the face
+                    !% into the Here ni_elemface_idx holds the face index
+                    tface => node%I(nodeIdx(ii),ni_elemface_idx)
+                    if (tface .ne. nullvalueI) then 
+                        elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                    else
+                        elemIdx(ii) = nullvalueI
+                    end if
+                case default 
+                    write(*,*) 'CODE ERROR: unexpected case default in '//trim(subroutine_name)
+                    print *, 'Node Type # of ',nodeType(nodeIdx(ii))
+                    print *, 'which has key of ',trim(reverseKey(nodeType(nodeIdx(ii))))
+                    stop 3758974
                 end select
                 !% store logical for elem
                 if (elemIdx(ii) .ne. nullvalueI) then 

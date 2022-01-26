@@ -626,7 +626,8 @@ module runge_kutta2
                 thisColJ  => col_elemP(ep_JM_ETM)
                 thisColF  => col_faceP(fp_Diag)
             case default
-                print *, 'CODE ERROR: incomplete code -- not developed yet for other time march'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 398705
             end select
             

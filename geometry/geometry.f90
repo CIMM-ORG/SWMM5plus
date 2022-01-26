@@ -86,7 +86,8 @@ module geometry
                     thisColP_all           => col_elemP(ep_AC)
                     thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
                 case default
-                    print *, 'error, case default should never be reached.'
+                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                    print *, 'which has key ',trim(reverseKey(whichTM))
                     stop 7389
             end select
         !%-----------------------------------------------------------------------------
@@ -332,34 +333,35 @@ module geometry
                             else
                                 !% not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
-                                    case (rectangular)
-                                        area(tB)     = rectangular_area_from_depth_singular (tB)
-                                        topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
-                                        hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
-                                        perimeter(tB)= rectangular_perimeter_from_depth_singular (tB)
-                                        hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
-                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
-                                        dHdA(tB)     = oneR / topwidth(tB)
-                                    case (trapezoidal)
-                                        area(tB)     = trapezoidal_area_from_depth_singular (tB)
-                                        topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
-                                        hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
-                                        perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB)
-                                        hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
-                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
-                                        dHdA(tB)     = oneR / topwidth(tB)
-                                    case (circular)
-                                        area(tB)     = circular_area_from_depth_singular (tB)
-                                        topwidth(tB) = circular_topwidth_from_depth_singular (tB)
-                                        hydDepth(tB) = circular_hyddepth_from_topwidth_singular (tB)
-                                        hydRadius(tB)= circular_hydradius_from_depth_singular (tB)
-                                        perimeter(tB)= circular_perimeter_from_hydradius_singular (tB)
-                                        ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for circular
-                                        dHdA(tB)     = oneR / topwidth(tB)
-                                    case default
-                                        print *, 'error, case default should not be reached'
-                                        print *, 'in ',trim(subroutine_name), ' with stop commented out <<<<<<<<<<<<<<<<<<<<<<<'
-                                        !stop 3998
+                                case (rectangular)
+                                    area(tB)     = rectangular_area_from_depth_singular (tB)
+                                    topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
+                                    hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
+                                    perimeter(tB)= rectangular_perimeter_from_depth_singular (tB)
+                                    hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                case (trapezoidal)
+                                    area(tB)     = trapezoidal_area_from_depth_singular (tB)
+                                    topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
+                                    hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
+                                    perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB)
+                                    hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                case (circular)
+                                    area(tB)     = circular_area_from_depth_singular (tB)
+                                    topwidth(tB) = circular_topwidth_from_depth_singular (tB)
+                                    hydDepth(tB) = circular_hyddepth_from_topwidth_singular (tB)
+                                    hydRadius(tB)= circular_hydradius_from_depth_singular (tB)
+                                    perimeter(tB)= circular_perimeter_from_hydradius_singular (tB)
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for circular
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                case default
+                                    print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
+                                    print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
+                                    print *, 'in ',trim(subroutine_name)
+                                    stop 399848
                                 end select
                             end if
                             volume(tB) = area(tB) * length(tB)

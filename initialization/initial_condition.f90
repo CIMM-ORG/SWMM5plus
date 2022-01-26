@@ -65,7 +65,9 @@ contains
             case (ETM_AC)
                 whichTM = ALLtm
             case default
-                print *, 'CODE ERROR -- unexpected case default'
+                print *, 'CODE ERROR: solver type unknown for # ', whichSolver
+                print *, 'which has key ',trim(reverseKey(whichSolver))
+                stop 478383
             end select      
         !%-------------------------------------------------------------------
         !% --- get data that can be extracted from links
@@ -390,8 +392,9 @@ contains
                 end do
 
             case default
-                print*, 'In ', subroutine_name
-                print*, 'error: unexpected initial depth type, ', LdepthType,'  in link, ', thisLink
+                print *, 'In ', subroutine_name
+                print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
+                print *, 'which has key ',trim(reverseKey(LdepthType)) 
                 stop 83753
 
         end select
@@ -488,8 +491,9 @@ contains
 
             case (lPump)
 
-                print*, 'In ', subroutine_name
-                print*, 'pumps are not handeled yet'
+                print *, 'In ', subroutine_name
+                print *, 'CODE ERROR: pumps are not handeled yet for # ', linkType
+                print *, 'which has key',trim(reverseKey(linkType)) 
                 stop 77364
 
             case (lOutlet)
@@ -501,8 +505,9 @@ contains
 
             case default
 
-                print*, 'In ', subroutine_name
-                print*, 'error: unexpected link, ', linkType,'  in the network'
+                print *, 'In ', subroutine_name
+                print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
+                print *, 'which has key ',trim(reverseKey(linkType))
                 stop 65343
 
         end select
@@ -551,9 +556,10 @@ contains
 
             case (lPump)
 
-                print*, 'In ', subroutine_name
-                print*, 'pumps are not handeled yet'
-                stop
+                print *, 'In ', subroutine_name
+                print *, 'CODE ERROR: pumps are not handeled yet for #',linkType
+                print *, 'which has key ',trim(reverseKey(linkType)) 
+                stop 337844
 
             case (lOutlet)
                 !% get geomety data for outlets
@@ -561,8 +567,9 @@ contains
 
             case default
 
-                print*, 'In ', subroutine_name
-                print*, 'error: unexpected link, ', linkType,'  in the network'
+                print *, 'In ', subroutine_name
+                print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
+                print *, 'which has key ',trim(reverseKey(linkType))
                 stop 99834
 
         end select
@@ -673,8 +680,9 @@ contains
 
             case default
 
-                print*, 'In, ', subroutine_name
-                print*, 'Only rectangular channel geometry is handeled at this moment'
+                print *, 'In, ', subroutine_name
+                print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
+                print *, 'which has key ',trim(reverseKey(geometryType))
                 stop 98734
 
         end select
@@ -769,10 +777,10 @@ contains
 
         case default
 
-            print*, 'In, ', subroutine_name
-            print*, 'Only rectangular, and circular conduit geometry is handeled at this moment'
-            stop 88734433
-
+            print *, 'In, ', trim(subroutine_name)
+            print *, 'CODE ERROR geometry type unknown for # ', geometryType
+            print *, 'which has key ',trim(reverseKey(geometryType))
+            stop 887344
         end select
 
         if (setting%Debug%File%initial_condition) &
@@ -837,9 +845,10 @@ contains
 
             case (lRoadWayWeir)
 
-                print*, 'In ', subroutine_name
-                print*, 'roadway weir is not handeled yet'
-                stop
+                print *, 'In ', subroutine_name
+                print *, 'roadway weir is not handeled yet for #',specificWeirType
+                print *, 'which has key ',trim(reverseKey(specificWeirType))
+                stop 557834
 
             case (lVnotchWeir)
 
@@ -872,8 +881,9 @@ contains
 
             case default
 
-                print*, 'In ', subroutine_name
-                print*, 'error: unknown weir type, ', specificWeirType,'  in network'
+                print *, 'In ', subroutine_name
+                print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
+                print *, 'which has key ',trim(reverseKey(specificWeirType))
                 stop 99834
 
         end select
@@ -906,24 +916,22 @@ contains
         specificOrificeType => link%I(thisLink,li_orif_type)
 
         select case (specificOrificeType)
-            !% copy orifice specific data
-            case (lBottomOrifice)
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    !% integer data
-                    elemSI(:,esi_Orifice_SpecificType)      = bottom_orifice
-                endwhere
-
-            case (lSideOrifice)
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    !% integer data
-                    elemSI(:,esi_Orifice_SpecificType)       = side_orifice
-                endwhere
-            case default
-
-                print*, 'In ', subroutine_name
-                print*, 'error: unknown orifice type, ', specificOrificeType,'  in network'
-                stop 8863411
-
+        !% copy orifice specific data
+        case (lBottomOrifice)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemSI(:,esi_Orifice_SpecificType)      = bottom_orifice
+            endwhere
+        case (lSideOrifice)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemSI(:,esi_Orifice_SpecificType)       = side_orifice
+            endwhere
+        case default
+            print *, 'In ', subroutine_name
+            print *, 'CODE ERROR: unknown orifice type, ', specificOrificeType,'  in network'
+            print *, 'which has key ',trim(reverseKey(specificOrificeType))
+            stop 8863411
         end select
 
         !% pointer to specific orifice geometry
@@ -931,37 +939,36 @@ contains
 
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
-            case (lRectangular_closed)  !% brh20211219 added Rect_closed
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    !% integer data
-                    elemI(:,ei_geometryType)          = rectangular_closed
+        case (lRectangular_closed)  !% brh20211219 added Rect_closed
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemI(:,ei_geometryType)          = rectangular_closed
 
-                    !% real data
-                    elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-                    elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
-                end where
+                !% real data
+                elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
+                elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
+                elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
+                elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
+                elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
+            end where
+        case (lCircular)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemI(:,ei_geometryType)    = circular
 
-            case (lCircular)
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    !% integer data
-                    elemI(:,ei_geometryType)    = circular
-
-                    !% real data
-                    elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-                    elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
-                end where
-
-            case default
-                print*, 'In ', subroutine_name
-                print*, 'error: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
-                stop
-            end select
+                !% real data
+                elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
+                elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
+                elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
+            end where
+        case default
+            print *, 'In ', subroutine_name
+            print *, 'CODE ERROR: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
+            print *, 'which has key ',trim(reverseKey(OrificeGeometryType))
+            stop 8345553
+        end select
 
 
         if (setting%Debug%File%initial_condition) &
@@ -1311,8 +1318,8 @@ contains
                     case default
 
                         print *, 'In, ', subroutine_name
-                        print *, 'link found of type ',trim(reverseKey(geometryType))
-                        print *, 'Only rectangular, trapezoidal, and circular geometry is handeled at this time'
+                        print *, 'CODE ERROR: geometry type unknown for # ', geometryType
+                        print *, 'which has key ',trim(reverseKey(geometryType))
                         stop 308974
 
                 end select
@@ -1345,80 +1352,81 @@ contains
 
         select case (JmType)
 
-            case (ArtificialStorage)
-                !% the JM characteristic length is the sum of the two longest branches
-                elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
-                                             elemR(JMidx+5,er_Length)) + &
-                                         max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
-                                             elemR(JMidx+6,er_Length))
+        case (ArtificialStorage)
+            !% the JM characteristic length is the sum of the two longest branches
+            elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
+                                            elemR(JMidx+5,er_Length)) + &
+                                        max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
+                                            elemR(JMidx+6,er_Length))
 
-                !% --- Plane area is the sum of the branch plane area 
-                !%     This uses simplified geometry approximations as the junction main is only
-                !%     mass conservation only, which means its volume change can be approximated
-                !%     as if it is a rectangular box of Storage_Plane_Area x Depth
-                elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
-                select case (geometryType)
-                case (lRectangular,lRectangular_closed)
-                    do ii=1,max_branch_per_node                                                    
-                        elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                        +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
-                                * elemR(  JMidx+ii,er_Length)                                        &
-                                * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
-                    end do 
-                case (lTrapezoidal)
-                    do ii=1,max_branch_per_node                                                    
-                        elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                        +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
-                                * elemR(  JMidx+ii,er_Length)                                        &
-                                * elemSGR(JMidx+ii,esgr_Trapezoidal_Breadth) )
-                    end do 
-                case (lCircular)
-                    do ii=1,max_branch_per_node                                                    
-                        elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                        +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
-                                * elemR(  JMidx+ii,er_Length)                                        &
-                                * elemSGR(JMidx+ii,esgr_Circular_Diameter) )
-                    end do 
-                case default
-                    print *, 'In, ', subroutine_name
-                    print *, 'link found of type ',trim(reverseKey(geometryType))
-                    print *, 'Only rectangular, trapezoidal, and circular geometry is handeled at this time'
-                    stop 8733455
-                end select
-
-                !% Volume depends on plane area and depth
-                elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
-
-                elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-                elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
-
-            case (FunctionalStorage)
-                elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)          &
-                    + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
-                     * elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
-
-                elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-                elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
-
-                !% create a storage curve
-                call storage_create_curve (JMidx)
-
-            case (TabularStorage)
-                curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
-                Curve(curveID)%ElemIdx = JMidx
-                !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
-                !% to get to integrate the area vs depth curve
-                call storage_integrate_area_vs_depth_curve (curveID)
-
-                !% now interpolate from the cure to get the volume
-                call storage_interpolate_volume_from_depth_singular (JMidx)
-
+            !% --- Plane area is the sum of the branch plane area 
+            !%     This uses simplified geometry approximations as the junction main is only
+            !%     mass conservation only, which means its volume change can be approximated
+            !%     as if it is a rectangular box of Storage_Plane_Area x Depth
+            elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
+            select case (geometryType)
+            case (lRectangular,lRectangular_closed)
+                do ii=1,max_branch_per_node                                                    
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                    +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
+                            * elemR(  JMidx+ii,er_Length)                                        &
+                            * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
+                end do 
+            case (lTrapezoidal)
+                do ii=1,max_branch_per_node                                                    
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                    +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
+                            * elemR(  JMidx+ii,er_Length)                                        &
+                            * elemSGR(JMidx+ii,esgr_Trapezoidal_Breadth) )
+                end do 
+            case (lCircular)
+                do ii=1,max_branch_per_node                                                    
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                    +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
+                            * elemR(  JMidx+ii,er_Length)                                        &
+                            * elemSGR(JMidx+ii,esgr_Circular_Diameter) )
+                end do 
             case default
-                !% IMPORTANT -- if any other new type is defined, make sure that
-                !% subroutine geo_depth_from_volume is updated
                 print *, 'In, ', subroutine_name
-                print *, 'error: unknown junction main type, ', JmType
-                stop 54895
+                print *, 'CODE ERROR: geometry type unknown for # ', geometryType
+                print *, 'which has key ',trim(reverseKey(geometryType))
+                stop 8733455
+            end select
+
+            !% Volume depends on plane area and depth
+            elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
+
+            elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
+
+        case (FunctionalStorage)
+            elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)          &
+                + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
+                    * elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
+
+            elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
+
+            !% create a storage curve
+            call storage_create_curve (JMidx)
+
+        case (TabularStorage)
+            curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            Curve(curveID)%ElemIdx = JMidx
+            !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
+            !% to get to integrate the area vs depth curve
+            call storage_integrate_area_vs_depth_curve (curveID)
+
+            !% now interpolate from the cure to get the volume
+            call storage_interpolate_volume_from_depth_singular (JMidx)
+
+        case default
+            !% IMPORTANT -- if any other new type is defined, make sure that
+            !% subroutine geo_depth_from_volume is updated
+            print *, 'In, ', subroutine_name
+            print *, 'CODE ERROR junction main type unknown for # ', JmType
+            print *, 'which has key ',trim(reverseKey(JmType))
+            stop 54895
 
         end select
 
@@ -1503,8 +1511,9 @@ contains
             print*, 'ETM-AC solver is not handeled at this moment'
             stop 2975
         case default
-            print*, 'In, ', subroutine_name
-            print*, 'error: unknown solver, ', whichSolver
+            print *, 'In, ', subroutine_name
+            print *, 'CODE ERROR: unknown solver, ', whichSolver
+            print *, 'which has key ',trim(reverseKey(whichSolver))
             stop 81878
         end select
 

@@ -63,7 +63,8 @@ module update
                 thisCol_all => col_elemP(ep_CC_AC)
                 thisCol_JM  => col_elemP(ep_JM_AC)
             case default
-                print *, 'error, default case should not be reached'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 7489
         end select
 
@@ -240,7 +241,8 @@ module update
             case (AC)
                 thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
             case default
-                print *, 'error, case default should not be reached.'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 3987
         end select
 

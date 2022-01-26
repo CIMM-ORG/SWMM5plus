@@ -366,18 +366,19 @@ contains
 
         !% call the RK2 time-march, depending on the type of solver
         select case (setting%Solver%SolverSelect)
-            case (ETM_AC)
-                !% dual-method, ETM for open channel, AC for surcharge
-                call rk2_toplevel_ETMAC() 
-            case (ETM)
-                !% ETM with Preissmann slot for surcharge
-                call rk2_toplevel_ETM()
-            case (AC)
-                !% AC for both open-channel and surcharge
-                call rk2_toplevel_AC()
-            case DEFAULT
-                print *, 'error, code should not be reached.'
-                stop 1001 !% need error statement
+        case (ETM_AC)
+            !% dual-method, ETM for open channel, AC for surcharge
+            call rk2_toplevel_ETMAC() 
+        case (ETM)
+            !% ETM with Preissmann slot for surcharge
+            call rk2_toplevel_ETM()
+        case (AC)
+            !% AC for both open-channel and surcharge
+            call rk2_toplevel_AC()
+        case DEFAULT
+            print *, 'CODE ERROR setting.Solver.SolverSelect type unknown for # ', setting%Solver%SolverSelect
+            print *, 'which has key ',trim(reverseKey(setting%Solver%SolverSelect))
+            stop 497895
         end select    
 
         call util_accumulate_volume_conservation () 

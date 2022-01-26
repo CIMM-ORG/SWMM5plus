@@ -89,21 +89,22 @@ module diagnostic_elements
             thisType => elemI(thisP(ii),ei_elementType)
 
             select case (thisType)
-                case (weir)
-                    call weir_toplevel (thisP(ii))
+            case (weir)
+                call weir_toplevel (thisP(ii))
 
-                case (orifice)
-                    call orifice_toplevel (thisP(ii))
+            case (orifice)
+                call orifice_toplevel (thisP(ii))
 
-                case (pump)
-                    ! call diagnostic_pump (thisP(ii))
+            case (pump)
+                ! call diagnostic_pump (thisP(ii))
 
-                case (outlet)
-                    call outlet_toplevel (thisP(ii))
-                    
-                case default
-                    print *, 'error, default case should not be reached'
-                    stop 9472
+            case (outlet)
+                call outlet_toplevel (thisP(ii))
+                
+            case default
+                print *, 'CODE ERROR element type unknown for # ', thisType
+                print *, 'which has key ',trim(reverseKey(thisType))
+                stop 9472
             end select
         end do
 

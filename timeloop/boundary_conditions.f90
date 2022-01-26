@@ -527,7 +527,9 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                 end if
 
             case default
-                print *, ' CODE ERROR - need geometry of type ',trim(reverseKey(elemGeometry)),' in critical depth computation'
+                print *, 'in ',trim(subroutine_name)
+                print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
+                print *, 'which has key ',trim(reverseKey(elemGeometry))
                 stop 389753 
             end select
         end if
@@ -740,18 +742,19 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
 
     select case (elemGeometry)
 
-        case (circular)
-            YoverYfull = Depth/fullDepth
-            Area     = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc, NACirc)
-            Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc, NTCirc), &
-                        setting%ZeroValue%Topwidth)
+    case (circular)
+        YoverYfull = Depth/fullDepth
+        Area     = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc, NACirc)
+        Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc, NTCirc), &
+                    setting%ZeroValue%Topwidth)
 
-            Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
+        Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
 
-        case default
-            print*, 'In', subroutine_name
-            print*, 'CODE ERROR -- feometry not completed for ',trim(reverseKey(elemGeometry))
-            stop 84198
+    case default
+        print *, 'in ',trim(subroutine_name)
+        print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
+        print *, 'which has key ',trim(reverseKey(elemGeometry))
+        stop 84198
      end select
 
 end function bc_get_critical_flow

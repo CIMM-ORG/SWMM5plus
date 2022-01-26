@@ -221,49 +221,50 @@ contains
         do ii =1,N_elem(this_image())
             tlink => link_idx(ii)
             select case (elementType(ii))
-                case (CC)
-                    !% --- conduits always correspond to links
-                    if (isLinkOut(tlink)) then
-                        isElemOut(ii) = .true.
-                    else
-                        isElemOut(ii) = .false.
-                    end if
-                case (orifice)
-                    !% --- orifices always correspond to links
-                    if (isLinkOut(tlink)) then
-                        isElemOut(ii) = .true.
-                    else
-                        isElemOut(ii) = .false.
-                    end if
-                case (weir)
-                    !% --- weirs always correspond to links
-                    if (isLinkOut(tlink)) then
-                        isElemOut(ii) = .true.
-                    else
-                        isElemOut(ii) = .false.
-                    end if
-                case (outlet)
-                    !% --- outlets that correspond to links
-                    if (isLinkOut(tlink)) then
-                        isElemOut(ii) = .true.
-                    else
-                        isElemOut(ii) = .false.
-                    end if
-                case (JM)
-                    tnode => node_idx(ii)
-                    !% --- junction mains correspond to nodes
-                    if (isNodeOut(tnode)) then
-                        isElemOut(ii) = .true.
-                    else
-                        isElemOut(ii) = .false.
-                    end if
-                case (JB)
-                    !% --- no output on junction branches
+            case (CC)
+                !% --- conduits always correspond to links
+                if (isLinkOut(tlink)) then
+                    isElemOut(ii) = .true.
+                else
                     isElemOut(ii) = .false.
-                case default
-                    write (*,"(A)") 'ERROR (code): statement should be unreachable'
-                    write (*,"(A)") ' invalid element type was ',elementType(ii)
-                    stop
+                end if
+            case (orifice)
+                !% --- orifices always correspond to links
+                if (isLinkOut(tlink)) then
+                    isElemOut(ii) = .true.
+                else
+                    isElemOut(ii) = .false.
+                end if
+            case (weir)
+                !% --- weirs always correspond to links
+                if (isLinkOut(tlink)) then
+                    isElemOut(ii) = .true.
+                else
+                    isElemOut(ii) = .false.
+                end if
+            case (outlet)
+                !% --- outlets that correspond to links
+                if (isLinkOut(tlink)) then
+                    isElemOut(ii) = .true.
+                else
+                    isElemOut(ii) = .false.
+                end if
+            case (JM)
+                tnode => node_idx(ii)
+                !% --- junction mains correspond to nodes
+                if (isNodeOut(tnode)) then
+                    isElemOut(ii) = .true.
+                else
+                    isElemOut(ii) = .false.
+                end if
+            case (JB)
+                !% --- no output on junction branches
+                isElemOut(ii) = .false.
+            case default
+                write (*,"(A)") 'CODE ERROR: statement should be unreachable'
+                write (*,"(A)") ' invalid element type was ',elementType(ii)
+                write (*,"(A)") ' which has key ',trim(reverseKey(elementType(ii)))
+                stop 487834
             end select
         end do
         !%------------------------------------------------------------------
@@ -605,18 +606,18 @@ contains
 
         !% --- set the type of time units for the output
         select case (setting%Output%Report%TimeUnits)
-            case (InSeconds)
-                output_typeUnits_withtime_elemR(1) = 'seconds'
-            case (InMinutes)
-                output_typeUnits_withtime_elemR(1) = 'minutes'
-            case (InHours)
-                output_typeUnits_withtime_elemR(1) = 'hours'
-            case (InDays)
-                output_typeUnits_withtime_elemR(1) = 'days'
-            case default
-                write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.Report.TimeUnits of...'
-                write(*,*) setting%Output%Report%TimeUnits
-                stop
+        case (InSeconds)
+            output_typeUnits_withtime_elemR(1) = 'seconds'
+        case (InMinutes)
+            output_typeUnits_withtime_elemR(1) = 'minutes'
+        case (InHours)
+            output_typeUnits_withtime_elemR(1) = 'hours'
+        case (InDays)
+            output_typeUnits_withtime_elemR(1) = 'days'
+        case default
+            write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.Report.TimeUnits of...'
+            write(*,*) setting%Output%Report%TimeUnits
+            stop 583003
         end select
 
         !%------------------------------------------------------------------
@@ -781,18 +782,18 @@ contains
 
         !% --- set the type of time units for the output
         select case (setting%Output%Report%TimeUnits)
-            case (InSeconds)
-                output_typeUnits_withtime_faceR(1) = 'seconds'
-            case (InMinutes)
-                output_typeUnits_withtime_faceR(1) = 'minutes'
-            case (InHours)
-                output_typeUnits_withtime_faceR(1) = 'hours'
-            case (InDays)
-                output_typeUnits_withtime_faceR(1) = 'days'
-            case default
-                write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.Report.TimeUnits of...'
-                write(*,*) setting%Output%Report%TimeUnits
-                stop
+        case (InSeconds)
+            output_typeUnits_withtime_faceR(1) = 'seconds'
+        case (InMinutes)
+            output_typeUnits_withtime_faceR(1) = 'minutes'
+        case (InHours)
+            output_typeUnits_withtime_faceR(1) = 'hours'
+        case (InDays)
+            output_typeUnits_withtime_faceR(1) = 'days'
+        case default
+            write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.Report.TimeUnits of...'
+            write(*,*) setting%Output%Report%TimeUnits
+            stop 99624
         end select
 
         !%------------------------------------------------------------------
@@ -1460,7 +1461,7 @@ contains
         case default
             write(*,'(A)') 'ERROR (code) unknown value of setting%Output%Report%TimeUnits of ...'
             write(*,*) setting%Output%Report%TimeUnits
-            stop
+            stop 883345
         end select
 
         !% --- HACK to make this independent of globals, this call will have to be changed and files always written/read.
@@ -1967,34 +1968,35 @@ contains
                             rlimits = (/ npackElem, nLevel/) !% limits for reshaping
                             do pp=2,nTypeElemWtime !% starts at 2 to skip the time column
                                 select case (output_typeProcessing_elemR(pp-1)) !% -1 needed for correct index excluding time
-                                    case (AverageElements)
-                                        !% --- first sum the elements
-                                        OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            sum(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                        !% --- then divide by number of elements in link
-                                        OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            OutLink_ProcessedDataR(kk,pp,1:nLevel) / OutLink_N_elem_in_link(kk)
-                                    case (SumElements)
-                                        !% --- simple sum of the elements in a link
-                                        OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            sum(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                    case (MaximumValue)
-                                        !% --- get the maximum value in the link
-                                        OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            maxval(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                    case (SingleValue)
-                                        if (npackElem > 1) then
-                                            !% if there is more than one value and a single value is desired, only
-                                            !% print the FV file
-                                            isOutLinkWriteFVonly(kk) = .true.
-                                        else
-                                            OutLink_ProcessedDataR(kk,pp,1:nLevel) &
-                                                = OutLink_ElemDataR(kk,1,pp,1:nLevel)
-                                        end if
-                                    case default
-                                        write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
-                                        write(*,*) output_typeProcessing_elemR(pp)
-                                        stop
+                                case (AverageElements)
+                                    !% --- first sum the elements
+                                    OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        sum(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                    !% --- then divide by number of elements in link
+                                    OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        OutLink_ProcessedDataR(kk,pp,1:nLevel) / OutLink_N_elem_in_link(kk)
+                                case (SumElements)
+                                    !% --- simple sum of the elements in a link
+                                    OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        sum(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                case (MaximumValue)
+                                    !% --- get the maximum value in the link
+                                    OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        maxval(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                case (SingleValue)
+                                    if (npackElem > 1) then
+                                        !% if there is more than one value and a single value is desired, only
+                                        !% print the FV file
+                                        isOutLinkWriteFVonly(kk) = .true.
+                                    else
+                                        OutLink_ProcessedDataR(kk,pp,1:nLevel) &
+                                            = OutLink_ElemDataR(kk,1,pp,1:nLevel)
+                                    end if
+                                case default
+                                    write(*,'(A)') 'CODE ERROR: unknown key index for output_typeProcessing_elemR of ...'
+                                    write(*,*) output_typeProcessing_elemR(pp-1)
+                                    write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
+                                    stop 7778734
                                 end select
                             end do
                         end if
@@ -2043,34 +2045,35 @@ contains
                             rlimits = (/ npackElem, nLevel/) !% limits for reshaping
                             do pp=2,nTypeElemWtime !% starts at 2 to skip the time column
                                 select case (output_typeProcessing_elemR(pp-1)) !% -1 needed for correct index excluding time
-                                    case (AverageElements)
-                                        !% --- first sum the elements
-                                        OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            sum(reshape(OutNodeElem_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                        !% --- then divide by number of elements in link
-                                        OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) / OutNodeElem_N_elem_in_node(kk)
-                                    case (SumElements)
-                                        !% --- simple sum of the elements in a link
-                                        OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            sum(reshape(OutNodeElem_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                    case (MaximumValue)
-                                        !% --- get the maximum value in the link
-                                        OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            maxval(reshape(OutNodeElem_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                    case (SingleValue)
-                                        if (npackElem > 1) then
-                                            !% if there is more than one value and a single value is desired, only
-                                            !% print the FV file
-                                            isOutNodeElemWriteFVonly(kk) = .true.
-                                        else
-                                            OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) &
-                                                = OutNodeElem_ElemDataR(kk,1,pp,1:nLevel)
-                                        end if
-                                    case default
-                                        write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
-                                        write(*,*) output_typeProcessing_elemR(pp)
-                                        stop
+                                case (AverageElements)
+                                    !% --- first sum the elements
+                                    OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        sum(reshape(OutNodeElem_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                    !% --- then divide by number of elements in link
+                                    OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) / OutNodeElem_N_elem_in_node(kk)
+                                case (SumElements)
+                                    !% --- simple sum of the elements in a link
+                                    OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        sum(reshape(OutNodeElem_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                case (MaximumValue)
+                                    !% --- get the maximum value in the link
+                                    OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        maxval(reshape(OutNodeElem_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                case (SingleValue)
+                                    if (npackElem > 1) then
+                                        !% if there is more than one value and a single value is desired, only
+                                        !% print the FV file
+                                        isOutNodeElemWriteFVonly(kk) = .true.
+                                    else
+                                        OutNodeElem_ProcessedDataR(kk,pp,1:nLevel) &
+                                            = OutNodeElem_ElemDataR(kk,1,pp,1:nLevel)
+                                    end if
+                                case default
+                                    write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
+                                    write(*,*) output_typeProcessing_elemR(pp-1)
+                                    write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
+                                    stop 559345
                                 end select
                             end do
                         end if
@@ -2124,34 +2127,35 @@ contains
                             rlimits = (/ npackFace, nLevel/) !% limits for reshaping
                             do pp=2,nTypeFaceWtime !% starts at 2 to skip the time column
                                 select case (output_typeProcessing_faceR(pp-1)) !% -1 needed for correct index excluding time
-                                    case (AverageElements)
-                                        !% --- first sum the elements
-                                        OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            sum(reshape(OutNodeFace_FaceDataR(kk,1:npackFace,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                        !% --- then divide by number of elements in link
-                                        OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) / OutNodeFace_N_face_in_node(kk)
-                                    case (SumElements)
-                                        !% --- simple sum of the elements in a link
-                                        OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            sum(reshape(OutNodeFace_FaceDataR(kk,1:npackFace,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                    case (MaximumValue)
-                                        !% --- get the maximum value in the link
-                                        OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
-                                            maxval(reshape(OutNodeFace_FaceDataR(kk,1:npackFace,pp,1:nLevel),rlimits(1:2)),dim=1)
-                                    case (SingleValue)
-                                        if (npackFace > 1) then
-                                            !% if there is more than one value and a single value is desired, only
-                                            !% print the FV file
-                                            isOutNodeFaceWriteFVonly(kk) = .true.
-                                        else
-                                            OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) &
-                                                = OutNodeFace_FaceDataR(kk,1,pp,1:nLevel)
-                                        end if
-                                    case default
-                                        write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_faceR of ...'
-                                        write(*,*) output_typeProcessing_faceR(pp)
-                                        stop
+                                case (AverageElements)
+                                    !% --- first sum the elements
+                                    OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        sum(reshape(OutNodeFace_FaceDataR(kk,1:npackFace,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                    !% --- then divide by number of elements in link
+                                    OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) / OutNodeFace_N_face_in_node(kk)
+                                case (SumElements)
+                                    !% --- simple sum of the elements in a link
+                                    OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        sum(reshape(OutNodeFace_FaceDataR(kk,1:npackFace,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                case (MaximumValue)
+                                    !% --- get the maximum value in the link
+                                    OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) = &
+                                        maxval(reshape(OutNodeFace_FaceDataR(kk,1:npackFace,pp,1:nLevel),rlimits(1:2)),dim=1)
+                                case (SingleValue)
+                                    if (npackFace > 1) then
+                                        !% if there is more than one value and a single value is desired, only
+                                        !% print the FV file
+                                        isOutNodeFaceWriteFVonly(kk) = .true.
+                                    else
+                                        OutNodeFace_ProcessedDataR(kk,pp,1:nLevel) &
+                                            = OutNodeFace_FaceDataR(kk,1,pp,1:nLevel)
+                                    end if
+                                case default
+                                    write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_faceR of ...'
+                                    write(*,*) output_typeProcessing_faceR(pp-1)
+                                    write(*,*), 'which has key ',reverseKey(output_typeProcessing_faceR(pp-1))
+                                    stop 2285334
                                 end select
                             end do
                         end if
@@ -2679,15 +2683,16 @@ contains
 
         !% --- ROW 2 --- FEATURE TYPE (keyword, string)
         select case (FeatureType)
-            case (LinkOut)
-                write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Link'
-            case (NodeElemOut)
-                write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVelement)'
-            case (NodeFaceOut)
-                write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVface)'
-            case default
-                write(*,'(A)') 'ERROR (code): Unknown FeatureType of ',FeatureType
-                stop
+        case (LinkOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Link'
+        case (NodeElemOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVelement)'
+        case (NodeFaceOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVface)'
+        case default
+            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            print *, 'which has key ',trim(reverseKey(FeatureType))
+            stop 663986
         end select
 
         !% --- ROW 3 --- SWMM INDEX NUMBER IN CODE
@@ -2699,8 +2704,9 @@ contains
             case (NodeFaceOut)
                 write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
             case default
-                write(*,'(A)') 'ERROR (code): Unknown FeatureType of ',FeatureType
-                stop
+                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                print *, 'which has key ',trim(reverseKey(FeatureType))
+                stop 993764
         end select
 
         !% --- ROW 4 --- MODEL RUN ID (keyword, string)
@@ -2725,12 +2731,16 @@ contains
 
         !% --- ROW 9 -- HEADER ROW CONTENTS (keyword, string, string ... to NumberOfHeaderRows)
         select case (FeatureType)
-            case (LinkOut)
-                write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'ElementID',',','DataType',',','Units'
-            case (NodeElemOut)
-                write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'ElementID',',','DataType',',','Units'
-            case (NodeFaceOut)
-                write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'FaceID',',','DataType',',','Units'
+        case (LinkOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'ElementID',',','DataType',',','Units'
+        case (NodeElemOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'ElementID',',','DataType',',','Units'
+        case (NodeFaceOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'FaceID',',','DataType',',','Units'
+        case default
+            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            print *, 'which has key ',trim(reverseKey(FeatureType))
+            stop 873853   
         end select
 
         !% --- ROW 10 --- EXPECTED NUMBER OF DATA ROWS (time levels)
@@ -2751,21 +2761,22 @@ contains
             write(funitIn,fmt='(i8)') elementsInLink(nType)
         else
             select case (FeatureType)
-                case (LinkOut)
+            case (LinkOut)
+                write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
+                do mm=1,nType-1
                     write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
-                    do mm=1,nType-1
-                        write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
-                    end do
-                    write(funitIn,fmt='(i8)') 0
-                case (NodeElemOut,NodeFaceOut)
-                    write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
-                    do mm=1,nType-1
-                        write(funitIn,fmt='(*(i8,a))',advance='no') elementsInLink(thisType),','
-                    end do
-                    write(funitIn,fmt='(i8)') elementsInLink(thisType)
-                case default
-                    write(*,*) 'ERROR (code): unexpected case default 389705'
-                    stop
+                end do
+                write(funitIn,fmt='(i8)') 0
+            case (NodeElemOut,NodeFaceOut)
+                write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
+                do mm=1,nType-1
+                    write(funitIn,fmt='(*(i8,a))',advance='no') elementsInLink(thisType),','
+                end do
+                write(funitIn,fmt='(i8)') elementsInLink(thisType)
+            case default
+                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                print *, 'which has key ',trim(reverseKey(FeatureType))
+                stop 93873
             end select
         end if
 

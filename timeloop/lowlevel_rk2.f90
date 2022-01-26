@@ -368,26 +368,26 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
 
         select case (setting%Solver%MomentumSourceMethod)
-            case (T00)
-                elemR(thisP,outCol) = grav * ( &
-                    ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) )
+        case (T00)
+            elemR(thisP,outCol) = grav * ( &
+                ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) )
 
-                    ! print *, 'faup : ', fAup(idn(thisP(1:2)))
-                    ! print *, 'fadn : ', fAdn(iup(thisP(1:2)))
-                    ! print *, 'head : ', eHead(thisP(1:2))
+                ! print *, 'faup : ', fAup(idn(thisP(1:2)))
+                ! print *, 'fadn : ', fAdn(iup(thisP(1:2)))
+                ! print *, 'head : ', eHead(thisP(1:2))
 
-            case (T10)
-                elemR(thisP,outCol) = grav * onehalfR *  ( &
-                    +fAup(idn(thisP)) * fHdn(iup(thisP))   &
-                    -fAdn(iup(thisP)) * fHup(idn(thisP)) )
-            case (T20)
-                elemR(thisP,outCol) = grav * onesixthR *  (                       &
-                    +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
-                    -fAdn(iup(thisP)) * ( fHup(idn(thisP)) + fourR * eHead(thisP) ) )
-            case default
-                print *, 'error, case default that should not be reached'
-                stop 2382
-            !% Error
+        case (T10)
+            elemR(thisP,outCol) = grav * onehalfR *  ( &
+                +fAup(idn(thisP)) * fHdn(iup(thisP))   &
+                -fAdn(iup(thisP)) * fHup(idn(thisP)) )
+        case (T20)
+            elemR(thisP,outCol) = grav * onesixthR *  (                       &
+                +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
+                -fAdn(iup(thisP)) * ( fHup(idn(thisP)) + fourR * eHead(thisP) ) )
+        case default
+            print *, 'CODE ERROR setting.Solver.MomentumSourceMethod type unknown for # ', setting%Solver%MomentumSourceMethod
+            print *, 'which has key ',trim(reverseKey(setting%Solver%MomentumSourceMethod))
+            stop 2382
         end select
 
         !print *, 'in ll_momentum_Ksource_CC'
@@ -428,15 +428,16 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
 
         select case (setting%Solver%MomentumSourceMethod)
-            case (T00)
-                delta = zeroR
-            case (T10)
-                delta = onehalfR
-            case (T20)
-                delta = onesixthR
-            case default
-                stop
-            !% Error
+        case (T00)
+            delta = zeroR
+        case (T10)
+            delta = onehalfR
+        case (T20)
+            delta = onesixthR
+        case default
+            print *, 'CODE ERROR setting.Solver.MomentumSourceMethod type unknown for # ', setting%Solver%MomentumSourceMethod
+            print *, 'which has key ',trim(reverseKey(setting%Solver%MomentumSourceMethod))
+            stop 589794
         end select
 
         elemR(thisP,outCol) = &
@@ -789,7 +790,8 @@ module lowlevel_rk2
         case (AC)
             thisColP_JM            => col_elemP(ep_JM_AC)
         case default
-            print *, 'error, case default should never be reached.'
+            print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            print *, 'which has key ',trim(reverseKey(whichTM))
             stop 7659
         end select
 
@@ -907,7 +909,8 @@ module lowlevel_rk2
                 thisColP_JM            => col_elemP(ep_JM_AC)
                 thisCol2               => col_elemP(ep_ZeroDepth_JM_AC)
             case default
-                print *, 'error, case default should never be reached.'
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 7659
             end select
             Npack => npack_elemP(thisColP_JM)
@@ -1207,7 +1210,8 @@ module lowlevel_rk2
         case (AC)
             thisColP_JM            => col_elemP(ep_JM_AC)
         case default
-            print *, 'error, case default should never be reached.'
+            print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            print *, 'which has key ',trim(reverseKey(whichTM))
             stop 7659
         end select
 
@@ -1281,32 +1285,31 @@ module lowlevel_rk2
 
         select case (SlotMethod)
 
-            case (VariableSlot)
+        case (VariableSlot)
+            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+            SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
+            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+            SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+                ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
 
-                SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-                SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
-                SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-                SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-                SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
-                    ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
+        case (StaticSlot)
+            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+            !% SWMM5 uses 1% of width max as slot width
+            ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
+            SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
+                (cfl*length(thisP))**twoR
+            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+            SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+                ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
 
-            case (StaticSlot)
-
-                SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-                !% SWMM5 uses 1% of width max as slot width
-                ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-                SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
-                    (cfl*length(thisP))**twoR
-                SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-                SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-                SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
-                    ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
-
-            case default
-                !% should not reach this stage
-                print*, 'In ', subroutine_name
-                print*, 'error: unexpected Preissmann Slot Method, ', SlotMethod
-                stop
+        case default
+            !% should not reach this stage
+            print*, 'In ', subroutine_name
+            print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+            print *, 'which has key ',trim(reverseKey(SlotMethod))
+            stop 38756
 
         end select
 
