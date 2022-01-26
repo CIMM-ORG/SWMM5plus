@@ -117,7 +117,8 @@ module adjust
             if (icrash) return
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%------------------------------------------------------------------      
+        !%------------------------------------------------------------------   
+                
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%ApplyYN) then   
             select case (setting%Adjust%Flowrate%Approach)
@@ -869,7 +870,8 @@ module adjust
             real(8), pointer :: coef, vMax, Qlateral(:)
             real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:)
             real(8), pointer ::  w_uQ(:), w_dQ(:), elemArea(:), Vvalue(:)
-            logical, pointer :: isSmallDepth(:), isNearZeroDepth(:)
+            real(8), pointer :: elemDepth(:), multiplier, smallDepth
+            !logical, pointer :: isSmallDepth(:), isNearZeroDepth(:), 
             character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
         !%------------------------------------------------------------------
         !% Preliminaries    
@@ -892,6 +894,9 @@ module adjust
                 stop 9239
             end select
 
+            coef => setting%Adjust%Flowrate%Coef
+            if (coef .le. zeroR) return
+
             Npack => npack_elemP(thisCol)
             if (Npack .le. 0) return
             
@@ -902,63 +907,52 @@ module adjust
             elemFlow => elemR(:,er_Flowrate)    
             elemVel  => elemR(:,er_Velocity)
             elemArea => elemR(:,er_Area)
+            elemDepth=> elemR(:,er_Depth)
             w_uQ     => elemR(:,er_InterpWeight_uQ)
             w_dQ     => elemR(:,er_InterpWeight_dQ)
             Vvalue   => elemR(:,er_Temp01)
             Qlateral => elemR(:,er_FlowrateLateral)
-            isSmallDepth   => elemYN(:,eYN_isSmallDepth)
-            isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
-            coef => setting%Adjust%Flowrate%Coef
-            vMax => setting%Limiter%Velocity%Maximum
+            !isSmallDepth   => elemYN(:,eYN_isSmallDepth)
+            !isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
+            
+            multiplier => setting%Adjust%Flowrate%SmallDepthMultiplier
+            smallDepth => setting%SmallDepth%DepthCutoff
+            vMax       => setting%Limiter%Velocity%Maximum
         !%-----------------------------------------------------------------
         !% coef is the blending adjustment (between 0.0 and 1.0)
         !% if coef == 1 then the V-shape element flowrate is replaced by 
         !% average of its faces. If coef < 1 then average value is blended
         !% with the present value of Q.
 
-        !print *, 'made it here in adjust velocity'
-    
+        !% find the cells that are deep enough to use the 
+        Vvalue(thisP) = elemDepth(thisP) / (multiplier * smallDepth)
+        where (Vvalue(thisP) > oneR)
+            Vvalue(thisP) = oneR
+        elsewhere
+            Vvalue(thisP) = zeroR
+        endwhere
+
         !% the Vvalue returns...
         !%  -1.0 if the element Q is between the face Q (not v-shaped)
         !%  +1.0 if the element Q is outside of the two face Q (v-shaped)
         !%  0.0 if the element Q is equal to one of the face Q (not v-shaped)
+        !%  0.0 if the depth is too shallow
         Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
-                        *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))    
+                        *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))      &
+                        * Vvalue(thisP)   
 
-        ! if (this_image() == debug_image) then
-        !     print *, ' in adjust ',Vvalue(ietmp(2)), setting%Time%Now
-        !     print *, faceFlow(mapUp(ietmp(2))), elemFlow(ietmp(2)), faceFlow(mapDn(ietmp(2)))
-        ! end if
-
-        where     ( (Vvalue(thisP) > zeroR)         &
-             .and.   (.not. isSmallDepth  (thisP))   &
-             .and.   (.not. isNearZeroDepth(thisP))  &
-         )
-        !   .and.   (Qlateral(thisP) .ne. zeroR) )
-
-            !% averaging based on interpolation weights
-            !% this had problems with lateral inflow conditions that
-            ! !% change the interpolation weights -- brh 20220207
-            ! elemFlow(thisP) =  (oneR - coef) * elemFlow(thisP) &
-            !     + coef *                                       &
-            !         (  w_uQ(thisP) * faceflow(mapDn(thisP))    &
-            !          + w_dQ(thisP) * faceflow(mapUp(thisP)) )  &
-            !     / ( w_uQ(thisP) + w_dQ(thisP) )
-
+        where (Vvalue(thisP) > zeroR)
             !% simple linear interpolation
             elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
                 + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
-
             !% reset the velocity      
             elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
         endwhere
-
-        ! if (this_image() == debug_image) then
-        !     print *, faceFlow(mapUp(ietmp(2))), elemFlow(ietmp(2)), faceFlow(mapDn(ietmp(2)))
-        ! end if
                 
+        !% reset for high velocity (typically due to small area)
         where (abs(elemVel(thisP)) > vMax)
-            elemVel(thisP) = sign( 0.99 * vMax, elemVel(thisP) )
+            elemVel(thisP)  = sign( 0.99 * vMax, elemVel(thisP) )
+            elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
         endwhere 
         
         !%------------------------------------------------------------------
@@ -973,24 +967,27 @@ module adjust
 !%==========================================================================  
 !%
     subroutine adjust_Vshaped_head_surcharged (whichTM)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM
-        integer, pointer :: thisCol, Npack
-        integer, pointer :: thisP(:), mapUp(:), mapDn(:)
-        real(8), pointer :: coef
-        real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
-        real(8), pointer :: w_uH(:), w_dH(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
-        !%-----------------------------------------------------------------------------
-        if (icrash) return              
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        select case (whichTM)
+        !% Applies V-filter to surcharged head 
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM
+            integer, pointer :: thisCol, Npack
+            integer, pointer :: thisP(:), mapUp(:), mapDn(:)
+            real(8), pointer :: coef, multiplier, smallDepth
+            real(8), pointer :: elemCrown(:), Vvalue(:), elemFullD(:)
+            real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
+            real(8), pointer :: w_uH(:), w_dH(:)
+            character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return              
+            if (setting%Debug%File%adjust) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases:
+            select case (whichTM)
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm_surcharged)
             case (ETM)
@@ -1001,54 +998,61 @@ module adjust
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 stop 2394
-        end select 
+            end select 
 
-        !% HACK: below is the old code. For similar reason mentioned above
-        !% the code has been modified
-        ! select case (whichTM)
-        !     case (ALLtm)
-        !         thisCol => col_elemP(ep_CCJB_ALLtm_surcharged)
-        !     case (ETM)
-        !         thisCol => col_elemP(ep_CCJB_ETM_surcharged)
-        !     case (AC)
-        !         thisCol => col_elemP(ep_CCJB_AC_surcharged)
-        !     case default
-        !         print *, 'error, this default case should not be reached'
-        !         stop 2394
-        ! end select   
-    
-        !% coefficient for the blending adjustment (between 0.0 and 1.0)
-        !% if coef == 1 then the V-shape element flowrate is replaced by 
-        !% average of its faces.
-        coef => setting%Adjust%Head%Coef
-        
-        if (coef > zeroR) then       
+            !% coefficient for the blending adjustment (between 0.0 and 1.0)
+            !% if coef == 1 then the V-shape element flowrate is replaced by 
+            !% average of its faces.
+            coef => setting%Adjust%Head%Coef
+            
+            if (coef .le. zeroR) return     
             Npack => npack_elemP(thisCol)
-            if (Npack > 0) then
-                thisP      => elemP(1:Npack,thisCol)
-                mapUp      => elemI(:,ei_Mface_uL)
-                mapDn      => elemI(:,ei_Mface_dL)    
-                faceHeadUp => faceR(:,fr_Head_u)  
-                faceHeadDn => faceR(:,fr_Head_d)          
-                elemHead   => elemR(:,er_Head)    
-                w_uH       => elemR(:,er_InterpWeight_uH)
-                w_dH       => elemR(:,er_InterpWeight_dH)
+            if (Npack .le. 0) return
+
+            thisP      => elemP(1:Npack,thisCol)
+            mapUp      => elemI(:,ei_Mface_uL)
+            mapDn      => elemI(:,ei_Mface_dL)    
+            faceHeadUp => faceR(:,fr_Head_u)  
+            faceHeadDn => faceR(:,fr_Head_d)          
+            elemHead   => elemR(:,er_Head)    
+            elemCrown  => elemR(:,er_Zcrown)
+            elemFullD  => elemR(:,er_FullDepth)
+            w_uH       => elemR(:,er_InterpWeight_uH)
+            w_dH       => elemR(:,er_InterpWeight_dH)
+            Vvalue     => elemR(:,er_Temp01)
+
+            multiplier => setting%Adjust%Head%FullDepthMultiplier
+
+        !%-------------------------------------------------------------------
+        !% find the cells that are deep enough to use the V filter
+        !% The surcharge head must be larger than some multiple of the conduit full depth
+        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemFullD(thisP))
+        where (Vvalue(thisP) > oneR)
+            Vvalue(thisP) = oneR
+        elsewhere
+            Vvalue(thisP) = zeroR
+        endwhere
+
+        !% identify the V-shape locations
+        Vvalue(thisP) =  (util_sign_with_ones(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
+                        *(util_sign_with_ones(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+                        * Vvalue(thisP)   
                 
-                !% identify the V-shape condition
-                where  ( (util_sign_with_ones(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
-                        *(util_sign_with_ones(faceHeadUp(mapDn(thisP)) - elemHead(thisP))) > 0)
-                    
-                    !% averaging based on interpolation weights
-                    elemHead(thisP) =  (oneR - coef) * elemHead(thisP)  &
-                        + coef *                                        &
-                            (  w_uH(thisP) * faceHeadUp(mapDn(thisP))   &
-                             + w_dH(thisP) * faceHeadDn(mapUp(thisP)) ) &
-                        / ( w_uH(thisP) + w_dH(thisP) )
-                        
-                endwhere                       
-            end if
-        end if
-        
+        !% adjust where needed
+        where (Vvalue(thisP) > zeroR)   
+            !% averaging based on interpolation weights
+            ! elemHead(thisP) =  (oneR - coef) * elemHead(thisP)  &
+            !     + coef *                                        &
+            !     (  w_uH(thisP) * faceHeadUp(mapDn(thisP))       &
+            !      + w_dH(thisP) * faceHeadDn(mapUp(thisP))       &
+            !      )                                              &
+            !     / ( w_uH(thisP) + w_dH(thisP) )   
+                
+            !% simple linear interpolation
+            elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
+                + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+        endwhere                     
+
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine

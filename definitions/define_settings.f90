@@ -103,6 +103,7 @@ module define_settings
         logical :: ApplyYN = .true.
         integer :: Approach = vshape
         real(8) :: Coef = 1.0
+        real(8) :: SmallDepthMultiplier = 3.0
     end type AdjustFlowrateType
 
     !% setting%Adjust%Head
@@ -110,6 +111,7 @@ module define_settings
         logical :: ApplyYN = .true.
         integer :: Approach = vshape_surcharge_only
         real(8) :: Coef = 1.0
+        real(8) :: FullDepthMultiplier = 2.0
     end type AdjustHeadType
 
     ! !% setting%Adjust%WidthDepth

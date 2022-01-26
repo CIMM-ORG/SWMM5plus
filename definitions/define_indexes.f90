@@ -479,9 +479,9 @@ module define_indexes
 
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
-        enumerator :: eYN_isSmallDepth                 !% TRUE is use small volume algorithm
+        enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow
-        enumerator :: eYN_isZeroDepth              !% TRUE if volume qualifies as "near zero"
+        enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
