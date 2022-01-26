@@ -300,6 +300,7 @@ module define_indexes
          !% brh20211210e         
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
+         enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
          enumerator :: ei_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemI = ei_lastplusone-1
@@ -484,6 +485,8 @@ module define_indexes
         enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
         !% brh20211210e
         enumerator :: eYN_isDummy
+        !% ss20220125
+        enumerator :: eYN_isBoundary                    !% TRUE if the element is connected to a shared face thus a boundary element of a partition
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemYN = eYN_lastplusone-1
@@ -707,6 +710,41 @@ module define_indexes
     integer, target :: Ncol_elemWDR =  ewdr_lastplusone-1
 
     !%-------------------------------------------------------------------------
+    !% Define the column indexes for elemB%I/elemGI(:,:) arrays
+    !% These arrays are used to store/transfer inter image data
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+         enumerator :: ebgi_idx = 1                   !% row index of elemB%I/elemGI array 
+         enumerator :: ebgi_elem_Lidx                 !% local element index (static)
+         enumerator :: ebgi_elem_Gidx                 !% global element index  (static)
+         enumerator :: ebgi_Mface_uL                  !% map to upstream face local index  (static)
+         enumerator :: ebgi_Mface_dL                  !% map to downstream face local index  (static)
+         enumerator :: ebgi_lastplusone !% must be last enum item
+    end enum
+    integer, target :: Ncol_elemBGI = ebgi_lastplusone-1
+
+    !%-------------------------------------------------------------------------
+    !% Define the column indexes for elemB%R/elemGR(:,:) arrays
+    !% These arrays are used to store/transfer inter image data
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
+        enumerator ::  ebgr_Topwidth                  !% topwidth of flow at free surfac boundary/ghost element
+        enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
+        enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
+        enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
+        enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_uH           !% interpolation Weight, upstream for head boundary/ghost element 
+        enumerator ::  ebgr_InterpWeight_dQ           !% interpolation Weight, downstream, for flowrate boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_uQ           !% interpolation Weight, upstream, for flowrate boundary/ghost element
+        enumerator ::  ebgr_lastplusone               !% must be last enum item boundary/ghost element
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, target :: Ncol_elemBGR =  ebgr_lastplusone-1
+
+    !%-------------------------------------------------------------------------
     !% Define the column indexes for faceI(:,:) arrays
     !% These are the full arrays of face integer data
     !%-------------------------------------------------------------------------
@@ -720,6 +758,8 @@ module define_indexes
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)
         enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element
         enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
+        enumerator ::  fi_BoundaryElem_uL           !% map to upstream boundary/ghost element in the boundary/ghost array
+        enumerator ::  fi_BoundaryElem_dL           !% map to dwonstream boundary/ghost element in the boundary/ghost array
         enumerator ::  fi_Connected_image           !% image number a shared face connected to
         enumerator ::  fi_node_idx_BIPquick         !% if the face is originated from a node, then the BQ idx
         enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 

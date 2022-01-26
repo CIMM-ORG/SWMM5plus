@@ -310,6 +310,9 @@ contains
         !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
+        !% identify the boundary element connected to a shared faces
+        call init_network_identify_boundary_element
+
         !%------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%network_define) &
@@ -1942,6 +1945,39 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_CC_elem_length_adjust
+!%
+!%==========================================================================
+!%==========================================================================
+!
+    subroutine init_network_identify_boundary_element()
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% Identify and mark the element those are connected to a shared face
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: eUp(:), eDn(:)
+            character(64)    :: subroutine_name = 'init_network_identify_boundary_element'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%network_define) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        
+        eUp => faceI(:,fi_Melem_uL)
+        eDn => faceI(:,fi_Melem_dL)
+
+        where (faceYN(:,fYN_isUpGhost))
+            elemYN(eDn,eYN_isBoundary) = .true.
+        endwhere
+
+        where (faceYN(:,fYN_isDnGhost))
+            elemYN(eUp,eYN_isBoundary) = .true.
+        endwhere 
+
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_network_identify_boundary_element
 !
 !==========================================================================
 ! END OF MODULE

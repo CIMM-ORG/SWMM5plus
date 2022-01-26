@@ -183,6 +183,11 @@ contains
 
         sync all 
 
+        !% --- iinitialize boundary and ghost elem arrays for inter image data transfer
+        call init_boundary_ghost_elem_array ()
+
+        sync all
+
         !% --- initialize the time variables
         !if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
@@ -236,7 +241,7 @@ contains
             end if
             stop 9378975
         end if          
-        
+
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
 
@@ -1156,6 +1161,108 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
+!%
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine init_boundary_ghost_elem_array()
+        !
+        !--------------------------------------------------------------------------
+        ! initialize ghost and boundary element arrays for inter image data transfer
+        !--------------------------------------------------------------------------
+        integer          :: ii, jj, NSfaces, eset_local(4), eBGset(4)
+        integer, pointer :: Nfaces, fIdx, fGidx, eUp, eDn, ci, BeUp, BeDn
+        integer, dimension(:), allocatable, target :: packed_shared_face_idx
+        character(64)    :: subroutine_name = 'init_boundary_ghost_elem_array'
+        !--------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% only initialize inter-image data transfer array for ore than one processor
+        if (num_images() > 1) then
+
+            !% allocate elemB and elemG data structure
+            call util_allocate_boundary_ghost_elem_array()
+
+            !% number of faces in this image
+            Nfaces => N_face((this_image()))
+            !% count the number of shared faces in this image
+            NSfaces = count(faceYN(1:Nfaces,fYN_isSharedFace))
+            !% packed indexes of shared faces in this image
+            packed_shared_face_idx = pack(faceI(1:Nfaces,fi_Lidx),faceYN(1:Nfaces,fYN_isSharedFace))
+            !% column indexes of elemI local data needed to be transferred 
+            eset_local = [ei_Lidx, ei_Gidx, ei_Mface_uL, ei_Mface_dL]
+            !% column indexes of the spot for receiving local elemI data
+            eBGset     = [ebgi_elem_Lidx, ebgi_elem_Gidx, ebgi_Mface_uL, ebgi_Mface_dL]
+
+            print*
+            do ii = 1,NSfaces
+                fIdx => packed_shared_face_idx(ii) 
+                eUp  => faceI(fIdx,fi_Melem_uL)
+                eDn  => faceI(fIdx,fi_Melem_dL)
+
+                !% local integer data transfer
+                elemB%I(ii,ebgi_idx) = ii
+
+                if (faceYN(fIdx,fYN_isUpGhost)) then
+                    !% copy the local integer data over
+                    elemB%I(ii,eBGset) = elemI(eDn,eset_local)
+                    !% save the position of the boundary array index in the elemI array
+                    elemI(eDn,ei_BoundaryArray_idx) = ii
+                    !% save the position of the boundary array index in the faceI array
+                    faceI(fIdx,fi_BoundaryElem_dL) = ii
+                else if (faceYN(fIdx,fYN_isDnGhost)) then
+                    !% copy the local integer data over
+                    elemB%I(ii,eBGset) = elemI(eUp,eset_local)
+                    !% save the position of the boundary array index in the elemI array
+                    elemI(eUp,ei_BoundaryArray_idx) = ii
+                    !% save the position of the boundary array index in the faceI array
+                    faceI(fIdx,fi_BoundaryElem_uL) = ii
+                else if (faceYN(fIdx,fYN_isUpGhost) .and. faceYN(fIdx,fYN_isDnGhost)) then
+                    print*, 'error: condition not handeled single element with two shared faces'
+                    stop 914744
+                else
+                    print*, 'should not reach this condition'
+                    stop 54673
+                end if
+            end do
+
+            !% wait and sync untill all the images update their elemB arrays with local data
+            sync all
+
+            !% now loop through all the shared faces again to find the boundary array location of the ghost 
+            !% element in a remote image
+            do ii = 1,NSfaces
+                fIdx  => packed_shared_face_idx(ii)
+                fGidx => faceI(fIdx,fi_Gidx)
+                eUp   => faceI(fIdx,fi_Melem_uL)
+                eDn   => faceI(fIdx,fi_Melem_dL)
+                ci    => faceI(fIdx,fi_Connected_image)
+                BeUp  => faceI(fIdx,fi_BoundaryElem_uL)
+                BeDn  => faceI(fIdx,fi_BoundaryElem_dL)
+                do jj = 1,N_face(ci)
+                    if ((faceI(jj,fi_Connected_image)[ci] == this_image()) .and. &
+                        (faceI(jj,fi_Gidx)[ci] == fGidx)) then
+                        !% find the local ghost element index of the connected image
+                        if (faceYN(jj,fYN_isUpGhost)[ci]) then
+                            faceI(jj,fi_BoundaryElem_uL)[ci] = BeUp
+                        else if (faceYN(jj,fYN_isDnGhost)[ci]) then
+                            faceI(jj,fi_BoundaryElem_dL)[ci] = BeDn
+                        end if
+                    end if
+                end do
+            end do
+
+            !% sync all the processors
+            sync all
+
+            deallocate(packed_shared_face_idx) !% deallocate temporary arrays
+        end if
+
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_boundary_ghost_elem_array
 !%    
 !%==========================================================================
 !%==========================================================================

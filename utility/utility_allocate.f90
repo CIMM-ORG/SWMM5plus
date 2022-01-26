@@ -44,6 +44,7 @@ module utility_allocate
     public :: util_allocate_curves
     public :: util_allocate_curve_entries
     public :: util_allocate_check
+    public :: util_allocate_boundary_ghost_elem_array
 
 
 contains
@@ -1756,6 +1757,44 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_curves
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_boundary_ghost_elem_array ()
+        ! allocate array to copy ghost element data from connected images
+        integer :: ii, nrow, n_elemB
+        integer, pointer :: ncol, Nfaces, Nelems
+        character(64) :: subroutine_name = 'util_allocate_boundary_ghost_elem_array'
+
+        !-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+
+        Nelems => N_elem(this_image())
+        nrow = count(elemYN(1:Nelems,eYN_isBoundary))
+        ncol => Ncol_elemBGR
+
+        allocate(elemGR(nrow, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemGR')
+        elemGR(:,:) = nullvalueR
+
+        allocate(elemB[*], stat=allocation_status, errmsg=emsg)
+
+        allocate(elemB%R(nrow, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemB%R')
+        elemB%R(:,:) = nullvalueR
+
+        ncol => Ncol_elemBGI
+        allocate(elemB%I(nrow, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemB%I')
+        elemB%I(:,:) = nullvalueI
+
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_boundary_ghost_elem_array
 !
 !==========================================================================
 !==========================================================================
