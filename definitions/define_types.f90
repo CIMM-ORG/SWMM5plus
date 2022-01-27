@@ -107,6 +107,11 @@ module define_types
         type(LinkPack)            :: P        !% pack for links
     end type LinkArray
 
+    type :: BoundaryElemArray
+        real(8),      allocatable :: R(:,:)   !% real data for elemB
+        integer,      allocatable :: I(:,:)   !% integer data for elemB
+    end type BoundaryElemArray
+
     type BCPack
         !% We initialze the pack array for BC interpolation use later
         integer, allocatable :: BCup(:)

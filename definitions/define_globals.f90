@@ -107,6 +107,9 @@ module define_globals
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
 
+    !% boundary elements array
+    type(BoundaryElemArray), allocatable :: elemB[:]
+
     !% Boundary conditions
     type(BCArray), target :: BC
 
@@ -158,6 +161,7 @@ module define_globals
     integer, allocatable, target :: elemSI(:,:)[:]      !% coarray for special element Integer
     real(8), allocatable, target :: elemSR(:,:)[:]      !% coarray for special elemen Real
     real(8), allocatable, target :: elemSGR(:,:)[:]     !% coarray for special element geometry Real
+    real(8), allocatable, target :: elemGR(:,:)         !% array to copy required ghost element data (not a coarray)
 
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]       !% coarray for faces real data

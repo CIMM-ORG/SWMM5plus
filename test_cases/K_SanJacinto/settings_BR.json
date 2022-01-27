@@ -43,7 +43,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 100
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : false,
@@ -65,7 +65,7 @@
         "Report" : {
             "useSWMMinpYN" :true,
             "provideYN" : true,
-            "suppress_MultiLevel_Output" : false,
+            "suppress_MultiLevel_Output" : true,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,
             "TimeUnits" : "Hours"
