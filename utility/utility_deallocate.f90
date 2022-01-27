@@ -47,6 +47,9 @@ contains
         !print *, 'call util_deallocate_elemX_faceX() ', this_image()
         call util_deallocate_elemX_faceX()
 
+        !print *, 'call util_deallocate_elem_boundary_ghost() ', this_image()
+        call util_deallocate_elem_boundary_ghost()
+
         !print *, 'call util_deallocate_columns() ', this_image()
         call util_deallocate_columns()
 
@@ -295,6 +298,36 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine util_deallocate_elem_boundary_ghost ()
+        !%-------------------------------------------------------------------
+        ! Description:
+        !   Simply deallocate the elemB%R and elemGR that we assigned across all employed images
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            character(64) :: subroutine_name = 'util_deallocate_elem_boundary_ghost'
+        !%-------------------------------------------------------------------
+        !% Preliminaries   
+            if (icrash) return
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+
+        !==== elemB deallocation ====
+        if (num_images() > 1) then
+            deallocate(elemB%R, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'elemB%R')
+
+            deallocate(elemB%I, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'elemB%I')
+
+            deallocate(elemGR, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'elemGR')
+        end if
+        !%-------------------------------------------------------------------
+        !% closing
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_deallocate_elem_boundary_ghost
 !%
 !%==========================================================================
 !%==========================================================================

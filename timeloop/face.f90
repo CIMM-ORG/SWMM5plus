@@ -1387,7 +1387,7 @@ module face
         !% elemB%R(ii,eset(jj)) is the element value of the boundary element
         !% elemGR(ii,eset(jj)) is the element value of the ghost element
         !% elemB%R(ii,eWdn) is the downstream weighting of the boundary element
-        !% elemR(ii,eWup)) is the upstream weighting of the ghost element
+        !% elemGR(ii,eWup)) is the upstream weighting of the ghost element
         !%--------------------------------------------------------------------
         !% Closing
         sync all
