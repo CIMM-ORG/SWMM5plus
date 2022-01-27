@@ -362,6 +362,7 @@ module define_settings
     ! setting%Constant
     type ConstantType
         real(8) :: gravity = 9.81 ! m^2/s
+        real(8) :: energy_correction_factor = 1.0 
     end type ConstantType
 
     !% setting%Debug

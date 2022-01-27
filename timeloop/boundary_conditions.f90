@@ -482,7 +482,8 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         real(8)              :: criticalDepth
         integer, pointer     :: elemGeometry 
         real(8), pointer     :: Flowrate, FullDepth, BreadthMax, grav, FullArea
-        real(8)              :: Q2g, critDepthEstimate, ratio
+        real(8), pointer     :: alpha, bottomWidth
+        real(8)              :: Q2g, critDepthEstimate, ratio, sideSlope, epsilon_c, tc0
         character(64) :: subroutine_name = 'bc_get_CC_critical_depth'
     !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -495,6 +496,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         FullArea     => elemR(elemIdx,er_FullArea)
         BreadthMax   => elemR(elemIdx,er_BreadthMax)
         grav         => setting%constant%gravity
+        alpha        => setting%constant%energy_correction_factor
 
         Q2g = (Flowrate**twoR) / grav
 
@@ -507,11 +509,21 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                 criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
                 
             case (trapezoidal)
-                !% NEED TO CODE approach of Vatankha (2012)
-                !% non-dimensional discharge (epsilon_c)
-                !Qn = fourR * cbrt( (Flowrate**2))
-                print *, 'CODE ERROR -- trapezoidal geometry not done for critical depth'
-                stop 3987066
+                !% use the average side slope
+                sideSlope = onehalfR * (  elemSGR(elemIdx,esgr_Trapezoidal_LeftSlope)   &
+                                        + elemSGR(elemIdx,esgr_Trapezoidal_RightSlope))
+                bottomWidth => elemSGR(elemIdx,esgr_Trapezoidal_Breadth)
+                !% Using approach of Vatakhah (2013)
+                !% non-dimensional discharge (epsilon_c), eq. 14
+                epsilon_c = fourR * sideSlope * ( alpha * (Flowrate**2) / (grav * (bottomWidth**5))  )**(onethirdR)
+                !% non-dimensional critical flow estimat (tc0), eq. 23
+                tc0 = (oneR + 1.161d0 * epsilon_c * (oneR + 0.666d0 * (epsilon_c**(1.041d0)) )**0.374d0 )**0.144d0
+                !% critical depth, eq. 22
+                criticalDepth = -onehalfR + onehalfR             &
+                          * (                                    &                     
+                                (fiveR * (tc0**6) + oneR       ) &
+                              / ( sixR * (tc0**5) - epsilon_c  ) &
+                            )**3
     
             case (circular)  
                 !% first estimate Critical Depth for an equivalent circular conduit

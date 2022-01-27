@@ -60,7 +60,8 @@
         "Short" : "test"
     },
     "Constant" : {
-        "gravity" : 9.81
+        "gravity" : 9.81,
+        "energy_correction_factor" : 1.0
     },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
