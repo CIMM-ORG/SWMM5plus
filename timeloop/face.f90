@@ -726,9 +726,9 @@ module face
         !% Declarations
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, intent(in) :: Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
-            integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
-            integer :: fFlowSet(1), eFlowSet(1)
+            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3), eGhostGeoSet(3)
+            integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1), eGhostHeadSet(1)
+            integer :: fFlowSet(1), eFlowSet(1), eGhostFlowSet(1)
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
@@ -759,24 +759,39 @@ module face
         !% set the matching sets
         !% HACK THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
         !% Note these can be expanded for other terms to be interpolated.
-        fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-        fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-        eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+        fGeoSetU     = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+        fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
 
-        fHeadSetU = [fr_Head_u]
-        fHeadSetD = [fr_Head_d]
-        eHeadSet = [er_Head]
+        fHeadSetU     = [fr_Head_u]
+        fHeadSetD     = [fr_Head_d]
+        eGhostHeadSet = [ebgr_Head]
 
-        fFlowSet = [fr_Flowrate]
-        eFlowSet = [er_Flowrate]
+        fFlowSet      = [fr_Flowrate]
+        eGhostFlowSet = [ebgr_Flowrate]
+
+        !% transfer all the local elemR data needed for face interpolation into elemB data structure
+        call local_data_transfer_to_boundary_array (facePackCol, Npack)
+
+        !% use elemB to transfer remote data to local elemG array for interpolation
+        call inter_image_data_transfer (facePackCol, Npack)
 
         !% two-sided interpolation to using the upstream face set
-        call face_interp_shared_set &
-            (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
-        call face_interp_shared_set &
-            (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)   
-        call face_interp_shared_set &
-            (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+        ! call face_interp_shared_set &
+        !     (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
+        ! call face_interp_shared_set &
+        !     (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)   
+        ! call face_interp_shared_set &
+        !     (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+
+        call face_interp_shared_set_new &
+            (fGeoSetU, eGhostGeoSet, ebgr_InterpWeight_dG, ebgr_InterpWeight_uG, facePackCol, Npack)
+
+        call face_interp_shared_set_new &
+            (fHeadSetU, eGhostHeadSet, ebgr_InterpWeight_dH, ebgr_InterpWeight_uH, facePackCol, Npack)
+
+        call face_interp_shared_set_new &
+            (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -1164,6 +1179,235 @@ module face
     !         if (setting%Debug%File%face) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     ! end subroutine face_FluxCorrection_interior
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine local_data_transfer_to_boundary_array &
+        (facePackCol, Npack)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% transfers local data from elemR to elemB%R
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer             :: ii, eColumns(11) 
+            integer, intent(in) :: facePackCol, Npack
+            integer, pointer    :: thisP, eUp, eDn
+            logical, pointer    :: isGhostUp, isGhostDn
+            character(64)       :: subroutine_name = 'local_data_transfer_to_boundary_array'
+        !%--------------------------------------------------------------------
+        !%  Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
+
+        !% HACK: this eset has to be exactly the same to work
+        eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate,    &
+                    er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH, &
+                    er_InterpWeight_uH, er_InterpWeight_dQ, er_InterpWeight_uQ] 
+
+        !%--------------------------------------------------------------------
+        !% cycle through all the shared faces
+        do ii = 1,Npack
+            !%-----------------------------------------------------------------
+            !% Aliases
+            thisP      => facePS(ii,facePackCol)
+            isGhostUp  => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn  => faceYN(thisP,fYN_isDnGhost)
+            eUp        => faceI(thisP,fi_Melem_uL)
+            eDn        => faceI(thisP,fi_Melem_dL)
+            !%-----------------------------------------------------------------
+            !% condition for upstream element is ghost
+            if (isGhostUp) then
+                elemB%R(ii,:) = elemR(eDn,eColumns)
+            !% condition for downstream element is ghost
+            elseif (isGhostDn) then
+                elemB%R(ii,:) = elemR(eUp,eColumns)
+            else
+                write(*,*) 'CODE ERROR: unexpected else'
+                stop 487874
+            end if        
+        end do
+
+        if (setting%Debug%File%face) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine local_data_transfer_to_boundary_array
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine inter_image_data_transfer &
+        (facePackCol, Npack)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% transfers data from connected images
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer             :: ii  
+            integer, intent(in) :: facePackCol, Npack
+            integer, pointer    :: thisP, ci, BUpIdx, BDnIdx, eUp, eDn
+            logical, pointer    :: isGhostUp, isGhostDn
+            integer(kind=8)     :: crate, cmax, cval
+            character(64)       :: subroutine_name = 'inter_image_data_transfer'
+        !%--------------------------------------------------------------------
+        !%  Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+            sync all
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStart_A = cval
+            end if 
+          
+        !%--------------------------------------------------------------------
+        !% cycle through all the shared faces
+        do ii = 1,Npack
+            !%-----------------------------------------------------------------
+            !% Aliases
+            thisP      => facePS(ii,facePackCol)
+            ci         => faceI(thisP,fi_Connected_image)
+            BUpIdx     => faceI(thisP,fi_BoundaryElem_uL)
+            BDnIdx     => faceI(thisP,fi_BoundaryElem_dL)
+            isGhostUp  => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn  => faceYN(thisP,fYN_isDnGhost)
+            !%-----------------------------------------------------------------
+            !% condition for upstream element of the shared face is ghost and in a different image
+            if (isGhostUp) then
+                elemGR(ii,:) = elemB[ci]%R(BUpIdx,:) 
+                ! print*, elemGR(ii,:), 'elemGR(ii,:)'
+                ! print*
+                ! print*, elemB[ci]%R(BUpIdx,:) , 'elemB[ci]%R(BUpIdx,:) '
+                ! print*
+                ! print*, reverseKey(elemI(faceI(thisP,fi_GhostElem_uL), ei_elementType)[ci])
+                ! print*, elemI(faceI(thisP,fi_GhostElem_uL), :)[ci], 'elem row'
+            !% condition for downstream element of the shared face is ghost and in a different image
+            elseif (isGhostDn) then
+                elemGR(ii,:) = elemB[ci]%R(BDnIdx,:)
+                ! print*, elemGR(ii,:), 'elemGR(ii,:)'
+                ! print*
+                ! print*, elemB[ci]%R(BUpIdx,:) , 'elemB[ci]%R(BUpIdx,:) '
+                ! print*
+                ! print*, reverseKey(elemI(faceI(thisP,fi_GhostElem_dL), ei_elementType)[ci])
+                ! print*, elemR(faceI(thisP,fi_GhostElem_dL), :)[ci], 'elem row'
+            else
+                write(*,*) 'CODE ERROR: unexpected else'
+                stop 487874
+            end if        
+        end do
+        
+        !%--------------------------------------------------------------------
+        !% Closing
+        sync all
+        
+        if (this_image()==1) then
+            !% stop the shared timer
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop_A = cval
+            setting%Time%WallClock%SharedCumulative_A &
+                    = setting%Time%WallClock%SharedCumulative_A &
+                    + setting%Time%WallClock%SharedStop_A &
+                    - setting%Time%WallClock%SharedStart_A                    
+        end if 
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine inter_image_data_transfer
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine face_interp_shared_set_new &
+        (fset, eset, eWdn, eWup, facePackCol, Npack)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% Interpolates faces shared between processor
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer             :: ii, jj
+            integer, intent(in) :: fset(:), eset(:), eWdn, eWup
+            integer, intent(in) :: facePackCol, Npack
+            integer, pointer    :: thisP, eup, edn, BUpIdx, BDnIdx
+            logical, pointer    :: isGhostUp, isGhostDn
+            integer(kind=8)     :: crate, cmax, cval
+            character(64)       :: subroutine_name = 'face_interp_shared_set'
+        !%--------------------------------------------------------------------
+        !%  Preliminaries
+            if (icrash) return
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+            sync all
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStart_A = cval
+            end if    
+        !%--------------------------------------------------------------------
+        !% cycle through all the shared faces
+        do ii = 1,Npack
+            !%-----------------------------------------------------------------
+            !% Aliases
+            thisP           => facePS(ii,facePackCol)
+            eup             => faceI(thisP,fi_Melem_uL)
+            edn             => faceI(thisP,fi_Melem_dL)
+            BUpIdx          => faceI(thisP,fi_BoundaryElem_uL)
+            BDnIdx          => faceI(thisP,fi_BoundaryElem_dL)
+            isGhostUp       => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn       => faceYN(thisP,fYN_isDnGhost)
+            !%-----------------------------------------------------------------
+            !% cycle through each element in the set.
+            !% This is designed for fset and eset being vectors, but it
+            !%   is not clear that this is needed.
+
+            do jj=1,size(fset)
+
+                !% condition for upstream element of the shared face is ghost and in a different image
+                if (isGhostUp) then
+                    faceR(thisP,fset(jj)) = &
+                        (+elemGR(ii,eset(jj))  * elemB%R(ii,eWup)  &
+                         +elemB%R(ii,eset(jj)) * elemGR(ii,eWdn) &
+                        ) / &
+                        ( elemB%R(ii,eWup) + elemGR(ii,eWdn) )
+
+                !% condition for downstream element of the shared face is ghost and in a different image
+                elseif (isGhostDn) then
+
+                    faceR(thisP,fset(jj)) = &
+                        (+elemB%R(ii,eset(jj)) * elemGR(ii,eWup) &
+                         +elemGR(ii,eset(jj))  * elemB%R(ii,eWdn)  &
+                        ) / &
+                        ( elemGR(ii,eWup) + elemB%R(ii,eWdn) )
+                else
+                    write(*,*) 'CODE ERROR: unexpected else'
+                    stop 487874
+                end if        
+            end do
+        end do
+
+        !% NOTES
+        !% elemR(eup,eset(jj)) is the element value upstream of the face
+        !% elemR(edn,eset(jj) is the element value downstream of the face.
+        !% elemR(eup,eWdn) is the downstream weighting of the upstream element
+        !% elemR(edn,eWup)) is the upstream weighting of the downstream element
+
+        !% elemGR(ii,eGset(jj)) is the elem value of the ghost element
+        !% elemGR(ii,eGWdn) is the downstream weighting of the upstream ghost element
+
+        !%--------------------------------------------------------------------
+        !% Closing
+        sync all
+        if (this_image()==1) then
+            !% stop the shared timer
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop_A = cval
+            setting%Time%WallClock%SharedCumulative_A &
+                    = setting%Time%WallClock%SharedCumulative_A &
+                    + setting%Time%WallClock%SharedStop_A &
+                    - setting%Time%WallClock%SharedStart_A                    
+        end if 
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine face_interp_shared_set_new
 !%
 !%==========================================================================
 !%==========================================================================
