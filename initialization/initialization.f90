@@ -1199,7 +1199,10 @@ contains
             !% column indexes of the spot for receiving local elemI data
             eBGset     = [ebgi_elem_Lidx, ebgi_elem_Gidx, ebgi_Mface_uL, ebgi_Mface_dL]
 
-            print*
+            !% HACK (Saz): We probably don't need this do loop
+            !% I coded this so we have some diagnostic of what is going on
+            !% in the elemB array. We can keep it for now just for all the 
+            !% mappings, and can remove it after we are confident.
             do ii = 1,NSfaces
                 fIdx => packed_shared_face_idx(ii) 
                 eUp  => faceI(fIdx,fi_Melem_uL)
@@ -1236,6 +1239,9 @@ contains
 
             !% now loop through all the shared faces again to find the boundary array location of the ghost 
             !% element in a remote image
+
+            !% HACK (Saz): If we remove the previous do loop, we can just replace BeUp and BeDn pointers
+            !% with ii. However, the current state of mapping is more self explanatory.
             do ii = 1,NSfaces
                 fIdx  => packed_shared_face_idx(ii)
                 fGidx => faceI(fIdx,fi_Gidx)

@@ -777,20 +777,20 @@ module face
         call inter_image_data_transfer (facePackCol, Npack)
 
         !% two-sided interpolation to using the upstream face set
-        ! call face_interp_shared_set &
+        ! call face_interp_shared_set_old &
         !     (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
-        ! call face_interp_shared_set &
+        ! call face_interp_shared_set_old &
         !     (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)   
-        ! call face_interp_shared_set &
+        ! call face_interp_shared_set_old &
         !     (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
-        call face_interp_shared_set_new &
+        call face_interp_shared_set &
             (fGeoSetU, eGhostGeoSet, ebgr_InterpWeight_dG, ebgr_InterpWeight_uG, facePackCol, Npack)
 
-        call face_interp_shared_set_new &
+        call face_interp_shared_set &
             (fHeadSetU, eGhostHeadSet, ebgr_InterpWeight_dH, ebgr_InterpWeight_uH, facePackCol, Npack)
 
-        call face_interp_shared_set_new &
+        call face_interp_shared_set &
             (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
@@ -878,7 +878,7 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine face_interp_shared_set &
+    subroutine face_interp_shared_set_old &
         (fset, eset, eWdn, eWup, facePackCol, Npack)
         !%-------------------------------------------------------------------
         !% Description:
@@ -890,7 +890,7 @@ module face
             logical, pointer :: isGhostUp, isGhostDn
             integer :: ii, jj   
             integer(kind=8) :: crate, cmax, cval
-            character(64) :: subroutine_name = 'face_interp_shared_set'
+            character(64) :: subroutine_name = 'face_interp_shared_set_old'
         !%--------------------------------------------------------------------
         !%  Preliminaries
             if (icrash) return
@@ -971,7 +971,7 @@ module face
         end if 
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine face_interp_shared_set
+    end subroutine face_interp_shared_set_old
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1317,7 +1317,7 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine face_interp_shared_set_new &
+    subroutine face_interp_shared_set &
         (fset, eset, eWdn, eWup, facePackCol, Npack)
         !%-------------------------------------------------------------------
         !% Description:
@@ -1358,7 +1358,6 @@ module face
             !% cycle through each element in the set.
             !% This is designed for fset and eset being vectors, but it
             !%   is not clear that this is needed.
-
             do jj=1,size(fset)
 
                 !% condition for upstream element of the shared face is ghost and in a different image
@@ -1385,14 +1384,10 @@ module face
         end do
 
         !% NOTES
-        !% elemR(eup,eset(jj)) is the element value upstream of the face
-        !% elemR(edn,eset(jj) is the element value downstream of the face.
-        !% elemR(eup,eWdn) is the downstream weighting of the upstream element
-        !% elemR(edn,eWup)) is the upstream weighting of the downstream element
-
-        !% elemGR(ii,eGset(jj)) is the elem value of the ghost element
-        !% elemGR(ii,eGWdn) is the downstream weighting of the upstream ghost element
-
+        !% elemB%R(ii,eset(jj)) is the element value of the boundary element
+        !% elemGR(ii,eset(jj)) is the element value of the ghost element
+        !% elemB%R(ii,eWdn) is the downstream weighting of the boundary element
+        !% elemR(ii,eWup)) is the upstream weighting of the ghost element
         !%--------------------------------------------------------------------
         !% Closing
         sync all
@@ -1407,7 +1402,7 @@ module face
         end if 
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine face_interp_shared_set_new
+    end subroutine face_interp_shared_set
 !%
 !%==========================================================================
 !%==========================================================================
