@@ -65,7 +65,7 @@
         "Report" : {
             "useSWMMinpYN" :true,
             "provideYN" : true,
-            "suppress_MultiLevel_Output" : true,
+            "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,
             "TimeUnits" : "Hours"

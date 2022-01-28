@@ -15,6 +15,7 @@ module rectangular_channel
     private
 
     public :: rectangular_depth_from_volume
+    public :: rectangular_area_from_depth
     public :: rectangular_area_from_depth_singular
     public :: rectangular_topwidth_from_depth
     public :: rectangular_topwidth_from_depth_singular 
@@ -54,6 +55,20 @@ module rectangular_channel
 
     end subroutine rectangular_depth_from_volume
     !%  
+!%==========================================================================
+!%==========================================================================
+!%
+    elemental real(8) function rectangular_area_from_depth (indx) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for rectangular cross section
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx  ! may be a packed array of indexes
+        !%-----------------------------------------------------------------------------
+        outvalue = elemR(indx,er_Depth) * elemSGR(indx,esgr_Rectangular_Breadth)
+
+    end function rectangular_area_from_depth
+!%
 !%==========================================================================
 !%==========================================================================
 !%

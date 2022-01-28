@@ -17,6 +17,7 @@ module circular_conduit
     private
 
     public :: circular_depth_from_volume
+    !public :: circular_depth_from_volume_singular
     public :: circular_area_from_depth_singular
     public :: circular_topwidth_from_depth
     public :: circular_topwidth_from_depth_singular
@@ -73,7 +74,46 @@ module circular_conduit
 
     end subroutine circular_depth_from_volume
 !%
+!%==========================================================================   
 !%==========================================================================
+!%
+    ! real(8) function circular_depth_from_volume_singular (indx) result (outvalue)
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Only applies on conduits (or non-surcharged circular conduits)
+    !     !%-----------------------------------------------------------------------------
+    !     integer, target, intent(in) :: indx
+    !     real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:)
+    !     real(8), pointer :: YoverYfull(:), fullArea(:), fulldepth(:)
+    !     !%-----------------------------------------------------------------------------
+    !     depth      => elemR(:,er_Depth)
+    !     volume     => elemR(:,er_Volume)
+    !     length     => elemR(:,er_Length)
+    !     fullArea   => elemR(:,er_FullArea)
+    !     fulldepth  => elemR(:,er_FullDepth)
+    !     AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
+    !     YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
+    !     !%-----------------------------------------------------------------------------
+    !     if (icrash) return
+    !     AoverAfull(indx) = volume(indx) / (length(indx) * fullArea(indx))
+
+    !     !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the
+    !     !% normalized depth using the central angle, theta
+    !     !% (Page 82 in the SWMM5 Hydraulic manual)
+    !     !% Figure out a way to implement this later.
+
+    !     !% retrive the normalized Y/Yfull from the lookup table
+    !     !call xsect_table_lookup &
+    !     !    (YoverYfull, AoverAfull, YCirc, NYCirc, thisP)
+
+    !     YoverYfull(indx) = xsect_table_lookup_singular(AoverAfull(indx), YCirc, NYCirc)
+
+    !     !% finally get the depth by multiplying the normalized depth with full depth
+    !     outvalue = YoverYfull(indx) * fulldepth(indx)
+
+    ! end function circular_depth_from_volume_singular
+!%
+!%==========================================================================      
 !%==========================================================================
 !%
     real(8) function circular_area_from_depth_singular (indx) result (outvalue)

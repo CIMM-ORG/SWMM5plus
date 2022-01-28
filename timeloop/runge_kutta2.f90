@@ -46,61 +46,115 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
         !% --- RK2 solution step -- single time advance step for CC and JM
+        
+        ! print *, 'AAA'
+        ! call util_CLprint ()
+
         istep=1
         call rk2_step_ETM (istep)
+
+        ! print *, 'BBB'
+        ! call util_CLprint ()
 
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         call update_auxiliary_variables (ETM)
 
+        ! print *, 'CCC'
+        ! call util_CLprint ()
+
         !% --- set the flagged zero and small depth cells (allow depth to change)
         !%     This does not reset the zero/small depth packing
         call adjust_zero_and_small_depth_elem (ETM, .false.)
+
+        ! print *, 'DDD'
+        ! call util_CLprint ()
      
         !% --- RK2 solution step  -- all face interpolation
         call face_interpolation(fp_all,ETM)
 
+        ! print *, 'EEE'
+        ! call util_CLprint ()
+
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .true.)
+
+        ! print *, 'FFF'
+        ! call util_CLprint ()
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
 
+        ! print *, 'GGG'
+        ! call util_CLprint ()
+
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
+
+        ! print *, 'HHH'
+        ! call util_CLprint ()
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ETM)
+
+        ! print *, 'III'
+        ! call util_CLprint ()
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
         istep=2
         call rk2_step_ETM (istep)
 
+        ! print *, 'JJJ'
+        ! call util_CLprint ()
+
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         call update_auxiliary_variables(ETM)  
+
+        ! print *, 'KKK'
+        ! call util_CLprint ()
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         call adjust_zero_and_small_depth_elem (ETM, .false.)
 
+        ! print *, 'LLL'
+        ! call util_CLprint ()
+
         !% --- RK2 solution step -- update all faces
         call face_interpolation(fp_all,ETM)
 
+        ! print *, 'MMM'
+        ! call util_CLprint ()
+
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .false.)
+
+        ! print *, 'NNN'
+        ! call util_CLprint ()
         
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
+
+        ! print *, 'OOO'
+        ! call util_CLprint ()
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_Vfilter (ETM)
 
+        ! print *, 'PPP'
+        ! call util_CLprint ()
+
         !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
         call adjust_zero_and_small_depth_elem (ETM, .true.)
+
+        ! print *, 'QQQ'
+        ! call util_CLprint ()
 
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
-   
+        ! print *, 'ZZZ'
+        ! call util_CLprint ()
+
         !%-----------------------------------------------------------------
         !% closing
             if (setting%Debug%File%runge_kutta2)  &

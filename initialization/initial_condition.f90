@@ -20,6 +20,8 @@ module initial_condition
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
     use circular_conduit
+    use rectangular_channel, only: rectangular_area_from_depth
+    use trapezoidal_channel, only: trapezoidal_area_from_depth
     use storage_geometry
     use adjust
     use interface, only: interface_get_nodef_attribute
@@ -1132,7 +1134,7 @@ contains
         integer, intent(in) :: thisJunctionNode
 
         integer              :: ii, jj, JMidx, JBidx
-        integer, pointer     :: BranchIdx, geometryType, JmType, curveID
+        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID
         integer              :: nbranches
         real(8), allocatable :: integrated_volume(:)
 
@@ -1213,138 +1215,136 @@ contains
 
             !% set the geometry for existing branches
             !% Note that elemSI(,...Exists) is set in init_network_handle_nJm
-            if (elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) then
+            if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
 
-                BranchIdx    => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
-                geometryType => link%I(BranchIdx,li_geometry)
+            BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
+            JBgeometryType => link%I(BranchIdx,li_geometry)
 
-                !% set the JB to time_march for use with splitting between AC
-                !% and ETM in rk2_extrapolate_to_fullstep_ETM, rk2_restore_to_midstep_ETM
-                !% rk2_interpolate_to_halfstep_AC, k2_restore_to_fullstep_AC
-                elemI(JBidx,ei_HeqType) = time_march
-                elemI(JBidx,ei_QeqType) = time_march
+            !% set the JB to time_march for use with splitting between AC
+            !% and ETM in rk2_extrapolate_to_fullstep_ETM, rk2_restore_to_midstep_ETM
+            !% rk2_interpolate_to_halfstep_AC, k2_restore_to_fullstep_AC
+            elemI(JBidx,ei_HeqType) = time_march
+            elemI(JBidx,ei_QeqType) = time_march
 
-                !% set the initial head to the same as the junction main
-                elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
-                !print *, 'here 39705 head ',elemR(JBidx,er_Head)
-                elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
-                if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
-                    elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
-                    elemR(JBidx,er_Depth) = zeroR
-                end if
-                !print *, 'here 98847 depth',elemR(JBidx,er_Depth)
-                !if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
-                !    elemR(JBidx,er_Depth) = setting%ZeroValue%depth
-                !    elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
-                !end if
-
-                !print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
-                !% JB elements initialized for momentum
-                elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
-                elemR(JBidx,er_FroudeNumber) = zeroR
-
-                ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
-                if (link%I(BranchIdx,li_link_type) == lPipe) then
-                    elemYN(JBidx,eYN_canSurcharge)  = .true.
-                    elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
-                else
-                    elemYN(JBidx,eYN_canSurcharge)  = .false.
-                    elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                                    max(link%R(BranchIdx,lr_BreadthScale),fourR)
-                end if
-                elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-
-                !% Junction branch k-factor
-                !% If the user does not input the K-factor for junction branches entrance/exit loses then
-                !% use default from setting
-                if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                    elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
-                else
-                    elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
-                end if
-
-                !% get the geometry data -- the branch takes on geometry of the upstream link
-                select case (geometryType)
-
-                    case (lRectangular,lRectangular_closed) !% brh20211219 the rect closed needed when orifice is adjacent
-                        elemI(JBidx,ei_geometryType) = rectangular
-                        elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
-                        elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
-
-                        !% store geometry specific data
-                        elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
-                        elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth)
-                        elemR(JBidx,er_ZbreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom)
-                        elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
-
-                    case (lTrapezoidal)
-                        !% brh20211217, reviewed
-                        elemI(JBidx,ei_geometryType) = trapezoidal
-
-                        !% store geometry specific data
-                        elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
-                        elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
-                        elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
-
-                        elemR(JBidx,er_ZBreadthMax) = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
-
-                        elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) &
-                                 + link%R(BranchIdx,lr_FullDepth)                             &
-                                 * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)               &
-                                     + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) 
-
-                        elemR(JBidx,er_FullArea)    =  elemR(JBidx,er_FullDepth)                  &
-                                * (   elemSGR(JBidx,esgr_Trapezoidal_Breadth)                     &
-                                    + onehalfR * elemR(JBidx,er_FullDepth)                        &
-                                       * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
-                                           + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
-
-                        elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
-                                  
-                    case (lCircular)
-                        elemI(JBidx,ei_geometryType) = circular
-
-                        !% store geometry specific data
-                        elemSGR(JBidx,esgr_Circular_Diameter) = link%R(BranchIdx,lr_FullDepth)
-                        elemSGR(JBidx,esgr_Circular_Radius)   = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
-
-                        elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom)
-
-                        elemR(JBidx,er_BreadthMax)  = link%R(BranchIdx,lr_FullDepth)
-
-                        elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
-
-                        elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
-                    case default
-
-                        print *, 'In, ', subroutine_name
-                        print *, 'CODE ERROR: geometry type unknown for # ', geometryType
-                        print *, 'which has key ',trim(reverseKey(geometryType))
-                        stop 308974
-
-                end select
-
-                !% get the flow data from links for junction branches
-                !% this flowrate will always be lagged in junction branches
-                elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
-
-                !% Manning's n
-                elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
-
-                if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
-                    elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
-                else
-                    elemR(JBidx,er_Velocity) = zeroR
-                end if
-
-                !% Common geometry that do not depend on cross-section
-                elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
-                elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
-                elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
-                elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
-                elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
-
+            !% set the initial head to the same as the junction main
+            elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
+            !print *, 'here 39705 head ',elemR(JBidx,er_Head)
+            elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
+            if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
+                elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
+                elemR(JBidx,er_Depth) = zeroR
             end if
+            !print *, 'here 98847 depth',elemR(JBidx,er_Depth)
+            !if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
+            !    elemR(JBidx,er_Depth) = setting%ZeroValue%depth
+            !    elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
+            !end if
+
+            !print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
+            !% JB elements initialized for momentum
+            elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
+            elemR(JBidx,er_FroudeNumber) = zeroR
+
+            ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
+            if (link%I(BranchIdx,li_link_type) == lPipe) then
+                elemYN(JBidx,eYN_canSurcharge)  = .true.
+                elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
+            else
+                elemYN(JBidx,eYN_canSurcharge)  = .false.
+                elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                                                max(link%R(BranchIdx,lr_BreadthScale),fourR)
+            end if
+            elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+
+            !% Junction branch k-factor
+            !% If the user does not input the K-factor for junction branches entrance/exit loses then
+            !% use default from setting
+            if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
+                elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+            else
+                elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+            end if
+
+            !% get the geometry data -- the branch takes on geometry of the upstream link
+            select case (JBgeometryType)
+
+            case (lRectangular,lRectangular_closed) !% brh20211219 the rect closed needed when orifice is adjacent
+                elemI(JBidx,ei_geometryType) = rectangular
+                elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
+
+                !% store geometry specific data
+                elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth)
+                elemR(JBidx,er_ZbreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom)
+                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
+
+            case (lTrapezoidal)
+                !% brh20211217, reviewed
+                elemI(JBidx,ei_geometryType) = trapezoidal
+
+                !% store geometry specific data
+                elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
+                elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
+                elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
+
+                elemR(JBidx,er_ZBreadthMax) = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
+
+                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) &
+                            + link%R(BranchIdx,lr_FullDepth)                             &
+                            * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)               &
+                                + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) 
+
+                elemR(JBidx,er_FullArea)    =  elemR(JBidx,er_FullDepth)                  &
+                        * (   elemSGR(JBidx,esgr_Trapezoidal_Breadth)                     &
+                            + onehalfR * elemR(JBidx,er_FullDepth)                        &
+                                * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
+                                    + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
+
+                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
+                            
+            case (lCircular)
+                elemI(JBidx,ei_geometryType) = circular
+
+                !% store geometry specific data
+                elemSGR(JBidx,esgr_Circular_Diameter) = link%R(BranchIdx,lr_FullDepth)
+                elemSGR(JBidx,esgr_Circular_Radius)   = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
+
+                elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom)
+
+                elemR(JBidx,er_BreadthMax)  = link%R(BranchIdx,lr_FullDepth)
+
+                elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
+
+                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
+            case default
+
+                print *, 'In, ', subroutine_name
+                print *, 'CODE ERROR: geometry type unknown for # ', JbgeometryType
+                print *, 'which has key ',trim(reverseKey(JBgeometryType))
+                stop 308974
+
+            end select
+
+            !% get the flow data from links for junction branches
+            !% this flowrate will always be lagged in junction branches
+            elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
+
+            !% Manning's n
+            elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
+
+            if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
+                elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
+            else
+                elemR(JBidx,er_Velocity) = zeroR
+            end if
+
+            !% Common geometry that do not depend on cross-section
+            elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
+            elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
+            elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
+            elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
+            elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
         end do
 
         !% get junction main geometry based on type
@@ -1364,34 +1364,38 @@ contains
             !%     mass conservation only, which means its volume change can be approximated
             !%     as if it is a rectangular box of Storage_Plane_Area x Depth
             elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
-            select case (geometryType)
-            case (lRectangular,lRectangular_closed)
-                do ii=1,max_branch_per_node                                                    
+            do ii=1,max_branch_per_node
+                JBidx = JMidx + ii
+                if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+                BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
+                JBgeometryType => link%I(BranchIdx,li_geometry)
+                select case (JBgeometryType)
+                case (lRectangular,lRectangular_closed)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                    +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
-                            * elemR(  JMidx+ii,er_Length)                                        &
-                            * elemSGR(JMidx+ii,esgr_Rectangular_Breadth) )
-                end do 
-            case (lTrapezoidal)
-                do ii=1,max_branch_per_node                                                    
+                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                          * elemR(  JBidx,er_Length)                                          &
+                          * elemSGR(JBidx,esgr_Rectangular_Breadth) )
+                case (lTrapezoidal)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                    +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
-                            * elemR(  JMidx+ii,er_Length)                                        &
-                            * elemSGR(JMidx+ii,esgr_Trapezoidal_Breadth) )
-                end do 
-            case (lCircular)
-                do ii=1,max_branch_per_node                                                    
+                             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                  * elemR(  JBidx,er_Length)                                  &
+                                  * elemSGR(JBidx,esgr_Trapezoidal_Breadth) )
+                case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                    +(real(elemSI( JMidx+ii,esi_JunctionBranch_Exists),8)                        &
-                            * elemR(  JMidx+ii,er_Length)                                        &
-                            * elemSGR(JMidx+ii,esgr_Circular_Diameter) )
-                end do 
-            case default
-                print *, 'In, ', subroutine_name
-                print *, 'CODE ERROR: geometry type unknown for # ', geometryType
-                print *, 'which has key ',trim(reverseKey(geometryType))
-                stop 8733455
-            end select
+                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                          * elemR(  JBidx,er_Length)                                          &
+                          * elemSGR(JBidx,esgr_Circular_Diameter) )
+                case default
+                    print *, 'In, ', subroutine_name
+                    print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
+                    print *, 'which has key ',trim(reverseKey(JBgeometryType))
+                    stop 308974
+                end select
+            end do
+
+            !% Breadth is consistent with length and plane area
+            elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plane_Area) &
+                                                    /   elemR(JMidx,er_Length)
 
             !% Volume depends on plane area and depth
             elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
@@ -1676,9 +1680,10 @@ contains
             character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
             !logical, pointer    :: useSmallVolumes
             real(8), pointer    :: depthCutoff, smallVolume(:), length(:)
-            real(8), pointer    :: theta(:), radius(:), rectB(:)
-            real(8), pointer    :: trapB(:), trapL(:), trapR(:)
-            integer, pointer    :: geoType(:)
+            real(8), pointer    :: theta(:), radius(:), rectB(:), tempDepth(:)
+            real(8), pointer    :: trapB(:), trapL(:), trapR(:), depth(:)
+            integer, pointer    :: geoType(:), tPack(:), eIdx(:)
+            integer             :: npack, ii, indx
         !%------------------------------------------------------------------
         !% Preliminaries
             if (icrash) return
@@ -1689,8 +1694,12 @@ contains
             !useSmallVolumes  => setting%SmallDepth%UseSmallVolumesYN
             depthCutoff      => setting%SmallDepth%DepthCutoff
             geoType          => elemI(1:N_elem(this_image()),ei_geometryType)
+            tPack            => elemI(1:N_elem(this_image()),ei_Temp01)
+            eIdx             => elemI(1:N_elem(this_image()),ei_Lidx)
             smallVolume      => elemR(1:N_elem(this_image()),er_SmallVolume)
             length           => elemR(1:N_elem(this_image()),er_Length)
+            depth            => elemR(1:N_elem(this_image()),er_Depth)
+            tempDepth        => elemR(1:N_elem(this_image()),er_Temp01)
             rectB            => elemSGR(1:N_elem(this_image()),esgr_Rectangular_Breadth)
             radius           => elemSGR(1:N_elem(this_image()),esgr_Circular_Radius)
             trapL            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_LeftSlope)
@@ -1698,65 +1707,94 @@ contains
             trapB            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_Breadth)
             theta            => elemR(1:N_elem(this_image()),er_Temp01)
         !%------------------------------------------------------------------
-        elemR(:,er_SmallVolume) = zeroR
-        !if (.not. useSmallVolumes) return
+        !% More preliminaries
+            elemR(:,er_SmallVolume) = zeroR
 
-        ! !% Check consistency
-        ! if (.not. setting%ZeroValue%UseZeroValues) then
-        !     write(*,*) 'WARNING -- SmallVolume algorithm requires UseZeroValues, which was off.'
-        !     write(*,*) 'The UseZeroValues has been turned on.'
-        !     setting%ZeroValue%UseZeroValues = .true.
-        ! end if
+            !% error checking for circular pipes
+            theta = zeroR ! temporary use of theta space for comparison, this isn't theta!
+            where (geoType == circular)
+                theta = radius - depthCutoff
+            end where
+            if (any(theta < zeroR)) then
+                print *, 'FATAL ERROR'
+                print *, 'Small Volume depth cutoff ',depthCutoff
+                print *, 'is larger or equal to radius of the smallest pipe '
+                print *, 'Small Volume depth cutoff must be smaller than the radius.'
+                stop 398705
+            end if
+        !%------------------------------------------------------------------
 
-        !% Check if size of depth cutoff is large enough
-        ! if (depthCutoff .le. tenR * setting%ZeroValue%Depth) then
-        !     if (this_image() == 1) then
-        !         write(*,*) ' '
-        !         write(*,*) '***************************************************************** '
-        !         write(*,*) '** WARNING -- SmallDepth cutoff was too small ', depthCutoff
-        !         write(*,*) '** Resetting to ', max(tenR * setting%ZeroValue%Depth, 0.001)
-        !         write(*,*) '** The SmallVolume depth cutoff must be 10x the zero depth cutoff ' 
-        !         write(*,*) '***************************************************************** '
-        !         write(*,*) ' '
-        !     end if
-        !     depthCutoff = max(tenR * setting%ZeroValue%Depth, 0.001)
-        ! end if
-
-        !% error checking for circular pipes
-        theta = zeroR ! temporary use of theta space for comparison, this isn't theta!
-        where (geoType == circular)
-            theta = radius - depthCutoff
-        end where
-        if (any(theta < zeroR)) then
-            print *, 'FATAL ERROR'
-            print *, 'Small Volume depth cutoff ',depthCutoff
-            print *, 'is larger or equal to radius of the smallest pipe '
-            print *, 'Small Volume depth cutoff must be smaller than the radius.'
-            stop 398705
-        end if
+        !% --- temporarily store depth, and replace depth with the cutoff
+        !%     so that we can use standard depth-to-area-functions.
+        !%     must be reversed at end of subroutine
+        tempDepth = Depth
+        depth = depthCutoff
                 
-        !% rectangular conduit
-        where (geoType == rectangular)
-            smallVolume = depthCutoff * length * rectB
-        end where
-             
-        !% trapezoidal conduit    
-        where (geoType == trapezoidal)
-            !rm smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
-            smallVolume = (trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff) * length !% 20220122brh
-        end where
+        !% --- rectangular conduit
+        tPack = zeroI
+        npack = count(geoType == rectangular)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == rectangular)
+            smallvolume(tPack(1:npack)) = rectangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if
+        !where (geoType == rectangular)
+        !    !smallVolume = depthCutoff * length * rectB
+        !end where
+      
+        !% --- trapezoidal conduit  
+        tPack = zeroI
+        npack = count(geoType == trapezoidal)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == trapezoidal)
+            smallvolume(tPack(1:npack)) = trapezoidal_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if  
+        ! where (geoType == trapezoidal)
+        !     !rm smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
+        !     smallVolume = (trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff) * length !% 20220122brh
+        ! end where
 
-        !% circular conduit
-        where (geoType == circular)
-            theta = twoR * acos ( (radius - depthCutoff) / radius )
-            smallVolume = length * (radius**2) * (theta - sin(theta)) * onehalfR
-        end where   
+        !% ---  circular conduit
 
-        !% small volume gives null, which should fail on every other cross-section    
-        !elsewhere
-        !    elemR(:,er_SmallVolume) = nullvalueR     
-        !endwhere
 
+        tPack = zeroI
+        npack = count(geoType == circular)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == circular)
+            !% HACK -- temporary until problem for small volumes in circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Circular_Diameter) * depthCutoff * length
+        end if
+           
+            ! do ii=1,npack
+            !     indx = tPack(ii)
+            !     if (elemI(indx,ei_elementType) .eq. CC) then
+            !         print *, indx, trim(reverseKey(elemI(indx,ei_elementType)))
+            !         print *, elemSGR(indx,esgr_Circular_Diameter), elemSGR(indx,esgr_Circular_Radius)
+            !     !print *, elemSGR(indx, esgr_Circular_YoverYfull), elemSGR(indx,esgr_Circular_AoverAfull)
+            !         elemR(indx,er_Volume) = 1.0d6 * elemR(indx,er_Volume)
+            !         print *, elemR(indx,er_Depth), elemR(indx,er_Volume)
+            !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
+            !         print *, 'after ',elemR(indx,er_Depth)
+            !         print *, elemR(indx,er_Length) * circular_area_from_depth_singular (indx) 
+            !     end if
+            ! end do
+                
+
+            ! tPack(1:npack) = pack(eIdx,geoType == circular)
+            ! !% HACK -- we need an array lookup that can use the temporary pack.
+            ! do ii=1,npack
+            !     smallvolume(tPack(ii)) = circular_area_from_depth_singular(tPack(ii)) * length(tPack(ii))
+            !     !elemR(tPack(ii),er_Volume) = smallvolume(tPack(ii)) !% temporary for debugging
+            !     !print *, ii, smallvolume(tPack(ii)), circular_depth_from_volume_singular(tPack(ii))
+            ! end do
+            ! elemR(tPack(1:npack),er_Volume) = smallvolume(tPack(ii))
+            ! print *, 'before', elemR(tPack(1:npack),er_Depth)
+            ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
+            ! print *, 'after ', elemR(tPack(1:npack),er_Depth)
+
+        !stop 397803
+
+        !% restore the initial condition depth to the depth vector
+        depth = tempDepth
  
         !%------------------------------------------------------------------
         !% Closing

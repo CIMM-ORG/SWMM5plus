@@ -201,7 +201,7 @@ module utility
         !%------------------------------------------------------------------
         !% Declarations:
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
-            real(8), pointer :: VolOver(:)
+            real(8), pointer :: VolOver(:), VolSlot(:)
             integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
             integer, pointer :: fdn(:), fup(:), BranchExists(:)
             integer :: ii,kk
@@ -217,6 +217,7 @@ module utility
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow) 
+            VolSlot => elemR(:,er_SlotVolume)
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -232,7 +233,7 @@ module utility
             !% --- for output, use an accumulator
             eCons(thisP) = eCons(thisP)                                            &
                          + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
-                         - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)
+                         - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP) + VolSlot(thisP)
 
             !endwhere             
             !% --- for debugging, switch to using non-cumulative            
@@ -245,7 +246,7 @@ module utility
                     print *,  eCons(thisP(ii))
                     print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
                     print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
-                    print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
+                    print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) + VolSlot(thisP(ii)) & 
                             - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
                     print *, elemR(thisP(ii),er_VolumeOverFlow)
                     do kk=1,num_images()
@@ -262,7 +263,7 @@ module utility
             thisP => elemP(1:npack,thisColJM)
 
             eCons(thisP) = eCons(thisP) + dt * eQlat(thisP) &
-                    - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
+                    - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP) + VolSlot(thisP)
 
             !% debug, compute just this time step conservation
             !eCons(thisP) = dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
@@ -286,7 +287,7 @@ module utility
                                  fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
                     end do
                     print *, ' vol ', VolNew(thisP(ii)), VolOld(thisP(ii))
-                    print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii)))
+                    print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii))) + VolSlot(thisP(ii))
                     !print *, 'net Q' , dt * (eQlat(thisP(ii)) + fQ(fup(thisP(ii)+1)  )+ fQ(fup(thisP(ii)+3)  )- fQ(fup(thisP(ii)+2)  ))
                     !print *, ' '
                     do kk=1,num_images()
@@ -612,6 +613,99 @@ module utility
             fdn => elemI(:,ei_Mface_dL)
             dt  => setting%Time%Hydraulics%Dt
         !%------------------------------------------------------------------
+
+        ! ii = 34 
+        ! print *, ii,  reverseKey(elemI(ii,ei_elementType)) , reverseKey(elemI(ii,ei_geometryType)) ! CC
+        ! print *, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)  ! 3 C3
+        ! print *, ' '
+        ! print *, elemI(ii,ei_Mface_uL), reverseKey(faceI(32,fi_BCtype))  ! 32   
+        ! print *, elemI(ii,ei_Mface_dL), reverseKey(faceI(33,fi_BCtype))  ! 33
+        ! print *, ' '
+        ! print *, faceI(32,fi_Melem_uL), reverseKey(elemI(80,ei_elementType))  ! 
+        ! print *, faceI(33,fi_Melem_dL), reverseKey(elemI(35,ei_elementType))  ! 
+        ! print *, ' '
+        ! !print *, elemI(25,ei_Mface_uL)  !
+        ! !print *, elemI(67,ei_Mface_dL)  !
+        ! stop 389753
+
+        ! ii = 65 
+        ! print *, ii,  reverseKey(elemI(ii,ei_elementType)) , reverseKey(elemI(ii,ei_geometryType)) ! CC
+        ! print *, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)  ! 11, C11
+        ! print *, ' '
+        ! print *, elemI(ii,ei_Mface_uL), reverseKey(faceI(23,fi_BCtype))  ! 23
+        ! print *, elemI(ii,ei_Mface_dL), reverseKey(faceI(60,fi_BCtype))  ! 60
+        ! print *, ' '
+        ! print *, faceI(23,fi_Melem_uL), reverseKey(elemI(25,ei_elementType))  ! 
+        ! print *, faceI(60,fi_Melem_dL), reverseKey(elemI(67,ei_elementType))  ! 
+        ! ! print *, ' '
+        ! ! !print *, elemI(25,ei_Mface_uL)  !
+        ! ! !print *, elemI(67,ei_Mface_dL)  !
+        ! stop 389753
+
+        hr = 1512.0d0
+
+        print *, 'small depth ',elemYN(iet,eYN_isSmallDepth)
+        print *, 'zero depth  ',elemYN(iet,eYN_isZeroDepth)    
+        !print *, 'surcharge   ',elemYN(iet,eYN_isSurcharged)
+        print *, 'jump type   ',reverseKey(faceI(ift,fi_jump_type))
+
+        write(*,"(A,10f12.5)")     'H       ',                &         
+        elemR(iet(1),er_Head)-hr , faceR(ift(1),fr_Head_u)-hr, faceR(ift(1),fr_Head_d)-hr, &
+        elemR(iet(2),er_Head)-hr , faceR(ift(2),fr_Head_u)-hr, faceR(ift(2),fr_Head_d)-hr,&
+        elemR(iet(3),er_Head)-hr
+
+        write(*,"(A,10f12.5)")     'Q       ',                &         
+        elemR(iet(1),er_Flowrate), faceR(ift(1),fr_Flowrate), &
+        elemR(iet(2),er_Flowrate), faceR(ift(2),fr_Flowrate), &
+        elemR(iet(3),er_Flowrate)
+
+        write(*,"(A,5(e12.5,A))")     'Fr      ',                &         
+        elemR(iet(1),er_FroudeNumber), '            ', &
+        elemR(iet(2),er_FroudeNumber), '            ', &
+        elemR(iet(3),er_FroudeNumber)
+
+
+        write(*,"(A,A,3(f12.5,A))") 'Qcons   ', &
+        '            ',faceR(ift(1),fr_Flowrate_Conservative), &
+        '            ',faceR(ift(2),fr_Flowrate_Conservative)
+
+        ! write(*,"(A,A,f12.5)")      'Qlat    ', &
+        ! '                        ',elemR(iet(2),er_FlowrateLateral)
+        
+
+        write(*,"(A,5(e12.5,A))")     'D       ',                &         
+        elemR(iet(1),er_Depth), '            ', &
+        elemR(iet(2),er_Depth), '            ', &
+        elemR(iet(3),er_Depth)
+
+        ! write(*,"(A,5(e12.5,A))")     'FullD   ',                &         
+        ! elemR(iet(1),er_FullDepth), '            ', &
+        ! elemR(iet(2),er_FullDepth), '            ', &
+        ! elemR(iet(3),er_FullDepth)
+
+
+        write(*,"(A,5(e12.5,A))")     'Vol     ',                &         
+        elemR(iet(1),er_Volume), '            ', &
+        elemR(iet(2),er_Volume), '            ', &
+        elemR(iet(3),er_Volume)
+
+        write(*,"(A,5(e12.5,A))")     'SmallVol',                &         
+        elemR(iet(1),er_SmallVolume), '            ', &
+        elemR(iet(2),er_SmallVolume), '            ', &
+        elemR(iet(3),er_SmallVolume)
+
+        ! write(*,"(A,5(e12.5,A))")     'FullVol ',                &         
+        ! elemR(iet(1),er_FullVolume), '            ', &
+        ! elemR(iet(2),er_FullVolume), '            ', &
+        ! elemR(iet(3),er_FullVolume)
+
+        ! write(*,"(A,5(e12.5,A))")     'SlotVol ',                &         
+        ! elemR(iet(1),er_SlotVolume), '            ', &
+        ! elemR(iet(2),er_SlotVolume), '            ', &
+        ! elemR(iet(3),er_SlotVolume)
+
+
+        print *, ' '
         !%------------------------------------------------------------------
         !% Closing:
 

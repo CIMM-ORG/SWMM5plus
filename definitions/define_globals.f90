@@ -20,52 +20,13 @@ module define_globals
     !% used for debugging
     character(len=32), allocatable :: reverseKey(:)
 
-    ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
-    ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
-    ! integer :: ieBup1(3) = (/352, 623, 615 /)
-    ! integer :: ieBup2(5) = (/291, 292, 293,  611, 613/)
-    ! integer :: ieBdn(3)  = (/ 614 ,624, 210/)
+   ! integer :: iet(3) = (/80, 34, 35/)
+   ! integer :: ift(2) = (/32, 33/)
 
-    ! integer :: ifBup1(2) = (/363, 620/)
-    ! integer :: ifBup2(4) = (/301, 302, 303, 618/)
+    integer :: iet(3) = (/25, 65, 67/)
+    integer :: ift(2) = (/23, 60/)
 
-    ! integer :: ifBdn(2) = (/619, 218/)
-
-    !integer :: ietmp(5) =  (/383, 384, 625, 626, 294 /)
-    !integer :: iftmp(4) =     (/395, 396, 628, 304/)
-
-
-
-
-    ! integer :: ietmp2(2) = (/ 611, 613/)
-    ! integer :: ietmp(6) = (/623, 615, 612, 614, 624, 210 /)
-    ! integer :: iftmp(3) =   (/620,            619, 218/)
-    ! integer :: iftmp2(1) =     618
-
-    ! !% debugging SJ -- 1 processor
-    ! integer :: ietmp(5) = (/ 630, 631, 385, 386, 387 /)
-    ! integer :: iftmp(4) = (/ 631, 397, 398, 399 /)
-    ! integer :: debug_image
-
-
-    ! !% debugging SJ -- 1 processor
-    ! !integer :: ietmp(5) = (/ 9975, 9976, 9977, 9978, 9979 /)
-    ! !integer :: iftmp(4) = (/ 10563, 10564, 10565, 10566 /)
-    ! integer :: debug_image
-
-    ! !% 16 processor, image 6
-    ! integer :: ietmp(5) = (/ 192, 193, 194, 195, 196 /)
-    ! integer :: iftmp(4) = (/ 205, 206, 207, 208 /)
-
-    !% At junction for lateral small test
-    !integer :: ietmp(5) = (/  13, 15, 14, 16, 38/)
-    !integer :: iftmp(2) = (/   14, 15/)
-
-    !integer :: ietmp(5) = (/  1, 2, 3, 4, 5/)
-    !integer :: iftmp(2) = (/   1, 2/)
-
-    integer :: temptime(6) !used for temporary time debugging
 
     integer(kind=8) :: irecCount = 0
 

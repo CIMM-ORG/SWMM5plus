@@ -15,6 +15,7 @@ module trapezoidal_channel
     private
 
     public :: trapezoidal_depth_from_volume
+    public :: trapezoidal_area_from_depth
     public :: trapezoidal_area_from_depth_singular
     public :: trapezoidal_topwidth_from_depth
     public :: trapezoidal_topwidth_from_depth_singular 
@@ -59,6 +60,25 @@ module trapezoidal_channel
 
     end subroutine trapezoidal_depth_from_volume
 !%  
+!%==========================================================================
+!%==========================================================================
+!%
+    elemental real(8) function trapezoidal_area_from_depth (indx) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for trapezoidal cross section 
+        !% input may be a scalar or a packed array of indexes
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        !%-----------------------------------------------------------------------------
+        outvalue = (elemSGR(indx,esgr_Trapezoidal_Breadth)                        &
+                        + onehalfR * (  elemSGR(indx,esgr_Trapezoidal_LeftSlope)  &
+                                      + elemSGR(indx,esgr_Trapezoidal_RightSlope) &
+                                     ) * elemR(indx,er_Depth)                     &
+                    ) * elemR(indx,er_Depth)
+
+    end function trapezoidal_area_from_depth
+!%
 !%==========================================================================
 !%==========================================================================
 !%

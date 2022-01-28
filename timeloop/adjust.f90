@@ -60,15 +60,23 @@ module adjust
         !%------------------------------------------------------------------
     
         if (isreset) then
+            !print *, '--------aaa ',elemR(iet(2),er_Flowrate)
             call adjust_zerodepth_identify_all ()
+            !print *, '--------bbb ',elemR(iet(2),er_Flowrate)
             call adjust_smalldepth_identify_all ()
+            !print *, '--------ccc ',elemR(iet(2),er_Flowrate)
             call pack_small_and_zero_depth_elements (whichTM)
         end if
 
+        !print *, '--------ddd ',elemR(iet(2),er_Flowrate)
         call adjust_zerodepth_element_values (whichTM, CC) 
+        !print *, '--------eee ',elemR(iet(2),er_Flowrate)
         call adjust_zerodepth_element_values (whichTM, JM) 
+        !print *, '--------fff ',elemR(iet(2),er_Flowrate)
         call adjust_smalldepth_element_fluxes (whichTM)
+        !print *, '--------ggg ',elemR(iet(2),er_Flowrate)
         call adjust_limit_velocity_max (whichTM) 
+        !print *, '--------hhh ',elemR(iet(2),er_Flowrate)
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -550,7 +558,7 @@ module adjust
         
         !% --- define the small volume ratio, 
         !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
-        svRatio(thisP) = max(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
+        svRatio(thisP) = min(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
     
         !% use the larger of available roughness values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
