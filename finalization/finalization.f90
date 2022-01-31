@@ -35,6 +35,7 @@ contains
             real(8) :: total_time,timemarch_time, hydraulics_time
             real(8) :: hydrology_time, loopoutput_time, initialization_time
             real(8) :: lastoutput_time, shared_time, volume_nonconservation
+            real(8) :: timemarch_seconds, shared_seconds
             logical :: isLastStep
             character(8) :: total_units, timemarch_units, hydraulics_units
             character(8) :: hydrology_units, loopoutput_units, initialization_units
@@ -102,6 +103,7 @@ contains
             timemarch_time = real(setting%Time%WallClock%TimeMarchEnd &
                              - setting%Time%WallClock%TimeMarchStart,kind=8)
             timemarch_time = timemarch_time / real(setting%Time%WallClock%CountRate,kind=8)
+            timemarch_seconds = timemarch_time
             call util_datetime_display_time (timemarch_time, timemarch_units)
 
             !% --- hydraulics time
@@ -116,7 +118,8 @@ contains
             
             !% --- time spent in shared communication across processors
             shared_time = real(setting%Time%WallClock%SharedCumulative,kind=8) &
-                            / real(setting%Time%WallClock%CountRate,kind=8)           
+                            / real(setting%Time%WallClock%CountRate,kind=8)  
+            shared_seconds = shared_time        
             call util_datetime_display_time (shared_time, shared_units)   
             
             !% --- output processing during time loop
@@ -161,6 +164,16 @@ contains
                 write(*,"(A,i9)")  ' Total number of finite-volume faces written      = ',sum(N_OutFace(:))
                 write(*,"(A,2i9)") ' Total number of SWMM links, nodes in system      = ',SWMM_N_link, SWMM_N_node
                 write(*,"(A,2i9)") ' Total number of finite-volume elements in system = ',sum(N_elem)
+                write(*,"(A,2i9)") ' Total number of time steps                       = ',setting%Time%step
+                write(*,"(A,e12.3)") ' FLOP scale (time steps x elements)               = ',&
+                    real(setting%Time%step,8) * real(sum(N_elem),8)
+                write(*,"(A,e12.3)") ' FLOP scale / processor                           = ', &
+                    real(setting%Time%step,8) * real(sum(N_elem),8) / real(num_images(),8)
+                write(*,"(A,e12.3)") ' FLOP scale / (processor x timemarching wall-clock total time) = ', &
+                    real(setting%Time%step,8) * real(sum(N_elem),8) / (real(num_images(),8) * timemarch_seconds)
+                write(*,"(A,e12.3)") ' FLOP scale / (processor x (timemarch - shared) wall-clock total time) = ', &
+                    real(setting%Time%step,8) * real(sum(N_elem),8) / (real(num_images(),8) * (timemarch_seconds - shared_seconds) )
+
                 write(*,*) ' '
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time in total                : ',total_time, ' ',trim(total_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in initialization : ',initialization_time, ' ',trim(initialization_units)
