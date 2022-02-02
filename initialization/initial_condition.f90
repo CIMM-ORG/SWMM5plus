@@ -1769,15 +1769,13 @@ contains
             !     if (elemI(indx,ei_elementType) .eq. CC) then
             !         print *, indx, trim(reverseKey(elemI(indx,ei_elementType)))
             !         print *, elemSGR(indx,esgr_Circular_Diameter), elemSGR(indx,esgr_Circular_Radius)
-            !     !print *, elemSGR(indx, esgr_Circular_YoverYfull), elemSGR(indx,esgr_Circular_AoverAfull)
-            !         elemR(indx,er_Volume) = 1.0d6 * elemR(indx,er_Volume)
-            !         print *, elemR(indx,er_Depth), elemR(indx,er_Volume)
+            !         print *, elemSGR(indx, esgr_Circular_YoverYfull), elemSGR(indx,esgr_Circular_AoverAfull)
             !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
-            !         print *, 'after ',elemR(indx,er_Depth)
-            !         print *, elemR(indx,er_Length) * circular_area_from_depth_singular (indx) 
+            !         elemR(indx,er_Volume) = 1.0d6 * elemR(indx,er_Volume)
+            !         print *, 'after depth',elemR(indx,er_Depth)
+            !         print *, 'after volume',elemR(indx,er_Length) * circular_area_from_depth_singular (indx) 
             !     end if
             ! end do
-                
 
             ! tPack(1:npack) = pack(eIdx,geoType == circular)
             ! !% HACK -- we need an array lookup that can use the temporary pack.

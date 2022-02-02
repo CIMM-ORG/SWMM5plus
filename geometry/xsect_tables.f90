@@ -151,9 +151,10 @@ contains
         elsewhere ( (position(thisP) .GT. zeroI          ) .and. &
                     (position(thisP) .LT. (nItems - oneI)) )
 
-            inoutArray(thisP) = table(position(thisP)) + &
-                                          (normalizedInput(thisP) - position(thisP) * delta) * &
-                                          (table(position(thisP) + oneI) - table(position(thisP))) / delta
+            !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
+            inoutArray(thisP) = table(position(thisP)+oneI) + &
+                                (normalizedInput(thisP) - position(thisP) * delta) * &
+                                (table(position(thisP) + twoI) - table(position(thisP)+oneI)) / delta
 
         elsewhere (position(thisP) .GE. (nItems - oneI))
             inoutArray(thisP) = table(nItems)
@@ -201,8 +202,9 @@ contains
         else if ( (position .GT. zeroI          ) .and. &
                   (position .LT. (nItems - oneI)) ) then
 
-            normalizedOutput = table(position) + (normalizedInput - position * delta) * &
-                                (table(position + oneI) - table(position)) / delta
+            !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
+            normalizedOutput = table(position+oneI) + (normalizedInput - position * delta) * &
+                            (table(position+twoI) - table(position+oneI)) / delta
 
         else if (position .GE. (nItems - oneI)) then
             normalizedOutput = table(nItems)
