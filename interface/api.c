@@ -392,6 +392,10 @@ int DLLEXPORT api_get_headBC(
             *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
             return 0;
 
+        case TIMESERIES_OUTFALL:
+            *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
+            return 0;
+
         default:
             *headBC = API_NULL_VALUE_I;
             sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
