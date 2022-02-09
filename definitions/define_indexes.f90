@@ -637,6 +637,13 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSGR_Rectangular =  esgr_Rectangular_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for triangular channel
+    enum, bind(c)
+         enumerator ::  esgr_Triangular_Slope = 1    !% breadth for rectangular geometry
+         enumerator ::  esgr_Triangular_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSGR_Triangular =  esgr_Triangular_lastplusone-1
+
     !% Define the column indexes for elemGSR(:,:) for trapezoidal pipe or channel
     enum, bind(c)
          enumerator ::  esgr_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
