@@ -679,6 +679,37 @@ contains
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                 endwhere
+            
+            case (lTriangular)
+
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+
+                    elemI(:,ei_geometryType) = triangular
+
+                    !% store geometry specific data
+                    elemSGR(:,esgr_Triangular_Top_Breadth) = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
+                    elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_Top_Breadth) / (twoR * elemR(:,er_FullDepth))
+                    
+                    ! Area = Depth*Depth*avg. sideslope
+                    elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Triangular_Slope) 
+                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                    elemR(:,er_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemR(:,er_FullDepth) * elemR(:, er_FullDepth) * elemSGR(:,esgr_Triangular_Slope) 
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                endwhere
+                
+                print *, 'In, ', subroutine_name
+                print *, 'CODE ERROR -- triangular geometry type is under dev'
+                print *, 'which has key ',trim(reverseKey(geometryType))
+                stop 45646
 
             case default
 
