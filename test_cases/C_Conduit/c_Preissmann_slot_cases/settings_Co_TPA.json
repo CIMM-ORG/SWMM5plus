@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 0.036
     },
     "Limiter" : {
         "BC" : {
@@ -34,7 +34,7 @@
         },
         "Dt" : {
             "UseLimitMinYN" : true,
-            "Minimum"     : 1e-4
+            "Minimum"     : 1e-10
         }
     },    
     "Output" : {
@@ -65,8 +65,8 @@
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 300.0,
-            "TimeUnits" : "Hours"
+            "TimeInterval" : 5.0,
+            "TimeUnits" : "Minutes"
         }
     },
     "Profile" : {
@@ -76,6 +76,7 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
+
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -90,19 +91,5 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
-    },
-    "Solver" : {
-        "PreissmannSlot" : true,
-        "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
-        "SolverSelect" : "ETM",
-        "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
-    },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot", 
-        "CelerityFactor" : 10.0,
-        "DesiredTimeStep" : 0.03
     }
 }
