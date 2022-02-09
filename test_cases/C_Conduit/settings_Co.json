@@ -90,5 +90,19 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0
+    },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "VariableSlot", 
+        "CelerityFactor" : 20.0,
+        "DesiredTimeStep" : 0.04
     }
 }

@@ -119,7 +119,7 @@ module geometry
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
         !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
-        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.false.) !% 20220124brh
+        call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
@@ -900,7 +900,7 @@ module geometry
         integer, pointer    :: thisP(:), Npack
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), depth(:), area(:), head(:), SlotHydRadius(:)
-        real(8), pointer    :: hydRadius(:), ell(:), breadthMax(:)
+        real(8), pointer    :: hydRadius(:), ell(:), zbottom(:), fullDepth(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -911,11 +911,12 @@ module geometry
         Npack      => npack_elemP(thisColP)
         volume     => elemR(:,er_Volume)
         depth      => elemR(:,er_Depth)
+        fullDepth  => elemR(:,er_FullDepth)
         area       => elemR(:,er_Area)
         head       => elemR(:,er_Head)
         ell        => elemR(:,er_ell)
-        breadthMax => elemR(:,er_BreadthMax)
         hydRadius  => elemR(:,er_HydRadius)
+        zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
         SlotVolume => elemR(:,er_SlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
@@ -929,7 +930,7 @@ module geometry
                 volume(thisP) = volume(thisP) + SlotVolume(thisP)
                 area(thisP)   = area(thisP)   + SlotArea(thisP)
                 depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-                head(thisP)   = head(thisP)   + SlotDepth(thisP)
+                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
             end where 
         end if
 

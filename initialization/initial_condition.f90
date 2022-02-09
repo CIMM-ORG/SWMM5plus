@@ -217,7 +217,7 @@ contains
             print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
             ! call execute_command_line('')
         end if
- 
+
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -718,29 +718,35 @@ contains
 
         select case (geometryType)
 
-        ! case (lRectangular)
+        case (lRectangular_closed)
 
-        !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
-        !         elemI(:,ei_geometryType)    = rectangular_closed
+                elemI(:,ei_geometryType)    = rectangular_closed
 
-        !         !% store geometry specific data
-        !         elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+                !% store geometry specific data
+                elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-        !         elemR(:,er_BreadthMax)      = elemSGR(:,esgr_Rectangular_Breadth)
-        !         elemR(:,er_Area)            = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
-        !         elemR(:,er_Area_N0)         = elemR(:,er_Area)
-        !         elemR(:,er_Area_N1)         = elemR(:,er_Area)
-        !         elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
-        !         elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
-        !         elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-        !         elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-        !         elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-        !         elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-        !         elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
-        !         elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
-        !     endwhere
-
+                elemR(:,er_BreadthMax)      = elemSGR(:,esgr_Rectangular_Breadth)
+                elemR(:,er_Area)            = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
+                elemR(:,er_Area_N0)         = elemR(:,er_Area)
+                elemR(:,er_Area_N1)         = elemR(:,er_Area)
+                elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
+                elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
+            endwhere
+            print*, elemR(:,er_depth), 'elemR(:,er_depth)'
+            print*, elemR(:,er_BreadthMax) , 'elemR(:,er_BreadthMax) '
+            print*, elemR(:,er_Volume), 'elemR(:,er_Volume)'
+            print*, elemR(:,er_FullDepth) , 'elemR(:,er_FullDepth) '
+            print*, elemR(:,er_ZbreadthMax), 'elemR(:,er_ZbreadthMax)'
+            print*, elemR(:,er_Zcrown), 'elemR(:,er_Zcrown)'
+            
         case (lCircular)
 
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
