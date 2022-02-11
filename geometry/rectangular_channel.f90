@@ -99,15 +99,25 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: breadth(:), topwidth(:)
+        integer, pointer :: thisP(:), elemType(:)
+        real(8), pointer :: breadth(:), topwidth(:), depth(:), fullDepth(:)
         !%-----------------------------------------------------------------------------
-        thisP    => elemPGx(1:Npack,thisCol) 
-        topwidth => elemR(:,er_Topwidth)
-        breadth  => elemSGR(:,esgr_Rectangular_Breadth)
+        thisP     => elemPGx(1:Npack,thisCol) 
+        elemType  => elemI(:,ei_elementType)
+        topwidth  => elemR(:,er_Topwidth)
+        depth     => elemR(:,er_Depth)
+        fullDepth => elemR(:,er_FullDepth)
+        breadth   => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
 
         topwidth(thisP) = breadth(thisP)
+
+        !% HACK code: testing if rectangular open and closed can be
+        !% incorporated in a single piece of code
+        where ((elemType(thisP) == rectangular_closed) .and. &
+               (depth(thisP) >= fullDepth(thisP)))
+               topwidth = setting%ZeroValue%Topwidth
+        end where
 
     end subroutine rectangular_topwidth_from_depth
 !%    
