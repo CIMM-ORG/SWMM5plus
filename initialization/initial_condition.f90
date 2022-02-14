@@ -740,12 +740,6 @@ contains
                 elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
             endwhere
-            print*, elemR(:,er_depth), 'elemR(:,er_depth)'
-            print*, elemR(:,er_BreadthMax) , 'elemR(:,er_BreadthMax) '
-            print*, elemR(:,er_Volume), 'elemR(:,er_Volume)'
-            print*, elemR(:,er_FullDepth) , 'elemR(:,er_FullDepth) '
-            print*, elemR(:,er_ZbreadthMax), 'elemR(:,er_ZbreadthMax)'
-            print*, elemR(:,er_Zcrown), 'elemR(:,er_Zcrown)'
             
         case (lCircular)
 

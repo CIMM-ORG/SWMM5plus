@@ -505,7 +505,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         else
             select case (elemGeometry)
 
-            case (rectangular)
+            case (rectangular, rectangular_closed)
                 criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
                 
             case (trapezoidal)
