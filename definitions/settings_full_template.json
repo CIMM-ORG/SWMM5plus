@@ -43,7 +43,8 @@
         "Flowrate" : {
             "ApplyYN" : true,
             "Approach" : "vshape",
-            "Coef" : 1.0
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
         },
         "Head" : {
             "ApplyYN" : true,
@@ -71,11 +72,7 @@
     },
     "Eps" : {
         "FroudeJump" : 0.1,
-        "InflowDepthIncreaseFroudeLimit" : 0.1,
         "Velocity"   : 1e-6
-    },
-    "FaceInterp" : {
-        "DownJBFaceInterp" : "dynamic"
     },
     "File" : {
         "UseCommandLineFoldersYN" : true,
@@ -88,10 +85,7 @@
         "inp_file" : "",
     },
     "Junction" : {
-        "isDynamicYN" : false,
-        "CFLlimit" : 0.5,
         "FunStorageN" : 10,
-        "HeadCoef" : 1.0,
         "kFactor"  : 0.0,
     },
     "Limiter" : {
@@ -183,7 +177,7 @@
         "useHydraulics" : true,
         "stopAfterInitializationYN" : false
     },
-    "SmallVolume" : {
+    "SmallDepth" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.1
     },
@@ -244,7 +238,6 @@
         "CFL_hi_max" : 0.7,
         "CFL_target" : 0.5,
         "CFL_lo_max" : 0.3,
-        "decreaseFactor" : 0.8,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     },

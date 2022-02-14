@@ -517,7 +517,7 @@ contains
             real(8)          :: oldDT
             real(8)          :: timeleft, thisCFL
             real(8), pointer :: targetCFL, maxCFL, maxCFLlow, timeNow, dtTol
-            real(8), pointer :: decreaseFactor, increaseFactor
+            real(8), pointer :: increaseFactor
             real(8), pointer :: newDT
             !rm velocity(:), wavespeed(:), length(:), PCelerity(:)
             real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
@@ -538,7 +538,7 @@ contains
             maxCFL             => setting%VariableDT%CFL_hi_max
             targetCFL          => setting%VariableDT%CFL_target
             maxCFLlow          => setting%VariableDT%CFL_lo_max
-            decreaseFactor     => setting%VariableDT%decreaseFactor
+            !rm 20220209brh decreaseFactor     => setting%VariableDT%decreaseFactor
             increaseFactor     => setting%VariableDT%increaseFactor
             checkStepInterval  => setting%VariableDT%NstepsForCheck
 
@@ -634,6 +634,7 @@ contains
                     if (thisCFL < maxCFLlow) then
                         !% --- increase the time step and reset the checkStep Counter
                         newDT = oldDT * increaseFactor
+                        !newDT = OldDT * targetCFL / thisCFL  ! 20220214brh
                         lastCheckStep = stepNow
                     end if
                 end if

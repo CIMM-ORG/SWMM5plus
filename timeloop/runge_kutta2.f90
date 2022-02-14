@@ -488,14 +488,6 @@ module runge_kutta2
 
         call ll_junction_branch_flowrate_and_velocity(ETM,istep)
 
-       ! write(*,"(5f12.7)") elemR(1,er_Velocity)
-       ! stop 835783
-
-        ! !% junction branch momentum source
-        ! if (setting%Junction%isDynamicYN) then
-        !     call ll_momentum_source_JB (ETM, istep)
-        ! end if
-
     end subroutine rk2_momentum_step_ETM
 !%
 !%==========================================================================
