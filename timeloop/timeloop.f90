@@ -633,7 +633,8 @@ contains
                     !% --- check for low CFL only on prescribed intervals and increase time step
                     if (thisCFL < maxCFLlow) then
                         !% --- increase the time step and reset the checkStep Counter
-                        newDT = oldDT * increaseFactor
+                        ! newDT = oldDT * increaseFactor
+                        newDT = OldDT * targetCFL / thisCFL  ! 20220214brh
                         lastCheckStep = stepNow
                     end if
                 end if
