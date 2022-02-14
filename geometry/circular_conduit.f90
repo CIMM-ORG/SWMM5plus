@@ -47,6 +47,9 @@ module circular_conduit
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:)
         real(8), pointer :: YoverYfull(:), fullArea(:), fulldepth(:)
+
+        integer, allocatable, target :: thisP_analytical(:), thisP_lookup(:)
+        integer, target              :: Npack_analytical, Npack_lookup
         !%-----------------------------------------------------------------------------
         thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
@@ -60,14 +63,29 @@ module circular_conduit
         if (icrash) return
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
 
-        !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the
+        !% when AoverAfull <= 4%, SWMM5 uses a special function to get the
         !% normalized depth using the central angle, theta
-        !% (Page 82 in the SWMM5 Hydraulic manual)
-        !% Figure out a way to implement this later.
 
-        !% retrive the normalized Y/Yfull from the lookup table
-        call xsect_table_lookup &
-            (YoverYfull, AoverAfull, YCirc, NYCirc, thisP)
+        !% pack the circular elements with AoverAfull <= 4% which will use analytical solution
+        !% from French, 1985 by using the central angle theta.
+        Npack_analytical = count(AoverAfull(thisP) <= 0.04)
+        thisP_analytical = pack(thisP,AoverAfull(thisP) <= 0.04)
+
+        !% pack the rest of the circular elements having AoverAfull > 0.04 which will use
+        !% lookup table for interpolation.
+        Npack_lookup = count(AoverAfull(thisP) > 0.04)
+        thisP_lookup = pack(thisP,AoverAfull(thisP) > 0.04)
+
+        if (Npack_analytical > zeroI) then
+            call circular_get_normalized_depth_from_area_analytical &
+                (YoverYfull, AoverAfull, Npack_analytical, thisP_analytical)
+        end if 
+    
+        if (Npack_lookup > zeroI) then        
+            !% retrive the normalized Y/Yfull from the lookup table
+            call xsect_table_lookup &
+                (YoverYfull, AoverAfull, YCirc, NYCirc, thisP_lookup)
+        end if
 
         !% finally get the depth by multiplying the normalized depth with full depth
         depth(thisP) = YoverYfull(thisP) * fulldepth(thisP)
@@ -377,7 +395,58 @@ module circular_conduit
     end function circular_hydradius_from_depth_singular
 !%
 !%==========================================================================
+!%==========================================================================
+!%
+    subroutine circular_get_normalized_depth_from_area_analytical &
+        (normalizedDepth, normalizedArea, Npack, thisP)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% find the YoverYfull from AoverAfull only when AoverAfull <= 0.04
+        !% This subroutine uses the analytical derivation from French, 1985 to
+        !% calculate the central angle theta. THIS SUBROUTINE IS NOT VECTORIZED
+        !%
+        !% this piece of the code is adapted from SWMM5-c code
+        !% for more reference check SWMM Reference Manual Volume II – Hydraulics, pp-81 
+        !% and SWMM5 xsect.c code
+        !%-----------------------------------------------------------------------------
+        real(8), intent(inout)      :: normalizedDepth(:)
+        real(8), intent(in)         :: normalizedArea(:)
+        integer, target, intent(in) :: Npack, thisP(:)
 
+        integer          :: ii, jj 
+        integer, pointer :: eIdx
+        real(8)          :: alpha, theta, theta1, dTheta
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
+
+        do ii = 1,Npack
+            eIdx   => thisP(ii)
+            alpha  = normalizedArea(eIdx)
+
+            !% this piece of the code is adapted from SWMM5-c code
+            if (alpha >= oneR) then
+                normalizedDepth(eIdx) = oneR
+            else if (alpha <= zeroR) then
+                normalizedDepth(eIdx) = zeroR
+            else if (alpha <= 1e-05) then 
+                normalizedDepth(eIdx) = (((37.6911*alpha)**onethirdR)**twoR)/16.0
+            else
+                theta1  = 0.031715 - 12.79384 * alpha + 8.28479 * sqrt(alpha)
+                theta = theta1
+                do jj = 1,40
+                    dTheta = - ((2.0 * pi) * alpha - theta1 + sin(theta1)) / (1.0 - cos(theta1))
+                    if (dTheta > oneR) dTheta = sign(oneR,dtheta)
+                    theta1 = theta1 - dTheta
+                    if (abs(dTheta) <= 0.0001) then
+                        theta = theta1
+                        exit
+                    end if    
+                end do
+                normalizedDepth(eIdx) = (oneR - cos(theta / twoR)) / twoR
+            end if
+        end do
+
+    end subroutine circular_get_normalized_depth_from_area_analytical
 !%
 !%
 !%==========================================================================
