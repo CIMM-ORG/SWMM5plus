@@ -4,6 +4,7 @@ module partitioning
     use define_globals
     use define_indexes
     use define_settings, only: setting
+    use discretization, only: init_discretization_nominal
     use utility
     use utility_allocate
     use BIPquick
@@ -73,6 +74,7 @@ subroutine init_partitioning_method()
             else if (setting%Partitioning%PartitioningMethod == BQuick) then
                 if (setting%Output%Verbose) write(*,"(A)") "... using BIPquick Partitioning..."
                 call init_partitioning_BIPquick()
+                ! call init_partitioning_bquick_modification ()
             else
                 print *, "Error, partitioning method not supported"
                 stop 87095
@@ -128,6 +130,74 @@ subroutine init_partitioning_method()
     call util_deallocate_partitioning_arrays()
 
 end subroutine init_partitioning_method
+!
+!==========================================================================
+!==========================================================================
+!
+! subroutine init_partitioning_bquick_modification ()
+!     ! --------------------------------------------------------
+!     ! Description:
+!     !   The purpose of this subroutine is to delete phantom links
+!     !   and nodes so that the network remain intact
+!     !---------------------------------------------------------
+!     integer :: ii, nIdx, upLidx, dnLidx, dnNidx, inImage
+!     character(64) :: subroutine_name = 'init_partitioning_bquick_modification'
+! !% --------------------------------------------------------
+!     if (icrash) return
+! !% --------------------------------------------------------
+!     do ii = 1, size(node%I, 1)
+!         nIdx = node%I(ii,ni_idx)
+!         if (node%YN(nIdx,nYN_is_phantom_node)) then
+!             if (link%YN(node%I(nIdx,ni_Mlink_u1),lYN_isPhantomLink)) then
+!                 print*, 'upstream link is phantom -- this should not happen'
+!                 stop 2321
+!                 ! upLidx = node%I(nIdx,ni_Mlink_u1)
+!                 ! dnLidx = node%I(nIdx,ni_Mlink_d1)
+!                 ! print*, upLidx,  ' = link index'
+!                 ! print*, node%I(nIdx,ni_P_image), ' = phantom node image'
+!                 ! print*, link%I(upLidx,li_P_image), ' = up link in image'
+!                 ! print*, link%I(dnLidx,li_P_image), ' = dn link in image'
+!             else if (link%YN(node%I(nIdx,ni_Mlink_d1),lYN_isPhantomLink)) then
+!                 print*, 'downstream link is pahntom'
+!                 upLidx = node%I(nIdx,ni_Mlink_u1)
+!                 dnLidx = node%I(nIdx,ni_Mlink_d1)
+!                 !% only carry the operations for small links
+!                 if (link%R(dnLidx,lr_length) .le. setting%Discretization%NominalElemLength) then
+!                     if (this_image() == 1) then
+!                         print*, node%I(nIdx,ni_Mlink_d1),  ' = link index'
+!                         print*, node%I(nIdx,ni_P_image), ' = phantom node image'
+!                         print*, node%I(nIdx,ni_P_is_boundary), 'ni_P_is_boundary'
+!                         print*, link%I(upLidx,li_P_image), ' = up link in image'
+!                         print*, link%I(dnLidx,li_P_image), ' = dn link in image'
+!                     end if 
+!                     !% if the next downstream node is in the same partition,
+!                     !% then delete the phantom link and nodes, else do nothing
+!                     dnNidx = link%I(dnLidx,li_Mnode_d)
+!                     print*, node%I(dnNidx,ni_P_image), ' = next dn node image'
+
+!                     if (node%I(dnNidx,ni_P_image) == link%I(dnLidx,li_P_image)) then !both the nodes are in the same image 
+!                         node%I(dnNidx,ni_P_is_boundary) = node%I(nIdx,ni_P_is_boundary)
+!                         node%I(dnNidx,ni_Mlink_u1) = upLidx
+!                         link%I(upLidx,li_Mnode_d) = dnNidx
+!                         link%R(upLidx,lr_length) = link%R(upLidx,lr_length) + link%R(dnLidx,lr_length)
+!                         call init_discretization_nominal(upLidx)
+!                         !% make the phantom node null
+!                         node%I(nIdx,:) = nullValueI
+!                         node%R(nIdx,:) = nullvalueR
+!                         node%YN(nIdx,:) = nullvalueL
+!                         !% make the phantom link null
+!                         link%I(dnLidx,:) = nullValueI
+!                         link%R(dnLidx,:) = nullvalueR
+!                         link%YN(dnLidx,:) = nullvalueL
+!                     else
+!                         ! do nothing
+!                     end if
+!                 end if
+!             end if
+!         endif
+!     end do 
+
+! end subroutine init_partitioning_bquick_modification
 !
 !==========================================================================
 !==========================================================================
