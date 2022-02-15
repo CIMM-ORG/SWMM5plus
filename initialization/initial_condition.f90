@@ -727,18 +727,20 @@ contains
                 !% store geometry specific data
                 elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-                elemR(:,er_BreadthMax)      = elemSGR(:,esgr_Rectangular_Breadth)
-                elemR(:,er_Area)            = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
-                elemR(:,er_Area_N0)         = elemR(:,er_Area)
-                elemR(:,er_Area_N1)         = elemR(:,er_Area)
-                elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-                elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
+                elemR(:,er_Area)                  = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
+                elemR(:,er_Area_N0)               = elemR(:,er_Area)
+                elemR(:,er_Area_N1)               = elemR(:,er_Area)
+                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
+                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
+                
             endwhere
             
         case (lCircular)
