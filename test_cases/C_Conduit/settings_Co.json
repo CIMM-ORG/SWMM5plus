@@ -43,7 +43,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 500
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -58,7 +58,7 @@
             "isTopWidthOut"     : false,
             "isVelocityOut"     : true,
             "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isWaveSpeedOut"    : true
         },
         "Report" : {
             "useSWMMinpYN" :true,
@@ -101,8 +101,17 @@
         "ReferenceHead"     : 0.0
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot", 
-        "CelerityFactor" : 10.0,
-        "DesiredTimeStep" : 0.5
+        "PreissmannSlotMethod" : "VariableSlot", 
+        "CelerityFactor" : 100.0,
+        "DesiredTimeStep" : 0.15
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.3,
+        "decreaseFactor" : 0.8,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10
     }
 }

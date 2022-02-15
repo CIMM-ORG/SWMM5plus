@@ -99,11 +99,11 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:), elemType(:)
+        integer, pointer :: thisP(:), GeomType(:)
         real(8), pointer :: breadth(:), topwidth(:), depth(:), fullDepth(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
-        elemType  => elemI(:,ei_elementType)
+        GeomType  => elemI(:,ei_geometryType)
         topwidth  => elemR(:,er_Topwidth)
         depth     => elemR(:,er_Depth)
         fullDepth => elemR(:,er_FullDepth)
@@ -114,9 +114,9 @@ module rectangular_channel
 
         !% HACK code: testing if rectangular open and closed can be
         !% incorporated in a single piece of code
-        where ((elemType(thisP) == rectangular_closed) .and. &
+        where ((GeomType(thisP) == rectangular_closed) .and. &
                (depth(thisP) >= fullDepth(thisP)))
-               topwidth = setting%ZeroValue%Topwidth
+               topwidth(thisP) = setting%ZeroValue%Topwidth
         end where
 
     end subroutine rectangular_topwidth_from_depth
