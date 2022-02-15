@@ -626,7 +626,7 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
@@ -663,7 +663,7 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)    = max(link%R(thisLink,lr_BreadthScale), fourR)
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
 
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
