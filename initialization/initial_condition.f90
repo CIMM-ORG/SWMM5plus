@@ -1327,6 +1327,13 @@ contains
             !% this flowrate will always be lagged in junction branches
             elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
 
+            !% also set the face flowrates such that it does not blowup the initial interpolation
+            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
+            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
+            end if
+
             !% Manning's n
             elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
 

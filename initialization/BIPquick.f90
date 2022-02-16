@@ -1245,7 +1245,10 @@ contains
                 link_image = link%I(adjacent_links(kk), li_P_image)
 
                 !% If the link and the image are on separate images, increment the ni_P_is_boundary
-                if ( link_image /= node%I(ii, ni_P_image) ) then
+                !% HACK: not sure about the 2nd condtion. For some nodes ni_P_is_boundary was > 1 
+                !% (saz02162022)
+                if ( (link_image /= node%I(ii, ni_P_image)) .and. &
+                     (node%I(ii, ni_P_is_boundary) == zeroI)) then
                     node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
                 end if
             end do
