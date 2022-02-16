@@ -761,13 +761,16 @@ module face
         !% Note these can be expanded for other terms to be interpolated.
         fGeoSetU     = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        eGeoSet      = [er_Area,   er_Topwidth,   er_HydDepth]
         eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
 
         fHeadSetU     = [fr_Head_u]
         fHeadSetD     = [fr_Head_d]
+        eHeadSet      = [er_Head]
         eGhostHeadSet = [ebgr_Head]
 
         fFlowSet      = [fr_Flowrate]
+        eFlowSet      = [er_Flowrate]
         eGhostFlowSet = [ebgr_Flowrate]
 
         !% transfer all the local elemR data needed for face interpolation into elemB data structure
@@ -1379,7 +1382,7 @@ module face
                 else
                     write(*,*) 'CODE ERROR: unexpected else'
                     stop 487874
-                end if        
+                end if      
             end do
         end do
 
