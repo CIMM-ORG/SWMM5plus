@@ -343,14 +343,6 @@ module update
             !w_dH(thisP) = setting%Limiter%InterpWeight%Minimum ! do not use!
         endwhere
 
-
-        ! if (setting%FaceInterp%DownJBFaceInterp == dynamic) then
-        !     !% testin a new branch interp technique
-        !     call update_interpolation_weights_ds_JB ()
-        !     print *, 'this isnot ready for use.'
-        !     stop 398705
-        ! endif
-
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine update_CCtm_interpweights

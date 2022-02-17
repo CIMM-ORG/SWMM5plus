@@ -1361,12 +1361,13 @@ contains
             write(*,'(A)') '** '
             ifound = .true.
         end if
-        if (setting%Junction%isDynamicYN) then
-            write(*,'(A)') '** setting.Junction.isDynamic = true. We recommend false. '
-            write(*,'(A)') '** Dynamic junctions are in development and provide inconsistent results. '
-            write(*,'(A)') '** '
-            ifound = .true.
-        end if
+        !rm 20220207brh
+        ! if (setting%Junction%isDynamicYN) then
+        !     write(*,'(A)') '** setting.Junction.isDynamic = true. We recommend false. '
+        !     write(*,'(A)') '** Dynamic junctions are in development and provide inconsistent results. '
+        !     write(*,'(A)') '** '
+        !     ifound = .true.
+        ! end if
         if (.not. setting%File%force_folder_creationYN) then
             write(*,'(A)') '** setting.File.force_folder_creationYN = false. We recommend true. '
             write(*,'(A)') '** If this is false, SWMM5+ will have write errors if output folders '

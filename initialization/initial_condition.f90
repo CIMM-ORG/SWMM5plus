@@ -626,8 +626,7 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
-                                                link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
@@ -664,8 +663,7 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
-                                                max(link%R(thisLink,lr_BreadthScale), fourR)
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
 
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
@@ -1253,8 +1251,7 @@ contains
                 elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
             else
                 elemYN(JBidx,eYN_canSurcharge)  = .false.
-                elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                                max(link%R(BranchIdx,lr_BreadthScale),fourR)
+                elemR(JBidx,er_FullDepth)   = max(link%R(BranchIdx,lr_BreadthScale),fourR)
             end if
             elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
 
@@ -1331,6 +1328,13 @@ contains
             !% get the flow data from links for junction branches
             !% this flowrate will always be lagged in junction branches
             elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
+
+            !% also set the face flowrates such that it does not blowup the initial interpolation
+            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
+            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
+            end if
 
             !% Manning's n
             elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
