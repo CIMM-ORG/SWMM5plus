@@ -112,7 +112,6 @@
         "CFL_hi_max" : 0.5,
         "CFL_target" : 0.3,
         "CFL_lo_max" : 0.1,
-        "decreaseFactor" : 0.8,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     } 

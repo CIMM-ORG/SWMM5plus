@@ -2498,7 +2498,7 @@ contains
         !--------------------------------------------------------------------------
         !% packed arrays for static shared faces
         !--------------------------------------------------------------------------
-        integer :: ii, image
+        integer :: ii
         integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn, Nfaces
         integer, pointer :: c_image, N_shared_faces, thisP
         logical, pointer :: isUpGhost, isDnGhost
@@ -2517,8 +2517,7 @@ contains
         ! end if
 
         !% pointing to the number of faces in this image
-        image  = this_image()
-        Nfaces => N_face(image)
+        Nfaces => N_face(this_image())
 
         fIdx   => faceI(1:Nfaces,fi_Lidx)
 

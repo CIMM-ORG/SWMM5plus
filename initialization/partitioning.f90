@@ -4,6 +4,7 @@ module partitioning
     use define_globals
     use define_indexes
     use define_settings, only: setting
+    use discretization, only: init_discretization_nominal
     use utility
     use utility_allocate
     use BIPquick
@@ -73,6 +74,7 @@ subroutine init_partitioning_method()
             else if (setting%Partitioning%PartitioningMethod == BQuick) then
                 if (setting%Output%Verbose) write(*,"(A)") "... using BIPquick Partitioning..."
                 call init_partitioning_BIPquick()
+                ! call init_partitioning_bquick_diagnostic ()
             else
                 print *, "Error, partitioning method not supported"
                 stop 87095
@@ -128,6 +130,132 @@ subroutine init_partitioning_method()
     call util_deallocate_partitioning_arrays()
 
 end subroutine init_partitioning_method
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine init_partitioning_bquick_diagnostic ()
+    ! --------------------------------------------------------
+    ! Description:
+    !   The purpose of this subroutine is to delete phantom links
+    !   and nodes so that the network remain intact
+    !---------------------------------------------------------
+    integer :: ii
+    integer, pointer :: pNode, pLink, sLink, dnNidx, upNidx
+    integer, pointer :: plinkUp, pLinkDn
+    real(8), pointer :: nominalElemLength
+    integer, dimension(:), allocatable, target :: nodeIndexes
+    character(64) :: subroutine_name = 'init_partitioning_bquick_diagnostic'
+!% --------------------------------------------------------
+    if (icrash) return
+!% --------------------------------------------------------
+    !% pointers
+    nominalElemLength => setting%Discretization%NominalElemLength
+
+    !% pack all the node indexes excluding the nullvalues
+    nodeIndexes = pack(node%I(:,ni_idx), (node%I(:,ni_idx) /= nullvalueI))
+
+    do ii = 1, size(nodeIndexes, 1)
+        pNode => nodeIndexes(ii)
+        if (node%YN(pNode,nYN_is_phantom_node)) then
+            !% if both the upstream and downstream links are phantom
+            if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink) .and. &
+                link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                plinkUp => node%I(pNode,ni_Mlink_u1)
+                pLinkDn => node%I(pNode,ni_Mlink_d1)
+                upNidx  => link%I(plinkUp,li_Mnode_u)
+                dnNidx  => link%I(pLinkDn,li_Mnode_d)
+            !% if the upstream link is a phantom link
+            else if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink)) then
+                pLink  => node%I(pNode,ni_Mlink_u1)
+                sLink  => node%I(pNode,ni_Mlink_d1)
+                upNidx => link%I(pLink,li_Mnode_u)
+                dnNidx => link%I(sLink,li_Mnode_d)
+            !% if the downstream link is a phantom link
+            else if (link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                sLink  => node%I(pNode,ni_Mlink_u1)
+                pLink  => node%I(pNode,ni_Mlink_d1)
+                upNidx => link%I(sLink,li_Mnode_u)
+                dnNidx => link%I(pLink,li_Mnode_d)
+            !% should not reach this error condition
+            else
+                print*, 'In subroutine', subroutine_name
+                print*, 'Error: phantom node', pNode, 'doesnot have any up or dn phantom link'
+                stop 147856
+            end if
+
+            !% print diagnistic of the spanning and phantom links
+            if (this_image() == 1) then
+                if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink) .and. &
+                    link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                    print*, 'Phantom link detected both upstream and downstream'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, plinkUp,                   ' = up phantom link index'
+                    print*, link%R(plinkUp,lr_length), ' = up phantom link length'
+                    print*, link%I(plinkUp,li_P_image),' = up phantom link in image'
+                    print*, upNidx,                    ' = node up idx of the phantom link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of phantom link in image'
+                    print*, pLinkDn,                   ' = dn phantom link index'
+                    print*, link%R(pLinkDn,lr_length), ' = dn phantom link length'
+                    print*, link%I(pLinkDn,li_P_image),' = dn phantom link in image'
+                    print*, dnNidx,                    ' = node dn idx of the spanning link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of spanning link in image'
+                    print*
+                else if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink)) then
+                    print*, 'Upstream phantom link detected'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, pLink,                     ' = up phantom link index'
+                    print*, link%R(pLink,lr_length),   ' = up phantom link length'
+                    print*, link%I(pLink,li_P_image),  ' = up phantom link in image'
+                    print*, upNidx,                    ' = node up idx of the phantom link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of phantom link in image'
+                    print*, sLink,                     ' = dn spanning link index'
+                    print*, link%R(sLink,lr_length),   ' = dn spanning link length'
+                    print*, link%I(sLink,li_P_image),  ' = dn spanning link in image'
+                    print*, dnNidx,                    ' = node dn idx of the spanning link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of spanning link in image'
+                    print*
+                else if (link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                    print*, 'Downstream phantom link detected'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, sLink,                     ' = up spanning link index'
+                    print*, link%R(sLink,lr_length),   ' = up spanning link length'
+                    print*, link%I(sLink,li_P_image),  ' = up spanning link in image'
+                    print*, upNidx,                    ' = node idx up of the spanning link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of spanning link in image'
+                    print*, pLink,                     ' = dn phantom link index'
+                    print*, link%R(pLink,lr_length),   ' = dn phantom link length'
+                    print*, link%I(pLink,li_P_image),  ' = dn phantom link in image'
+                    print*, dnNidx,                    ' = node idx dn of the phantom link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of phantom link in image'
+                    print*
+                end if
+            end if 
+
+            !% adjust only when the spanning or phantom link is smaller 
+            !% than the nominal element length and the phantom link and node
+            !% are on different images
+
+            !% HACK: if the phantom link and nodes are on a same image, 
+            !% that implys
+            ! if ( (link%R(pLink,lr_length) .le. nominalElemLength) .or. &
+            !      (link%R(sLink,lr_length) .le. nominalElemLength)) then
+            !     !% print out for the adjusted links    
+            !     if (this_image() == 1) then
+            !         print*, 'Adjusting Link', pLink, ' and ', sLink
+            !     end if
+
+            ! end if    
+        end if
+    end do 
+
+    !% deacclocate the temporary array
+    deallocate(nodeIndexes)
+
+end subroutine init_partitioning_bquick_diagnostic
 !
 !==========================================================================
 !==========================================================================

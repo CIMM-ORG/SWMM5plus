@@ -134,7 +134,7 @@ module define_settings
 
     !% setting%Output%DataLink
     type DataOutType
-        logical :: isAreaOut         = .true.
+        logical :: isAreaOut         = .false.
         logical :: isDepthOut        = .true.
         logical :: isFlowrateOut     = .true.
         logical :: isFluxConsOut     = .true.
@@ -152,23 +152,23 @@ module define_settings
     end type DataOutType
 
     !% setting%Limiter%ArraySize
-    type LimiterArraySizeType
-        integer :: TemporalInflows = 10
-        integer :: TotalInflows = 50
-    end type LimiterArraySizeType
+    ! type LimiterArraySizeType
+    !     integer :: TemporalInflows = 10
+    !     integer :: TotalInflows = 50
+    ! end type LimiterArraySizeType
 
     !% setting%Limiter%BC -- not presently used brh20220101
-    type LimiterBCType
-        logical :: UseInflowLimiterYN = .true.
-        integer :: Approach = FroudeNumber
-        ! max value of Fr at inflow
-        real(8) :: FroudeInflowMaximum = 1.5
-    end type LimiterBCType
+    ! type LimiterBCType
+    !     logical :: UseInflowLimiterYN = .true.
+    !     integer :: Approach = FroudeNumber
+    !     ! max value of Fr at inflow
+    !     real(8) :: FroudeInflowMaximum = 1.5
+    ! end type LimiterBCType
 
-    !% setting%Limiter%Channel
-    type LimiterChannelType
-        real(8) :: LargeDepthFactor = 10.0
-    end type LimiterChannelType
+    ! !% setting%Limiter%Channel
+    ! type LimiterChannelType
+    !     real(8) :: LargeDepthFactor = 10.0
+    ! end type LimiterChannelType
 
     !% setting%Limiter%Dt
     type LimiterDtType
@@ -176,13 +176,13 @@ module define_settings
         real(8) :: Minimum     = 1e-3
     end type LimiterDtType
 
-    !% setting%Limiter%Flowrate -- presently not used brh20220101
-    type LimiterFlowrateType
-        logical :: UseFaceVolumeTransportYN = .true.  !% obsolete?
-        ! Fraction of usptream volume that can be
-        ! transported in on time step
-        real(8) :: FaceVolumeTransport = 0.5
-    end type LimiterFlowrateType
+    ! !% setting%Limiter%Flowrate -- presently not used brh20220101
+    ! type LimiterFlowrateType
+    !     logical :: UseFaceVolumeTransportYN = .true.  !% obsolete?
+    !     ! Fraction of usptream volume that can be
+    !     ! transported in on time step
+    !     real(8) :: FaceVolumeTransport = 0.5
+    ! end type LimiterFlowrateType
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
@@ -386,17 +386,18 @@ module define_settings
         !% +- small non-dimensional range for hyd jump discrimination
         real(8) :: FroudeJump = 0.1
         !% Fractional increase in depth under froude limitation
-        real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
+        !rm 20220207brh real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
         !% small velocity
         real(8) :: Velocity = 1.0e-6
         !% small head difference (tolerance for no flow)
         real(8) :: Head = 1.0e-6
     end type EpsilonType
 
-    !% setting%FaceInterp
-    type FaceInterpType
-        integer :: DownJBFaceInterp = dynamic
-    end type FaceInterpType
+    !rm 20220207brh
+    ! !% setting%FaceInterp
+    ! type FaceInterpType
+    !     integer :: DownJBFaceInterp = dynamic
+    ! end type FaceInterpType
 
     !% setting%File
     type FileType
@@ -432,21 +433,21 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        logical :: isDynamicYN    = .false.
-        real(8) :: CFLlimit     = 0.5   !% limiter on CFL to control dynamic junction
+        !rm 20220207brh logical :: isDynamicYN    = .false.
+        !rm 20220207brh real(8) :: CFLlimit     = 0.5   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
-        real(8) :: HeadCoef     = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
+        !rm 20220207brh real(8) :: HeadCoef     = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
         real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
     end type JunctionType
 
     ! setting%Limiter
     type LimiterType
-        type(LimiterBCType)           :: BC  !% not used
-        type(LimiterChannelType)      :: Channel
-        type(LimiterFlowrateType)     :: Flowrate  !% not used
+        !rm 20220207brh type(LimiterBCType)           :: BC  !% not used
+        !rm 20220209brh type(LimiterChannelType)      :: Channel
+        !rm 20220207brh type(LimiterFlowrateType)     :: Flowrate  !% not used
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
-        type(LimiterArraySizeType)    :: ArraySize  !% not used
+        !rm 20220207brh type(LimiterArraySizeType)    :: ArraySize  !% not used
         type(LimiterDtType)           :: Dt
     end type LimiterType
 
@@ -476,7 +477,7 @@ module define_settings
         integer :: NumberOfWriteSteps = 0
         integer :: NumberOfTimeLevelSaved = 0
         integer :: StoredLevels = 100        
-        integer :: StoredFileNames = 2
+        integer :: StoredFileNames = 100
         integer :: ElemHeadIndex = 0
         integer :: FaceUpHeadIndex = 0
         integer :: faceDnHeadIndex = 0
@@ -586,7 +587,7 @@ module define_settings
         real(8) :: CFL_hi_max = 0.7
         real(8) :: CFL_target = 0.5
         real(8) :: CFL_lo_max = 0.3
-        real(8) :: decreaseFactor = 0.8  
+        !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2 
         integer :: NstepsForCheck = 10
         integer :: LastCheckStep = 0
@@ -618,7 +619,7 @@ module define_settings
         type(DebugType)          :: Debug
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
-        type(FaceInterpType)     :: FaceInterp ! Temporary: setting for face interpolation in downstream JB
+        !rm 20220207brh type(FaceInterpType)     :: FaceInterp ! Temporary: setting for face interpolation in downstream JB
         type(FileType)           :: File
         type(JunctionType)       :: Junction
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
@@ -988,28 +989,30 @@ contains
         if (found) setting%Eps%FroudeJump = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Eps.FroudeJump not found'
         
-        !%                       Eps.InflowDepthIncreaseFroudeLimit
-        call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
-        if (found) setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Eps.InflowDepthIncreaseFroudeLimit not found'
+        !rm 20220207brh
+        ! !%                       Eps.InflowDepthIncreaseFroudeLimit
+        ! call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
+        ! if (found) setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Eps.InflowDepthIncreaseFroudeLimit not found'
 
     !% FaceInterp. =====================================================================
         !%                       FaceInterp.DownJBFaceInterp
-        call json%get('FaceInterp.DownJBFaceInterp', c, found)
-        if (found) then 
-            call util_lower_case(c)
-            if (c == 'static') then
-                setting%FaceInterp%DownJBFaceInterp = static
-            else if (c == 'dynamic') then
-                setting%FaceInterp%DownJBFaceInterp = dynamic
-            else
-                write(*,"(A)") 'Error - json file - setting.FaceInterp.DownJBFaceInterp of ',trim(c)
-                write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '...static, dynamic'
-                stop 993895
-            end if
-        end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'FaceInterp.DownJBFaceInterp not found'
+        !rm 20220207brh
+        ! call json%get('FaceInterp.DownJBFaceInterp', c, found)
+        ! if (found) then 
+        !     call util_lower_case(c)
+        !     if (c == 'static') then
+        !         setting%FaceInterp%DownJBFaceInterp = static
+        !     else if (c == 'dynamic') then
+        !         setting%FaceInterp%DownJBFaceInterp = dynamic
+        !     else
+        !         write(*,"(A)") 'Error - json file - setting.FaceInterp.DownJBFaceInterp of ',trim(c)
+        !         write(*,"(A)") '..is not in allowed options of:'
+        !         write(*,"(A)") '...static, dynamic'
+        !         stop 993895
+        !     end if
+        ! end if
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'FaceInterp.DownJBFaceInterp not found'
 
     !% File. =====================================================================
         !% --- (filenames and paths should not be read)
@@ -1063,25 +1066,27 @@ contains
         !% do not read           File.UnitNumber...
 
     !% Junctions. =====================================================================
+        !rm 20220207brh
         !%                       Junction.isDynamicYN
-        call json%get('Junction.isDynamicYN', logical_value, found)
-        if (found) setting%Junction%isDynamicYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Junction.isDynamicYN not found'
+        ! call json%get('Junction.isDynamicYN', logical_value, found)
+        ! if (found) setting%Junction%isDynamicYN = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Junction.isDynamicYN not found'
 
-        !%                       Junction.CFLlimit
-        call json%get('Junction.CFLlimit', real_value, found)
-        if (found) setting%Junction%CFLlimit = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
+        ! !%                       Junction.CFLlimit
+        ! call json%get('Junction.CFLlimit', real_value, found)
+        ! if (found) setting%Junction%CFLlimit = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
 
         !%                       Junction.FunStorageN
         call json%get('Junction.FunStorageN', integer_value, found)
         if (found) setting%Junction%FunStorageN = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
         
-        !%                       Junction.HeadCoef
-        call json%get('Junction.HeadCoef', real_value, found)
-        if (found) setting%Junction%HeadCoef = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.HeeadCoef not found'
+        !rm 20220207brh
+        ! !%                       Junction.HeadCoef
+        ! call json%get('Junction.HeadCoef', real_value, found)
+        ! if (found) setting%Junction%HeadCoef = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.HeeadCoef not found'
 
         !%                       Junction.kFactor
         call json%get('Junction.kFactor', real_value, found)
@@ -1090,45 +1095,48 @@ contains
 
    
     !% Limiter. =====================================================================
-        !%                       Limiter.ArraySize.TemporalInflows
-        call json%get('Limiter.ArraySize.TemporalInflows', integer_value, found)
-        if (found) setting%Limiter%ArraySize%TemporalInflows = integer_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.ArraySize.TemporalInflows not found'
+        !rm 20220207brh
+        ! !%                       Limiter.ArraySize.TemporalInflows
+        ! call json%get('Limiter.ArraySize.TemporalInflows', integer_value, found)
+        ! if (found) setting%Limiter%ArraySize%TemporalInflows = integer_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.ArraySize.TemporalInflows not found'
 
-        !%                       Limiter.ArraySize.TotalInflows
-        call json%get('Limiter.ArraySize.TotalInflows', integer_value, found)
-        if (found) setting%Limiter%ArraySize%TotalInflows = integer_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.ArraySize.TotalInflows not found'
+        ! !%                       Limiter.ArraySize.TotalInflows
+        ! call json%get('Limiter.ArraySize.TotalInflows', integer_value, found)
+        ! if (found) setting%Limiter%ArraySize%TotalInflows = integer_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.ArraySize.TotalInflows not found'
 
-        !%                       Limiter.BC.UseInflowLimiterYN
-        call json%get('Limiter.BC.UseInflowLimiterYN', logical_value, found)
-        if (found) setting%Limiter%BC%UseInflowLimiterYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.UseInflowLimiterYN not found'
+        !rm 20220207brh
+        ! !%                       Limiter.BC.UseInflowLimiterYN
+        ! call json%get('Limiter.BC.UseInflowLimiterYN', logical_value, found)
+        ! if (found) setting%Limiter%BC%UseInflowLimiterYN = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.UseInflowLimiterYN not found'
 
+        !rm 20220207brh
         !%                       Limiter.BC.Approach
-        call json%get('Limiter.BC.Approach', c, found)
-        if (found) then 
-            call util_lower_case(c)
-            if (c == 'froudenumber') then
-                setting%Limiter%BC%Approach = FroudeNumber
-            else
-                write(*,"(A)") 'Error - json file - setting.Limiter.BC.Approach of ',trim(c)
-                write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '...froudenumber'
-                stop 837735
-            end if
-        end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.Approach not found'
+        ! call json%get('Limiter.BC.Approach', c, found)
+        ! if (found) then 
+        !     call util_lower_case(c)
+        !     if (c == 'froudenumber') then
+        !         setting%Limiter%BC%Approach = FroudeNumber
+        !     else
+        !         write(*,"(A)") 'Error - json file - setting.Limiter.BC.Approach of ',trim(c)
+        !         write(*,"(A)") '..is not in allowed options of:'
+        !         write(*,"(A)") '...froudenumber'
+        !         stop 837735
+        !     end if
+        ! end if
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.Approach not found'
         
         !%                       Limiter.BC.FroudeInflowMaximum
-        call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
-        if (found) setting%Limiter%BC%FroudeInflowMaximum = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.FroudeInflowMaximum not found'
+        ! call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
+        ! if (found) setting%Limiter%BC%FroudeInflowMaximum = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.FroudeInflowMaximum not found'
         
-        !%                       Limiter.Channel.LargeDepthFactor
-        call json%get('Limiter.Channel.LargeDepthFactor', real_value, found)
-        if (found) setting%Limiter%Channel%LargeDepthFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Channel.LargeDepthFactor not found'
+        ! !%                       Limiter.Channel.LargeDepthFactor
+        ! call json%get('Limiter.Channel.LargeDepthFactor', real_value, found)
+        ! if (found) setting%Limiter%Channel%LargeDepthFactor = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Channel.LargeDepthFactor not found'
         
         !%                       Limiter.Dt.Minimum
         call json%get('Limiter.Dt.Minimum', real_value, found)
@@ -1140,15 +1148,16 @@ contains
         if (found) setting%Limiter%Dt%UseLimitMinYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMinYN not found'
 
-        !%                       Limiter.Flowrate.FaceVolumeTransport
-        call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
-        if (found) setting%Limiter%Flowrate%FaceVolumeTransport = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.FaceVolumeTransport not found'
+        !rm 20220207brh
+        ! !%                       Limiter.Flowrate.FaceVolumeTransport
+        ! call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
+        ! if (found) setting%Limiter%Flowrate%FaceVolumeTransport = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.FaceVolumeTransport not found'
         
-        !%                       Limiter.Flowrate.UseFaceVolumeTransportYN
-        call json%get('Limiter.Flowrate.UseFaceVolumeTransportYN', logical_value, found)
-        if (found) setting%Limiter%Flowrate%UseFaceVolumeTransportYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.UseFaceVolumeTransportYN not found'
+        ! !%                       Limiter.Flowrate.UseFaceVolumeTransportYN
+        ! call json%get('Limiter.Flowrate.UseFaceVolumeTransportYN', logical_value, found)
+        ! if (found) setting%Limiter%Flowrate%UseFaceVolumeTransportYN = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.UseFaceVolumeTransportYN not found'
 
         !%                       Limiter.InterpWeight.Maximum
         call json%get('Limiter.InterpWeight.Maximum', real_value, found)
@@ -1701,10 +1710,10 @@ contains
         if (found) setting%VariableDT%CFL_lo_max = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_lo_max not found'
         
-        !%                       decreaseFactor
-        call json%get('VariableDT.decreaseFactor', real_value, found)
-        if (found) setting%VariableDT%decreaseFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.decreaseFactor not found'
+        ! !%                       decreaseFactor
+        ! call json%get('VariableDT.decreaseFactor', real_value, found)
+        ! if (found) setting%VariableDT%decreaseFactor = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.decreaseFactor not found'
         
         !%                       increaseFactor
         call json%get('VariableDT.increaseFactor', real_value, found)
