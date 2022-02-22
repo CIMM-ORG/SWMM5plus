@@ -148,7 +148,7 @@
             "weir_elements" : false
         },
         "FileGroup" : {
-            "all" : true,
+            "all" : false,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,
@@ -160,5 +160,9 @@
         },
         "SetupYN"  : true,
         "OutputYN" : true
+    },
+    "SmallDepth" : {
+        "DepthCutoff" : 0.00001,
+        "ManningsN" : 0.1
     }
 }
