@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 1.00
     },
     "Limiter" : {
         "BC" : {
@@ -40,7 +40,7 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 1000,
+        "StoredLevels" : 10000,
         "CommandLine" : {
             "quietYN" : false,
             "interval" : 500
