@@ -1298,9 +1298,11 @@ module lowlevel_rk2
         case (StaticSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             !% SWMM5 uses 1% of width max as slot width
-            ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-            SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
-                (cfl*length(thisP))**twoR
+            SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
+            !% HACK: emulating TPA acoustic wavespeed of 25 m/s
+            ! SlotWidth(thisP) = (grav * fullarea(thisP)) / (25.0**2.0)
+            ! SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
+                ! (cfl*length(thisP))**twoR
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
             SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
