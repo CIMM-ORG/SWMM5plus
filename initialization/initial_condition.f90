@@ -1421,11 +1421,11 @@ contains
             call storage_create_curve (JMidx)
 
         case (TabularStorage)
-            curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
-            Curve(curveID)%ElemIdx = JMidx
+            CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            Curve(CurveID)%ElemIdx = JMidx
             !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
             !% to get to integrate the area vs depth curve
-            call storage_integrate_area_vs_depth_curve (curveID)
+            call storage_integrate_area_vs_depth_curve (CurveID)
 
             !% now interpolate from the cure to get the volume
             call storage_interpolate_volume_from_depth_singular (JMidx)

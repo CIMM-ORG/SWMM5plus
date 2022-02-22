@@ -221,6 +221,8 @@ module define_indexes
         enumerator :: lr_Volume
         enumerator :: lr_Velocity
         enumerator :: lr_Capacity
+        enumerator :: lr_ZbottomUp
+        enumerator :: lr_ZbottomDn
         enumerator :: lr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is

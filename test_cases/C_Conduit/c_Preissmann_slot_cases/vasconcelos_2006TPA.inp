@@ -58,7 +58,7 @@ DRY_ONLY         NO
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
 ;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
-1                0        0.31       0.073      FUNCTIONAL 0.0625    0         0        0        0       
+1                0        0.31       0.073      FUNCTIONAL 0.0625     0         0        0        0       
 3                0        0.5        0.073      FUNCTIONAL 0.2835287  0         0        0        0       
 
 [CONDUITS]

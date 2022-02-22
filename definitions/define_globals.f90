@@ -349,6 +349,9 @@ module define_globals
     integer, parameter :: LinearlyVarying   = 2
     integer, parameter :: ExponentialDecay  = 3
 
+    ! default for number of functional storage
+    integer :: N_FunctionalStorage = 0
+
     !% datetime related variables
     integer, parameter :: datedelta = 693594
     integer, parameter :: secsperday = 86400
