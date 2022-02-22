@@ -1451,16 +1451,16 @@ contains
         if (found) setting%Simulation%stopAfterInitializationYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.stopAfterInitializationYN not found'
   
-    !% SmallVolume. =====================================================================    
+    !% SmallDepth. =====================================================================    
         !%                       DepthCutoff
-        call json%get('SmallVolume.DepthCutoff', real_value, found)
+        call json%get('SmallDepth.DepthCutoff', real_value, found)
         if (found) setting%SmallDepth%DepthCutoff = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.DepthCutoff not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.DepthCutoff not found'
         
         !%                       ManningsN
-        call json%get('SmallVolume.ManningsN', real_value, found)
+        call json%get('SmallDepth.ManningsN', real_value, found)
         if (found) setting%SmallDepth%ManningsN = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallVolume.ManningsN not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.ManningsN not found'
         
 
     !% Solver. =====================================================================
