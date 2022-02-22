@@ -61,11 +61,11 @@
             "isWaveSpeedOut"    : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" :false,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 5.0,
+            "TimeInterval" : 0.5,
             "TimeUnits" : "Seconds"
         }
     },
@@ -93,9 +93,9 @@
         }
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot",
+        "PreissmannSlotMethod" : "StaticSlot",
         "CelerityFactor" : 1.0,
-        "DesiredTimeStep" : 0.01
+        "DesiredTimeStep" : 0.1
     },
     "VariableDT" : {
         "ApplyYN" : true,
