@@ -669,7 +669,7 @@ contains
                 print*, 'max wavespeed ', maxval( &
                     elemR(elemP(1:npack_elemP(ep_CC_Q_NOTsmalldepth),ep_CC_Q_NOTsmalldepth),er_WaveSpeed) )
                 print*, 'warning: the dt value is smaller than the user supplied min dt value'
-                stop 1123938
+                ! stop 1123938
             end if
 
             if (setting%Debug%File%timeloop) &

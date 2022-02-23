@@ -442,21 +442,22 @@ contains
         !%------------------------------------------------------------------
         N_OutTypeElem = 0
         !% --- count the number of true output element types
-        if (setting%Output%DataOut%isAreaOut)           N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isDepthOut)          N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isFlowrateOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isFluxConsOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isFroudeNumberOut)   N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isHeadOut)           N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isHydRadiusOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isPerimeterOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isSlotWidthOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isSlotDepthOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isTopWidthOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVelocityOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVolumeOut)         N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVolumeConsOut)     N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isWaveSpeedOut)      N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isAreaOut)                    N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isDepthOut)                   N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFlowrateOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFluxConsOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFroudeNumberOut)            N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isHeadOut)                    N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isHydRadiusOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isPerimeterOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isSlotWidthOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isSlotDepthOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isTopWidthOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVelocityOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumeOut)                  N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumeConsOut)              N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
 
         if (N_OutTypeElem == 0) then
             !% --- if no outputtypes are specified, then suppress the element output
@@ -597,6 +598,16 @@ contains
             output_typeProcessing_elemR(ii) = AverageElements
         end if
 
+        !% --- Preissmann Celerity
+        if (setting%Output%DataOut%isPreissmannCelerityOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Preissmann_Celerity
+            output_typenames_elemR(ii) = 'PreissmannCelerity'
+            output_typeUnits_elemR(ii) = 'm/s'
+            output_typeProcessing_elemR(ii) = AverageElements
+        end if
+
+        
         !% -- store 'time' for use in output
         output_typeNames_withTime_elemR(2:ii+1) = output_typeNames_elemR(:)
         output_typeNames_withTime_elemR(1) = 'Time'

@@ -50,8 +50,6 @@ module runge_kutta2
         ! print *, 'AAA'
         ! call util_CLprint ()
 
-        elemR(:,er_SlotWidth)  = elemR(:,er_FullArea) / &
-            ( (setting%PreissmannSlot%CelerityFactor ** twoR) * elemR(:,er_ell))
         istep=1
         call rk2_step_ETM (istep)
 
