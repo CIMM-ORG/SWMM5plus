@@ -134,21 +134,22 @@ module define_settings
 
     !% setting%Output%DataLink
     type DataOutType
-        logical :: isAreaOut         = .false.
-        logical :: isDepthOut        = .true.
-        logical :: isFlowrateOut     = .true.
-        logical :: isFluxConsOut     = .true.
-        logical :: isFroudeNumberOut = .false.
-        logical :: isHeadOut         = .true.
-        logical :: isHydRadiusOut    = .false.
-        logical :: isPerimeterOut    = .false.
-        logical :: isSlotWidthOut    = .false.
-        logical :: isSlotDepthOut    = .false.
-        logical :: isTopWidthOut     = .false.
-        logical :: isVelocityOut     = .true.
-        logical :: isVolumeOut       = .true.
-        logical :: isVolumeConsOut   = .true.
-        logical :: isWaveSpeedOut    = .false.
+        logical :: isAreaOut                = .false.
+        logical :: isDepthOut               = .true.
+        logical :: isFlowrateOut            = .true.
+        logical :: isFluxConsOut            = .true.
+        logical :: isFroudeNumberOut        = .false.
+        logical :: isHeadOut                = .true.
+        logical :: isHydRadiusOut           = .false.
+        logical :: isPerimeterOut           = .false.
+        logical :: isSlotWidthOut           = .false.
+        logical :: isSlotDepthOut           = .false.
+        logical :: isTopWidthOut            = .false.
+        logical :: isVelocityOut            = .true.
+        logical :: isVolumeOut              = .true.
+        logical :: isVolumeConsOut          = .true.
+        logical :: isWaveSpeedOut           = .false.
+        logical :: isPreissmannCelerityOut  = .false.
     end type DataOutType
 
     !% setting%Limiter%ArraySize
@@ -1329,6 +1330,11 @@ contains
         call json%get('Output.DataOut.isWaveSpeedOut', logical_value, found)
         if (found) setting%Output%DataOut%isWaveSpeedOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isWaveSpeedOut not found'
+
+        !%                       Dataout.isPreissmannCelerityOut
+        call json%get('Output.DataOut.isPreissmannCelerityOut', logical_value, found)
+        if (found) setting%Output%DataOut%isPreissmannCelerityOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannCelerityOut not found'
              
         !% --- Report settings
         !%                       Report.useSWMMinpYN
