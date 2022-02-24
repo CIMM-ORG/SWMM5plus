@@ -94,7 +94,7 @@
         }
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot",
+        "PreissmannSlotMethod" : "StaticSlot",
         "CelerityFactor" : 1.1,
         "DesiredTimeStep" : 0.1
     },
