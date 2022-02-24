@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    11/15/2021
 REPORT_START_TIME    00:00:00
 END_DATE             11/15/2021
-END_TIME             00:01:10
+END_TIME             00:03:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -48,24 +48,24 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-2                0          0.094      0.076      0.094      0         
-1                0          0.31       0.076      0.31       0         
+2                0          0.094      0.073      0.094      0         
+1                0          0.31       0.073      0.31       0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-4                0.5        FIXED      0.076            NO                       
+4                0.5        FIXED      0.073            NO                       
 
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
 ;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
-3                0        0.5        0.076      FUNCTIONAL 0.02835287  0         0        0        0       
+3                0        0.5        0.073      FUNCTIONAL 0.02835287  0         0        0        0       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-3                3                4                1.43       0.012      0.5        0          0          0         
-1                1                2                14.33      0.012      0          0          0          0         
+3                3                4                1.44      0.012      0.5        0          0          0         
+1                1                2                14.4      0.012      0          0          0          0         
 
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
@@ -98,10 +98,8 @@ Test                        3          3
 vasconcelos_timeseries 11/15/2021 0          0         
 vasconcelos_timeseries            0.016664   0         
 vasconcelos_timeseries            0.0166667  0.0031    
-vasconcelos_timeseries            0.0833333  0.0031    
-vasconcelos_timeseries            0.1666667  0.0031    
-vasconcelos_timeseries            0.3333333  0.0031    
-vasconcelos_timeseries            0.3344444  0         
+vasconcelos_timeseries            0.0333333  0.0031       
+vasconcelos_timeseries            0.0333344  0         
 vasconcelos_timeseries            0.4        0         
 
 [REPORT]

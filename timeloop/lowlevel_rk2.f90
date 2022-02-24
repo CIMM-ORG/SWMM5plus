@@ -1261,6 +1261,7 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: volumeN0(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
         real(8), pointer    :: CelerityFactor, tDelta, cfl, grav
 
@@ -1268,6 +1269,7 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         volume     => elemR(:,er_Volume)
+        volumeN0   => elemR(:,er_Volume_N0)
         fullvolume => elemR(:,er_FullVolume)
         fullarea   => elemR(:,er_FullArea)
         ell        => elemR(:,er_ell)
@@ -1288,12 +1290,17 @@ module lowlevel_rk2
         select case (SlotMethod)
 
         case (VariableSlot)
-            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+            ! SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+            ! SlotWidth(thisP)  = fullarea(thisP) / ( (CelerityFactor ** twoR) * ell(thisP))
+            ! SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            ! SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+            ! SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+            !     ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
+
+            SlotVolume(thisP) = max(volume(thisP),fullvolume(thisP)) - max(fullvolume(thisP),volumeN0(thisP))
             SlotWidth(thisP)  = fullarea(thisP) / ( (CelerityFactor ** twoR) * ell(thisP))
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-            SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
-                ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
 
         case (StaticSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)

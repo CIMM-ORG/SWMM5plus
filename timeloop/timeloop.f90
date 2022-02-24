@@ -750,6 +750,8 @@ contains
         elemR(:,er_Velocity_N0)  = elemR(:,er_Velocity)
         elemR(:,er_Volume_N1)    = elemR(:,er_Volume_N0)
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+        elemR(:,er_Area_N1)      = elemR(:,er_Area_N0)
+        elemR(:,er_Area_N0)      = elemR(:,er_Area)
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

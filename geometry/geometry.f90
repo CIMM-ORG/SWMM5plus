@@ -897,9 +897,10 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
-        integer, pointer    :: thisP(:), Npack
+        integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), depth(:), area(:), head(:), SlotHydRadius(:)
+        real(8), pointer    :: volume(:), depth(:), area(:), areaN0(:), head(:), headN0(:), SlotHydRadius(:)
+        real(8), pointer    :: volumeN0(:), fullVolume(:), fullArea(:), Overflow(:)
         real(8), pointer    :: hydRadius(:), ell(:), zbottom(:), fullDepth(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
@@ -909,11 +910,17 @@ module geometry
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack      => npack_elemP(thisColP)
+        area       => elemR(:,er_Area)
+        areaN0     => elemR(:,er_Area_N0)
         volume     => elemR(:,er_Volume)
+        volumeN0   => elemR(:,er_Volume_N0)
+        Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
         fullDepth  => elemR(:,er_FullDepth)
-        area       => elemR(:,er_Area)
+        fullvolume => elemR(:,er_FullVolume)
+        fullArea   => elemR(:,er_FullArea)
         head       => elemR(:,er_Head)
+        headN0     => elemR(:,er_Head_N0)
         ell        => elemR(:,er_ell)
         hydRadius  => elemR(:,er_HydRadius)
         zbottom    => elemR(:,er_Zbottom)
@@ -922,16 +929,50 @@ module geometry
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
+
+        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-            where (SlotVolume(thisP) .gt. zeroR) 
-                volume(thisP) = volume(thisP) + SlotVolume(thisP)
-                area(thisP)   = area(thisP)   + SlotArea(thisP)
-                depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-            end where 
+
+            select case (SlotMethod)
+
+            case (VariableSlot)
+
+                where (abs(SlotVolume(thisP)) .gt. zeroR) 
+
+                    volume(thisP) = max(fullvolume(thisP),volumeN0(thisP)) + SlotVolume(thisP)
+                    area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
+                    depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
+                    head(thisP)   = zbottom(thisP) + depth(thisP)
+                    Overflow(thisP) = zeroR
+
+                    ! volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                    ! area(thisP)   = area(thisP)    + SlotArea(thisP)
+                    ! depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                    ! head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                end where 
+
+            case (StaticSlot)
+
+                where (SlotVolume(thisP) .gt. zeroR) 
+                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                    area(thisP)   = area(thisP)    + SlotArea(thisP)
+                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                    head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                    Overflow(thisP) = zeroR
+                end where 
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                stop 48756
+    
+            end select
+
         end if
 
         if (setting%Debug%File%geometry) &

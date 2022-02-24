@@ -268,7 +268,7 @@ module update
                 thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
                 !% initialize preissmann slot celerity
                 PCelerity(thisP2) = zeroR
-                where (SlotVolume(thisP2) .gt. zeroR) 
+                where (abs(SlotVolume(thisP2)) .gt. zeroR) 
                     PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
                 end where
             end if
@@ -292,8 +292,8 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (PCelerity(thisP) .gt. zeroR)
-            w_uQ(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) !bugfix SAZ 23022022 
-            w_dQ(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
 
         !% apply limiters to timescales
