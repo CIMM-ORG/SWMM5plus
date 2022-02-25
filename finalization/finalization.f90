@@ -10,6 +10,7 @@ module finalization
     use utility_profiler
     !use utility_prof_jobcount
     use output
+    use utility_crash
 
     implicit none
 
@@ -77,8 +78,8 @@ contains
                 !if (this_image() == 1) write(*,*) 'starting convert elements'
                 call outputML_convert_elements_to_linknode_and_write ()
             end if
-
         end if  
+        call util_crashstop(31903)
 
         !% --- shut down EPA SWMM-C and delete the API
         ! if (this_image() == 1) print *, 'calling interface finalize'

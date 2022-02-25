@@ -9,6 +9,7 @@ module partitioning
     use utility_allocate
     use BIPquick
     use utility_deallocate
+    use utility_crash
 
     implicit none
 
@@ -24,14 +25,14 @@ module partitioning
 
     private
 
-    public :: init_partitioning_method
+    public :: partitioning_toplevel
 
 contains
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine init_partitioning_method()
+subroutine partitioning_toplevel()
     ! --------------------------------------------------------
     ! Description:
     !   The purpose of this subroutine is to check which partitioning
@@ -41,9 +42,9 @@ subroutine init_partitioning_method()
         logical :: partition_correct
         integer :: connectivity, ii, nn
         real(8) :: part_size_balance
-        character(64) :: subroutine_name = 'init_partitioning_method'
+        character(64) :: subroutine_name = 'partitioning_toplevel'
     !% --------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
     !% --------------------------------------------------------
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -73,14 +74,18 @@ subroutine init_partitioning_method()
                 call init_partitioning_linkbalance()
             else if (setting%Partitioning%PartitioningMethod == BQuick) then
                 if (setting%Output%Verbose) write(*,"(A)") "... using BIPquick Partitioning..."
-                call init_partitioning_BIPquick()
+                call BIPquick_toplevel()
                 ! call init_partitioning_bquick_diagnostic ()
             else
                 print *, "Error, partitioning method not supported"
-                stop 87095
+                call util_crashpoint(87095)
+                return
+                !stop 
             end if
         end if
-        sync all
+
+        call util_crashstop(44873)
+
         !% broadcast partitioning results to all images
         call co_broadcast(node%I, source_image=1)
         call co_broadcast(node%R, source_image=1)
@@ -129,7 +134,7 @@ subroutine init_partitioning_method()
 
     call util_deallocate_partitioning_arrays()
 
-end subroutine init_partitioning_method
+end subroutine partitioning_toplevel
 !
 !==========================================================================
 !==========================================================================
@@ -147,7 +152,7 @@ subroutine init_partitioning_bquick_diagnostic ()
     integer, dimension(:), allocatable, target :: nodeIndexes
     character(64) :: subroutine_name = 'init_partitioning_bquick_diagnostic'
 !% --------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
 !% --------------------------------------------------------
     !% pointers
     nominalElemLength => setting%Discretization%NominalElemLength
@@ -181,7 +186,9 @@ subroutine init_partitioning_bquick_diagnostic ()
             else
                 print*, 'In subroutine', subroutine_name
                 print*, 'Error: phantom node', pNode, 'doesnot have any up or dn phantom link'
-                stop 147856
+                !stop 
+                call util_crashpoint(147856)
+                return
             end if
 
             !% print diagnistic of the spanning and phantom links
@@ -275,7 +282,7 @@ subroutine init_partitioning_default()
     real(8) :: partition_threshold
     logical :: partition_correct
 
-    if (icrash) return
+    if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -354,7 +361,9 @@ subroutine init_partitioning_default()
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            stop 1098226
+            !stop 
+            call util_crashpoint(1098226)
+            return
         end select
 
 
@@ -405,7 +414,7 @@ subroutine init_partitioning_random()
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold, rand_num
     !% ----------------------------------------------------------------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -493,7 +502,9 @@ subroutine init_partitioning_random()
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            stop 1098226
+            !stop 
+            call util_crashpoint(1098226)
+            return
         end select
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
@@ -543,7 +554,7 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
     if (setting%Debug%File%partitioning) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -610,7 +621,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
     integer :: part_size_balance
     integer :: ii, current_image, max_elem, min_elem
     ! -----------------------------------------------------------------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
     !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
@@ -660,7 +671,9 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            stop 73875
+            !stop 
+            call util_crashpoint(73875)
+            return
         end select
     end do
 
