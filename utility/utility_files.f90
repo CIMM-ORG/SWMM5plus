@@ -1,7 +1,8 @@
 module utility_files
 
     use define_settings
-    USE ifport
+    use ifport
+    use utility_crash
 
     implicit none
 
@@ -15,6 +16,8 @@ module utility_files
     public :: util_file_assign_unitnumber
     public :: util_file_get_commandline
     public :: util_file_setup_input_paths_and_files
+    public :: util_file_duplicate_input
+    public :: util_file_delete_duplicate_input
     public :: util_file_setup_output_folders
 
 contains
@@ -383,12 +386,44 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
+!%   
+    subroutine util_file_duplicate_input ()
+
+        if (setting%File%duplicate_input_file) then
+            !% --- create separate input file copies for each image (handled by image=1)
+            if (this_image()==1) call util_file_input_copies (.true.,this_image())
+            sync all
+            !% --- reset the name of the input file for each image
+            call util_file_input_copies (.false.,this_image())
+        end if
+        call util_crashstop(139872)
+        
+    end subroutine util_file_duplicate_input
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_file_delete_duplicate_input ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Deletes the duplicate input files in the tmp directory
+        !% each image will delete its own temporary input file
+        !%------------------------------------------------------------------
+
+        if (setting%File%duplicate_input_file) then 
+            call execute_command_line (('rm '//setting%File%inp_file))
+        end if
+
+    end subroutine util_file_delete_duplicate_input
+!%
+!%==========================================================================
+!%==========================================================================
 !%
     subroutine util_file_setup_output_folders ()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% initializes the output file path and filenames
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer :: istat, ireturn, ierr, kk, lc
         logical :: isfolder = .false.
         character(len=256) :: cmsg, default_path, output_path, this_purpose, temppath
@@ -717,6 +752,142 @@ contains
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================
+!%   
+    subroutine util_file_input_copies (createYN, imageIn)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Handles separate EPA SWMM *.in files for each image
+        !% if createYN is true, then creates a \tmp folder and creates
+        !% copies of *.inp file in each folder
+        !% if createYN is false then it stores the name of the imageIn
+        !% input file in setting%File%inp_file
+        !%------------------------------------------------------------------
+        !% Declarations
+            logical, intent(in) :: createYN 
+            integer, intent(in) :: imageIn
+            character(len=256) :: thisfolder, kernel, extension 
+            character(len=256) :: newfolder, newfilename
+            character(len=1)   :: divider
+            integer :: ii
+            logical :: doesexist
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (num_images() == 1) return  ! skip for a single image
+        !%------------------------------------------------------------------
+        !% --- find the upper level directory where the input file sits
+        divider = '/'   
+        call util_file_separate_kernel_and_extension    &
+             (setting%File%inp_file, thisfolder, divider, extension)
+
+        !% --- name for a temporary folder for storing input file copies
+        newfolder = trim(thisfolder) // divider // 'tmp'
+
+        !print *, ' ' 
+        !print *, this_image(), imageIn
+        !print *, 'AAA ',trim(newfolder)
+        !print *, 'BBB ',createYN
+    
+        !% --- check to see if folder exists, create it if not
+        inquire(DIRECTORY=newfolder,EXIST=doesexist)
+        if (.not. doesexist) then
+            if (createYN) then
+                call execute_command_line( ('mkdir '//trim(newfolder)) )
+            else
+                print *, 'CODE ERROR: need to create the tmp file before getting filenames'
+                call util_crashpoint(449872)
+                return
+            end if
+        end if
+
+        !% --- glue the filename back to the folder
+        newfilename = trim(newfolder)//divider//trim(extension)
+
+        !print *, 'CCC ',trim(newfilename)
+
+        !% --- split the filename extension off 
+        divider = '.'   
+        call util_file_separate_kernel_and_extension    &
+             (newfilename, kernel, divider, extension)
+
+        !% --- cycle through images
+        do ii=1,num_images()
+            call util_file_new_inp_filename_for_image &
+                (newfilename, kernel, divider, extension, ii)
+            !print *, '   DDD ', ii, trim(newfilename)
+            if (createYN) then
+                !% --- make a copy of the input file for this image
+                call execute_command_line (('cp '//trim(setting%File%inp_file)//' '//trim(newfilename)))
+            else
+                if (ii==imageIn) then
+                    !% --- store the newfilename as the input file
+                    setting%File%inp_file  = trim(newfilename)
+                end if
+            end if
+        end do
+
+    end subroutine util_file_input_copies
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_file_separate_kernel_and_extension &
+        (filename, kernel, divider, extension)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Takes the filename and finds the location of right-most "."
+        !% and returns the kernel as the text to the left and the extension
+        !% as the text to the right
+        !%------------------------------------------------------------------
+        !% Declarations
+            character(len=*), intent(in) :: filename
+            character(len=*), intent(inout) :: kernel, extension
+            character(len=1), intent(in) :: divider
+            integer :: jj
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        jj=scan(filename,divider, .true.)
+        extension   = trim(filename(jj+1:))
+        kernel      = filename(1:jj-1)
+
+        ! print *, '=============='
+        ! print *, trim(kernel)
+        ! print *, trim(extension)
+
+    end subroutine util_file_separate_kernel_and_extension
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_file_new_inp_filename_for_image &
+        (newfilename, kernel, divider, extension, timage)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% creates a filename that inserts the image # after the kernel
+        !% and before the extension
+        !%------------------------------------------------------------------
+        !% Declarations
+            character(len=*), intent(inout) :: newfilename
+            character(len=*), intent(in)    :: kernel, extension
+            character(len=*), intent(in)    :: divider
+            integer, intent(in) :: timage
+        !%------------------------------------------------------------------
+        if (num_images() > 99999) then
+            !% --- the maximum number of images must be consistent with the formatting
+            !%      in setting the newfilename
+            print *, 'USER/CODE ERROR: The number of images (',num_images(),') exceeds the'
+            print *, 'format size used for setting up input files. '
+            print *, 'The quick fix is to limit the number of images to ',99999
+            call util_crashpoint(31937)
+            return
+        else
+            write(newfilename,"(A,A,i5.5,A,A)") trim(kernel),'_',timage,trim(divider),trim(extension)
+        end if
+
+    end subroutine util_file_new_inp_filename_for_image
+!%
+!%==========================================================================
+!%==========================================================================
 !%
     subroutine util_file_parse_folder_or_file_path &
         (input_path, project_path, default_path, full_path)
@@ -767,8 +938,6 @@ contains
         !   print *, 'full path', full_path
 
     end subroutine util_file_parse_folder_or_file_path
-!%
-!%==========================================================================
 !%
 !%==========================================================================
 !%==========================================================================

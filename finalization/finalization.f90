@@ -11,6 +11,7 @@ module finalization
     !use utility_prof_jobcount
     use output
     use utility_crash
+    use utility_files, only: util_file_delete_duplicate_input
 
     implicit none
 
@@ -86,6 +87,9 @@ contains
         call interface_finalize()
 
         sync all
+
+        !% --- delete the duplicate input files
+        call util_file_delete_duplicate_input ()
 
         !% --- stop the CPU time clock
         call cpu_time(setting%Time%CPU%EpochFinishSeconds)
