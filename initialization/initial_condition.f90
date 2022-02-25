@@ -28,6 +28,7 @@ module initial_condition
     use utility_profiler
     use utility_allocate
     use utility_deallocate
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -69,7 +70,8 @@ contains
             case default
                 print *, 'CODE ERROR: solver type unknown for # ', whichSolver
                 print *, 'which has key ',trim(reverseKey(whichSolver))
-                stop 478383
+                call util_crashpoint(478383)
+                return
             end select      
         !%-------------------------------------------------------------------
         !% --- get data that can be extracted from links
@@ -132,10 +134,12 @@ contains
         !% --- initialize boundary conditions
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
+        if (crashI==1) return
 
         !% --- update the BC so that face interpolation works in update_aux...
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
+        if (crashI==1) return
 
         !% --- storing dummy values for branches that are invalid
         call init_IC_branch_dummy_values ()
@@ -169,6 +173,7 @@ contains
         !% --- update the initial condition in all diagnostic elements
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel ()
+        if (crashI==1) return
 
         !% --- ensure that small and zero depth faces are correct
         call adjust_zero_and_small_depth_face (ETM, .false.)
@@ -242,7 +247,7 @@ contains
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -309,7 +314,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -397,8 +402,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
                 print *, 'which has key ',trim(reverseKey(LdepthType)) 
-                stop 83753
-
+                !stop 
+                call util_crashpoint(83753)
+                return
         end select
 
         if (setting%Debug%File%initial_condition) &
@@ -419,7 +425,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -448,7 +454,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -496,7 +502,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: pumps are not handeled yet for # ', linkType
                 print *, 'which has key',trim(reverseKey(linkType)) 
-                stop 77364
+                !stop 
+                call util_crashpoint(77364)
+                return
 
             case (lOutlet)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -510,8 +518,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
                 print *, 'which has key ',trim(reverseKey(linkType))
-                stop 65343
-
+                !stop 
+                call util_crashpoint(65343)
+                return
         end select
 
 
@@ -531,7 +540,7 @@ contains
             integer, pointer    :: linkType
             character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -561,7 +570,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: pumps are not handeled yet for #',linkType
                 print *, 'which has key ',trim(reverseKey(linkType)) 
-                stop 337844
+                !stop 
+                call util_crashpoint(337844)
+                return
 
             case (lOutlet)
                 !% get geomety data for outlets
@@ -572,7 +583,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
                 print *, 'which has key ',trim(reverseKey(linkType))
-                stop 99834
+                !stop 
+                call util_crashpoint(99834)
+                return
 
         end select
 
@@ -598,7 +611,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -683,7 +696,9 @@ contains
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
                 print *, 'which has key ',trim(reverseKey(geometryType))
-                stop 98734
+                !stop 
+                call util_crashpoint(98734)
+                return
 
         end select
 
@@ -707,7 +722,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -780,7 +795,9 @@ contains
             print *, 'In, ', trim(subroutine_name)
             print *, 'CODE ERROR geometry type unknown for # ', geometryType
             print *, 'which has key ',trim(reverseKey(geometryType))
-            stop 887344
+            !stop 
+            call util_crashpoint(887344)
+            return
         end select
 
         if (setting%Debug%File%initial_condition) &
@@ -802,7 +819,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -848,7 +865,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'roadway weir is not handeled yet for #',specificWeirType
                 print *, 'which has key ',trim(reverseKey(specificWeirType))
-                stop 557834
+                !stop 
+                call util_crashpoint(557834)
+                return
 
             case (lVnotchWeir)
 
@@ -884,7 +903,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(specificWeirType))
-                stop 99834
+                !stop 
+                call util_crashpoint(99834)
+                return
 
         end select
 
@@ -908,7 +929,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -931,7 +952,9 @@ contains
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice type, ', specificOrificeType,'  in network'
             print *, 'which has key ',trim(reverseKey(specificOrificeType))
-            stop 8863411
+            !stop 
+            call util_crashpoint(8863411)
+            return
         end select
 
         !% pointer to specific orifice geometry
@@ -967,7 +990,9 @@ contains
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
             print *, 'which has key ',trim(reverseKey(OrificeGeometryType))
-            stop 8345553
+            !stop 
+            call util_crashpoint(8345553)
+            return
         end select
 
 
@@ -990,7 +1015,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_outlet_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1025,7 +1050,9 @@ contains
                 else
                     print*, 'In ', subroutine_name
                     print*, 'error: unknown orifice type, ', specificOutletType,'  in network'
-                    stop 82564
+                    !stop 
+                    call util_crashpoint(82564)
+                    return
                 end if
             end if 
         end do
@@ -1050,7 +1077,7 @@ contains
     !         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
     !     !%------------------------------------------------------------------
     !     !% Preliminaries:
-    !         if (icrash) return
+    !         if (crashYN) return
     !         if (setting%Debug%File%initial_condition) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%------------------------------------------------------------------
@@ -1093,7 +1120,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_from_nodedata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1138,7 +1165,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1319,7 +1346,9 @@ contains
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR: geometry type unknown for # ', JbgeometryType
                 print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                stop 308974
+                !stop 
+                call util_crashpoint(308974)
+                return
 
             end select
 
@@ -1393,7 +1422,9 @@ contains
                     print *, 'In, ', subroutine_name
                     print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
                     print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                    stop 308974
+                    !stop 
+                    call util_crashpoint(308974)
+                    return
                 end select
             end do
 
@@ -1434,7 +1465,9 @@ contains
             print *, 'In, ', subroutine_name
             print *, 'CODE ERROR junction main type unknown for # ', JmType
             print *, 'which has key ',trim(reverseKey(JmType))
-            stop 54895
+            !stop 
+            call util_crashpoint(54895)
+            return
 
         end select
 
@@ -1500,7 +1533,7 @@ contains
             character(64)       :: subroutine_name = 'init_IC_solver_select'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -1513,16 +1546,22 @@ contains
         case (AC)
             print*, 'In, ', subroutine_name
             print*, 'AC solver is not handeled at this moment'
-            stop 83974
+            !stop 
+            call util_crashpoint(83974)
+            return
         case (ETM_AC)
             print*, 'In, ', subroutine_name
             print*, 'ETM-AC solver is not handeled at this moment'
-            stop 2975
+            !stop 
+            call util_crashpoint(2975)
+            return
         case default
             print *, 'In, ', subroutine_name
             print *, 'CODE ERROR: unknown solver, ', whichSolver
             print *, 'which has key ',trim(reverseKey(whichSolver))
-            stop 81878
+            !stop 
+            call util_crashpoint(81878)
+            return
         end select
 
         !%------------------------------------------------------------------
@@ -1546,7 +1585,7 @@ contains
             character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1579,7 +1618,7 @@ contains
             integer, pointer ::  Npack, thisP(:), tM
             integer :: ii, kk, tB
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1690,7 +1729,7 @@ contains
             integer             :: npack, ii, indx
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -1724,7 +1763,9 @@ contains
                 print *, 'Small Volume depth cutoff ',depthCutoff
                 print *, 'is larger or equal to radius of the smallest pipe '
                 print *, 'Small Volume depth cutoff must be smaller than the radius.'
-                stop 398705
+                !stop 
+                call util_crashpoint(398705)
+                return
             end if
         !%------------------------------------------------------------------
 
@@ -1793,7 +1834,8 @@ contains
             ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
             ! print *, 'after ', elemR(tPack(1:npack),er_Depth)
 
-        !stop 397803
+        !stop 
+        !call util_crashpoint(397803)
 
         !% restore the initial condition depth to the depth vector
         depth = tempDepth
@@ -1837,7 +1879,7 @@ contains
         !%-----------------------------------------------------------------
             character(64)       :: subroutine_name = 'init_IC_slot'
         !------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
@@ -2028,7 +2070,7 @@ contains
         integer :: SWMMtseriesIdx, SWMMbasepatType
         character(64) :: subroutine_name = "init_bc"
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
@@ -2041,7 +2083,8 @@ contains
         !     write(*,"(10i8)"), BC%flowI(ii,bi_idx), BC%flowI(ii,bi_node_idx), BC%flowI(ii,bi_face_idx), &
         !     BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_category), BC%flowI(ii,bi_subcategory), BC%flowI(ii,bi_fetch)
         ! end do 
-        ! stop 39766
+        ! stop 
+        !call util_crashpoint(39766)
 
         !% Convention to denote that xR_timeseries arrays haven't been fetched
         if (N_flowBC > 0) then
@@ -2078,7 +2121,9 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop 739845
+                        !stop 
+                        call util_crashpoint(739845)
+                        return
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -2109,7 +2154,9 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop 826549
+                    !stop 
+                    call util_crashpoint(826549)
+                    return
                 end if
             end do
         end if
@@ -2125,7 +2172,9 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop 57635
+                    !stop 
+                    call util_crashpoint(57635)
+                    return
                 end if
 
                 BC%headI(ii, bi_idx) = ii
@@ -2151,6 +2200,8 @@ contains
         end if
         
         call bc_step()
+        if (crashI==1) return
+
         call pack_bc()
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_bc)
@@ -2224,27 +2275,37 @@ contains
             !print *, topwidth, area, depth, volume, minval(elemR(thisP,er_Length))
         else
             print *, 'unexpected error -- no time-marching elements found '
-            stop 398733
+            !stop 
+            call util_crashpoint(398733)
+            return
         end if
 
         if (depth < 1e-16) then
             print *, 'error, setting%ZeroValue%Depth is too small'
-            stop 3987095
+            !stop 
+            call util_crashpoint(3987095)
+            return
         end if
 
         if (topwidth < 1e-16) then
             print *, 'error, setting%ZeroValue%TopWidth is too small'
-            stop 3987095
+            !stop 
+            call util_crashpoint(3987095)
+            return
         end if
 
         if (area < 1e-16) then
             print *, 'error, setting%ZeroValue%Area is too small'
-            stop 93764
+            !stop 
+            call util_crashpoint(93764)
+            return
         end if
 
         if (volume < 1e-16) then
             print *, 'error, setting%ZeroValue%Volume is too small'
-            stop 77395
+            !stop 
+            call util_crashpoint(77395)
+            return
         end if
 
         !%------------------------------------------------------------------

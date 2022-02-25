@@ -60,7 +60,7 @@ module circular_conduit
         AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
 
         !% when AoverAfull <= 4%, SWMM5 uses a special function to get the
@@ -112,7 +112,7 @@ module circular_conduit
     !     AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
     !     YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
     !     !%-----------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     AoverAfull(indx) = volume(indx) / (length(indx) * fullArea(indx))
 
     !     !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the
@@ -144,7 +144,7 @@ module circular_conduit
         real(8), pointer    :: depth(:), AoverAfull(:), YoverYfull(:)
         real(8), pointer    :: fullArea(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         depth      => elemR(:,er_Depth)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
@@ -176,7 +176,7 @@ module circular_conduit
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), topwidth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
@@ -208,7 +208,7 @@ module circular_conduit
         integer, intent(in) :: indx
         real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
@@ -240,7 +240,7 @@ module circular_conduit
         real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
         real(8), pointer :: fulldepth(:), perimeter(:), area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         area       => elemR(:,er_Area)
@@ -281,7 +281,7 @@ module circular_conduit
         integer, intent(in) :: indx
         real(8), pointer :: hydRadius(:), area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         hydRadius     => elemR(:,er_HydRadius)
         area          => elemR(:,er_Area)
         fullperimeter => elemR(:,er_FullPerimeter)
@@ -306,7 +306,7 @@ module circular_conduit
         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
         real(8), pointer    :: depth(:), hyddepth(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         thisP        => elemPGx(1:Npack,thisCol)
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
@@ -344,7 +344,7 @@ module circular_conduit
         integer, intent(in) :: indx
         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), depth(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         depth        => elemR(:,er_Depth)
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
@@ -378,7 +378,7 @@ module circular_conduit
         integer, intent(in) :: indx
         real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
@@ -417,7 +417,7 @@ module circular_conduit
         integer, pointer :: eIdx
         real(8)          :: alpha, theta, theta1, dTheta
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
 
         do ii = 1,Npack
             eIdx   => thisP(ii)

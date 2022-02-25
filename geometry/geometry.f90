@@ -10,6 +10,7 @@ module geometry
     use storage_geometry
     use adjust
     use utility_profiler
+    use utility_crash
 
 
     implicit none
@@ -47,7 +48,7 @@ module geometry
             character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -88,8 +89,11 @@ module geometry
                 case default
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
-                    stop 7389
+                    call util_crashpoint(7389)
+                    return
+                    !stop 7389
             end select
+            call util_crashstop(49872)
         !%-----------------------------------------------------------------------------
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
@@ -169,6 +173,8 @@ module geometry
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
 
+        call util_crashstop(322983)
+
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geometry_toplevel
@@ -222,7 +228,7 @@ module geometry
             character(64) :: subroutine_name = 'geo_assign_JB'
         !%---------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
@@ -361,7 +367,9 @@ module geometry
                                     print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
                                     print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
                                     print *, 'in ',trim(subroutine_name)
-                                    stop 399848
+                                    call util_crashpoint(399848)
+                                    return
+                                    !stop 399848
                                 end select
                             end if
                             volume(tB) = area(tB) * length(tB)
@@ -398,7 +406,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_surcharged'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Npack => npack_elemP(thisColP)
         !%-------------------------------------------------
         if (setting%Debug%File%geometry) &
@@ -434,7 +442,7 @@ module geometry
             character(64) :: subroutine_name = 'geo_depth_from_volume'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
@@ -505,7 +513,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_limit_incipient_surcharge'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Npack      => npack_elemP(thisColP)
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)
@@ -551,7 +559,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_head_from_depth'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Npack     => npack_elemP(thisColP)
         depth     => elemR(:,er_Depth)
         fulldepth => elemR(:,er_FullDepth)
@@ -587,7 +595,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_area_from_volume'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Npack  => npack_elemP(thisColP)
         area   => elemR(:,er_Area)
         volume => elemR(:,er_Volume)
@@ -621,7 +629,7 @@ module geometry
         character(64) :: subroutine_name = 'geo_topwidth_from_depth'
         !%-----------------------------------------------------------------------------
         !% cycle through different geometries
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -663,7 +671,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_perimeter_from_depth'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -708,7 +716,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -753,7 +761,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hydradius_from_area_perimeter'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -788,7 +796,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -832,7 +840,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell_singular'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -870,7 +878,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_dHdA'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -904,7 +912,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
