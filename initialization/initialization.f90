@@ -107,13 +107,18 @@ contains
             call util_file_setup_input_paths_and_files()
         end if
 
+        !% --- create duplicate input files
+        call util_file_duplicate_input ()
+        call util_crashstop(2293883)
+        sync all
+
         !% --- initialize the time stamp used for output (must be after json is read)
         call init_timestamp ()
+        sync all
 
         !% --- setup the output file directories. 
         !%        This will create a new directory with a timestamp for output
         call util_file_setup_output_folders()
-
         sync all
 
         !% -- program header
