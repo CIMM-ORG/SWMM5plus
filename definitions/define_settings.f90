@@ -495,8 +495,8 @@ module define_settings
     !% setting%PreissmannSlot
     type PreissmannSlotType
         integer :: PreissmannSlotMethod = VariableSlot
-        real(8) :: CelerityFactor = 1.0
-        real(8) :: DesiredTimeStep = 0.01
+        real(8) :: PreissmannNumber = 1.0
+        real(8) :: PreissmannCelerity = 0.01
     end type PreissmannSlotType
 
     !% setting%Profile
@@ -1425,15 +1425,15 @@ contains
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
         
-        !%                      CelerityFactor          
-        call json%get('PreissmannSlot.CelerityFactor', real_value, found)
-        if (found) setting%PreissmannSlot%CelerityFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.CelerityFactor not found'
+        !%                      PreissmannNumber          
+        call json%get('PreissmannSlot.PreissmannNumber', real_value, found)
+        if (found) setting%PreissmannSlot%PreissmannNumber = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannNumber not found'
 
-        !%                      DesiredTimeStep
-        call json%get('PreissmannSlot.DesiredTimeStep', real_value, found)
-        if (found) setting%PreissmannSlot%DesiredTimeStep = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.DesiredTimeStep not found'
+        !%                      PreissmannCelerity
+        call json%get('PreissmannSlot.PreissmannCelerity', real_value, found)
+        if (found) setting%PreissmannSlot%PreissmannCelerity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannCelerity not found'
 
     !% Profile. =====================================================================
         !%                       Profile.useYN

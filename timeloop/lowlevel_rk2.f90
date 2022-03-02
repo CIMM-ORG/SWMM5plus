@@ -1263,7 +1263,7 @@ module lowlevel_rk2
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
         real(8), pointer    :: volumeN0(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
-        real(8), pointer    :: CelerityFactor, tDelta, cfl, grav
+        real(8), pointer    :: PreissmannNumber, PreissmannCelerity, cfl, grav
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
@@ -1281,24 +1281,24 @@ module lowlevel_rk2
         SlotHydRadius => elemR(:,er_SlotHydRadius)
         BreadthMax    => elemR(:,er_BreadthMax)
 
-        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
-        CelerityFactor => setting%PreissmannSlot%CelerityFactor
-        tDelta         => setting%PreissmannSlot%DesiredTimeStep
-        cfl            => setting%VariableDT%CFL_target
-        grav           => setting%Constant%gravity
+        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
+        PreissmannNumber    => setting%PreissmannSlot%PreissmannNumber
+        PreissmannCelerity  => setting%PreissmannSlot%PreissmannCelerity
+        cfl                 => setting%VariableDT%CFL_target
+        grav                => setting%Constant%gravity
 
         select case (SlotMethod)
 
         case (VariableSlot)
             ! SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            ! SlotWidth(thisP)  = fullarea(thisP) / ( (CelerityFactor ** twoR) * ell(thisP))
+            ! SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
             ! SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             ! SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
             ! SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
             !     ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
 
             SlotVolume(thisP) = max(volume(thisP),fullvolume(thisP)) - max(fullvolume(thisP),volumeN0(thisP))
-            SlotWidth(thisP)  = fullarea(thisP) / ( (CelerityFactor ** twoR) * ell(thisP))
+            SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
 
@@ -1306,8 +1306,8 @@ module lowlevel_rk2
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             !% SWMM5 uses 1% of width max as slot width
             ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-            !% HACK: emulating TPA acoustic wavespeed of 25 m/s
-            SlotWidth(thisP) = (grav * fullarea(thisP)) / (2.53**2.0)
+            !% HACK: modeling for acoustic wavespeed
+            SlotWidth(thisP) = (grav * fullarea(thisP)) / (PreissmannCelerity**2.0)
             ! SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
                 ! (cfl*length(thisP))**twoR
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)

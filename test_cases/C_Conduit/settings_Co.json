@@ -102,8 +102,8 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot", 
-        "CelerityFactor" : 100.0,
-        "DesiredTimeStep" : 0.15
+        "PreissmannNumber" : 100.0,
+        "PreissmannCelerity" : 0.15
     },
     "VariableDT" : {
         "ApplyYN" : true,

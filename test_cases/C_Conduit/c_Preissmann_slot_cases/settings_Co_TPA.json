@@ -2,14 +2,14 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "test",
-        "Short" : "test"
+        "Long"  : "VasconcelosTPA_noUpStorage",
+        "Short" : "TPA_noUpStorage"
     },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.36
+        "NominalElemLength" : 0.036
     },
     "Limiter" : {
         "BC" : {
@@ -95,8 +95,8 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "StaticSlot",
-        "CelerityFactor" : 1.1,
-        "DesiredTimeStep" : 0.1
+        "PreissmannNumber" : 1.0,
+        "PreissmannCelerity" : 2.53
     },
     "VariableDT" : {
         "ApplyYN" : true,
