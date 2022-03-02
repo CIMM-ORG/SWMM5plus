@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 1.00
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "BC" : {
@@ -58,7 +58,8 @@
             "isTopWidthOut"     : false,
             "isVelocityOut"     : true,
             "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : true
+            "isWaveSpeedOut"    : true,
+            "isPreissmannCelerityOut"   : true
         },
         "Report" : {
             "useSWMMinpYN" :true,
@@ -102,8 +103,8 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot", 
-        "PreissmannNumber" : 100.0,
-        "PreissmannCelerity" : 0.15
+        "PreissmannNumber" : 4.0,
+        "PreissmannCelerity" : 16.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
