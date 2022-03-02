@@ -884,7 +884,7 @@ contains
         end if
         
         outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                        maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * thisDT / length(thisP)))
+                        maxval(( abs(PCelerity(thisP))) * thisDT / length(thisP)))
 
         ! print * , ' '
         ! print *, velocity(thisP)

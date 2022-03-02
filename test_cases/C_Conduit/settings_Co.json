@@ -103,8 +103,8 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot", 
-        "PreissmannNumber" : 4.0,
-        "PreissmannCelerity" : 16.0
+        "PreissmannNumber" : 8.0,
+        "PreissmannCelerity" : 80.0
     },
     "VariableDT" : {
         "ApplyYN" : true,

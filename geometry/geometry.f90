@@ -900,8 +900,8 @@ module geometry
         integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), depth(:), area(:), areaN0(:), head(:), headN0(:), SlotHydRadius(:)
-        real(8), pointer    :: volumeN0(:), fullVolume(:), fullArea(:), Overflow(:)
-        real(8), pointer    :: hydRadius(:), ell(:), zbottom(:), fullDepth(:)
+        real(8), pointer    :: fullVolume(:), fullArea(:), Overflow(:), fullDepth(:)
+        real(8), pointer    :: volumeN0(:), zbottom(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -921,11 +921,9 @@ module geometry
         fullArea   => elemR(:,er_FullArea)
         head       => elemR(:,er_Head)
         headN0     => elemR(:,er_Head_N0)
-        ell        => elemR(:,er_ell)
-        hydRadius  => elemR(:,er_HydRadius)
         zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
@@ -940,18 +938,12 @@ module geometry
 
             case (VariableSlot)
 
-                where (abs(SlotVolume(thisP)) .gt. zeroR) 
-
-                    volume(thisP) = max(fullvolume(thisP),volumeN0(thisP)) + SlotVolume(thisP)
+                where (SlotVolume(thisP) .gt. zeroR) 
+                    volume(thisP) = fullvolume(thisP) + SlotVolume(thisP)
                     area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
                     depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
                     head(thisP)   = zbottom(thisP) + depth(thisP)
                     Overflow(thisP) = zeroR
-
-                    ! volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                    ! area(thisP)   = area(thisP)    + SlotArea(thisP)
-                    ! depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                    ! head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
                 end where 
 
             case (StaticSlot)
