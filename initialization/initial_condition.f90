@@ -1844,7 +1844,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
+        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR

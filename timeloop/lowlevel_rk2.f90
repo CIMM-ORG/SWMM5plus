@@ -1261,7 +1261,7 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
-        real(8), pointer    :: volumeN0(:)
+        real(8), pointer    :: volumeN0(:), dSlotVolume(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
         real(8), pointer    :: PreissmannNumber, PreissmannCelerity, cfl, grav
 
@@ -1275,11 +1275,12 @@ module lowlevel_rk2
         ell        => elemR(:,er_ell)
         length     => elemR(:,er_Length)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
         BreadthMax    => elemR(:,er_BreadthMax)
+        dSlotVolume   => elemR(:,er_dSlotVolume)
 
         SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
         PreissmannNumber    => setting%PreissmannSlot%PreissmannNumber
@@ -1296,10 +1297,13 @@ module lowlevel_rk2
             ! SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
             ! SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
             !     ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
+            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
 
-            SlotVolume(thisP) = max(volume(thisP),fullvolume(thisP)) - max(fullvolume(thisP),volumeN0(thisP))
+
+            dSlotVolume(thisP) = volume(thisP) - max(volumeN0(thisP),fullvolume(thisP))
+            ! SlotVolume(thisP) = max(volume(thisP),fullvolume(thisP)) - max(fullvolume(thisP),volumeN0(thisP))
             SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            SlotArea(thisP)   = dSlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
 
         case (StaticSlot)

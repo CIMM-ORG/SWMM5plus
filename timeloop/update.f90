@@ -226,7 +226,7 @@ module update
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotWidth  => elemR(:,er_SlotWidth)
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
@@ -268,7 +268,7 @@ module update
                 thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
                 !% initialize preissmann slot celerity
                 PCelerity(thisP2) = zeroR
-                where (abs(SlotVolume(thisP2)) .gt. zeroR) 
+                where (SlotVolume(thisP2) .gt. zeroR) 
                     PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
                 end where
             end if
