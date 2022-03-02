@@ -1291,27 +1291,18 @@ module lowlevel_rk2
         select case (SlotMethod)
 
         case (VariableSlot)
-            ! SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            ! SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
-            ! SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            ! SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-            ! SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
-            !     ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-
-
             dSlotVolume(thisP) = volume(thisP) - max(volumeN0(thisP),fullvolume(thisP))
-            ! SlotVolume(thisP) = max(volume(thisP),fullvolume(thisP)) - max(fullvolume(thisP),volumeN0(thisP))
             SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
             SlotArea(thisP)   = dSlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-
         case (StaticSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             !% SWMM5 uses 1% of width max as slot width
             ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
             !% HACK: modeling for acoustic wavespeed
             SlotWidth(thisP) = (grav * fullarea(thisP)) / (PreissmannCelerity**2.0)
+            !% HACK: old code based on a target CFL
             ! SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
                 ! (cfl*length(thisP))**twoR
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
