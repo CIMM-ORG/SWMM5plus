@@ -65,7 +65,7 @@
             "useSWMMinpYN" :false,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
-            "StartTime" : 0.0,
+            "StartTime" : 55.0,
             "TimeInterval" : 0.1,
             "TimeUnits" : "Seconds"
         }
@@ -94,8 +94,8 @@
         }
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "PreissmannNumber" : 1.0,
+        "PreissmannSlotMethod" : "VariableSlot",
+        "PreissmannNumber" : 3.0,
         "PreissmannCelerity" : 2.53
     },
     "VariableDT" : {

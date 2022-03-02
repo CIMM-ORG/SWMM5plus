@@ -96,7 +96,7 @@ Out1             0          FREE                          NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      4.859   
+1                FLOW             "630016810"               FLOW       
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
