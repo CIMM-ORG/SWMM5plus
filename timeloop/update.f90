@@ -7,6 +7,7 @@ module update
     use geometry
     use adjust
     use utility_profiler
+    use utility_crash
 
     implicit none
 
@@ -37,7 +38,7 @@ module update
             character(64) :: subroutine_name = 'update_auxiliary_variables'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%update) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
@@ -50,6 +51,7 @@ module update
 
         !% adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
+        call util_crashstop(21987)
 
         !% set packed column for updated elements
         select case (whichTM)
@@ -106,7 +108,7 @@ module update
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:)
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
         area     => elemR(:,er_Area)
@@ -131,7 +133,7 @@ module update
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: Froude(:), velocity(:), depth(:), grav
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
@@ -161,7 +163,7 @@ module update
         real(8), pointer :: Froude(:), velocity(:), depth(:), grav
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
@@ -208,7 +210,7 @@ module update
         real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
         integer :: ii
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -431,7 +433,7 @@ module update
     !     integer, pointer :: Npack1, Npack2,  thisP1(:), thisP2(:)
     !     real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
     !     !%-----------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     if (setting%Debug%File%update)  &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     w_uQ      => elemR(:,er_InterpWeight_uQ)

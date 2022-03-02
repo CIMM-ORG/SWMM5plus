@@ -6,6 +6,7 @@ module adjust
     use define_settings, only: setting
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use utility
+    use utility_crash
 
     implicit none
 
@@ -122,7 +123,7 @@ module adjust
             integer, intent(in) :: whichTM  !% indicates which Time marching method
             character(64) :: subroutine_name = 'adjust_Vfilter'
         !%------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------   
@@ -136,7 +137,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
                 print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
-                stop 4973
+                !stop 
+                call util_crashpoint( 4973)
+                return
             end select
         end if
         
@@ -148,7 +151,9 @@ module adjust
             case default
                 print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
                 print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
-                stop 9073
+                !stop 
+                call util_crashpoint( 9073)
+                return
             end select
         end if
         
@@ -173,7 +178,7 @@ module adjust
         !logical, pointer :: NearZeroDepth(:),   isSmallDepth(:)   
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -214,7 +219,7 @@ module adjust
         real(8), intent(in) :: geozero
         real(8), pointer :: geovalue(:)        
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues_singular'
-        if (icrash) return
+        if (crashYN) return
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -245,7 +250,7 @@ module adjust
         !%-------------------------------------------------------------------
         !% Preliminaries
             if (.not. setting%Limiter%Velocity%UseLimitMaxYN) return
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% small velocity adjustment should only be done for CC elements
@@ -260,7 +265,9 @@ module adjust
                 case default
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
-                    stop 8368
+                    !stop 
+                    call util_crashpoint( 8368)
+                    return
             end select
         !%-------------------------------------------------------------------
         !% Aliases
@@ -308,7 +315,8 @@ module adjust
     !             thisCol => col_elemP(ep_CC_AC)       
     !         case default
     !             print *, 'error, default case should not be reached.'
-    !             stop 83655
+    !             stop 
+    !               call util_crashpoint( 83655)
     !         end select
     !         isSmallVol => elemYN(:,eYN_isSmallDepth)
     !         fdn        => elemI(:,ei_Mface_dL)
@@ -435,7 +443,9 @@ module adjust
                     thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
                 case default
                     print *, 'CODE ERROR -- unexpected case default'
-                    stop 94733
+                    !stop 
+                    call util_crashpoint( 94733)
+                    return
                 end select
             case (ETM)
                 select case (whichType)
@@ -445,7 +455,9 @@ module adjust
                     thisCol => col_elemP(ep_ZeroDepth_JM_ETM)
                 case default
                     print *, 'CODE ERROR -- unexpected case default'
-                    stop 94733
+                    !stop 
+                    call util_crashpoint( 93287)
+                    return
                 end select
             case (AC)
                 select case (whichType)
@@ -455,12 +467,16 @@ module adjust
                     thisCol => col_elemP(ep_ZeroDepth_JM_AC)
                 case default
                     print *, 'CODE ERROR -- unexpected case default'
-                    stop 94733
+                    !stop 
+                    call util_crashpoint( 22733)
+                    return
                 end select
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 55873
+                !stop 
+                call util_crashpoint( 55873)
+                return
             end select
         !% -----------------------------------------------------------------
         !% Aliases
@@ -530,7 +546,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                    print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 557345
+                !stop 
+                call util_crashpoint( 557345)
+                return
             end select
         !% -----------------------------------------------------------------    
         !% Aliases    
@@ -610,7 +628,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 224875
+                !stop 
+                call util_crashpoint( 22487)
+                return
             end select
             npack   => npack_elemP(thisCol)
             if (npack < 1) return
@@ -663,7 +683,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 224875
+                !stop 
+                call util_crashpoint( 224238)
+                return
             end select
             npack => npack_elemp(thisCol)
             if (npack < 1) return
@@ -714,7 +736,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 398703
+                !stop 
+                call util_crashpoint( 398703)
+                return
             end select
             npack => npack_elemP(thisCol)
             if (npack < 1) return
@@ -775,7 +799,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 447833
+                !stop 
+                call util_crashpoint( 447833)
+                return
             end select
         !%------------------------------------------------------------------
         !% Aliases:
@@ -884,7 +910,7 @@ module adjust
         !%------------------------------------------------------------------
         !% Preliminaries    
             if (setting%Adjust%Flowrate%Coef .le. zeroR) return
-            if (icrash) return       
+            if (crashYN) return       
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
@@ -899,7 +925,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 9239
+                !stop 
+                call util_crashpoint( 9239)
+                return
             end select
 
             coef => setting%Adjust%Flowrate%Coef
@@ -990,7 +1018,7 @@ module adjust
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return              
+            if (crashYN) return              
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1005,7 +1033,9 @@ module adjust
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 2394
+                !stop 
+                call util_crashpoint( 23943)
+                return
             end select 
 
             !% coefficient for the blending adjustment (between 0.0 and 1.0)
@@ -1079,7 +1109,7 @@ module adjust
     !         character(64) :: subroutine_name = 'adjust_smallvolumes_reset_old'
     !     !%-----------------------------------------------------------------------------
     !         if (Npack .le. 0) return
-    !         if (icrash) return              
+    !         if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-----------------------------------------------------------------------------
@@ -1112,7 +1142,7 @@ module adjust
     !     !%-----------------------------------------------------------------
     !     !% Preliminaries
     !         if (Npack .le. 0) return
-    !         if (icrash) return              
+    !         if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%----------------------------------------------------------------- 
@@ -1158,7 +1188,7 @@ module adjust
     !         character(64) :: subroutine_name = 'adjust_smallvolumes_pack'
     !     !%------------------------------------------------------------------
     !         if (Npack .le. 0) return
-    !         if (icrash) return              
+    !         if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%------------------------------------------------------------------
@@ -1182,7 +1212,8 @@ module adjust
     !         print *, 'This is likely a failure to have one of the cross-sections shapes'
     !         print *, 'initialized in init_IC_set_SmallVolumes'
     !         print *, 'CODE FIX IS NEEDED/'
-    !         stop 448795
+    !         stop 
+    !           call util_crashpoint( 448795)
     !     end if
 
     !     !%------------------------------------------------------------------
@@ -1210,7 +1241,7 @@ module adjust
     !     !%------------------------------------------------------------------
     !     !% Preliminaries
     !         if (Npack .le. 0) return
-    !         if (icrash) return              
+    !         if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%------------------------------------------------------------------
@@ -1284,7 +1315,7 @@ module adjust
     !         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
     !     !%----------------------------------------------------------------------
     !         if (Npack .le. 0) return
-    !         if (icrash) return              
+    !         if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%--------------------------------------------------------------------

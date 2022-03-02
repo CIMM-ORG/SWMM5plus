@@ -32,7 +32,7 @@ contains
     character(len = 5) :: str_image
     integer :: ii, jj, fu, rc, image
 
-    if (icrash) return
+    if (crashYN) return
     if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -112,7 +112,7 @@ contains
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
-    if (icrash) return
+    if (crashYN) return
     if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

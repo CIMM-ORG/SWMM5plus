@@ -8,6 +8,7 @@ module face
     use jump
     use utility_profiler
     use utility, only: util_sign_with_ones
+    use utility_crash, only: util_crashpoint
 
 
     implicit none
@@ -47,7 +48,7 @@ module face
             character(64) :: subroutine_name = 'face_interpolation'
         !%-------------------------------------------------------------------
         !% Preliminaries    
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             
@@ -98,7 +99,7 @@ module face
             logical, intent(in) :: isBConly
             character (64) :: subroutine_name = 'face_interpolate_bc'
         !%-------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -243,7 +244,9 @@ module face
                   + (oneR - util_sign_with_ones( elemR(ghostDn,   er_Flowrate)[ci] ) ) * elemR(ghostDn,   er_Flowrate)[ci] )
             else
                 write(*,*) 'CODE ERROR: unexpected else'
-                stop 88355
+                !stop 
+                call util_crashpoint( 88355)
+                return
             end if 
         end do
 
@@ -286,7 +289,7 @@ module face
             character(64) :: subroutine_name = 'face_interpolation_upBC'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -385,7 +388,7 @@ module face
     !     character(64) :: subroutine_name = 'face_interpolation_latBC_byPack'
 
     !     !%-----------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     if (setting%Debug%File%boundary_conditions)  &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -431,7 +434,7 @@ module face
             character(64) :: subroutine_name = 'face_interpolation_dnBC'
         !%--------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
@@ -510,7 +513,7 @@ module face
     !     real :: DownStreamBcHead
 
     !     !%-----------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     if (setting%Debug%File%boundary_conditions)  &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -616,7 +619,7 @@ module face
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
         !% Preliminaries    
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -733,7 +736,7 @@ module face
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
         !% Preliminaries   
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% start the shared timer    
@@ -849,7 +852,7 @@ module face
             character(64) :: subroutine_name = 'face_interp_interior_set'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -896,7 +899,7 @@ module face
             character(64) :: subroutine_name = 'face_interp_shared_set_old'
         !%--------------------------------------------------------------------
         !%  Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -944,7 +947,9 @@ module face
 
                 else
                     write(*,*) 'CODE ERROR: unexpected else'
-                    stop 487874
+                    !stop 
+                    call util_crashpoint( 487874)
+                    return
                 end if        
             end do
         end do
@@ -994,7 +999,7 @@ module face
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
     !         !if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
-    !         if (icrash) return
+    !         if (crashYN) return
     !         if (setting%Debug%File%face) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1066,7 +1071,7 @@ module face
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
     !         !if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
-    !         if (icrash) return
+    !         if (crashYN) return
     !         if (setting%Debug%File%face) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------
@@ -1200,7 +1205,7 @@ module face
             character(64)       :: subroutine_name = 'local_data_transfer_to_boundary_array'
         !%--------------------------------------------------------------------
         !%  Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
@@ -1228,8 +1233,10 @@ module face
                 elemB%R(ii,:) = elemR(eUp,eColumns)
             else
                 write(*,*) 'CODE ERROR: unexpected else'
-                stop 487874
-            end if        
+                !stop 
+                call util_crashpoint( 487874)
+                return
+            end if       
         end do
 
         if (setting%Debug%File%face) &
@@ -1254,7 +1261,7 @@ module face
             character(64)       :: subroutine_name = 'inter_image_data_transfer'
         !%--------------------------------------------------------------------
         !%  Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1296,7 +1303,9 @@ module face
                 ! print*, elemR(faceI(thisP,fi_GhostElem_dL), :)[ci], 'elem row'
             else
                 write(*,*) 'CODE ERROR: unexpected else'
-                stop 487874
+                !stop 
+                call util_crashpoint( 487874)
+                return
             end if        
         end do
         
@@ -1336,7 +1345,7 @@ module face
             character(64)       :: subroutine_name = 'face_interp_shared_set'
         !%--------------------------------------------------------------------
         !%  Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1381,7 +1390,9 @@ module face
                         ( elemGR(ii,eWup) + elemB%R(ii,eWdn) )
                 else
                     write(*,*) 'CODE ERROR: unexpected else'
-                    stop 487874
+                    !stop 
+                    call util_crashpoint( 487874)
+                    return
                 end if      
             end do
         end do
@@ -1422,7 +1433,7 @@ module face
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_interior'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -1456,7 +1467,7 @@ module face
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%SharedStart_B = cval
         end if 
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -1494,7 +1505,7 @@ module face
             real(8), pointer :: f_flowrate(:), zeroValue, vMax
             character(64) :: subroutine_name = 'adjust_face_dynamic_limit'
         !%-------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1563,7 +1574,7 @@ module face
         
     !     character(64) :: subroutine_name = 'face_interp_set_byMask'
     !     !%-----------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     if (setting%Debug%File%face) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-----------------------------------------------------------------------------

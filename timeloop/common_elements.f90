@@ -32,7 +32,7 @@ module common_elements
         integer, intent(in) :: eIdx
         real(8), pointer :: Flowrate, Area, Velocity, Vmax
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         Vmax     => setting%Limiter%Velocity%Maximum
         Velocity => elemR(eIdx,er_Velocity)
         Flowrate => elemR(eIdx,er_Flowrate)
@@ -67,7 +67,7 @@ module common_elements
         real(8), pointer :: UpstreamFaceHead, DownstreamFaceHead, Zcrest
         integer, pointer :: FlowDirection, iupf, idnf
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         !% outputs
         Head           => elemR(eIdx,er_Head)
         NominalDSHead  => elemSR(eIdx,NominalDownstreamHeadCol)
