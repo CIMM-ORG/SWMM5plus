@@ -10,6 +10,7 @@ module boundary_conditions
     use face, only: face_interpolate_bc
     use define_xsect_tables
     use xsect_tables
+    use utility_crash
 
     implicit none
 
@@ -34,13 +35,14 @@ contains
             character(64) :: subroutine_name = "bc_update"
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
 
         !% Gets boundary flow and head data from SWMM-C and stores in the BC structure
         call bc_step()
+        if (crashI==1) return
 
         ! print *, 'in bcupdate AAA'
         ! print *, faceR(47:48,fr_Head_u)
@@ -100,7 +102,6 @@ contains
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             end if
 
-            !stop 398705
     end subroutine bc_update
 !%
 !%==========================================================================
@@ -113,7 +114,7 @@ contains
         real(8) :: ttime, tnow, tend
         character(64) :: subroutine_name = "bc_step"
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -152,7 +153,9 @@ contains
                 else
                     call util_print_warning("Error (bc.f08): The flow boundary condition for node " &
                     // node%Names(nidx)%str // " should always read from an input file")
-                    stop 87453
+                    !stop 
+                    call util_crashpoint( 87453)
+                    return
                 end if
             end do
         end if
@@ -217,7 +220,7 @@ contains
             character(64)       :: subroutine_name = "bc_fetch_flow"
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -246,13 +249,6 @@ contains
             if (new_inflow_time == setting%Time%End) exit
         end do
         BC%flowIdx(bc_idx) = 2
-
-        ! print *, 'in 398705 ', trim(subroutine_name)
-        ! print *, bc_idx
-        ! do ii = 1,NN
-        !      print *, BC%flowR_timeseries(bc_idx,ii,br_time), BC%flowR_timeseries(bc_idx,ii,br_value)
-        ! end do
-        ! stop 398705
         
         if (setting%Debug%File%boundary_conditions) then
             do ii = 1, NN
@@ -275,7 +271,7 @@ contains
         integer, pointer    :: nodeIdx, faceIdx, elemUpIdx
         character(64)       :: subroutine_name = "bc_fetch_head"
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -379,9 +375,10 @@ contains
             else 
                 !% lower_idx <= 0
                 write(*,*), 'CODE ERROR? unexpected else in BC'
-                stop 9870985    
+                !stop 
+                call util_crashpoint( 987098) 
+                return   
             end if
-
         end do
 
         do ii=1, N_headBC
@@ -417,7 +414,9 @@ contains
                 else 
                     !% lower_idx <= 0
                     write(*,*), 'CODE ERROR? unexpected else in BC'
-                        stop 786985    
+                    !stop 
+                    call util_crashpoint( 786985)    
+                    return
                 end if
 
             !% --- normal flow at outlet   
@@ -460,7 +459,9 @@ contains
             else
                 call util_print_warning("Error (bc.f08): Unknown downstream boundary condition type at " &
                     // node%Names(nodeIdx)%str // " node")
-                    stop 86474
+                !stop 
+                call util_crashpoint( 86474)
+                return
             end if
         end do
 
@@ -486,7 +487,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         real(8)              :: Q2g, critDepthEstimate, ratio, sideSlope, epsilon_c, tc0
         character(64) :: subroutine_name = 'bc_get_CC_critical_depth'
     !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -542,7 +543,9 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                 print *, 'in ',trim(subroutine_name)
                 print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
                 print *, 'which has key ',trim(reverseKey(elemGeometry))
-                stop 389753 
+                !stop 
+                call util_crashpoint( 389753)
+                return
             end select
         end if
 
@@ -766,7 +769,9 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
         print *, 'in ',trim(subroutine_name)
         print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
         print *, 'which has key ',trim(reverseKey(elemGeometry))
-        stop 84198
+        !stop 
+        call util_crashpoint( 84198)
+        return
      end select
 
 end function bc_get_critical_flow

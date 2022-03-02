@@ -38,7 +38,8 @@ module define_globals
 !% referred to with a short name
 
 
-    logical :: icrash = .false. !% error condition
+    logical :: crashYN = .false. !% error condition
+    integer :: crashI = 0 
 
 !% ===================================================================================
 !% ARRAYS

@@ -34,7 +34,7 @@ module jump
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'jump_compute'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%jump) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
         !%-----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ module jump
         real(8), pointer :: feps, Fr(:)
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         !% pointing to the number of faces in this image
         image  = this_image()
         Nfaces => N_face(image)
@@ -207,7 +207,7 @@ module jump
         integer :: fsetUp(2), fsetDn(2), eset(2)
         !%----------------------------------------------------------------------------- 
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         thisP => faceP(1:Npack,facePackCol)     
         eUp => faceI(:,fi_Melem_uL)
         eDn => faceI(:,fi_Melem_dL)

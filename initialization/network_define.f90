@@ -18,6 +18,7 @@ module network_define
     use define_globals
     use define_settings
     use utility_profiler
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -42,7 +43,7 @@ contains
             character(64) :: subroutine_name = 'init_network_define_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries:
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_init_network_define_toplevel)
@@ -61,7 +62,8 @@ contains
         ! print *, 'Geometry Type = ',elemI(ii,ei_geometryType)
         ! print *, 'this link       ',elemI(ii,ei_link_Gidx_SWMM)
 
-        ! stop 397805        
+        ! stop 
+        !call util_crashpoint(397805)        
 
         ! print *, ' '
         ! print *, ' elements ---------------------------------------------'
@@ -76,10 +78,12 @@ contains
         ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
         ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
         ! print *, ' ======================================='
-        ! !stop 77869
+        ! !stop 
+        !call util_crashpoint(77869)
 
         ! print *, 'why do elements 15 and 16 have the same downstream face?'
-        ! stop 398705
+        ! stop 
+        !call util_crashpoint(398705)
 
         ! print *, ' '
         ! print *, ' faces ---------------------------------------------------'
@@ -119,7 +123,8 @@ contains
         ! end do
 
         
-        ! stop 39705
+        ! stop 
+        !call util_crashpoint(39705)
 
         !% print result
         if (setting%Debug%File%network_define) then
@@ -194,7 +199,7 @@ contains
             integer          :: mm
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -282,7 +287,7 @@ contains
             character(64) :: subroutine_name = 'init_network_datacreate'
         !%-------------------------------------------------------------------
         !% Preliminaries    
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -314,7 +319,8 @@ contains
             ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
             ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
             ! print *, ' ======================================='
-            ! !stop 77869
+            ! !stop 
+            !call util_crashpoint(77869)
 
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
@@ -358,7 +364,7 @@ contains
             character(64) :: subroutine_name = 'init_network_update_nj2_elem'
         !%-----------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
@@ -396,7 +402,7 @@ contains
             character(64) :: subroutine_name = 'init_network_set_global_indexes'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -427,7 +433,7 @@ contains
             character(64) :: subroutine_name = 'init_network_set_dummy_elem'
         !%-------------------------------------------------------------------
         !% Preliminaries   
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -470,7 +476,7 @@ contains
             character(64) :: subroutine_name = 'init_network_handle_partition'
         !%--------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
@@ -539,7 +545,8 @@ contains
         !     print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
         !     print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
         !     print *, ' ======================================='
-        !     !stop 77869
+        !     !stop 
+        !call util_crashpoint(77869)
 
         !%--------------------------------------------------------------------
         !% Closing
@@ -566,7 +573,7 @@ contains
             character(64) :: subroutine_name = 'init_network_map_nodes'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -601,8 +608,9 @@ contains
                 write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
                 print *, 'Node Type # of ',nodeType
                 print *, 'which has key of ',trim(reverseKey(nodeType))
-                stop 39705
-
+                !stop 
+                call util_crashpoint(39705)
+                return
             end select
         end do
 
@@ -631,7 +639,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_shared_faces'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -658,8 +666,9 @@ contains
                 write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
                 print *, 'Node Type # of ',nodeType
                 print *, 'which has key of ',trim(reverseKey(nodeType))
-                stop 55934
-
+                !stop 
+                call util_crashpoint(55934)
+                return
             end select
         end do
 
@@ -689,7 +698,7 @@ contains
             character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
         !%-----------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
@@ -830,14 +839,17 @@ contains
                 print*
                 print*, 'In ', subroutine_name
                 print*, 'CODE ERROR: storage node is not handeled yet'
-                stop 597883
-
+                !stop 
+                call util_crashpoint(597883)
+                return
             case default    
                 write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
                 print*, 'error: node ' // node%Names(thisNode)%str // &
                         ' has an unexpected nodeType', nodeType
                 print *, 'which has key of ',trim(reverseKey(nodeType))
-                stop 987034
+                !stop 
+                call util_crashpoint(987034)
+                return
             end select
 
         !% handle the node if it is not in the partition
@@ -935,7 +947,7 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_link'
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1051,7 +1063,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_downstreamnode'
      !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1176,15 +1188,18 @@ contains
                 print *
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: storage node is not handeled yet'
-                stop 387994
-
+                !stop 
+                call util_crashpoint(387994)
+                return
             case default
 
                 print*
                 print*, 'In ', subroutine_name
                 print*, 'CODE ERROR: node ' // node%Names(thisNode)%str // &
                         ' has an unexpected nodeType', nodeType
-                stop 398704
+                !stop 
+                call util_crashpoint(398704)
+                return
             end select
         else
             !% Advance face local and global counters for nodes outside of the partition
@@ -1262,7 +1277,7 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_nJm'
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1484,7 +1499,9 @@ contains
                 end if
             case default
                 print *, 'CODE ERROR: unsupported value for mod(ii,2) of ',mod(ii,2)
-                stop 65874
+                !stop 
+                call util_crashpoint(65874)
+                return
             end select
 
             !% Advance the element counter for next branch
@@ -1519,7 +1536,7 @@ contains
         integer, pointer :: eIdx, fLidx
         character(64) :: subroutine_name = 'init_network_map_nJm_branches'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1625,7 +1642,9 @@ contains
                     end if
                 case default
                     print *, 'CODE ERROR: unsupported value for mod(ii,2) of ',mod(ii,2)
-                    stop 99374    
+                    !stop 
+                    call util_crashpoint(99374)    
+                    return
                 end select
             end if
         end do
@@ -1653,7 +1672,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_shared_nJm_nodes'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1711,7 +1730,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_nJ2'
      !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1762,7 +1781,8 @@ contains
             fLidx => node%I(thisJNode,ni_elemface_idx)
 
 
-            !stop 89703
+            !stop 
+            !call util_crashpoint(89703)
             !% if the face is a shared face across images,
             !% it will not have any downstream local element
             !% (not sure if we need this condition)
@@ -1800,7 +1820,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_shared_nJ2_nodes'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1883,7 +1903,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_nullify_nJm_branch'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1911,7 +1931,7 @@ contains
         !--------------------------------------------------------------------------
         character(64) :: subroutine_name = 'init_network_set_interior_faceYN'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1942,7 +1962,7 @@ contains
         real(8)          :: MinElemLength
         character(64)    :: subroutine_name = 'init_network_CC_elem_length_adjust'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
 
         AdjustType      => setting%Discretization%MinElemLengthMethod
         NominalLength   => setting%Discretization%NominalElemLength
@@ -1978,7 +1998,9 @@ contains
             print*, 'In, ', subroutine_name
             print *, 'CODE ERROR: AdjustType unknown for # ',AdjustType 
             print *, 'which has key ',trim(reverseKey(AdjustType))
-            stop 89537
+            !stop 
+            call util_crashpoint(89537)
+            return
         end select
 
         if (setting%Debug%File%network_define) &
@@ -1998,7 +2020,7 @@ contains
             character(64)    :: subroutine_name = 'init_network_identify_boundary_element'
         !%-----------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%network_define) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------

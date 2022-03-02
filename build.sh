@@ -18,6 +18,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_types.f90\
               $DEF_DIR/define_api_keys.f90\
               $DEF_DIR/define_globals.f90\
+              $UTIL_DIR/utility_crash.f90\
               $DEF_DIR/define_keys.f90\
               $DEF_DIR/define_settings.f90\
               $DEF_DIR/define_indexes.f90\

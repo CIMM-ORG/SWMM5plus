@@ -30,7 +30,7 @@ contains
         real(8), pointer :: elem_nominal_length, elem_shorten_cof
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -83,7 +83,7 @@ contains
         character(64) :: subroutine_name = 'init_discretization_nominal'
 
     !-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

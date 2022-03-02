@@ -33,7 +33,7 @@ module outlet_elements
         
         character(64) :: subroutine_name = 'outlet_toplevel'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         !%----------------------------------------------------------------------------- 
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
@@ -67,7 +67,7 @@ module outlet_elements
         real(8), pointer :: NominalDownstreamHead
         integer, pointer :: OutletType
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         !% input
         OutletType            => elemSI(eIdx,esi_Outlet_SpecificType)
         Head                  => elemR(eIdx,er_Head)
@@ -100,7 +100,7 @@ module outlet_elements
         real(8), pointer :: Flowrate, Depth, EffectiveHeadDelta, qCoeff, qExpon
         real(8) :: CoeffOrifice
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         OutletType         => elemSI(eIdx,esi_Outlet_SpecificType)
         FlowDirection      => elemSI(eIdx,esi_Outlet_FlowDirection)
         CurveID            => elemSI(eIdx,esi_Outlet_CurveID)
@@ -137,7 +137,7 @@ module outlet_elements
         integer, pointer :: fUp, fDn
         real(8), pointer :: fAUp, fADn, Area
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
 
         fUp  => elemI(eIdx,ei_Mface_uL)
         fDn  => elemI(eIdx,ei_Mface_dL)

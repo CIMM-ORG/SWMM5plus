@@ -404,6 +404,7 @@ module define_settings
     type FileType
         logical              :: UseCommandLineFoldersYN  = .true.
         logical              :: force_folder_creationYN = .true.
+        logical              :: duplicate_input_file = .true.
         !% standard files and folders
         character(len=256)   :: base_folder = ""
         character(len=256)   :: library_folder = ""
