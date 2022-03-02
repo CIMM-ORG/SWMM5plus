@@ -907,9 +907,9 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), depth(:), area(:), areaN0(:), head(:), headN0(:), SlotHydRadius(:)
-        real(8), pointer    :: fullVolume(:), fullArea(:), Overflow(:), fullDepth(:)
-        real(8), pointer    :: volumeN0(:), zbottom(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:)
+        real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
+        real(8), pointer    :: Overflow(:), zbottom(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -934,7 +934,6 @@ module geometry
         SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
-        SlotHydRadius => elemR(:,er_SlotHydRadius)
 
         SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
