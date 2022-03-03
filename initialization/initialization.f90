@@ -512,15 +512,16 @@ contains
             link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
             link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
             link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
-            !write(*,*) 'api_nodef_initDepth 1'
-            link%R(ii,lr_InitialUpstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth)
-            !write(*,*) 'api_nodef_initDepth 2'
-            link%R(ii,lr_InitialDnstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth)
-            
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
             link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
             link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)
             link%R(ii,lr_OutletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset2)
+            !write(*,*) 'api_nodef_initDepth 1'
+            link%R(ii,lr_InitialUpstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth) - &
+                                                    link%R(ii,lr_InletOffset), zeroR)
+            !write(*,*) 'api_nodef_initDepth 2'
+            link%R(ii,lr_InitialDnstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth) - &
+                                                    link%R(ii,lr_OutletOffset), zeroR)
 
             !% special element attributes
             link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions)

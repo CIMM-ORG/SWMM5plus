@@ -754,6 +754,8 @@ contains
         elemR(:,er_Velocity_N0)  = elemR(:,er_Velocity)
         elemR(:,er_Volume_N1)    = elemR(:,er_Volume_N0)
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+        elemR(:,er_Area_N1)      = elemR(:,er_Area_N0)
+        elemR(:,er_Area_N0)      = elemR(:,er_Area)
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -827,9 +829,9 @@ contains
                     ! endif
 
                     ! write a time counter
-                    write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3)") &
+                    write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
                         'time step = ',step,'; model time = ',thistime, &
-                        ' ',trim(timeunit),'; dt = ',dt,' s'
+                        ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,dt)
 
                     ! write estimate of time remaining
                     thistime = seconds_to_completion
@@ -886,7 +888,7 @@ contains
         end if
         
         outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                        maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * thisDT / length(thisP)))
+                        maxval(( abs(PCelerity(thisP))) * thisDT / length(thisP)))
 
         ! print * , ' '
         ! print *, velocity(thisP)

@@ -205,8 +205,9 @@ module storage_geometry
         nRow =>  setting%Junction%FunStorageN
 
         !% add a new curveID
-        CurveID  = SWMM_N_Curve + oneI
-
+        N_FunctionalStorage = N_FunctionalStorage + oneI
+        CurveID  = SWMM_N_Curve + N_FunctionalStorage
+      
         curve(CurveID)%ID       = CurveID
         curve(CurveID)%Type     = StorageCurve
         curve(CurveID)%NumRows  = nRow 
