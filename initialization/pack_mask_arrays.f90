@@ -496,7 +496,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -513,7 +513,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -685,7 +685,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -699,7 +699,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -872,7 +872,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -886,7 +886,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
