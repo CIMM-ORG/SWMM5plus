@@ -222,7 +222,7 @@ contains
             print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
             ! call execute_command_line('')
         end if
- 
+
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -731,29 +731,31 @@ contains
 
         select case (geometryType)
 
-        ! case (lRectangular)
+        case (lRectangular_closed)
 
-        !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
-        !         elemI(:,ei_geometryType)    = rectangular_closed
+                elemI(:,ei_geometryType)    = rectangular_closed
 
-        !         !% store geometry specific data
-        !         elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+                !% store geometry specific data
+                elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-        !         elemR(:,er_BreadthMax)      = elemSGR(:,esgr_Rectangular_Breadth)
-        !         elemR(:,er_Area)            = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
-        !         elemR(:,er_Area_N0)         = elemR(:,er_Area)
-        !         elemR(:,er_Area_N1)         = elemR(:,er_Area)
-        !         elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
-        !         elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
-        !         elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-        !         elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-        !         elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-        !         elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-        !         elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
-        !         elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
-        !     endwhere
-
+                elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
+                elemR(:,er_Area)                  = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
+                elemR(:,er_Area_N0)               = elemR(:,er_Area)
+                elemR(:,er_Area_N1)               = elemR(:,er_Area)
+                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
+                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
+                
+            endwhere
+            
         case (lCircular)
 
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -1450,11 +1452,11 @@ contains
             call storage_create_curve (JMidx)
 
         case (TabularStorage)
-            curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
-            Curve(curveID)%ElemIdx = JMidx
+            CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            Curve(CurveID)%ElemIdx = JMidx
             !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
             !% to get to integrate the area vs depth curve
-            call storage_integrate_area_vs_depth_curve (curveID)
+            call storage_integrate_area_vs_depth_curve (CurveID)
 
             !% now interpolate from the cure to get the volume
             call storage_interpolate_volume_from_depth_singular (JMidx)
@@ -1884,7 +1886,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
+        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR

@@ -221,6 +221,8 @@ module define_indexes
         enumerator :: lr_Volume
         enumerator :: lr_Velocity
         enumerator :: lr_Capacity
+        enumerator :: lr_ZbottomUp
+        enumerator :: lr_ZbottomDn
         enumerator :: lr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
@@ -351,7 +353,8 @@ module define_indexes
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
-        enumerator :: er_SlotVolume                 !% slot volume
+        enumerator :: er_TotalSlotVolume            !% slot volume
+        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area

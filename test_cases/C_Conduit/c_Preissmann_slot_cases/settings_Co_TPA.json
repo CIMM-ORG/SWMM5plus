@@ -2,14 +2,14 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "test",
-        "Short" : "test"
+        "Long"  : "VasconcelosTPA_noUpStorage",
+        "Short" : "TPA_noUpStorage"
     },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 0.036
     },
     "Limiter" : {
         "BC" : {
@@ -34,40 +34,40 @@
         },
         "Dt" : {
             "UseLimitMinYN" : true,
-            "Minimum"     : 1e-4
+            "Minimum"     : 1e-10
         }
     },    
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 10000,
+        "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 500
+            "interval" : 1000
         },
         "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : true,
-            "isHydRadiusOut"    : false,
-            "isPerimeterOut"    : false,
-            "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
-            "isTopWidthOut"     : false,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : true,
+            "isAreaOut"                 : true,
+            "isDepthOut"                : true,
+            "isFlowrateOut"             : true,
+            "isFroudeNumberOut"         : false,
+            "isHeadOut"                 : true,
+            "isHydRadiusOut"            : false,
+            "isPerimeterOut"            : false,
+            "isSlotWidthOut"            : true,
+            "isSlotDepthOut"            : true,
+            "isTopWidthOut"             : false,
+            "isVelocityOut"             : true,
+            "isVolumeOut"               : true,
+            "isWaveSpeedOut"            : true,
             "isPreissmannCelerityOut"   : true
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" :false,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
-            "StartTime" : 0.0,
-            "TimeInterval" : 300.0,
-            "TimeUnits" : "Hours"
+            "StartTime" : 55.0,
+            "TimeInterval" : 0.1,
+            "TimeUnits" : "Seconds"
         }
     },
     "Profile" : {
@@ -77,6 +77,7 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
+
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -92,27 +93,34 @@
             "Dt" : 600.0
         }
     },
-    "Solver" : {
-        "PreissmannSlot" : true,
-        "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
-        "SolverSelect" : "ETM",
-        "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
-    },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot", 
-        "PreissmannNumber" : 8.0,
-        "PreissmannCelerity" : 80.0
+        "PreissmannSlotMethod" : "VariableSlot",
+        "PreissmannNumber" : 3.0,
+        "PreissmannCelerity" : 2.53
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.7,
+        "CFL_hi_max" : 0.6,
         "CFL_target" : 0.5,
         "CFL_lo_max" : 0.3,
-        "decreaseFactor" : 0.8,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
+    },
+    "SmallDepth" : {
+        "DepthCutoff" : 0.00001,
+        "ManningsN" : 0.1
+    },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0
+        }
     }
 }

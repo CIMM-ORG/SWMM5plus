@@ -123,7 +123,7 @@ module geometry
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
         !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
-        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.false.) !% 20220124brh
+        call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
@@ -905,10 +905,11 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
-        integer, pointer    :: thisP(:), Npack
+        integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), depth(:), area(:), head(:), SlotHydRadius(:)
-        real(8), pointer    :: hydRadius(:), ell(:), breadthMax(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:)
+        real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
+        real(8), pointer    :: Overflow(:), zbottom(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -917,28 +918,60 @@ module geometry
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack      => npack_elemP(thisColP)
-        volume     => elemR(:,er_Volume)
-        depth      => elemR(:,er_Depth)
         area       => elemR(:,er_Area)
+        areaN0     => elemR(:,er_Area_N0)
+        volume     => elemR(:,er_Volume)
+        volumeN0   => elemR(:,er_Volume_N0)
+        Overflow   => elemR(:,er_VolumeOverFlow)
+        depth      => elemR(:,er_Depth)
+        fullDepth  => elemR(:,er_FullDepth)
+        fullvolume => elemR(:,er_FullVolume)
+        fullArea   => elemR(:,er_FullArea)
         head       => elemR(:,er_Head)
-        ell        => elemR(:,er_ell)
-        breadthMax => elemR(:,er_BreadthMax)
-        hydRadius  => elemR(:,er_HydRadius)
+        headN0     => elemR(:,er_Head_N0)
+        zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
-        SlotHydRadius => elemR(:,er_SlotHydRadius)
+
+        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-            where (SlotVolume(thisP) .gt. zeroR) 
-                volume(thisP) = volume(thisP) + SlotVolume(thisP)
-                area(thisP)   = area(thisP)   + SlotArea(thisP)
-                depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-                head(thisP)   = head(thisP)   + SlotDepth(thisP)
-            end where 
+
+            select case (SlotMethod)
+
+            case (VariableSlot)
+
+                where (SlotVolume(thisP) .gt. zeroR) 
+                    volume(thisP) = fullvolume(thisP) + SlotVolume(thisP)
+                    area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
+                    depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
+                    head(thisP)   = zbottom(thisP) + depth(thisP)
+                    Overflow(thisP) = zeroR
+                end where 
+
+            case (StaticSlot)
+
+                where (SlotVolume(thisP) .gt. zeroR) 
+                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                    area(thisP)   = area(thisP)    + SlotArea(thisP)
+                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                    head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                    Overflow(thisP) = zeroR
+                end where 
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                stop 48756
+    
+            end select
+
         end if
 
         if (setting%Debug%File%geometry) &

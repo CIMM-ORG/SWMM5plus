@@ -1814,8 +1814,9 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% allocate the value array of curve
+
         allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg, 'curve')
+        call util_allocate_check (allocation_status, emsg, 'curve entries')
 
         curve(curve_idx)%ValueArray = nullvalueR
 

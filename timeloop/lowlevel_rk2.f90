@@ -1261,46 +1261,50 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: volumeN0(:), dSlotVolume(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
-        real(8), pointer    :: CelerityFactor, tDelta, cfl, grav
+        real(8), pointer    :: PreissmannNumber, PreissmannCelerity, cfl, grav
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         volume     => elemR(:,er_Volume)
+        volumeN0   => elemR(:,er_Volume_N0)
         fullvolume => elemR(:,er_FullVolume)
         fullarea   => elemR(:,er_FullArea)
         ell        => elemR(:,er_ell)
         length     => elemR(:,er_Length)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
         BreadthMax    => elemR(:,er_BreadthMax)
+        dSlotVolume   => elemR(:,er_dSlotVolume)
 
-        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
-        CelerityFactor => setting%PreissmannSlot%CelerityFactor
-        tDelta         => setting%PreissmannSlot%DesiredTimeStep
-        cfl            => setting%VariableDT%CFL_target
-        grav           => setting%Constant%gravity
+        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
+        PreissmannNumber    => setting%PreissmannSlot%PreissmannNumber
+        PreissmannCelerity  => setting%PreissmannSlot%PreissmannCelerity
+        cfl                 => setting%VariableDT%CFL_target
+        grav                => setting%Constant%gravity
 
         select case (SlotMethod)
 
         case (VariableSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            dSlotVolume(thisP) = volume(thisP) - max(volumeN0(thisP),fullvolume(thisP))
+            SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
+            SlotArea(thisP)   = dSlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-            SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
-                ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
-
         case (StaticSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             !% SWMM5 uses 1% of width max as slot width
             ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-            SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
-                (cfl*length(thisP))**twoR
+            !% HACK: modeling for acoustic wavespeed
+            SlotWidth(thisP) = (grav * fullarea(thisP)) / (PreissmannCelerity**2.0)
+            !% HACK: old code based on a target CFL
+            ! SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
+                ! (cfl*length(thisP))**twoR
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
             SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &

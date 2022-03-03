@@ -207,18 +207,38 @@ contains
             !% Inputs
             NodeUp      => link%I(mm,li_Mnode_u)
             NodeDn      => link%I(mm,li_Mnode_d)
-            zUp         => node%R(NodeUp,nr_Zbottom)
-            zDn         => node%R(NodeDn,nr_Zbottom)
             Length      => link%R(mm,lr_Length)
             lType       => link%I(mm,li_link_type)
+            !% Output
+            zUp         => link%R(mm,lr_ZbottomUp)
+            zDn         => link%R(mm,lr_ZbottomDn)
+            Slope       => link%R(mm,lr_Slope)
+
+            if (((lType == lChannel) .or.     &
+                 (lType == lPipe  )) .and.    &
+                 (node%I(NodeUp,ni_node_type) == nJm)) then
+                !% HACK: for upstream nJm, consider the offsets
+                zUp = node%R(NodeUp,nr_Zbottom) + link%R(mm,lr_InletOffset) 
+            else
+                !% HACK: for upstream other nodes, ignore the offsets
+                zUp = node%R(NodeUp,nr_Zbottom)
+            end if
+
+            if (((lType == lChannel) .or.     &
+                 (lType == lPipe  )) .and.    &
+                 (node%I(NodeDn,ni_node_type) == nJm)) then
+                !% HACK: for downstream nJm, consider the offsets
+                zDn = node%R(NodeDn,nr_Zbottom) + link%R(mm,lr_OutletOffset)
+            else
+                !% HACK: for other downstream nodes, ignore the offsets
+                zDn = node%R(NodeDn,nr_Zbottom)
+            end if 
+            
             !%-------------------------------------------------------------------------
             !% HACK: Original length is used for slope calculation instead of adjusted
             !% length. Using adjusted lenghts will induce errors in slope calculations
             !% and will distort the original network.
             !%-------------------------------------------------------------------------
-            !% Output
-            Slope => link%R(mm,lr_Slope)
-
             if ( (lType == lChannel) .or. (lType == lPipe)) then
                 Slope = (zUp - zDn) / Length
             else
@@ -936,7 +956,7 @@ contains
 
         if (lAssignStatus == lUnAssigned) then
             NlinkElem     => link%I(thisLink,li_N_element)
-            zUpstream     => node%R(upNode,nr_Zbottom)
+            zUpstream     => link%R(thisLink,lr_ZbottomUp)
 
             !% store the ID of the first (upstream) element in this link
             link%I(thisLink,li_first_elem_idx)   = ElemLocalCounter
@@ -1353,7 +1373,8 @@ contains
                     faceI(FaceLocalCounter,fi_link_idx_BIPquick) = upBranchIdx
                     faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(upBranchIdx,li_parent_link)
                     !% set zbottom
-                    faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
+                    elemR(ElemLocalCounter,er_Zbottom)  = link%R(upBranchIdx,lr_ZbottomDn)
+                    faceR(FaceLocalCounter,fr_Zbottom)  = elemR(ElemLocalCounter,er_Zbottom)
                     !% Check 4: this node is the connecting node across partitions
                     if ( (node%I(thisNode,ni_P_is_boundary) == EdgeNode)  .and. &
                          (link%I(upBranchIdx,li_P_image)    /= image   ) )  then
@@ -1433,7 +1454,8 @@ contains
                     faceI(FacelocalCounter,fi_link_idx_BIPquick) = dnBranchIdx
                     faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(dnBranchIdx,li_parent_link)
                     !% set zbottom
-                    faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
+                    elemR(ElemLocalCounter,er_Zbottom)  = link%R(dnBranchIdx,lr_ZbottomUp)
+                    faceR(FaceLocalCounter,fr_Zbottom)  = elemR(ElemLocalCounter,er_Zbottom)
                     !% identifier for downstream junction branch faces
                     faceYN(FaceLocalCounter,fYN_isDownstreamJbFace) = .true.
                     !% Check 4: if the link connecting this branch is a part of this partition and

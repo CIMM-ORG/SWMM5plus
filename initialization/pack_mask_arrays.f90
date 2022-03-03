@@ -331,7 +331,11 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -345,7 +349,11 @@ contains
             elemPGalltm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -550,7 +558,11 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -561,7 +573,11 @@ contains
             elemPGac(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
@@ -736,7 +752,11 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -747,7 +767,11 @@ contains
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                  (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
