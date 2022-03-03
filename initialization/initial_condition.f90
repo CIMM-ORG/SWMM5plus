@@ -1198,7 +1198,7 @@ contains
             !%-----------------------------------------------------------------------
             !% HACK: Junction main with artificial storage are rectangular
             !%-----------------------------------------------------------------------
-            elemSI(JMidx,esi_JunctionMain_Type) = ArtificialStorage
+            elemSI(JMidx,esi_JunctionMain_Type) = ImpliedStorage
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
 
@@ -1385,7 +1385,7 @@ contains
 
         select case (JmType)
 
-        case (ArtificialStorage)
+        case (ImpliedStorage)
             !% the JM characteristic length is the sum of the two longest branches
             elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
                                             elemR(JMidx+5,er_Length)) + &
