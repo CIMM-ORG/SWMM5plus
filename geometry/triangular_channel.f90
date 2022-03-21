@@ -48,7 +48,7 @@ module triangular_channel
         depth   => elemR(:,er_Depth)
         volume  => elemR(:,er_Volume)
         length  => elemR(:,er_Length)
-        breadth => elemSGR(:,esgr_Triangular_Top_Breadth)
+        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
         sideslope => elemSGR(:,esgr_Triangular_Slope)
         !%-----------------------------------------------------------------------------  
 
@@ -84,7 +84,7 @@ module triangular_channel
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
         sideslope => elemSGR(:,esgr_Triangular_Slope)
-        breadth => elemSGR(:,esgr_Triangular_Top_Breadth)
+        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         outvalue = sideslope(indx) * (depth(indx) ** twoR)
 
@@ -148,7 +148,7 @@ module triangular_channel
         real(8), pointer :: breadth(:), depth(:), perimeter(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
-        breadth   => elemSGR(:,esgr_Triangular_Top_Breadth)
+        breadth   => elemSGR(:,esgr_Triangular_TopBreadth)
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
         !%-----------------------------------------------------------------------------
@@ -172,7 +172,7 @@ module triangular_channel
         real(8), pointer :: depth(:), breadth(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,esgr_Triangular_Top_Breadth)
+        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         
         outvalue = twoR * sqrt(((breadth(indx) ** twoR) / fourR) + (depth(indx) ** twoR))
@@ -234,7 +234,7 @@ module triangular_channel
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
         sideslope => elemSGR(:,esgr_Triangular_Slope)
-        breadth => elemSGR(:,esgr_Triangular_Top_Breadth)
+        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         
         outvalue = (sideslope(indx) * depth(indx)) / (twoR * sqrt(oneR + sideslope(indx) ** twoR))

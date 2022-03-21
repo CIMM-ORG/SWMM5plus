@@ -460,12 +460,14 @@ module define_indexes
     enum, bind(c)
         enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
+        enumerator :: epg_CC_triangular_nonsurcharged      !% CC triangular channels that are not surcharged
         enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
         enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JM_artificial_nonsurcharged        !% JM with artificial storage
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
+        enumerator :: epg_JB_triangular                      !% all triangular junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
         enumerator :: epg_lastplusone !% must be last enum item
         end enum
@@ -640,7 +642,7 @@ module define_indexes
     !% Define the column indexes for elemGSR(:,:) for triangular channel
     enum, bind(c)
          enumerator ::  esgr_Triangular_Slope = 1    !% side-slope for triangular geometry
-         enumerator ::  esgr_Triangular_Top_Breadth  !% top breadth of triangular geometry
+         enumerator ::  esgr_Triangular_TopBreadth  !% top breadth of triangular geometry
          enumerator ::  esgr_Triangular_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSGR_Triangular =  esgr_Triangular_lastplusone-1
