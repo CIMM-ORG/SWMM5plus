@@ -55,7 +55,7 @@ contains
         !%-------------------------------------------------------------------
         !% Preliminaries:
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% Aliases
             whichSolver => setting%Solver%SolverSelect
@@ -244,7 +244,7 @@ contains
         !% Preliminaries
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% pack all the link indexes in an image
         packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == this_image()))
@@ -311,7 +311,7 @@ contains
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -421,7 +421,7 @@ contains
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -450,10 +450,12 @@ contains
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
+
+        print *, 'LinkType: ', linkType, '    ',lpipe,'   ', trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -529,14 +531,16 @@ contains
 
             integer, intent(in) :: thisLink
             integer, pointer    :: linkType
-            character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
+            character(64) :: subroutine_name = 'init_IC_get_geometry_from_linkdata'
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
+
+        print *, 'LinkType: ', linkType, 'Conduit: ',lpipe, 'Channel: ',lChannel, 'Current Link: ', trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -600,7 +604,7 @@ contains
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -709,7 +713,7 @@ contains
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR -- triangular geometry type is under dev'
                 print *, 'which has key ',trim(reverseKey(geometryType))
-                stop 45646
+                !stop 45646
 
             case default
 
@@ -742,10 +746,12 @@ contains
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
+
+
 
         select case (geometryType)
 
@@ -807,6 +813,7 @@ contains
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
             end where
+        
 
         case default
 
@@ -1128,7 +1135,7 @@ contains
         !--------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
