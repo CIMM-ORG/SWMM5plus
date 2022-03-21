@@ -467,7 +467,9 @@ contains
 
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
+            print *, 'ii',ii
             link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
+            print *, 'link__type',link%I(ii, li_link_type)
             link%I(ii,li_weir_type) = interface_get_linkf_attribute(ii, api_linkf_weir_type)
             link%I(ii,li_orif_type) = interface_get_linkf_attribute(ii, api_linkf_orifice_type)
             link%I(ii,li_outlet_type) = interface_get_linkf_attribute(ii, api_linkf_outlet_type)
@@ -517,6 +519,7 @@ contains
                  ( &
                  (link%I(ii,li_geometry) == lRectangular)    .or. &
                  (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
+                 (link%I(ii,li_geometry) == lTriangular)     .or. &
                  (link%I(ii,li_geometry) == lPower_function) .or. &
                  (link%I(ii,li_geometry) == lRect_triang)    .or. &
                  (link%I(ii,li_geometry) == lRect_round)     .or. &
@@ -525,6 +528,7 @@ contains
 
                 link%I(ii,li_link_type) = lChannel
             end if
+            print *, 'link__type',link%I(ii, li_link_type)
             !% brh20211207s
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag) == 1)
             !% brh20211207e
