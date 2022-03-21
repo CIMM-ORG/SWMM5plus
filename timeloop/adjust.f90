@@ -1027,7 +1027,7 @@ module adjust
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm_surcharged)
             case (ETM)
-                thisCol => col_elemP(ep_CC_ETM_surcharged)
+                thisCol => col_elemP(ep_Closed_Elements)
             case (AC)
                 thisCol => col_elemP(ep_CC_AC_surcharged)
             case default
@@ -1093,7 +1093,7 @@ module adjust
 
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
-    end subroutine
+    end subroutine adjust_Vshaped_head_surcharged
         !%    
 !%==========================================================================
 !%==========================================================================

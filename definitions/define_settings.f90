@@ -111,7 +111,7 @@ module define_settings
         logical :: ApplyYN = .true.
         integer :: Approach = vshape_surcharge_only
         real(8) :: Coef = 1.0
-        real(8) :: FullDepthMultiplier = 2.0
+        real(8) :: FullDepthMultiplier = 1.0
     end type AdjustHeadType
 
     ! !% setting%Adjust%WidthDepth

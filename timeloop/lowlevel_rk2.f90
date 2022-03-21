@@ -1261,7 +1261,7 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
-        real(8), pointer    :: volumeN0(:), dSlotVolume(:)
+        real(8), pointer    :: volumeN0(:), dSlotVolume(:), velocity(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
         real(8), pointer    :: PreissmannNumber, PreissmannCelerity, cfl, grav
 
@@ -1281,6 +1281,7 @@ module lowlevel_rk2
         SlotHydRadius => elemR(:,er_SlotHydRadius)
         BreadthMax    => elemR(:,er_BreadthMax)
         dSlotVolume   => elemR(:,er_dSlotVolume)
+        velocity      => elemR(:,er_velocity)
 
         SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
         PreissmannNumber    => setting%PreissmannSlot%PreissmannNumber
@@ -1293,7 +1294,10 @@ module lowlevel_rk2
         case (VariableSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             dSlotVolume(thisP) = volume(thisP) - max(volumeN0(thisP),fullvolume(thisP))
-            SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
+            SlotWidth(thisP)  = max(fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP)), &
+                                (grav*fullarea(thisP))/1000.00, &
+                                (grav*fullarea(thisP))/((0.5*length(thisP)/setting%Time%Hydraulics%Dt)-velocity(thisP))**2.0)
+
             SlotArea(thisP)   = dSlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
         case (StaticSlot)
