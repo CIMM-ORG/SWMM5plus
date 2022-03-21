@@ -358,6 +358,14 @@ module geometry
                                     hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
                                     dHdA(tB)     = oneR / topwidth(tB)
+                                case (triangular)
+                                    area(tB)     = triangular_area_from_depth_singular (tB)
+                                    topwidth(tB) = triangular_topwidth_from_depth_singular (tB)
+                                    hydDepth(tB) = triangular_hyddepth_from_depth_singular (tB)
+                                    perimeter(tB)= triangular_perimeter_from_depth_singular (tB)
+                                    hydRadius(tB)= triangular_hydradius_from_depth_singular (tB)
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
+                                    dHdA(tB)     = oneR / topwidth(tB)
                                 case (circular)
                                     area(tB)     = circular_area_from_depth_singular (tB)
                                     topwidth(tB) = circular_topwidth_from_depth_singular (tB)
@@ -460,6 +468,13 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% TRIANGULAR
+        thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% CIRCULAR
@@ -646,6 +661,12 @@ module geometry
             call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
+            call triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
@@ -688,6 +709,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% cycle through different geometries
+        Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
+            call triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
@@ -733,6 +761,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% cycle through different geometries
+        Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
+            call triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% cycle through different geometries

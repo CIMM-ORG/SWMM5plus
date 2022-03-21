@@ -22,6 +22,7 @@ module initial_condition
     use circular_conduit
     use rectangular_channel, only: rectangular_area_from_depth
     use trapezoidal_channel, only: trapezoidal_area_from_depth
+    use triangular_channel, only: triangular_area_from_depth
     use storage_geometry
     use adjust
     use interface, only: interface_get_nodef_attribute
@@ -691,9 +692,9 @@ contains
                     elemI(:,ei_geometryType) = triangular
 
                     !% store geometry specific data
-                    elemSGR(:,esgr_Triangular_Top_Breadth) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
-                    elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_Top_Breadth) / (twoR * elemR(:,er_FullDepth))
+                    elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_TopBreadth) / (twoR * elemR(:,er_FullDepth))
                     
                     ! Area = Depth*Depth*avg. sideslope
                     elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Triangular_Slope) 
@@ -1340,6 +1341,21 @@ contains
                                     + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
 
                 elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
+            
+            case (lTriangular)
+
+                elemI(JBidx,ei_geometryType) = triangular
+
+                !% store geometry specific data
+                elemSGR(JBidx,esgr_Triangular_TopBreadth)  = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullDepth)                  = link%R(BranchIdx,lr_FullDepth)
+                elemSGR(JBidx,esgr_Triangular_Slope)       = elemSGR(JBidx,esgr_Triangular_TopBreadth) / &
+                                                                (twoR * elemR(JBidx,er_FullDepth))
+                elemR(JBidx,er_ZBreadthMax)                = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                elemR(JBidx,er_BreadthMax)                 = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullArea)                   =  elemR(JBidx,er_FullDepth) * elemR(JBidx, er_FullDepth) * &
+                                                                elemSGR(JBidx,esgr_Triangular_Slope)
+                elemR(JBidx,er_AreaBelowBreadthMax)        = elemR(JBidx,er_FullArea)
                             
             case (lCircular)
                 elemI(JBidx,ei_geometryType) = circular
@@ -1418,6 +1434,11 @@ contains
                              +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                   * elemR(  JBidx,er_Length)                                  &
                                   * elemSGR(JBidx,esgr_Trapezoidal_Breadth) )
+                case (lTriangular)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                    * elemR(  JBidx,er_Length)                                   &
+                                    * elemSGR(JBidx,esgr_Triangular_TopBreadth) )
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
@@ -1790,6 +1811,14 @@ contains
         !     !rm smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
         !     smallVolume = (trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff) * length !% 20220122brh
         ! end where
+
+        !% --- triangular conduit  
+        tPack = zeroI
+        npack = count(geoType == triangular)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == triangular)
+            smallvolume(tPack(1:npack)) = triangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if 
 
         !% ---  circular conduit
 
