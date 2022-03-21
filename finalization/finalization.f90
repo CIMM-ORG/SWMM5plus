@@ -89,7 +89,7 @@ contains
         sync all
 
         !% --- delete the duplicate input files
-        call util_file_delete_duplicate_input ()
+        ! call util_file_delete_duplicate_input ()
 
         !% --- stop the CPU time clock
         call cpu_time(setting%Time%CPU%EpochFinishSeconds)

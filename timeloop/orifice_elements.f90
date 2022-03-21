@@ -161,6 +161,17 @@ module orifice_elements
         VillemonteExponent    => Setting%Orifice%VillemonteCorrectionExponent
         grav                  => setting%constant%gravity
         !%-----------------------------------------------------------------------------
+
+        !% HACK: Hardcoded for Trajkovic cases
+        if (eIdx == 146) then
+            if ((setting%Time%Now .ge. 120.00) .and. (setting%Time%Now .lt. 150.00)) then
+                EffectiveFullDepth = 0.00001
+            else if (setting%Time%Now .ge. 150.00) then
+                EffectiveFullDepth = 0.028
+            end if
+        end if
+
+
         !% find full area for flow, and A/L for critical depth calculations
         select case (GeometryType)
             case (circular)
