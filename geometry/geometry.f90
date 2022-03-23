@@ -289,7 +289,7 @@ module geometry
                                 !% is not updated until after face interpolation
                                 head(tB) = zBtm(tB)  &
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
-                                    *(velocity(tB)**twoR) / grav
+                                    *(velocity(tB)**twoR) / (twoR * grav)   !% 20220307 brh ADDED 2 to factor
                             end if
                            
                             
@@ -471,24 +471,24 @@ module geometry
         !% HACK Needs additional geometries
 
         !% JM with functional geomtery
-        thisCol => col_elemPGx(epg_JM_functional_nonsurcharged)
+        thisCol => col_elemPGx(epg_JM_functionalStorage_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% JM with tabular geomtery
-        thisCol => col_elemPGx(epg_JM_tabular_nonsurcharged)
+        thisCol => col_elemPGx(epg_JM_tabularStorage_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% JM with artificial storage
-        thisCol => col_elemPGx(epg_JM_artificial_nonsurcharged)
+        thisCol => col_elemPGx(epg_JM_impliedStorage_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_artificial_depth_from_volume (elemPGx, Npack, thisCol)
+            call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !%-------------------------------------------------------------------

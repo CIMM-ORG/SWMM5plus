@@ -1198,7 +1198,7 @@ contains
             end if
         else
             !%-----------------------------------------------------------------------
-            !% HACK: Junction main with artificial storage are rectangular
+            !% HACK: Junction main with implied storage are rectangular
             !%-----------------------------------------------------------------------
             elemSI(JMidx,esi_JunctionMain_Type) = ImpliedStorage
             elemI(JMidx,ei_geometryType)        = rectangular
