@@ -427,7 +427,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGalltm(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -462,7 +462,7 @@ contains
         end if
 
         !% junction main with tabular geometry relationship
-        ptype => col_elemPGalltm(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -497,7 +497,7 @@ contains
         end if
 
         !% junction main with artificial storage relationship -- for ALL tm
-        ptype => col_elemPGalltm(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -636,7 +636,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -665,7 +665,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -694,7 +694,7 @@ contains
         end if
 
         !% junction main with artificial storage relationship -- for AC
-        ptype => col_elemPGac(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -830,7 +830,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGetm(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -859,7 +859,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGetm(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -889,7 +889,7 @@ contains
 
 
         !% junction main with artificial storage relationship -- for ETM
-        ptype => col_elemPGetm(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &

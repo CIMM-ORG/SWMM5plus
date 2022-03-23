@@ -464,9 +464,9 @@ module define_indexes
         enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
-        enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
-        enumerator :: epg_JM_artificial_nonsurcharged        !% JM with artificial storage
+        enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_impliedStorage_nonsurcharged        !% JM with artificial storage
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
