@@ -10,6 +10,8 @@ module finalization
     use utility_profiler
     !use utility_prof_jobcount
     use output
+    use utility_crash
+    use utility_files, only: util_file_delete_duplicate_input
 
     implicit none
 
@@ -77,14 +79,17 @@ contains
                 !if (this_image() == 1) write(*,*) 'starting convert elements'
                 call outputML_convert_elements_to_linknode_and_write ()
             end if
-
         end if  
+        call util_crashstop(31903)
 
         !% --- shut down EPA SWMM-C and delete the API
         ! if (this_image() == 1) print *, 'calling interface finalize'
         call interface_finalize()
 
         sync all
+
+        !% --- delete the duplicate input files
+        call util_file_delete_duplicate_input ()
 
         !% --- stop the CPU time clock
         call cpu_time(setting%Time%CPU%EpochFinishSeconds)

@@ -40,10 +40,10 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 100,
+        "StoredLevels" : 10000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 500
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -58,7 +58,8 @@
             "isTopWidthOut"     : false,
             "isVelocityOut"     : true,
             "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isWaveSpeedOut"    : true,
+            "isPreissmannCelerityOut"   : true
         },
         "Report" : {
             "useSWMMinpYN" :true,
@@ -90,5 +91,28 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0
+    },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "VariableSlot", 
+        "PreissmannNumber" : 8.0,
+        "PreissmannCelerity" : 80.0
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.3,
+        "decreaseFactor" : 0.8,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10
     }
 }

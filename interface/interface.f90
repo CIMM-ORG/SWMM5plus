@@ -9,6 +9,7 @@ module interface
     use define_api_keys
     use define_globals
     use define_settings, only: setting
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -490,7 +491,9 @@ contains
             print *, '* system with exactly 200 nodes and exactly 200 links.             *'
             print *, '********************************************************************'
             print *, ''
-            stop 309786
+            !stop 
+            call util_crashpoint( 309786)
+            return
             !% HACK -- developer's note:
             !% Unfortunately, the parse error returns a code of 200 in the get_num_objects()
             !% function, which is appears as SWMM_N_link=200 and SWMM_N_node=200. As it is
@@ -569,7 +572,8 @@ contains
     !     call c_lib_load(c_lib, errstat, errmsg)
     !     if (errstat /= 0) then
     !         print *, "ERROR: " // trim(errmsg)
-    !         stop
+    !         stop 
+    !         call util_crashpoint(298703)
     !     end if
     !     call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
 
@@ -603,7 +607,9 @@ contains
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop 8673489
+                !stop 
+                call util_crashpoint( 8673489)
+                return
             end if
         end do
 
@@ -613,7 +619,9 @@ contains
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop 48705
+                !stop 
+                call util_crashpoint( 48705)
+                return
             end if
         end do
 
@@ -692,12 +700,16 @@ contains
 
         if ((attr > N_api_nodef_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
-            stop 948705
+            !stop 
+            call util_crashpoint( 948705)
+            return
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
-            stop 397904
+            !stop 
+            call util_crashpoint( 397904)
+            return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -743,12 +755,16 @@ contains
             !print *, 'API_CONDUIT', API_CONDUIT,',link_value',link_value
         if ((attr > N_api_total_linkf_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
-            stop 49870555
+            !stop 
+            call util_crashpoint( 498705)
+            return
         end if
 
         if ((link_idx > SWMM_N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
-            stop 9987355
+            !stop 
+            call util_crashpoint( 9987355)
+            return
         end if
 
         if (attr <= N_api_linkf_attributes) then
@@ -1108,12 +1124,16 @@ contains
 
         if ((attr > N_api_total_table_attributes) .or. (attr < 1)) then
             print *, "error: unexpected table attribute value", attr
-            stop 28704
+            !stop 
+            call util_crashpoint( 28704)
+            return
         end if
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop 498734
+            !stop 
+            call util_crashpoint( 498734)
+            return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1184,7 +1204,9 @@ contains
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop 835551
+            !stop 
+            call util_crashpoint( 835551)
+            return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1224,7 +1246,9 @@ contains
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop 837014
+            !stop 
+            call util_crashpoint( 837014)
+            return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1271,7 +1295,9 @@ contains
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop 8367894
+            !stop 
+            call util_crashpoint( 8367894)
+            return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1389,7 +1415,8 @@ contains
                     write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
                     write(*,*), '   skipping error condition!'
                     write(*,*) '******'
-                    !stop 3987044
+                    !stop 
+                    !call util_crashpoint( 3987044)
                 !% brh20211207e    
                 end if
             !% brh20211208s
@@ -1449,7 +1476,8 @@ contains
                             ! write(*,*) '   tnow  = ', tnow
                             ! write(*,*) '   skipping error condition'
                             ! write(*,*) '******'
-                            ! stop 4479823
+                            ! stop 
+                            !call util_crashpoint( 4479823)
                         !% brh20211207e    
                         end if
                     !% brh20211207s
@@ -1459,7 +1487,8 @@ contains
                         ! write(*,*) '   success = ', success
                         ! write(*,*) '   skipping error condition'
                         ! write(*,*) '******'
-                        ! stop 4589709
+                        ! stop 
+                        !call util_crashpoint( 4589709)
                     !% brh20211207e                          
                     end if
                 else
@@ -1497,7 +1526,9 @@ contains
             tnext = setting%Time%End
         else
             print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
-            stop
+            !stop 
+            call util_crashpoint(42987)
+            return
         end if
 
         if (setting%Debug%File%interface)  &
@@ -2118,8 +2149,10 @@ contains
 
         !% Open the shared library
         call c_lib_open(c_lib, errstat, errmsg)
+        if (crashI==1) return
         c_lib%procname = api_procedure_name
         call c_lib_load(c_lib, errstat, errmsg)
+        if (crashI==1) return
 
         !% Loads shared library funcitonalities
         select case (api_procedure_name)
@@ -2183,7 +2216,9 @@ contains
             case default
                 write(*,"(A,A)") "Error, procedure " // api_procedure_name // &
                  " has not been handled in load_api_procedure"
-                stop
+                !stop 
+                call util_crashpoint(420987)
+                return
         end select
 
         if (setting%Debug%File%interface)  &
@@ -2329,7 +2364,9 @@ contains
             write(*,*) trim(setting%File%rpt_file)
             write(*,*) "SWMM User Manual (Appendix E) has details on error codes."
             write(*,*)
-            stop 63455
+            !stop 
+            call util_crashpoint( 63455)
+            return
         end if
     end subroutine print_api_error
 !%

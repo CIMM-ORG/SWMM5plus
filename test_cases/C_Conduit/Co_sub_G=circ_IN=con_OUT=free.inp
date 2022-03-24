@@ -16,11 +16,11 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             06:00:00
+END_TIME             00:02:59
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:01:00
+REPORT_STEP          00:00:01
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:01 
@@ -63,40 +63,40 @@ J9               0.189      0          0.5        2.0        0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-Out1             0          FREE                      NO                       
+Out1             0          FREE                          NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               1                J1               100        0.015      0          0          8.859      0         
-C2               J1               J2               100        0.015      0          0          8.859      0         
-C3               J2               J3               100        0.015      0          0          8.859      0         
-C4               J3               J4               100        0.015      0          0          8.859      0         
-C5               J4               J5               100        0.015      0          0          8.859      0         
-C6               J5               J6               100        0.015      0          0          8.859      0         
-C7               J6               J7               100        0.015      0          0          8.859      0         
-C8               J7               J8               100        0.015      0          0          8.859      0         
-C9               J8               J9               100        0.015      0          0          8.859      0         
-C10              J9               Out1             100        0.015      0          0          8.859      0         
+1               1                J1               100        0.015      0          0          8.859      0         
+2               J1               J2               100        0.015      0          0          8.859      0         
+3               J2               J3               100        0.015      0          0          8.859      0         
+4               J3               J4               100        0.015      0          0          8.859      0         
+5               J4               J5               100        0.015      0          0          8.859      0         
+6               J5               J6               100        0.015      0          0          8.859      0         
+7               J6               J7               100        0.015      0          0          8.859      0         
+8               J7               J8               100        0.015      0          0          8.859      0         
+9               J8               J9               100        0.015      0          0          8.859      0         
+10              J9               Out1             100        0.025      0          0          8.859      0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1               CIRCULAR     2                0          0          0          1                    
-C2               CIRCULAR     2                0          0          0          1                    
-C3               CIRCULAR     2                0          0          0          1                    
-C4               CIRCULAR     2                0          0          0          1                    
-C5               CIRCULAR     2                0          0          0          1                    
-C6               CIRCULAR     2                0          0          0          1                    
-C7               CIRCULAR     2                0          0          0          1                    
-C8               CIRCULAR     2                0          0          0          1                    
-C9               CIRCULAR     2                0          0          0          1                    
-C10              CIRCULAR     2                0          0          0          1                    
+1               CIRCULAR     1.5                0          0          0          1                    
+2               CIRCULAR     1.5                0          0          0          1                    
+3               CIRCULAR     1.5                0          0          0          1                    
+4               CIRCULAR     1.5                0          0          0          1                    
+5               CIRCULAR     1.5                0          0          0          1                    
+6               CIRCULAR     1.5                0          0          0          1                    
+7               CIRCULAR     1.5                0          0          0          1                    
+8               CIRCULAR     1.5                0          0          0          1                    
+9               CIRCULAR     1.5                0          0          0          1                    
+10              CIRCULAR     1.5                0          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      4.859   
+1                FLOW             "630016810"               FLOW       
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     

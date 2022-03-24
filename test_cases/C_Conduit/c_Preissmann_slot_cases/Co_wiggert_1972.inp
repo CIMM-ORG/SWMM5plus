@@ -1,0 +1,236 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         MODIFIED_GREEN_AMPT
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           11/12/2021
+START_TIME           00:00:00
+REPORT_START_DATE    11/12/2021
+REPORT_START_TIME    00:00:00
+END_DATE             11/12/2021
+END_TIME             00:05:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:00:01
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0.0001
+RULE_STEP            00:00:00
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  D-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         1.167
+MAX_TRIALS           9
+HEAD_TOLERANCE       0.000015
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.00001
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+J1               0          0.148      0.128      0          0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+Out1             0          FIXED 0.128  NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+C1               J1               Out1             10         0.012      0          0          0          0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+C1               RECT_CLOSED  0.148            0.51       0          0          1                    
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+J1               FLOW             wiggert_inflow   FLOW     1.0      1.0              
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+;this dwonstream head has been obtained from wiggert1972
+wiggert_dn_head  11/12/2021 0          0.128     
+wiggert_dn_head             0.000277777777777778 0.128     
+wiggert_dn_head             0.000555555555555556 0.128     
+wiggert_dn_head             0.000833333333333333 0.128     
+wiggert_dn_head             0.00111111111111111 0.128     
+wiggert_dn_head             0.00138888888888889 0.128     
+wiggert_dn_head             0.00166666666666667 0.128     
+wiggert_dn_head             0.00194444444444444 0.128     
+wiggert_dn_head             0.00200000000000000 0.168     
+wiggert_dn_head             0.00222222222222222 0.168     
+wiggert_dn_head             0.00250000000000000 0.168     
+wiggert_dn_head             0.00277777777777778 0.168     
+wiggert_dn_head             0.00305555555555556 0.168     
+wiggert_dn_head             0.00333333333333333 0.168     
+;
+;from wiggert 1972
+wiggert_inflow   11/12/21   0          0         
+wiggert_inflow              2.77777777777778e-05 0.000586813428939194
+wiggert_inflow              5.55555555555556e-05 0.00107903213622789
+wiggert_inflow              8.33333333333333e-05 0.00179623051903828
+wiggert_inflow              0.000111111111111111 0.00245086200506488
+wiggert_inflow              0.000138888888888889 0.00313559055569221
+wiggert_inflow              0.000166666666666667 0.00386893716622495
+wiggert_inflow              0.000194444444444444 0.00499728948462598
+wiggert_inflow              0.000222222222222222 0.00588155093692918
+wiggert_inflow              0.000250000000000000 0.00696351797720701
+wiggert_inflow              0.000277777777777778 0.00771121166505400
+wiggert_inflow              0.000305555555555556 0.00844370739838725
+wiggert_inflow              0.000333333333333333 0.00905683129010781
+wiggert_inflow              0.000361111111111111 0.00958741713169842
+wiggert_inflow              0.000388888888888889 0.0100606269691670
+wiggert_inflow              0.000416666666666667 0.0105842957079566
+wiggert_inflow              0.000444444444444444 0.0109495056151825
+wiggert_inflow              0.000472222222222222 0.0112560744645047
+wiggert_inflow              0.000500000000000000 0.0116129668036287
+wiggert_inflow              0.000527777777777778 0.0120328905897567
+wiggert_inflow              0.000555555555555556 0.0123616287372891
+wiggert_inflow              0.000583333333333333 0.0125601320129779
+wiggert_inflow              0.000611111111111111 0.0127458615480985
+wiggert_inflow              0.000638888888888889 0.0130101947986031
+wiggert_inflow              0.000666666666666667 0.0131925401469399
+wiggert_inflow              0.000694444444444445 0.0133442698950241
+wiggert_inflow              0.000722222222222222 0.0135161112771669
+wiggert_inflow              0.000750000000000000 0.0136961324198693
+wiggert_inflow              0.000777777777777778 0.0139050380224548
+wiggert_inflow              0.000805555555555556 0.0141303142202966
+wiggert_inflow              0.000833333333333333 0.0143306601777998
+wiggert_inflow              0.000861111111111111 0.0145473557226544
+wiggert_inflow              0.000888888888888889 0.0147616624357629
+wiggert_inflow              0.000916666666666667 0.0149356978922979
+wiggert_inflow              0.000944444444444444 0.0150811904717056
+wiggert_inflow              0.000972222222222222 0.0152258773598500
+wiggert_inflow              0.00100000000000000 0.0154719269189072
+wiggert_inflow              0.00102777777777778 0.0157814387894577
+wiggert_inflow              0.00105555555555556 0.0159696577772677
+wiggert_inflow              0.00108333333333333 0.0161049464545264
+wiggert_inflow              0.00111111111111111 0.0163295415399919
+wiggert_inflow              0.00113888888888889 0.0165648349583042
+wiggert_inflow              0.00116666666666667 0.0167598891913254
+wiggert_inflow              0.00119444444444444 0.0169557631299479
+wiggert_inflow              0.00122222222222222 0.0171536732739985
+wiggert_inflow              0.00125000000000000 0.0173495488043992
+wiggert_inflow              0.00127777777777778 0.0175514234657650
+wiggert_inflow              0.00130555555555556 0.0177758360834758
+wiggert_inflow              0.00133333333333333 0.0179258797795185
+wiggert_inflow              0.00136111111111111 0.0179948318943424
+wiggert_inflow              0.00138888888888889 0.0181655426753341
+wiggert_inflow              0.00141666666666667 0.0182559489894597
+wiggert_inflow              0.00144444444444444 0.0183483989757290
+wiggert_inflow              0.00147222222222222 0.0185116837500024
+wiggert_inflow              0.00150000000000000 0.0185440504497530
+wiggert_inflow              0.00152777777777778 0.0185352946514302
+wiggert_inflow              0.00155555555555556 0.0185415777967096
+wiggert_inflow              0.00158333333333333 0.0185436407269372
+wiggert_inflow              0.00161111111111111 0.0185433473008041
+wiggert_inflow              0.00163888888888889 0.0185431097745705
+wiggert_inflow              0.00166666666666667 0.0185473551218259
+wiggert_inflow              0.00169444444444444 0.0185881824916566
+wiggert_inflow              0.00172222222222222 0.0186695394388206
+wiggert_inflow              0.00175000000000000 0.0187242769340090
+wiggert_inflow              0.00177777777777778 0.0187303488122912
+wiggert_inflow              0.00180555555555556 0.0188111058964087
+wiggert_inflow              0.00183333333333333 0.0189025875317291
+wiggert_inflow              0.00186111111111111 0.0189413202467232
+wiggert_inflow              0.00188888888888889 0.0189466587844454
+wiggert_inflow              0.00191666666666667 0.0189624346634631
+wiggert_inflow              0.00194444444444444 0.0190332487499776
+wiggert_inflow              0.00197222222222222 0.0191454118779058
+wiggert_inflow              0.00200000000000000 0.0192410628173479
+wiggert_inflow              0.00202777777777778 0.0192960465621927
+wiggert_inflow              0.00205555555555556 0.0193311673811652
+wiggert_inflow              0.00208333333333333 0.0193841122664001
+wiggert_inflow              0.00211111111111111 0.0194684695938445
+wiggert_inflow              0.00213888888888889 0.0195791633102637
+wiggert_inflow              0.00216666666666667 0.0196994315620388
+wiggert_inflow              0.00219444444444444 0.0198471221096371
+wiggert_inflow              0.00222222222222222 0.0199900517723555
+wiggert_inflow              0.00225000000000000 0.0200553094106031
+wiggert_inflow              0.00227777777777778 0.0200540045322149
+wiggert_inflow              0.00230555555555556 0.0200442765916116
+wiggert_inflow              0.00233333333333333 0.0200891802010366
+wiggert_inflow              0.00236111111111111 0.0201738284943715
+wiggert_inflow              0.00238888888888889 0.0202060040416406
+wiggert_inflow              0.00241666666666667 0.0201938491481108
+wiggert_inflow              0.00244444444444445 0.0202007558502916
+wiggert_inflow              0.00247222222222222 0.0202302865126286
+wiggert_inflow              0.00250000000000000 0.0202603661264913
+wiggert_inflow              0.00252777777777778 0.0202792354920028
+wiggert_inflow              0.00255555555555556 0.0202799348475166
+wiggert_inflow              0.00258333333333333 0.0202710533556201
+wiggert_inflow              0.00261111111111111 0.0202951237964350
+wiggert_inflow              0.00263888888888889 0.0203546375229823
+wiggert_inflow              0.00266666666666667 0.0203826576089660
+wiggert_inflow              0.00269444444444444 0.0203507942483034
+wiggert_inflow              0.00272222222222222 0.0202686314445946
+wiggert_inflow              0.00275000000000000 0.0202453235226345
+wiggert_inflow              0.00277777777777778 0.0202944021472166
+wiggert_inflow              0.00280555555555556 0.0202853167139707
+wiggert_inflow              0.00283333333333333 0.0202785663748057
+wiggert_inflow              0.00286111111111111 0.0202827221908502
+wiggert_inflow              0.00288888888888889 0.0202804561785045
+wiggert_inflow              0.00291666666666667 0.0202750538948568
+wiggert_inflow              0.00294444444444444 0.0202928013294258
+wiggert_inflow              0.00297222222222222 0.0203236788320409
+wiggert_inflow              0.00300000000000000 0.0203108429028308
+wiggert_inflow              0.00302777777777778 0.0202680491617472
+wiggert_inflow              0.00305555555555556 0.0202299088075161
+wiggert_inflow              0.00308333333333333 0.0201804539658670
+wiggert_inflow              0.00311111111111111 0.0201135752747154
+wiggert_inflow              0.00313888888888889 0.0200550001270342
+wiggert_inflow              0.00316666666666667 0.0200235079133722
+wiggert_inflow              0.00319444444444444 0.0200022385311801
+wiggert_inflow              0.00322222222222222 0.0199620572520632
+wiggert_inflow              0.00325000000000000 0.0198841635544269
+wiggert_inflow              0.00327777777777778 0.0197906718989018
+wiggert_inflow              0.00330555555555556 0.0196995304213904
+wiggert_inflow              0.00333333333333333 0.0195850752366943
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 0.000 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+J1               0.000              5000.000          
+Out1             1000.000           5000.000          
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

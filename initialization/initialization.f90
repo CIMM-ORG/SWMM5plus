@@ -18,6 +18,7 @@ module initialization
     use utility_files
     use output
     use pack_mask_arrays
+    use utility_crash
 
     implicit none
 
@@ -66,7 +67,7 @@ contains
             integer    :: nUpBranch, nDnBranch
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
@@ -106,13 +107,18 @@ contains
             call util_file_setup_input_paths_and_files()
         end if
 
+        !% --- create duplicate input files
+        call util_file_duplicate_input ()
+        call util_crashstop(2293883)
+        sync all
+
         !% --- initialize the time stamp used for output (must be after json is read)
         call init_timestamp ()
+        sync all
 
         !% --- setup the output file directories. 
         !%        This will create a new directory with a timestamp for output
         call util_file_setup_output_folders()
-
         sync all
 
         !% -- program header
@@ -135,10 +141,12 @@ contains
         !% --- initialize the API with the SWMM-C code
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
+        call util_crashstop(43974)
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
+        call util_crashstop(31973)
         
         !% --- initialize globals that are run-time dependent
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
@@ -155,12 +163,12 @@ contains
         !% --- store the SWMM-C curves in equivalent Fortran arrays
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
+        call util_crashstop(53454)
 
         !% --- break the link-node system into partitions for multi-processor operation
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
-
-        sync all 
+        call util_crashstop(52973)
 
         !% --- default keys  brh20220103
         elemI(:,ei_elementType) = undefinedKey
@@ -169,24 +177,23 @@ contains
         elemI(:,ei_QeqType) = undefinedKey
         elemI(:,ei_specificType) = undefinedKey
         
-        !% --- translate the link-node system into a finite-volume network
-        if (setting%Simulation%useHydraulics) then 
-            !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin network definition"
-            call network_define_toplevel ()
-        else 
+        if (.not. setting%Simulation%useHydraulics) then 
             if (this_image() == 1) then
                 write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
                 write(*,*) '...this presently is not supported in SWMM5+'
             end if
-            stop 879815
-        end if                                   
+            !stop 
+            call util_crashpoint(879815)
+        end if  
+        call util_crashstop(190873)
 
-        sync all 
+        !% --- translate the link-node system into a finite-volume network
+        call network_define_toplevel ()
+        call util_crashstop(329873)
 
         !% --- iinitialize boundary and ghost elem arrays for inter image data transfer
         call init_boundary_ghost_elem_array ()
-
-        sync all
+        call util_crashstop(2293378)
 
         !% --- initialize the time variables
         !if (setting%Output%Verbose) print *, "begin initializing time"
@@ -207,40 +214,42 @@ contains
         else 
             !% continue without hydrology    
         end if
-
-        sync all
+        call util_crashstop(320983)
 
         !% --- initialize the output reports
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
         call init_report()
 
         !% --- set up initial conditions in the FV network
-        if (setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
-            if ((setting%Output%Verbose) .and. (this_image() == 1)) then 
-                !print *, "begin initial conditions"
-                if (this_image() == 1) then
-                    if ((N_link > 5000) .or. (N_node > 5000)) then
-                        write(*,"(A)") " ... setting initial conditions -- may take several minutes for big systems ..."
-                        write(*,"(A,i8,A,i8,A)") "      SWMM system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
-                        write(*,"(A,i8,A)")      "      FV system has   ", sum(N_elem(:)), " elements"
-                    else 
-                        !% no need to write for small systems
-                    end if
-                else 
-                    !% only print for 1 processor
-                end if
-            else 
-                !% be silent    
-            end if    
-            !% --- initial conditions all are setup here
-            call init_IC_toplevel ()
-        else 
+        if (.not. setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
             if (this_image() == 1) then
                 write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
                 write(*,*) '...this presently is not supported in SWMM5+'
             end if
-            stop 9378975
-        end if          
+            !stop 
+            call util_crashpoint(9378975)
+        end if
+        call util_crashstop(223873)
+    
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) then 
+            !print *, "begin initial conditions"
+            if (this_image() == 1) then
+                if ((N_link > 5000) .or. (N_node > 5000)) then
+                    write(*,"(A)") " ... setting initial conditions -- may take several minutes for big systems ..."
+                    write(*,"(A,i8,A,i8,A)") "      SWMM system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
+                    write(*,"(A,i8,A)")      "      FV system has   ", sum(N_elem(:)), " elements"
+                else 
+                    !% no need to write for small systems
+                end if
+            else 
+                !% only print for 1 processor
+            end if
+        else 
+            !% be silent    
+        end if    
+        !% --- initial conditions all are setup here
+        call init_IC_toplevel ()       
+        call util_crashstop(4429873)
 
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
@@ -268,11 +277,14 @@ contains
                     write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
                     write(*,*) '...this presently is not supported in SWMM5+'
                 end if
-                stop 487587  
+                !stop 
+                call util_crashpoint(487587)  
             end if  
         else 
             !% continue without any output files                                      
         end if
+        call util_crashstop(103897)
+
         !% --- wait for all processors before exiting to the time loop
         sync all
     
@@ -291,14 +303,17 @@ contains
                     write(*,*) '** the json file to run a full simulation.            **'
                     write(*,*) '********************************************************'
                 end if
-                stop 333578
+                !stop 
+                call util_crashpoint(333578)
             end if
-            if (icrash) then  !% if crash in initialization, write the output and exit
+            if (crashYN) then  !% if crash in initialization, write the output and exit
                 if (setting%Output%Report%provideYN) then 
                     call outputML_store_data (.true.)
                 end if
                 return
             end if
+            call util_crashstop(440987)
+
             if (setting%Debug%File%initialization)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
@@ -358,7 +373,7 @@ contains
         character(len=13) :: datetimestamp
         character(64) :: subroutine_name = 'init_timestamp'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         call date_and_time(values = thisTime)
         write(cyear, "(i4)") thisTime(1)
         write(cmonth,"(i2)") thisTime(2)
@@ -449,13 +464,15 @@ contains
             character(64) :: subroutine_name = 'init_linknode_arrays'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             if (.not. api_is_initialized) then
                 print *, "ERROR: API is not initialized"
-                stop
+                !stop
+                call util_crashpoint(29873)
+                return
             end if
         !%-----------------------------------------------------------------------------
         !% Allocate storage for link & node tables
@@ -495,15 +512,16 @@ contains
             link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
             link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
             link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
-            !write(*,*) 'api_nodef_initDepth 1'
-            link%R(ii,lr_InitialUpstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth)
-            !write(*,*) 'api_nodef_initDepth 2'
-            link%R(ii,lr_InitialDnstreamDepth) = interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth)
-            
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
             link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
             link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)
             link%R(ii,lr_OutletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset2)
+            !write(*,*) 'api_nodef_initDepth 1'
+            link%R(ii,lr_InitialUpstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth) - &
+                                                    link%R(ii,lr_InletOffset), zeroR)
+            !write(*,*) 'api_nodef_initDepth 2'
+            link%R(ii,lr_InitialDnstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth) - &
+                                                    link%R(ii,lr_OutletOffset), zeroR)
 
             !% special element attributes
             link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions)
@@ -547,25 +565,23 @@ contains
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_up_branch_per_node,' upstream connections'
                     write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
                 end if
-                stop 387666
+                !stop 
+                call util_crashpoint(387666)
+                return
             end if
+
             if (node%I(ii, ni_N_link_u) > max_dn_branch_per_node) then
                 if (this_image() == 1) then
                     write(*,*) 'FATAL ERROR IN INPUT FILE'
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_dn_branch_per_node,' downstream connections'
                     write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
                 end if
-                stop 86752
+                !stop 
+                call util_crashpoint(86752)
+                return
             end if
 
         end do
-
-        !stop 398706
-        !write(*,*) 
-        !write(*,*) 'FINISHED WITH LINKS ---------------------------------------------------------'
-        !write(*,*) 'N_node = ',N_node
-        !write(*,*)
-
         
         do ii = 1, N_node
             !write(*,*) '======= starting node ',ii
@@ -617,7 +633,8 @@ contains
             ! else 
             !     write(*,*) 'CODE or INP FILE ERROR, unexpected else condition '
             !     write(*,*) 'Node type is undefined for node',ii
-            !     stop 98075               
+            !     stop 
+            !       call util_crashpoint(98075)               
             ! end if
             !write(*,*)
 
@@ -740,13 +757,15 @@ contains
         character(64) :: subroutine_name = 'init_curves'
 
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop 84785
+            !stop 
+            call util_crashpoint(84785)
+            return
         end if
 
         !% we create additional curves for functional storage as well
@@ -795,7 +814,7 @@ contains
         integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -810,7 +829,8 @@ contains
                 write(*,*) '* This run was stopped without any output.           *'
                 write(*,*) '******************************************************'
             end if
-            stop 9705322
+            !stop 
+            call util_crashpoint(970532)
             !write(*,*) '*** WARNING no conduit/channel links found, using SWMM hydrology only'
             setting%Simulation%useHydraulics = .false.
             return
@@ -825,7 +845,7 @@ contains
         end do
 
         !% Set the network partitioning method used for multi-processor parallel computation
-        call init_partitioning_method()
+        call partitioning_toplevel()
         sync all
 
         !% adjust the link lengths by cutting off a certain portion for the junction branch
@@ -875,7 +895,7 @@ contains
             character(64) :: subroutine_name = 'init_subcatchment'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -936,7 +956,9 @@ contains
                     write(*,*) 'CODE ERROR: unexpected case default in '//trim(subroutine_name)
                     print *, 'Node Type # of ',nodeType(nodeIdx(ii))
                     print *, 'which has key of ',trim(reverseKey(nodeType(nodeIdx(ii))))
-                    stop 3758974
+                    !stop 
+                    call util_crashpoint(3758974)
+                    return
                 end select
                 !% store logical for elem
                 if (elemIdx(ii) .ne. nullvalueI) then 
@@ -1071,7 +1093,7 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1119,7 +1141,9 @@ contains
                     print *, jj, node%I(idx, ni_node_type), reverseKey(node%I(idx, ni_node_type))
                     print *, reverseKey(nJ1), reverseKey(nJ2), reverseKey(nBCup), reverseKey(nBCdn)
                     print *, 'CODE ERROR, unexpected else'
-                    stop 390715
+                    !stop 
+                    call util_crashpoint(390715)
+                    return
                 end if !% multiple junction faces already counted
             end do
 
@@ -1180,7 +1204,7 @@ contains
         integer, dimension(:), allocatable, target :: packed_shared_face_idx
         character(64)    :: subroutine_name = 'init_boundary_ghost_elem_array'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1229,10 +1253,14 @@ contains
                     faceI(fIdx,fi_BoundaryElem_uL) = ii
                 else if (faceYN(fIdx,fYN_isUpGhost) .and. faceYN(fIdx,fYN_isDnGhost)) then
                     print*, 'error: condition not handeled single element with two shared faces'
-                    stop 914744
+                    !stop 
+                    call util_crashpoint(914744)
+                    return
                 else
                     print*, 'should not reach this condition'
-                    stop 54673
+                    !stop 
+                    call util_crashpoint(54673)
+                    return
                 end if
             end do
 
@@ -1363,12 +1391,13 @@ contains
             write(*,'(A)') '** '
             ifound = .true.
         end if
-        if (setting%Junction%isDynamicYN) then
-            write(*,'(A)') '** setting.Junction.isDynamic = true. We recommend false. '
-            write(*,'(A)') '** Dynamic junctions are in development and provide inconsistent results. '
-            write(*,'(A)') '** '
-            ifound = .true.
-        end if
+        !rm 20220207brh
+        ! if (setting%Junction%isDynamicYN) then
+        !     write(*,'(A)') '** setting.Junction.isDynamic = true. We recommend false. '
+        !     write(*,'(A)') '** Dynamic junctions are in development and provide inconsistent results. '
+        !     write(*,'(A)') '** '
+        !     ifound = .true.
+        ! end if
         if (.not. setting%File%force_folder_creationYN) then
             write(*,'(A)') '** setting.File.force_folder_creationYN = false. We recommend true. '
             write(*,'(A)') '** If this is false, SWMM5+ will have write errors if output folders '

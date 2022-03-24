@@ -38,7 +38,8 @@ module define_globals
 !% referred to with a short name
 
 
-    logical :: icrash = .false. !% error condition
+    logical :: crashYN = .false. !% error condition
+    integer :: crashI = 0 
 
 !% ===================================================================================
 !% ARRAYS
@@ -349,6 +350,9 @@ module define_globals
     integer, parameter :: Uniform           = 1
     integer, parameter :: LinearlyVarying   = 2
     integer, parameter :: ExponentialDecay  = 3
+
+    ! default for number of functional storage
+    integer :: N_FunctionalStorage = 0
 
     !% datetime related variables
     integer, parameter :: datedelta = 693594

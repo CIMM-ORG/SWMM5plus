@@ -38,8 +38,6 @@ module lowlevel_rk2
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
     public :: ll_junction_branch_flowrate_and_velocity
-    public :: ll_junction_branch_flowrate_and_velocity_packtest
-    public :: ll_momentum_source_JB
     public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
 
@@ -745,7 +743,7 @@ module lowlevel_rk2
         integer, pointer :: Npack
         real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:), fFlowMax(:)
         real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
-        real(8), pointer :: eVolume(:), eLength(:), dt, headC, grav, epsH, crk(:)
+        real(8), pointer :: eVolume(:), eLength(:), dt, grav, epsH, crk(:)
         real(8), pointer :: eRough(:)
         integer :: ii, kk, tB
         real(8) :: dHead, gamma
@@ -777,7 +775,7 @@ module lowlevel_rk2
         crk          => setting%Solver%crk2
         vMax         => setting%Limiter%Velocity%Maximum
         dt           => setting%Time%Hydraulics%Dt
-        headC        => setting%Junction%HeadCoef
+        !rm 20220207brh headC        => setting%Junction%HeadCoef
         grav         => setting%constant%gravity
         epsH         => setting%Eps%Head
         !%-----------------------------------------------------------------------------
@@ -882,286 +880,290 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_junction_branch_flowrate_and_velocity_packtest (whichTM)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Updates the flowrate and velocity on junction branches from face values
-        !% obtained in the face interpolation
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: whichTM
-            integer, pointer :: thisColP_JM, thisCol2, nPack, npack2, thisP(:), thisZeroP(:)
-            integer, pointer :: fUp(:), fDn(:), BranchExists(:)
-            integer :: kk, ii, jj
-            real(8), pointer :: dHead(:), eHead(:), eFlow(:), eVol(:)
-            real(8), pointer :: eArea(:), eVelocity(:), fHead_d(:), fHead_u(:)
-            real(8), pointer :: fFlowMax(:), vMax, dt, headC, grav, epsH
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                thisColP_JM            => col_elemP(ep_JM_ALLtm)
-                thisCol2               => col_elemP(ep_ZeroDepth_JM_ALLtm)
-            case (ETM)
-                thisColP_JM            => col_elemP(ep_JM_ETM)
-                thisCol2               => col_elemP(ep_ZeroDepth_JM_ETM)
-            case (AC)
-                thisColP_JM            => col_elemP(ep_JM_AC)
-                thisCol2               => col_elemP(ep_ZeroDepth_JM_AC)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 7659
-            end select
-            Npack => npack_elemP(thisColP_JM)
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
-        !% Aliases:
-            thisP     => elemP(1:Npack,thisColP_JM)
-            dHead     => elemR(:,er_Temp01)
-            eHead     => elemR(:,er_Head)
-            eFlow     => elemR(:,er_Flowrate)
-            eVol      => elemR(:,er_Volume)
-            eArea     => elemR(:,er_Area)
-            eVelocity => elemR(:,er_Velocity)
-            fUp       => elemI(:,ei_Mface_uL)
-            fDn       => elemI(:,ei_Mface_dL)
+! subroutine ll_junction_branch_flowrate_and_velocity_packtest (whichTM)
+    ! OBSOLETE 20220207
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Updates the flowrate and velocity on junction branches from face values
+    !     !% obtained in the face interpolation
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: whichTM
+    !         integer, pointer :: thisColP_JM, thisCol2, nPack, npack2, thisP(:), thisZeroP(:)
+    !         integer, pointer :: fUp(:), fDn(:), BranchExists(:)
+    !         integer :: kk, ii, jj
+    !         real(8), pointer :: dHead(:), eHead(:), eFlow(:), eVol(:)
+    !         real(8), pointer :: eArea(:), eVelocity(:), fHead_d(:), fHead_u(:)
+    !         real(8), pointer :: fFlowMax(:), vMax, dt, headC, grav, epsH
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !         select case (whichTM)
+    !         case (ALLtm)
+    !             thisColP_JM            => col_elemP(ep_JM_ALLtm)
+    !             thisCol2               => col_elemP(ep_ZeroDepth_JM_ALLtm)
+    !         case (ETM)
+    !             thisColP_JM            => col_elemP(ep_JM_ETM)
+    !             thisCol2               => col_elemP(ep_ZeroDepth_JM_ETM)
+    !         case (AC)
+    !             thisColP_JM            => col_elemP(ep_JM_AC)
+    !             thisCol2               => col_elemP(ep_ZeroDepth_JM_AC)
+    !         case default
+    !             print *, 'CODE ERROR: time march type unknown for # ', whichTM
+    !             print *, 'which has key ',trim(reverseKey(whichTM))
+    !             stop 7659
+    !         end select
+    !         Npack => npack_elemP(thisColP_JM)
+    !         if (Npack < 1) return
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !         thisP     => elemP(1:Npack,thisColP_JM)
+    !         dHead     => elemR(:,er_Temp01)
+    !         eHead     => elemR(:,er_Head)
+    !         eFlow     => elemR(:,er_Flowrate)
+    !         eVol      => elemR(:,er_Volume)
+    !         eArea     => elemR(:,er_Area)
+    !         eVelocity => elemR(:,er_Velocity)
+    !         fUp       => elemI(:,ei_Mface_uL)
+    !         fDn       => elemI(:,ei_Mface_dL)
 
-            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+    !         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
 
-            fHead_d  => faceR(:,fr_Head_d)
-            fHead_u  => faceR(:,fr_Head_u)
-            fFlowMax => faceR(:,fr_Flowrate_Max)
+    !         fHead_d  => faceR(:,fr_Head_d)
+    !         fHead_u  => faceR(:,fr_Head_u)
+    !         fFlowMax => faceR(:,fr_Flowrate_Max)
 
-            vMax         => setting%Limiter%Velocity%Maximum
-            dt           => setting%Time%Hydraulics%Dt
-            headC        => setting%Junction%HeadCoef
-            grav         => setting%constant%gravity
-            epsH         => setting%Eps%Head
-        !%------------------------------------------------------------------
-        !% cycle through the upper branches  
+    !         vMax         => setting%Limiter%Velocity%Maximum
+    !         dt           => setting%Time%Hydraulics%Dt
+    !         headC        => setting%Junction%HeadCoef
+    !         grav         => setting%constant%gravity
+    !         epsH         => setting%Eps%Head
+    !     !%------------------------------------------------------------------
+    !     !% cycle through the upper branches  
 
-        dHead = zeroR    
-        do kk=1,max_branch_per_node,2
-            !% head gradient from upstream to downstream
-            dHead(thisP+kk) = (fHead_d(fUp(thisP+kk)) - eHead(thisP+kk)) * real(BranchExists(thisP+kk),8)
-            !% flow based on head gradient
-            eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
-                * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
-            !% adjust so that inflow and outflow are limited
-            where     (dHead(thisP+kk) > epsH)  
-                !% use the smaller (positive) of the JB flow and the max flow on the face
-                eFlow(thisP+kk) = min(eFlow(thisP+kk), fFlowMax(fup(thisP+kk)))
-                !% if the minimum is negative (i.e, fFlowMax < 0), use zero
-                eFlow(thisP+kk) = max(eFlow(thisP+kk),zeroR)
-            elsewhere (dHead(thisP+kk) < epSH)
-                !% if outflow, limit by 1/3 of the main junction volume
-                eFlow(thisP+kk) = max(eFlow(thisP+kk), -eVol(thisP)/ (threeR * dt))
-            elsewhere
-                eFlow(thisP+kk) = zeroR
-            endwhere
-        end do
+    !     dHead = zeroR    
+    !     do kk=1,max_branch_per_node,2
+    !         !% head gradient from upstream to downstream
+    !         dHead(thisP+kk) = (fHead_d(fUp(thisP+kk)) - eHead(thisP+kk)) * real(BranchExists(thisP+kk),8)
+    !         !% flow based on head gradient
+    !         eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
+    !             * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
+    !         !% adjust so that inflow and outflow are limited
+    !         where     (dHead(thisP+kk) > epsH)  
+    !             !% use the smaller (positive) of the JB flow and the max flow on the face
+    !             eFlow(thisP+kk) = min(eFlow(thisP+kk), fFlowMax(fup(thisP+kk)))
+    !             !% if the minimum is negative (i.e, fFlowMax < 0), use zero
+    !             eFlow(thisP+kk) = max(eFlow(thisP+kk),zeroR)
+    !         elsewhere (dHead(thisP+kk) < epSH)
+    !             !% if outflow, limit by 1/3 of the main junction volume
+    !             eFlow(thisP+kk) = max(eFlow(thisP+kk), -eVol(thisP)/ (threeR * dt))
+    !         elsewhere
+    !             eFlow(thisP+kk) = zeroR
+    !         endwhere
+    !     end do
 
-        !% cycle through the lower branches
-        dHead = zeroR    
-        do kk=2,max_branch_per_node,2
-            !% head gradient from upstream to downstream
-            dHead(thisP+kk) = (eHead(thisP+kk) - fHead_u(fDn(thisP+kk))) * real(BranchExists(thisP+kk),8)
-            !% flow based on with head gradient
-            eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
-               * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
-            !% adjust so that inflow andd outflow are limited
-            where     (dHead(thisP+kk) < -epsH)  !% inflow
-                !% use the larger (smaller negative flow rate) of the JB flow and the max flow on the face
-                eFlow(thisP+kk) = max(eFlow(thisP+kk), fFlowMax(fdn(thisP+kk)))
-                !% if the minimum is positive (outflow ) (i.e, fFlowMax > 0), use zero
-                eFlow(thisP+kk) = min(eFlow(thisP+kk),zeroR)
-            elsewhere (dHead(thisP+kk) > epSH) !% outflow
-                !% if outflow, limit by 1/3 of the main junction volume
-                eFlow(thisP+kk) = min(eFlow(thisP+kk), eVol(thisP)/ (threeR * dt))
-            elsewhere
-                eFlow(thisP+kk) = zeroR
-            endwhere
-        end do
+    !     !% cycle through the lower branches
+    !     dHead = zeroR    
+    !     do kk=2,max_branch_per_node,2
+    !         !% head gradient from upstream to downstream
+    !         dHead(thisP+kk) = (eHead(thisP+kk) - fHead_u(fDn(thisP+kk))) * real(BranchExists(thisP+kk),8)
+    !         !% flow based on with head gradient
+    !         eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
+    !            * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
+    !         !% adjust so that inflow andd outflow are limited
+    !         where     (dHead(thisP+kk) < -epsH)  !% inflow
+    !             !% use the larger (smaller negative flow rate) of the JB flow and the max flow on the face
+    !             eFlow(thisP+kk) = max(eFlow(thisP+kk), fFlowMax(fdn(thisP+kk)))
+    !             !% if the minimum is positive (outflow ) (i.e, fFlowMax > 0), use zero
+    !             eFlow(thisP+kk) = min(eFlow(thisP+kk),zeroR)
+    !         elsewhere (dHead(thisP+kk) > epSH) !% outflow
+    !             !% if outflow, limit by 1/3 of the main junction volume
+    !             eFlow(thisP+kk) = min(eFlow(thisP+kk), eVol(thisP)/ (threeR * dt))
+    !         elsewhere
+    !             eFlow(thisP+kk) = zeroR
+    !         endwhere
+    !     end do
 
-        !% second pack for the zero-depth JM  
-        npack2 => npack_elemP(thisCol2)  ! HACK -- do we need separate packfor AC, ETM and ALLtm?
-        if (npack2 > 0) then
-            thisZeroP => elemP(1:npack2,thisCol2)
-        end if
+    !     !% second pack for the zero-depth JM  
+    !     npack2 => npack_elemP(thisCol2)  ! HACK -- do we need separate packfor AC, ETM and ALLtm?
+    !     if (npack2 > 0) then
+    !         thisZeroP => elemP(1:npack2,thisCol2)
+    !     end if
 
-        !% cycle through all the branches without reference to up or down
-        do kk=1,max_branch_per_node
-            !% fix for the zero depth JM
-            if (npack2 > 0) then
-                eFlow(thisZeroP+kk) = zeroR
-            end if
+    !     !% cycle through all the branches without reference to up or down
+    !     do kk=1,max_branch_per_node
+    !         !% fix for the zero depth JM
+    !         if (npack2 > 0) then
+    !             eFlow(thisZeroP+kk) = zeroR
+    !         end if
 
-            !% set the velocity
-            where (eArea(thisP+kk) .le. setting%ZeroValue%Area)
-                eVelocity(thisP+kk) = zeroR
-            elsewhere
-                eVelocity(thisP+kk) = eFlow(thisP+kk) / eArea(thisP+kk)
-            endwhere
+    !         !% set the velocity
+    !         where (eArea(thisP+kk) .le. setting%ZeroValue%Area)
+    !             eVelocity(thisP+kk) = zeroR
+    !         elsewhere
+    !             eVelocity(thisP+kk) = eFlow(thisP+kk) / eArea(thisP+kk)
+    !         endwhere
 
-            where (abs(eVelocity(thisP+kk)) > vMax)
-                eVelocity(thisP+kk) = sign(0.99 * vMax, eVelocity(thisP+kk))
-            endwhere
-        end do
+    !         where (abs(eVelocity(thisP+kk)) > vMax)
+    !             eVelocity(thisP+kk) = sign(0.99 * vMax, eVelocity(thisP+kk))
+    !         endwhere
+    !     end do
 
-        !% reset temp01 space
-        dHead = zeroR
+    !     !% reset temp01 space
+    !     dHead = zeroR
     
-        !%------------------------------------------------------------------
-        !% Closing:
+    !     !%------------------------------------------------------------------
+    !     !% Closing:
 
-    end subroutine ll_junction_branch_flowrate_and_velocity_packtest
+    ! end subroutine ll_junction_branch_flowrate_and_velocity_packtest
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_momentum_source_JB (thisMethod, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the RK2 step for VU on the junction branches
-        !% Note that this MUST be called separately for AC and ETM as the low-level VU
-        !% algorithm uses different dt and different volumes in the computation.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: thisMethod, istep
+! subroutine ll_momentum_source_JB (thisMethod, istep)
+    ! OBSOLETE 20220207brh
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes the RK2 step for VU on the junction branches
+    !     !% Note that this MUST be called separately for AC and ETM as the low-level VU
+    !     !% algorithm uses different dt and different volumes in the computation.
+    !     !%-----------------------------------------------------------------------------
+    !     integer, intent(in) :: thisMethod, istep
 
-        integer, pointer :: thisColP_JM, Npack, tM
-        integer, pointer :: thisP(:), BranchExists(:), iFaceUp(:), iFaceDn(:)
-        real(8), pointer :: fHead_u(:), fHead_d(:)
+    !     integer, pointer :: thisColP_JM, Npack, tM
+    !     integer, pointer :: thisP(:), BranchExists(:), iFaceUp(:), iFaceDn(:)
+    !     real(8), pointer :: fHead_u(:), fHead_d(:)
 
-        real(8), pointer :: delt
+    !     real(8), pointer :: delt
 
-        integer :: ii, kk, tB,  volumeLastCol, velocityLastCol
+    !     integer :: ii, kk, tB,  volumeLastCol, velocityLastCol
 
-        real(8) :: fHead
+    !     real(8) :: fHead
 
-        !%-----------------------------------------------------------------------------
-        !%
-        BranchExists => elemSI(:,esi_JunctionBranch_Exists)
-        fHead_u      => faceR(:,fr_Head_u)
-        fHead_d      => faceR(:,fr_Head_d)
-        iFaceUp      => elemI(:,ei_Mface_uL)
-        iFaceDn      => elemI(:,ei_Mface_dL)
+    !     !%-----------------------------------------------------------------------------
+    !     !%
+    !     BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+    !     fHead_u      => faceR(:,fr_Head_u)
+    !     fHead_d      => faceR(:,fr_Head_d)
+    !     iFaceUp      => elemI(:,ei_Mface_uL)
+    !     iFaceDn      => elemI(:,ei_Mface_dL)
 
-        !%-----------------------------------------------------------------------------
-        !%
-        if (thisMethod == AC) then !% AC time march
-            thisColP_JM     => col_elemP(ep_JM_AC)
-            delt            => setting%ACmethod%dtau
-            volumeLastCol   =  er_VolumeLastAC
-            velocityLastCol =  er_VelocityLastAC
-        elseif (thisMethod == ETM) then !% real time march
-            thisColP_JM     => col_elemP(ep_JM_ETM)
-            delt            => setting%Time%Hydraulics%Dt
-            volumeLastCol   =  er_Volume_N0
-            velocityLastCol =  er_Velocity_N0
-        else
-            print *, 'error, if-else that should not be reached'
-            stop 38293
-        end if
+    !     !%-----------------------------------------------------------------------------
+    !     !%
+    !     if (thisMethod == AC) then !% AC time march
+    !         thisColP_JM     => col_elemP(ep_JM_AC)
+    !         delt            => setting%ACmethod%dtau
+    !         volumeLastCol   =  er_VolumeLastAC
+    !         velocityLastCol =  er_VelocityLastAC
+    !     elseif (thisMethod == ETM) then !% real time march
+    !         thisColP_JM     => col_elemP(ep_JM_ETM)
+    !         delt            => setting%Time%Hydraulics%Dt
+    !         volumeLastCol   =  er_Volume_N0
+    !         velocityLastCol =  er_Velocity_N0
+    !     else
+    !         print *, 'error, if-else that should not be reached'
+    !         stop 38293
+    !     end if
 
-        Npack => npack_elemP(thisColP_JM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_JM)
-            do ii=1,Npack
-                tM => thisP(ii)
-                ! handle the upstream branches
-                do kk=1,max_branch_per_node,2
-                    tB = tM + kk
-                    if (BranchExists(tB)==1) then
-                        !% head on the upstream side of the upstream face
-                        fHead = fHead_u(iFaceUp(tB))
-                        call ll_junction_branch_VU ( &
-                            fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
-                    end if
-                end do
-                !% handle the downstream branches
-                do kk=2,max_branch_per_node,2
-                    tB = tM + kk
-                    if (BranchExists(tB)==1) then
-                        ! head on the downstream side of the downstream face
-                        fHead = fHead_d(iFaceDn(tB))
+    !     Npack => npack_elemP(thisColP_JM)
+    !     if (Npack > 0) then
+    !         thisP => elemP(1:Npack,thisColP_JM)
+    !         do ii=1,Npack
+    !             tM => thisP(ii)
+    !             ! handle the upstream branches
+    !             do kk=1,max_branch_per_node,2
+    !                 tB = tM + kk
+    !                 if (BranchExists(tB)==1) then
+    !                     !% head on the upstream side of the upstream face
+    !                     fHead = fHead_u(iFaceUp(tB))
+    !                     call ll_junction_branch_VU ( &
+    !                         fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
+    !                 end if
+    !             end do
+    !             !% handle the downstream branches
+    !             do kk=2,max_branch_per_node,2
+    !                 tB = tM + kk
+    !                 if (BranchExists(tB)==1) then
+    !                     ! head on the downstream side of the downstream face
+    !                     fHead = fHead_d(iFaceDn(tB))
 
-                        ! elem(tB,er_SourceMoment) = ll_junction_branch_VU_test ( &
-                        !     elemR(tB,er_Volume), &
-                        !     elemR(tB,er_Velocity), &
-                        !     elemR(tB,er_Head),  &
-                        !     elemR(tB,er_length), &
-                        !     elemR(tB,er_WaveSpeed), &
-                        !     fHead, delt, kk, istep )
+    !                     ! elem(tB,er_SourceMoment) = ll_junction_branch_VU_test ( &
+    !                     !     elemR(tB,er_Volume), &
+    !                     !     elemR(tB,er_Velocity), &
+    !                     !     elemR(tB,er_Head),  &
+    !                     !     elemR(tB,er_length), &
+    !                     !     elemR(tB,er_WaveSpeed), &
+    !                     !     fHead, delt, kk, istep )
                             
-                        call ll_junction_branch_VU (&
-                            fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
-                    end if
-                end do
-            end do
-        end if
+    !                     call ll_junction_branch_VU (&
+    !                         fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
+    !                 end if
+    !             end do
+    !         end do
+    !     end if
 
-    end subroutine ll_momentum_source_JB
+    ! end subroutine ll_momentum_source_JB
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_momentum_source_JB_packtest ()
-        !% to crate a packed version we need to first
-        !% create an elemental function for ll_junction_branch_VU
+! subroutine ll_momentum_source_JB_packtest ()
+    ! OBSOLETE 20220207brh
+    !     !% to crate a packed version we need to first
+    !     !% create an elemental function for ll_junction_branch_VU
 
-        !% STUB ROUTINE
+    !     !% STUB ROUTINE
 
-    end subroutine ll_momentum_source_JB_packtest    
+    ! end subroutine ll_momentum_source_JB_packtest    
 !%       
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_junction_branch_VU &
-        (fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% computes product of volume*velocity for a junction branch dynamic update
-        !% using an RK2
-        !% input:
-        !%    fHead is the head at the valid branch face (either up or down stream)
-        !%    delt is the RK2 time march step (ETM or AC)
-        !%    volumeLastCol, velocityLastCol are the columns for either AC or ETM
-        !%        previous velocities used as the RK2 base.
-        !%    tB is the branch local index
-        !%    kk is the row of the branch after the main
-        !%    istep is the step of the RK2
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: tB, kk, istep, volumeLastCol, velocityLastCol
-        real(8), intent(in) :: fHead, delt
+! subroutine ll_junction_branch_VU &
+    ! OBSOLETE 20220207brh
+    !     (fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% computes product of volume*velocity for a junction branch dynamic update
+    !     !% using an RK2
+    !     !% input:
+    !     !%    fHead is the head at the valid branch face (either up or down stream)
+    !     !%    delt is the RK2 time march step (ETM or AC)
+    !     !%    volumeLastCol, velocityLastCol are the columns for either AC or ETM
+    !     !%        previous velocities used as the RK2 base.
+    !     !%    tB is the branch local index
+    !     !%    kk is the row of the branch after the main
+    !     !%    istep is the step of the RK2
+    !     !%-----------------------------------------------------------------------------
+    !     integer, intent(in) :: tB, kk, istep, volumeLastCol, velocityLastCol
+    !     real(8), intent(in) :: fHead, delt
 
-        real(8), pointer :: eLength(:), eWaveSpeed(:), eHead(:)
-        real(8), pointer :: eVolume0(:), eVelocity0(:), Msource(:)
-        real(8), pointer :: cLim,  crk(:), grav
+    !     real(8), pointer :: eLength(:), eWaveSpeed(:), eHead(:)
+    !     real(8), pointer :: eVolume0(:), eVelocity0(:), Msource(:)
+    !     real(8), pointer :: cLim,  crk(:), grav
 
-        real(8) :: dC, deltaHead
-        !%-----------------------------------------------------------------------------
-        !%
-        Msource      => elemR(:,er_SourceMomentum)
-        eVolume0     => elemR(:,volumeLastCol)
-        eVelocity0   => elemR(:,velocityLastCol)
-        eLength      => elemR(:,er_Length)
-        eHead        => elemR(:,er_Head)
-        eWaveSpeed   => elemR(:,er_WaveSpeed)
+    !     real(8) :: dC, deltaHead
+    !     !%-----------------------------------------------------------------------------
+    !     !%
+    !     Msource      => elemR(:,er_SourceMomentum)
+    !     eVolume0     => elemR(:,volumeLastCol)
+    !     eVelocity0   => elemR(:,velocityLastCol)
+    !     eLength      => elemR(:,er_Length)
+    !     eHead        => elemR(:,er_Head)
+    !     eWaveSpeed   => elemR(:,er_WaveSpeed)
         
-        cLim         => setting%Junction%CFLlimit
-        crk          => setting%Solver%crk2
-        grav         => setting%constant%gravity
+    !     cLim         => setting%Junction%CFLlimit
+    !     crk          => setting%Solver%crk2
+    !     grav         => setting%constant%gravity
 
-        !% dynamic coefficient
-        dC = + grav * eVolume0(tB) &
-                / max(eLength(tB), (abs(eVelocity0(tB)) + abs(eWaveSpeed(tB))) / (cLim * delt))
-        !% head difference from downstream to upstream (d \eta /dx)*dx
-        deltaHead = branchsign(kk) * (eHead(tB) - fHead)
-        !% RK2 source
-        Msource(tB) = eVolume0(tB) * eVelocity0(tB) - crk(istep) * dC * deltaHead
+    !     !% dynamic coefficient
+    !     dC = + grav * eVolume0(tB) &
+    !             / max(eLength(tB), (abs(eVelocity0(tB)) + abs(eWaveSpeed(tB))) / (cLim * delt))
+    !     !% head difference from downstream to upstream (d \eta /dx)*dx
+    !     deltaHead = branchsign(kk) * (eHead(tB) - fHead)
+    !     !% RK2 source
+    !     Msource(tB) = eVolume0(tB) * eVelocity0(tB) - crk(istep) * dC * deltaHead
 
-    end subroutine ll_junction_branch_VU
+    ! end subroutine ll_junction_branch_VU
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1259,46 +1261,50 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: volumeN0(:), dSlotVolume(:)
         real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
-        real(8), pointer    :: CelerityFactor, tDelta, cfl, grav
+        real(8), pointer    :: PreissmannNumber, PreissmannCelerity, cfl, grav
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         volume     => elemR(:,er_Volume)
+        volumeN0   => elemR(:,er_Volume_N0)
         fullvolume => elemR(:,er_FullVolume)
         fullarea   => elemR(:,er_FullArea)
         ell        => elemR(:,er_ell)
         length     => elemR(:,er_Length)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
         BreadthMax    => elemR(:,er_BreadthMax)
+        dSlotVolume   => elemR(:,er_dSlotVolume)
 
-        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
-        CelerityFactor => setting%PreissmannSlot%CelerityFactor
-        tDelta         => setting%PreissmannSlot%DesiredTimeStep
-        cfl            => setting%VariableDT%CFL_target
-        grav           => setting%Constant%gravity
+        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
+        PreissmannNumber    => setting%PreissmannSlot%PreissmannNumber
+        PreissmannCelerity  => setting%PreissmannSlot%PreissmannCelerity
+        cfl                 => setting%VariableDT%CFL_target
+        grav                => setting%Constant%gravity
 
         select case (SlotMethod)
 
         case (VariableSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            dSlotVolume(thisP) = volume(thisP) - max(volumeN0(thisP),fullvolume(thisP))
+            SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
+            SlotArea(thisP)   = dSlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-            SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
-                ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
-
         case (StaticSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             !% SWMM5 uses 1% of width max as slot width
             ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-            SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
-                (cfl*length(thisP))**twoR
+            !% HACK: modeling for acoustic wavespeed
+            SlotWidth(thisP) = (grav * fullarea(thisP)) / (PreissmannCelerity**2.0)
+            !% HACK: old code based on a target CFL
+            ! SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
+                ! (cfl*length(thisP))**twoR
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
             SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &

@@ -217,7 +217,7 @@ module utility
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow) 
-            VolSlot => elemR(:,er_SlotVolume)
+            VolSlot => elemR(:,er_TotalSlotVolume)
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -233,7 +233,7 @@ module utility
             !% --- for output, use an accumulator
             eCons(thisP) = eCons(thisP)                                            &
                          + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
-                         - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP) + VolSlot(thisP)
+                         - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)
 
             !endwhere             
             !% --- for debugging, switch to using non-cumulative            
@@ -246,7 +246,7 @@ module utility
                     print *,  eCons(thisP(ii))
                     print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
                     print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
-                    print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) + VolSlot(thisP(ii)) & 
+                    print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
                             - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
                     print *, elemR(thisP(ii),er_VolumeOverFlow)
                     do kk=1,num_images()
@@ -700,9 +700,9 @@ module utility
         ! elemR(iet(3),er_FullVolume)
 
         ! write(*,"(A,5(e12.5,A))")     'SlotVol ',                &         
-        ! elemR(iet(1),er_SlotVolume), '            ', &
-        ! elemR(iet(2),er_SlotVolume), '            ', &
-        ! elemR(iet(3),er_SlotVolume)
+        ! elemR(iet(1),er_TotalSlotVolume), '            ', &
+        ! elemR(iet(2),er_TotalSlotVolume), '            ', &
+        ! elemR(iet(3),er_TotalSlotVolume)
 
 
         print *, ' '

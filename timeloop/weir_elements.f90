@@ -33,7 +33,7 @@ module weir_elements
         
         character(64) :: subroutine_name = 'weir_toplevel'
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%weir_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -78,7 +78,7 @@ module weir_elements
         logical, pointer :: CanSurcharge, IsSurcharged
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         !% input
         Head   => elemR(eIdx,er_Head)
         !% output
@@ -124,7 +124,7 @@ module weir_elements
         real(8), pointer :: Flowrate, EffectiveFullDepth, EffectiveHeadDelta
         real(8) :: CoeffOrifice
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         FlowDirection      => elemSI(eIdx,esi_Weir_FlowDirection)
         Flowrate           => elemR(eIdx,er_Flowrate) 
         EffectiveFullDepth => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
@@ -162,7 +162,7 @@ module weir_elements
         real(8) :: Zmidpt, CrestLength, SubCorrectionTriangular, SubCorrectionRectangular
         real(8) :: ratio
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
         EndContractions  => elemSI(eIdx,esi_Weir_EndContractions)
         FlowDirection    => elemSI(eIdx,esi_Weir_FlowDirection)
@@ -309,7 +309,7 @@ module weir_elements
         integer, pointer :: SpecificWeirType
         logical, pointer :: IsSurcharged
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
 
         Head        => elemR(eIdx,er_Head)

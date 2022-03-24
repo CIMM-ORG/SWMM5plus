@@ -9,6 +9,7 @@ module output
     use utility_datetime
     use utility_allocate
     use utility_deallocate
+    use utility_crash, only: util_crashpoint
 
 
     !use, intrinsic :: iso_fortran_env, only: *
@@ -264,7 +265,9 @@ contains
                 write (*,"(A)") 'CODE ERROR: statement should be unreachable'
                 write (*,"(A)") ' invalid element type was ',elementType(ii)
                 write (*,"(A)") ' which has key ',trim(reverseKey(elementType(ii)))
-                stop 487834
+                !stop 
+                call util_crashpoint( 487834)
+                return
             end select
         end do
         !%------------------------------------------------------------------
@@ -416,7 +419,8 @@ contains
         ! print *, setting%Output%FacesExist_byImage
         ! print *, setting%Output%FacesExist_global
         ! print *, N_OutFace
-        ! stop 3648053
+        ! stop 
+        !call util_crashpoint( 3648053)
 
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -442,21 +446,22 @@ contains
         !%------------------------------------------------------------------
         N_OutTypeElem = 0
         !% --- count the number of true output element types
-        if (setting%Output%DataOut%isAreaOut)           N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isDepthOut)          N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isFlowrateOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isFluxConsOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isFroudeNumberOut)   N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isHeadOut)           N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isHydRadiusOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isPerimeterOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isSlotWidthOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isSlotDepthOut)      N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isTopWidthOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVelocityOut)       N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVolumeOut)         N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVolumeConsOut)     N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isWaveSpeedOut)      N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isAreaOut)                    N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isDepthOut)                   N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFlowrateOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFluxConsOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFroudeNumberOut)            N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isHeadOut)                    N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isHydRadiusOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isPerimeterOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isSlotWidthOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isSlotDepthOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isTopWidthOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVelocityOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumeOut)                  N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumeConsOut)              N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
 
         if (N_OutTypeElem == 0) then
             !% --- if no outputtypes are specified, then suppress the element output
@@ -597,6 +602,16 @@ contains
             output_typeProcessing_elemR(ii) = AverageElements
         end if
 
+        !% --- Preissmann Celerity
+        if (setting%Output%DataOut%isPreissmannCelerityOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Preissmann_Celerity
+            output_typenames_elemR(ii) = 'PreissmannCelerity'
+            output_typeUnits_elemR(ii) = 'm/s'
+            output_typeProcessing_elemR(ii) = AverageElements
+        end if
+
+        
         !% -- store 'time' for use in output
         output_typeNames_withTime_elemR(2:ii+1) = output_typeNames_elemR(:)
         output_typeNames_withTime_elemR(1) = 'Time'
@@ -617,7 +632,9 @@ contains
         case default
             write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.Report.TimeUnits of...'
             write(*,*) setting%Output%Report%TimeUnits
-            stop 583003
+            !stop 
+            call util_crashpoint( 583003)
+            return
         end select
 
         !%------------------------------------------------------------------
@@ -793,7 +810,9 @@ contains
         case default
             write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.Report.TimeUnits of...'
             write(*,*) setting%Output%Report%TimeUnits
-            stop 99624
+            !stop 
+            call util_crashpoint( 99624)
+            return
         end select
 
         !%------------------------------------------------------------------
@@ -896,7 +915,9 @@ contains
             setting%Output%NumberOfWriteSteps = setting%Output%NumberOfWriteSteps+1
             call outputML_combine_and_write_data (thisLevel, isLastStep)
             thisLevel = 0
+            if (crashI==1) return
         end if
+
 
         !%------------------------------------------------------------------
         !% Closing
@@ -1093,7 +1114,9 @@ contains
             write(*,"(A)") 'ERROR (code, user): the intermediate output files have reached ...'
             write(*,"(A,I6,A)") '...the code the limit of',nWritten,' files...'
             write(*,"(A)") 'Suggest increasing setting.Output.StoredLevels.'
-            stop
+            !stop 
+            call util_crashpoint(220973)
+            return
         end if
 
         !% -----------------------------------------------
@@ -1114,7 +1137,9 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(file_name)
-            stop
+            !stop 
+            call util_crashpoint(982736)
+            return
         end if
 
         !% ----------------------------------
@@ -1216,7 +1241,9 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(file_name)
-            stop
+            !stop 
+            call util_crashpoint(92763)
+            return
         end if
 
         !% --- BEGIN WRITING
@@ -1405,7 +1432,9 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(thisFile)
-            stop 309870
+            !stop 
+            call util_crashpoint( 309870)
+            return
         end if
 
         !% --- get the total number of combined files written
@@ -1461,8 +1490,11 @@ contains
         case default
             write(*,'(A)') 'ERROR (code) unknown value of setting%Output%Report%TimeUnits of ...'
             write(*,*) setting%Output%Report%TimeUnits
-            stop 883345
+            !stop 
+            call util_crashpoint( 883345)
+            return
         end select
+
 
         !% --- HACK to make this independent of globals, this call will have to be changed and files always written/read.
         call outputML_get_all_output_binary_filenames (nWritten)
@@ -1487,7 +1519,9 @@ contains
                     write(*,"(A)") trim(thisFile)
                     write(*,"(A)") '... file is an unformated file of output data...'
                     write(*,"(A,i5)") '... iostat value = ',ios
-                    stop
+                    !stop 
+                    call util_crashpoint(209837)
+                    return
                 end if
 
                 !% -------------------------------
@@ -1502,7 +1536,9 @@ contains
                     write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                     write(*,"(A,i5)") '...output_times has size ',shape(output_times)
                     write(*,"(A,i5)") '...but needs to read in ',nLevel
-                    stop
+                    !stop 
+                    call util_crashpoint(87364)
+                    return
                 end if
 
                 !% -------------------------------------------
@@ -1523,7 +1559,9 @@ contains
                         write(*,"(A)") 'ERROR (code, file), unexpected array size problem...'
                         write(*,"(A,i5)") '...output_types_elemR has size ',size(output_types_elemR)
                         write(*,"(A,i5)") '...but needs to read in ',nTypeElem
-                        stop
+                        !stop 
+                        call util_crashpoint(209837)
+                        return
                     end if
 
                     !% --- read and store the fixed integer data
@@ -1542,20 +1580,23 @@ contains
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(1) has value ',dimvector(1)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTotalElem
-                        stop
+                        !stop 
+                        call util_crashpoint(109287)
                     end if
                     if (dimvector(2) .ne. nTypeElem) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(2) has value ',dimvector(2)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTypeElem
-                        stop
+                        !stop 
+                        call util_crashpoint(88273)
                     end if
                     !% --- ensure that dimvector(3) is less than or equal to allocated
                     if (dimvector(3) > olddimvector(3)) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but olddimvector(3) is ',olddimvector(3)
-                        stop
+                        !stop 
+                        call util_crashpoint(77283)
                     end if
                     !% --- check the dimvector(3) is consistent with lasttimestart and lasttimeread
                     if (dimvector(3) .ne. lasttimeread + 1 - lasttimestart) then
@@ -1563,8 +1604,10 @@ contains
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but lasttimeread is  ',lasttimeread
                         write(*,"(A,i5)") '...and lasttimestart is ',lasttimestart
-                        stop
+                        !stop 
+                        call util_crashpoint(98762)
                     end if
+                    if (crashI==1) return
                     nTotalElem = dimvector(1)
                     nTypeElem  = dimvector(2)
                     nLevel = dimvector(3)
@@ -1592,7 +1635,9 @@ contains
                         write(*,"(A)") 'ERROR (code, file), unexpected array size problem...'
                         write(*,"(A,i5)") '...output_types_faceR has size ',size(output_types_faceR)
                         write(*,"(A,i5)") '...but needs to read in ',nTypeFace
-                        stop
+                        !stop 
+                        call util_crashpoint(87629)
+                        return
                     end if
 
                     !% --- read and store the fixed integer data
@@ -1610,20 +1655,23 @@ contains
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(1) has value ',dimvector(1)
                         write(*,"(A,i5)") '...but nTotalFace is ',nTotalFace
-                        stop
+                        !stop 
+                        call util_crashpoint(441282)
                     end if
                     if (dimvector(2) .ne. nTypeFace) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(2) has value ',dimvector(2)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTypeFace
-                        stop
+                        !stop 
+                        call util_crashpoint(89162)
                     end if
                     !% --- ensure that dimvector(3) is less than or equal to allocated
                     if (dimvector(3) > olddimvector(3)) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but olddimvector(3) is ',olddimvector(3)
-                        stop
+                        !stop 
+                        call util_crashpoint(88229)
                     end if
                     !% --- check the dimvector(3) is consistent with lasttimestart and lasttimeread
                     if (dimvector(3) .ne. lasttimeread + 1 - lasttimestart) then
@@ -1631,8 +1679,10 @@ contains
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but lasttimeread is  ',lasttimeread
                         write(*,"(A,i5)") '...and lasttimestart is ',lasttimestart
-                        stop
+                        !stop 
+                        call util_crashpoint(8263)
                     end if
+                    if (crashI==1) return
                     nTotalFace = dimvector(1)
                     nTypeFace  = dimvector(2)
                     nLevel = dimvector(3)
@@ -1677,7 +1727,9 @@ contains
                                     write(*,'(A)') '... appears to be neither a link nor a node.'
                                     write(*,'(A,i8)') '... kk = ',kk
                                     write(*,'(A,i8)') '... Global Element Index = ',pOutElem_Gidx(kk)
-                                    stop
+                                    !stop 
+                                    call util_crashpoint(98293)
+                                    return
                                 end if
                                 !% -- store the node index for each of the output elements
                                 !OutElem_SWMMnodeIdx(kk) = SWMMnode
@@ -1716,7 +1768,9 @@ contains
                             if (SWMMnode == nullvalueI) then !% then this is a face not pointing at a node
                                 write(*,'(A)') 'ERROR (code) unexpected nullvalue for an output face...'
                                 write(*,'(A)') '... appears to be not part of the SWMM node set.'
-                                stop
+                                !stop 
+                                call util_crashpoint(11298)
+                                return
                             else
                                 !% -- store the link index for each of the output elements
                                 !OutFace_SWMMnodeIdx(kk) = SWMMnode
@@ -1751,7 +1805,8 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_link is ',SWMM_N_link
                             write(*,"(A)") ',... size(link%I(:,li_idx)) is ',(size(link%I(:,li_idx))-additional_rows)
-                            ! stop
+                            ! stop 
+                            !call util_crashpoint(1093874)
                         end if
 
                         if (nOutLink > 0) then
@@ -1818,7 +1873,8 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
-                            ! stop
+                            ! stop 
+                            !call util_crashpoint(12209)
                         end if
 
                         if (nOutNodeElem > 0) then
@@ -1881,7 +1937,8 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
-                            ! stop
+                            ! stop 
+                            !call util_crashpoint(221078)
                         end if
 
                         if (nOutNodeFace > 0) then
@@ -1996,7 +2053,9 @@ contains
                                     write(*,'(A)') 'CODE ERROR: unknown key index for output_typeProcessing_elemR of ...'
                                     write(*,*) output_typeProcessing_elemR(pp-1)
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
-                                    stop 7778734
+                                    !stop 
+                                    call util_crashpoint( 7778734)
+                                    return
                                 end select
                             end do
                         end if
@@ -2073,7 +2132,9 @@ contains
                                     write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
                                     write(*,*) output_typeProcessing_elemR(pp-1)
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
-                                    stop 559345
+                                    !stop 
+                                    call util_crashpoint( 559345)
+                                    return
                                 end select
                             end do
                         end if
@@ -2155,7 +2216,9 @@ contains
                                     write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_faceR of ...'
                                     write(*,*) output_typeProcessing_faceR(pp-1)
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_faceR(pp-1))
-                                    stop 2285334
+                                    !stop 
+                                    call util_crashpoint( 2285334)
+                                    return
                                 end select
                             end do
                         end if
@@ -2196,12 +2259,16 @@ contains
                         !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMlink)%str is a valid string
                         if (.not. allocated(link%Names(SWMMlink)%str)) then
                             write (*,"(A,i8)") 'ERROR (code): link%Name(SWMMlink)%str not allocated for SWMMlink=',SWMMlink
-                            stop
+                            !stop 
+                            call util_crashpoint(10347)
+                            return
                         end if
 
                         if (len(link%Names(SWMMlink)%str) == 0) then
                             write(*,"(A,i8)") 'ERROR (code)): link%Name(kk)%str is empty for SWMMlink= ',SWMMlink
-                            stop
+                            !stop 
+                            call util_crashpoint(110387)
+                            return
                         end if
 
                         if (len(link%Names(SWMMlink)%str) > len(tlinkname)) then
@@ -2210,7 +2277,9 @@ contains
                             write(*,"(A,i8)") '... max length is: ',len(link%Names(SWMMlink)%str)
                             write(*,"(A)") '... link name in SWMM is ...'
                             write(*,"(A)") trim(link%Names(SWMMlink)%str)
-                            stop
+                            !stop 
+                            call util_crashpoint(443134)
+                            return
                         end if
 
                         !% --- use a temporary name for convenience
@@ -2321,12 +2390,16 @@ contains
                         !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMlink)%str is a valid string
                         if (.not. allocated(node%Names(SWMMnode)%str)) then
                             write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
-                            stop
+                            !stop 
+                            call util_crashpoint(667567)
+                            return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) == 0) then
                             write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
-                            stop
+                            !stop 
+                            call util_crashpoint(77987)
+                            return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
@@ -2335,7 +2408,9 @@ contains
                             write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
                             write(*,"(A)") '... node name in SWMM is ...'
                             write(*,"(A)") trim(node%Names(SWMMnode)%str)
-                            stop
+                            !stop 
+                            call util_crashpoint(98163)
+                            return
                         end if
 
                         !% --- use a temporary name for convenience
@@ -2445,12 +2520,16 @@ contains
                         !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMnode)%str is a valid string
                         if (.not. allocated(node%Names(SWMMnode)%str)) then
                             write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
-                            stop
+                            !stop 
+                            call util_crashpoint(98763)
+                            return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) == 0) then
                             write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
-                            stop
+                            !stop 
+                            call util_crashpoint(1208)
+                            return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
@@ -2459,7 +2538,9 @@ contains
                             write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
                             write(*,"(A)") '... node name in SWMM is ...'
                             write(*,"(A)") trim(node%Names(SWMMnode)%str)
-                            stop
+                            !stop 
+                            call util_crashpoint(12087)
+                            return
                         end if
 
                         !% --- use a temporary name for convenience
@@ -2692,7 +2773,9 @@ contains
         case default
             write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
             print *, 'which has key ',trim(reverseKey(FeatureType))
-            stop 663986
+            !stop 
+            call util_crashpoint( 663986)
+            return
         end select
 
         !% --- ROW 3 --- SWMM INDEX NUMBER IN CODE
@@ -2706,7 +2789,9 @@ contains
             case default
                 write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
                 print *, 'which has key ',trim(reverseKey(FeatureType))
-                stop 993764
+                !stop 
+                call util_crashpoint( 993764)
+                return
         end select
 
         !% --- ROW 4 --- MODEL RUN ID (keyword, string)
@@ -2740,7 +2825,9 @@ contains
         case default
             write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
             print *, 'which has key ',trim(reverseKey(FeatureType))
-            stop 873853   
+            !stop 
+            call util_crashpoint( 873853)   
+            return
         end select
 
         !% --- ROW 10 --- EXPECTED NUMBER OF DATA ROWS (time levels)
@@ -2776,7 +2863,9 @@ contains
             case default
                 write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
                 print *, 'which has key ',trim(reverseKey(FeatureType))
-                stop 93873
+                !stop 
+                call util_crashpoint( 93873)
+                return
             end select
         end if
 
@@ -3092,7 +3181,8 @@ contains
     !                  iostat=rc)
     !             if (rc /= 0) then
     !                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%links_input_file), ' failed: ', rc
-    !                 stop
+    !                 stop 
+    !                 call util_crashpoint(23987)
     !             end if
     !             pp = 1 ! parent link
     !             endoffile = .false.
@@ -3112,7 +3202,8 @@ contains
     !                     !exit
     !                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%links_input_file)
     !                     write(*,"(A,i5)") 'failed before end of file with error ',rc
-    !                     stop
+    !                     stop 
+    !                       call util_crashpoint(3987)
     !                 end if
 
     !                 !% --- converting link name to link idx using the interface
@@ -3122,7 +3213,8 @@ contains
     !                     write(*, "(A)") "ERROR (user): Link " // trim(link_name) // " in " // &
     !                         trim(setting%File%links_input_file) // " couldn't be found"
     !                     !exit
-    !                     stop
+    !                     stop 
+    !                       call util_crashpoint(44072)
     !                 end if
 
     !                 !% --- store index of link for output and increase index
@@ -3229,7 +3321,8 @@ contains
     !                  iostat=rc)
     !             if (rc /= 0) then
     !                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%nodes_input_file), ' failed: ', rc
-    !                 stop
+    !                 stop 
+    !                   call util_crashpoint(18734)
     !             end if
     !             ii = 1
     !             endoffile = .false.
@@ -3248,14 +3341,16 @@ contains
     !                     !exit
     !                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%nodes_input_file)
     !                     write(*,"(A,i5)") 'failed before end of file with error ',rc
-    !                     stop
+    !                     stop 
+    !                       call util_crashpoint(209837)
     !                 end if
     !                 !% --- converting node name to node idx using the interface
     !                 node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
     !                 if (node_idx == 0) then
     !                     write(*, "(A)") "Node " // trim(node_name) // " in " // &
     !                     trim(setting%File%nodes_input_file) // " couldn't be found"
-    !                     stop
+    !                     stop 
+    !                       call util_crashpoint(44929)
     !                 end if
     !                 node_output_idx(ii) = node_idx
     !                 ii = ii + 1
@@ -3333,7 +3428,8 @@ contains
 
     !             if (open_status /= 0) then
     !                 write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-    !                 stop
+    !                 stop 
+    !                   call util_crashpoint(5509993)
     !             end if
 
     !             !% Write the header of the file, set end for next write and then close file
@@ -3392,7 +3488,8 @@ contains
     !                 write (*, '(A)') 'Opening file failed'
     !                 write (*, '(A)') trim(FILE_NAME)
     !                 write (*, '(i0)') open_status
-    !                 stop
+    !                 stop 
+    !                   call util_crashpoint(3321998)
     !             end if
 
     !             !% Write the header, this endfile and close the file
@@ -3534,7 +3631,8 @@ contains
 
     !             if (open_status /= 0) then
     !                 write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-    !                 stop
+    !                 stop 
+    !                   call util_crashpoint(402229)
     !             end if
 
     !             !% temp value for easier to read code
@@ -3656,7 +3754,8 @@ contains
     !                     open(newunit=file_idx(ii), action='read', file=parent_file_name, iostat=rc)
     !                     if (rc /= 0) then
     !                         write (*, '(3a, i0)') 'Opening file "', trim(parent_file_name), '" failed: ', rc
-    !                         stop
+    !                         stop 
+    !                           call util_crashpoint(409872)
     !                     end if
     !                     read (file_idx(ii), *, iostat=rc) str_time ! advance one line (skip header)
 
@@ -3670,7 +3769,8 @@ contains
     !                         form = 'formatted', action = 'write', iostat = open_status)
     !                     if (open_status /= 0) then
     !                         write (*, '(3a, i0)') 'Opening file "', trim(Final_File_NAME), '" failed: ', open_status
-    !                         stop
+    !                         stop 
+    !                           call util_crashpoint(30987)
     !                     end if
     !                     write(file_idx(link_output_idx_length+pp), *) "Timestamp,Time_In_Secs,flowrate"
 
@@ -3693,7 +3793,8 @@ contains
     !                             open(newunit=file_idx(ii+jj), action='read', file=phantom_file_name, iostat=rc)
     !                             if (rc /= 0) then
     !                                 write (*, '(3a, i0)') 'Opening file "', trim(phantom_file_name), '" failed: ', rc
-    !                                 stop
+    !                                 stop 
+    !                                   call util_crashpoint(440297)
     !                             end if
     !                             read (file_idx(ii+jj), *, iostat=rc) str_time ! advance one line (skip header)
     !                         end do
@@ -3962,7 +4063,9 @@ contains
                     write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
                     write(*,"(A)") 'filename is ...'
                     write(*,"(A)") trim(file_name)
-                    stop
+                    !stop 
+                    call util_crashpoint(223077)
+                    return
                 end if
                 !% --- write the filename
                 write(fnunit,"(A)") trim(file_name)
@@ -3986,7 +4089,9 @@ contains
                         write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
                         write(*,"(A)") 'filename is ...'
                         write(*,"(A)") trim(file_name)
-                        stop
+                        !stop 
+                        call util_crashpoint(329928)
+                        return
                     end if
                 !% --- write the prior filenames from memory to the file and the delete
                 do kk=1,setting%Output%StoredFileNames
@@ -4038,7 +4143,9 @@ contains
                 write(*,"(A)") 'but it cannot be found. The filename is'
                 write(*,"(A)") trim(setting%File%outputML_filename_file)
                 write(*,"(A,i6)") 'and the unit number is ',fnunit 
-                stop 339182
+                !stop 
+                call util_crashpoint( 339182)
+                return
             end if     
             inquire(UNIT=fnunit,OPENED=isopen)
 
@@ -4052,7 +4159,9 @@ contains
                 write(*,"(A)") trim(setting%File%outputML_filename_file)
                 write(*,"(A)") '... file is the outputML_filename_file ...'
                 write(*,"(A,i5)") '... iostat value = ',ios
-                stop 89075
+                !stop 
+                call util_crashpoint( 89075)
+                return
             end if
             rewind(unit=fnunit)
             do ii=1,nWritten
