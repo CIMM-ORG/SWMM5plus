@@ -467,9 +467,7 @@ contains
 
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
-            print *, 'ii',ii
             link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
-            print *, 'link__type',link%I(ii, li_link_type)
             link%I(ii,li_weir_type) = interface_get_linkf_attribute(ii, api_linkf_weir_type)
             link%I(ii,li_orif_type) = interface_get_linkf_attribute(ii, api_linkf_orifice_type)
             link%I(ii,li_outlet_type) = interface_get_linkf_attribute(ii, api_linkf_outlet_type)

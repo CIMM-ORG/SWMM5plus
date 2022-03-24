@@ -507,6 +507,10 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
 
             case (rectangular)
                 criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
+
+            case (triangular)
+                sideSlope = elemSGR(elemIdx,esgr_Triangular_Slope)
+                criticalDepth = (twoR * Q2g / sideSlope ** twoR) ** onefifthR
                 
             case (trapezoidal)
                 !% use the average side slope
