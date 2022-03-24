@@ -99,9 +99,6 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
-         ! call the standard geometry update for junction branches
-        call geo_assign_JB (ALLtm, ep_JM_ALLtm)
-
         !% --- initialize zerovalues for other than depth (must be done after pack)
         call init_IC_ZeroValues_nondepth ()
 
