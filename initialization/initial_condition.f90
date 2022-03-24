@@ -97,6 +97,9 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
+         ! call the standard geometry update for junction branches
+        call geo_assign_JB (ALLtm, ep_JM_ALLtm)
+
         !% --- initialize zerovalues for other than depth (must be done after pack)
         call init_IC_ZeroValues_nondepth ()
 
@@ -456,8 +459,6 @@ contains
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
 
-        print *, 'LinkType: ', linkType, '    ',lpipe,'   ', trim(reverseKey(linkType))
-
         select case (linkType)
 
             case (lChannel)
@@ -540,8 +541,6 @@ contains
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
-
-        print *, 'LinkType: ', linkType, 'Conduit: ',lpipe, 'Channel: ',lChannel, 'Current Link: ', trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -1433,7 +1432,7 @@ contains
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * elemSGR(JBidx,esgr_Triangular_TopBreadth) )
+                                    * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
@@ -1487,9 +1486,6 @@ contains
             stop 54895
 
         end select
-
-        ! call the standard geometry update for junction branches
-        call geo_assign_JB (ALLtm, ep_JM_ALLtm)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
