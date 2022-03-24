@@ -526,7 +526,7 @@ contains
 
                 link%I(ii,li_link_type) = lChannel
             end if
-            print *, 'link__type',link%I(ii, li_link_type)
+
             !% brh20211207s
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag) == 1)
             !% brh20211207e
