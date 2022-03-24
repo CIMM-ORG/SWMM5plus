@@ -12,7 +12,8 @@ module pack_mask_arrays
     use define_indexes
     use define_keys
     use define_settings
-
+    use utility_crash
+    
     implicit none
 
     private
@@ -38,7 +39,7 @@ contains
         integer :: ii
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -100,7 +101,7 @@ contains
         !--------------------------------------------------------------------------
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -125,7 +126,7 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -162,7 +163,7 @@ contains
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -221,7 +222,7 @@ contains
         !%------------------------------------------------------------------
         !% Preliminaries
             if (setting%Output%Report%suppress_MultiLevel_Output) return
-            if (icrash) return
+            if (crashYN) return
         !%------------------------------------------------------------------
         !% Aliases
             eIdx => elemI(:,ei_Lidx)
@@ -257,7 +258,7 @@ contains
         !%-----------------------------------------------------------------
         !% Preliminaries
             if (setting%Output%Report%suppress_MultiLevel_Output) return
-            if (icrash) return
+            if (crashYN) return
         !%-----------------------------------------------------------------
         !% Aliases:
             fIdx => faceI(:,fi_Lidx)
@@ -290,7 +291,7 @@ contains
     !     integer, pointer :: mcol
     !     character(64) :: subroutine_name = 'mask_faces_whole_array_static'
     !     !--------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     if (setting%Debug%File%pack_mask_arrays) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -318,7 +319,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -330,7 +331,11 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -344,7 +349,11 @@ contains
             elemPGalltm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -449,7 +458,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGalltm(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -484,7 +493,7 @@ contains
         end if
 
         !% junction main with tabular geometry relationship
-        ptype => col_elemPGalltm(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -519,14 +528,14 @@ contains
         end if
 
         !% junction main with artificial storage relationship -- for ALL tm
-        ptype => col_elemPGalltm(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -543,7 +552,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -568,7 +577,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -580,7 +589,11 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -591,7 +604,11 @@ contains
             elemPGac(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
@@ -675,7 +692,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -704,7 +721,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -733,14 +750,14 @@ contains
         end if
 
         !% junction main with artificial storage relationship -- for AC
-        ptype => col_elemPGac(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -754,7 +771,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -779,7 +796,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_etm_elements'
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -791,7 +808,11 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -802,7 +823,11 @@ contains
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                  (elemI(:,ei_elementType) == CC)  &
                 .and. &
-                (elemI(:,ei_geometryType) == rectangular) &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -886,7 +911,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGetm(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -915,7 +940,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGetm(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -945,14 +970,14 @@ contains
 
 
         !% junction main with artificial storage relationship -- for ETM
-        ptype => col_elemPGetm(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -966,7 +991,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -997,7 +1022,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1303,7 +1328,7 @@ contains
         integer, pointer :: ptype, npack, fup, fdn, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2258,7 +2283,9 @@ contains
         case default
             print *, 'CODE ERROR: time march type unknown for # ', whichTM
             print *, 'which has key ',trim(reverseKey(whichTM))
-            stop 3987053
+            !stop 
+            call util_crashpoint(3987053)
+            return
         end select
         
 
@@ -2373,7 +2400,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2477,7 +2504,7 @@ contains
         integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2555,14 +2582,14 @@ contains
         !--------------------------------------------------------------------------
         !% packed arrays for static shared faces
         !--------------------------------------------------------------------------
-        integer :: ii, image
+        integer :: ii
         integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn, Nfaces
         integer, pointer :: c_image, N_shared_faces, thisP
         logical, pointer :: isUpGhost, isDnGhost
         integer(kind=8) :: crate, cmax, cval
         character(64) :: subroutine_name = 'pack_static_shared_faces'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2574,8 +2601,7 @@ contains
         ! end if
 
         !% pointing to the number of faces in this image
-        image  = this_image()
-        Nfaces => N_face(image)
+        Nfaces => N_face(this_image())
 
         fIdx   => faceI(1:Nfaces,fi_Lidx)
 
@@ -2673,7 +2699,7 @@ contains
         integer(kind=8) :: crate, cmax, cval
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             
@@ -2879,7 +2905,7 @@ contains
     !     integer :: ii, jj, link_output_idx_length, node_output_idx_length
     !     character(64)    :: subroutine_name = 'pack_link_node_output'
     !     !% --------------------------------------------------------------------------
-    !     if (icrash) return
+    !     if (crashYN) return
     !     if (setting%Debug%File%pack_mask_arrays) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

@@ -2,6 +2,7 @@ module c_library
 
     use iso_c_binding
     use define_settings, only: setting
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -80,12 +81,19 @@ contains
                         'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
                         //' Check that the file ' // 'exists in the specified location and' &
                         //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
-                stop
+                !stop 
+                call util_crashpoint(29873)
+                c_lib%loaded = .false.
+            else    
+                c_lib%loaded = .true.
+                errstat = 0
             end if
-            c_lib%loaded = .true.
+            !c_lib%loaded = .true.
+        else
+            errstat = 0
         end if
 
-        errstat = 0
+        !errstat = 0
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -121,10 +129,12 @@ contains
             errstat = -1
             errmsg = 'The procedure ' // trim(c_lib%procname) // ' in file ' &
                      // trim(c_lib%filename) // ' could not be loaded.'
-            stop
+            !stop 
+            call util_crashpoint(55783)
+        else   
+            errstat = 0 
         end if
 
-        errstat = 0
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

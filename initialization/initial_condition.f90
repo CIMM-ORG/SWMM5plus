@@ -29,6 +29,7 @@ module initial_condition
     use utility_profiler
     use utility_allocate
     use utility_deallocate
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -70,7 +71,8 @@ contains
             case default
                 print *, 'CODE ERROR: solver type unknown for # ', whichSolver
                 print *, 'which has key ',trim(reverseKey(whichSolver))
-                stop 478383
+                call util_crashpoint(478383)
+                return
             end select      
         !%-------------------------------------------------------------------
         !% --- get data that can be extracted from links
@@ -136,10 +138,12 @@ contains
         !% --- initialize boundary conditions
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
+        if (crashI==1) return
 
         !% --- update the BC so that face interpolation works in update_aux...
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
+        if (crashI==1) return
 
         !% --- storing dummy values for branches that are invalid
         call init_IC_branch_dummy_values ()
@@ -173,6 +177,7 @@ contains
         !% --- update the initial condition in all diagnostic elements
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel ()
+        if (crashI==1) return
 
         !% --- ensure that small and zero depth faces are correct
         call adjust_zero_and_small_depth_face (ETM, .false.)
@@ -221,7 +226,7 @@ contains
             print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
             ! call execute_command_line('')
         end if
- 
+
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -246,7 +251,7 @@ contains
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -313,7 +318,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -401,8 +406,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
                 print *, 'which has key ',trim(reverseKey(LdepthType)) 
-                stop 83753
-
+                !stop 
+                call util_crashpoint(83753)
+                return
         end select
 
         if (setting%Debug%File%initial_condition) &
@@ -423,7 +429,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -452,7 +458,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -500,7 +506,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: pumps are not handeled yet for # ', linkType
                 print *, 'which has key',trim(reverseKey(linkType)) 
-                stop 77364
+                !stop 
+                call util_crashpoint(77364)
+                return
 
             case (lOutlet)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -514,8 +522,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
                 print *, 'which has key ',trim(reverseKey(linkType))
-                stop 65343
-
+                !stop 
+                call util_crashpoint(65343)
+                return
         end select
 
 
@@ -535,7 +544,7 @@ contains
             integer, pointer    :: linkType
             character(64) :: subroutine_name = 'init_IC_get_geometry_from_linkdata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -565,7 +574,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: pumps are not handeled yet for #',linkType
                 print *, 'which has key ',trim(reverseKey(linkType)) 
-                stop 337844
+                !stop 
+                call util_crashpoint(337844)
+                return
 
             case (lOutlet)
                 !% get geomety data for outlets
@@ -576,7 +587,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
                 print *, 'which has key ',trim(reverseKey(linkType))
-                stop 99834
+                !stop 
+                call util_crashpoint(99834)
+                return
 
         end select
 
@@ -602,7 +615,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -630,8 +643,7 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
-                                                link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
@@ -668,8 +680,7 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
-                                                max(link%R(thisLink,lr_BreadthScale), fourR)
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
 
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
@@ -715,7 +726,9 @@ contains
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
                 print *, 'which has key ',trim(reverseKey(geometryType))
-                stop 98734
+                !stop 
+                call util_crashpoint(98734)
+                return
 
         end select
 
@@ -739,7 +752,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -750,29 +763,31 @@ contains
 
         select case (geometryType)
 
-        ! case (lRectangular)
+        case (lRectangular_closed)
 
-        !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
-        !         elemI(:,ei_geometryType)    = rectangular_closed
+                elemI(:,ei_geometryType)    = rectangular_closed
 
-        !         !% store geometry specific data
-        !         elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+                !% store geometry specific data
+                elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-        !         elemR(:,er_BreadthMax)      = elemSGR(:,esgr_Rectangular_Breadth)
-        !         elemR(:,er_Area)            = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
-        !         elemR(:,er_Area_N0)         = elemR(:,er_Area)
-        !         elemR(:,er_Area_N1)         = elemR(:,er_Area)
-        !         elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
-        !         elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
-        !         elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-        !         elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-        !         elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-        !         elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-        !         elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
-        !         elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
-        !     endwhere
-
+                elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
+                elemR(:,er_Area)                  = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
+                elemR(:,er_Area_N0)               = elemR(:,er_Area)
+                elemR(:,er_Area_N1)               = elemR(:,er_Area)
+                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
+                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
+                
+            endwhere
+            
         case (lCircular)
 
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -815,7 +830,9 @@ contains
             print *, 'In, ', trim(subroutine_name)
             print *, 'CODE ERROR geometry type unknown for # ', geometryType
             print *, 'which has key ',trim(reverseKey(geometryType))
-            stop 887344
+            !stop 
+            call util_crashpoint(887344)
+            return
         end select
 
         if (setting%Debug%File%initial_condition) &
@@ -837,7 +854,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -883,7 +900,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'roadway weir is not handeled yet for #',specificWeirType
                 print *, 'which has key ',trim(reverseKey(specificWeirType))
-                stop 557834
+                !stop 
+                call util_crashpoint(557834)
+                return
 
             case (lVnotchWeir)
 
@@ -919,7 +938,9 @@ contains
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(specificWeirType))
-                stop 99834
+                !stop 
+                call util_crashpoint(99834)
+                return
 
         end select
 
@@ -943,7 +964,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -966,7 +987,9 @@ contains
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice type, ', specificOrificeType,'  in network'
             print *, 'which has key ',trim(reverseKey(specificOrificeType))
-            stop 8863411
+            !stop 
+            call util_crashpoint(8863411)
+            return
         end select
 
         !% pointer to specific orifice geometry
@@ -1002,7 +1025,9 @@ contains
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
             print *, 'which has key ',trim(reverseKey(OrificeGeometryType))
-            stop 8345553
+            !stop 
+            call util_crashpoint(8345553)
+            return
         end select
 
 
@@ -1025,7 +1050,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_get_outlet_geometry'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1060,7 +1085,9 @@ contains
                 else
                     print*, 'In ', subroutine_name
                     print*, 'error: unknown orifice type, ', specificOutletType,'  in network'
-                    stop 82564
+                    !stop 
+                    call util_crashpoint(82564)
+                    return
                 end if
             end if 
         end do
@@ -1085,7 +1112,7 @@ contains
     !         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
     !     !%------------------------------------------------------------------
     !     !% Preliminaries:
-    !         if (icrash) return
+    !         if (crashYN) return
     !         if (setting%Debug%File%initial_condition) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%------------------------------------------------------------------
@@ -1128,7 +1155,7 @@ contains
 
             character(64) :: subroutine_name = 'init_IC_from_nodedata'
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1173,7 +1200,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1204,9 +1231,9 @@ contains
             end if
         else
             !%-----------------------------------------------------------------------
-            !% HACK: Junction main with artificial storage are rectangular
+            !% HACK: Junction main with implied storage are rectangular
             !%-----------------------------------------------------------------------
-            elemSI(JMidx,esi_JunctionMain_Type) = ArtificialStorage
+            elemSI(JMidx,esi_JunctionMain_Type) = ImpliedStorage
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
 
@@ -1284,8 +1311,7 @@ contains
                 elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
             else
                 elemYN(JBidx,eYN_canSurcharge)  = .false.
-                elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                                max(link%R(BranchIdx,lr_BreadthScale),fourR)
+                elemR(JBidx,er_FullDepth)   = max(link%R(BranchIdx,lr_BreadthScale),fourR)
             end if
             elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
 
@@ -1370,13 +1396,22 @@ contains
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR: geometry type unknown for # ', JbgeometryType
                 print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                stop 308974
+                !stop 
+                call util_crashpoint(308974)
+                return
 
             end select
 
             !% get the flow data from links for junction branches
             !% this flowrate will always be lagged in junction branches
             elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
+
+            !% also set the face flowrates such that it does not blowup the initial interpolation
+            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
+            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
+            end if
 
             !% Manning's n
             elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
@@ -1400,7 +1435,7 @@ contains
 
         select case (JmType)
 
-        case (ArtificialStorage)
+        case (ImpliedStorage)
             !% the JM characteristic length is the sum of the two longest branches
             elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
                                             elemR(JMidx+5,er_Length)) + &
@@ -1442,7 +1477,9 @@ contains
                     print *, 'In, ', subroutine_name
                     print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
                     print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                    stop 308974
+                    !stop 
+                    call util_crashpoint(308974)
+                    return
                 end select
             end do
 
@@ -1468,11 +1505,11 @@ contains
             call storage_create_curve (JMidx)
 
         case (TabularStorage)
-            curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
-            Curve(curveID)%ElemIdx = JMidx
+            CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            Curve(CurveID)%ElemIdx = JMidx
             !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
             !% to get to integrate the area vs depth curve
-            call storage_integrate_area_vs_depth_curve (curveID)
+            call storage_integrate_area_vs_depth_curve (CurveID)
 
             !% now interpolate from the cure to get the volume
             call storage_interpolate_volume_from_depth_singular (JMidx)
@@ -1483,7 +1520,9 @@ contains
             print *, 'In, ', subroutine_name
             print *, 'CODE ERROR junction main type unknown for # ', JmType
             print *, 'which has key ',trim(reverseKey(JmType))
-            stop 54895
+            !stop 
+            call util_crashpoint(54895)
+            return
 
         end select
 
@@ -1546,7 +1585,7 @@ contains
             character(64)       :: subroutine_name = 'init_IC_solver_select'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -1559,16 +1598,22 @@ contains
         case (AC)
             print*, 'In, ', subroutine_name
             print*, 'AC solver is not handeled at this moment'
-            stop 83974
+            !stop 
+            call util_crashpoint(83974)
+            return
         case (ETM_AC)
             print*, 'In, ', subroutine_name
             print*, 'ETM-AC solver is not handeled at this moment'
-            stop 2975
+            !stop 
+            call util_crashpoint(2975)
+            return
         case default
             print *, 'In, ', subroutine_name
             print *, 'CODE ERROR: unknown solver, ', whichSolver
             print *, 'which has key ',trim(reverseKey(whichSolver))
-            stop 81878
+            !stop 
+            call util_crashpoint(81878)
+            return
         end select
 
         !%------------------------------------------------------------------
@@ -1592,7 +1637,7 @@ contains
             character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1625,7 +1670,7 @@ contains
             integer, pointer ::  Npack, thisP(:), tM
             integer :: ii, kk, tB
         !--------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1736,7 +1781,7 @@ contains
             integer             :: npack, ii, indx
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -1770,7 +1815,9 @@ contains
                 print *, 'Small Volume depth cutoff ',depthCutoff
                 print *, 'is larger or equal to radius of the smallest pipe '
                 print *, 'Small Volume depth cutoff must be smaller than the radius.'
-                stop 398705
+                !stop 
+                call util_crashpoint(398705)
+                return
             end if
         !%------------------------------------------------------------------
 
@@ -1847,7 +1894,8 @@ contains
             ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
             ! print *, 'after ', elemR(tPack(1:npack),er_Depth)
 
-        !stop 397803
+        !stop 
+        !call util_crashpoint(397803)
 
         !% restore the initial condition depth to the depth vector
         depth = tempDepth
@@ -1891,12 +1939,12 @@ contains
         !%-----------------------------------------------------------------
             character(64)       :: subroutine_name = 'init_IC_slot'
         !------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
+        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
@@ -2082,7 +2130,7 @@ contains
         integer :: SWMMtseriesIdx, SWMMbasepatType
         character(64) :: subroutine_name = "init_bc"
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
@@ -2095,7 +2143,8 @@ contains
         !     write(*,"(10i8)"), BC%flowI(ii,bi_idx), BC%flowI(ii,bi_node_idx), BC%flowI(ii,bi_face_idx), &
         !     BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_category), BC%flowI(ii,bi_subcategory), BC%flowI(ii,bi_fetch)
         ! end do 
-        ! stop 39766
+        ! stop 
+        !call util_crashpoint(39766)
 
         !% Convention to denote that xR_timeseries arrays haven't been fetched
         if (N_flowBC > 0) then
@@ -2132,7 +2181,9 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop 739845
+                        !stop 
+                        call util_crashpoint(739845)
+                        return
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -2163,7 +2214,9 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop 826549
+                    !stop 
+                    call util_crashpoint(826549)
+                    return
                 end if
             end do
         end if
@@ -2179,7 +2232,9 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop 57635
+                    !stop 
+                    call util_crashpoint(57635)
+                    return
                 end if
 
                 BC%headI(ii, bi_idx) = ii
@@ -2205,6 +2260,8 @@ contains
         end if
         
         call bc_step()
+        if (crashI==1) return
+
         call pack_bc()
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_bc)
@@ -2278,27 +2335,37 @@ contains
             !print *, topwidth, area, depth, volume, minval(elemR(thisP,er_Length))
         else
             print *, 'unexpected error -- no time-marching elements found '
-            stop 398733
+            !stop 
+            call util_crashpoint(398733)
+            return
         end if
 
         if (depth < 1e-16) then
             print *, 'error, setting%ZeroValue%Depth is too small'
-            stop 3987095
+            !stop 
+            call util_crashpoint(3987095)
+            return
         end if
 
         if (topwidth < 1e-16) then
             print *, 'error, setting%ZeroValue%TopWidth is too small'
-            stop 3987095
+            !stop 
+            call util_crashpoint(3987095)
+            return
         end if
 
         if (area < 1e-16) then
             print *, 'error, setting%ZeroValue%Area is too small'
-            stop 93764
+            !stop 
+            call util_crashpoint(93764)
+            return
         end if
 
         if (volume < 1e-16) then
             print *, 'error, setting%ZeroValue%Volume is too small'
-            stop 77395
+            !stop 
+            call util_crashpoint(77395)
+            return
         end if
 
         !%------------------------------------------------------------------

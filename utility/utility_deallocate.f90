@@ -75,7 +75,7 @@ contains
             character(64) :: subroutine_name = 'util_deallocate_partitioning_arrays'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility_deallocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------        
@@ -110,7 +110,7 @@ contains
             character(64):: subroutine_name = 'util_deallocate_check'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -149,7 +149,7 @@ contains
             character(64) :: subroutine_name = 'util_deallocate_linknode'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility_deallocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -230,7 +230,7 @@ contains
             character(64) :: subroutine_name = 'util_deallocate_elemX_faceX'
         !%-------------------------------------------------------------------
         !% Preliminaries   
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility_deallocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -307,7 +307,7 @@ contains
             character(64) :: subroutine_name = 'util_deallocate_elem_boundary_ghost'
         !%-------------------------------------------------------------------
         !% Preliminaries   
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility_deallocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -340,7 +340,7 @@ contains
         !%-------------------------------------------------------------------
             character(64) :: subroutine_name = 'util_deallocate_columns'
         !%-------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility_deallocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -424,7 +424,7 @@ contains
         !%-------------------------------------------------------------------
             character(64) :: subroutine_name = 'util_deallocate_bc'
         !%-------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%utility_deallocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------

@@ -4,10 +4,12 @@ module partitioning
     use define_globals
     use define_indexes
     use define_settings, only: setting
+    use discretization, only: init_discretization_nominal
     use utility
     use utility_allocate
     use BIPquick
     use utility_deallocate
+    use utility_crash
 
     implicit none
 
@@ -23,14 +25,14 @@ module partitioning
 
     private
 
-    public :: init_partitioning_method
+    public :: partitioning_toplevel
 
 contains
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine init_partitioning_method()
+subroutine partitioning_toplevel()
     ! --------------------------------------------------------
     ! Description:
     !   The purpose of this subroutine is to check which partitioning
@@ -40,9 +42,9 @@ subroutine init_partitioning_method()
         logical :: partition_correct
         integer :: connectivity, ii, nn
         real(8) :: part_size_balance
-        character(64) :: subroutine_name = 'init_partitioning_method'
+        character(64) :: subroutine_name = 'partitioning_toplevel'
     !% --------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
     !% --------------------------------------------------------
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -72,13 +74,18 @@ subroutine init_partitioning_method()
                 call init_partitioning_linkbalance()
             else if (setting%Partitioning%PartitioningMethod == BQuick) then
                 if (setting%Output%Verbose) write(*,"(A)") "... using BIPquick Partitioning..."
-                call init_partitioning_BIPquick()
+                call BIPquick_toplevel()
+                ! call init_partitioning_bquick_diagnostic ()
             else
                 print *, "Error, partitioning method not supported"
-                stop 87095
+                call util_crashpoint(87095)
+                return
+                !stop 
             end if
         end if
-        sync all
+
+        call util_crashstop(44873)
+
         !% broadcast partitioning results to all images
         call co_broadcast(node%I, source_image=1)
         call co_broadcast(node%R, source_image=1)
@@ -127,7 +134,135 @@ subroutine init_partitioning_method()
 
     call util_deallocate_partitioning_arrays()
 
-end subroutine init_partitioning_method
+end subroutine partitioning_toplevel
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine init_partitioning_bquick_diagnostic ()
+    ! --------------------------------------------------------
+    ! Description:
+    !   The purpose of this subroutine is to delete phantom links
+    !   and nodes so that the network remain intact
+    !---------------------------------------------------------
+    integer :: ii
+    integer, pointer :: pNode, pLink, sLink, dnNidx, upNidx
+    integer, pointer :: plinkUp, pLinkDn
+    real(8), pointer :: nominalElemLength
+    integer, dimension(:), allocatable, target :: nodeIndexes
+    character(64) :: subroutine_name = 'init_partitioning_bquick_diagnostic'
+!% --------------------------------------------------------
+    if (crashYN) return
+!% --------------------------------------------------------
+    !% pointers
+    nominalElemLength => setting%Discretization%NominalElemLength
+
+    !% pack all the node indexes excluding the nullvalues
+    nodeIndexes = pack(node%I(:,ni_idx), (node%I(:,ni_idx) /= nullvalueI))
+
+    do ii = 1, size(nodeIndexes, 1)
+        pNode => nodeIndexes(ii)
+        if (node%YN(pNode,nYN_is_phantom_node)) then
+            !% if both the upstream and downstream links are phantom
+            if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink) .and. &
+                link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                plinkUp => node%I(pNode,ni_Mlink_u1)
+                pLinkDn => node%I(pNode,ni_Mlink_d1)
+                upNidx  => link%I(plinkUp,li_Mnode_u)
+                dnNidx  => link%I(pLinkDn,li_Mnode_d)
+            !% if the upstream link is a phantom link
+            else if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink)) then
+                pLink  => node%I(pNode,ni_Mlink_u1)
+                sLink  => node%I(pNode,ni_Mlink_d1)
+                upNidx => link%I(pLink,li_Mnode_u)
+                dnNidx => link%I(sLink,li_Mnode_d)
+            !% if the downstream link is a phantom link
+            else if (link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                sLink  => node%I(pNode,ni_Mlink_u1)
+                pLink  => node%I(pNode,ni_Mlink_d1)
+                upNidx => link%I(sLink,li_Mnode_u)
+                dnNidx => link%I(pLink,li_Mnode_d)
+            !% should not reach this error condition
+            else
+                print*, 'In subroutine', subroutine_name
+                print*, 'Error: phantom node', pNode, 'doesnot have any up or dn phantom link'
+                !stop 
+                call util_crashpoint(147856)
+                return
+            end if
+
+            !% print diagnistic of the spanning and phantom links
+            if (this_image() == 1) then
+                if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink) .and. &
+                    link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                    print*, 'Phantom link detected both upstream and downstream'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, plinkUp,                   ' = up phantom link index'
+                    print*, link%R(plinkUp,lr_length), ' = up phantom link length'
+                    print*, link%I(plinkUp,li_P_image),' = up phantom link in image'
+                    print*, upNidx,                    ' = node up idx of the phantom link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of phantom link in image'
+                    print*, pLinkDn,                   ' = dn phantom link index'
+                    print*, link%R(pLinkDn,lr_length), ' = dn phantom link length'
+                    print*, link%I(pLinkDn,li_P_image),' = dn phantom link in image'
+                    print*, dnNidx,                    ' = node dn idx of the spanning link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of spanning link in image'
+                    print*
+                else if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink)) then
+                    print*, 'Upstream phantom link detected'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, pLink,                     ' = up phantom link index'
+                    print*, link%R(pLink,lr_length),   ' = up phantom link length'
+                    print*, link%I(pLink,li_P_image),  ' = up phantom link in image'
+                    print*, upNidx,                    ' = node up idx of the phantom link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of phantom link in image'
+                    print*, sLink,                     ' = dn spanning link index'
+                    print*, link%R(sLink,lr_length),   ' = dn spanning link length'
+                    print*, link%I(sLink,li_P_image),  ' = dn spanning link in image'
+                    print*, dnNidx,                    ' = node dn idx of the spanning link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of spanning link in image'
+                    print*
+                else if (link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                    print*, 'Downstream phantom link detected'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, sLink,                     ' = up spanning link index'
+                    print*, link%R(sLink,lr_length),   ' = up spanning link length'
+                    print*, link%I(sLink,li_P_image),  ' = up spanning link in image'
+                    print*, upNidx,                    ' = node idx up of the spanning link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of spanning link in image'
+                    print*, pLink,                     ' = dn phantom link index'
+                    print*, link%R(pLink,lr_length),   ' = dn phantom link length'
+                    print*, link%I(pLink,li_P_image),  ' = dn phantom link in image'
+                    print*, dnNidx,                    ' = node idx dn of the phantom link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of phantom link in image'
+                    print*
+                end if
+            end if 
+
+            !% adjust only when the spanning or phantom link is smaller 
+            !% than the nominal element length and the phantom link and node
+            !% are on different images
+
+            !% HACK: if the phantom link and nodes are on a same image, 
+            !% that implys
+            ! if ( (link%R(pLink,lr_length) .le. nominalElemLength) .or. &
+            !      (link%R(sLink,lr_length) .le. nominalElemLength)) then
+            !     !% print out for the adjusted links    
+            !     if (this_image() == 1) then
+            !         print*, 'Adjusting Link', pLink, ' and ', sLink
+            !     end if
+
+            ! end if    
+        end if
+    end do 
+
+    !% deacclocate the temporary array
+    deallocate(nodeIndexes)
+
+end subroutine init_partitioning_bquick_diagnostic
 !
 !==========================================================================
 !==========================================================================
@@ -147,7 +282,7 @@ subroutine init_partitioning_default()
     real(8) :: partition_threshold
     logical :: partition_correct
 
-    if (icrash) return
+    if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -226,7 +361,9 @@ subroutine init_partitioning_default()
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            stop 1098226
+            !stop 
+            call util_crashpoint(1098226)
+            return
         end select
 
 
@@ -277,7 +414,7 @@ subroutine init_partitioning_random()
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold, rand_num
     !% ----------------------------------------------------------------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -365,7 +502,9 @@ subroutine init_partitioning_random()
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            stop 1098226
+            !stop 
+            call util_crashpoint(1098226)
+            return
         end select
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
@@ -415,7 +554,7 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
     if (setting%Debug%File%partitioning) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -482,7 +621,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
     integer :: part_size_balance
     integer :: ii, current_image, max_elem, min_elem
     ! -----------------------------------------------------------------------------------------------------------------
-    if (icrash) return
+    if (crashYN) return
     !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
@@ -532,7 +671,9 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            stop 73875
+            !stop 
+            call util_crashpoint(73875)
+            return
         end select
     end do
 

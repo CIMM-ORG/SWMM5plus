@@ -71,24 +71,15 @@
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
-        "FroudeJump" : 0.1,
-        "InflowDepthIncreaseFroudeLimit" : 0.1
-    },
-    "FaceInterp" : {
-        "DownJBFaceInterp" : "dynamic"
+        "FroudeJump" : 0.1
     },
     "File" : {
         "library_folder" : "",
-        
-          
         "force_folder_creationYN"  : true
     },
     "Junction" : {
         "kFactor"  : 0.0,
-        "HeadCoef" : 1.0,
-        "CFLlimit" : 0.5,
-        "FunStorageN" : 10,
-        "isDynamicYN" : false
+        "FunStorageN" : 10
     },
     "Limiter" : {
         "BC" : {
@@ -169,8 +160,8 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 10.0,
-        "DesiredTimeStep" : 0.01
+        "PreissmannNumber" : 10.0,
+        "PreissmannCelerity" : 0.01
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -255,7 +246,6 @@
         "CFL_hi_max" : 0.7,
         "CFL_target" : 0.5,
         "CFL_lo_max" : 0.3,
-        "decreaseFactor" : 0.8,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10,
         "LastCheckStep"  : 0

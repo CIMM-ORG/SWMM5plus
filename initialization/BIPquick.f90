@@ -14,6 +14,7 @@ module BIPquick
     use define_settings
     use discretization, only: init_discretization_nominal
     use utility
+    use utility_crash, only: util_crashpoint
 
     !use utility_profiler
     !use utility_prof_jobcount
@@ -21,7 +22,7 @@ module BIPquick
 
     private
 
-    public :: init_partitioning_BIPquick
+    public :: BIPquick_toplevel
 
     real(8), parameter :: precision_matching_tolerance = 1.0D-5 ! a tolerance parameter for whether or not two real(8) numbers are equal
 
@@ -38,7 +39,7 @@ contains
 
 ! -----------------------------------------------------------------------------------------------------------------
 
-    subroutine init_partitioning_BIPquick()
+    subroutine BIPquick_toplevel()
         ! ----------------------------------------------------------------------------------------------------------------
         ! Description:
         !   This subroutine serves as the BIPquick main.  It is the only public subroutine from the BIPquick module and its
@@ -55,7 +56,7 @@ contains
         integer       :: connectivity
         ! -----------------------------------------------------------------------------------------------------------------
         if (this_image() .ne. 1) return
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -245,7 +246,9 @@ contains
                 else
                     print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
                     print*, "Suggestion: Use a different number of processors"
-                    stop
+                    call util_crashpoint(233874)
+                    return
+                    !stop 233874
 
                 end if
 
@@ -271,7 +274,7 @@ contains
 
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_partitioning_BIPquick
+    end subroutine BIPquick_toplevel
 !
 !==========================================================================
 !==========================================================================
@@ -286,7 +289,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
             character(64) :: subroutine_name = 'bip_allocate_arrays'
         ! -----------------------------------------------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -318,7 +321,7 @@ contains
             character(64) :: subroutine_name = 'bip_allocate_arrays'
             integer       :: ii, counter
         ! -----------------------------------------------------------------------------------------------------------------
-            if (icrash) return
+            if (crashYN) return
             if (setting%Debug%File%BIPquick) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -357,7 +360,7 @@ contains
             integer :: upstream_link, upstream_node, uplink_counter
             integer ii, jj, uplinks
         ! ----------------------------------------------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -410,7 +413,7 @@ contains
         integer, intent(in) :: link_index
         real(8)             :: weight, length, element_length
         ! --------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% Sometimes the Interface gives garbage for these values so I need to adjust
@@ -448,7 +451,7 @@ contains
         integer :: ii, jj
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -494,7 +497,7 @@ contains
         integer, intent(in out) :: root
         integer :: jj
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -549,7 +552,7 @@ contains
         integer :: ii, weight_index, root
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -614,7 +617,7 @@ contains
         integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -673,7 +676,7 @@ contains
         integer :: jj
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -739,7 +742,7 @@ contains
         real(8) :: nearest_overestimate
         integer :: ii
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -814,7 +817,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -877,7 +880,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -937,7 +940,7 @@ contains
         real(8) :: length_from_start, total_length, start_weight, weight_ratio, link_weight
         integer :: upstream_node
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% The length of the spanning_link
@@ -987,7 +990,7 @@ contains
         integer :: kk
         real    :: l1, l2, y1, y2
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1124,7 +1127,7 @@ contains
         integer   :: jj
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1172,7 +1175,9 @@ contains
 
         if ( total_clipped_weight <= zeroR ) then
             print*, "BIPquick Case 3: Haven't removed any weight"
-            stop
+            call util_crashpoint(557324)
+            return
+            !stop 557324
         end if
 
         !% Reduce the partition_threshold by the total_clipped_weight too
@@ -1219,7 +1224,7 @@ contains
         integer    :: ii, kk
 
         !--------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1245,7 +1250,10 @@ contains
                 link_image = link%I(adjacent_links(kk), li_P_image)
 
                 !% If the link and the image are on separate images, increment the ni_P_is_boundary
-                if ( link_image /= node%I(ii, ni_P_image) ) then
+                !% HACK: not sure about the 2nd condtion. For some nodes ni_P_is_boundary was > 1 
+                !% (saz02162022)
+                if ( (link_image /= node%I(ii, ni_P_image)) .and. &
+                     (node%I(ii, ni_P_is_boundary) == zeroI)) then
                     node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
                 end if
             end do

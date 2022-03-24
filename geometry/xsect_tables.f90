@@ -133,7 +133,7 @@ contains
         integer, pointer          :: position(:)
         real(8)                   :: delta
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
 
         !% pointer towards the position in the lookup table
         !% this is pointed towards temporary column
@@ -188,7 +188,7 @@ contains
         integer                   :: position
         real(8)                   :: delta
         !%-----------------------------------------------------------------------------
-        if (icrash) return
+        if (crashYN) return
 
         delta = oneR / (nItems - oneR)
 

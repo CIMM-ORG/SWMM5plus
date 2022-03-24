@@ -221,6 +221,8 @@ module define_indexes
         enumerator :: lr_Volume
         enumerator :: lr_Velocity
         enumerator :: lr_Capacity
+        enumerator :: lr_ZbottomUp
+        enumerator :: lr_ZbottomDn
         enumerator :: lr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
@@ -351,7 +353,8 @@ module define_indexes
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
-        enumerator :: er_SlotVolume                 !% slot volume
+        enumerator :: er_TotalSlotVolume            !% slot volume
+        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
@@ -462,9 +465,9 @@ module define_indexes
         enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_triangular_nonsurcharged      !% CC triangular channels that are not surcharged
         enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
-        enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
-        enumerator :: epg_JM_artificial_nonsurcharged        !% JM with artificial storage
+        enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_impliedStorage_nonsurcharged        !% JM with artificial storage
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_triangular                      !% all triangular junction branches
