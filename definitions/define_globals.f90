@@ -243,6 +243,7 @@ module define_globals
     real(8), parameter :: onetenthR = oneR / tenR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
+    real(8), parameter :: onefifthR = oneR / fiveR
     real(8), parameter :: onefourthR = oneR / fourR
     real(8), parameter :: onethirdR = oneR / threeR
     real(8), parameter :: onehalfR = oneR / twoR

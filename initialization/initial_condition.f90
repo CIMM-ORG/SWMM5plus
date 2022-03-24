@@ -710,11 +710,6 @@ contains
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                 endwhere
-                
-                print *, 'In, ', subroutine_name
-                print *, 'CODE ERROR -- triangular geometry type is under dev'
-                print *, 'which has key ',trim(reverseKey(geometryType))
-                !stop 45646
 
             case default
 
