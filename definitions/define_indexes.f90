@@ -211,6 +211,9 @@ module define_indexes
         enumerator :: lr_SideSlope             ! for weirs only
         enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_initSetting           ! initial link setting
+        enumerator :: lr_yOn                   ! startup depth for pumps
+        enumerator :: lr_yOff                  ! shutoff depth for pumps    
         enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
         enumerator :: lr_Flowrate
         enumerator :: lr_Depth
