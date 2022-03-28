@@ -1269,6 +1269,36 @@ int DLLEXPORT api_get_linkf_attribute(
                     *value = 0;
             }
             break;
+        
+        case linkf_initSetting :
+            switch (Link[link_idx].type) {
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].initSetting;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_yOn :
+            switch (Link[link_idx].type) {
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].yOn;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_yOff :
+            switch (Link[link_idx].type) {
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].yOff;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
 
         case linkf_weir_side_slope :
             switch (Link[link_idx].type) {

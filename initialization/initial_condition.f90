@@ -500,9 +500,15 @@ contains
 
             case (lPump)
 
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_elementType)            = pump
+                    elemI(:,ei_QeqType)                = diagnostic
+                    elemYN(:,eYN_canSurcharge)         = .true.
+                endwhere
+
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: pumps are not handeled yet for # ', linkType
-                print *, 'which has key',trim(reverseKey(linkType)) 
+                print *, 'which has key ',trim(reverseKey(linkType)) 
                 !stop 
                 call util_crashpoint(77364)
                 return

@@ -547,20 +547,23 @@ module define_api_keys
         enumerator :: api_linkf_curveid      ! 18
         enumerator :: api_linkf_discharge_coeff1  ! 19
         enumerator :: api_linkf_discharge_coeff2  ! 20
-        enumerator :: api_linkf_conduit_roughness ! 21
-        enumerator :: api_linkf_conduit_length    ! 22
+        enumerator :: api_linkf_initSetting       ! 21
+        enumerator :: api_linkf_yOn               ! 22
+        enumerator :: api_linkf_yOff              ! 23
+        enumerator :: api_linkf_conduit_roughness ! 24
+        enumerator :: api_linkf_conduit_length    ! 25
         !% brh20211207s
-        enumerator :: api_linkf_rptFlag      ! 23
+        enumerator :: api_linkf_rptFlag      ! 26
         !% brh20211207e
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 24
-        enumerator :: api_linkf_sub_type     ! 25
+        enumerator :: api_linkf_type         ! 27
+        enumerator :: api_linkf_sub_type     ! 28
         ! --- xsect attributes 
-        enumerator :: api_linkf_xsect_type   ! 26
-        enumerator :: api_linkf_geometry     ! 27
-        enumerator :: api_linkf_xsect_wMax   ! 28
-        enumerator :: api_linkf_xsect_yBot   ! 29
-        enumerator :: api_linkf_xsect_yFull  ! 30
+        enumerator :: api_linkf_xsect_type   ! 29
+        enumerator :: api_linkf_geometry     ! 30
+        enumerator :: api_linkf_xsect_wMax   ! 31
+        enumerator :: api_linkf_xsect_yBot   ! 32
+        enumerator :: api_linkf_xsect_yFull  ! 33
 
     end enum
 

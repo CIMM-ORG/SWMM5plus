@@ -109,20 +109,23 @@ enum api_linkf_attributes {
   linkf_curveid,           // 18 *
   linkf_discharge_coeff1,       // 19 *
   linkf_discharge_coeff2,       // 20 *
-  linkf_conduit_roughness,      // 21 *
-  linkf_conduit_length,         // 22 *
+  linkf_initSetting,            // 21 *
+  linkf_yOn,                    // 22 *
+  linkf_yOff,                   // 23 *
+  linkf_conduit_roughness,      // 24 *
+  linkf_conduit_length,         // 25 *
   // brh 20211207s
-  linkf_rptFlag,           // 23 new in api.c
+  linkf_rptFlag,           // 26 new in api.c
   // brh 20211207s
   // --- special elements attributes
-  linkf_type,                   // 24 *
-  linkf_sub_type,               // 25 *
+  linkf_type,                   // 27 *
+  linkf_sub_type,               // 28 *
   // --- xsect attributes
-  linkf_xsect_type,        // 26 *
-  linkf_geometry,          // 27 missing in api.c
-  linkf_xsect_wMax,        // 28 *
-  linkf_xsect_yBot,        // 29 *
-  linkf_xsect_yFull        // 30 *
+  linkf_xsect_type,        // 29 *
+  linkf_geometry,          // 30 missing in api.c
+  linkf_xsect_wMax,        // 31 *
+  linkf_xsect_yBot,        // 32 *
+  linkf_xsect_yFull        // 33 *
 };
 
 // API vars are those necessary for external applications

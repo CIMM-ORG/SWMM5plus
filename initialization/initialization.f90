@@ -535,6 +535,9 @@ contains
             link%I(ii,li_curve_id) = interface_get_linkf_attribute(ii, api_linkf_curveid)
             link%R(ii,lr_DischargeCoeff1) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1)
             link%R(ii,lr_DischargeCoeff2) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2)
+            link%R(ii,lr_initSetting) = interface_get_linkf_attribute(ii, api_linkf_initSetting)
+            link%R(ii,lr_yOn) = interface_get_linkf_attribute(ii, api_linkf_yOn)
+            link%R(ii,lr_yOff) = interface_get_linkf_attribute(ii, api_linkf_yOff)
             link%R(ii,lr_SideSlope) = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope)
             !% SWMM5 doesnot distinguish between channel and conduit
             !% however we need that distinction to set up the init condition
@@ -697,9 +700,10 @@ contains
                 , node%I(ii,ni_curve_ID), node%I(ii,ni_pattern_resolution)
             end do
 
-            print *, 'idx,    LinkType,  nodeU,   nodeD'
+            print *, 'idx,    LinkType,  nodeU,   nodeD, curveId'
             do ii=1,N_Link
-                write(*,"(10i8)") link%I(ii,li_idx), link%I(ii,li_link_type), link%I(ii,li_Mnode_u), link%I(ii,li_Mnode_d) 
+                write(*,"(10i8)") link%I(ii,li_idx), link%I(ii,li_link_type), link%I(ii,li_Mnode_u), link%I(ii,li_Mnode_d) &
+                , link%I(ii,li_curve_id) 
             end do
         end if 
 
