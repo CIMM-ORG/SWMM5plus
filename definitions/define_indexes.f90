@@ -56,6 +56,7 @@ module define_indexes
         enumerator :: li_idx = 1
         enumerator :: li_link_type           ! type of links (i.e. conduit, orifice, weir, etc.)   
         enumerator :: li_link_sub_type       ! link subtype (i.e. vnotch weir, side orifice, etc.)
+        enumerator :: li_link_direction      ! link direction
         enumerator :: li_geometry
         enumerator :: li_roughness_type
         enumerator :: li_N_element           ! Number of elements in this link

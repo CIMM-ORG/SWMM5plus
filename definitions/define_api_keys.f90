@@ -529,37 +529,38 @@ module define_api_keys
     enum, bind(c)
         enumerator :: api_linkf_ID = 1
         enumerator :: api_linkf_subIndex  ! 2
-        enumerator :: api_linkf_node1     ! 3
-        enumerator :: api_linkf_node2     ! 4
-        enumerator :: api_linkf_offset1   ! 5
-        enumerator :: api_linkf_offset2   ! 6
-        enumerator :: api_linkf_q0        ! 7
-        enumerator :: api_linkf_flow      ! 8
-        enumerator :: api_linkf_depth     ! 9
-        enumerator :: api_linkf_volume    ! 10
-        enumerator :: api_linkf_froude    ! 11
-        enumerator :: api_linkf_setting   ! 12
-        enumerator :: api_linkf_left_slope       ! 13
-        enumerator :: api_linkf_right_slope      ! 14  
-        enumerator :: api_linkf_weir_end_contractions ! 15
-        enumerator :: api_linkf_weir_side_slope   ! 16
-        enumerator :: api_linkf_curveid      ! 17
-        enumerator :: api_linkf_discharge_coeff1  ! 18
-        enumerator :: api_linkf_discharge_coeff2  ! 19
-        enumerator :: api_linkf_conduit_roughness ! 20
-        enumerator :: api_linkf_conduit_length    ! 21
+        enumerator :: api_linkf_direction ! 3
+        enumerator :: api_linkf_node1     ! 4
+        enumerator :: api_linkf_node2     ! 5
+        enumerator :: api_linkf_offset1   ! 6
+        enumerator :: api_linkf_offset2   ! 7
+        enumerator :: api_linkf_q0        ! 8
+        enumerator :: api_linkf_flow      ! 9
+        enumerator :: api_linkf_depth     ! 10
+        enumerator :: api_linkf_volume    ! 11
+        enumerator :: api_linkf_froude    ! 12
+        enumerator :: api_linkf_setting   ! 13
+        enumerator :: api_linkf_left_slope       ! 14
+        enumerator :: api_linkf_right_slope      ! 15  
+        enumerator :: api_linkf_weir_end_contractions ! 16
+        enumerator :: api_linkf_weir_side_slope   ! 17
+        enumerator :: api_linkf_curveid      ! 18
+        enumerator :: api_linkf_discharge_coeff1  ! 19
+        enumerator :: api_linkf_discharge_coeff2  ! 20
+        enumerator :: api_linkf_conduit_roughness ! 21
+        enumerator :: api_linkf_conduit_length    ! 22
         !% brh20211207s
-        enumerator :: api_linkf_rptFlag      ! 22
+        enumerator :: api_linkf_rptFlag      ! 23
         !% brh20211207e
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 23
-        enumerator :: api_linkf_sub_type          ! 24
+        enumerator :: api_linkf_type         ! 24
+        enumerator :: api_linkf_sub_type     ! 25
         ! --- xsect attributes 
-        enumerator :: api_linkf_xsect_type   ! 25
-        enumerator :: api_linkf_geometry     ! 26
-        enumerator :: api_linkf_xsect_wMax   ! 27
-        enumerator :: api_linkf_xsect_yBot   ! 28
-        enumerator :: api_linkf_xsect_yFull  ! 29
+        enumerator :: api_linkf_xsect_type   ! 26
+        enumerator :: api_linkf_geometry     ! 27
+        enumerator :: api_linkf_xsect_wMax   ! 28
+        enumerator :: api_linkf_xsect_yBot   ! 29
+        enumerator :: api_linkf_xsect_yFull  ! 30
 
     end enum
 

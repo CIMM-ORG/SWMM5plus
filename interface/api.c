@@ -1117,6 +1117,10 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_subIndex :
             *value = Link[link_idx].subIndex;
             break;
+        
+        case linkf_direction :
+            *value = Link[link_idx].direction;
+            break;
 
         case linkf_type : 
             *value = Link[link_idx].type;

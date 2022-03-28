@@ -951,7 +951,8 @@ contains
                     thisposition = trim(subroutine_name)//'_G07'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 87438687'
+                    !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_RECT_OPEN) then
@@ -968,7 +969,8 @@ contains
                     thisposition = trim(subroutine_name)//'_I09'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 72678439'
+                    !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRAPEZOIDAL) then
@@ -985,7 +987,8 @@ contains
                     thisposition = trim(subroutine_name)//'_K11'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 55278093'
+                    !% trapezoidal geometry does not have certain geometric features (i.e. top-width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRIANGULAR) then
@@ -1002,7 +1005,8 @@ contains
                     thisposition = trim(subroutine_name)//'_N13'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 267849'
+                    !% triangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_PARABOLIC) then
@@ -1019,7 +1023,8 @@ contains
                     thisposition = trim(subroutine_name)//'_P15'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 8270894987'
+                    !% parabolic geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_CIRCULAR) then
@@ -1036,11 +1041,13 @@ contains
                     thisposition = trim(subroutine_name)//'_R17'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 8276438'
+                    !% circular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else
-                write(*,*) '****** Not clear why this is null brh20211207 at 227589'
+                !% some links like pumps or outlets does not have any geometric features
+                !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
                 link_value = nullvalueR
             end if
         end if
