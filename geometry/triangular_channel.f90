@@ -198,7 +198,7 @@ module triangular_channel
         hyddepth  => elemR(:,er_HydDepth)
         !%-----------------------------------------------------------------------------
 
-        hyddepth(thisP) = depth(thisP)
+        hyddepth(thisP) = depth(thisP) / twoR
 
     end subroutine triangular_hyddepth_from_depth
 !%    
@@ -215,7 +215,7 @@ module triangular_channel
         integer, intent(in) :: indx     
         !%-----------------------------------------------------------------------------  
 
-        outvalue = elemR(indx,er_Depth)
+        outvalue = elemR(indx,er_Depth) / twoR
 
     end function triangular_hyddepth_from_depth_singular 
 !%    
