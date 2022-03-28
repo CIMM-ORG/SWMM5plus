@@ -752,7 +752,7 @@ contains
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
             "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
-
+            !print *, 'API_CONDUIT', API_CONDUIT,',link_value',link_value
         if ((attr > N_api_total_linkf_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
             !stop 

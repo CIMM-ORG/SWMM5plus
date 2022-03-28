@@ -22,6 +22,7 @@ module initial_condition
     use circular_conduit
     use rectangular_channel, only: rectangular_area_from_depth
     use trapezoidal_channel, only: trapezoidal_area_from_depth
+    use triangular_channel, only: triangular_area_from_depth
     use storage_geometry
     use adjust
     use interface, only: interface_get_nodef_attribute
@@ -56,7 +57,7 @@ contains
         !%-------------------------------------------------------------------
         !% Preliminaries:
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% Aliases
             whichSolver => setting%Solver%SolverSelect
@@ -249,7 +250,7 @@ contains
         !% Preliminaries
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% pack all the link indexes in an image
         packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == this_image()))
@@ -316,7 +317,7 @@ contains
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -427,7 +428,7 @@ contains
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -456,7 +457,7 @@ contains
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -538,11 +539,11 @@ contains
 
             integer, intent(in) :: thisLink
             integer, pointer    :: linkType
-            character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
+            character(64) :: subroutine_name = 'init_IC_get_geometry_from_linkdata'
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -613,7 +614,7 @@ contains
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -690,6 +691,32 @@ contains
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                 endwhere
+            
+            case (lTriangular)
+
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+
+                    elemI(:,ei_geometryType) = triangular
+
+                    !% store geometry specific data
+                    elemSGR(:,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
+                    elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_TopBreadth) / (twoR * elemR(:,er_FullDepth))
+                    
+                    ! Area = Depth*Depth*avg. sideslope
+                    elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Triangular_Slope) 
+                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                    elemR(:,er_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemR(:,er_FullDepth) * elemR(:, er_FullDepth) * elemSGR(:,esgr_Triangular_Slope) 
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                endwhere
 
             case default
 
@@ -724,10 +751,12 @@ contains
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
+
+
 
         select case (geometryType)
 
@@ -791,6 +820,7 @@ contains
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
             end where
+        
 
         case default
 
@@ -1124,7 +1154,7 @@ contains
         !--------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
@@ -1198,9 +1228,9 @@ contains
             end if
         else
             !%-----------------------------------------------------------------------
-            !% HACK: Junction main with artificial storage are rectangular
+            !% HACK: Junction main with implied storage are rectangular
             !%-----------------------------------------------------------------------
-            elemSI(JMidx,esi_JunctionMain_Type) = ArtificialStorage
+            elemSI(JMidx,esi_JunctionMain_Type) = ImpliedStorage
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
 
@@ -1328,6 +1358,21 @@ contains
                                     + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
 
                 elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
+            
+            case (lTriangular)
+
+                elemI(JBidx,ei_geometryType) = triangular
+
+                !% store geometry specific data
+                elemSGR(JBidx,esgr_Triangular_TopBreadth)  = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullDepth)                  = link%R(BranchIdx,lr_FullDepth)
+                elemSGR(JBidx,esgr_Triangular_Slope)       = elemSGR(JBidx,esgr_Triangular_TopBreadth) / &
+                                                                (twoR * elemR(JBidx,er_FullDepth))
+                elemR(JBidx,er_ZBreadthMax)                = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                elemR(JBidx,er_BreadthMax)                 = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullArea)                   =  elemR(JBidx,er_FullDepth) * elemR(JBidx, er_FullDepth) * &
+                                                                elemSGR(JBidx,esgr_Triangular_Slope)
+                elemR(JBidx,er_AreaBelowBreadthMax)        = elemR(JBidx,er_FullArea)
                             
             case (lCircular)
                 elemI(JBidx,ei_geometryType) = circular
@@ -1387,7 +1432,7 @@ contains
 
         select case (JmType)
 
-        case (ArtificialStorage)
+        case (ImpliedStorage)
             !% the JM characteristic length is the sum of the two longest branches
             elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
                                             elemR(JMidx+5,er_Length)) + &
@@ -1415,6 +1460,11 @@ contains
                              +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                   * elemR(  JBidx,er_Length)                                  &
                                   * elemSGR(JBidx,esgr_Trapezoidal_Breadth) )
+                case (lTriangular)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                    * elemR(  JBidx,er_Length)                                   &
+                                    * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
@@ -1472,9 +1522,6 @@ contains
             return
 
         end select
-
-        ! call the standard geometry update for junction branches
-        call geo_assign_JB (ALLtm, ep_JM_ALLtm)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1799,6 +1846,14 @@ contains
         !     !rm smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
         !     smallVolume = (trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff) * length !% 20220122brh
         ! end where
+
+        !% --- triangular conduit  
+        tPack = zeroI
+        npack = count(geoType == triangular)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == triangular)
+            smallvolume(tPack(1:npack)) = triangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if 
 
         !% ---  circular conduit
 
