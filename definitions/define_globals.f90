@@ -301,7 +301,7 @@ module define_globals
     !rm integer, parameter :: N_api_link_attributes = api_linkf_conduit_length
     integer, parameter :: N_api_linkf_attributes = api_linkf_rptFlag
     !% brh20211207e
-    integer, parameter :: N_api_linkf_type_attributes = api_linkf_pump_type - N_api_linkf_attributes
+    integer, parameter :: N_api_linkf_type_attributes = api_linkf_sub_type - N_api_linkf_attributes
     integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_xsect_yFull - N_api_linkf_type_attributes
     integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
                                                         + N_api_linkf_xsect_attributes

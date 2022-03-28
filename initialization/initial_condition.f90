@@ -856,7 +856,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific weir type
-        specificWeirType => link%I(thisLink,li_weir_type)
+        specificWeirType => link%I(thisLink,li_link_sub_type)
 
         select case (specificWeirType)
             !% copy weir specific data
@@ -966,7 +966,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific orifice type
-        specificOrificeType => link%I(thisLink,li_orif_type)
+        specificOrificeType => link%I(thisLink,li_link_sub_type)
 
         select case (specificOrificeType)
         !% copy orifice specific data
@@ -1052,7 +1052,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific outlet type
-        specificOutletType => link%I(thisLink,li_outlet_type)
+        specificOutletType => link%I(thisLink,li_link_sub_type)
         curveID            => link%I(thisLink,li_curve_id)
 
         do ii = 1,N_elem(this_image())
