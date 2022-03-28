@@ -18,6 +18,17 @@ module define_types
         character(len=:), allocatable :: str
     end type string
 
+    !% curve data
+    type curveType
+        integer :: ID
+        integer :: Type
+        integer :: RefersTo
+        integer :: NumRows
+        integer :: ElemIdx
+        integer :: FaceIdx
+        real(8), dimension(:,:), allocatable :: ValueArray
+    end type
+
     !%  control data
     type controlType
         integer :: Idx
@@ -81,20 +92,25 @@ module define_types
     end type LinkPack
 
     type NodeArray
-        integer,      allocatable :: I(:,:)   !% integer data for nodes
-        real(8),      allocatable :: R(:,:)   !% real data for nodes
-        logical,      allocatable :: YN(:,:)  !% logical data for nodes
+        integer,      allocatable :: I(:,:)[:]   !% integer data for nodes
+        real(8),      allocatable :: R(:,:)[:]   !% real data for nodes
+        logical,      allocatable :: YN(:,:)[:]  !% logical data for nodes
         type(string), allocatable :: Names(:) !% names for nodes retrieved from EPA-SWMM
         type(NodePack)            :: P        !% packs for nodes
     end type NodeArray
 
     type LinkArray
-        integer,      allocatable :: I(:,:)   !% integer data for links
-        real(8),      allocatable :: R(:,:)   !% real data for links
-        logical,      allocatable :: YN(:,:)  !% logical data for links
+        integer,      allocatable :: I(:,:)[:]   !% integer data for links
+        real(8),      allocatable :: R(:,:)[:]   !% real data for links
+        logical,      allocatable :: YN(:,:)[:]  !% logical data for links
         type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
         type(LinkPack)            :: P        !% pack for links
     end type LinkArray
+
+    type :: BoundaryElemArray
+        real(8),      allocatable :: R(:,:)   !% real data for elemB
+        integer,      allocatable :: I(:,:)   !% integer data for elemB
+    end type BoundaryElemArray
 
     type BCPack
         !% We initialze the pack array for BC interpolation use later
@@ -105,10 +121,12 @@ module define_types
 
     type BCArray
         integer,     allocatable :: flowI(:,:)              !% integer data for inflow BCs
+        logical,     allocatable :: flowYN(:,:)             !% logical data for inflow BCs
         real(8),     allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
         integer,     allocatable :: flowIdx(:)              !% indexes of current entry in flowR_timeseries
         real(8),     allocatable :: flowRI(:)               !% values of interpolated inflows at current time
         integer,     allocatable :: headI(:,:)              !% integer data for elevation BCs
+        logical,     allocatable :: headYN(:,:)             !% logical data for head BCs
         real(8),     allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
         integer,     allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
         real(8),     allocatable :: headRI(:)               !% values of interpolated heads at current time

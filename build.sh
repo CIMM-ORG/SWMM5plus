@@ -18,23 +18,24 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_types.f90\
               $DEF_DIR/define_api_keys.f90\
               $DEF_DIR/define_globals.f90\
+              $UTIL_DIR/utility_crash.f90\
               $DEF_DIR/define_keys.f90\
               $DEF_DIR/define_settings.f90\
               $DEF_DIR/define_indexes.f90\
+              $DEF_DIR/define_xsect_tables.f90\
               $UTIL_DIR/utility.f90\
               $UTIL_DIR/utility_datetime.f90\
               $API_DIR/c_library.f90\
               $API_DIR/interface.f90\
               $UTIL_DIR/utility_allocate.f90\
               $UTIL_DIR/utility_deallocate.f90\
-              $UTIL_DIR/utility_profiler_array.f90\
-              $UTIL_DIR/utility_prof_jobcount.f90\
               $UTIL_DIR/utility_profiler.f90\
               $UTIL_DIR/utility_array.f90\
               $UTIL_DIR/utility_debug.f90\
 	          $OUT_DIR/output.f90\
               $UTIL_DIR/utility_output.f90\
               $UTIL_DIR/utility_interpolate.f90\
+              $UTIL_DIR/utility_files.f90\
               $INIT_DIR/pack_mask_arrays.f90\
               $INIT_DIR/discretization.f90\
               $INIT_DIR/BIPquick.f90\
@@ -43,26 +44,31 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_unit_testing.f90\
               $TL_DIR/adjust.f90\
               $TL_DIR/jump.f90\
-              $TL_DIR/common_elements.f90\
-              $TL_DIR/weir_elements.f90\
-              $TL_DIR/orifice_elements.f90\
-              $TL_DIR/pump_elements.f90\
               $GEO_DIR/xsect_tables.f90\
               $GEO_DIR/rectangular_channel.f90\
               $GEO_DIR/trapezoidal_channel.f90\
+              $GEO_DIR/triangular_channel.f90\
               $GEO_DIR/circular_conduit.f90\
+              $GEO_DIR/storage_geometry.f90
               $GEO_DIR/geometry.f90\
+              $TL_DIR/common_elements.f90\
+              $TL_DIR/weir_elements.f90\
+              $TL_DIR/orifice_elements.f90\
+              $TL_DIR/outlet_elements.f90\
+              $TL_DIR/pump_elements.f90\
               $TL_DIR/lowlevel_rk2.f90\
               $TL_DIR/update.f90\
               $TL_DIR/face.f90\
               $TL_DIR/boundary_conditions.f90\
               $TL_DIR/diagnostic_elements.f90\
               $TL_DIR/runge_kutta2.f90\
+              $TL_DIR/hydrology.f90\
               $TL_DIR/timeloop.f90\
               $INIT_DIR/initial_condition.f90\
               $INIT_DIR/initialization.f90\
               $FIN_DIR/finalization.f90"
 
+# --------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------
 
 TEST_FILES=""
@@ -80,22 +86,24 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-if [[ ! $skip_fortran = "true" ]]
+
+if [[ $compile_fortran = "true" ]]
 then
-    $CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
+    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o SWMM
 fi
 
-# --------------------------------------------------------------------------------------
-
-$clean:
 echo
 echo Clean Object files ...
 echo
 rm -rf *.o *.mod *.out
-if [[ -d debug_input ]]; then rm -r debug_input; fi
-if [[ -d debug_output ]]; then rm -r debug_output; fi
-if [[ -d swmm5_output ]]; then rm -r swmm5_output; fi
+if [[ -d debug_input ]]; then rm -rf debug_input; fi
+if [[ -d debug_output ]]; then rm -rf debug_output; fi
+if [[ -d swmm5_output ]]; then rm -rf swmm5_output; fi
 
 echo
 echo Complete!
-echo
+echo "To update number of processors in the system:"
+echo "Please execute >>> source ~/.bashrc"
+
+
+

@@ -20,11 +20,11 @@ module jump
     public :: jump_compute
 
     contains
-    !%
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================  
-    !%  
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================  
+!%  
     subroutine jump_compute
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -33,8 +33,10 @@ module jump
         integer, pointer :: facePackCol, Npack
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'jump_compute'
+        !%-----------------------------------------------------------------------------
+        if (crashYN) return
         if (setting%Debug%File%jump) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
         !%-----------------------------------------------------------------------------
         !%  
         !% identify hydraulic jump (create pack facemap in global)
@@ -55,13 +57,13 @@ module jump
         end if
 
         if (setting%Debug%File%jump)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine jump_compute   
-    !%
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-    !%    
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%    
     subroutine jump_face_identify
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -89,6 +91,8 @@ module jump
         logical, pointer :: isSurcharged(:), isInterior(:)
         real(8), pointer :: feps, Fr(:)
         !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        if (crashYN) return
         !% pointing to the number of faces in this image
         image  = this_image()
         Nfaces => N_face(image)
@@ -189,10 +193,10 @@ module jump
         end if
 
     end subroutine jump_face_identify
-    !%
-    !%========================================================================== 
-    !%==========================================================================    
-    !%  
+!%
+!%========================================================================== 
+!%==========================================================================    
+!%  
     subroutine jump_enforce (facePackCol, Npack, jump_from)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -202,6 +206,8 @@ module jump
         integer, pointer :: thisP(:), eUp(:), eDn(:)
         integer :: fsetUp(2), fsetDn(2), eset(2)
         !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
+        if (crashYN) return
         thisP => faceP(1:Npack,facePackCol)     
         eUp => faceI(:,fi_Melem_uL)
         eDn => faceI(:,fi_Melem_dL)
@@ -213,23 +219,27 @@ module jump
         !%-----------------------------------------------------------------------------
 
         select case (jump_from)
-            case (jump_from_upstream)
-                !% enforce jump from upstream faces
-                !% so that downstream face is the downstream element value
-                faceR(thisP,fsetDn) = elemR(eDn(thisP),eset)
-                faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
-                faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
-            case (jump_from_downstream)
-                !% enforce jump from downstream faces
-                !%  so that upstream face is the upstream element value
-                faceR(thisP,fsetUp) = elemR(eUp(thisP),eset)
-                faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
-                faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
+        case (jump_from_upstream)
+            !% enforce jump from upstream faces
+            !% so that downstream face is the downstream element value
+            faceR(thisP,fsetDn) = elemR(eDn(thisP),eset)
+            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
+            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
+        case (jump_from_downstream)
+            !% enforce jump from downstream faces
+            !%  so that upstream face is the upstream element value
+            faceR(thisP,fsetUp) = elemR(eUp(thisP),eset)
+            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
+            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
+        case default
+            print *, 'CODE ERROR geometry type unknown for # ', jump_from
+            print *, 'which has key ',trim(reverseKey(jump_from))
+            stop 587834
         end select
         
     end subroutine jump_enforce
-    !%
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
 end module jump

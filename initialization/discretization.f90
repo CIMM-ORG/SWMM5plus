@@ -7,9 +7,6 @@ module discretization
 
     implicit none
 
-    real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
-    real(8), pointer :: elem_shorten_cof    => setting%Discretization%LinkShortingFactor
-
 contains
 
     !
@@ -30,12 +27,15 @@ contains
     !-----------------------------------------------------------------------------
         integer :: ii, Adjustment_flag
         real(8) :: temp_length
-
+        real(8), pointer :: elem_nominal_length, elem_shorten_cof
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
-
+        if (crashYN) return
         if (setting%Debug%File%discretization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        elem_nominal_length => setting%Discretization%NominalElemLength
+        elem_shorten_cof    => setting%Discretization%LinkShortingFactor
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -51,14 +51,19 @@ contains
                 Adjustment_flag = Adjustment_flag + oneI
             end if
 
-            link%R(ii,lr_AdjustedLength) = temp_length
-            link%I(ii,li_length_adjusted) = Adjustment_flag
-            !% set the new element length based on the adjusted link length
-            link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
+            if ((link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe)) then
+                link%R(ii,lr_AdjustedLength) = temp_length
+                link%I(ii,li_length_adjusted) = Adjustment_flag
+                !% set the new element length based on the adjusted link length
+                link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
+            else
+                link%R(ii,lr_AdjustedLength) = link%R(ii,lr_ElementLength)
+                link%I(ii,li_length_adjusted) = DiagAdjust
+            end if
         end do
 
         if (setting%Debug%File%discretization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
@@ -74,12 +79,15 @@ contains
     !-----------------------------------------------------------------------------
         integer, intent(in) :: link_idx
         real(8) :: remainder
+        real(8), pointer :: elem_nominal_length
         character(64) :: subroutine_name = 'init_discretization_nominal'
 
     !-----------------------------------------------------------------------------
-
+        if (crashYN) return
         if (setting%Debug%File%discretization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        elem_nominal_length => setting%Discretization%NominalElemLength
 
         !% Adjusts the number of elements in a link based on the length
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
@@ -106,8 +114,19 @@ contains
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
         end if
 
+        !% treatment of for special links
+        if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
+            (link%I(link_idx,li_link_type) == lOrifice) .or. &
+            (link%I(link_idx,li_link_type) == lOutlet)  .or. &
+            (link%I(link_idx,li_link_type) == lPump) ) then
+
+            link%I(link_idx, li_N_element) = oneI
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+
+        end if 
+
         if (setting%Debug%File%discretization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_discretization_nominal
     !

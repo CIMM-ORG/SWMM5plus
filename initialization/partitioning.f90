@@ -4,10 +4,12 @@ module partitioning
     use define_globals
     use define_indexes
     use define_settings, only: setting
+    use discretization, only: init_discretization_nominal
     use utility
     use utility_allocate
     use BIPquick
     use utility_deallocate
+    use utility_crash
 
     implicit none
 
@@ -23,52 +25,80 @@ module partitioning
 
     private
 
-    public :: init_partitioning_method
+    public :: partitioning_toplevel
 
 contains
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine init_partitioning_method()
+subroutine partitioning_toplevel()
     ! --------------------------------------------------------
-    !
     ! Description:
     !   The purpose of this subroutine is to check which partitioning
     !   algorithm should be used, then call that algorithm, then
     !   check that the output is correct (if debug == true)
-    !
     !---------------------------------------------------------
         logical :: partition_correct
         integer :: connectivity, ii, nn
         real(8) :: part_size_balance
-        character(64) :: subroutine_name = 'init_partitioning_method'
+        character(64) :: subroutine_name = 'partitioning_toplevel'
     !% --------------------------------------------------------
+        if (crashYN) return
+    !% --------------------------------------------------------
+    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
-    call util_allocate_partitioning_arrays()
+    !% the allcoation should probably should only be for image=1
+    !% but we need to then be careful with deallocation
+    call util_allocate_partitioning_arrays() 
 
-    !% Determine which partitioning method is being used
-    print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
-    if (setting%Partitioning%PartitioningMethod == Default) then
-        if (setting%Verbose) print*, new_line(""), "Using Default Partitioning"
-        call init_partitioning_default()
-    else if (setting%Partitioning%PartitioningMethod == Random) then
-        if (setting%Verbose) print*, new_line(""), "Using Random Partitioning"
-        call init_partitioning_random()
-    else if (setting%Partitioning%PartitioningMethod == BLink) then
-        if (setting%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
-        call init_partitioning_linkbalance()
-    else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
-        call init_partitioning_BIPquick()
+    !% --- check for using a single processor or multiprocessor
+    if ( num_images() == 1 ) then
+        node%I(:, ni_P_image) = oneI
+        node%I(:, ni_P_is_boundary) = zeroI
+        link%I(:, li_P_image) = oneI
+        if (setting%Output%Verbose) print*, "... Using one processor, bypassing partitioning"
     else
-        print *, "Error, partitioning method not supported"
-        stop "in " // subroutine_name
+        !% --- confine the partitioning computations to a single image
+        if (this_image() == 1) then
+            !% Determine which partitioning method is being used
+            !print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
+            if (setting%Partitioning%PartitioningMethod == Default) then
+                if (setting%Output%Verbose) write(*,"(A)")  "... using Default Partitioning..."
+                call init_partitioning_default()
+            else if (setting%Partitioning%PartitioningMethod == Random) then
+                if (setting%Output%Verbose) write(*,"(A)")  "... using Random Partitioning..."
+                call init_partitioning_random()
+            else if (setting%Partitioning%PartitioningMethod == BLink) then
+                if (setting%Output%Verbose) write(*,"(A)")  "... using Balanced Link Partitioning..."
+                call init_partitioning_linkbalance()
+            else if (setting%Partitioning%PartitioningMethod == BQuick) then
+                if (setting%Output%Verbose) write(*,"(A)") "... using BIPquick Partitioning..."
+                call BIPquick_toplevel()
+                ! call init_partitioning_bquick_diagnostic ()
+            else
+                print *, "Error, partitioning method not supported"
+                call util_crashpoint(87095)
+                return
+                !stop 
+            end if
+        end if
+
+        call util_crashstop(44873)
+
+        !% broadcast partitioning results to all images
+        call co_broadcast(node%I, source_image=1)
+        call co_broadcast(node%R, source_image=1)
+        call co_broadcast(node%YN, source_image=1)
+        call co_broadcast(link%I, source_image=1)
+        call co_broadcast(link%R, source_image=1)
+        call co_broadcast(link%YN, source_image=1)
+        sync all
     end if
 
     if (setting%Debug%File%partitioning) then
         print *, "Node Partitioning"
-        print*, new_line("")
+        print *
         do ii = 1, size(node%I, 1)
             if ( ii <= N_node ) then
                 print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
@@ -78,10 +108,10 @@ subroutine init_partitioning_method()
         end do
 
         print *, "Link Partitioning"
-        print *, new_line("")
+        print *
         do ii = 1, size(link%I, 1)
             if ( ii <= N_link ) then
-                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), & 
+                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
                     link%I(ii, li_Mnode_u:li_Mnode_d)
             else
                 print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
@@ -90,12 +120,11 @@ subroutine init_partitioning_method()
 
         end do
 
-
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
         ! part_size_balance = init_partitioning_metric_partsizebalance()
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         write(*,"(2(A,i5),A)") &
         "completed partitioning (", connectivity, ") | [Processor ", this_image(), "]" ! part_size_balance
     end if
@@ -104,7 +133,136 @@ subroutine init_partitioning_method()
     N_link = count(link%I(:,li_idx) /= nullvalueI)
 
     call util_deallocate_partitioning_arrays()
-end subroutine init_partitioning_method
+
+end subroutine partitioning_toplevel
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine init_partitioning_bquick_diagnostic ()
+    ! --------------------------------------------------------
+    ! Description:
+    !   The purpose of this subroutine is to delete phantom links
+    !   and nodes so that the network remain intact
+    !---------------------------------------------------------
+    integer :: ii
+    integer, pointer :: pNode, pLink, sLink, dnNidx, upNidx
+    integer, pointer :: plinkUp, pLinkDn
+    real(8), pointer :: nominalElemLength
+    integer, dimension(:), allocatable, target :: nodeIndexes
+    character(64) :: subroutine_name = 'init_partitioning_bquick_diagnostic'
+!% --------------------------------------------------------
+    if (crashYN) return
+!% --------------------------------------------------------
+    !% pointers
+    nominalElemLength => setting%Discretization%NominalElemLength
+
+    !% pack all the node indexes excluding the nullvalues
+    nodeIndexes = pack(node%I(:,ni_idx), (node%I(:,ni_idx) /= nullvalueI))
+
+    do ii = 1, size(nodeIndexes, 1)
+        pNode => nodeIndexes(ii)
+        if (node%YN(pNode,nYN_is_phantom_node)) then
+            !% if both the upstream and downstream links are phantom
+            if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink) .and. &
+                link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                plinkUp => node%I(pNode,ni_Mlink_u1)
+                pLinkDn => node%I(pNode,ni_Mlink_d1)
+                upNidx  => link%I(plinkUp,li_Mnode_u)
+                dnNidx  => link%I(pLinkDn,li_Mnode_d)
+            !% if the upstream link is a phantom link
+            else if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink)) then
+                pLink  => node%I(pNode,ni_Mlink_u1)
+                sLink  => node%I(pNode,ni_Mlink_d1)
+                upNidx => link%I(pLink,li_Mnode_u)
+                dnNidx => link%I(sLink,li_Mnode_d)
+            !% if the downstream link is a phantom link
+            else if (link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                sLink  => node%I(pNode,ni_Mlink_u1)
+                pLink  => node%I(pNode,ni_Mlink_d1)
+                upNidx => link%I(sLink,li_Mnode_u)
+                dnNidx => link%I(pLink,li_Mnode_d)
+            !% should not reach this error condition
+            else
+                print*, 'In subroutine', subroutine_name
+                print*, 'Error: phantom node', pNode, 'doesnot have any up or dn phantom link'
+                !stop 
+                call util_crashpoint(147856)
+                return
+            end if
+
+            !% print diagnistic of the spanning and phantom links
+            if (this_image() == 1) then
+                if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink) .and. &
+                    link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                    print*, 'Phantom link detected both upstream and downstream'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, plinkUp,                   ' = up phantom link index'
+                    print*, link%R(plinkUp,lr_length), ' = up phantom link length'
+                    print*, link%I(plinkUp,li_P_image),' = up phantom link in image'
+                    print*, upNidx,                    ' = node up idx of the phantom link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of phantom link in image'
+                    print*, pLinkDn,                   ' = dn phantom link index'
+                    print*, link%R(pLinkDn,lr_length), ' = dn phantom link length'
+                    print*, link%I(pLinkDn,li_P_image),' = dn phantom link in image'
+                    print*, dnNidx,                    ' = node dn idx of the spanning link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of spanning link in image'
+                    print*
+                else if (link%YN(node%I(pNode,ni_Mlink_u1),lYN_isPhantomLink)) then
+                    print*, 'Upstream phantom link detected'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, pLink,                     ' = up phantom link index'
+                    print*, link%R(pLink,lr_length),   ' = up phantom link length'
+                    print*, link%I(pLink,li_P_image),  ' = up phantom link in image'
+                    print*, upNidx,                    ' = node up idx of the phantom link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of phantom link in image'
+                    print*, sLink,                     ' = dn spanning link index'
+                    print*, link%R(sLink,lr_length),   ' = dn spanning link length'
+                    print*, link%I(sLink,li_P_image),  ' = dn spanning link in image'
+                    print*, dnNidx,                    ' = node dn idx of the spanning link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of spanning link in image'
+                    print*
+                else if (link%YN(node%I(pNode,ni_Mlink_d1),lYN_isPhantomLink)) then
+                    print*, 'Downstream phantom link detected'
+                    print*, pNode,                     ' = phantom node index'
+                    print*, node%I(pNode,ni_P_image),  ' = phantom node image'
+                    print*, sLink,                     ' = up spanning link index'
+                    print*, link%R(sLink,lr_length),   ' = up spanning link length'
+                    print*, link%I(sLink,li_P_image),  ' = up spanning link in image'
+                    print*, upNidx,                    ' = node idx up of the spanning link'
+                    print*, node%I(upNidx,ni_P_image), ' = node up of spanning link in image'
+                    print*, pLink,                     ' = dn phantom link index'
+                    print*, link%R(pLink,lr_length),   ' = dn phantom link length'
+                    print*, link%I(pLink,li_P_image),  ' = dn phantom link in image'
+                    print*, dnNidx,                    ' = node idx dn of the phantom link'
+                    print*, node%I(dnNidx,ni_P_image), ' = node dn of phantom link in image'
+                    print*
+                end if
+            end if 
+
+            !% adjust only when the spanning or phantom link is smaller 
+            !% than the nominal element length and the phantom link and node
+            !% are on different images
+
+            !% HACK: if the phantom link and nodes are on a same image, 
+            !% that implys
+            ! if ( (link%R(pLink,lr_length) .le. nominalElemLength) .or. &
+            !      (link%R(sLink,lr_length) .le. nominalElemLength)) then
+            !     !% print out for the adjusted links    
+            !     if (this_image() == 1) then
+            !         print*, 'Adjusting Link', pLink, ' and ', sLink
+            !     end if
+
+            ! end if    
+        end if
+    end do 
+
+    !% deacclocate the temporary array
+    deallocate(nodeIndexes)
+
+end subroutine init_partitioning_bquick_diagnostic
 !
 !==========================================================================
 !==========================================================================
@@ -118,19 +276,25 @@ subroutine init_partitioning_default()
     !   in the order in which they appear in the link-node arrays.
     !
     ! -----------------------------------------------------------------------------------------------------------------
-    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold
     logical :: partition_correct
 
+    if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
-    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(link%I(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
-        (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
+    total_num_elements = sum(link%I(:, li_N_element))         &
+                             + (N_nBCup    * N_elem_nBCup)    &
+                             + (N_nBCdn    * N_elem_nBCdn)    &
+                             + (N_nJm      * N_elem_nJm)      &
+                             + (N_nStorage * N_elem_nStorage) &
+                             + (N_nJ2      * N_elem_nJ2)      &
+                             + (N_nJ1      * N_elem_nJ1)                   !% brh 20211217
     partition_threshold = total_num_elements / real(num_images())
 
     !% This loop counts the elements attributed to each link, and assigns the link to an image
@@ -167,17 +331,41 @@ subroutine init_partitioning_default()
     do ii = 1, size(node%I, 1)
 
         !% This if statement increments the num_attributed_elements by the number of elements associated with that node type
-        if ( node%I(ii, ni_node_type) == nBCup ) then
+
+        ! if ( node%I(ii, ni_node_type) == nBCup ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nBCup
+        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nBCdn
+        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nStorage
+        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nJ2
+        ! else if ( node%I(ii, ni_node_type) == nJm ) then
+        !     num_attributed_elements = num_attributed_elements + N_elem_nJm
+        ! end if
+
+        !% brh20211217 -- revised to add nJ1
+        select case (node%I(ii, ni_node_type))
+        case (nBCup)
             num_attributed_elements = num_attributed_elements + N_elem_nBCup
-        else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        case (nBCdn)
             num_attributed_elements = num_attributed_elements + N_elem_nBCdn
-        else if ( node%I(ii, ni_node_type) == nStorage ) then
+        case (nStorage)
             num_attributed_elements = num_attributed_elements + N_elem_nStorage
-        else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        case (nJ1)
+            num_attributed_elements = num_attributed_elements + N_elem_nJ1
+        case (nJ2)
             num_attributed_elements = num_attributed_elements + N_elem_nJ2
-        else if ( node%I(ii, ni_node_type) == nJm ) then
+        case (nJM)
             num_attributed_elements = num_attributed_elements + N_elem_nJm
-        end if
+        case default 
+            print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
+            print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            !stop 
+            call util_crashpoint(1098226)
+            return
+        end select
+
 
         !% If the number of attributed nodes exceeds the partition_threshold, then the remaining nodes are assigned to a new image
         if ( num_attributed_elements > partition_threshold) then
@@ -193,7 +381,8 @@ subroutine init_partitioning_default()
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
         current_node_image = node%I(ii, ni_P_image)
-        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        !adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        adjacent_links = node%I(ii, ni_MlinkStart:ni_MlinkEnd)        !% brh20211219
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle
@@ -220,19 +409,24 @@ subroutine init_partitioning_random()
     !   it to a random image (after checking to ensure that image is not full).
     !
     ! -----------------------------------------------------------------------------------------------------------------
-    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold, rand_num
     !% ----------------------------------------------------------------------------------------------------------------
-
+    if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
-    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+    call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(link%I(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
-        (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
+    total_num_elements = sum(link%I(:, li_N_element))        &
+                            + (N_nBCup * N_elem_nBCup)       &
+                            + (N_nBCdn * N_elem_nBCdn)       &
+                            + (N_nJm * N_elem_nJm)           &
+                            + (N_nStorage * N_elem_nStorage) &
+                            + (N_nJ2 * N_elem_nJ2)           &
+                            + (N_nJ1 * N_elem_nJ1)                            !% brh20211217
     partition_threshold = ( total_num_elements / real(num_images()) )
 
     !% Initialize the arrays that will hold the number of elements already on an image (and whether that image is full)
@@ -279,17 +473,39 @@ subroutine init_partitioning_random()
         end do
 
         !% elem_per_image is incremented by the number of elements associated with each node type
-        if ( node%I(ii, ni_node_type) == nBCup ) then
-            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCup
-        else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        ! if ( node%I(ii, ni_node_type) == nBCup ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCup
+        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
+        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
+        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
+        ! else if ( node%I(ii, ni_node_type) == nJm ) then
+        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
+        ! end if
+
+        !% brh20211217 -- revised to add nJ1
+        select case (node%I(ii, ni_node_type))
+        case (nBCup)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image)+ N_elem_nBCup
+        case (nBCdn)
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
-        else if ( node%I(ii, ni_node_type) == nStorage ) then
+        case (nStorage)
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
-        else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        case (nJ1)
+            elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ1
+        case (nJ2)
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
-        else if ( node%I(ii, ni_node_type) == nJm ) then
+        case (nJM)
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
-        end if
+        case default 
+            print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
+            print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            !stop 
+            call util_crashpoint(1098226)
+            return
+        end select
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
         !% Note, this check after the assigning_image has been selected allows for images be over-filled
@@ -303,7 +519,8 @@ subroutine init_partitioning_random()
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
         current_node_image = node%I(ii, ni_P_image)
-        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        !adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+        adjacent_links = node%I(ii, ni_MlinkStart:ni_MlinkEnd)        !% brh20211219
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle
@@ -337,8 +554,9 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
+    if (crashYN) return
     if (setting%Debug%File%partitioning) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     if (SWMM_N_link < num_images()) then
         call init_partitioning_default()
@@ -385,7 +603,7 @@ subroutine init_partitioning_linkbalance()
     end if
 
     if (setting%Debug%File%partitioning)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 end subroutine init_partitioning_linkbalance
 !
 !==========================================================================
@@ -403,7 +621,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
     integer :: part_size_balance
     integer :: ii, current_image, max_elem, min_elem
     ! -----------------------------------------------------------------------------------------------------------------
-
+    if (crashYN) return
     !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
@@ -423,19 +641,43 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
         !% The current image is the one to which the current link has been assigned
         current_image = node%I(ii, ni_P_image)
 
-        !% elem_per_image for the current image is incremented by the number of elements associated with each node type
-        if ( node%I(ii, ni_node_type) == nBCup ) then
+        ! !% elem_per_image for the current image is incremented by the number of elements associated with each node type
+        ! if ( node%I(ii, ni_node_type) == nBCup ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
+        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCdn
+        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nStorage
+        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
+        ! else if ( node%I(ii, ni_node_type) == nJm ) then
+        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
+        ! end if
+
+        !% brh20211217 -- revised to add nJ1
+        select case (node%I(ii, ni_node_type))
+        case (nBCup)
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
-        else if ( node%I(ii, ni_node_type) == nBCdn ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCdn
-        else if ( node%I(ii, ni_node_type) == nStorage ) then
-            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nStorage
-        else if ( node%I(ii, ni_node_type) == nJ2 ) then
+        case (nBCdn)
+            elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nBCdn
+        case (nStorage)
+            elem_per_image(current_image) = elem_per_image(current_image)+ N_elem_nStorage
+        case (nJ1)
+            elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ1
+        case (nJ2)
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
-        else if ( node%I(ii, ni_node_type) == nJm ) then
+        case (nJM)
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
-        end if
+        case default 
+            print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
+            print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            !stop 
+            call util_crashpoint(73875)
+            return
+        end select
     end do
+
+     
 
     !% The maximum and minimum number of elements for an image are determined
     max_elem = maxval(elem_per_image(:))

@@ -1,0 +1,158 @@
+[TITLE]
+;;Project Title/Notes
+Lavaca_Sample
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         KINWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           01/01/2000
+START_TIME           00:00:00
+REPORT_START_DATE    01/01/2000
+REPORT_START_TIME    00:00:00
+END_DATE             01/01/2000
+END_TIME             23:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             5
+REPORT_STEP          00:01:00
+WET_STEP             00:15:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:01:00 
+
+INERTIAL_DAMPING     PARTIAL
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  D-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         12.557
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.005
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+208                 91.135      0      0.000      0      0
+205                 95.224      0      0.000      0      0
+206                 96.907      0      0.000      0      0
+
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+220                 86.214      FREE         NO
+                     
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+1                   205             208             1859        0.060      0        0           0.000      
+14                  206             208             1862        0.060      0        0           0.000      
+27                  208             220             2100        0.055      0        0           0.000          
+       
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+27      RECT_OPEN      100      20      0      0      1
+14      RECT_OPEN      100      20      0      0      1
+1       RECT_OPEN      100      20      0      0      1
+       
+
+[TRANSECTS]
+;;Transect Data in HEC-2 format
+;
+
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+206        FLOW      630008206      FLOW            1.0      1.0            
+205        FLOW      630008205      FLOW            1.0      1.0                      
+      
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+630008206      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/630008206.dat"
+630008205      FILE      "/home/bhodges/SWMMengine/test_cases/Lateral_Small_Test/ExtFiles/630008205.dat"
+
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 0.000 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+630008220      616      89
+630008208      861      931
+630008205      554      433
+630008206      604      891
+1465864_0      166      167
+1465864_1      512      672
+1465864_2      931      471
+1465864_3      72      471
+1465840_0      298      341
+1465840_1      9      398
+1465840_2      717      65
+1465840_3      858      840
+1465840_4      700      844
+1465840_5      227      249
+1465840_6      560      358
+1465840_7      654      268
+1465840_8      78      411
+1465826_0      389      460
+1465826_1      539      379
+1465826_2      145      388
+1465826_3      841      145
+1465826_4      769      495
+1465826_5      40      434
+1465826_6      537      741
+1465826_7      469      766
+1465826_8      767      328
+1465826_9      605      681
+1465826_10      695      190
+1465826_11      372      989
+1465822_0      447      494
+1465822_1      924      11
+1465822_2      53      675
+1465822_3      539      852
+1465822_4      965      932
+1465822_5      174      953
+1465822_6      408      585
+1465822_7      552      653
+1465822_8      653      939
+1465822_9      346      21
+1465822_10      509      370
+1465822_11      788      114
+         
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

@@ -1,0 +1,131 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "Medium River",
+        "Short" : "MR"
+    },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0
+        }
+    },    
+    "Discretization" : {
+        "LinkShortingFactor" : 0.33,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "NominalElemLength" : 150.00
+    },
+    "Limiter" : {
+        "BC" : {
+            "UseInflowLimiterYN" : true,
+            "Approach" : "FroudeNumber",
+            "FroudeInflowMaximum" : 1.5
+        },
+        "Channel" : {
+            "LargeDepthFactor" : 10.0
+        },
+        "Flowrate" : {
+            "FaceVolumeTransport" : 0.5,
+            "UseFaceVolumeTransportYN" : true
+        },
+        "Velocity" : {
+            "UseLimitMaxYN" : true,
+            "Maximum" : 10.0
+        },
+        "ArraySize" : {
+            "TemporalInflows" : 10,
+            "TotalInflows" : 50
+        },
+        "Dt" : {
+            "UseLimitMinYN" : true,
+            "Minimum"     : 1e-4
+        }
+    },    
+    "Output" : {
+        "Verbose" : true,
+        "Warning" : true,
+        "StoredLevels" : 5000,
+        "CommandLine" : {
+            "quietYN" : false,
+            "interval" : 1000
+        },
+        "DataOut" :{
+            "isAreaOut"         : false,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : false,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
+        },
+        "Report" : {
+            "useSWMMinpYN" :true,
+            "provideYN" : true,
+            "suppress_MultiLevel_Output" : false,
+            "StartTime" : 0.0,
+            "TimeInterval" : 300.0,
+            "TimeUnits" : "Hours"
+        }
+    },
+    "Profile" : {
+        "useYN" : false
+    },
+    "Simulation" : {
+        "useHydrology" : false,
+        "useHydraulics" : true
+    },
+    "SmallVolume" : {
+        "DepthCutoff" : 0.02,
+        "ManningsN" : 0.2
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : true,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9
+    },
+    "TestCase" : {
+        "UseTestCaseYN" : false,
+        "TestName" : ""
+    },
+    "Time" : {
+        "useSWMMinpYN" : true,
+        "matchHydrologyStep" : true,
+        "DtTol" : 1e-1,
+        "Hydraulics" : {
+            "Dt" : 10.0
+        },
+        "Hydrology" : {
+            "Dt" : 600.0
+        }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.3,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 1
+    },
+    "ZeroValue" : {
+        "UseZeroValues" : true,
+        "Depth" : 5e-4
+    }
+}
