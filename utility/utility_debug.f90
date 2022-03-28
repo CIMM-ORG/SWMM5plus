@@ -14,7 +14,11 @@ module utility_debug
   public :: debug_Nface_check
 
 contains
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
   subroutine debug_2D_array_csv(file_name_input, type, header, arr_real, arr_int, arr_log)
 
     character(64) :: subroutine_name = 'debug_2D_array_csv'
@@ -28,8 +32,9 @@ contains
     character(len = 5) :: str_image
     integer :: ii, jj, fu, rc, image
 
+    if (crashYN) return
     if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
     !% fu stands for file unit which will be tied to the image and tells the system what file to open
@@ -43,7 +48,7 @@ contains
     open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
     if (rc .ne. 0) then
        write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
-       stop "in " // subroutine_name
+       stop
    end if
 
     write(fu,'(A)', advance = "no") header
@@ -94,20 +99,22 @@ contains
 
 
     if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
   end subroutine debug_2D_array_csv
-
-
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
   subroutine debug_Nface_check
     !% debug to check that the number of faces on each processor is equal to N_Face
 
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
+    if (crashYN) return
     if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
     total_faces = 0
@@ -143,8 +150,11 @@ contains
     end if
 
     if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
   end subroutine debug_Nface_check
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
 end module utility_debug

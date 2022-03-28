@@ -1,0 +1,323 @@
+{
+    "ACmethod" : {
+        "dtau" : 1.0,
+        "Anomaly" : {
+            "DensityLowCutoff" : 1e-10,
+            "FullPipeFactor" : 1.0,
+            "OpenPipeFactor" : 1.0,
+            "UseDensityCorrection" : false,
+            "DensityHighCutoff" : 0.1
+        },
+        "ImplicitCoef" : {
+            "a1" : 1.5,
+            "a2" : -2.0,
+            "a3" : 0.5
+        },
+        "CFL" : {
+            "CFLmax" : 2.0,
+            "CFLsmall" : 0.05
+        },
+        "Celerity" : {
+            "RC" : 1.0
+        },
+        "Convergence" : {
+            "Habsolute" : 1e-5,
+            "Hrelative" : 1e-2,
+            "Qabsolute" : 1e-5,
+            "Qrelative" : 1e-2
+        },
+        "Iter" : {
+            "Firststep" : 100,
+            "Max" : 100,
+            "Min" : 3
+        },
+        "Switch" : {
+            "Area" : 0.9,
+            "Buffer" : 0.05,
+            "Depth" : 0.9
+        }
+    },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "approach" : "vshape",
+            "Coef" : 1.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "approach" : "vshape_surcharge_only",
+            "Coef" : 1.0
+        },
+        "WidthDepth" :{
+            "ApplyYN" : true
+        }
+    },
+    "BC" : {
+        "TimeSlotsStored" : 10,
+        "disableInterpolationYN": false
+    },
+    "CaseName" : {
+        "Long"  : "Single Link",
+        "Short" : "SL",
+        "withTimeStamp" : ""
+    },
+    "Constant" : {
+        "gravity" : 9.81
+    },
+    "Discretization" : {
+        "NominalElemLength" : 10.00,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "LinkShortingFactor" : 0.33
+    },
+    "Eps" : {
+        "FroudeJump" : 0.1
+    },
+    "File" : {
+        "library_folder" : "",  
+        "force_folder_creationYN"  : true
+    },
+    "Junction" : {
+        "kFactor"  : 0.0,
+        "FunStorageN" : 10
+    },
+    "Limiter" : {
+        "BC" : {
+            "approach" : "FroudeNumber",
+            "FroudeInflowMaximum" : 1.5,
+            "UseInflowLimiterYN" : true
+        },
+        "Channel" : {
+            "LargeDepthFactor" : 10.0
+        },
+        "Flowrate" : {
+            "FaceVolumeTransport" : 0.5,
+            "UseFaceVolumeTransportYN" : true
+        },
+        "InterpWeight" : {
+            "Maximum" : 1e6,
+            "Minimum" : 1e-6
+        },
+        "Velocity" : {
+            "Maximum" : 10.0,
+            "UseLimitMaxYN" : true
+        },
+        "ArraySize" : {
+            "TemporalInflows" : 10,
+            "TotalInflows" : 50
+        },
+        "Dt" : {
+            "Minimum"     : 1e-4,
+            "UseLimitMinYN" : true
+        }
+    },
+    "Link" : {
+        "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
+        
+    },
+    "OutputYN" : {
+        
+        
+        "report" : true,
+        "reportStartTime" : 0.0,
+        "reportDt" : 900.0,
+        "reportStep" : 0,
+        "reportTimeUnits" : "Hours",
+        "TimeSlotsStored" : 20,
+        "StoredLevels" : 100,
+        "StoredFileNames" : 100,
+        "suppress_MultiLevel_Output" : false,
+        "UseFileNameFile" : false,
+        "Verbose" : true,
+        "Warning" : true,
+        "CommandLine" : {
+            "quietYN" : false,
+            "interval" : 100
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
+        }
+    },
+    "Orifice" : {
+        "SharpCrestedWeirCoefficient" : 0.414,
+        "TransverseWeirExponent" : 1.5,
+        "VillemonteCorrectionExponent" : 0.385
+    },
+    "Partitioning" : {
+        "PartitioningMethod" : "bquick"
+    },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "VariableSlot",
+        "PreissmannNumber" : 1.0,
+        "PreissmannCelerity" : 0.01
+    },
+    "Simulation" : {
+        "useHydrology" : false,
+        "useHydraulics" : true,
+        "" : false
+    },
+    "SmallVolume" : {
+        "DepthCutoff" : 0.01,
+        "ManningsN" : 0.01,
+        "MinimumArea" : 0.005,
+        "MinimumHydRadius" : 0.009,
+        "MinimumPerimeter" : 0.52,
+        "MinimumTopwidth" : 0.5
+    },
+    "Solver" : {
+        "MomentumSourceMethod" : "T00",
+        "PreissmannSlot" : false,
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9
+    },
+    "TestCase" : {
+        "UseTestCaseYN" : false,
+        "TestName" : "testcase"
+    },
+    "Time" : {
+        "Start" : 0.0,
+        "Now" : 0.0,
+        "End" : 0.0,
+        "Dt" : 10.0,
+        "Step" : 0,
+        "matchHydrologyStep" : true,
+        "Hydraulics" : {
+            "Dt" : 10.0,
+            "LastTime" : 0.0,
+            "NextTime" : 0.0,
+            "Step" : 0
+        },
+        "Hydrology" : {
+            "Dt" : 10.0,
+            "LastTime" : 0.0,
+            "NextTime" : 0.0,
+            "Step" : 0
+        },
+        "DateTimeStamp" : 0.0,
+        "DtTol" : 1e-1,
+        "Real" : {
+            "EpochStartSeconds" : 0,
+            "EpochTimeLoopStartSeconds" : 0,
+            "EpochNowSeconds" : 0
+        },
+        "CPU" : {
+            "EpochStartSeconds" : 0.0,
+            "EpochNowSeconds" : 0.0,
+            "EpochFinishSeconds" : 0.0
+        }
+    },
+    "Weir" : {
+        "Transverse" : {
+            "WeirExponent" : 1.5,
+            "WeirContractionFactor" : 0.1,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 0.385
+        },
+        "SideFlow" : {
+            "WeirExponent" : 1.67,
+            "WeirContractionFactor" : 0.1,
+            "SideFlowWeirCrestExponent" : 0.83,
+            "VillemonteCorrectionExponent" : 0.385
+        },
+        "VNotch" : {
+            "WeirExponent" : 2.5,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 0.385
+        },
+        "Trapezoidal" : {
+            "WeirExponent" : 1.5,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 0.385
+        }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.3,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10,
+        "LastCheckStep"  : 0
+    },
+    "ZeroValue" : {
+        "Area" : 1e-6,
+        "Depth" : 1e-4,
+        "Topwidth" : 1e-4,
+        "UseZeroValues" : true,
+        "Volume" : 1e-6
+    },
+    "Debug" : {
+        "File" : {
+            "adjust" : false,
+            "boundary_conditions" : false,
+            "c_library" : false,
+            "define_globals" : false,
+            "define_indexes" : false,
+            "define_keys" : false,
+            "define_settings" : false,
+            "define_types" : false,
+            "diagnostic_elements" : false,
+            "face" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "discretization"  : false,
+            "initial_condition" : false,
+            "initialization" : false,
+            "interface" : false,
+            "jump" : false,
+            "lowlevel_rk2" : false,
+            "network_define" : false,
+            "orifice_elements" : false,
+	        "OutputYN" : false,
+            "pack_mask_arrays" : false,
+            "partitioning" : false,
+            "pump_elements" : false,
+            "rectangular_channel" : false,
+            "trapezoidal_channel" : false,
+            "runge_kutta2" : false,
+            "timeloop" : false,
+            "update" : false,
+            "utility" : false,
+            "utility_allocate" : false,
+            "utility_deallocate" : false,
+            "utility_array" : false,
+            "utility_datetime" : false,
+            "utility_interpolate" : false,
+            "utility_output" : false,
+            "utility_string" : false,
+            "weir_elements" : false
+        },
+        "FileGroup" : {
+            "all" : false,
+            "definitions" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "initialization" : false,
+            "interface" : false,
+            "OutputYN" : false,
+            "timeloop" : false,
+            "utility" : false
+        },
+         "SetupYN"  : true,
+        "OutputYN" : true,
+         
+    },
+    "Profile" : {
+        "YN" : true
+    }
+}
