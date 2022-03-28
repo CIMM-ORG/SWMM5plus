@@ -91,37 +91,38 @@ enum api_nodef_attributes {
 enum api_linkf_attributes {
   linkf_ID = 1,
   linkf_subIndex,  // 2 *
-  linkf_node1,     // 3 *
-  linkf_node2,     // 4 *
-  linkf_offset1,   // 5 *
-  linkf_offset2,   // 6 *
-  linkf_q0,        // 7 *
-  linkf_flow,      // 8 *
-  linkf_depth,     // 9 *
-  linkf_volume,    // 10 *
-  linkf_froude,    // 11 *
-  linkf_setting,   // 12 *
-  linkf_left_slope,        // 13 *
-  linkf_right_slope,       // 14 *
-  linkf_weir_end_contractions,  // 15 *
-  linkf_weir_side_slope,        // 16 *
-  linkf_curveid,           // 17 *
-  linkf_discharge_coeff1,       // 18 *
-  linkf_discharge_coeff2,       // 19 *
-  linkf_conduit_roughness,      // 20 *
-  linkf_conduit_length,         // 21 *
+  linkf_direction, // 3 *
+  linkf_node1,     // 4 *
+  linkf_node2,     // 5 *
+  linkf_offset1,   // 6 *
+  linkf_offset2,   // 7 *
+  linkf_q0,        // 8 *
+  linkf_flow,      // 9 *
+  linkf_depth,     // 10 *
+  linkf_volume,    // 11 *
+  linkf_froude,    // 12 *
+  linkf_setting,   // 13 *
+  linkf_left_slope,        // 14 *
+  linkf_right_slope,       // 15 *
+  linkf_weir_end_contractions,  // 16 *
+  linkf_weir_side_slope,        // 17 *
+  linkf_curveid,           // 18 *
+  linkf_discharge_coeff1,       // 19 *
+  linkf_discharge_coeff2,       // 20 *
+  linkf_conduit_roughness,      // 21 *
+  linkf_conduit_length,         // 22 *
   // brh 20211207s
-  linkf_rptFlag,           // 22 new in api.c
+  linkf_rptFlag,           // 23 new in api.c
   // brh 20211207s
   // --- special elements attributes
-  linkf_type,                   // 23 *
-  linkf_sub_type,               // 24 *
+  linkf_type,                   // 24 *
+  linkf_sub_type,               // 25 *
   // --- xsect attributes
-  linkf_xsect_type,        // 25 *
-  linkf_geometry,          // 26 missing in api.c
-  linkf_xsect_wMax,        // 27 *
-  linkf_xsect_yBot,        // 28 *
-  linkf_xsect_yFull        // 29 *
+  linkf_xsect_type,        // 26 *
+  linkf_geometry,          // 27 missing in api.c
+  linkf_xsect_wMax,        // 28 *
+  linkf_xsect_yBot,        // 29 *
+  linkf_xsect_yFull        // 30 *
 };
 
 // API vars are those necessary for external applications
