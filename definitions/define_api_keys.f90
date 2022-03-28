@@ -553,16 +553,13 @@ module define_api_keys
         !% brh20211207e
         ! --- special elements attributes
         enumerator :: api_linkf_type         ! 23
-        enumerator :: api_linkf_weir_type         ! 24
-        enumerator :: api_linkf_orifice_type      ! 25
-        enumerator :: api_linkf_outlet_type       ! 26
-        enumerator :: api_linkf_pump_type         ! 27
+        enumerator :: api_linkf_sub_type          ! 24
         ! --- xsect attributes 
-        enumerator :: api_linkf_xsect_type   ! 28
-        enumerator :: api_linkf_geometry     ! 29
-        enumerator :: api_linkf_xsect_wMax   ! 30
-        enumerator :: api_linkf_xsect_yBot   ! 31
-        enumerator :: api_linkf_xsect_yFull  ! 32
+        enumerator :: api_linkf_xsect_type   ! 25
+        enumerator :: api_linkf_geometry     ! 26
+        enumerator :: api_linkf_xsect_wMax   ! 27
+        enumerator :: api_linkf_xsect_yBot   ! 28
+        enumerator :: api_linkf_xsect_yFull  ! 29
 
     end enum
 

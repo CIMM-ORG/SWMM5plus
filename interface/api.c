@@ -1157,20 +1157,27 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_q0 :
             *value = CFTOCM(Link[link_idx].q0);
             break;
-
-        case linkf_pump_type : 
-            *value =  Pump[Link[link_idx].subIndex].type;
-            break;
-        case linkf_orifice_type  :
-            *value = Orifice[Link[link_idx].subIndex].type;
-            break;
-
-        case linkf_outlet_type : 
-            *value = Outlet[Link[link_idx].subIndex].curveType;
-            break;
-
-        case linkf_weir_type : 
-            *value = Weir[Link[link_idx].subIndex].type;
+        
+        case linkf_sub_type :
+            switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = API_NULL_VALUE_I;
+                    break;
+                case ORIFICE :
+                    *value = Orifice[Link[link_idx].subIndex].type;
+                    break;
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].type;
+                    break;
+                case OUTLET :
+                    *value = Outlet[Link[link_idx].subIndex].curveType;
+                    break;
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].type;
+                    break;
+                default :
+                    *value = 0;
+            }
             break;
 
         case linkf_conduit_roughness :

@@ -114,17 +114,14 @@ enum api_linkf_attributes {
   linkf_rptFlag,           // 22 new in api.c
   // brh 20211207s
   // --- special elements attributes
-  linkf_type,              // 23 *
-  linkf_weir_type,              // 24 *
-  linkf_orifice_type,           // 25 *
-  linkf_outlet_type,            // 26 *
-  linkf_pump_type,              // 27 *
+  linkf_type,                   // 23 *
+  linkf_sub_type,               // 24 *
   // --- xsect attributes
-  linkf_xsect_type,        // 28 *
-  linkf_geometry,          // 29 missing in api.c
-  linkf_xsect_wMax,        // 30 *
-  linkf_xsect_yBot,        // 31 *
-  linkf_xsect_yFull        // 32 *
+  linkf_xsect_type,        // 25 *
+  linkf_geometry,          // 26 missing in api.c
+  linkf_xsect_wMax,        // 27 *
+  linkf_xsect_yBot,        // 28 *
+  linkf_xsect_yFull        // 29 *
 };
 
 // API vars are those necessary for external applications

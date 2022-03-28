@@ -91,7 +91,7 @@
         enumerator :: outlet                !% outlet element
         enumerator :: JM                    !% junction main element
         enumerator :: JB                    !% junction branch element
-        enumerator :: ImpliedStorage      !% junction main storage is artificially created
+        enumerator :: ImpliedStorage        !% junction main storage is artificially created
         enumerator :: FunctionalStorage     !% junction main storage is cauculated from a user provided function
         enumerator :: TabularStorage        !% junction main storage is cauculated from a user provided table
         enumerator :: storage               !% storage element

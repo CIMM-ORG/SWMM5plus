@@ -485,10 +485,7 @@ contains
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
-            link%I(ii,li_weir_type) = interface_get_linkf_attribute(ii, api_linkf_weir_type)
-            link%I(ii,li_orif_type) = interface_get_linkf_attribute(ii, api_linkf_orifice_type)
-            link%I(ii,li_outlet_type) = interface_get_linkf_attribute(ii, api_linkf_outlet_type)
-            link%I(ii,li_pump_type) = interface_get_linkf_attribute(ii, api_linkf_pump_type)
+            link%I(ii,li_link_sub_type) = interface_get_linkf_attribute(ii, api_linkf_sub_type)
             link%I(ii,li_geometry) = interface_get_linkf_attribute(ii, api_linkf_geometry)
             link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
