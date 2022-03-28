@@ -44,6 +44,8 @@ contains
     ! Description:
     !   This subroutine serves as the BIPquick main.  It is the only public subroutine from the BIPquick module and its
     !   output is populated columns ni_P_image, ni_P_is_boundary in node%I and li_P_image in link%I.
+
+    !   Adding some text as a test
     !
     ! -----------------------------------------------------------------------------------------------------------------
         character(64) :: subroutine_name = 'BIPquick_subroutine'
