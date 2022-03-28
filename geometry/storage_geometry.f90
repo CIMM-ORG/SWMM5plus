@@ -19,7 +19,7 @@ module storage_geometry
 
     public :: storage_functional_depth_from_volume
     public :: storage_tabular_depth_from_volume
-    public :: storage_artificial_depth_from_volume
+    public :: storage_implied_depth_from_volume
     public :: storage_integrate_area_vs_depth_curve
     public :: storage_interpolate_volume_from_depth_singular
     public :: storage_create_curve
@@ -101,7 +101,7 @@ module storage_geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine storage_artificial_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
         !%  
         !%-------------------------------------------------------------------
         !% Description:
@@ -125,7 +125,7 @@ module storage_geometry
         !print *, 'INSTORAGE ',volume(thisP)
        
         !%-------------------------------------------------------------------
-    end subroutine storage_artificial_depth_from_volume
+    end subroutine storage_implied_depth_from_volume
 !%    
 !%==========================================================================
 !%==========================================================================

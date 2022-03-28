@@ -1,0 +1,106 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           03/24/2022
+START_TIME           00:00:00
+REPORT_START_DATE    03/24/2022
+REPORT_START_TIME    00:00:00
+END_DATE             03/24/2022
+END_TIME             06:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:00:01
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:01 
+RULE_STEP            00:00:00
+
+INERTIAL_DAMPING     PARTIAL
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         1.167
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.0015
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+1                2          10         2          0          0         
+2                1.8        10         2          0          0         
+3                1.6        10         2          0          0         
+4                1.4        10         2          0          0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+5                1.2        FREE                         NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+1                1                2                1000       0.016      0          0          0          0         
+2                2                3                1000       0.016      0          0          0          0         
+3                3                4                1000       0.016      0          0          0          0         
+4                4                5                1000       0.016      0          0          0          0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+1                TRIANGULAR   10               5          0          0          1                    
+2                TRIANGULAR   10               5          0          0          1                    
+3                TRIANGULAR   10               5          0          0          1                    
+4                TRIANGULAR   10               5          0          0          1                    
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+1                FLOW             ""               FLOW     1.0      1.0      4       
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 0.000 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+1                -1000.000          5000.000          
+2                0.000              5000.000          
+3                1000.000           5000.000          
+4                2000.000           5000.000          
+5                3000.000           5000.000          
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

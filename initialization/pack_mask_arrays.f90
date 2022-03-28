@@ -395,6 +395,37 @@ contains
                 ))
         end if
 
+        !% triangular channels 
+        ptype => col_elemPGalltm(epg_CC_triangular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == triangular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == triangular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
         !% circular conduits 
         ptype => col_elemPGalltm(epg_CC_circular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
@@ -427,7 +458,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGalltm(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -462,7 +493,7 @@ contains
         end if
 
         !% junction main with tabular geometry relationship
-        ptype => col_elemPGalltm(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -497,14 +528,14 @@ contains
         end if
 
         !% junction main with artificial storage relationship -- for ALL tm
-        ptype => col_elemPGalltm(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -521,7 +552,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -610,6 +641,31 @@ contains
                 )
         end if
 
+        !% triangular channels 
+        ptype => col_elemPGac(epg_CC_triangular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == triangular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == triangular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+        
         !% circular conduits 
         ptype => col_elemPGac(epg_CC_circular_nonsurcharged)
         npack => npack_elemPGac(ptype)
@@ -636,7 +692,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -665,7 +721,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -694,14 +750,14 @@ contains
         end if
 
         !% junction main with artificial storage relationship -- for AC
-        ptype => col_elemPGac(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -715,7 +771,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -804,6 +860,31 @@ contains
                 )
         end if
 
+        !% triangular channels, conduits 
+        ptype => col_elemPGetm(epg_CC_triangular_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == triangular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                    (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == triangular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
         !% circular conduits and junction main
         ptype => col_elemPGetm(epg_CC_circular_nonsurcharged)
         npack => npack_elemPGetm(ptype)
@@ -830,7 +911,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGetm(epg_JM_functional_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -859,7 +940,7 @@ contains
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGetm(epg_JM_tabular_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -889,14 +970,14 @@ contains
 
 
         !% junction main with artificial storage relationship -- for ETM
-        ptype => col_elemPGetm(epg_JM_artificial_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
@@ -910,7 +991,7 @@ contains
                     (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ArtificialStorage) &
+                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &

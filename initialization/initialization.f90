@@ -535,6 +535,7 @@ contains
                  ( &
                  (link%I(ii,li_geometry) == lRectangular)    .or. &
                  (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
+                 (link%I(ii,li_geometry) == lTriangular)     .or. &
                  (link%I(ii,li_geometry) == lPower_function) .or. &
                  (link%I(ii,li_geometry) == lRect_triang)    .or. &
                  (link%I(ii,li_geometry) == lRect_round)     .or. &
@@ -543,6 +544,7 @@ contains
 
                 link%I(ii,li_link_type) = lChannel
             end if
+
             !% brh20211207s
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag) == 1)
             !% brh20211207e
