@@ -16,7 +16,7 @@ module BIPquick
     use utility
     use utility_crash, only: util_crashpoint
 
-    !use utility_profiler
+    use utility_profiler
     !use utility_prof_jobcount
     implicit none
 
@@ -39,17 +39,19 @@ contains
 
 ! -----------------------------------------------------------------------------------------------------------------
 
-    subroutine init_partitioning_BIPquick()
-    ! ----------------------------------------------------------------------------------------------------------------
+    subroutine BIPquick_toplevel()
+    !%------------------------------------------------------------------
     !
     ! Description:
     !   This subroutine serves as the BIPquick main.  It is the only public subroutine from the BIPquick module and its
     !   output is populated columns ni_P_image, ni_P_is_boundary in node%I and li_P_image in link%I.
-
-    !   Adding some text as a test
     !
-    ! -----------------------------------------------------------------------------------------------------------------
+    !%------------------------------------------------------------------
+    !% Declarations
+
         character(64) :: subroutine_name = 'BIPquick_subroutine'
+
+        integer, allocatable :: packed_link_idx(:), packed_node_idx(:)
 
         integer       :: mp, ii, jj, image
         real(8)       :: partition_threshold, max_weight, phantom_node_start
@@ -58,26 +60,16 @@ contains
         integer       :: effective_root, ideal_junction
         integer       :: phantom_node_idx, phantom_link_idx
         integer       :: connectivity
-        ! -----------------------------------------------------------------------------------------------------------------
+    !%-------------------------------------------------------------------
+    !% Preliminaries    
+
         if (this_image() .ne. 1) return
         if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !if (setting%Profile%File%BIPquick) print*, "BIPquick Profiler is on"
-
-        !if (setting%Profile%File%BIPquick) call util_tic(timer, 2)
-
-        !% HACK -- this bypass should be in init_partitioning, and the code should not reach here
-        !% if there is only one image.
-        !% One processor bypass for BIPquick
-        ! if ( num_images() == 1 ) then
-        !     node%I(:, ni_P_image) = oneI
-        !     node%I(:, ni_P_is_boundary) = zeroI
-        !     link%I(:, li_P_image) = oneI
-        !     print*, "...Using one processor, bypassing partitioning"
-        !     return
-        ! end if
+        if (setting%Profile%useYN) call util_profiler_start (pfc_init_BIPquick)
+    !%-------------------------------------------------------------------
 
         call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -85,15 +77,15 @@ contains
             write(*,"(A,i5,A)") "      number of root nodes (downstream BC)", N_nBCdn, ' ...'
 
         !% Initialize the temporary arrays needed for BIPquick
-        !print *, 'calling bip_initialize_arrays'
+        ! print *, 'calling bip_initialize_arrays'
         call bip_initialize_arrays()
 
         !% Find the system roots
-        !print *, 'calling bip_find_roots'
+        ! print *, 'calling bip_find_roots'
         call bip_find_roots()
 
         !% This subroutine populates B_nodeI with the upstream neighbors for a given node
-        !print *, 'calling bip_network_processing'
+        ! print *, 'calling bip_network_processing'
         call bip_network_processing()
 
         !% Determine what the phantom nodes will be named
@@ -101,74 +93,51 @@ contains
         phantom_link_idx = N_link + 1
 
         !% This subroutine populates the directweight column of B_nodeR
-        !print *, 'calling calc_directweight'
+        ! print *, 'calling calc_directweight'
         call calc_directweight()
+
 
         !% BIPquick sweeps through the network a finite number of times
         do mp = 1, num_images()
 
-            !print *, ' '
-            !print *, 'this mp = ',mp, '; this image = ',this_image()
-
-            ! if ( mp == 6 ) then
-
-            !     print*, "Node Partitioning"
-            !     print*, new_line("")
-            !     do ii = 1, size(node%I, 1)
-            !         if ( ii <= N_node ) then
-            !             print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
-            !         else
-            !             print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
-            !         endif
-            !     end do
-
-            !     print *, "Link Partitioning"
-            !     print *, new_line("")
-            !     do ii = 1, size(link%I, 1)
-            !         if ( ii <= N_link ) then
-            !             print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
-            !                 link%I(ii, li_Mnode_u:li_Mnode_d)
-            !         else
-            !             print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
-            !                 link%I(ii, li_Mnode_u:li_Mnode_d)
-            !         endif
-
-            !     end do
-
-            !     stop
-            ! endif
-
+            print *, ' '
+            print *, 'this mp = ',mp, '; this image = ', this_image()
 
             !% Last sweep bypass
-            if ( mp == num_images() ) then
-                do ii = 1, size(node%I, 1)
-                    if ( node%I(ii, ni_idx) == nullValueI ) then
-                        cycle
-                    endif
-                    if ( node%I(ii, ni_P_image) == nullValueI ) then
-                        node%I(ii, ni_P_image) = mp
-                    endif
-                enddo
+            ! if ( mp == num_images() ) then
+            !     do ii = 1, size(node%I, 1)
+            !         if ( node%I(ii, ni_idx) == nullValueI ) then
+            !             cycle
+            !         endif
+            !         if ( node%I(ii, ni_P_image) == nullValueI ) then
+            !             node%I(ii, ni_P_image) = mp
+            !         endif
+            !     enddo
 
-                do ii = 1, size(link%I, 1)
-                    if ( link%I(ii, li_idx) == nullValueI ) then
-                        cycle
-                    endif
-                    if ( link%I(ii, li_P_image) == nullValueI ) then
-                        link%I(ii, li_P_image) = mp
-                    endif
-                enddo
+            !     do ii = 1, size(link%I, 1)
+            !         if ( link%I(ii, li_idx) == nullValueI ) then
+            !             cycle
+            !         endif
+            !         if ( link%I(ii, li_P_image) == nullValueI ) then
+            !             link%I(ii, li_P_image) = mp
+            !         endif
+            !     enddo
+            !     exit
+            ! endif
+            if ( mp == num_images() ) then
+                print*, "Last Sweep Bypass"
+                packed_node_idx = pack(node%I(:,ni_idx), (node%I(:, ni_P_image) == nullValueI ) .and. node%I(:, ni_idx) /= nullValueI)
+                node%I(packed_node_idx, ni_P_image) = mp
+                packed_link_idx = pack(link%I(:,li_idx), (link%I(:, li_P_image) == nullValueI ) .and. link%I(:, li_idx) /= nullValueI)
+                link%I(packed_link_idx, li_P_image) = mp
                 exit
-            endif
+            end if
 
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
 
             if (setting%Output%Verbose) write(*,"(A,i5,A)") "      BIPquick Sweep", image, '; please be patient...'
-            !if (setting%Output%Verbose) write(*,*) '... please be patient, this is slow for big systems with lots of processors...'
-
-            !print *, totalweight, size(B_nodeR,DIM=2), 'this image ',this_image()
-
+    
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0
             ideal_exists = .false.
@@ -177,10 +146,10 @@ contains
             max_weight = 0.0
 
             !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
-            !print *, 'calling calc_totalweight', max_weight
+            ! print *, 'calling calc_totalweight', max_weight
             call calc_totalweight(max_weight)
 
-            !print *, 'max_weight ', max_weight, mp, real(num_images() - mp + 1, 8), this_image()
+            ! print *, 'max_weight ', max_weight, mp, real(num_images() - mp + 1, 8), this_image()
 
             !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
             partition_threshold = max_weight/real(num_images() - mp + 1, 8)
@@ -268,13 +237,13 @@ contains
         !if (this_image() == 1) print *, 'calling calc_is_boundary'
         call calc_is_boundary()
 
-        !if (this_image() == 1) print *, 'calling connectivity_metric'
         connectivity = connectivity_metric()
+        if (this_image() == 1) print *, 'Connectivity_metric: ', connectivity
 
-        ! if (setting%Profile%File%BIPquick) then
-        !     call util_toc(timer, 2)
-        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(2))
-        ! end if
+        call init_bip_timer_stop()
+    !%-------------------------------------------------------------------
+    !% Closing
+        if (setting%Profile%useYN) call util_profiler_stop(pfc_init_BIPquick)
 
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -283,6 +252,18 @@ contains
 !==========================================================================
 !==========================================================================
 !
+
+    subroutine init_bip_timer_stop ()
+
+        integer(kind=8) :: crate, cmax, cval
+        
+        if (this_image() == 1) then
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%BIPquickEnd = cval
+        end if
+
+    end subroutine init_bip_timer_stop
+
     subroutine bip_initialize_arrays()
         ! ----------------------------------------------------------------------------------------------------------------
         !
@@ -322,21 +303,23 @@ contains
         !   These temporary arrays are initialized in Globals, so they're not needed as arguments to BIPquick subroutines
         !
         ! -----------------------------------------------------------------------------------------------------------------
-            character(64) :: subroutine_name = 'bip_allocate_arrays'
-            integer       :: ii, counter
+            character(64)        :: subroutine_name = 'bip_allocate_arrays'
+            integer              :: ii, counter
+            integer, allocatable :: root_node_idx(:)
         ! -----------------------------------------------------------------------------------------------------------------
             if (crashYN) return
             if (setting%Debug%File%BIPquick) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
             counter = 1
-            do ii = 1, size(node%I, oneI)
-                if ( node%I(ii, ni_node_type) == nBCdn ) then
-                    ! print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_node_type)
-                    B_roots(counter) = node%I(ii, ni_idx)
-                    counter = counter + 1
-                endif
-            enddo
+            ! do ii = 1, size(node%I, oneI)
+            !     if ( node%I(ii, ni_node_type) == nBCdn ) then
+            !         ! print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_node_type)
+            !         B_roots(counter) = node%I(ii, ni_idx)
+            !         counter = counter + 1
+            !     endif
+            ! enddo
+
+            B_roots = pack(node%I(:,ni_idx), (node%I(:, ni_node_type) == nBCdn))
 
             ! where ( node%I(:, ni_node_type) == nBCdn )
             !     B_roots(:) = node%I(:, ni_idx)
@@ -452,31 +435,37 @@ contains
 
         real(8)  :: lr_target
         integer :: rootnode_index, links_row, upstream_links
-        integer :: ii, jj
+        integer :: ii, jj, links_iter
 
         !--------------------------------------------------------------------------
         if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% Calculates directweight for each node
-        do ii = 1, size(node%I,1)
+        ! !% Calculates directweight for each node
+        ! do ii = 1, size(node%I,1)
 
-            if ( node%I(ii, ni_idx) == nullValueI ) then
-                cycle
-            end if
+        !     if ( node%I(ii, ni_idx) == nullValueI ) then
+        !         cycle
+        !     end if
 
-            !% Need a loop bc multiple links might have a given node as its downstream endpoint
-            do jj=1,size(link%I(:, li_Mnode_d))
+        !     !% Need a loop bc multiple links might have a given node as its downstream endpoint
+        !     do jj=1,size(link%I(:, li_Mnode_d))
 
-                !% If the link has the current node as a downstream endpoint
-                if (link%I(jj, li_Mnode_d) == node%I(ii, ni_idx)) then
+        !         !% If the link has the current node as a downstream endpoint
+        !         if (link%I(jj, li_Mnode_d) == node%I(ii, ni_idx)) then
 
-                    !% The directweight for that node is the running total of link weights
-                    B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
-                    + calc_link_weights(link%I(jj, li_idx))
-                end if
-            end do
+        !             !% The directweight for that node is the running total of link weights
+        !             B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
+        !             + calc_link_weights(link%I(jj, li_idx))
+        !         end if
+        !     end do
+        ! end do
+        links_iter = size(link%I,1) - count(link%I(:, li_idx) == nullValueI)
+        do jj=1, links_iter
+            ii = link%I(jj, li_Mnode_d)
+            B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
+                + calc_link_weights(link%I(jj, li_idx))
         end do
 
         if (setting%Debug%File%BIPquick) &
@@ -1272,7 +1261,7 @@ contains
 !==========================================================================
 !
     function connectivity_metric() result(connectivity)
-        !-----------------------------------------------------------------------------
+        !-------------------------------------ni_P_is_boundary----------------------------------
         ! Description: This subroutine is used to calculate the number of nodes that belong
         !   to multiple partitions
         !-----------------------------------------------------------------------------

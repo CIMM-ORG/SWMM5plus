@@ -248,6 +248,7 @@ module define_settings
         integer (kind=8):: TimeMarchStart = 0
         integer (kind=8):: TimeMarchEnd = 0
         integer (kind=8):: InitializationEnd = 0
+        integer (kind=8):: BIPquickEnd = 0
         integer (kind=8):: FinalOutputStart = 0
         integer (kind=8):: SharedStart_A = 0
         integer (kind=8):: SharedStop_A = 0

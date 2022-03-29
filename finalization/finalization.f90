@@ -36,11 +36,13 @@ contains
             integer :: ii
             real(8) :: total_time,timemarch_time, hydraulics_time
             real(8) :: hydrology_time, loopoutput_time, initialization_time
+            real(8) :: bipquick_time
             real(8) :: lastoutput_time, shared_time, volume_nonconservation
             real(8) :: timemarch_seconds, shared_seconds
             logical :: isLastStep
             character(8) :: total_units, timemarch_units, hydraulics_units
             character(8) :: hydrology_units, loopoutput_units, initialization_units
+            character(8) :: bipquick_units
             character(8) :: lastoutput_units, shared_units
             character(64) :: subroutine_name = 'finalize_toplevel'
         !%-------------------------------------------------------------------
@@ -136,8 +138,13 @@ contains
             initialization_time = real(setting%Time%WallClock%InitializationEnd &
                                      - setting%Time%WallClock%Start,kind=8)
             initialization_time = initialization_time / real(setting%Time%WallClock%CountRate,kind=8)
-            call util_datetime_display_time (initialization_time, initialization_units)          
+            call util_datetime_display_time (initialization_time, initialization_units)     
             
+            !% --- time spent in initialization
+            bipquick_time = real(setting%Time%WallClock%BIPquickEnd &
+                                     - setting%Time%WallClock%Start,kind=8)
+            bipquick_time = bipquick_time / real(setting%Time%WallClock%CountRate,kind=8)
+            call util_datetime_display_time (bipquick_time, bipquick_units)                 
             !% --- time spent in the final output
             lastoutput_time = real(setting%Time%WallClock%End &
                                 -  setting%Time%WallClock%FinalOutputStart)
@@ -182,6 +189,7 @@ contains
                 write(*,*) ' '
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time in total                : ',total_time, ' ',trim(total_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in initialization : ',initialization_time, ' ',trim(initialization_units)
+                write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in BIPquick       : ',bipquick_time, ' ',trim(bipquick_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in time-marching  : ',timemarch_time, ' ',trim(timemarch_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in loop output    : ',loopoutput_time, ' ',trim(loopoutput_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in hydrology      : ',hydrology_time, ' ',trim(hydrology_units)
