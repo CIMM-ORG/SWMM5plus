@@ -30,6 +30,26 @@
 #define NUM_API_DOUBLE_VARS 2
 #define NUM_API_TABLES 1
 
+//-----------------------------------------------------------------------------
+//  SI Unit conversion factors
+//-----------------------------------------------------------------------------
+const double UCF_SI[10][2] = 
+      {//  US      SI
+      {141732.3,  3600000.0 },         // RAINFALL (in/hr, mm/hr --> m/sec)
+      {39.3701,   1000.0    },         // RAINDEPTH (in, mm --> m)
+      {3402000.0, 86400000.0},         // EVAPRATE (in/day, mm/day --> m/sec)
+      {3.28084,   1.0       },         // LENGTH (ft, m --> m)
+      {0.0002471, 1.0e-4    },         // LANDAREA (ac, ha --> m2)
+      {35.3147,   1.0       },         // VOLUME (ft3, m3 --> m3)
+      {0.62,      1.0       },         // WINDSPEED (mph, km/hr --> km/hr)
+      {1.0,       1.8       },         // TEMPERATURE (deg F, deg C --> deg F)
+      {2.203e-6,  1.0e-6    },         // MASS (lb, kg --> mg)
+      {43560.0,   3048.0    }          // GWFLOW (cfs/ac, cms/ha --> ft/sec)
+      };
+const double QCF_SI[6] =                  // Flow Conversion Factors:
+    {35.3147, 15850.37, 22.8245,          // cfs, gpm, mgd --> cms
+     1.00000, 1000.000, 84.6000};         // cms, lps, mld --> cms
+
 // Enums written in caps are extracted from native
 // EPA-SWMM, whereas lower case vars are added to EPA-SWMM
 
@@ -250,7 +270,21 @@ int check_api_is_initialized();
 int api_load_vars();
 int getTokens(char *s);
 
+//=============================================================================
+//   General purpose functions
+//=============================================================================
 
+double SI_Uint_Conversiton(int u)
+//
+//  Input:   u = integer code of quantity being converted
+//  Output:  returns a units conversion factor
+//  Purpose: computes a conversion factor from SWMM's internal
+//           units to user's units
+//
+{
+    if ( u < FLOW ) return UCF_SI[u][UnitSystem];
+    else            return QCF_SI[FlowUnits];
+}
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
