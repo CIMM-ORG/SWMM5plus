@@ -356,6 +356,7 @@ module define_indexes
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
         enumerator :: er_TotalSlotVolume            !% slot volume
         enumerator :: er_dSlotVolume                !% change in slot volume
+        enumerator :: er_Setting                    !% percent open setting for a link element
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
@@ -366,6 +367,7 @@ module define_indexes
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
         enumerator :: er_SourceMomentum             !% source term for momentum equation
+        enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Topwidth                   !% topwidth of flow at free surface
         enumerator :: er_Velocity                   !% velocity (latest)
