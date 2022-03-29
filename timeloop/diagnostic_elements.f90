@@ -98,7 +98,10 @@ module diagnostic_elements
                 call orifice_toplevel (thisP(ii))
 
             case (pump)
-                ! call diagnostic_pump (thisP(ii))
+                print *, 'CODE ERROR: Pump has not yet been developed'
+                print *, 'which has key ',trim(reverseKey(thisType))
+                call util_crashpoint(564321)
+                return
 
             case (outlet)
                 call outlet_toplevel (thisP(ii))
@@ -106,38 +109,12 @@ module diagnostic_elements
             case default
                 print *, 'CODE ERROR element type unknown for # ', thisType
                 print *, 'which has key ',trim(reverseKey(thisType))
-                !stop 
                 call util_crashpoint( 9472)
                 return
             end select
         end do
 
-
-        !% HACK not sure what we need for diagnostic aux variables
-        !% The weir geometry is set in weir routines, as is flowrate, head, and velocity
-        call diagnostic_auxiliary_variables (thisCol, Npack)
-
     end subroutine diagnostic_by_type
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine diagnostic_auxiliary_variables (thisCol, Npack)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes auxiliary variables for diagnostic elements
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: thisCol, Npack
-!% Not sure what we need here. The diagnostic should produce the flowrate and head of the
-!% diagnostic element. For face interpolation we need arguabely area, topwidth, hydraulic depth
-!% However, if the interpolation weighting makes these negligible, then maybe they can just use
-!% arbitrary small values.
-
-!% QUESTION -- how do we handle geometry for the diagnostic elements themselves?
-
-        !%-----------------------------------------------------------------------------
-        !%
-    end subroutine diagnostic_auxiliary_variables
 !%
 !%==========================================================================
 !%==========================================================================
