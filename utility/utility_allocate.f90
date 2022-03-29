@@ -521,6 +521,9 @@ contains
             profiler_procedure_name(pfc_init_partitioning) = 'init_partitioning'
             profiler_procedure_level(pfc_init_partitioning) = 1
 
+            profiler_procedure_name(pfc_init_BIPquick) = 'init_BIPquick'
+            profiler_procedure_level(pfc_init_BIPquick) = 1
+
             profiler_procedure_name(pfc_init_network_define_toplevel) = 'init_network_define_toplevel'
             profiler_procedure_level(pfc_init_network_define_toplevel) = 1
 

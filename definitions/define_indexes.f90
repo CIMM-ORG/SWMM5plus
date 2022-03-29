@@ -890,6 +890,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: pfc_initialize_all = 1
         enumerator :: pfc_init_partitioning
+        enumerator :: pfc_init_BIPquick
         enumerator :: pfc_init_network_define_toplevel
         enumerator :: pfc_init_bc
         enumerator :: pfc_init_IC_setup
