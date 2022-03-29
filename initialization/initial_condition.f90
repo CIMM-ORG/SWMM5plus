@@ -244,7 +244,7 @@ contains
             integer, dimension(:), allocatable, target  :: packed_link_idx
             integer, dimension(:) , allocatable, target :: ePack
             integer           :: allocation_status, deallocation_status
-            character(len=99) ::              emsg
+            character(len=99) :: emsg
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -1019,36 +1019,41 @@ contains
                 !% real data
                 elemSR(ii,esr_Pump_yOn)     = link%R(thisLink,lr_yOn)
                 elemSR(ii,esr_Pump_yOff)    = link%R(thisLink,lr_yOff)
-                elemSI(ii,esi_Pump_CurveID) = curveID
-                Curve(curveID)%ElemIdx      = ii
 
-                !% copy pump specific data
-                if (specificPumpType == lType1Pump) then
-                    !% integer data
-                    elemSI(ii,esi_Pump_SpecificType) = type1_Pump
-
-                else if (specificPumpType == lType2Pump) then
-                    !% integer data
-                    elemSI(ii,esi_Pump_SpecificType) = type2_Pump
-
-                else if (specificPumpType == lType3Pump) then
-                    !% integer data
-                    elemSI(ii,esi_Pump_SpecificType) = type3_Pump
-
-                else if (specificPumpType == lType4Pump) then
-                    !% integer data
-                    elemSI(ii,esi_Pump_SpecificType) = type4_Pump
-
-                else if (specificPumpType == lTypeIdealPump) then
+                if (curveID < zeroI) then
                     !% integer data
                     elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
                 else
-                    print *, 'In ', subroutine_name
-                    print *, 'CODE ERROR: unknown orifice type, ', specificPumpType,'  in network'
-                    print *, 'which has key ',trim(reverseKey(specificPumpType))
-                    !stop 
-                    call util_crashpoint(8863411)
-                    return
+                    elemSI(ii,esi_Pump_CurveID) = curveID
+                    Curve(curveID)%ElemIdx      = ii
+                    !% copy pump specific data
+                    if (specificPumpType == lType1Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type1_Pump
+
+                    else if (specificPumpType == lType2Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type2_Pump
+
+                    else if (specificPumpType == lType3Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type3_Pump
+
+                    else if (specificPumpType == lType4Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type4_Pump
+
+                    else if (specificPumpType == lTypeIdealPump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
+                    else
+                        print *, 'In ', subroutine_name
+                        print *, 'CODE ERROR: unknown orifice type, ', specificPumpType,'  in network'
+                        print *, 'which has key ',trim(reverseKey(specificPumpType))
+                        !stop 
+                        call util_crashpoint(8863411)
+                        return
+                    end if
                 end if 
             end if
         end do

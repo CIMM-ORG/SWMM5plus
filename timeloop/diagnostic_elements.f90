@@ -91,6 +91,7 @@ module diagnostic_elements
             thisType => elemI(thisP(ii),ei_elementType)
 
             select case (thisType)
+                
             case (weir)
                 call weir_toplevel (thisP(ii))
 
@@ -98,6 +99,7 @@ module diagnostic_elements
                 call orifice_toplevel (thisP(ii))
 
             case (pump)
+                call pump_toplevel (thisP(ii))
                 print *, 'CODE ERROR: Pump has not yet been developed'
                 print *, 'which has key ',trim(reverseKey(thisType))
                 call util_crashpoint(564321)
