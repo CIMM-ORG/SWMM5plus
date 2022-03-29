@@ -143,6 +143,7 @@
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
+        enumerator :: type_IdealPump        !% type ideal pump
         enumerator :: func_depth_outlet     !% outlet having functional depth relationship  
         enumerator :: func_head_outlet      !% outlet having functional head relationship 
         enumerator :: tabl_depth_outlet     !% outlet having curve relationship to depth
@@ -355,6 +356,7 @@
         reverseKey(type2_Pump) = 'type2_Pump'
         reverseKey(type3_Pump) = 'type3_Pump'
         reverseKey(type4_Pump) = 'type4_Pump'
+        reverseKey(type_IdealPump) = 'type_IdealPump'
         reverseKey(func_depth_outlet) = 'func_depth_outlet'
         reverseKey(func_head_outlet) = 'func_head_outlet'
         reverseKey(tabl_depth_outlet) = 'tabl_depth_outlet'

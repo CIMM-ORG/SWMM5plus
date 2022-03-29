@@ -545,12 +545,22 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSI_outlet = esi_Orifice_lastplusone-1
 
+    enum, bind(c)
+        !% define the column indexes for elemSi(:,:) outlet elements
+        enumerator :: esi_Pump_FlowDirection = 1     !% pump flow direction
+        enumerator :: esi_Pump_SpecificType          !% specifc pump type
+        enumerator :: esi_Pump_CurveID               !% pump curve id
+        enumerator :: esi_Pump_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_Pump = esi_Pump_lastplusone-1
+
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
                             Ncol_elemSI_junction, &
                             Ncol_elemSI_orifice, &
                             Ncol_elemSI_weir, &
-                            Ncol_elemSI_outlet)
+                            Ncol_elemSI_outlet, &
+                            Ncol_elemSI_Pump)
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSr(:,:) arrays
     !% These are the full arrays if special real data
@@ -615,7 +625,16 @@ module define_indexes
         enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
         enumerator ::  esr_Outlet_lastplusone !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSR_Ooutlet = esr_Outlet_lastplusone-1
+    integer, parameter :: Ncol_elemSR_Outlet = esr_Outlet_lastplusone-1
+
+    enum, bind(c)
+        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across outlet
+        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
+        enumerator ::  esr_Pump_yOn                        !% pump startup depth
+        enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
+        enumerator ::  esr_pump_lastplusone                !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Pump = esr_pump_lastplusone-1
 
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
@@ -625,7 +644,8 @@ module define_indexes
                             Ncol_elemSR_Storage,        &
                             Ncol_elemSR_Weir,           &
                             Ncol_elemSR_Orifice,        &
-                            Ncol_elemSR_Ooutlet) !, &
+                            Ncol_elemSR_Outlet,         &
+                            Ncol_elemSR_Pump) !, &
                             ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
