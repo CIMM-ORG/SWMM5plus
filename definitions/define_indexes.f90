@@ -1003,7 +1003,7 @@ module define_indexes
 
     !% define column indexes for pump curve types
     enum, bind(c)
-        enumerator :: curve_pump_depth = 1
+        enumerator :: curve_pump_Xvar = 1    !% this can be volume, head or depth used for interpolation
         enumerator :: curve_pump_flowrate
         enumerator :: curve_pump_lastplusone !% must be the last enum item
     end enum

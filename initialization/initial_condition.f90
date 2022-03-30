@@ -78,7 +78,7 @@ contains
         !% --- get data that can be extracted from links
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
-
+  
         !% --- get data that can be extracted from nodes
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
         call init_IC_from_nodedata ()
@@ -760,30 +760,32 @@ contains
             
         case (lCircular)
 
-            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                elemI(:,ei_geometryType)    = circular
-                !% store geometry specific data
-                elemSGR(:,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
-                elemSGR(:,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
-                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
-                elemR(:,er_FullArea)              = pi * elemSGR(:,esgr_Circular_Radius) ** twoR
-                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
-                elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth)
-                elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
-                elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Circular_Diameter)
-                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR
-                elemR(:,er_Area)                  = (elemSGR(:,esgr_Circular_Radius) **2) * &
-                                (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))) - &
-                                sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )
-                elemR(:,er_Area_N0)               = elemR(:,er_Area)
-                elemR(:,er_Area_N1)               = elemR(:,er_Area)
-                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
-            end where
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then  
+                    elemI(ii,ei_geometryType)    = circular
+                    !% store geometry specific data
+                    elemSGR(ii,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(ii,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
+                    elemR(ii,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_Zcrown)                = elemR(ii,er_Zbottom) + elemR(ii,er_FullDepth)
+                    elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullArea)              = pi * elemSGR(ii,esgr_Circular_Radius) ** twoR
+                    elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
+                    elemR(ii,er_BreadthMax)            = elemSGR(ii,esgr_Circular_Diameter)
+                    elemR(ii,er_AreaBelowBreadthMax)   = elemR(ii,er_FullArea)  / twoR
+                    ! elemR(ii,er_Area)                  = (elemSGR(ii,esgr_Circular_Radius) **2) * &
+                    !                 (acos(1.0 - (elemR(ii,er_Depth)/elemSGR(ii,esgr_Circular_Radius))) - &
+                    !                 sin(2.0*acos(1.0 - (elemR(ii,er_Depth)/elemSGR(ii,esgr_Circular_Radius))))/2.0 )
+                    elemR(ii,er_Area)                  = circular_area_from_depth_singular (ii)
+                    elemR(ii,er_Area_N0)               = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)               = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
+                end if
+            end do
 
         case default
 
@@ -1019,14 +1021,15 @@ contains
                 !% real data
                 elemSR(ii,esr_Pump_yOn)     = link%R(thisLink,lr_yOn)
                 elemSR(ii,esr_Pump_yOff)    = link%R(thisLink,lr_yOff)
+                elemR(ii,er_Setting)        = link%R(thisLink,lr_initSetting)
 
                 if (curveID < zeroI) then
                     !% integer data
                     elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
                 else
                     elemSI(ii,esi_Pump_CurveID) = curveID
-                    elemSR(ii,esr_Pump_xMin)    = curve(curveID)%ValueArray(1,curve_pump_depth)
-                    elemSR(ii,esr_Pump_xMax)    = curve(curveID)%ValueArray(lastRow,curve_pump_depth)
+                    elemSR(ii,esr_Pump_xMin)    = curve(curveID)%ValueArray(1,curve_pump_Xvar)
+                    elemSR(ii,esr_Pump_xMax)    = curve(curveID)%ValueArray(lastRow,curve_pump_Xvar)
                     Curve(curveID)%ElemIdx      = ii
                     !% copy pump specific data
                     if (specificPumpType == lType1Pump) then
@@ -1044,10 +1047,6 @@ contains
                     else if (specificPumpType == lType4Pump) then
                         !% integer data
                         elemSI(ii,esi_Pump_SpecificType) = type4_Pump
-
-                    else if (specificPumpType == lTypeIdealPump) then
-                        !% integer data
-                        elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
                     else
                         print *, 'In ', subroutine_name
                         print *, 'CODE ERROR: unknown orifice type, ', specificPumpType,'  in network'
@@ -1361,7 +1360,6 @@ contains
                 elemI(JBidx,ei_geometryType) = rectangular
                 elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
                 elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
-
                 !% store geometry specific data
                 elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
                 elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth)
@@ -1371,31 +1369,25 @@ contains
             case (lTrapezoidal)
                 !% brh20211217, reviewed
                 elemI(JBidx,ei_geometryType) = trapezoidal
-
                 !% store geometry specific data
                 elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
                 elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
                 elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
-
-                elemR(JBidx,er_ZBreadthMax) = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
-
-                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) &
+                elemR(JBidx,er_ZBreadthMax)                = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
+                elemR(JBidx,er_BreadthMax)                 = elemSGR(JBidx,esgr_Trapezoidal_Breadth)    &
                             + link%R(BranchIdx,lr_FullDepth)                             &
-                            * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)               &
+                            * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)              &
                                 + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) 
-
-                elemR(JBidx,er_FullArea)    =  elemR(JBidx,er_FullDepth)                  &
+                elemR(JBidx,er_FullArea)                   =  elemR(JBidx,er_FullDepth)   &
                         * (   elemSGR(JBidx,esgr_Trapezoidal_Breadth)                     &
                             + onehalfR * elemR(JBidx,er_FullDepth)                        &
-                                * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
+                                * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)           &
                                     + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
-
-                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
+                elemR(JBidx,er_AreaBelowBreadthMax)        = elemR(JBidx,er_FullArea)!% 20220124brh
             
             case (lTriangular)
 
                 elemI(JBidx,ei_geometryType) = triangular
-
                 !% store geometry specific data
                 elemSGR(JBidx,esgr_Triangular_TopBreadth)  = link%R(BranchIdx,lr_BreadthScale)
                 elemR(JBidx,er_FullDepth)                  = link%R(BranchIdx,lr_FullDepth)
@@ -1409,17 +1401,12 @@ contains
                             
             case (lCircular)
                 elemI(JBidx,ei_geometryType) = circular
-
                 !% store geometry specific data
                 elemSGR(JBidx,esgr_Circular_Diameter) = link%R(BranchIdx,lr_FullDepth)
                 elemSGR(JBidx,esgr_Circular_Radius)   = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
-
-                elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom)
-
-                elemR(JBidx,er_BreadthMax)  = link%R(BranchIdx,lr_FullDepth)
-
-                elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
-
+                elemR(JBidx,er_ZBreadthMax)           = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom)
+                elemR(JBidx,er_BreadthMax)            = link%R(BranchIdx,lr_FullDepth)
+                elemR(JBidx,er_FullArea)              = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
                 elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
             case default
 
@@ -1974,7 +1961,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)            = zeroR
+        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)       = zeroR
         elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
