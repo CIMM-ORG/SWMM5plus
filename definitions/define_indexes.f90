@@ -634,6 +634,8 @@ module define_indexes
         enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
         enumerator ::  esr_Pump_yOn                        !% pump startup depth
         enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
+        enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
+        enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
         enumerator ::  esr_pump_lastplusone                !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Pump = esr_pump_lastplusone-1

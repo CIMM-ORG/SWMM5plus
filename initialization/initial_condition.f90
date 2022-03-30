@@ -1002,7 +1002,7 @@ contains
         !--------------------------------------------------------------------------
             integer             :: ii
             integer, intent(in) :: thisLink
-            integer, pointer    :: specificPumpType, curveID, eIDx
+            integer, pointer    :: specificPumpType, curveID, lastRow
 
             character(64) :: subroutine_name = 'init_IC_get_pump_geometry'
         !--------------------------------------------------------------------------
@@ -1013,7 +1013,7 @@ contains
         !% pointer to specific pump type
         specificPumpType => link%I(thisLink,li_link_sub_type)
         curveID          => link%I(thisLink,li_curve_id)
-
+        lastRow          => curve(curveID)%NumRows
         do ii = 1,N_elem(this_image())
             if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then  
                 !% real data
@@ -1025,6 +1025,8 @@ contains
                     elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
                 else
                     elemSI(ii,esi_Pump_CurveID) = curveID
+                    elemSR(ii,esr_Pump_xMin)    = curve(curveID)%ValueArray(1,curve_pump_depth)
+                    elemSR(ii,esr_Pump_xMax)    = curve(curveID)%ValueArray(lastRow,curve_pump_depth)
                     Curve(curveID)%ElemIdx      = ii
                     !% copy pump specific data
                     if (specificPumpType == lType1Pump) then
