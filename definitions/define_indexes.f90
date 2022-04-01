@@ -54,11 +54,9 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: li_idx = 1
-        enumerator :: li_link_type
-        enumerator :: li_weir_type           ! type of weir link
-        enumerator :: li_orif_type           ! type of orifice link
-        enumerator :: li_pump_type           ! type of pump link
-        enumerator :: li_outlet_type         ! type of outlet link
+        enumerator :: li_link_type           ! type of links (i.e. conduit, orifice, weir, etc.)   
+        enumerator :: li_link_sub_type       ! link subtype (i.e. vnotch weir, side orifice, etc.)
+        enumerator :: li_link_direction      ! link direction
         enumerator :: li_geometry
         enumerator :: li_roughness_type
         enumerator :: li_N_element           ! Number of elements in this link
@@ -213,6 +211,9 @@ module define_indexes
         enumerator :: lr_SideSlope             ! for weirs only
         enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_initSetting           ! initial link setting
+        enumerator :: lr_yOn                   ! startup depth for pumps
+        enumerator :: lr_yOff                  ! shutoff depth for pumps    
         enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
         enumerator :: lr_Flowrate
         enumerator :: lr_Depth
@@ -355,6 +356,7 @@ module define_indexes
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
         enumerator :: er_TotalSlotVolume            !% slot volume
         enumerator :: er_dSlotVolume                !% change in slot volume
+        enumerator :: er_Setting                    !% percent open setting for a link element
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
@@ -365,6 +367,7 @@ module define_indexes
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
         enumerator :: er_SourceMomentum             !% source term for momentum equation
+        enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Topwidth                   !% topwidth of flow at free surface
         enumerator :: er_Velocity                   !% velocity (latest)
@@ -544,12 +547,22 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSI_outlet = esi_Orifice_lastplusone-1
 
+    enum, bind(c)
+        !% define the column indexes for elemSi(:,:) outlet elements
+        enumerator :: esi_Pump_FlowDirection = 1     !% pump flow direction
+        enumerator :: esi_Pump_SpecificType          !% specifc pump type
+        enumerator :: esi_Pump_CurveID               !% pump curve id
+        enumerator :: esi_Pump_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_Pump = esi_Pump_lastplusone-1
+
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
                             Ncol_elemSI_junction, &
                             Ncol_elemSI_orifice, &
                             Ncol_elemSI_weir, &
-                            Ncol_elemSI_outlet)
+                            Ncol_elemSI_outlet, &
+                            Ncol_elemSI_Pump)
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSr(:,:) arrays
     !% These are the full arrays if special real data
@@ -614,7 +627,16 @@ module define_indexes
         enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
         enumerator ::  esr_Outlet_lastplusone !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSR_Ooutlet = esr_Outlet_lastplusone-1
+    integer, parameter :: Ncol_elemSR_Outlet = esr_Outlet_lastplusone-1
+
+    enum, bind(c)
+        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across outlet
+        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
+        enumerator ::  esr_Pump_yOn                        !% pump startup depth
+        enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
+        enumerator ::  esr_pump_lastplusone                !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Pump = esr_pump_lastplusone-1
 
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
@@ -624,7 +646,8 @@ module define_indexes
                             Ncol_elemSR_Storage,        &
                             Ncol_elemSR_Weir,           &
                             Ncol_elemSR_Orifice,        &
-                            Ncol_elemSR_Ooutlet) !, &
+                            Ncol_elemSR_Outlet,         &
+                            Ncol_elemSR_Pump) !, &
                             ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
