@@ -244,7 +244,7 @@ contains
             integer, dimension(:), allocatable, target  :: packed_link_idx
             integer, dimension(:) , allocatable, target :: ePack
             integer           :: allocation_status, deallocation_status
-            character(len=99) ::              emsg
+            character(len=99) :: emsg
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -465,7 +465,6 @@ contains
         select case (linkType)
 
             case (lChannel)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
@@ -474,7 +473,6 @@ contains
 
 
             case (lpipe)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
@@ -483,7 +481,6 @@ contains
                 endwhere
 
             case (lweir)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)         = weir
                     elemI(:,ei_QeqType)             = diagnostic
@@ -491,7 +488,6 @@ contains
                 endwhere
 
             case (lOrifice)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)            = orifice
                     elemI(:,ei_QeqType)                = diagnostic
@@ -499,13 +495,11 @@ contains
                 endwhere
 
             case (lPump)
-
-                print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: pumps are not handeled yet for # ', linkType
-                print *, 'which has key',trim(reverseKey(linkType)) 
-                !stop 
-                call util_crashpoint(77364)
-                return
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_elementType)            = pump
+                    elemI(:,ei_QeqType)                = diagnostic
+                    elemYN(:,eYN_canSurcharge)         = .true.
+                endwhere
 
             case (lOutlet)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -567,13 +561,8 @@ contains
                 call init_IC_get_orifice_geometry (thisLink)
 
             case (lPump)
-
-                print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: pumps are not handeled yet for #',linkType
-                print *, 'which has key ',trim(reverseKey(linkType)) 
-                !stop 
-                call util_crashpoint(337844)
-                return
+                !% get geomety data for pump
+                call init_IC_get_pump_geometry (thisLink)
 
             case (lOutlet)
                 !% get geomety data for outlets
@@ -637,9 +626,6 @@ contains
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    !% the full depth of channel is set to a large depth so it
-                    !% never surcharges. the large depth is set as, factor x width,
-                    !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
@@ -669,20 +655,13 @@ contains
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
                                 elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-            
-                    !% the full depth of channel is set to a large depth so it
-                    !% never surcharges. the large depth is set as, factor x width,
-                    !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
-                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-                    
+                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)    
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
@@ -697,12 +676,10 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                     elemI(:,ei_geometryType) = triangular
-
                     !% store geometry specific data
                     elemSGR(:,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
                     elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_TopBreadth) / (twoR * elemR(:,er_FullDepth))
-                    
                     ! Area = Depth*Depth*avg. sideslope
                     elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Triangular_Slope) 
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
@@ -756,8 +733,6 @@ contains
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
 
-
-
         select case (geometryType)
 
         case (lRectangular_closed)
@@ -765,10 +740,8 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 elemI(:,ei_geometryType)    = rectangular_closed
-
                 !% store geometry specific data
                 elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
-
                 elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
                 elemR(:,er_Area)                  = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -790,11 +763,9 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 elemI(:,ei_geometryType)    = circular
-
                 !% store geometry specific data
                 elemSGR(:,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
                 elemSGR(:,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
-
                 elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
                 elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
@@ -804,23 +775,15 @@ contains
                 elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
                 elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Circular_Diameter)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR
-
-                ! elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
-
-                !% HACK: for initial condition steup, use analytical functions which works with where
-                !% statement
-
                 elemR(:,er_Area)                  = (elemSGR(:,esgr_Circular_Radius) **2) * &
                                 (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))) - &
                                 sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )
-
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
                 elemR(:,er_Area_N1)               = elemR(:,er_Area)
                 elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
             end where
-        
 
         case default
 
@@ -856,7 +819,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific weir type
-        specificWeirType => link%I(thisLink,li_weir_type)
+        specificWeirType => link%I(thisLink,li_link_sub_type)
 
         select case (specificWeirType)
             !% copy weir specific data
@@ -865,7 +828,6 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = trapezoidal_weir
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
@@ -883,7 +845,6 @@ contains
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = side_flow
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
@@ -906,7 +867,6 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = vnotch_weir
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1)
@@ -921,7 +881,6 @@ contains
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = transverse_weir
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
@@ -966,7 +925,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific orifice type
-        specificOrificeType => link%I(thisLink,li_orif_type)
+        specificOrificeType => link%I(thisLink,li_link_sub_type)
 
         select case (specificOrificeType)
         !% copy orifice specific data
@@ -998,7 +957,6 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                 !% integer data
                 elemI(:,ei_geometryType)          = rectangular_closed
-
                 !% real data
                 elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
@@ -1007,17 +965,18 @@ contains
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
             end where
+
         case (lCircular)
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                 !% integer data
                 elemI(:,ei_geometryType)    = circular
-
                 !% real data
                 elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                 elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
             end where
+
         case default
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
@@ -1031,6 +990,77 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_orifice_geometry
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_IC_get_pump_geometry (thisLink)
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry and other data data for orifice links
+        !
+        !--------------------------------------------------------------------------
+            integer             :: ii
+            integer, intent(in) :: thisLink
+            integer, pointer    :: specificPumpType, curveID, eIDx
+
+            character(64) :: subroutine_name = 'init_IC_get_pump_geometry'
+        !--------------------------------------------------------------------------
+            if (crashYN) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% pointer to specific pump type
+        specificPumpType => link%I(thisLink,li_link_sub_type)
+        curveID          => link%I(thisLink,li_curve_id)
+
+        do ii = 1,N_elem(this_image())
+            if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then  
+                !% real data
+                elemSR(ii,esr_Pump_yOn)     = link%R(thisLink,lr_yOn)
+                elemSR(ii,esr_Pump_yOff)    = link%R(thisLink,lr_yOff)
+
+                if (curveID < zeroI) then
+                    !% integer data
+                    elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
+                else
+                    elemSI(ii,esi_Pump_CurveID) = curveID
+                    Curve(curveID)%ElemIdx      = ii
+                    !% copy pump specific data
+                    if (specificPumpType == lType1Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type1_Pump
+
+                    else if (specificPumpType == lType2Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type2_Pump
+
+                    else if (specificPumpType == lType3Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type3_Pump
+
+                    else if (specificPumpType == lType4Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type4_Pump
+
+                    else if (specificPumpType == lTypeIdealPump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
+                    else
+                        print *, 'In ', subroutine_name
+                        print *, 'CODE ERROR: unknown orifice type, ', specificPumpType,'  in network'
+                        print *, 'which has key ',trim(reverseKey(specificPumpType))
+                        !stop 
+                        call util_crashpoint(8863411)
+                        return
+                    end if
+                end if 
+            end if
+        end do
+     
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_IC_get_pump_geometry
 !
 !==========================================================================
 !==========================================================================
@@ -1052,7 +1082,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific outlet type
-        specificOutletType => link%I(thisLink,li_outlet_type)
+        specificOutletType => link%I(thisLink,li_link_sub_type)
         curveID            => link%I(thisLink,li_curve_id)
 
         do ii = 1,N_elem(this_image())
@@ -1081,7 +1111,8 @@ contains
                     Curve(curveID)%ElemIdx              = ii
                 else
                     print*, 'In ', subroutine_name
-                    print*, 'error: unknown orifice type, ', specificOutletType,'  in network'
+                    print*, 'CODE ERROR: unknown outlet type, ', specificOutletType,'  in network'
+                    print *, 'which has key ',trim(reverseKey(specificOutletType))
                     !stop 
                     call util_crashpoint(82564)
                     return
