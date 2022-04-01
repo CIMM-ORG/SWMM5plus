@@ -834,14 +834,6 @@ contains
                         FaceGlobalCounter, nAssignStatus)
                 end if
 
-            !% Handle storage nodes
-            case (nStorage)
-                print*
-                print*, 'In ', subroutine_name
-                print*, 'CODE ERROR: storage node is not handeled yet'
-                !stop 
-                call util_crashpoint(597883)
-                return
             case default    
                 write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
                 print*, 'error: node ' // node%Names(thisNode)%str // &
@@ -1184,13 +1176,6 @@ contains
 
                 end if
 
-            case (nStorage)
-                print *
-                print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: storage node is not handeled yet'
-                !stop 
-                call util_crashpoint(387994)
-                return
             case default
 
                 print*

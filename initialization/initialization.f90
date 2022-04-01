@@ -484,14 +484,21 @@ contains
 
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
+            link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction)
             link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
-            link%I(ii,li_weir_type) = interface_get_linkf_attribute(ii, api_linkf_weir_type)
-            link%I(ii,li_orif_type) = interface_get_linkf_attribute(ii, api_linkf_orifice_type)
-            link%I(ii,li_outlet_type) = interface_get_linkf_attribute(ii, api_linkf_outlet_type)
-            link%I(ii,li_pump_type) = interface_get_linkf_attribute(ii, api_linkf_pump_type)
+            link%I(ii,li_link_sub_type) = interface_get_linkf_attribute(ii, api_linkf_sub_type)
             link%I(ii,li_geometry) = interface_get_linkf_attribute(ii, api_linkf_geometry)
-            link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
-            link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
+
+            if (link%I(ii,li_link_direction) == 1) then
+                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
+                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
+            else if (link%I(ii,li_link_direction) == -1) then
+                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
+                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
+            else
+                write(*,*) 'Fatal error: link direction should be 1 or -1'
+                stop 79456456
+            end if 
             link%I(ii,li_parent_link) = ii
 
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
@@ -507,7 +514,7 @@ contains
             link%R(ii,lr_Length) = interface_get_linkf_attribute(ii, api_linkf_conduit_length)
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
             link%R(ii,lr_BreadthScale) = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax)
-            !% link%R(ii,lr_Slope): defined in network_define.f08
+            !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             link%R(ii,lr_LeftSlope) = interface_get_linkf_attribute(ii, api_linkf_left_slope)
             link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
             link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
@@ -528,6 +535,9 @@ contains
             link%I(ii,li_curve_id) = interface_get_linkf_attribute(ii, api_linkf_curveid)
             link%R(ii,lr_DischargeCoeff1) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1)
             link%R(ii,lr_DischargeCoeff2) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2)
+            link%R(ii,lr_initSetting) = interface_get_linkf_attribute(ii, api_linkf_initSetting)
+            link%R(ii,lr_yOn) = interface_get_linkf_attribute(ii, api_linkf_yOn)
+            link%R(ii,lr_yOff) = interface_get_linkf_attribute(ii, api_linkf_yOff)
             link%R(ii,lr_SideSlope) = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope)
             !% SWMM5 doesnot distinguish between channel and conduit
             !% however we need that distinction to set up the init condition
@@ -611,33 +621,6 @@ contains
                     node%I(ii, ni_node_type) = nJm
                 end select
             end if 
-        
-            ! if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
-            !     !write(*,*) '... is outfall type'
-            !     node%I(ii, ni_node_type) = nBCdn
-            ! else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
-            !     !write(*,*) '... is storage type'
-            !     node%I(ii, ni_node_type) = nJm
-            !     node%YN(ii, nYN_has_storage) = .true.
-            ! else if ((total_n_links == twoI)          .and. &
-            !          (node%I(ii,ni_N_link_u) == oneI) .and. &
-            !          (node%I(ii,ni_N_link_d) == oneI) )then
-            !     !write(*,*) '... is 2 junction type'        
-            !     node%I(ii, ni_node_type) = nJ2
-            ! else if (total_n_links >= twoI) then
-            !     !write(*,*) '... is 3+ junction type'
-            !     node%I(ii, ni_node_type) = nJm
-            ! else if (total_n_links == oneI) then  !% brh 20211217
-            !     !write(*,*) '... is 1 junction is an upstream BC
-            !     node%I(ii, ni_node_type) = nJ1
-            ! else 
-            !     write(*,*) 'CODE or INP FILE ERROR, unexpected else condition '
-            !     write(*,*) 'Node type is undefined for node',ii
-            !     stop 
-            !       call util_crashpoint(98075)               
-            ! end if
-            !write(*,*)
-
             !write(*,*) 'call api_nodef_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
             !write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
@@ -709,20 +692,23 @@ contains
 
         !% Update Link/Node names
         call interface_update_linknode_names()
+        if (setting%Debug%File%initialization) then
+            !%-----------------------------------------------------------------------------
+            print *, 'idx,    nodeType,    linkU,    linkD,   curveID, patternRes'
+            do ii=1,N_node
+                write(*,"(10i8)") node%I(ii,ni_idx), node%I(ii,ni_node_type), node%I(ii,ni_N_link_u), node%I(ii,ni_N_link_d) &
+                , node%I(ii,ni_curve_ID), node%I(ii,ni_pattern_resolution)
+            end do
 
-        !%-----------------------------------------------------------------------------
-        !% closing
-            ! print *,  'at end of ',trim(subroutine_name)
-            ! print *, 'node data'
-            
-            ! print *, 'idx,    nodeType,    linkU,    linkD,   curveID, patternRes,    assigned'
-            ! do ii=1,N_node
-            !     write(*,"(10i8)") node%I(ii,ni_idx), node%I(ii,ni_node_type), node%I(ii,ni_N_link_u), node%I(ii,ni_N_link_d) &
-            !     , node%I(ii,ni_curve_ID), node%I(ii,ni_pattern_resolution), node%I(ii,ni_assigned)
-            ! end do
+            print *, 'idx,    LinkType,  nodeU,   nodeD, curveId'
+            do ii=1,N_Link
+                write(*,"(10i8)") link%I(ii,li_idx), link%I(ii,li_link_type), link%I(ii,li_Mnode_u), link%I(ii,li_Mnode_d) &
+                , link%I(ii,li_curve_id) 
+            end do
+        end if 
 
-            if (setting%Debug%File%initialization)  &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
 !%

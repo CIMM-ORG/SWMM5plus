@@ -1117,6 +1117,10 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_subIndex :
             *value = Link[link_idx].subIndex;
             break;
+        
+        case linkf_direction :
+            *value = Link[link_idx].direction;
+            break;
 
         case linkf_type : 
             *value = Link[link_idx].type;
@@ -1157,20 +1161,27 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_q0 :
             *value = CFTOCM(Link[link_idx].q0);
             break;
-
-        case linkf_pump_type : 
-            *value =  Pump[Link[link_idx].subIndex].type;
-            break;
-        case linkf_orifice_type  :
-            *value = Orifice[Link[link_idx].subIndex].type;
-            break;
-
-        case linkf_outlet_type : 
-            *value = Outlet[Link[link_idx].subIndex].curveType;
-            break;
-
-        case linkf_weir_type : 
-            *value = Weir[Link[link_idx].subIndex].type;
+        
+        case linkf_sub_type :
+            switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = API_NULL_VALUE_I;
+                    break;
+                case ORIFICE :
+                    *value = Orifice[Link[link_idx].subIndex].type;
+                    break;
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].type;
+                    break;
+                case OUTLET :
+                    *value = Outlet[Link[link_idx].subIndex].curveType;
+                    break;
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].type;
+                    break;
+                default :
+                    *value = 0;
+            }
             break;
 
         case linkf_conduit_roughness :
@@ -1253,6 +1264,36 @@ int DLLEXPORT api_get_linkf_attribute(
                     break;
                 case OUTLET :
                     *value = Outlet[Link[link_idx].subIndex].qExpon;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_initSetting :
+            switch (Link[link_idx].type) {
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].initSetting;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_yOn :
+            switch (Link[link_idx].type) {
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].yOn;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_yOff :
+            switch (Link[link_idx].type) {
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].yOff;
                     break;
                 default :
                     *value = 0;
@@ -1669,44 +1710,44 @@ int DLLEXPORT api_get_first_entry_table(
             // unit conversion depending on the type of curve
             switch (Curve[table_idx].curveType) {
                 case STORAGE_CURVE:
-                    *xx = FTTOM(*xx);
-                    *yy = FT2TOM2(*yy);
+                    *xx /= SI_Uint_Conversiton(LENGTH); 
+                    *yy /= (SI_Uint_Conversiton(LENGTH) * SI_Uint_Conversiton(LENGTH));
                     break;
                 case DIVERSION_CURVE:
-                    *xx = CFTOCM(*xx);
-                    *yy = CFTOCM(*yy);
+                    *xx /= SI_Uint_Conversiton(FLOW);
+                    *yy /= SI_Uint_Conversiton(FLOW);
                     break;
                 case TIDAL_CURVE:
-                    *yy = FTTOM(*yy);
+                    *yy /= SI_Uint_Conversiton(LENGTH);
                     break;
                 case RATING_CURVE:
-                    *xx = FTTOM(*xx);
-                    *yy = CFTOCM(*yy);
+                    *xx /= SI_Uint_Conversiton(LENGTH);
+                    *yy /= SI_Uint_Conversiton(FLOW);
                     break;
                 case SHAPE_CURVE:
-                    *xx = FTTOM(*xx);
-                    *yy = FTTOM(*yy);
+                    *xx /= SI_Uint_Conversiton(LENGTH);
+                    *yy /= SI_Uint_Conversiton(LENGTH);
                     break;
                 case CONTROL_CURVE:
                     break;
                 case WEIR_CURVE:
-                    *xx = FTTOM(*xx);
+                    *xx /= SI_Uint_Conversiton(LENGTH);
                     break;
                 case PUMP1_CURVE:
-                    *xx = CFTOCM(*xx);
-                    *yy = CFTOCM(*yy);
+                    *xx /= SI_Uint_Conversiton(VOLUME);
+                    *yy /= SI_Uint_Conversiton(FLOW);
                     break;
                 case PUMP2_CURVE:
-                    *xx = FTTOM(*xx);
-                    *yy = CFTOCM(*yy);
+                    *xx /= SI_Uint_Conversiton(LENGTH);
+                    *yy /= SI_Uint_Conversiton(FLOW);
                     break;
                 case PUMP3_CURVE:
-                    *xx = FTTOM(*xx);
-                    *yy = CFTOCM(*yy);
+                    *xx /= SI_Uint_Conversiton(LENGTH);
+                    *yy /= SI_Uint_Conversiton(FLOW);
                     break;
                 case PUMP4_CURVE:
-                    *xx = FTTOM(*xx);
-                    *yy = CFTOCM(*yy);
+                    *xx /= SI_Uint_Conversiton(LENGTH);
+                    *yy /= SI_Uint_Conversiton(FLOW);
                     break;
                 default:
                     return 0;
@@ -1751,50 +1792,48 @@ int DLLEXPORT api_get_next_entry_table(
                     // unit conversion depending on the type of curve
             switch (Curve[table_idx].curveType) {
                 case STORAGE_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
-                    *yy = FT2TOM2(Curve[table_idx].y2);
-                    // printf("...xx, %f \n",*xx);
-                    // printf("...yy, %f \n",*yy);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 * SI_Uint_Conversiton(LENGTH) / SI_Uint_Conversiton(VOLUME);
                     break;
                 case DIVERSION_CURVE:
-                    *xx = CFTOCM(Curve[table_idx].x2);
-                    *yy = CFTOCM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(FLOW);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
                     break;
                 case TIDAL_CURVE:
                     *xx = Curve[table_idx].x2;
-                    *yy = FTTOM(Curve[table_idx].y2);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(LENGTH);
                     break;
                 case RATING_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
-                    *yy = CFTOCM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
                     break;
                 case CONTROL_CURVE:
                     *xx = Curve[table_idx].x2;
                     *yy = Curve[table_idx].y2;
                     break;
                 case SHAPE_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
-                    *yy = FTTOM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(LENGTH);
                     break;
                 case WEIR_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
                     *yy = Curve[table_idx].y2;
                     break;
                 case PUMP1_CURVE:
-                    *xx = CFTOCM(Curve[table_idx].x2);
-                    *yy = CFTOCM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(VOLUME);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
                     break;
                 case PUMP2_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
-                    *yy = CFTOCM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
                     break;break;
                 case PUMP3_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
-                    *yy = CFTOCM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
                     break;
                 case PUMP4_CURVE:
-                    *xx = FTTOM(Curve[table_idx].x2);
-                    *yy = CFTOCM(Curve[table_idx].y2);
+                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
                     break;
                 default:
                     *xx = Curve[table_idx].x2;

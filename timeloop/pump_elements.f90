@@ -10,7 +10,7 @@ module pump_elements
 
     !%----------------------------------------------------------------------------- 
     !% Description:
-    !% Computes weir elemevnts
+    !% Computes diagnostic flow through orifice elements
     !%
     !% METHOD:
     !% 
@@ -18,13 +18,32 @@ module pump_elements
 
     private
 
-    !public :: pump_toplevel
+    public :: pump_toplevel
 
     contains
+!%
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
 !%
+    subroutine pump_toplevel (eIdx)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% We need a subroutine to get the new full depth (esr_EffectiveFullDepth)
+        !% crown (esr_Zcrown) and crest (esr_Zcrest) elevation from control setting.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: eIdx  !% must be a single element ID
+
+        character(64) :: subroutine_name = 'pump_toplevel'
+        !%-----------------------------------------------------------------------------
+        if (crashYN) return
+        if (setting%Debug%File%pump_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+
+        if (setting%Debug%File%pump_elements)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine pump_toplevel
 !%
 !%========================================================================== 
 !%==========================================================================    

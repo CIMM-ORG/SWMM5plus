@@ -30,6 +30,26 @@
 #define NUM_API_DOUBLE_VARS 2
 #define NUM_API_TABLES 1
 
+//-----------------------------------------------------------------------------
+//  SI Unit conversion factors
+//-----------------------------------------------------------------------------
+const double UCF_SI[10][2] = 
+      {//  US      SI
+      {141732.3,  3600000.0 },         // RAINFALL (in/hr, mm/hr --> m/sec)
+      {39.3701,   1000.0    },         // RAINDEPTH (in, mm --> m)
+      {3402000.0, 86400000.0},         // EVAPRATE (in/day, mm/day --> m/sec)
+      {3.28084,   1.0       },         // LENGTH (ft, m --> m)
+      {0.0002471, 1.0e-4    },         // LANDAREA (ac, ha --> m2)
+      {35.3147,   1.0       },         // VOLUME (ft3, m3 --> m3)
+      {0.62,      1.0       },         // WINDSPEED (mph, km/hr --> km/hr)
+      {1.0,       1.8       },         // TEMPERATURE (deg F, deg C --> deg F)
+      {2.203e-6,  1.0e-6    },         // MASS (lb, kg --> mg)
+      {43560.0,   3048.0    }          // GWFLOW (cfs/ac, cms/ha --> ft/sec)
+      };
+const double QCF_SI[6] =                  // Flow Conversion Factors:
+    {35.3147, 15850.37, 22.8245,          // cfs, gpm, mgd --> cms
+     1.00000, 1000.000, 84.6000};         // cms, lps, mld --> cms
+
 // Enums written in caps are extracted from native
 // EPA-SWMM, whereas lower case vars are added to EPA-SWMM
 
@@ -91,40 +111,41 @@ enum api_nodef_attributes {
 enum api_linkf_attributes {
   linkf_ID = 1,
   linkf_subIndex,  // 2 *
-  linkf_node1,     // 3 *
-  linkf_node2,     // 4 *
-  linkf_offset1,   // 5 *
-  linkf_offset2,   // 6 *
-  linkf_q0,        // 7 *
-  linkf_flow,      // 8 *
-  linkf_depth,     // 9 *
-  linkf_volume,    // 10 *
-  linkf_froude,    // 11 *
-  linkf_setting,   // 12 *
-  linkf_left_slope,        // 13 *
-  linkf_right_slope,       // 14 *
-  linkf_weir_end_contractions,  // 15 *
-  linkf_weir_side_slope,        // 16 *
-  linkf_curveid,           // 17 *
-  linkf_discharge_coeff1,       // 18 *
-  linkf_discharge_coeff2,       // 19 *
-  linkf_conduit_roughness,      // 20 *
-  linkf_conduit_length,         // 21 *
+  linkf_direction, // 3 *
+  linkf_node1,     // 4 *
+  linkf_node2,     // 5 *
+  linkf_offset1,   // 6 *
+  linkf_offset2,   // 7 *
+  linkf_q0,        // 8 *
+  linkf_flow,      // 9 *
+  linkf_depth,     // 10 *
+  linkf_volume,    // 11 *
+  linkf_froude,    // 12 *
+  linkf_setting,   // 13 *
+  linkf_left_slope,        // 14 *
+  linkf_right_slope,       // 15 *
+  linkf_weir_end_contractions,  // 16 *
+  linkf_weir_side_slope,        // 17 *
+  linkf_curveid,           // 18 *
+  linkf_discharge_coeff1,       // 19 *
+  linkf_discharge_coeff2,       // 20 *
+  linkf_initSetting,            // 21 *
+  linkf_yOn,                    // 22 *
+  linkf_yOff,                   // 23 *
+  linkf_conduit_roughness,      // 24 *
+  linkf_conduit_length,         // 25 *
   // brh 20211207s
-  linkf_rptFlag,           // 22 new in api.c
+  linkf_rptFlag,           // 26 new in api.c
   // brh 20211207s
   // --- special elements attributes
-  linkf_type,              // 23 *
-  linkf_weir_type,              // 24 *
-  linkf_orifice_type,           // 25 *
-  linkf_outlet_type,            // 26 *
-  linkf_pump_type,              // 27 *
+  linkf_type,                   // 27 *
+  linkf_sub_type,               // 28 *
   // --- xsect attributes
-  linkf_xsect_type,        // 28 *
-  linkf_geometry,          // 29 missing in api.c
-  linkf_xsect_wMax,        // 30 *
-  linkf_xsect_yBot,        // 31 *
-  linkf_xsect_yFull        // 32 *
+  linkf_xsect_type,        // 29 *
+  linkf_geometry,          // 30 missing in api.c
+  linkf_xsect_wMax,        // 31 *
+  linkf_xsect_yBot,        // 32 *
+  linkf_xsect_yFull        // 33 *
 };
 
 // API vars are those necessary for external applications
@@ -249,7 +270,21 @@ int check_api_is_initialized();
 int api_load_vars();
 int getTokens(char *s);
 
+//=============================================================================
+//   General purpose functions
+//=============================================================================
 
+double SI_Uint_Conversiton(int u)
+//
+//  Input:   u = integer code of quantity being converted
+//  Output:  returns a units conversion factor
+//  Purpose: computes a conversion factor from SWMM's internal
+//           units to user's units
+//
+{
+    if ( u < FLOW ) return UCF_SI[u][UnitSystem];
+    else            return QCF_SI[FlowUnits];
+}
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
