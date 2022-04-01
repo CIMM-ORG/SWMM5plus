@@ -106,6 +106,7 @@ contains
         !% get the initial dt and the next hydraulics time
         if (useHydraulics) then
             call tl_update_hydraulics_timestep()
+            call util_crashstop(229873)
         else
             !% NOTE -- WORKING WITHOUT SWMM5+ HYDRAULICS IS NOT SUPPORTED 
             !% the following is stub routines.
@@ -135,6 +136,7 @@ contains
         !% The loop starts at t = setting%Time%Start
         !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
         do while (setting%Time%Now <= (setting%Time%End - dtTol))
+
             !write(*,"(A)") ' ... beginning time loop'
 
             !% --- push the old values down the stack 
@@ -190,7 +192,7 @@ contains
                 end if
 
                 !write (*,*) ' '
-                !write(*,"(A,f12.2,A)") 'time loop ',timeNow/3600.0, '===================================================================='
+                !write(*,"(A,f12.2,A)") 'time loop ',timeNow, ' ===================================================================='
 
                 !% --- perform hydraulic routing
                 call tl_hydraulics()
@@ -439,10 +441,10 @@ contains
         !% --- get the timestep and the next time for hydraulics
         if (doHydraulics) then
             call tl_update_hydraulics_timestep()
+            call util_crashstop(449873)
         else
             nextHydraulicsTime = setting%Time%End + tenR*DtTol
         end if    
-
 
         !% --- The NextHydrologyTime is updated in SWMM, here we just need to
         !%     provide a large number if hydrology isn't used
@@ -531,7 +533,10 @@ contains
             !rm integer, pointer :: thisCol, Npack, thisP(:)
             character(64)    :: subroutine_name = 'tl_update_hydraulics_timestep'
 
-            integer :: kk !temporary
+            !integer :: bcElemDn(2)
+            !real(8), pointer :: volume(:), smallVolume(:), flowrate(:), topwidth(:), depth(:)
+
+            !integer :: kk !temporary
         !%-------------------------------------------------------------------
         !% Preliminaries
             if (crashYN) return
@@ -564,6 +569,10 @@ contains
         !%----------------------------------------------------------------------
         oldDT =  setting%Time%Hydraulics%Dt  ! not a pointer (important!)
         newDT => setting%Time%Hydraulics%Dt
+        
+        !print *, '=============================================='
+        !print *, 'oldDT ',oldDT
+        !print *, 'newDT ',newDT
 
         if ((matchHydrologyStep) .and. (useHydrology)) then 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
@@ -627,6 +636,8 @@ contains
             !% --- allowing hydrology and hydraulics to occur at different times
             thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,oldDT)
 
+            !print *, 'thisCFL ',thisCFL
+
             if (thisCFL > maxCFL) then
                 !% --- decrease the time step to the target CFL and reset the checkStep counter
                 newDT = oldDT * targetCFL / thisCFL
@@ -644,6 +655,13 @@ contains
                 end if
             end if
         end if
+
+        !% 20220328brh time step limiter for inflows into small or zero volumes
+        !print *, 'dt before limit ', newDT
+        call tl_limit_BCinflow_dt (newDT)
+        !print *, 'dt BC limit     ',newDT
+        call tl_limit_LatInflow_dt (newDT)
+        !print *, 'dt Qlat limit   ',newDt
 
         !% --- if dt is large and there is more than 2 steps, then round to an integer number
         if ((matchHydrologyStep) .and. (useHydrology) .and. (neededSteps .le. 2)) then
@@ -673,7 +691,8 @@ contains
                 print*, 'max wavespeed ', maxval( &
                     elemR(elemP(1:npack_elemP(ep_CC_Q_NOTsmalldepth),ep_CC_Q_NOTsmalldepth),er_WaveSpeed) )
                 print*, 'warning: the dt value is smaller than the user supplied min dt value'
-                stop 1123938
+                !stop 1123938
+                call util_crashpoint(1123938)
             end if
 
             if (setting%Debug%File%timeloop) &
@@ -886,9 +905,16 @@ contains
         else    
             thisDT => dt
         end if
-        
-        outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                        maxval(( abs(PCelerity(thisP))) * thisDT / length(thisP)))
+
+        !print *, 'in tl_get_max_CFL'
+        !print *, size(thisP), Npack
+
+        if (Npack > 0) then 
+            outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
+                            maxval(( abs(PCelerity(thisP))) * thisDT / length(thisP)))
+        else
+            outvalue = zeroR
+        end if
 
         ! print * , ' '
         ! print *, velocity(thisP)
@@ -909,6 +935,203 @@ contains
         ! !stop 39875
 
     end function tl_get_max_cfl    
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine tl_limit_BCinflow_dt (thisDT)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the maximum dt for inflows (BCup) into cells that
+        !% have small depths
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(inout) :: thisDT
+
+            integer, pointer :: BCelemIdx(:)
+            real(8), pointer :: depthLimit(:), DTlimit(:), depthScale(:)
+            real(8), pointer :: BCQ(:), topwidth(:), length(:), depth(:)
+            real(8), pointer :: alpha, gravity, smallDepth
+            real(8) :: newDTlimit
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (crashYN) return
+            temp_BCupI(:,:) = nullValueI
+            temp_BCupR(:,:) = nullValueR
+        !%------------------------------------------------------------------
+        !% Aliases:
+            BCelemIdx  => temp_BCupI(:,1)
+
+            depthLimit => temp_BCupR(:,1)
+            DTlimit    => temp_BCupR(:,2)
+            BCQ        => temp_BCupR(:,3)
+            depthScale => temp_BCupR(:,4)
+
+            topwidth   => elemR(:,er_TopWidth)
+            length     => elemR(:,er_Length)
+            depth      => elemR(:,er_Depth)
+
+            alpha      => setting%VariableDT%CFL_inflow_max
+            gravity    => setting%Constant%gravity
+            smallDepth => setting%SmallDepth%DepthCutoff
+        !%------------------------------------------------------------------
+        
+        !% set the inflow limiter for upstream boundary conditions (BCup)
+        if (size(BC%P%BCup) > 0) then
+
+            !% ensure flowrate used for limiter is  positive and non-zero
+            !tinyQ(:) = setting%Eps%Velocity
+            BCQ(:) = max( abs(BC%FlowRI(BC%P%BCup)), setting%Eps%Velocity)
+
+            !print *, 'BCQ', BCQ
+
+            !% store the element indexes downstream of a BCup face
+            BCelemIdx =  faceI(BC%flowI(BC%P%BCup,bi_face_idx), fi_Melem_dL)
+
+            !% store the scaling depth limit defined by when the induced velocity
+            !% from an inflow is similar to the gravity wave speed of the BC inflow
+            depthScale = ( (onehalfR**4) * (BCQ**2) / (gravity * (topwidth(BCelemIdx)**2) ) )**onethirdR
+
+            !print *, 'depthScale ',depthScale
+
+            !% get the depth limit for maximum depth that the time step will be limited as 
+            !% either the depth scale or the specified smallDepth limit
+            depthLimit = max(smallDepth, depthScale)
+
+            !print *, 'depthLimit ',depthLimit
+            
+            !% time step limit based on inflow flux
+            DTlimit = length(BCelemIdx) * ( ( alpha * topwidth(BCelemIdx) / (gravity * BCQ) )**onethirdR) 
+
+            !print *, 'DTlimit ',DTlimit
+        
+            !% where the depth is greater than the depthlimit the DT inflow limiter
+            !% is not needed, and we can use the existing DT value
+            depthLimit = depth(BCelemIdx) - depthLimit
+            where (depthLimit .ge. zeroR)
+                DTlimit = thisDT
+            endwhere
+
+            !print *, 'new DTlimit ',DTlimit
+
+            !% get the smallest DT in the limiter array
+            newDTlimit = minval(DTlimit)
+
+            !% use the smaller value of the new limit or the input
+            thisDT = min(newDTlimit,thisDT)
+
+            !print *, 'thisDT ',thisDT
+
+            !% return to null value storage
+            temp_BCupI(:,:) = nullValueI
+            temp_BCupR(:,:) = nullValueR
+        else
+            !% continue -- no DT limitation if there are no BCup faces
+        end if
+
+        !%------------------------------------------------------------------
+    end subroutine tl_limit_BCinflow_dt
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine tl_limit_LatInflow_dt (thisDT)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the maximum dt for inflows (Qlat) into cells that
+        !% have small depths
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(inout) :: thisDT
+            real(8), pointer :: Qlat(:), depthScale(:), depthLimit(:)
+            real(8), pointer :: DTlimit(:), topwidth(:), length(:), depth(:)
+            real(8), pointer :: alpha, gravity, smallDepth
+            real(8) :: newDTlimit
+
+            integer, pointer :: thisP(:), Npack
+            integer :: thisCol
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (crashYN) return
+        !%------------------------------------------------------------------
+        !% Aliases:
+            Qlat       => elemR(:,er_Temp01)
+            depthScale => elemR(:,er_Temp02)
+            depthLimit => elemR(:,er_Temp03)
+            DTLimit    => elemR(:,er_Temp04)
+
+            topwidth   => elemR(:,er_TopWidth)
+            length     => elemR(:,er_Length)
+            depth      => elemR(:,er_Depth)
+
+            alpha      => setting%VariableDT%CFL_inflow_max
+            gravity    => setting%Constant%gravity
+            smallDepth => setting%SmallDepth%DepthCutoff
+        !%------------------------------------------------------------------
+        !% ---- use the pack for CC and JM with H time march 
+        !%      (no lateral flows into JB or diagnostic)
+        thisCol = ep_CCJM_H_ETM
+        Npack => npack_elemP(thisCol)   
+        if (Npack < 1) return
+        thisP => elemP(1:Npack,thisCol)
+        
+        !% ensure flowrate used for limiter is  positive and non-zero
+        !tinyQ(:) = setting%Eps%Velocity
+        Qlat(thisP) = max( abs( elemR(thisP,er_FlowrateLateral)) , &
+                           setting%Eps%Velocity)
+
+        !print *, 'Qlat ',Qlat(thisP)
+
+        !print *
+        !print *, 'topwidth ',topwidth(thisP)
+
+        !% store the scaling depth limit defined by when the induced velocity
+        !% from an inflow is similar to the gravity wave speed of the BC inflow
+        depthScale(thisP) = ( (onehalfR**4) * (Qlat(thisP)**2) / (gravity * (topwidth(thisP)**2) ) )**onethirdR
+
+        !print *
+        !print *, 'depthScale ',depthScale(thisP)
+
+        !% get the depth limit for maximum depth that the time step will be limited as 
+        !% either the depth scale or the specified smallDepth limit
+        depthLimit(thisP) = max(smallDepth, depthScale(thisP))
+
+        !print *
+        !print *, 'depthLimit ',depthLimit(thisP)
+        
+        !% time step limit based on inflow flux
+        DTlimit(thisP) = length(thisP) * ( ( alpha * topwidth(thisP) / (gravity * Qlat(thisP)) )**onethirdR) 
+
+        !print *
+        !print *, 'DTlimit ',DTlimit(thisP)
+    
+        !% where the depth is greater than the depthlimit the DT inflow limiter
+        !% is not needed, and we can use the existing DT value
+        depthLimit(thisP) = depth(thisP) - depthLimit(thisP)
+        where (depthLimit .ge. zeroR)
+            DTlimit = thisDT
+        endwhere
+
+        !print *
+        !print *, 'new DTlimit ',DTlimit(thisP)
+
+        !% get the smallest DT in the limiter array
+        newDTlimit = minval(DTlimit(thisP))
+
+        !% use the smaller value of the new limit or the input DT
+        thisDT = min(newDTlimit,thisDT)
+
+        !print *
+        !print *, 'thisDT ',thisDT
+
+        !%------------------------------------------------------------------
+        !% Closing
+            elemR(:,er_Temp01) = nullvalueR
+            elemR(:,er_Temp02) = nullvalueR
+            elemR(:,er_Temp03) = nullvalueR
+            elemR(:,er_Temp04) = nullvalueR
+
+    end subroutine tl_limit_LatInflow_dt
 !%
 !%==========================================================================
 !% END OF MODULE

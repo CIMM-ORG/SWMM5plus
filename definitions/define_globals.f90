@@ -24,8 +24,12 @@ module define_globals
    ! integer :: iet(3) = (/80, 34, 35/)
    ! integer :: ift(2) = (/32, 33/)
 
-    integer :: iet(3) = (/25, 65, 67/)
-    integer :: ift(2) = (/23, 60/)
+   ! integer :: iet(3) = (/25, 65, 67/)
+   ! integer :: ift(2) = (/23, 60/)
+
+    integer :: iet(2) = (/1, 2/)
+    integer :: ift(3) = (/1, 2, 3/)
+
 
 
     integer(kind=8) :: irecCount = 0
@@ -207,6 +211,13 @@ module define_globals
     integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+
+    !% Temporary arrays that don't fit in any of the standard array structures
+    !% brh 20220401
+    integer, allocatable, target :: temp_BCupI(:,:)  !% number of BCup faces.
+    real(8), allocatable, target :: temp_BCupR(:,:)
+    integer :: N_tempBCupI = 1
+    integer :: N_tempBCupR = 4
     
     !% Profiling Timer
     type(wall_clk) :: timer
