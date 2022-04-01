@@ -1408,6 +1408,15 @@ contains
                 elemR(JBidx,er_BreadthMax)            = link%R(BranchIdx,lr_FullDepth)
                 elemR(JBidx,er_FullArea)              = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
                 elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
+                
+            case (undefinedKey)
+                print *, 'In, ', subroutine_name
+                print *, 'CODE ERROR: junction branch geometry type is ', trim(reverseKey(JBgeometryType))
+                print *, 'Pump and outlets does not have a geometry and are undefined'
+                print *, 'This is under dev'
+                !stop 
+                call util_crashpoint(808974)
+                return
             case default
 
                 print *, 'In, ', subroutine_name

@@ -104,7 +104,11 @@ module pump_elements
                 call util_curve_lookup_singular(CurveID, er_Depth, er_Flowrate, &
                         curve_pump_Xvar, curve_pump_flowrate)
 
-        case (type_IdealPump)     
+        case (type_IdealPump)  
+                
+                print *, 'CODE ERROR: ',trim(reverseKey(PumpType)), ' has not yet been developed'
+                call util_crashpoint(784666)
+                return
 
         end select
 

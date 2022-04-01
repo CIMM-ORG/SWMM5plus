@@ -1048,7 +1048,7 @@ contains
             else
                 !% some links like pumps or outlets does not have any geometric features
                 !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
-                link_value = nullvalueR
+                link_value = undefinedKey
             end if
         end if
         if (setting%Debug%File%interface)  then
