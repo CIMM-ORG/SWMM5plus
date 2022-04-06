@@ -27,10 +27,22 @@ module define_globals
    ! integer :: iet(3) = (/25, 65, 67/)
    ! integer :: ift(2) = (/23, 60/)
 
-    integer :: iet(2) = (/1, 2/)
-    integer :: ift(3) = (/1, 2, 3/)
+   ! integer :: iet(2) = (/1, 2/)
+   ! integer :: ift(3) = (/1, 2, 3/)
+
+    !integer :: iet(15) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,48,47/)
+    !integer :: ift(14) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,47/)
+
+    integer :: ietU1(3) =   (/46, 48, 47/)
+    integer :: iftU1(1) =     (/47 /)
 
 
+    integer :: ietU2(3) = (/ 114, 50, 47/)
+    integer :: iftU2(1) =   (/ 49/)
+
+    integer :: ietD1(3) = (/47 ,49, 115/)
+    integer :: iftD1(1) =       (/48/)
+     
 
     integer(kind=8) :: irecCount = 0
 

@@ -589,7 +589,7 @@ module define_settings
         real(8) :: CFL_hi_max = 0.7
         real(8) :: CFL_target = 0.5
         real(8) :: CFL_lo_max = 0.3
-        real(8) :: CFL_inflow_max = 0.1
+        real(8) :: CFL_inflow_max = 0.5
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2 
         integer :: NstepsForCheck = 10
