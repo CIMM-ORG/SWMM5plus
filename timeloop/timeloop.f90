@@ -191,8 +191,8 @@ contains
                     !% continue
                 end if
 
-                !write (*,*) ' '
-                !write(*,"(A,f12.2,A)") 'time loop ',timeNow, ' ===================================================================='
+                ! write (*,*) ' '
+                ! write(*,"(A,f12.2,A)") 'time loop ',timeNow/3600.0, ' ===================================================================='
 
                 !% --- perform hydraulic routing
                 call tl_hydraulics()
@@ -1087,7 +1087,7 @@ contains
 
         !% store the scaling depth limit defined by when the induced velocity
         !% from an inflow is similar to the gravity wave speed of the BC inflow
-        depthScale(thisP) = ( (onehalfR**4) * (Qlat(thisP)**2) / (gravity * (topwidth(thisP)**2) ) )**onethirdR
+        depthScale(thisP) = ( (alpha**4) * (Qlat(thisP)**2) / (gravity * (topwidth(thisP)**2) ) )**onethirdR
 
         !print *
         !print *, 'depthScale ',depthScale(thisP)
