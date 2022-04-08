@@ -79,6 +79,10 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
+        !% sync after all the link data has been extracted
+        !% the junction branch data is read in from the elemR arrays which my need inter-image communication
+        !% thus the sync call is needed
+        sync all
         !% --- get data that can be extracted from nodes
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
         call init_IC_from_nodedata ()
@@ -1228,8 +1232,8 @@ contains
         !--------------------------------------------------------------------------
         integer, intent(in) :: thisJunctionNode
 
-        integer              :: ii, jj, JMidx, JBidx, Aidx
-        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID
+        integer              :: ii, jj, JMidx, JBidx, Aidx, Ci
+        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, Fidx
         integer              :: nbranches
         real(8), allocatable :: integrated_volume(:)
 
@@ -1314,14 +1318,26 @@ contains
             !% set the adjacent element id where elemI and elemR data can be extracted
             !% note that elemSGR etc are not yet assigned
             if (mod(ii,2) == zeroI) then
+                Fidx => elemI(JBidx,ei_MFace_dL)
                 !% even are downstream branches
-                Aidx = faceI(elemI(JBidx,ei_MFace_dL),fi_Melem_dL)
+                if (elemYN(JBidx,eYN_isBoundary)) then
+                    Ci   = faceI(Fidx,fi_Connected_image)
+                    Aidx = faceI(Fidx,fi_GhostElem_dL)
+                else
+                    Ci   = this_image()
+                    Aidx = faceI(Fidx,fi_Melem_dL)
+                end if
+            !% odd are upstream branches
             else
-                !% odd are upstream branches
-                Aidx = faceI(elemI(JBidx,ei_MFace_uL),fi_Melem_uL)
+                Fidx => elemI(JBidx,ei_MFace_uL)
+                if (elemYN(JBidx,eYN_isBoundary)) then
+                    Ci   = faceI(Fidx,fi_Connected_image)
+                    Aidx = faceI(Fidx,fi_GhostElem_uL)
+                else
+                    Ci   = this_image()
+                    Aidx = faceI(Fidx,fi_Melem_uL)
+                end if
             end if
-
-            !print *, 'Aidx ',Aidx
 
             !% set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
@@ -1356,18 +1372,13 @@ contains
                 elemR(JBidx,er_Depth) = zeroR
             end if
 
-            !print *, 'head  ', elemR(JBidx,er_Head) ,elemR(JMidx,er_Head)
-            !print *, 'depth ', elemR(JBidx,er_Depth),  elemR(JMidx,er_Depth)
-
             elemR(JBidx,er_VolumeOverFlow) = zeroR
             elemR(JBidx,er_VolumeOverFlowTotal) = zeroR
 
             !% JB elements initialized for momentum
-            elemR(JBidx,er_Flowrate)     = elemR(Aidx,er_Flowrate) !% flowrate of adjacent element
+            elemR(JBidx,er_Flowrate)     = elemR(Aidx,er_Flowrate)[Ci] !% flowrate of adjacent element
             elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
             elemR(JBidx,er_FroudeNumber) = zeroR
-
-            !print *, 'Q ', elemR(JBidx,er_Flowrate)
 
             !% Set the face flowrates such that it does not blowup the initial interpolation
             if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
@@ -1377,58 +1388,37 @@ contains
             end if
 
             !% Set the geometry of the adjacent elements
-            elemYN(JBidx,eYN_canSurcharge) = elemYN(Aidx,eYN_canSurcharge)
+            elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
+            elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
 
-            elemI(JBidx,ei_geometryType) = elemI(Aidx,ei_geometryType)
+            select case  (elemI(JBidx,ei_geometryType))
 
-            !print *, 'Geotype ',elemI(JBidx,ei_geometryType), this_image()
-            !print *,  reverseKey(elemI(JBidx,ei_geometryType)), this_image()
-
-            elemR(JBidx,er_AreaBelowBreadthMax) = elemR(Aidx,er_AreaBelowBreadthMax)
-            elemR(JBidx,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)
-            elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)
-            elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)
-            elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)
-            elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)
-            elemR(JBidx,er_FullVolume)          = elemR(Aidx,er_FullVolume) * elemR(JBidx,er_Length) / elemR(Aidx,er_Length)
-            elemR(JBidx,er_ZbreadthMax)         = elemR(Aidx,er_ZbreadthMax)
-            elemR(JBidx,er_Zcrown)              = elemR(Aidx,er_Zcrown)         
-            elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)
-
-            select case (elemI(JBidx,ei_geometryType))
-
-            case (rectangular,rectangular_closed)
-                elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
-                elemR(JBidx,er_Area) = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
-
-            case (trapezoidal)
-                elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale) 
-                elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
-                elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
-                elemR(JBidx,er_Area) = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR &
-                    * (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) &
-                    * elemR(JBidx,er_Depth)) * elemR(JBidx,er_Depth)
-
-            case (triangular)
-                elemSGR(JBidx,esgr_Triangular_TopBreadth)   = link%R(BranchIdx,lr_BreadthScale)
-                elemSGR(JBidx,esgr_Triangular_Slope)        = elemSGR(JBidx,esgr_Triangular_TopBreadth)  &
-                                                                    / (twoR * elemR(JBidx,er_FullDepth))
-                elemR(JBidx,er_Area) = elemR(JBidx,er_Depth) * elemR(JBidx, er_Depth) * elemSGR(JBidx,esgr_Triangular_Slope) 
-
-            case (circular)
-                elemSGR(JBidx,esgr_Circular_Diameter)   = link%R(BranchIdx,lr_FullDepth)
-                elemSGR(JBidx,esgr_Circular_Radius)     = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
-                elemR(JBidx,er_Area) = (elemSGR(JBidx,esgr_Circular_Radius) **2)        &
-                    * (acos(1.0 - (elemR(JBidx,er_Depth)/elemSGR(JBidx,esgr_Circular_Radius))) &
-                    - sin(2.0*acos(1.0 - (elemR(JBidx,er_Depth)/elemSGR(JBidx,esgr_Circular_Radius))))/2.0 )
-
+            case (rectangular, trapezoidal, triangular, rectangular_closed, circular)
+                !% copy all the geometry specific data from the adjacent element cell as well
+                elemR(JBidx,er_Area)                = elemR(Aidx,er_Area)[Ci]
+                elemR(JBidx,er_Area_N0)             = elemR(JBidx,er_Area)
+                elemR(JBidx,er_Area_N1)             = elemR(JBidx,er_Area)
+                elemR(JBidx,er_AreaBelowBreadthMax) = elemR(Aidx,er_AreaBelowBreadthMax)[Ci]
+                elemR(JBidx,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)[Ci]
+                elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
+                elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
+                elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
+                elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
+                elemR(JBidx,er_FullVolume)          = elemR(JBidx,er_FullArea)  * elemR(JBidx,er_Length)
+                elemR(JBidx,er_ZbreadthMax)         = elemR(Aidx,er_ZbreadthMax)[Ci]
+                elemR(JBidx,er_Zcrown)              = elemR(Aidx,er_Zcrown)[Ci]         
+                elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)[Ci]
+                elemR(JBidx,er_Volume)              = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
+                elemR(JBidx,er_Volume_N0)           = elemR(JBidx,er_Volume)
+                elemR(JBidx,er_Volume_N1)           = elemR(JBidx,er_Volume)
+                !% copy the entire row of the elemSGR array
+                elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
             case default
                 print *, 'in ',trim(subroutine_name)
                 print *, 'CODE ERROR: unknown geometry type ',elemI(JBidx,ei_geometryType)
                 print *, 'which has key ',trim(reverseKey(elemI(JBidx,ei_geometryType)))
                 call util_crashpoint (4482793)
                 return
-
             end select
 
             ! ! set the common geometry for conduits and non-conduits that are independent of cross-section shape

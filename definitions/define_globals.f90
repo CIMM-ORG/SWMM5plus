@@ -377,6 +377,9 @@ module define_globals
     ! default for number of functional storage
     integer :: N_FunctionalStorage = 0
 
+    !% maximum cfl across the network. Used for reporting 
+    real(8) :: cfl_max
+
     !% datetime related variables
     integer, parameter :: datedelta = 693594
     integer, parameter :: secsperday = 86400

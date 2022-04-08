@@ -491,6 +491,10 @@ contains
         ! call co_broadcast(doHydraulics, minImg)
         ! call co_broadcast(doHydrology, minImg)
 
+        !% find the cfl for reporting
+        cfl_max = tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,dtHydraulics)
+        call co_max(cfl_max)
+
         if (util_output_must_report()) reportStep = reportStep + 1
         if (doHydraulics) hydraulicStep = hydraulicStep + 1
         if (doHydrology)  hydrologyStep = hydrologyStep + 1
@@ -850,7 +854,7 @@ contains
                     ! write a time counter
                     write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
                         'time step = ',step,'; model time = ',thistime, &
-                        ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,dt)
+                        ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
 
                     ! write estimate of time remaining
                     thistime = seconds_to_completion
