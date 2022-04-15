@@ -157,14 +157,15 @@ module geometry
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
-        !% make adjustments for slots on closed elements only for ETM
-        if (whichTM .eq. ETM) then
-            call geo_slot_adjustments (thisColP_ClosedElems)
-        end if
 
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell (thisColP_all)
+
+        !% make adjustments for slots on closed elements only for ETM
+        if (whichTM .eq. ETM) then
+            call geo_slot_adjustments (thisColP_ClosedElems)
+        end if
 
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
@@ -216,7 +217,7 @@ module geometry
             real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
-            real(8), pointer :: zCrown(:), fullarea(:), fulldepth(:), fullperimeter(:)
+            real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
             real(8), pointer :: fullhyddepth(:)
             real(8), pointer :: grav
             integer :: tB, ii, kk
@@ -250,7 +251,7 @@ module geometry
             volume        => elemR(:,er_Volume)
             zBtm          => elemR(:,er_Zbottom)
             zCrown        => elemR(:,er_Zcrown)
-            fullarea      => elemR(:,er_FullArea)
+            fullArea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_FullDepth)
             fullhyddepth  => elemR(:,er_FullHydDepth)
             fullperimeter => elemR(:,er_FullPerimeter)
@@ -300,7 +301,7 @@ module geometry
                             if (depth(tB) .ge. fulldepth(tB)) then
                                 !% surcharged or incipient surcharged
                                 depth(tB)     = fulldepth(tB)
-                                area(tB)      = fullarea(tB)
+                                area(tB)      = fullArea(tB)
                                 hyddepth(tB)  = fullhyddepth(tB)
                                 perimeter(tB) = fullperimeter(tB)
                                 topwidth(tB)  = setting%ZeroValue%Topwidth
@@ -943,9 +944,9 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:), ell(:)
         real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:)
+        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -960,6 +961,8 @@ module geometry
         volumeN0   => elemR(:,er_Volume_N0)
         Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
+        ell        => elemR(:,er_ell)
+        ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
         fullvolume => elemR(:,er_FullVolume)
         fullArea   => elemR(:,er_FullArea)
@@ -967,7 +970,7 @@ module geometry
         headN0     => elemR(:,er_Head_N0)
         zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_TotalSlotVolume)
+        SlotVolume => elemR(:,er_SlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
 
@@ -976,38 +979,15 @@ module geometry
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-
-            select case (SlotMethod)
-
-            case (VariableSlot)
-
-                where (SlotVolume(thisP) .gt. zeroR) 
-                    volume(thisP) = fullvolume(thisP) + SlotVolume(thisP)
-                    area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
-                    depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
-                    head(thisP)   = zbottom(thisP) + depth(thisP)
-                    Overflow(thisP) = zeroR
-                end where 
-
-            case (StaticSlot)
-
-                where (SlotVolume(thisP) .gt. zeroR) 
-                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                    area(thisP)   = area(thisP)    + SlotArea(thisP)
-                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                    head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                    Overflow(thisP) = zeroR
-                end where 
-
-            case default
-                !% should not reach this stage
-                print*, 'In ', subroutine_name
-                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                print *, 'which has key ',trim(reverseKey(SlotMethod))
-                stop 48756
-    
-            end select
-
+            
+            where (SlotVolume(thisP) .gt. zeroR) 
+                volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                area(thisP)   = area(thisP)    + SlotArea(thisP)
+                depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                ! ell(thisP)    = ellMax(thisP)  + SlotDepth(thisP)
+                Overflow(thisP) = zeroR
+            end where 
         end if
 
         if (setting%Debug%File%geometry) &

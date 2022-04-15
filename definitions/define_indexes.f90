@@ -322,6 +322,7 @@ module define_indexes
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
+        enumerator :: er_ell_max                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
         enumerator :: er_Flowrate_N1                !% flowrate (time N-1)
@@ -353,14 +354,14 @@ module define_indexes
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
+        enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
-        enumerator :: er_TotalSlotVolume            !% slot volume
-        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_Setting                    !% percent open setting for a link element
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
-        enumerator :: er_SlotHydRadius              !% slot hydraulic radius        
+        enumerator :: er_SlotHydRadius              !% slot hydraulic radius 
+        enumerator :: er_SlotVolume                 !% slot volume       
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume
@@ -774,6 +775,7 @@ module define_indexes
         enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
+        enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
         enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
@@ -850,6 +852,7 @@ module define_indexes
         enumerator :: fr_Topwidth_u             !% topwidth on upstream side of face
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
+        enumerator :: fr_Preissmann_Number      !% preissmann number at face
 
         !% HACK: THE FOLLOWING MAY NEED TO BE RESTORED
         ! enumerator :: fr_Zbottom_u             !% Bottom elevation on upstream side of face

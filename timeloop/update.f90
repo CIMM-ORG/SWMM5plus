@@ -206,7 +206,7 @@ module update
         integer, pointer :: Npack, Npack2, thisCol_AC,  thisCol_ClosedElems, thisP(:), thisP2(:)
         real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:), QLateral(:)
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
-        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
+        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), Area(:)
         real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
         integer :: ii
         !%-----------------------------------------------------------------------------
@@ -228,10 +228,13 @@ module update
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_TotalSlotVolume)
+        SlotVolume => elemR(:,er_SlotVolume)
         SlotWidth  => elemR(:,er_SlotWidth)
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
+
+
+        Area => faceR(:,er_Area)
         !%-----------------------------------------------------------------------------
         !% 2nd cases needed for handling surcharged AC elements and using the celerity
         !% multiplier of the AC method for the wavespeed
@@ -271,7 +274,8 @@ module update
                 !% initialize preissmann slot celerity
                 PCelerity(thisP2) = zeroR
                 where (SlotVolume(thisP2) .gt. zeroR) 
-                    PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
+                    PCelerity(thisP2) = sqrt(grav * FullArea(thisP2)/SlotWidth(thisP2)) 
+                    ! PCelerity(thisP2) = sqrt(grav * Area(thisP2)/SlotWidth(thisP2))        
                 end where
             end if
         end if
@@ -294,8 +298,8 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (PCelerity(thisP) .gt. zeroR)
-            w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 23022022 
-            w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_uQ(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_dQ(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
 
         !% apply limiters to timescales

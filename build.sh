@@ -56,9 +56,9 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/orifice_elements.f90\
               $TL_DIR/outlet_elements.f90\
               $TL_DIR/pump_elements.f90\
-              $TL_DIR/lowlevel_rk2.f90\
               $TL_DIR/update.f90\
               $TL_DIR/face.f90\
+              $TL_DIR/lowlevel_rk2.f90\
               $TL_DIR/boundary_conditions.f90\
               $TL_DIR/diagnostic_elements.f90\
               $TL_DIR/runge_kutta2.f90\

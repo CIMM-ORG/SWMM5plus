@@ -187,7 +187,7 @@
         enumerator :: Random
         enumerator :: BLink
         enumerator :: StaticSlot
-        enumerator :: VariableSlot
+        enumerator :: DynamicSlot
         !% keys for report time processing
         enumerator :: InSeconds
         enumerator :: InMinutes
@@ -391,7 +391,7 @@
         reverseKey(Random) = 'Random'
         reverseKey(BLink) = 'BLink'
         reverseKey(StaticSlot) = 'StaticSlot'
-        reverseKey(VariableSlot) = 'VariableSlot'
+        reverseKey(DynamicSlot) = 'DynamicSlot'
         reverseKey(InSeconds) = 'InSeconds'
         reverseKey(InMinutes) = 'InMinutes'
         reverseKey(InHours) = 'InHours'
@@ -626,7 +626,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(type3_Pump)) , type3_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(type4_Pump)) , type4_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(undefinedKey)) , undefinedKey
-        write(*,'(A," = ",i4)') trim(reverseKey(VariableSlot)) , VariableSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(DynamicSlot)) , DynamicSlot
         write(*,'(A," = ",i4)') trim(reverseKey(vert_ellipse)) , vert_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
         write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue

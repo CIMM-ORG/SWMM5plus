@@ -149,7 +149,7 @@ module orifice_elements
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
         FlowDirection         => elemSI(eIdx,esi_Orifice_FlowDirection)
         Flowrate              => elemR(eIdx,er_Flowrate)
-        FullArea              => elemR(eIdx,er_FullArea)
+        fullArea              => elemR(eIdx,er_FullArea)
         Head                  => elemR(eIdx,er_Head)
         EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
@@ -176,7 +176,7 @@ module orifice_elements
         !% find full area for flow, and A/L for critical depth calculations
         select case (GeometryType)
             case (circular)
-                FullArea = pi * (onehalfR * EffectiveFullDepth) ** twoR
+                fullArea = pi * (onehalfR * EffectiveFullDepth) ** twoR
                 AoverL   = onefourthR * EffectiveFullDepth
             case (rectangular_closed)
                 FullArea = EffectiveFullDepth * RectangularBreadth
