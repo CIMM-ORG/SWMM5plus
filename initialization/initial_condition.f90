@@ -755,7 +755,9 @@ contains
                 elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
-                
+
+                elemR(:,er_ell_max) = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax)  
             endwhere
             
         case (lCircular)
@@ -783,6 +785,9 @@ contains
                 elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
+
+                elemR(:,er_ell_max) = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
             end where
 
         case default
@@ -1971,12 +1976,29 @@ contains
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
-        elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)            = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotVolume)       = zeroR
+        ! elemR(1:20,er_SlotVolume)                    = 0.01 
+
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
+        ! elemR(1:20,er_SlotArea)                           = elemR(1:20,er_SlotVolume) / elemR(1:20,er_length)
+
+        elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
+        ! elemR(1:20,er_SlotWidth)                          = (setting%Constant%gravity * elemR(1:20,er_FullArea) )/(100.0**2.0)
+
+        elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
+        ! elemR(1:20,er_SlotDepth)                          = elemR(1:20,er_SlotArea)/elemR(1:20,er_SlotWidth) 
+        ! elemR(1:20,er_SlotDepth)                          = 1.0 / (elemR(1:20,er_area)/(10.0 * elemR(1:20,er_SlotArea))-1.0)
+        
+        ! elemR(1:20,er_SlotWidth)                          = elemR(1:20,er_SlotArea) / elemR(1:20,er_SlotDepth) 
+        
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
+        ! elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = zeroR
+        elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = setting%PreissmannSlot%TargetPreissmannCelerity / &
+                                                            (setting%PreissmannSlot%PreissmannAlpha * sqrt(setting%Constant%gravity * &
+                                                            elemR(1:size(elemR,1)-1,er_ell_max)))
+        ! elemR(1:20,er_Preissmann_Celerity)                = sqrt(9.81 * elemR(1:20,er_area)/elemR(1:20,er_SlotWidth) )
+        ! faceR(1:20,fr_Area_d) = elemR(1:20,er_SlotWidth) * elemR(1:20,er_Length) * elemR(1:20,er_SlotDepth)  
         !------------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
