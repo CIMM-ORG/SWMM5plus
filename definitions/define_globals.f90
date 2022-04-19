@@ -24,9 +24,25 @@ module define_globals
    ! integer :: iet(3) = (/80, 34, 35/)
    ! integer :: ift(2) = (/32, 33/)
 
-    integer :: iet(3) = (/25, 65, 67/)
-    integer :: ift(2) = (/23, 60/)
+   ! integer :: iet(3) = (/25, 65, 67/)
+   ! integer :: ift(2) = (/23, 60/)
 
+   ! integer :: iet(2) = (/1, 2/)
+   ! integer :: ift(3) = (/1, 2, 3/)
+
+    !integer :: iet(15) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,48,47/)
+    !integer :: ift(14) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,47/)
+
+    integer :: ietU1(3) =   (/46, 48, 47/)
+    integer :: iftU1(1) =     (/47 /)
+
+
+    integer :: ietU2(3) = (/ 114, 50, 47/)
+    integer :: iftU2(1) =   (/ 49/)
+
+    integer :: ietD1(3) = (/47 ,49, 115/)
+    integer :: iftD1(1) =       (/48/)
+     
 
     integer(kind=8) :: irecCount = 0
 
@@ -207,6 +223,13 @@ module define_globals
     integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+
+    !% Temporary arrays that don't fit in any of the standard array structures
+    !% brh 20220401
+    integer, allocatable, target :: temp_BCupI(:,:)  !% number of BCup faces.
+    real(8), allocatable, target :: temp_BCupR(:,:)
+    integer :: N_tempBCupI = 1
+    integer :: N_tempBCupR = 4
     
     !% Profiling Timer
     type(wall_clk) :: timer
@@ -353,6 +376,9 @@ module define_globals
 
     ! default for number of functional storage
     integer :: N_FunctionalStorage = 0
+
+    !% maximum cfl across the network. Used for reporting 
+    real(8) :: cfl_max
 
     !% datetime related variables
     integer, parameter :: datedelta = 693594

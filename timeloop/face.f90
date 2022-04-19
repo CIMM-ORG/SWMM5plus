@@ -7,7 +7,7 @@ module face
     use adjust
     use jump
     use utility_profiler
-    use utility, only: util_sign_with_ones
+    use utility, only: util_sign_with_ones, util_CLprint
     use utility_crash, only: util_crashpoint
 
 
@@ -662,15 +662,28 @@ module face
         ! faceR(iftmp(1),fr_Head_d), &
         ! elemR(ietmp(2),er_Head)
 
+       ! print *, 'EEE--aa'
+       ! call util_CLprint ()   
+
         !% two-sided interpolation to using the upstream face set
         call face_interp_interior_set &
             (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
+          !  print *, 'EEE--bb'
+          !  call util_CLprint ()   
+
         call face_interp_interior_set &
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
+
+            ! print *, 'EEE--cc'
+            ! call util_CLprint ()   
+
         call face_interp_interior_set &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
         call face_interp_interior_set &
             (fPreissmenSet, ePreissmenSet, er_InterpWeight_dP, er_InterpWeight_uP, facePackCol, Npack)
+
+            ! print *, 'EEE--dd'
+            ! call util_CLprint ()       
 
         ! write(*,"(A,4f12.5)") '......qqq ',elemR(ietmp(1),er_Head), &
         !     faceR(iftmp(1),fr_Head_u), &
@@ -697,6 +710,8 @@ module face
             ! faceR(iftmp(1),fr_Head_u), &
             ! faceR(iftmp(1),fr_Head_d), &
             ! elemR(ietmp(2),er_Head)    
+          !  print *, 'EEE--ee'
+          !  call util_CLprint ()  
 
         call face_copy_upstream_to_downstream_interior &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
@@ -706,8 +721,14 @@ module face
             ! faceR(iftmp(1),fr_Head_d), &
             ! elemR(ietmp(2),er_Head)    
 
+       !     print *, 'EEE--ff'
+       !     call util_CLprint ()    
+
         !% calculate the velocity in faces and put limiter
         call face_velocities (facePackCol, .true.)
+
+         !   print *, 'EEE--gg'
+         !   call util_CLprint ()  
 
         ! write(*,"(A,4f12.5)") '......yyy ',elemR(ietmp(1),er_Head), &
         ! faceR(iftmp(1),fr_Head_u), &
@@ -716,6 +737,9 @@ module face
 
         !% reset all the hydraulic jump interior faces
         call jump_compute
+
+          !  print *, 'EEE--hh'
+          !  call util_CLprint ()  
 
         ! write(*,"(A,4f12.5)") '......zzz ',elemR(ietmp(1),er_Head), &
         ! faceR(iftmp(1),fr_Head_u), &
