@@ -206,7 +206,7 @@ module update
         integer, pointer :: Npack, Npack2, thisCol_AC,  thisCol_ClosedElems, thisP(:), thisP2(:)
         real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:), QLateral(:)
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
-        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), Area(:)
+        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), w_uP(:), w_dP(:), Area(:)
         real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
         integer :: ii
         !%-----------------------------------------------------------------------------
@@ -225,6 +225,8 @@ module update
         w_dG      => elemR(:,er_InterpWeight_dG)
         w_uH      => elemR(:,er_InterpWeight_uH)
         w_dH      => elemR(:,er_InterpWeight_dH)
+        w_uP      => elemR(:,er_InterpWeight_uP)
+        w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
@@ -258,7 +260,7 @@ module update
 
         !% wavespeed at modified hydraulic depth (ell)
         wavespeed(thisP) = sqrt(grav * depth(thisP))
-        PCelerity(thisP) = zeroR !% initialize to zero
+        ! PCelerity(thisP) = zeroR !% initialize to zero
     
         !% modify wavespeed for surcharged AC cells
         if (whichTM .ne. ETM) then
@@ -267,17 +269,17 @@ module update
                 thisP2 => elemP(1:Npack2,thisCol_AC)
                 wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
             end if
-        else if (whichTM .eq. ETM) then
-            Npack2 => npack_elemP(thisCol_ClosedElems)
-            if (Npack2 > 0) then
-                thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
-                !% initialize preissmann slot celerity
-                PCelerity(thisP2) = zeroR
-                where (SlotVolume(thisP2) .gt. zeroR) 
-                    PCelerity(thisP2) = sqrt(grav * FullArea(thisP2)/SlotWidth(thisP2)) 
-                    ! PCelerity(thisP2) = sqrt(grav * Area(thisP2)/SlotWidth(thisP2))        
-                end where
-            end if
+        ! else if (whichTM .eq. ETM) then
+        !     Npack2 => npack_elemP(thisCol_ClosedElems)
+        !     if (Npack2 > 0) then
+        !         thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
+        !         !% initialize preissmann slot celerity
+        !         PCelerity(thisP2) = zeroR
+        !         where (SlotVolume(thisP2) .gt. zeroR) 
+        !             PCelerity(thisP2) = sqrt(grav * FullArea(thisP2)/SlotWidth(thisP2)) 
+        !             ! PCelerity(thisP2) = sqrt(grav * Area(thisP2)/SlotWidth(thisP2))        
+        !         end where
+        !     end if
         end if
 
 
@@ -327,6 +329,31 @@ module update
         !% but may be modified elsewhere
         w_uG(thisP) = w_uQ(thisP)
         w_dG(thisP) = w_dQ(thisP)
+
+        !% timascale interpolation for the preissmann number only depends on the preissmann celerity
+        w_uP(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) 
+        w_dP(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) 
+
+        !% apply limiters to timescales
+        where (w_uP(thisP) < zeroR)
+            w_uP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
+        where (w_uP(thisP) < setting%Limiter%InterpWeight%Minimum)
+            w_uP(thisP) = setting%Limiter%InterpWeight%Minimum
+        endwhere
+        where (w_uP(thisP) > setting%Limiter%InterpWeight%Maximum)
+            w_uP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
+
+        where (w_dP(thisP) < zeroR)
+            w_dP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
+        where (w_dP(thisP) < setting%Limiter%InterpWeight%Minimum)
+            w_dP(thisP) = setting%Limiter%InterpWeight%Minimum
+        endwhere
+        where (w_dP(thisP) > setting%Limiter%InterpWeight%Maximum)
+            w_dP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
 
         !% head uses length scale interpolation
         !% This shouldn't need limiters.

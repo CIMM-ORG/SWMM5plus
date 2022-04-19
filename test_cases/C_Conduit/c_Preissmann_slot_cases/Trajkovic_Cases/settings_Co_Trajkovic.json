@@ -59,7 +59,8 @@
             "isVelocityOut"             : true,
             "isVolumeOut"               : true,
             "isWaveSpeedOut"            : true,
-            "isPreissmannCelerityOut"   : true
+            "isPreissmannCelerityOut"   : true,
+            "isPreissmannNumberOut"     : true
         },
         "Report" : {
             "useSWMMinpYN" :false,
@@ -95,14 +96,14 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 2.0,
-        "PreissmannAlpha" : 1.0
+        "TargetPreissmannCelerity" : 20.0,
+        "PreissmannAlpha" : 2.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.6,
+        "CFL_hi_max" : 0.7,
         "CFL_target" : 0.5,
-        "CFL_lo_max" : 0.4,
+        "CFL_lo_max" : 0.3,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     },
@@ -118,7 +119,7 @@
             "SmallDepthMultiplier" : 3.0
         },
         "Head" : {
-            "ApplyYN" : false,
+            "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0
         }
