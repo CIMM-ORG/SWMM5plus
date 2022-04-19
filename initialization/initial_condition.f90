@@ -1312,7 +1312,9 @@ contains
         else
             elemYN(JMidx,eYN_canSurcharge)  = .false.
         end if
-
+        print*, elemYN(JMidx,eYN_canSurcharge), 'elemYN(JMidx,eYN_canSurcharge)'
+        print*, elemR(JMidx,er_FullDepth), 'elemR(JMidx,er_FullDepth)'
+        print*, node%R(thisJunctionNode,nr_SurchargeDepth), 'node%R(thisJunctionNode,nr_SurchargeDepth)'
         !%................................................................
         !% Junction Branches
         !%................................................................
@@ -1410,21 +1412,15 @@ contains
             case (rectangular, trapezoidal, triangular, rectangular_closed, circular)
                 !% copy all the geometry specific data from the adjacent element cell as well
                 elemR(JBidx,er_Area)                = elemR(Aidx,er_Area)[Ci]
-                elemR(JBidx,er_Area_N0)             = elemR(JBidx,er_Area)
-                elemR(JBidx,er_Area_N1)             = elemR(JBidx,er_Area)
                 elemR(JBidx,er_AreaBelowBreadthMax) = elemR(Aidx,er_AreaBelowBreadthMax)[Ci]
                 elemR(JBidx,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)[Ci]
                 elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
                 elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
                 elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
                 elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
-                elemR(JBidx,er_FullVolume)          = elemR(JBidx,er_FullArea)  * elemR(JBidx,er_Length)
                 elemR(JBidx,er_ZbreadthMax)         = elemR(Aidx,er_ZbreadthMax)[Ci]
                 elemR(JBidx,er_Zcrown)              = elemR(Aidx,er_Zcrown)[Ci]         
                 elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)[Ci]
-                elemR(JBidx,er_Volume)              = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
-                elemR(JBidx,er_Volume_N0)           = elemR(JBidx,er_Volume)
-                elemR(JBidx,er_Volume_N1)           = elemR(JBidx,er_Volume)
                 !% copy the entire row of the elemSGR array
                 elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
             case default
@@ -1434,102 +1430,6 @@ contains
                 call util_crashpoint (4482793)
                 return
             end select
-
-            ! ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
-            ! if (link%I(BranchIdx,li_link_type) == lPipe) then
-            !     elemYN(JBidx,eYN_canSurcharge)  = .true.
-            !     elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
-            ! else
-            !     elemYN(JBidx,eYN_canSurcharge)  = .false.
-            !     elemR(JBidx,er_FullDepth)   = max(link%R(BranchIdx,lr_BreadthScale),fourR)
-            ! end if
-            ! elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-
-
-            ! !% get the geometry data -- the branch takes on geometry of the upstream link
-            ! select case (JBgeometryType)
-
-            ! case (lRectangular,lRectangular_closed) !% brh20211219 the rect closed needed when orifice is adjacent
-            !     elemI(JBidx,ei_geometryType) = rectangular
-            !     elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
-            !     elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
-
-            !     !% store geometry specific data
-            !     elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
-            !     elemR(JBidx,er_FullArea)            = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth)
-            !     elemR(JBidx,er_ZbreadthMax)         = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom) 
-
-            ! case (lTrapezoidal)
-            !     !% brh20211217, reviewed
-            !     elemI(JBidx,ei_geometryType) = trapezoidal
-
-            !     !% store geometry specific data
-            !     elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
-            !     elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
-            !     elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
-
-            !     elemR(JBidx,er_ZBreadthMax) = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
-
-            !     elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) &
-            !                 + link%R(BranchIdx,lr_FullDepth)                             &
-            !                 * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)               &
-            !                     + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) 
-
-            !     elemR(JBidx,er_FullArea)    =  elemR(JBidx,er_FullDepth)                  &
-            !             * (   elemSGR(JBidx,esgr_Trapezoidal_Breadth)                     &
-            !                 + onehalfR * elemR(JBidx,er_FullDepth)                        &
-            !                     * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
-            !                         + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
-
-            !     elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
-            
-            ! case (lTriangular)
-
-            !     elemI(JBidx,ei_geometryType) = triangular
-
-            !     !% store geometry specific data
-            !     elemSGR(JBidx,esgr_Triangular_TopBreadth)  = link%R(BranchIdx,lr_BreadthScale)
-            !     elemR(JBidx,er_FullDepth)                  = link%R(BranchIdx,lr_FullDepth)
-            !     elemSGR(JBidx,esgr_Triangular_Slope)       = elemSGR(JBidx,esgr_Triangular_TopBreadth) / &
-            !                                                     (twoR * elemR(JBidx,er_FullDepth))
-            !     elemR(JBidx,er_ZBreadthMax)                = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-            !     elemR(JBidx,er_BreadthMax)                 = link%R(BranchIdx,lr_BreadthScale)
-            !     elemR(JBidx,er_FullArea)                   =  elemR(JBidx,er_FullDepth) * elemR(JBidx, er_FullDepth) * &
-            !                                                     elemSGR(JBidx,esgr_Triangular_Slope)
-            !     elemR(JBidx,er_AreaBelowBreadthMax)        = elemR(JBidx,er_FullArea)
-                            
-            ! case (lCircular)
-            !     elemI(JBidx,ei_geometryType) = circular
-
-            !     !% store geometry specific data
-            !     elemSGR(JBidx,esgr_Circular_Diameter) = link%R(BranchIdx,lr_FullDepth)
-            !     elemSGR(JBidx,esgr_Circular_Radius)   = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
-
-            !     elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom)
-
-            !     elemR(JBidx,er_BreadthMax)  = link%R(BranchIdx,lr_FullDepth)
-
-            !     elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
-
-            !     elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
-            ! case default
-
-            !     print *, 'In, ', subroutine_name
-            !     print *, 'CODE ERROR: geometry type unknown for # ', JbgeometryType
-            !     print *, 'which has key ',trim(reverseKey(JBgeometryType))
-            !     !stop 
-            !     call util_crashpoint(308974)
-            !     return
-
-            ! end select
-
-            !% get the flow data from links for junction branches
-            !% this flowrate will always be lagged in junction branches
-            !elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
-   
-
-            !% Manning's n
-            !elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
 
             !% set the velocity
             if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
@@ -1541,6 +1441,7 @@ contains
             !% Common geometry that do not depend on cross-section
             elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
             elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
+            elemR(JBidx,er_FullVolume)   = elemR(JBidx,er_FullArea)  * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
@@ -1563,32 +1464,39 @@ contains
             !%     mass conservation only, which means its volume change can be approximated
             !%     as if it is a rectangular box of Storage_Plane_Area x Depth
             elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
+
             do ii=1,max_branch_per_node
                 JBidx = JMidx + ii
                 if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+
                 BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
                 JBgeometryType => link%I(BranchIdx,li_geometry)
+
                 select case (JBgeometryType)
                 case (lRectangular,lRectangular_closed)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Rectangular_Breadth) )
+
                 case (lTrapezoidal)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                              +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                   * elemR(  JBidx,er_Length)                                  &
                                   * elemSGR(JBidx,esgr_Trapezoidal_Breadth) )
+
                 case (lTriangular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
+
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Circular_Diameter) )
+
                 case default
                     print *, 'In, ', subroutine_name
                     print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
