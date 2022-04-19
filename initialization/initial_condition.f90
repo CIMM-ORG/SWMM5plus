@@ -632,6 +632,8 @@ contains
                     elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                            elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
 
             case (lTrapezoidal)
@@ -669,6 +671,8 @@ contains
                                 elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
             
             case (lTriangular)
@@ -693,6 +697,8 @@ contains
                     elemR(:,er_FullArea)     = elemR(:,er_FullDepth) * elemR(:, er_FullDepth) * elemSGR(:,esgr_Triangular_Slope) 
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
 
             case default
@@ -755,9 +761,8 @@ contains
                 elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
-
-                elemR(:,er_ell_max) = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax)  
+                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax)  
             endwhere
             
         case (lCircular)
@@ -785,9 +790,8 @@ contains
                 elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
-
-                elemR(:,er_ell_max) = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
             end where
 
         case default
@@ -1719,6 +1723,8 @@ contains
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_uP) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
         !% H-diagnostic elements will have minimum interp weights for H and G
@@ -1732,6 +1738,8 @@ contains
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_uP) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
         ! !% brh 20220204 -- ccommenting this approach
@@ -1993,7 +2001,6 @@ contains
         
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
-        ! elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = setting%PreissmannSlot%TargetPreissmannCelerity / &
                                                             (setting%PreissmannSlot%PreissmannAlpha * sqrt(setting%Constant%gravity * &
                                                             elemR(1:size(elemR,1)-1,er_ell_max)))

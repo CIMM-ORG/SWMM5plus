@@ -670,7 +670,7 @@ module face
         call face_interp_interior_set &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
         call face_interp_interior_set &
-            (fPreissmenSet, ePreissmenSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
+            (fPreissmenSet, ePreissmenSet, er_InterpWeight_dP, er_InterpWeight_uP, facePackCol, Npack)
 
         ! write(*,"(A,4f12.5)") '......qqq ',elemR(ietmp(1),er_Head), &
         !     faceR(iftmp(1),fr_Head_u), &
@@ -800,7 +800,7 @@ module face
         call face_interp_shared_set &
             (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
         call face_interp_shared_set &
-            (fPreissmenSet, eGhostPreissmenSet, ebgr_InterpWeight_dH, ebgr_InterpWeight_uH, facePackCol, Npack)
+            (fPreissmenSet, eGhostPreissmenSet, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -1201,7 +1201,7 @@ module face
         !% transfers local data from elemR to elemB%R
         !%-------------------------------------------------------------------
         !% Declarations
-            integer             :: ii, eColumns(12) 
+            integer             :: ii, eColumns(14) 
             integer, intent(in) :: facePackCol, Npack
             integer, pointer    :: thisP, eUp, eDn
             logical, pointer    :: isGhostUp, isGhostDn
@@ -1215,7 +1215,7 @@ module face
         !% HACK: this eset has to be exactly the same to work
         eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate, er_Preissmann_Number,  &
                     er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH, er_InterpWeight_uH, &
-                    er_InterpWeight_dQ, er_InterpWeight_uQ] 
+                    er_InterpWeight_dQ, er_InterpWeight_uQ, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces

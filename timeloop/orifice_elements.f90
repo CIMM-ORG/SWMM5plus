@@ -88,7 +88,7 @@ module orifice_elements
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Orifice_NominalDownstreamHead)
         !% output
-        EffectiveHeadDelta         => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
+        EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
         select case (SpecificOrificeType)
         case (bottom_orifice)

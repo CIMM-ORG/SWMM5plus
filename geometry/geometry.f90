@@ -942,9 +942,9 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
-        integer, pointer    :: thisP(:), Npack, SlotMethod
+        integer, pointer    :: thisP(:), Npack
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:), ell(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:)
         real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
         real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:)
 
@@ -956,12 +956,10 @@ module geometry
 
         Npack      => npack_elemP(thisColP)
         area       => elemR(:,er_Area)
-        areaN0     => elemR(:,er_Area_N0)
         volume     => elemR(:,er_Volume)
         volumeN0   => elemR(:,er_Volume_N0)
         Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
-        ell        => elemR(:,er_ell)
         ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
         fullvolume => elemR(:,er_FullVolume)
@@ -974,18 +972,16 @@ module geometry
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
 
-        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-            
+
             where (SlotVolume(thisP) .gt. zeroR) 
                 volume(thisP) = volume(thisP)  + SlotVolume(thisP)
                 area(thisP)   = area(thisP)    + SlotArea(thisP)
                 depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
                 head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                ! ell(thisP)    = ellMax(thisP)  + SlotDepth(thisP)
                 Overflow(thisP) = zeroR
             end where 
         end if

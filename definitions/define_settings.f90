@@ -150,6 +150,7 @@ module define_settings
         logical :: isVolumeConsOut          = .true.
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
+        logical :: isPreissmannNumberOut    = .false.
     end type DataOutType
 
     !% setting%Limiter%ArraySize
@@ -1336,6 +1337,11 @@ contains
         call json%get('Output.DataOut.isPreissmannCelerityOut', logical_value, found)
         if (found) setting%Output%DataOut%isPreissmannCelerityOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannCelerityOut not found'
+
+        !%                       Dataout.isPreissmannNumberOut
+        call json%get('Output.DataOut.isPreissmannNumberOut', logical_value, found)
+        if (found) setting%Output%DataOut%isPreissmannNumberOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannNumberOut not found'
              
         !% --- Report settings
         !%                       Report.useSWMMinpYN

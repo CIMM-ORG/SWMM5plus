@@ -349,6 +349,8 @@ module define_indexes
         enumerator :: er_InterpWeight_dH            !% interpolation Weight, downstream for head
         enumerator :: er_InterpWeight_uQ            !% interpolation Weight, upstream, for flowrate
         enumerator :: er_InterpWeight_dQ            !% interpolation Weight, downstream, for flowrate
+        enumerator :: er_InterpWeight_uP            !% interpolation Weight, upstream, for Preissmann number
+        enumerator :: er_InterpWeight_dP            !% interpolation Weight, downstream, for Preissmann number
         enumerator :: er_Ksource                    !% k source term for AC solver
         enumerator :: er_Length                     !% length of element (static)
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
@@ -782,6 +784,8 @@ module define_indexes
         enumerator ::  ebgr_InterpWeight_uH           !% interpolation Weight, upstream for head boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dQ           !% interpolation Weight, downstream, for flowrate boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uQ           !% interpolation Weight, upstream, for flowrate boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_dP           !% interpolation Weight, downstream, for preissman number boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_uP           !% interpolation Weight, upstream, for preissman number boundary/ghost element
         enumerator ::  ebgr_lastplusone               !% must be last enum item boundary/ghost element
     end enum
     !% note, this must be changed to whatever the last enum element is!
