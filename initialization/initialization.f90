@@ -191,7 +191,7 @@ contains
         call network_define_toplevel ()
         call util_crashstop(329873)
 
-        !% --- iinitialize boundary and ghost elem arrays for inter image data transfer
+        !% --- initialize boundary and ghost elem arrays for inter image data transfer
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293378)
 
@@ -247,9 +247,13 @@ contains
         else 
             !% be silent    
         end if    
+        
         !% --- initial conditions all are setup here
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
+
+        !% --- allocate other temporary arrays (initialized to null)
+        call util_allocate_temporary_arrays()
 
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    

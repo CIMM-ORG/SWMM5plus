@@ -8,6 +8,7 @@ module update
     use adjust
     use utility_profiler
     use utility_crash
+    use utility, only: util_CLprint
 
     implicit none
 
@@ -49,6 +50,9 @@ module update
         !% update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
+        ! print *, 'CCC -- 002'
+        ! call util_CLprint ()
+
         !% adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
         call util_crashstop(21987)
@@ -75,16 +79,31 @@ module update
         !% The JB flowrate is not updated until after face interpolation
         call update_CC_element_flowrate (thisCol_all)
 
+        ! print *, 'CCC -- 003'
+        ! call util_CLprint ()
+
         !% compute element Froude numbers for CC, JM
         call update_Froude_number_element (thisCol_all)
+
+        ! print *, 'CCC -- 004'
+        ! call util_CLprint ()
 
         !% compute element face interpolation weights on CC, JM
         call update_CCtm_interpweights(thisCol_all, whichTM)
 
+        ! print *, 'CCC -- 005'
+        ! call util_CLprint ()
+
         call update_JB_interpweights (thisCol_JM)
+
+        ! print *, 'CCC -- 006'
+        ! call util_CLprint ()
 
         !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (thisCol_JM) 
+
+        ! print *, 'CCC -- 007'
+        ! call util_CLprint ()
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -261,6 +280,10 @@ module update
         !% wavespeed at modified hydraulic depth (ell)
         wavespeed(thisP) = sqrt(grav * depth(thisP))
         ! PCelerity(thisP) = zeroR !% initialize to zero
+
+        ! if (setting%Time%Now/3600.0 > 388.0) then
+        !     print *, 'in ',trim(subroutine_name), wavespeed(ietU1(2))
+        ! end if
     
         !% modify wavespeed for surcharged AC cells
         if (whichTM .ne. ETM) then
@@ -417,6 +440,12 @@ module update
             w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
             w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
             
+
+            ! if (setting%Time%Now/3600.0 > 388.0) then
+            !     write(*,"(A,10f16.9)") 'interp before', w_dQ(ietU1(1)), w_uQ(ietU1(2))
+            !     print *, 'depth, wavespeed JB ',depth(ietU1(2)),wavespeed(ietU1(2))
+            ! end if
+
             !% apply limiters to timescales
             where (w_uQ(thisP+ii) < zeroR)
                 w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
@@ -437,6 +466,10 @@ module update
             where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
                 w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
             endwhere
+
+            ! if (setting%Time%Now/3600.0 > 388.0) then
+            !     write(*,"(A,10f16.9)") 'interp after ', w_dQ(ietU1(1)), w_uQ(ietU1(2))
+            ! end if
 
             !% set the geometry interp the same as flow interp
             w_uG(thisP+ii) = w_uQ(thisP+ii)

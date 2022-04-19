@@ -372,6 +372,9 @@ module define_indexes
         enumerator :: er_SourceMomentum             !% source term for momentum equation
         enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp02                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp03                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp04                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Topwidth                   !% topwidth of flow at free surface
         enumerator :: er_Velocity                   !% velocity (latest)
         enumerator :: er_Velocity_N0                !% velocity time N
