@@ -1316,26 +1316,22 @@ module lowlevel_rk2
             SlotWidth(thisP)  = zeroR
             PCelerity(thisP)  = zeroR
 
+            !% find incipient surcharge  and non-surcharged elements reset the preissmann number
             where ((SlotArea(thisP) .le. zeroR) .or. (AreaN0(thisP) .le. fullArea(thisP)))
                 PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
             end where
 
-            !% find incipient surcharge point and reset the preissmann number
-            ! where ((SlotArea(thisP) .gt. zeroR) .and. (AreaN0(thisP) .le. fullArea(thisP)))
-            ! ! where (AreaN0(thisP) .le. fullArea(thisP))
-            !     PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
-            ! end where
-
+            !% Slot calculations
             where (SlotArea(thisP) .gt. zeroR)
                 !% use the preissmann number from the faces
                 PNumber(thisP) =  onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP)))
-                !% HACK: update the preissmann celerity here
+                !% update the preissmann celerity here
                 PCelerity(thisP) = TargetPCelerity / PNumber(thisP)
                 !% find the water height at the slot
                 SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
                 !% find the width of the slot
                 SlotWidth(thisP)  = SlotArea(thisP) / SlotDepth(thisP) 
-                !% get a new preissmann number for the next time step
+                !% get a new increased preissmann number for the next time step
                 PNumber(thisP) = (PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP)
             end where
 
