@@ -1247,7 +1247,7 @@ contains
         integer, intent(in) :: thisJunctionNode
 
         integer              :: ii, jj, JMidx, JBidx, Aidx, Ci
-        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, Fidx
+        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, NumRows, Fidx
         integer              :: nbranches
         real(8), allocatable :: integrated_volume(:)
 
@@ -1308,13 +1308,12 @@ contains
         !% find if the node can surcharge
         if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
             elemYN(JMidx,eYN_canSurcharge)  = .true.
-            elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_SurchargeDepth)
+            elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeDepth)
+            ! elemI(JMidx,ei_geometryType)    = rectangular_closed
         else
             elemYN(JMidx,eYN_canSurcharge)  = .false.
         end if
-        print*, elemYN(JMidx,eYN_canSurcharge), 'elemYN(JMidx,eYN_canSurcharge)'
-        print*, elemR(JMidx,er_FullDepth), 'elemR(JMidx,er_FullDepth)'
-        print*, node%R(thisJunctionNode,nr_SurchargeDepth), 'node%R(thisJunctionNode,nr_SurchargeDepth)'
+
         !%................................................................
         !% Junction Branches
         !%................................................................
@@ -1512,24 +1511,26 @@ contains
                                                     /   elemR(JMidx,er_Length)
 
             !% Volume depends on plane area and depth
-            elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
-
-            elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-            elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
+            elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_FullVolume) = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_FullDepth)
 
         case (FunctionalStorage)
-            elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)          &
+            elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)      &
                 + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
                     * elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
-
-            elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-            elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
-
+            elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_FullVolume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_FullDepth)  &
+                + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
+                    * elemR(JMidx,er_FullDepth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
             !% create a storage curve
             call storage_create_curve (JMidx)
 
         case (TabularStorage)
             CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            NumRows => curve(CurveID)%NumRows 
             Curve(CurveID)%ElemIdx = JMidx
             !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
             !% to get to integrate the area vs depth curve
@@ -1538,6 +1539,9 @@ contains
             !% now interpolate from the cure to get the volume
             call storage_interpolate_volume_from_depth_singular (JMidx)
 
+            elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_FullVolume) = Curve(CurveID)%ValueArray(NumRows,curve_storage_volume)
         case default
             !% IMPORTANT -- if any other new type is defined, make sure that
             !% subroutine geo_depth_from_volume is updated
