@@ -615,16 +615,27 @@ contains
                 !% --- classify by number of links connected
                 select case (total_n_links)
                 case (oneI)
-                    !write(*,*) '... is 1 junction is an upstream BC
+                    ! write(*,*) '... is 1 junction is an upstream BC'
                     node%I(ii, ni_node_type) = nJ1
                 case (twoI)
-                    !write(*,*) '... is 2 junction type'        
+                    ! write(*,*) '... is 2 junction type'        
                     node%I(ii, ni_node_type) = nJ2
                 case default 
-                    !write(*,*) '... is 3+ junction type'
+                    ! write(*,*) '... is 3+ junction type'
                     node%I(ii, ni_node_type) = nJm
                 end select
             end if 
+
+            !% exception: nJ2 strictly has one upstream and one downstream link
+            !% other cases where a nJ2 has only two upstream or two downstream 
+            !% links will be considered as a nJm
+            if ((node%I(ii, ni_node_type) == nJ2) .and. &
+                ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
+                 (node%I(ii,ni_N_link_d) > oneI))) then
+                    ! write(*,*) '... switching to a 2 links nJm junction type'
+                    node%I(ii, ni_node_type) = nJm
+            end if
+
             !write(*,*) 'call api_nodef_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
             !write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
