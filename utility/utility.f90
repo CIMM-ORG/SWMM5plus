@@ -322,12 +322,12 @@ module utility
                     print *, 'is zero =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
                     print *,  'net cons ',eCons(thisP(ii))
                     do kk = 1,max_branch_per_node,2
-                        print *, 'branch Q',kk, fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8) ,  &
-                                                fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
+                        print *, 'branch Q',kk,   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)   &
+                                           ,kk+1, fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
                     end do
                     do kk = 1,max_branch_per_node,2
-                        print *, 'branch VolOver',thisP(ii)+kk,VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8) ,  &
-                                                     VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
+                        print *, 'branch VolOver',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)   &
+                                                 ,thisP(ii)+kk+1, VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
                     end do
                     print *, ' vol ', VolNew(thisP(ii)), VolOld(thisP(ii)), VolSlot(thisP(ii))
                     print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii))) + VolSlot(thisP(ii))
