@@ -31,3 +31,4 @@ tests/*
 !tests/test*
 .vscode
 swmm5_output
+test_cases/C_Conduit/c_Preissmann_slot_cases/Malekpour_Cases/Malekpour_analytical_test_case.inp
