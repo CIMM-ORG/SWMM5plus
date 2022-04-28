@@ -47,6 +47,10 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
         character(64) :: subroutine_name = 'BIPquick_subroutine'
 
+        integer, allocatable :: packed_links_bypass(:), packed_nodes_bypass(:)
+        integer, allocatable :: totalweight_nodes_pack(:)
+
+
         integer       :: mp, ii, jj, image
         real(8)       :: partition_threshold, max_weight, phantom_node_start
         logical       :: ideal_exists = .false.
@@ -95,27 +99,15 @@ contains
             !print *, ' '
             !print *, 'this mp = ',mp, '; this image = ',this_image()
 
-            !% Last sweep bypass
+            !% Packed Last Sweep Bypass
             if ( mp == num_images() ) then
-                do ii = 1, size(node%I, 1)
-                    if ( node%I(ii, ni_idx) == nullValueI ) then
-                        cycle
-                    endif
-                    if ( node%I(ii, ni_P_image) == nullValueI ) then
-                        node%I(ii, ni_P_image) = mp
-                    endif
-                enddo
-
-                do ii = 1, size(link%I, 1)
-                    if ( link%I(ii, li_idx) == nullValueI ) then
-                        cycle
-                    endif
-                    if ( link%I(ii, li_P_image) == nullValueI ) then
-                        link%I(ii, li_P_image) = mp
-                    endif
-                enddo
+                print*, "Last Sweep Bypass"
+                packed_nodes_bypass = pack(node%I(:,ni_idx), (node%I(:, ni_P_image) == nullValueI ) .and. node%I(:, ni_idx) /= nullValueI)
+                node%I(packed_nodes_bypass, ni_P_image) = mp
+                packed_links_bypass = pack(link%I(:,li_idx), (link%I(:, li_P_image) == nullValueI ) .and. link%I(:, li_idx) /= nullValueI)
+                link%I(packed_links_bypass, li_P_image) = mp
                 exit
-            endif
+            end if
 
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
@@ -283,18 +275,8 @@ contains
             if (setting%Debug%File%BIPquick) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-            counter = 1
-            do ii = 1, size(node%I, oneI)
-                if ( node%I(ii, ni_node_type) == nBCdn ) then
-                    ! print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_node_type)
-                    B_roots(counter) = node%I(ii, ni_idx)
-                    counter = counter + 1
-                endif
-            enddo
-
-            ! where ( node%I(:, ni_node_type) == nBCdn )
-            !     B_roots(:) = node%I(:, ni_idx)
-            ! endwhere
+            !% B_root = indices where ni_node_type is downstream boudary condition
+            B_roots = pack(node%I(:,ni_idx), (node%I(:, ni_node_type) == nBCdn))
 
             if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -404,34 +386,25 @@ contains
         !----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'calc_directweight'
 
+        integer, allocatable :: dn_link_pack(:)
+
         real(8)  :: lr_target
         integer :: rootnode_index, links_row, upstream_links
-        integer :: ii, jj
+        integer :: ii, jj, links_iter
 
         !--------------------------------------------------------------------------
         if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% Calculates directweight for each node
-        do ii = 1, size(node%I,1)
-
-            if ( node%I(ii, ni_idx) == nullValueI ) then
-                cycle
-            end if
-
-            !% Need a loop bc multiple links might have a given node as its downstream endpoint
-            do jj=1,size(link%I(:, li_Mnode_d))
-
-                !% If the link has the current node as a downstream endpoint
-                if (link%I(jj, li_Mnode_d) == node%I(ii, ni_idx)) then
-
-                    !% The directweight for that node is the running total of link weights
-                    B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
+            !% Iterate through the existing links, assign link_weight to the downstream node
+            links_iter = size(link%I,1) - count(link%I(:, li_idx) == nullValueI)
+            do jj=1, links_iter
+                ii = link%I(jj, li_Mnode_d)
+                B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
                     + calc_link_weights(link%I(jj, li_idx))
-                end if
             end do
-        end do
+
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -542,13 +515,8 @@ contains
             end if
         end do
 
-        !% The max_weight is the largest totalweight value for this partition
-        ! max_weight = (maxval(B_nodeR(:, totalweight)))
-
         !% The max_weight is the sum of the weights at the downstream BC
-        do ii = 1, size(B_roots,1)
-            max_weight = max_weight + B_nodeR(B_roots(ii), totalweight)
-        enddo
+        max_weight = sum(B_nodeR(B_roots, totalweight))
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -694,6 +662,7 @@ contains
 
         character(64) :: subroutine_name = 'calc_effective_root'
         integer :: effective_root
+        integer, allocatable :: unassigned_nodes_pack(:)
 
         real(8), intent(in) :: max_weight, partition_threshold
         logical, intent(in out) :: ideal_exists
@@ -704,51 +673,66 @@ contains
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% The nearest overestimate is set above the max_weight as a buffer
-        nearest_overestimate = max_weight*1.1
+        ! !% The nearest overestimate is set above the max_weight as a buffer
+        ! nearest_overestimate = max_weight*1.1
 
-        !% The effective_root is initialized as a nullValueI
-        effective_root = nullValueI
+        ! !% The effective_root is initialized as a nullValueI
+        ! effective_root = nullValueI
 
-        !% Searching through each node
-        do ii=1, size(node%I,1)
+        ! !% Searching through each node
+        ! do ii=1, size(node%I,1)
 
-            !% If the node has already been partitioned then go to the next one
-            if (partitioned_nodes(ii) .eqv. .true. ) then
-                cycle
-            end if
+        !     !% If the node has already been partitioned then go to the next one
+        !     if (partitioned_nodes(ii) .eqv. .true. ) then
+        !         cycle
+        !     end if
 
-            !% If the node's totalweight matches the partition_threshold to within a tolerance
-            if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
-            < precision_matching_tolerance )  then
+        !     !% If the node's totalweight matches the partition_threshold to within a tolerance
+        !     if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
+        !     < precision_matching_tolerance )  then
 
-                !% Then the effective root is set and the ideal (Case 1) boolean is set to true
-                effective_root = node%I(ii, ni_idx)
-                ideal_exists = .true.
-                exit
-            end if
+        !         !% Then the effective root is set and the ideal (Case 1) boolean is set to true
+        !         effective_root = node%I(ii, ni_idx)
+        !         ideal_exists = .true.
+        !         exit
+        !     end if
 
-            !% Alternatively, if the totalweight is greater than the partition threshold and
-            !% less than the nearest overestimate
-            if (&
-            (B_nodeR(ii, totalweight) > partition_threshold) .and. &
-            (B_nodeR(ii, totalweight) < nearest_overestimate) &
-            ) then
+        !     !% Alternatively, if the totalweight is greater than the partition threshold and
+        !     !% less than the nearest overestimate
+        !     if (&
+        !     (B_nodeR(ii, totalweight) > partition_threshold) .and. &
+        !     (B_nodeR(ii, totalweight) < nearest_overestimate) &
+        !     ) then
 
-                !% Then update the nearest overestimate and set the effective root
-                nearest_overestimate = B_nodeR(ii, totalweight)
-                effective_root = node%I(ii, ni_idx)
-            end if
+        !         !% Then update the nearest overestimate and set the effective root
+        !         nearest_overestimate = B_nodeR(ii, totalweight)
+        !         effective_root = node%I(ii, ni_idx)
+        !     end if
 
-            !% Need to alter this logic for disjoint cases
+        !     !% Need to alter this logic for disjoint cases
+        ! end do
 
-        end do
 
-        !% If the effective root is still null, that means it must be a disjoint system
-        if ( effective_root == nullValueI ) then
+
+        !% Create a packed array of the nodes that have NOT been assigned
+        unassigned_nodes_pack = PACK(node%I(:, ni_idx), partitioned_nodes(:) .eqv. .false.)
+        
+        !% Assign effective root to the nearest overestimate of the partition threshold (masked by unassigned nodes)
+        effective_root = minloc(B_nodeR(unassigned_nodes_pack, totalweight), 1, B_nodeR(unassigned_nodes_pack, totalweight) >= partition_threshold)
+
+        !% If the effective_root is 1 it LIKELY means that no value was found.  No value could be found only for disjoint systems. 
+        if ( ( effective_root == oneI ) .and. ( B_nodeR(effective_root, totalweight) < partition_threshold ) ) then
             effective_root = maxloc(B_nodeR(:, totalweight), 1)
             print*, "The disjoint effective_root is", effective_root, node%Names(effective_root)%str
-        endif
+            stop
+        end if
+
+        !% Checks if the effective root's totalweight is within the tolerance of the partition threshold
+        if ( abs ((B_nodeR(effective_root, totalweight) - partition_threshold)/partition_threshold) &
+        < precision_matching_tolerance )  then
+            !% Then the effective root is set and the ideal (Case 1) boolean is set to true
+            ideal_exists = .true.
+        end if
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
