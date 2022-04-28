@@ -136,7 +136,7 @@ contains
             initialization_time = real(setting%Time%WallClock%InitializationEnd &
                                      - setting%Time%WallClock%Start,kind=8)
             initialization_time = initialization_time / real(setting%Time%WallClock%CountRate,kind=8)
-            call util_datetime_display_time (initialization_time, initialization_units)          
+            call util_datetime_display_time (initialization_time, initialization_units) 
             
             !% --- time spent in the final output
             lastoutput_time = real(setting%Time%WallClock%End &
