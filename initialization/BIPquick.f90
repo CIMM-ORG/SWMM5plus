@@ -60,20 +60,6 @@ contains
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !if (setting%Profile%File%BIPquick) print*, "BIPquick Profiler is on"
-
-        !if (setting%Profile%File%BIPquick) call util_tic(timer, 2)
-
-        !% HACK -- this bypass should be in init_partitioning, and the code should not reach here
-        !% if there is only one image.
-        !% One processor bypass for BIPquick
-        ! if ( num_images() == 1 ) then
-        !     node%I(:, ni_P_image) = oneI
-        !     node%I(:, ni_P_is_boundary) = zeroI
-        !     link%I(:, li_P_image) = oneI
-        !     print*, "...Using one processor, bypassing partitioning"
-        !     return
-        ! end if
 
         call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
