@@ -10,6 +10,7 @@ module partitioning
     use BIPquick
     use utility_deallocate
     use utility_crash
+    use utility_profiler
 
     implicit none
 
@@ -133,6 +134,8 @@ subroutine partitioning_toplevel()
     N_link = count(link%I(:,li_idx) /= nullvalueI)
 
     call util_deallocate_partitioning_arrays()
+
+    call init_timer_stop()
 
 end subroutine partitioning_toplevel
 !
@@ -709,6 +712,20 @@ function init_partitioning_metric_connectivity() result(connectivity)
     !% The sum of the ni_is_boundary column is the connectivity
     connectivity = sum(node%I(:, ni_P_is_boundary))
 end function init_partitioning_metric_connectivity
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine init_timer_stop ()
+
+    integer(kind=8) :: crate, cmax, cval
+    
+    if (this_image() == 1) then
+        call system_clock(count=cval,count_rate=crate,count_max=cmax)
+        setting%Time%WallClock%PartitionEnd = cval
+    end if
+
+end subroutine init_timer_stop
 !
 !==========================================================================
 !   End module

@@ -16,7 +16,7 @@ module BIPquick
     use utility
     use utility_crash, only: util_crashpoint
 
-    !use utility_profiler
+    ! use utility_profiler
     !use utility_prof_jobcount
     implicit none
 
@@ -55,12 +55,15 @@ contains
         integer       :: phantom_node_idx, phantom_link_idx
         integer       :: connectivity
         ! -----------------------------------------------------------------------------------------------------------------
+        !% Preliminaries
         if (this_image() .ne. 1) return
         if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-
+        ! if (setting%Profile%useYN) call util_profiler_start (pfc_init_BIPquick)
+        ! ------------------------------------------------------------------------------------------------------------------
+        !% Main
         call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
         if ((this_image() == 1) .and. (setting%Output%Verbose) ) &
@@ -91,35 +94,6 @@ contains
 
             !print *, ' '
             !print *, 'this mp = ',mp, '; this image = ',this_image()
-
-            ! if ( mp == 6 ) then
-
-            !     print*, "Node Partitioning"
-            !     print*, new_line("")
-            !     do ii = 1, size(node%I, 1)
-            !         if ( ii <= N_node ) then
-            !             print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
-            !         else
-            !             print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
-            !         endif
-            !     end do
-
-            !     print *, "Link Partitioning"
-            !     print *, new_line("")
-            !     do ii = 1, size(link%I, 1)
-            !         if ( ii <= N_link ) then
-            !             print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
-            !                 link%I(ii, li_Mnode_u:li_Mnode_d)
-            !         else
-            !             print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
-            !                 link%I(ii, li_Mnode_u:li_Mnode_d)
-            !         endif
-
-            !     end do
-
-            !     stop
-            ! endif
-
 
             !% Last sweep bypass
             if ( mp == num_images() ) then
@@ -253,10 +227,8 @@ contains
         !if (this_image() == 1) print *, 'calling connectivity_metric'
         connectivity = connectivity_metric()
 
-        ! if (setting%Profile%File%BIPquick) then
-        !     call util_toc(timer, 2)
-        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(2))
-        ! end if
+        ! ---------------------------------------------------------------------------------------------------------------
+        !% Closing
 
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
