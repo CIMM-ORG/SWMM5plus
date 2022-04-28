@@ -38,7 +38,7 @@
         }
     },  
     "Partitioning" : {
-        "PartitioningMethod" : "random"
+        "PartitioningMethod" : "bquick"
     },  
     "Output" : {
         "Verbose" : true,
