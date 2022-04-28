@@ -192,12 +192,7 @@ contains
         call network_define_toplevel ()
         call util_crashstop(329873)
 
-<<<<<<< HEAD
-        !% --- iinitialize boundary and ghost elem arrays for inter image data transfer
-        print*, "boundary ghost elem array"
-=======
         !% --- initialize boundary and ghost elem arrays for inter image data transfer
->>>>>>> 8ee39c1314c25eacc97dc0941c3b8a17eea8b2cf
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293378)
 
