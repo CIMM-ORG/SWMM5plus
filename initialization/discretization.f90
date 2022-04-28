@@ -125,6 +125,18 @@ contains
 
         end if 
 
+        ! !% HARD CODED for trajkovic case A_nx40
+        ! link%I(1, li_N_element) = 6
+        ! link%I(2, li_N_element) = 40
+        ! link%I(3, li_N_element) = 6
+        ! link%I(4, li_N_element) = 20
+
+        !% HARD CODED for trajkovic case A_nx80
+        ! link%I(1, li_N_element) = 12
+        ! link%I(2, li_N_element) = 80
+        ! link%I(3, li_N_element) = 12
+        ! link%I(4, li_N_element) = 40
+
         if (setting%Debug%File%discretization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

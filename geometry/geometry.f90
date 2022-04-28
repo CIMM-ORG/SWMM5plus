@@ -12,6 +12,7 @@ module geometry
     use adjust
     use utility_profiler
     use utility_crash
+    use utility, only: util_CLprint
 
 
     implicit none
@@ -99,20 +100,40 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
+            ! print *, 'CCC -- 002- aaa',elemR(48,er_Volume)
+            ! call util_CLprint ()    
+
         !% assign all geometry for surcharged elements CC, JM (and JB?)
         call geo_surcharged (thisColP_surcharged)
+
+        ! print *, 'CCC -- 002- bbb',elemR(48,er_Volume)
+        ! call util_CLprint () 
 
         !% reset all zero or near-zero volumes in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged)
 
+        ! print *, 'CCC -- 002- ccc',elemR(48,er_Volume)
+        ! call util_CLprint () 
+
         !% compute the depth on all non-surcharged elements of CC and JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
+
+        ! print *, 'CCC -- 002- ddd',elemR(48,er_Volume)
+        ! call util_CLprint () 
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged)
 
+        ! print *, 'CCC -- 002- eee',elemR(48,er_Volume)
+        ! call util_CLprint () 
+
         !% compute the head on all non-surcharged elements of CC and JM
         call geo_head_from_depth (thisColP_NonSurcharged)
+
+        ! print *, 'CCC -- 002- fff',elemR(49,er_Volume)
+        ! call util_CLprint () 
+
+        ! print *, 'in ',trim(subroutine_name),elemR(49,er_VolumeOverFlow), elemR(49,er_Volume)
 
         !% limit volume for incipient surcharge. This is done after depth is computed
         !% so that the "depth" algorithm can include depths greater than fulldepth
@@ -120,11 +141,19 @@ module geometry
         !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
+        ! print *, 'CCC -- 002- ggg'
+        ! call util_CLprint () 
+
+        ! print *, 'in ',trim(subroutine_name),elemR(48,er_VolumeOverFlow)
+
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
         !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
+
+        ! print *, 'CCC -- 002- hhh'
+        ! call util_CLprint () 
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
@@ -132,47 +161,78 @@ module geometry
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
+        ! print *, 'CCC -- 002- iii'
+        ! call util_CLprint () 
+
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
 
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
+        ! print *, 'CCC -- 002- jjj'
+        ! call util_CLprint () 
+
         !% reset all zero or near-zero areas in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged)
 
+        ! print *, 'CCC -- 002- kkk'
+        ! call util_CLprint () 
+
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+
+        ! print *, 'CCC -- 002- lll'
+        ! call util_CLprint () 
 
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
         call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged)
 
+        ! print *, 'CCC -- 002- mmm'
+        ! call util_CLprint () 
+
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+
+        ! print *, 'CCC -- 002- nnn'
+        ! call util_CLprint () 
 
         !% compute hyddepth
         call geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
 
+        ! print *, 'CCC -- 002- ooo'
+        ! call util_CLprint () 
+
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
+
+
+        ! print *, 'CCC -- 002- qqq'
+        ! call util_CLprint () 
+
+        !% the modified hydraulic depth "ell" is used for AC computations and
+        !% for Froude number computations on all elements, whether ETM or AC.
+        call geo_ell (thisColP_all)
 
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
 
-        !% the modified hydraulic depth "ell" is used for AC computations and
-        !% for Froude number computations on all elements, whether ETM or AC.
-        call geo_ell (thisColP_all)
-
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
+
+        ! print *, 'CCC -- 002- sss'
+        ! call util_CLprint () 
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
+
+        ! print *, 'CCC -- 002- ttt'
+        ! call util_CLprint () 
 
         call util_crashstop(322983)
 
@@ -216,7 +276,7 @@ module geometry
             real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
-            real(8), pointer :: zCrown(:), fullarea(:), fulldepth(:), fullperimeter(:)
+            real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
             real(8), pointer :: fullhyddepth(:)
             real(8), pointer :: grav
             integer :: tB, ii, kk
@@ -250,7 +310,7 @@ module geometry
             volume        => elemR(:,er_Volume)
             zBtm          => elemR(:,er_Zbottom)
             zCrown        => elemR(:,er_Zcrown)
-            fullarea      => elemR(:,er_FullArea)
+            fullArea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_FullDepth)
             fullhyddepth  => elemR(:,er_FullHydDepth)
             fullperimeter => elemR(:,er_FullPerimeter)
@@ -296,17 +356,30 @@ module geometry
                             
                             !% compute provisional depth
                             depth(tB) = head(tB) - zBtm(tB)
+
+                            !if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                            !    print *, 'depth, head, zbtm',depth(ietU1(2)), fulldepth(ietU1(2)), head(ietU1(2)),zBtm(ietU1(2))
+                            !end if
+                            !print *, 'in JB AAA ',depth(48), fulldepth(48), setting%ZeroValue%Depth
                             
                             if (depth(tB) .ge. fulldepth(tB)) then
+                                ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                !     print *, 'surcharge'
+                                !     print *, fulldepth(ietU1(2)), fullarea(ietU1(2)), fullhyddepth(ietU1(2))
+                                !     print *, fullperimeter(ietU1(2))
+                                ! end if
                                 !% surcharged or incipient surcharged
                                 depth(tB)     = fulldepth(tB)
-                                area(tB)      = fullarea(tB)
+                                area(tB)      = fullArea(tB)
                                 hyddepth(tB)  = fullhyddepth(tB)
                                 perimeter(tB) = fullperimeter(tB)
                                 topwidth(tB)  = setting%ZeroValue%Topwidth
                                 hydRadius(tB) = fulldepth(tB) / fullperimeter(tB)
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                             elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
+                                ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                !     print *, 'zero'
+                                ! end if
                                 !% negligible depth is treated with ZeroValues
                                 depth(tB)     = setting%ZeroValue%Depth
                                 area(tB)      = setting%ZeroValue%Area
@@ -328,6 +401,9 @@ module geometry
                                 dHdA(tB)      = oneR / topwidth(tB)
                                 ! dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
+                                ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                !     print *, 'negative'
+                                ! end if
                                 !% negative depth is treated as exactly zero
                                 depth(tB) = zeroR
                                 area(tB)  = zeroR
@@ -338,9 +414,18 @@ module geometry
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                                 !dHdA(tB)      = setting%ZeroValue%Topwidth
                             else
+                                !print *, 'Im here , not zerovalue '
+                                ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                !     print *, 'other'
+                                ! end if
                                 !% not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
-                                case (rectangular)
+                                case (rectangular,rectangular_closed)
+                                    ! print *, 'im rectangular',tB
+                                    ! print *, elemR(48,er_Depth), elemSGR(48,esgr_Rectangular_Breadth)
+                                    ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                    !     print *, 'rectangular'
+                                    ! end if
                                     area(tB)     = rectangular_area_from_depth_singular (tB)
                                     topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
                                     hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
@@ -348,7 +433,14 @@ module geometry
                                     hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
+                                    ! print *, area(tB), topwidth(tB), hydDepth(tB)
+                                    ! print *, perimeter(tB), hydRadius(tB),ell(tB)
+                                    ! print *, dHdA(tB)
                                 case (triangular)
+                                    ! print *, 'im triangular ',tB
+                                    ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                    !     print *, 'triangular'
+                                    ! end if
                                     area(tB)     = triangular_area_from_depth_singular (tB)
                                     topwidth(tB) = triangular_topwidth_from_depth_singular (tB)
                                     hydDepth(tB) = triangular_hyddepth_from_depth_singular (tB)
@@ -356,7 +448,12 @@ module geometry
                                     hydRadius(tB)= triangular_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
+                                    
                                 case (trapezoidal)
+                                    ! print *, 'im trapezoid',tB
+                                    ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                    !     print *, 'trapezoid'
+                                    ! end if
                                     area(tB)     = trapezoidal_area_from_depth_singular (tB)
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
                                     hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
@@ -365,6 +462,10 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 case (circular)
+                                    ! print *, 'im circular',tB
+                                    ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                                    !     print *, 'circular'
+                                    ! end if
                                     area(tB)     = circular_area_from_depth_singular (tB)
                                     topwidth(tB) = circular_topwidth_from_depth_singular (tB)
                                     hydDepth(tB) = circular_hyddepth_from_topwidth_singular (tB)
@@ -382,6 +483,12 @@ module geometry
                                 end select
                             end if
                             volume(tB) = area(tB) * length(tB)
+
+                            ! print *, 'in ',trim(subroutine_name), volume(48), area(48),length(48)
+
+                            ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
+                            !     print *, 'in ',trim(subroutine_name), ell(ietU1(2)), hydDepth(ietU1(2)), depth(ietU1(2))
+                            ! end if
                         end if
                     end do
                 end if
@@ -538,6 +645,9 @@ module geometry
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+            ! print *, 'in ',trim(subroutine_name),elemR(49,er_VolumeOverFlow)
+            ! print *, geovalue(49), fullvalue(49), overflow(49)
+
         if (Npack > 0) then
             thisP      => elemP(1:Npack,thisColP)
              !% 20220124brh REWRITE START
@@ -556,6 +666,8 @@ module geometry
             !    geovalue(thisP) = fullvalue(thisP)
             !endwhere
         end if
+
+        ! print *, 'end of ',trim(subroutine_name),elemR(48,er_VolumeOverFlow)
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -941,11 +1053,11 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
-        integer, pointer    :: thisP(:), Npack, SlotMethod
+        integer, pointer    :: thisP(:), Npack
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:)
         real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:)
+        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -955,11 +1067,11 @@ module geometry
 
         Npack      => npack_elemP(thisColP)
         area       => elemR(:,er_Area)
-        areaN0     => elemR(:,er_Area_N0)
         volume     => elemR(:,er_Volume)
         volumeN0   => elemR(:,er_Volume_N0)
         Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
+        ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
         fullvolume => elemR(:,er_FullVolume)
         fullArea   => elemR(:,er_FullArea)
@@ -967,47 +1079,22 @@ module geometry
         headN0     => elemR(:,er_Head_N0)
         zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_TotalSlotVolume)
+        SlotVolume => elemR(:,er_SlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
 
-        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
 
-            select case (SlotMethod)
-
-            case (VariableSlot)
-
-                where (SlotVolume(thisP) .gt. zeroR) 
-                    volume(thisP) = fullvolume(thisP) + SlotVolume(thisP)
-                    area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
-                    depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
-                    head(thisP)   = zbottom(thisP) + depth(thisP)
-                    Overflow(thisP) = zeroR
-                end where 
-
-            case (StaticSlot)
-
-                where (SlotVolume(thisP) .gt. zeroR) 
-                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                    area(thisP)   = area(thisP)    + SlotArea(thisP)
-                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                    head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                    Overflow(thisP) = zeroR
-                end where 
-
-            case default
-                !% should not reach this stage
-                print*, 'In ', subroutine_name
-                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                print *, 'which has key ',trim(reverseKey(SlotMethod))
-                stop 48756
-    
-            end select
-
+            where (SlotVolume(thisP) .gt. zeroR) 
+                volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                area(thisP)   = area(thisP)    + SlotArea(thisP)
+                depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                Overflow(thisP) = zeroR
+            end where 
         end if
 
         if (setting%Debug%File%geometry) &

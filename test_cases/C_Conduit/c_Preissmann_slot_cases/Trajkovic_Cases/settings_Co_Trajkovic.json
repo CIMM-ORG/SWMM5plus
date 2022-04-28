@@ -2,13 +2,13 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "VasconcelosTPA_noUpStorage",
-        "Short" : "TPA_noUpStorage"
+        "Long"  : "Trajkovic_CaseA3_nx80_Vslot",
+        "Short" : "TA3_nx80_Vslot"
     },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
-        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "MinElemLengthMethod" : "RawElemLength",
         "NominalElemLength" : 0.036
     },
     "Limiter" : {
@@ -59,13 +59,14 @@
             "isVelocityOut"             : true,
             "isVolumeOut"               : true,
             "isWaveSpeedOut"            : true,
-            "isPreissmannCelerityOut"   : true
+            "isPreissmannCelerityOut"   : true,
+            "isPreissmannNumberOut"     : true
         },
         "Report" : {
             "useSWMMinpYN" :false,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
-            "StartTime" : 55.0,
+            "StartTime" : 110.0,
             "TimeInterval" : 0.1,
             "TimeUnits" : "Seconds"
         }
@@ -94,13 +95,13 @@
         }
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot",
-        "PreissmannNumber" : 3.0,
-        "PreissmannCelerity" : 2.53
+        "PreissmannSlotMethod" : "DynamicSlot",
+        "TargetPreissmannCelerity" : 20.0,
+        "PreissmannAlpha" : 2.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.6,
+        "CFL_hi_max" : 0.7,
         "CFL_target" : 0.5,
         "CFL_lo_max" : 0.3,
         "increaseFactor" : 1.2,

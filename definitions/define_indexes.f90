@@ -54,11 +54,9 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: li_idx = 1
-        enumerator :: li_link_type
-        enumerator :: li_weir_type           ! type of weir link
-        enumerator :: li_orif_type           ! type of orifice link
-        enumerator :: li_pump_type           ! type of pump link
-        enumerator :: li_outlet_type         ! type of outlet link
+        enumerator :: li_link_type           ! type of links (i.e. conduit, orifice, weir, etc.)   
+        enumerator :: li_link_sub_type       ! link subtype (i.e. vnotch weir, side orifice, etc.)
+        enumerator :: li_link_direction      ! link direction
         enumerator :: li_geometry
         enumerator :: li_roughness_type
         enumerator :: li_N_element           ! Number of elements in this link
@@ -213,6 +211,9 @@ module define_indexes
         enumerator :: lr_SideSlope             ! for weirs only
         enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_initSetting           ! initial link setting
+        enumerator :: lr_yOn                   ! startup depth for pumps
+        enumerator :: lr_yOff                  ! shutoff depth for pumps    
         enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
         enumerator :: lr_Flowrate
         enumerator :: lr_Depth
@@ -321,6 +322,7 @@ module define_indexes
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
+        enumerator :: er_ell_max                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
         enumerator :: er_Flowrate_N1                !% flowrate (time N-1)
@@ -347,25 +349,32 @@ module define_indexes
         enumerator :: er_InterpWeight_dH            !% interpolation Weight, downstream for head
         enumerator :: er_InterpWeight_uQ            !% interpolation Weight, upstream, for flowrate
         enumerator :: er_InterpWeight_dQ            !% interpolation Weight, downstream, for flowrate
+        enumerator :: er_InterpWeight_uP            !% interpolation Weight, upstream, for Preissmann number
+        enumerator :: er_InterpWeight_dP            !% interpolation Weight, downstream, for Preissmann number
         enumerator :: er_Ksource                    !% k source term for AC solver
         enumerator :: er_Length                     !% length of element (static)
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
+        enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
-        enumerator :: er_TotalSlotVolume            !% slot volume
-        enumerator :: er_dSlotVolume                !% change in slot volume
+        enumerator :: er_Setting                    !% percent open setting for a link element
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
-        enumerator :: er_SlotHydRadius              !% slot hydraulic radius        
+        enumerator :: er_SlotHydRadius              !% slot hydraulic radius 
+        enumerator :: er_SlotVolume                 !% slot volume       
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
         enumerator :: er_SourceMomentum             !% source term for momentum equation
+        enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp02                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp03                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp04                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Topwidth                   !% topwidth of flow at free surface
         enumerator :: er_Velocity                   !% velocity (latest)
         enumerator :: er_Velocity_N0                !% velocity time N
@@ -544,12 +553,22 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSI_outlet = esi_Orifice_lastplusone-1
 
+    enum, bind(c)
+        !% define the column indexes for elemSi(:,:) outlet elements
+        enumerator :: esi_Pump_FlowDirection = 1     !% pump flow direction
+        enumerator :: esi_Pump_SpecificType          !% specifc pump type
+        enumerator :: esi_Pump_CurveID               !% pump curve id
+        enumerator :: esi_Pump_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_Pump = esi_Pump_lastplusone-1
+
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
                             Ncol_elemSI_junction, &
                             Ncol_elemSI_orifice, &
                             Ncol_elemSI_weir, &
-                            Ncol_elemSI_outlet)
+                            Ncol_elemSI_outlet, &
+                            Ncol_elemSI_Pump)
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSr(:,:) arrays
     !% These are the full arrays if special real data
@@ -614,7 +633,16 @@ module define_indexes
         enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
         enumerator ::  esr_Outlet_lastplusone !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSR_Ooutlet = esr_Outlet_lastplusone-1
+    integer, parameter :: Ncol_elemSR_Outlet = esr_Outlet_lastplusone-1
+
+    enum, bind(c)
+        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across outlet
+        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
+        enumerator ::  esr_Pump_yOn                        !% pump startup depth
+        enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
+        enumerator ::  esr_pump_lastplusone                !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Pump = esr_pump_lastplusone-1
 
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
@@ -624,7 +652,8 @@ module define_indexes
                             Ncol_elemSR_Storage,        &
                             Ncol_elemSR_Weir,           &
                             Ncol_elemSR_Orifice,        &
-                            Ncol_elemSR_Ooutlet) !, &
+                            Ncol_elemSR_Outlet,         &
+                            Ncol_elemSR_Pump) !, &
                             ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
@@ -751,12 +780,15 @@ module define_indexes
         enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
+        enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
         enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uH           !% interpolation Weight, upstream for head boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dQ           !% interpolation Weight, downstream, for flowrate boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uQ           !% interpolation Weight, upstream, for flowrate boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_dP           !% interpolation Weight, downstream, for preissman number boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_uP           !% interpolation Weight, upstream, for preissman number boundary/ghost element
         enumerator ::  ebgr_lastplusone               !% must be last enum item boundary/ghost element
     end enum
     !% note, this must be changed to whatever the last enum element is!
@@ -827,6 +859,7 @@ module define_indexes
         enumerator :: fr_Topwidth_u             !% topwidth on upstream side of face
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
+        enumerator :: fr_Preissmann_Number      !% preissmann number at face
 
         !% HACK: THE FOLLOWING MAY NEED TO BE RESTORED
         ! enumerator :: fr_Zbottom_u             !% Bottom elevation on upstream side of face

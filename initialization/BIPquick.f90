@@ -69,8 +69,11 @@ contains
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+<<<<<<< HEAD
         if (setting%Profile%useYN) call util_profiler_start (pfc_init_BIPquick)
     !%-------------------------------------------------------------------
+=======
+>>>>>>> 8ee39c1314c25eacc97dc0941c3b8a17eea8b2cf
 
         call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 

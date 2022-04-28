@@ -22,6 +22,7 @@ module orifice_elements
     public :: orifice_toplevel
 
     contains
+!%
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
@@ -87,7 +88,7 @@ module orifice_elements
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Orifice_NominalDownstreamHead)
         !% output
-        EffectiveHeadDelta         => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
+        EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
         select case (SpecificOrificeType)
         case (bottom_orifice)
@@ -148,7 +149,7 @@ module orifice_elements
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
         FlowDirection         => elemSI(eIdx,esi_Orifice_FlowDirection)
         Flowrate              => elemR(eIdx,er_Flowrate)
-        FullArea              => elemR(eIdx,er_FullArea)
+        fullArea              => elemR(eIdx,er_FullArea)
         Head                  => elemR(eIdx,er_Head)
         EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
@@ -161,10 +162,21 @@ module orifice_elements
         VillemonteExponent    => Setting%Orifice%VillemonteCorrectionExponent
         grav                  => setting%constant%gravity
         !%-----------------------------------------------------------------------------
+
+        !% HACK: Hardcoded for Trajkovic cases
+        ! if (eIdx == 146) then
+        !     if ((setting%Time%Now .ge. 120.00) .and. (setting%Time%Now .lt. 150.00)) then
+        !         EffectiveFullDepth = 0.00001
+        !     else if (setting%Time%Now .ge. 150.00) then
+        !         EffectiveFullDepth = 0.028
+        !     end if
+        ! end if
+
+
         !% find full area for flow, and A/L for critical depth calculations
         select case (GeometryType)
             case (circular)
-                FullArea = pi * (onehalfR * EffectiveFullDepth) ** twoR
+                fullArea = pi * (onehalfR * EffectiveFullDepth) ** twoR
                 AoverL   = onefourthR * EffectiveFullDepth
             case (rectangular_closed)
                 FullArea = EffectiveFullDepth * RectangularBreadth

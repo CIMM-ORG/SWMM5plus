@@ -79,6 +79,10 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
+        !% sync after all the link data has been extracted
+        !% the junction branch data is read in from the elemR arrays which my need inter-image communication
+        !% thus the sync call is needed
+        sync all
         !% --- get data that can be extracted from nodes
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
         call init_IC_from_nodedata ()
@@ -244,7 +248,7 @@ contains
             integer, dimension(:), allocatable, target  :: packed_link_idx
             integer, dimension(:) , allocatable, target :: ePack
             integer           :: allocation_status, deallocation_status
-            character(len=99) ::              emsg
+            character(len=99) :: emsg
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -465,7 +469,6 @@ contains
         select case (linkType)
 
             case (lChannel)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
@@ -474,7 +477,6 @@ contains
 
 
             case (lpipe)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
@@ -483,7 +485,6 @@ contains
                 endwhere
 
             case (lweir)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)         = weir
                     elemI(:,ei_QeqType)             = diagnostic
@@ -491,7 +492,6 @@ contains
                 endwhere
 
             case (lOrifice)
-
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)            = orifice
                     elemI(:,ei_QeqType)                = diagnostic
@@ -499,13 +499,11 @@ contains
                 endwhere
 
             case (lPump)
-
-                print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: pumps are not handeled yet for # ', linkType
-                print *, 'which has key',trim(reverseKey(linkType)) 
-                !stop 
-                call util_crashpoint(77364)
-                return
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_elementType)            = pump
+                    elemI(:,ei_QeqType)                = diagnostic
+                    elemYN(:,eYN_canSurcharge)         = .true.
+                endwhere
 
             case (lOutlet)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -567,13 +565,8 @@ contains
                 call init_IC_get_orifice_geometry (thisLink)
 
             case (lPump)
-
-                print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: pumps are not handeled yet for #',linkType
-                print *, 'which has key ',trim(reverseKey(linkType)) 
-                !stop 
-                call util_crashpoint(337844)
-                return
+                !% get geomety data for pump
+                call init_IC_get_pump_geometry (thisLink)
 
             case (lOutlet)
                 !% get geomety data for outlets
@@ -637,15 +630,16 @@ contains
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    !% the full depth of channel is set to a large depth so it
-                    !% never surcharges. the large depth is set as, factor x width,
-                    !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullHydDepth) = link%R(thisLink,lr_FullDepth)  !% 20220406brh
+                    elemR(:,er_FullPerimeter) = twoR * link%R(thisLink,lr_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth) !% 20220406brh
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                            elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
 
             case (lTrapezoidal)
@@ -669,20 +663,13 @@ contains
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
                                 elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-            
-                    !% the full depth of channel is set to a large depth so it
-                    !% never surcharges. the large depth is set as, factor x width,
-                    !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
-                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-                    
+                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)    
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)     = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
@@ -690,6 +677,13 @@ contains
                                 elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                    elemR(:,er_FullHydDepth) = elemR(:,er_FullArea) / elemR(:,er_BreadthMax) !% 20220406brh
+                    elemR(:,er_FullPerimeter) = elemSGR(:,esgr_Trapezoidal_Breadth)   &
+                        + elemR(:,er_FullDepth)                                       &
+                        * (   sqrt(oneR + elemSGR(:,esgr_Trapezoidal_LeftSlope )**2)  &
+                            + sqrt(oneR + elemSGR(:,esgr_Trapezoidal_RightSlope)**2) ) !% 20220406brh            
                 endwhere
             
             case (lTriangular)
@@ -697,12 +691,10 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                     elemI(:,ei_geometryType) = triangular
-
                     !% store geometry specific data
                     elemSGR(:,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
                     elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_TopBreadth) / (twoR * elemR(:,er_FullDepth))
-                    
                     ! Area = Depth*Depth*avg. sideslope
                     elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Triangular_Slope) 
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
@@ -716,6 +708,11 @@ contains
                     elemR(:,er_FullArea)     = elemR(:,er_FullDepth) * elemR(:, er_FullDepth) * elemSGR(:,esgr_Triangular_Slope) 
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                        elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                    elemR(:,er_FullHydDepth)  = elemR(:,er_FullArea) / elemR(:,er_BreadthMax) 
+                    elemR(:,er_FullPerimeter) = twoR * sqrt(((elemSGR(:,esgr_Triangular_TopBreadth) ** twoR) / fourR) +  &
+                                                (elemR(:,er_FullDepth) ** twoR))
                 endwhere
 
             case default
@@ -756,8 +753,6 @@ contains
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
 
-
-
         select case (geometryType)
 
         case (lRectangular_closed)
@@ -765,10 +760,8 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 elemI(:,ei_geometryType)    = rectangular_closed
-
                 !% store geometry specific data
                 elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
-
                 elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
                 elemR(:,er_Area)                  = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -782,7 +775,10 @@ contains
                 elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
-                
+                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax)  
+                elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth) 
+                elemR(:,er_FullPerimeter)         = twoR * elemR(:,er_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth)
             endwhere
             
         case (lCircular)
@@ -790,11 +786,9 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 elemI(:,ei_geometryType)    = circular
-
                 !% store geometry specific data
                 elemSGR(:,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
                 elemSGR(:,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
-
                 elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
                 elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
@@ -804,23 +798,17 @@ contains
                 elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
                 elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Circular_Diameter)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR
-
-                ! elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
-
-                !% HACK: for initial condition steup, use analytical functions which works with where
-                !% statement
-
                 elemR(:,er_Area)                  = (elemSGR(:,esgr_Circular_Radius) **2) * &
                                 (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))) - &
                                 sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )
-
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
                 elemR(:,er_Area_N1)               = elemR(:,er_Area)
                 elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
+                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
             end where
-        
 
         case default
 
@@ -856,7 +844,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific weir type
-        specificWeirType => link%I(thisLink,li_weir_type)
+        specificWeirType => link%I(thisLink,li_link_sub_type)
 
         select case (specificWeirType)
             !% copy weir specific data
@@ -865,7 +853,6 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = trapezoidal_weir
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
@@ -883,7 +870,6 @@ contains
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = side_flow
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
@@ -906,7 +892,6 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = vnotch_weir
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1)
@@ -921,7 +906,6 @@ contains
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = transverse_weir
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
-
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
@@ -966,7 +950,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific orifice type
-        specificOrificeType => link%I(thisLink,li_orif_type)
+        specificOrificeType => link%I(thisLink,li_link_sub_type)
 
         select case (specificOrificeType)
         !% copy orifice specific data
@@ -998,7 +982,6 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                 !% integer data
                 elemI(:,ei_geometryType)          = rectangular_closed
-
                 !% real data
                 elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
@@ -1007,17 +990,18 @@ contains
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
             end where
+
         case (lCircular)
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                 !% integer data
                 elemI(:,ei_geometryType)    = circular
-
                 !% real data
                 elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                 elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
             end where
+
         case default
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
@@ -1031,6 +1015,77 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_orifice_geometry
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_IC_get_pump_geometry (thisLink)
+        !--------------------------------------------------------------------------
+        !
+        !% get the geometry and other data data for orifice links
+        !
+        !--------------------------------------------------------------------------
+            integer             :: ii
+            integer, intent(in) :: thisLink
+            integer, pointer    :: specificPumpType, curveID, eIDx
+
+            character(64) :: subroutine_name = 'init_IC_get_pump_geometry'
+        !--------------------------------------------------------------------------
+            if (crashYN) return
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% pointer to specific pump type
+        specificPumpType => link%I(thisLink,li_link_sub_type)
+        curveID          => link%I(thisLink,li_curve_id)
+
+        do ii = 1,N_elem(this_image())
+            if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then  
+                !% real data
+                elemSR(ii,esr_Pump_yOn)     = link%R(thisLink,lr_yOn)
+                elemSR(ii,esr_Pump_yOff)    = link%R(thisLink,lr_yOff)
+
+                if (curveID < zeroI) then
+                    !% integer data
+                    elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
+                else
+                    elemSI(ii,esi_Pump_CurveID) = curveID
+                    Curve(curveID)%ElemIdx      = ii
+                    !% copy pump specific data
+                    if (specificPumpType == lType1Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type1_Pump
+
+                    else if (specificPumpType == lType2Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type2_Pump
+
+                    else if (specificPumpType == lType3Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type3_Pump
+
+                    else if (specificPumpType == lType4Pump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type4_Pump
+
+                    else if (specificPumpType == lTypeIdealPump) then
+                        !% integer data
+                        elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
+                    else
+                        print *, 'In ', subroutine_name
+                        print *, 'CODE ERROR: unknown orifice type, ', specificPumpType,'  in network'
+                        print *, 'which has key ',trim(reverseKey(specificPumpType))
+                        !stop 
+                        call util_crashpoint(8863411)
+                        return
+                    end if
+                end if 
+            end if
+        end do
+     
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_IC_get_pump_geometry
 !
 !==========================================================================
 !==========================================================================
@@ -1052,7 +1107,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific outlet type
-        specificOutletType => link%I(thisLink,li_outlet_type)
+        specificOutletType => link%I(thisLink,li_link_sub_type)
         curveID            => link%I(thisLink,li_curve_id)
 
         do ii = 1,N_elem(this_image())
@@ -1081,7 +1136,8 @@ contains
                     Curve(curveID)%ElemIdx              = ii
                 else
                     print*, 'In ', subroutine_name
-                    print*, 'error: unknown orifice type, ', specificOutletType,'  in network'
+                    print*, 'CODE ERROR: unknown outlet type, ', specificOutletType,'  in network'
+                    print *, 'which has key ',trim(reverseKey(specificOutletType))
                     !stop 
                     call util_crashpoint(82564)
                     return
@@ -1190,8 +1246,8 @@ contains
         !--------------------------------------------------------------------------
         integer, intent(in) :: thisJunctionNode
 
-        integer              :: ii, jj, JMidx, JBidx
-        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID
+        integer              :: ii, jj, JMidx, JBidx, Aidx, Ci
+        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, NumRows, Fidx
         integer              :: nbranches
         real(8), allocatable :: integrated_volume(:)
 
@@ -1201,13 +1257,15 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !print *, 'inside ',trim(subroutine_name)
+       ! print *, 'inside ',trim(subroutine_name)
         !%................................................................
         !% Junction main
         !%................................................................
         !% find the first element ID associated with that nJm
         !% masked on the global node number for this node.
         JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
+
+        !print *, JMidx
 
         !% the first element index is a junction main
         elemI(JMidx,ei_elementType)  = JM
@@ -1250,7 +1308,8 @@ contains
         !% find if the node can surcharge
         if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
             elemYN(JMidx,eYN_canSurcharge)  = .true.
-            elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_SurchargeDepth)
+            elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeDepth)
+            ! elemI(JMidx,ei_geometryType)    = rectangular_closed
         else
             elemYN(JMidx,eYN_canSurcharge)  = .false.
         end if
@@ -1264,8 +1323,36 @@ contains
         !% adjacent element.
         do ii = 1,max_branch_per_node
 
+            !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
+
             !% find the element id of junction branches
             JBidx = JMidx + ii
+
+            !print *, 'JBidx ',JBidx
+
+            !% set the adjacent element id where elemI and elemR data can be extracted
+            !% note that elemSGR etc are not yet assigned
+            if (mod(ii,2) == zeroI) then
+                Fidx => elemI(JBidx,ei_MFace_dL)
+                !% even are downstream branches
+                if (elemYN(JBidx,eYN_isBoundary)) then
+                    Ci   = faceI(Fidx,fi_Connected_image)
+                    Aidx = faceI(Fidx,fi_GhostElem_dL)
+                else
+                    Ci   = this_image()
+                    Aidx = faceI(Fidx,fi_Melem_dL)
+                end if
+            !% odd are upstream branches
+            else
+                Fidx => elemI(JBidx,ei_MFace_uL)
+                if (elemYN(JBidx,eYN_isBoundary)) then
+                    Ci   = faceI(Fidx,fi_Connected_image)
+                    Aidx = faceI(Fidx,fi_GhostElem_uL)
+                else
+                    Ci   = this_image()
+                    Aidx = faceI(Fidx,fi_Melem_uL)
+                end if
+            end if
 
             !% set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
@@ -1283,35 +1370,6 @@ contains
             elemI(JBidx,ei_HeqType) = time_march
             elemI(JBidx,ei_QeqType) = time_march
 
-            !% set the initial head to the same as the junction main
-            elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
-            !print *, 'here 39705 head ',elemR(JBidx,er_Head)
-            elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
-            if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
-                elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
-                elemR(JBidx,er_Depth) = zeroR
-            end if
-            !print *, 'here 98847 depth',elemR(JBidx,er_Depth)
-            !if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
-            !    elemR(JBidx,er_Depth) = setting%ZeroValue%depth
-            !    elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
-            !end if
-
-            !print *,'here 857895 Depth ', elemR(JBidx,er_Depth)
-            !% JB elements initialized for momentum
-            elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
-            elemR(JBidx,er_FroudeNumber) = zeroR
-
-            ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
-            if (link%I(BranchIdx,li_link_type) == lPipe) then
-                elemYN(JBidx,eYN_canSurcharge)  = .true.
-                elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
-            else
-                elemYN(JBidx,eYN_canSurcharge)  = .false.
-                elemR(JBidx,er_FullDepth)   = max(link%R(BranchIdx,lr_BreadthScale),fourR)
-            end if
-            elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-
             !% Junction branch k-factor
             !% If the user does not input the K-factor for junction branches entrance/exit loses then
             !% use default from setting
@@ -1321,98 +1379,58 @@ contains
                 elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
             end if
 
-            !% get the geometry data -- the branch takes on geometry of the upstream link
-            select case (JBgeometryType)
+            !% set the initial head to the same as the junction main
+            elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
+            elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
+            if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
+                elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
+                elemR(JBidx,er_Depth) = zeroR
+            end if
 
-            case (lRectangular,lRectangular_closed) !% brh20211219 the rect closed needed when orifice is adjacent
-                elemI(JBidx,ei_geometryType) = rectangular
-                elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
-                elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
+            elemR(JBidx,er_VolumeOverFlow) = zeroR
+            elemR(JBidx,er_VolumeOverFlowTotal) = zeroR
 
-                !% store geometry specific data
-                elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
-                elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth)
-                elemR(JBidx,er_ZbreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom)
-                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
+            !% JB elements initialized for momentum
+            elemR(JBidx,er_Flowrate)     = elemR(Aidx,er_Flowrate)[Ci] !% flowrate of adjacent element
+            elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
+            elemR(JBidx,er_FroudeNumber) = zeroR
 
-            case (lTrapezoidal)
-                !% brh20211217, reviewed
-                elemI(JBidx,ei_geometryType) = trapezoidal
-
-                !% store geometry specific data
-                elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
-                elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
-                elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
-
-                elemR(JBidx,er_ZBreadthMax) = elemR(JBidx,er_Zbottom) + link%R(BranchIdx,lr_FullDepth)
-
-                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) &
-                            + link%R(BranchIdx,lr_FullDepth)                             &
-                            * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)               &
-                                + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) 
-
-                elemR(JBidx,er_FullArea)    =  elemR(JBidx,er_FullDepth)                  &
-                        * (   elemSGR(JBidx,esgr_Trapezoidal_Breadth)                     &
-                            + onehalfR * elemR(JBidx,er_FullDepth)                        &
-                                * (   elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)            &
-                                    + elemSGR(JBidx,esgr_Trapezoidal_RightSlope) ) )
-
-                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea)!% 20220124brh
-            
-            case (lTriangular)
-
-                elemI(JBidx,ei_geometryType) = triangular
-
-                !% store geometry specific data
-                elemSGR(JBidx,esgr_Triangular_TopBreadth)  = link%R(BranchIdx,lr_BreadthScale)
-                elemR(JBidx,er_FullDepth)                  = link%R(BranchIdx,lr_FullDepth)
-                elemSGR(JBidx,esgr_Triangular_Slope)       = elemSGR(JBidx,esgr_Triangular_TopBreadth) / &
-                                                                (twoR * elemR(JBidx,er_FullDepth))
-                elemR(JBidx,er_ZBreadthMax)                = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-                elemR(JBidx,er_BreadthMax)                 = link%R(BranchIdx,lr_BreadthScale)
-                elemR(JBidx,er_FullArea)                   =  elemR(JBidx,er_FullDepth) * elemR(JBidx, er_FullDepth) * &
-                                                                elemSGR(JBidx,esgr_Triangular_Slope)
-                elemR(JBidx,er_AreaBelowBreadthMax)        = elemR(JBidx,er_FullArea)
-                            
-            case (lCircular)
-                elemI(JBidx,ei_geometryType) = circular
-
-                !% store geometry specific data
-                elemSGR(JBidx,esgr_Circular_Diameter) = link%R(BranchIdx,lr_FullDepth)
-                elemSGR(JBidx,esgr_Circular_Radius)   = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
-
-                elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom)
-
-                elemR(JBidx,er_BreadthMax)  = link%R(BranchIdx,lr_FullDepth)
-
-                elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
-
-                elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
-            case default
-
-                print *, 'In, ', subroutine_name
-                print *, 'CODE ERROR: geometry type unknown for # ', JbgeometryType
-                print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                !stop 
-                call util_crashpoint(308974)
-                return
-
-            end select
-
-            !% get the flow data from links for junction branches
-            !% this flowrate will always be lagged in junction branches
-            elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
-
-            !% also set the face flowrates such that it does not blowup the initial interpolation
+            !% Set the face flowrates such that it does not blowup the initial interpolation
             if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
                 faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
             else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
                 faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
             end if
 
-            !% Manning's n
-            elemR(JBidx,er_Roughness) = link%R(BranchIdx,lr_Roughness)
+            !% Set the geometry of the adjacent elements
+            elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
+            elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
 
+            select case  (elemI(JBidx,ei_geometryType))
+
+            case (rectangular, trapezoidal, triangular, rectangular_closed, circular)
+                !% copy all the geometry specific data from the adjacent element cell as well
+                elemR(JBidx,er_Area)                = elemR(Aidx,er_Area)[Ci]
+                elemR(JBidx,er_AreaBelowBreadthMax) = elemR(Aidx,er_AreaBelowBreadthMax)[Ci]
+                elemR(JBidx,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)[Ci]
+                elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
+                elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
+                elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
+                elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
+                elemR(JBidx,er_ZbreadthMax)         = elemR(Aidx,er_ZbreadthMax)[Ci]
+                elemR(JBidx,er_Zcrown)              = elemR(Aidx,er_Zcrown)[Ci]         
+                elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)[Ci]
+                !% copy the entire row of the elemSGR array
+                elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
+            case default
+                print *, 'in ',trim(subroutine_name)
+                print *, 'CODE ERROR: unknown geometry type ',elemI(JBidx,ei_geometryType)
+                print *, 'which has key ',trim(reverseKey(elemI(JBidx,ei_geometryType)))
+                call util_crashpoint (4482793)
+                return
+            end select
+
+            !% set the velocity
             if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
                 elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
             else
@@ -1422,11 +1440,12 @@ contains
             !% Common geometry that do not depend on cross-section
             elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
             elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
+            elemR(JBidx,er_FullVolume)   = elemR(JBidx,er_FullArea)  * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
         end do
-
+        
         !% get junction main geometry based on type
         JmType => elemSI(JMidx,esi_JunctionMain_Type)
 
@@ -1444,32 +1463,39 @@ contains
             !%     mass conservation only, which means its volume change can be approximated
             !%     as if it is a rectangular box of Storage_Plane_Area x Depth
             elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
+
             do ii=1,max_branch_per_node
                 JBidx = JMidx + ii
                 if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+
                 BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
                 JBgeometryType => link%I(BranchIdx,li_geometry)
+
                 select case (JBgeometryType)
                 case (lRectangular,lRectangular_closed)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Rectangular_Breadth) )
+
                 case (lTrapezoidal)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                              +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                   * elemR(  JBidx,er_Length)                                  &
                                   * elemSGR(JBidx,esgr_Trapezoidal_Breadth) )
+
                 case (lTriangular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
+
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Circular_Diameter) )
+
                 case default
                     print *, 'In, ', subroutine_name
                     print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
@@ -1485,24 +1511,26 @@ contains
                                                     /   elemR(JMidx,er_Length)
 
             !% Volume depends on plane area and depth
-            elemR(JMidx,er_Volume) =   elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
-
-            elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-            elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)
+            elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_FullVolume) = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_FullDepth)
 
         case (FunctionalStorage)
-            elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)          &
+            elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)      &
                 + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
                     * elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
-
-            elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-            elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
-
+            elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_FullVolume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_FullDepth)  &
+                + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
+                    * elemR(JMidx,er_FullDepth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
             !% create a storage curve
             call storage_create_curve (JMidx)
 
         case (TabularStorage)
             CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            NumRows => curve(CurveID)%NumRows 
             Curve(CurveID)%ElemIdx = JMidx
             !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
             !% to get to integrate the area vs depth curve
@@ -1511,6 +1539,9 @@ contains
             !% now interpolate from the cure to get the volume
             call storage_interpolate_volume_from_depth_singular (JMidx)
 
+            elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
+            elemR(JMidx,er_FullVolume) = Curve(CurveID)%ValueArray(NumRows,curve_storage_volume)
         case default
             !% IMPORTANT -- if any other new type is defined, make sure that
             !% subroutine geo_depth_from_volume is updated
@@ -1683,6 +1714,8 @@ contains
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_uP) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
         !% H-diagnostic elements will have minimum interp weights for H and G
@@ -1696,6 +1729,8 @@ contains
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_uP) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
         ! !% brh 20220204 -- ccommenting this approach
@@ -1940,12 +1975,28 @@ contains
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !------------------------------------------------------------------
-        elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_TotalSlotVolume)            = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotVolume)       = zeroR
+        ! elemR(1:20,er_SlotVolume)                    = 0.01 
+
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
+        ! elemR(1:20,er_SlotArea)                           = elemR(1:20,er_SlotVolume) / elemR(1:20,er_length)
+
+        elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
+        ! elemR(1:20,er_SlotWidth)                          = (setting%Constant%gravity * elemR(1:20,er_FullArea) )/(100.0**2.0)
+
+        elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
+        ! elemR(1:20,er_SlotDepth)                          = elemR(1:20,er_SlotArea)/elemR(1:20,er_SlotWidth) 
+        ! elemR(1:20,er_SlotDepth)                          = 1.0 / (elemR(1:20,er_area)/(10.0 * elemR(1:20,er_SlotArea))-1.0)
+        
+        ! elemR(1:20,er_SlotWidth)                          = elemR(1:20,er_SlotArea) / elemR(1:20,er_SlotDepth) 
+        
         elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
+        elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = setting%PreissmannSlot%TargetPreissmannCelerity / &
+                                                            (setting%PreissmannSlot%PreissmannAlpha * sqrt(setting%Constant%gravity * &
+                                                            elemR(1:size(elemR,1)-1,er_ell_max)))
+        ! elemR(1:20,er_Preissmann_Celerity)                = sqrt(9.81 * elemR(1:20,er_area)/elemR(1:20,er_SlotWidth) )
+        ! faceR(1:20,fr_Area_d) = elemR(1:20,er_SlotWidth) * elemR(1:20,er_Length) * elemR(1:20,er_SlotDepth)  
         !------------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

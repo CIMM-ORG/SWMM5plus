@@ -1027,7 +1027,7 @@ module adjust
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm_surcharged)
             case (ETM)
-                thisCol => col_elemP(ep_CC_ETM_surcharged)
+                thisCol => col_elemP(ep_Closed_Elements)
             case (AC)
                 thisCol => col_elemP(ep_CC_AC_surcharged)
             case default
@@ -1064,12 +1064,12 @@ module adjust
         !%-------------------------------------------------------------------
         !% find the cells that are deep enough to use the V filter
         !% The surcharge head must be larger than some multiple of the conduit full depth
-        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemFullD(thisP))
-        where (Vvalue(thisP) > oneR)
-            Vvalue(thisP) = oneR
-        elsewhere
-            Vvalue(thisP) = zeroR
-        endwhere
+        ! Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemFullD(thisP))
+        ! where (Vvalue(thisP) > oneR)
+        !     Vvalue(thisP) = oneR
+        ! elsewhere
+        !     Vvalue(thisP) = zeroR
+        ! endwhere
 
         !% identify the V-shape locations
         Vvalue(thisP) =  (util_sign_with_ones(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
@@ -1093,7 +1093,7 @@ module adjust
 
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
-    end subroutine
+    end subroutine adjust_Vshaped_head_surcharged
         !%    
 !%==========================================================================
 !%==========================================================================

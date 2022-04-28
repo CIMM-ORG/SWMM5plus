@@ -783,24 +783,15 @@ contains
             if (link_value == API_CONDUIT) then
                 if (attr == api_linkf_type) then
                     link_value = lPipe
-                else if (attr == api_linkf_weir_type) then
-                    !write(*,*) '****** Not clear why this is null brh20211207 at 837894'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_orifice_type) then
-                    !write(*,*) '****** Not clear why this is null brh20211207 at 938765'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_pump_type) then
-                    !write(*,*) '****** Not clear why this is null brh20211207 at 875323'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_outlet_type) then
-                    !write(*,*) '****** Not clear why this is null brh20211207 at 3897895'
-                    link_value = nullvalueI
+                else if (attr == api_linkf_sub_type) then
+                    !% conduits doesnot have a sub type
+                    link_value = undefinedKey
                 else
                     link_value = nullvalueI
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 45782987'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'
                 end if
@@ -808,17 +799,10 @@ contains
             else if (link_value == API_PUMP) then
                 if (attr == api_linkf_type) then
                     link_value = lPump
-                else if (attr == api_linkf_weir_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 478974'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_orifice_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 3695'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_pump_type) then
+                else if (attr == api_linkf_sub_type) then
                     call load_api_procedure("api_get_linkf_attribute")
-                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_pump_type, link_value)
-                    thisposition = trim(subroutine_name)//'_C03'
-                    call print_api_error(error, thisposition)
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
+                    thisposition = trim(subroutine_name)//'_C04'
                     if (link_value == API_TYPE1_PUMP) then
                         link_value = lType1Pump
                     else if (link_value == API_TYPE2_PUMP) then
@@ -837,17 +821,13 @@ contains
                         write(*,*) '   allowable are ',API_TYPE1_PUMP, API_TYPE2_PUMP, API_TYPE3_PUMP, API_TYPE4_PUMP, API_IDEAL_PUMP
                         write(*,*) '   skipping error condition!'
                         write(*,*) '******'                     
-                    endif
-                else if (attr == api_linkf_outlet_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 773682'
-                    link_value = nullvalueI
-                !% brh20211207s    
+                    endif   
                 else
                     link_value = nullvalueI
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  8836785'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'          
                 end if
@@ -855,14 +835,10 @@ contains
             else if (link_value == API_ORIFICE) then
                 if (attr == api_linkf_type) then
                     link_value = lOrifice
-                else if (attr == api_linkf_weir_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 82674'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_orifice_type) then
+                else if (attr == api_linkf_sub_type) then
                     call load_api_procedure("api_get_linkf_attribute")
-                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_orifice_type, link_value)
-                    thisposition = trim(subroutine_name)//'_D04'
-                    call print_api_error(error, thisposition)
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
+                    thisposition = trim(subroutine_name)//'_D05'
                     if (link_value == API_SIDE_ORIFICE) then
                         link_value = lSideOrifice
                     else if (link_value == API_BOTTOM_ORIFICE) then
@@ -876,18 +852,12 @@ contains
                         write(*,*) '   skipping error condition!'
                         write(*,*) '******'     
                     endif
-                else if (attr == api_linkf_pump_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at  8378904'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_outlet_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 3446789'
-                    link_value = nullvalueI  
                 else
                     link_value = nullvalueI
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'              
                 end if
@@ -895,10 +865,10 @@ contains
             else if (link_value == API_WEIR) then
                 if (attr == api_linkf_type) then
                     link_value = lWeir
-                else if (attr == api_linkf_weir_type) then
+                else if (attr == api_linkf_sub_type) then
                     call load_api_procedure("api_get_linkf_attribute")
-                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_weir_type, link_value)
-                    thisposition = trim(subroutine_name)//'_E05'
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
+                    thisposition = trim(subroutine_name)//'_E06'
                     call print_api_error(error, thisposition)
                     if (link_value == API_TRANSVERSE_WEIR) then
                         link_value = lTransverseWeir
@@ -918,22 +888,13 @@ contains
                         write(*,*) '   allowable are ',API_TRANSVERSE_WEIR, API_SIDEFLOW_WEIR, API_VNOTCH_WEIR, API_TRAPEZOIDAL_WEIR, API_ROADWAY_WEIR
                         write(*,*) '   skipping error condition!'
                         write(*,*) '******'  
-                    endif
-                else if (attr == api_linkf_orifice_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 836637'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_pump_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 6637892'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_outlet_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 826784'
-                    link_value = nullvalueI    
+                    endif    
                 else
                     link_value = nullvalueI
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'   
                 end if
@@ -941,19 +902,10 @@ contains
             else if (link_value == API_OUTLET) then
                 if (attr == api_linkf_type) then
                     link_value = lOutlet
-                else if (attr == api_linkf_weir_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 226784'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_orifice_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 737890'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_pump_type) then
-                    write(*,*) '****** Not clear why this is null brh20211207 at 827894'
-                    link_value = nullvalueI
-                else if (attr == api_linkf_outlet_type) then
+                else if (attr == api_linkf_sub_type) then
                     call load_api_procedure("api_get_linkf_attribute")
-                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_outlet_type, link_value)
-                    thisposition = trim(subroutine_name)//'_F05'
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
+                    thisposition = trim(subroutine_name)//'_F06'
                     call print_api_error(error, thisposition)
                     if (link_value == API_NODE_DEPTH) then
                         link_value = lNodeDepth
@@ -973,7 +925,7 @@ contains
                     write(*,*)
                     write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  11947'
                     write(*,*) '   attr = ',attr
-                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_weir_type, api_linkf_orifice_type, api_linkf_pump_type, api_linkf_outlet_type
+                    write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
                     write(*,*) '   skipping error condition!'
                     write(*,*) '******'     
                 end if                
@@ -999,7 +951,8 @@ contains
                     thisposition = trim(subroutine_name)//'_G07'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 87438687'
+                    !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_RECT_OPEN) then
@@ -1016,7 +969,8 @@ contains
                     thisposition = trim(subroutine_name)//'_I09'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 72678439'
+                    !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRAPEZOIDAL) then
@@ -1033,7 +987,8 @@ contains
                     thisposition = trim(subroutine_name)//'_K11'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 55278093'
+                    !% trapezoidal geometry does not have certain geometric features (i.e. top-width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRIANGULAR) then
@@ -1050,7 +1005,8 @@ contains
                     thisposition = trim(subroutine_name)//'_N13'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 267849'
+                    !% triangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_PARABOLIC) then
@@ -1067,7 +1023,8 @@ contains
                     thisposition = trim(subroutine_name)//'_P15'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 8270894987'
+                    !% parabolic geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else if (link_value == API_CIRCULAR) then
@@ -1084,11 +1041,13 @@ contains
                     thisposition = trim(subroutine_name)//'_R17'
                     call print_api_error(error, thisposition)
                 else
-                    write(*,*) '****** Not clear why this is null brh20211207 at 8276438'
+                    !% circular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
             else
-                write(*,*) '****** Not clear why this is null brh20211207 at 227589'
+                !% some links like pumps or outlets does not have any geometric features
+                !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
                 link_value = nullvalueR
             end if
         end if

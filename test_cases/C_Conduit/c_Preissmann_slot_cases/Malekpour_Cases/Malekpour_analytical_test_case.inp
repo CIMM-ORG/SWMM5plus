@@ -11,32 +11,33 @@ MIN_SLOPE            0
 ALLOW_PONDING        NO
 SKIP_STEADY_STATE    NO
 
-START_DATE           10/12/2021
+START_DATE           11/15/2021
 START_TIME           00:00:00
-REPORT_START_DATE    10/12/2021
+REPORT_START_DATE    11/15/2021
 REPORT_START_TIME    00:00:00
-END_DATE             10/12/2021
-END_TIME             06:00:00
-SWEEP_START          1/1
+END_DATE             11/15/2021
+END_TIME             00:00:20
+SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:30
+REPORT_STEP          00:00:01
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
-ROUTING_STEP         0:00:30 
+ROUTING_STEP         0.01
 RULE_STEP            00:00:00
 
 INERTIAL_DAMPING     PARTIAL
 NORMAL_FLOW_LIMITED  BOTH
 FORCE_MAIN_EQUATION  D-W
+SURCHARGE_METHOD     SLOT
 VARIABLE_STEP        0.75
 LENGTHENING_STEP     0
-MIN_SURFAREA         0
-MAX_TRIALS           0
-HEAD_TOLERANCE       0
+MIN_SURFAREA         1.167
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.00000015
 SYS_FLOW_TOL         5
 LAT_FLOW_TOL         5
-MINIMUM_STEP         0.5
+MINIMUM_STEP         0.0000001
 THREADS              1
 
 [EVAPORATION]
@@ -48,53 +49,56 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                0.2781     2          1          0          0         
+1                0          1          1.0        1          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-Out1             0          FIXED      1                NO                       
+3                10         FIXED      0.05             NO                       
 
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
 ;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
-ST1              0.1390   8.0          1         TABULAR    ST_CURVE_1                   0        0       
+2                0        10         1.0        FUNCTIONAL 100       0         0        10       0       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               1                ST1              100        0.015      0          0          2.4599     0         
-C2               ST1              Out1             100        0.015      0          0          2.4599     0         
+1                1                2                400        0.00001    0          0          0          0         
+2                2                3                100        0.016      10         0          0          0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1               CIRCULAR     2                0          0          0          1                    
-C2               CIRCULAR     2                0          0          0          1                    
+1                RECT_CLOSED  1                1          0          0          1                    
+2                RECT_CLOSED  1                1          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      2.4599  
+1                FLOW             Bore_timeseries  FLOW     1.0      1.0              
 
 [CURVES]
 ;;Name           Type       X-Value    Y-Value   
 ;;-------------- ---------- ---------- ----------
-ST_CURVE_1       Storage    0.5          500      
-ST_CURVE_1                  1.0          1000      
-ST_CURVE_1                  1.5          1500      
-ST_CURVE_1                  2.0          2000
-ST_CURVE_1                  2.5          2500      
-ST_CURVE_1                  3.0          3000      
-ST_CURVE_1                  3.5          3500 
-ST_CURVE_1                  4.0          4000
-ST_CURVE_1                  4.5          4100      
-ST_CURVE_1                  5.0          4211     
-ST_CURVE_1                  5.5          4567
-ST_CURVE_1                  6.0          5157      
-ST_CURVE_1                  6.5          5523      
-ST_CURVE_1                  7.0          6001 
-ST_CURVE_1                  8.0          6503         
+Test             Storage    0          0         
+Test                        1          1         
+Test                        2          2         
+Test                        3          3         
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+Bore_timeseries  11/15/2021 0          0.0         
+Bore_timeseries             0.016664   0.0         
+Bore_timeseries             0.0166667  0.0
+Bore_timeseries             0.0244445  0.0
+Bore_timeseries             0.025      0.0         
+Bore_timeseries             0.0833333  0.0         
+Bore_timeseries             0.0833334  0.0         
+Bore_timeseries             0.3333333  0.0         
+Bore_timeseries             0.3344444  0.0         
+Bore_timeseries             0.4        0.0         
 
 [REPORT]
 ;;Reporting Options
@@ -111,9 +115,9 @@ Units      None
 [COORDINATES]
 ;;Node           X-Coord            Y-Coord           
 ;;-------------- ------------------ ------------------
-1                -2805.430          5723.982          
-Out1             2217.195           5893.665          
-ST1              -599.548           5814.480          
+1                -100.000           5000.000          
+3                3500.000           5000.000          
+2                2000.000           5000.000          
 
 [VERTICES]
 ;;Link           X-Coord            Y-Coord           

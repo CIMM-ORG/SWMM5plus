@@ -250,6 +250,13 @@ contains
                 else
                     isElemOut(ii) = .false.
                 end if
+            case (pump)
+                !% --- pumps that correspond to links
+                if (isLinkOut(tlink)) then
+                    isElemOut(ii) = .true.
+                else
+                    isElemOut(ii) = .false.
+                end if
             case (JM)
                 tnode => node_idx(ii)
                 !% --- junction mains correspond to nodes
@@ -462,6 +469,7 @@ contains
         if (setting%Output%DataOut%isVolumeConsOut)              N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isPreissmannNumberOut)        N_OutTypeElem =  N_OutTypeElem + 1
 
         if (N_OutTypeElem == 0) then
             !% --- if no outputtypes are specified, then suppress the element output
@@ -608,6 +616,15 @@ contains
             output_types_elemR(ii) = er_Preissmann_Celerity
             output_typenames_elemR(ii) = 'PreissmannCelerity'
             output_typeUnits_elemR(ii) = 'm/s'
+            output_typeProcessing_elemR(ii) = AverageElements
+        end if
+
+        !% --- Preissmann Number
+        if (setting%Output%DataOut%isPreissmannNumberOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Preissmann_Number
+            output_typenames_elemR(ii) = 'PreissmannNumber'
+            output_typeUnits_elemR(ii) = ' '
             output_typeProcessing_elemR(ii) = AverageElements
         end if
 

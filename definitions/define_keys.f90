@@ -91,7 +91,7 @@
         enumerator :: outlet                !% outlet element
         enumerator :: JM                    !% junction main element
         enumerator :: JB                    !% junction branch element
-        enumerator :: ImpliedStorage      !% junction main storage is artificially created
+        enumerator :: ImpliedStorage        !% junction main storage is artificially created
         enumerator :: FunctionalStorage     !% junction main storage is cauculated from a user provided function
         enumerator :: TabularStorage        !% junction main storage is cauculated from a user provided table
         enumerator :: storage               !% storage element
@@ -143,6 +143,7 @@
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
+        enumerator :: type_IdealPump        !% type ideal pump
         enumerator :: func_depth_outlet     !% outlet having functional depth relationship  
         enumerator :: func_head_outlet      !% outlet having functional head relationship 
         enumerator :: tabl_depth_outlet     !% outlet having curve relationship to depth
@@ -186,7 +187,7 @@
         enumerator :: Random
         enumerator :: BLink
         enumerator :: StaticSlot
-        enumerator :: VariableSlot
+        enumerator :: DynamicSlot
         !% keys for report time processing
         enumerator :: InSeconds
         enumerator :: InMinutes
@@ -355,6 +356,7 @@
         reverseKey(type2_Pump) = 'type2_Pump'
         reverseKey(type3_Pump) = 'type3_Pump'
         reverseKey(type4_Pump) = 'type4_Pump'
+        reverseKey(type_IdealPump) = 'type_IdealPump'
         reverseKey(func_depth_outlet) = 'func_depth_outlet'
         reverseKey(func_head_outlet) = 'func_head_outlet'
         reverseKey(tabl_depth_outlet) = 'tabl_depth_outlet'
@@ -389,7 +391,7 @@
         reverseKey(Random) = 'Random'
         reverseKey(BLink) = 'BLink'
         reverseKey(StaticSlot) = 'StaticSlot'
-        reverseKey(VariableSlot) = 'VariableSlot'
+        reverseKey(DynamicSlot) = 'DynamicSlot'
         reverseKey(InSeconds) = 'InSeconds'
         reverseKey(InMinutes) = 'InMinutes'
         reverseKey(InHours) = 'InHours'
@@ -624,7 +626,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(type3_Pump)) , type3_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(type4_Pump)) , type4_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(undefinedKey)) , undefinedKey
-        write(*,'(A," = ",i4)') trim(reverseKey(VariableSlot)) , VariableSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(DynamicSlot)) , DynamicSlot
         write(*,'(A," = ",i4)') trim(reverseKey(vert_ellipse)) , vert_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
         write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue

@@ -7,7 +7,7 @@ module face
     use adjust
     use jump
     use utility_profiler
-    use utility, only: util_sign_with_ones
+    use utility, only: util_sign_with_ones, util_CLprint
     use utility_crash, only: util_crashpoint
 
 
@@ -326,6 +326,9 @@ module face
                 faceR(idx_fBoth,fGeoSetU(ii)) = faceR(idx_fBoth,fGeoSetD(ii))
             end do
 
+            !% HACK: copy the preissmann number as well
+            faceR(idx_fBoth,fr_Preissmann_Number) = elemR(edn(idx_fBoth),er_Preissmann_Number) 
+            
             !% gradient extrapolation for head at infow
             faceR(idx_fBC, fr_Head_d) = elemR(edn(idx_fBC),er_Head)       &
                                       + elemR(edn(idx_fBC),er_Head)        &
@@ -457,6 +460,7 @@ module face
             eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
 
             faceR(idx_fBC, fr_Flowrate) = elemR(eup(idx_fBC), er_Flowrate) !% Copying the flow from the upstream element
+            faceR(idx_fBC,fr_Preissmann_Number) = elemR(eup(idx_fBC),er_Preissmann_Number) !% Copying the preissmann number
 
             do ii=1,size(fGeoSetD)
                 faceR(idx_fBC, fGeoSetD(ii)) = elemR(eup(idx_fBC), eGeoSet(ii)) !% Copying other geo factors from the upstream element
@@ -616,6 +620,7 @@ module face
             integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
             integer :: fFlowSet(1), eFlowSet(1)
+            integer :: fPreissmenSet(1), ePreissmenSet(1)
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
         !% Preliminaries    
@@ -649,18 +654,36 @@ module face
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_Flowrate]
 
+        fPreissmenSet = [fr_Preissmann_Number]
+        ePreissmenSet = [er_Preissmann_Number]
+
         ! write(*,"(A,4f12.5)") '......ppp ',elemR(ietmp(1),er_Head), &
         ! faceR(iftmp(1),fr_Head_u), &
         ! faceR(iftmp(1),fr_Head_d), &
         ! elemR(ietmp(2),er_Head)
 
+       ! print *, 'EEE--aa'
+       ! call util_CLprint ()   
+
         !% two-sided interpolation to using the upstream face set
         call face_interp_interior_set &
             (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
+          !  print *, 'EEE--bb'
+          !  call util_CLprint ()   
+
         call face_interp_interior_set &
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
+
+            ! print *, 'EEE--cc'
+            ! call util_CLprint ()   
+
         call face_interp_interior_set &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+        call face_interp_interior_set &
+            (fPreissmenSet, ePreissmenSet, er_InterpWeight_dP, er_InterpWeight_uP, facePackCol, Npack)
+
+            ! print *, 'EEE--dd'
+            ! call util_CLprint ()       
 
         ! write(*,"(A,4f12.5)") '......qqq ',elemR(ietmp(1),er_Head), &
         !     faceR(iftmp(1),fr_Head_u), &
@@ -687,6 +710,8 @@ module face
             ! faceR(iftmp(1),fr_Head_u), &
             ! faceR(iftmp(1),fr_Head_d), &
             ! elemR(ietmp(2),er_Head)    
+          !  print *, 'EEE--ee'
+          !  call util_CLprint ()  
 
         call face_copy_upstream_to_downstream_interior &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
@@ -696,8 +721,14 @@ module face
             ! faceR(iftmp(1),fr_Head_d), &
             ! elemR(ietmp(2),er_Head)    
 
+       !     print *, 'EEE--ff'
+       !     call util_CLprint ()    
+
         !% calculate the velocity in faces and put limiter
         call face_velocities (facePackCol, .true.)
+
+         !   print *, 'EEE--gg'
+         !   call util_CLprint ()  
 
         ! write(*,"(A,4f12.5)") '......yyy ',elemR(ietmp(1),er_Head), &
         ! faceR(iftmp(1),fr_Head_u), &
@@ -706,6 +737,9 @@ module face
 
         !% reset all the hydraulic jump interior faces
         call jump_compute
+
+          !  print *, 'EEE--hh'
+          !  call util_CLprint ()  
 
         ! write(*,"(A,4f12.5)") '......zzz ',elemR(ietmp(1),er_Head), &
         ! faceR(iftmp(1),fr_Head_u), &
@@ -729,9 +763,10 @@ module face
         !% Declarations
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, intent(in) :: Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3), eGhostGeoSet(3)
-            integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1), eGhostHeadSet(1)
-            integer :: fFlowSet(1), eFlowSet(1), eGhostFlowSet(1)
+            integer :: fGeoSetU(3), fGeoSetD(3), eGhostGeoSet(3)
+            integer :: fHeadSetU(1), fHeadSetD(1), eGhostHeadSet(1)
+            integer :: fFlowSet(1), eGhostFlowSet(1)
+            integer :: fPreissmenSet(1), eGhostPreissmenSet(1)
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
@@ -764,17 +799,17 @@ module face
         !% Note these can be expanded for other terms to be interpolated.
         fGeoSetU     = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-        eGeoSet      = [er_Area,   er_Topwidth,   er_HydDepth]
         eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
 
         fHeadSetU     = [fr_Head_u]
         fHeadSetD     = [fr_Head_d]
-        eHeadSet      = [er_Head]
         eGhostHeadSet = [ebgr_Head]
 
         fFlowSet      = [fr_Flowrate]
-        eFlowSet      = [er_Flowrate]
         eGhostFlowSet = [ebgr_Flowrate]
+
+        fPreissmenSet      = [fr_Preissmann_Number]
+        eGhostPreissmenSet = [ebgr_Preissmann_Number]
 
         !% transfer all the local elemR data needed for face interpolation into elemB data structure
         call local_data_transfer_to_boundary_array (facePackCol, Npack)
@@ -782,22 +817,14 @@ module face
         !% use elemB to transfer remote data to local elemG array for interpolation
         call inter_image_data_transfer (facePackCol, Npack)
 
-        !% two-sided interpolation to using the upstream face set
-        ! call face_interp_shared_set_old &
-        !     (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
-        ! call face_interp_shared_set_old &
-        !     (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)   
-        ! call face_interp_shared_set_old &
-        !     (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
-
         call face_interp_shared_set &
             (fGeoSetU, eGhostGeoSet, ebgr_InterpWeight_dG, ebgr_InterpWeight_uG, facePackCol, Npack)
-
         call face_interp_shared_set &
             (fHeadSetU, eGhostHeadSet, ebgr_InterpWeight_dH, ebgr_InterpWeight_uH, facePackCol, Npack)
-
         call face_interp_shared_set &
             (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
+        call face_interp_shared_set &
+            (fPreissmenSet, eGhostPreissmenSet, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -1198,7 +1225,7 @@ module face
         !% transfers local data from elemR to elemB%R
         !%-------------------------------------------------------------------
         !% Declarations
-            integer             :: ii, eColumns(11) 
+            integer             :: ii, eColumns(14) 
             integer, intent(in) :: facePackCol, Npack
             integer, pointer    :: thisP, eUp, eDn
             logical, pointer    :: isGhostUp, isGhostDn
@@ -1210,9 +1237,9 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
         !% HACK: this eset has to be exactly the same to work
-        eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate,    &
-                    er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH, &
-                    er_InterpWeight_uH, er_InterpWeight_dQ, er_InterpWeight_uQ] 
+        eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate, er_Preissmann_Number,  &
+                    er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH, er_InterpWeight_uH, &
+                    er_InterpWeight_dQ, er_InterpWeight_uQ, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces
