@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 0.5
     },
     "Limiter" : {
         "BC" : {
@@ -34,16 +34,16 @@
         },
         "Dt" : {
             "UseLimitMinYN" : true,
-            "Minimum"     : 1e-4
+            "Minimum"     : 1e-10
         }
     },    
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 10000,
+        "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 500
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -58,16 +58,15 @@
             "isTopWidthOut"     : false,
             "isVelocityOut"     : true,
             "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : true,
-            "isPreissmannCelerityOut"   : true
+            "isWaveSpeedOut"    : false
         },
         "Report" : {
             "useSWMMinpYN" :true,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 300.0,
-            "TimeUnits" : "Hours"
+            "TimeInterval" : 5.0,
+            "TimeUnits" : "Minutes"
         }
     },
     "Profile" : {
@@ -77,6 +76,7 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
+
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -91,33 +91,5 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
-    },
-    "Solver" : {
-        "PreissmannSlot" : true,
-        "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
-        "SolverSelect" : "ETM",
-        "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
-    },
-    "PreissmannSlot" : {
-<<<<<<< HEAD
-        "PreissmannSlotMethod" : "DynamicSlot", 
-        "TargetPreissmannCelerity" : 80.0
-=======
-        "PreissmannSlotMethod" : "VariableSlot", 
-        "PreissmannNumber" : 8.0,
-        "PreissmannCelerity" : 80.0
->>>>>>> fcb17dc37b226764f470f3cac00b2f5094c25cd2
-    },
-    "VariableDT" : {
-        "ApplyYN" : true,
-        "CFL_hi_max" : 0.7,
-        "CFL_target" : 0.5,
-        "CFL_lo_max" : 0.3,
-        "decreaseFactor" : 0.8,
-        "increaseFactor" : 1.2,
-        "NstepsForCheck" : 10
     }
 }

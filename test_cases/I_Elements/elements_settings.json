@@ -139,8 +139,14 @@
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
+<<<<<<< HEAD
         "PreissmannSlotMethod" : "DynamicSlot",
         "TargetPreissmannCelerity" : 0.01
+=======
+        "PreissmannSlotMethod" : "VariableSlot",
+        "PreissmannNumber" : 1.0,
+        "PreissmannCelerity" : 0.01
+>>>>>>> fcb17dc37b226764f470f3cac00b2f5094c25cd2
     },
     "Simulation" : {
         "useHydrology" : true,

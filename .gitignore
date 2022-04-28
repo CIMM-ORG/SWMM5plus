@@ -32,4 +32,7 @@ tests/*
 .vscode
 swmm5_output
 test_cases/C_Conduit/c_Preissmann_slot_cases/Malekpour_Cases/Malekpour_analytical_test_case.inp
+<<<<<<< HEAD
 test_cases/TRBs_IC/*
+=======
+>>>>>>> fcb17dc37b226764f470f3cac00b2f5094c25cd2

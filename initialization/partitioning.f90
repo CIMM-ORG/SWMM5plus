@@ -351,6 +351,7 @@ subroutine init_partitioning_default()
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
+            !stop 
             call util_crashpoint(1098226)
             return
         end select

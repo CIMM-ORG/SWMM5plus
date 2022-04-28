@@ -497,9 +497,9 @@ module define_settings
 
     !% setting%PreissmannSlot
     type PreissmannSlotType
-        integer :: PreissmannSlotMethod = DynamicSlot
-        real(8) :: TargetPreissmannCelerity = 0.01
-        real(8) :: PreissmannAlpha = 3.0
+        integer :: PreissmannSlotMethod = VariableSlot
+        real(8) :: PreissmannNumber = 1.0
+        real(8) :: PreissmannCelerity = 0.01
     end type PreissmannSlotType
 
     !% setting%Profile
@@ -1433,16 +1433,16 @@ contains
             end if
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
+        
+        !%                      PreissmannNumber          
+        call json%get('PreissmannSlot.PreissmannNumber', real_value, found)
+        if (found) setting%PreissmannSlot%PreissmannNumber = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannNumber not found'
 
-        !%                      TargetPreissmannCelerity
-        call json%get('PreissmannSlot.TargetPreissmannCelerity', real_value, found)
-        if (found) setting%PreissmannSlot%TargetPreissmannCelerity = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.TargetPreissmannCelerity not found'
-
-        !%                      PreissmannAlpha
-        call json%get('PreissmannSlot.PreissmannAlpha', real_value, found)
-        if (found) setting%PreissmannSlot%PreissmannAlpha = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannAlpha not found'
+        !%                      PreissmannCelerity
+        call json%get('PreissmannSlot.PreissmannCelerity', real_value, found)
+        if (found) setting%PreissmannSlot%PreissmannCelerity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannCelerity not found'
 
     !% Profile. =====================================================================
         !%                       Profile.useYN

@@ -1804,22 +1804,21 @@ contains
 !==========================================================================
 !
     subroutine util_allocate_curve_entries (curve_idx, num_entries)
-        !%-----------------------------------------------------------------
-        !% Description:
-        !% allocates the curve table of curve_indx for the number of values
-        !% expected (num_entries)
-        !%-----------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: curve_idx, num_entries
-            character(64)       :: subroutine_name = 'util_allocate_curve_entries'
-        !%-----------------------------------------------------------------
-        !% Preliminaries
-            if (crashYN) return
-            if (setting%Debug%File%utility_allocate) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------
-                
-        !% allocate the value array of curve of the given curve_idx
+        !-----------------------------------------------------------------------------
+        !
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, intent(in) :: curve_idx, num_entries
+        character(64)       :: subroutine_name = 'util_allocate_curve_entries'
+
+        !-----------------------------------------------------------------------------
+        if (crashYN) return
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% allocate the value array of curve
+
         allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'curve entries')
 

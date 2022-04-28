@@ -218,7 +218,7 @@ module utility
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow) 
-            VolSlot => elemR(:,er_SlotVolume)
+            VolSlot => elemR(:,er_TotalSlotVolume)
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -804,15 +804,10 @@ module utility
         ! elemR(iet(2),er_SmallVolume), '            ', &
         ! elemR(iet(3),er_SmallVolume)
 
-        ! ! write(*,"(A,5(e12.5,A))")     'FullVol ',                &         
-        ! ! elemR(iet(1),er_FullVolume), '            ', &
-        ! ! elemR(iet(2),er_FullVolume), '            ', &
-        ! ! elemR(iet(3),er_FullVolume)
-
-        ! ! write(*,"(A,5(e12.5,A))")     'SlotVol ',                &         
-        ! ! elemR(iet(1),er_TotalSlotVolume), '            ', &
-        ! ! elemR(iet(2),er_TotalSlotVolume), '            ', &
-        ! ! elemR(iet(3),er_TotalSlotVolume)
+        ! write(*,"(A,5(e12.5,A))")     'SlotVol ',                &         
+        ! elemR(iet(1),er_TotalSlotVolume), '            ', &
+        ! elemR(iet(2),er_TotalSlotVolume), '            ', &
+        ! elemR(iet(3),er_TotalSlotVolume)
 
 
         print *, ' '

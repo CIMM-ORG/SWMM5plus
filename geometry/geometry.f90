@@ -152,9 +152,6 @@ module geometry
         !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
 
-        ! print *, 'CCC -- 002- hhh'
-        ! call util_CLprint () 
-
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
            
@@ -230,9 +227,6 @@ module geometry
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
-
-        ! print *, 'CCC -- 002- ttt'
-        ! call util_CLprint () 
 
         call util_crashstop(322983)
 
@@ -433,14 +427,7 @@ module geometry
                                     hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
-                                    ! print *, area(tB), topwidth(tB), hydDepth(tB)
-                                    ! print *, perimeter(tB), hydRadius(tB),ell(tB)
-                                    ! print *, dHdA(tB)
                                 case (triangular)
-                                    ! print *, 'im triangular ',tB
-                                    ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
-                                    !     print *, 'triangular'
-                                    ! end if
                                     area(tB)     = triangular_area_from_depth_singular (tB)
                                     topwidth(tB) = triangular_topwidth_from_depth_singular (tB)
                                     hydDepth(tB) = triangular_hyddepth_from_depth_singular (tB)
@@ -448,7 +435,6 @@ module geometry
                                     hydRadius(tB)= triangular_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
-                                    
                                 case (trapezoidal)
                                     ! print *, 'im trapezoid',tB
                                     ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
@@ -1053,11 +1039,11 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
-        integer, pointer    :: thisP(:), Npack
+        integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:)
         real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:)
+        real(8), pointer    :: Overflow(:), zbottom(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -1067,11 +1053,11 @@ module geometry
 
         Npack      => npack_elemP(thisColP)
         area       => elemR(:,er_Area)
+        areaN0     => elemR(:,er_Area_N0)
         volume     => elemR(:,er_Volume)
         volumeN0   => elemR(:,er_Volume_N0)
         Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
-        ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
         fullvolume => elemR(:,er_FullVolume)
         fullArea   => elemR(:,er_FullArea)
@@ -1079,22 +1065,47 @@ module geometry
         headN0     => elemR(:,er_Head_N0)
         zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
 
+        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
 
-            where (SlotVolume(thisP) .gt. zeroR) 
-                volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                area(thisP)   = area(thisP)    + SlotArea(thisP)
-                depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                Overflow(thisP) = zeroR
-            end where 
+            select case (SlotMethod)
+
+            case (VariableSlot)
+
+                where (SlotVolume(thisP) .gt. zeroR) 
+                    volume(thisP) = fullvolume(thisP) + SlotVolume(thisP)
+                    area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
+                    depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
+                    head(thisP)   = zbottom(thisP) + depth(thisP)
+                    Overflow(thisP) = zeroR
+                end where 
+
+            case (StaticSlot)
+
+                where (SlotVolume(thisP) .gt. zeroR) 
+                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                    area(thisP)   = area(thisP)    + SlotArea(thisP)
+                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                    head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                    Overflow(thisP) = zeroR
+                end where 
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                stop 48756
+    
+            end select
+
         end if
 
         if (setting%Debug%File%geometry) &

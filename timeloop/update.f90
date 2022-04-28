@@ -8,7 +8,6 @@ module update
     use adjust
     use utility_profiler
     use utility_crash
-    use utility, only: util_CLprint
 
     implicit none
 
@@ -249,7 +248,7 @@ module update
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotWidth  => elemR(:,er_SlotWidth)
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
@@ -323,8 +322,8 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (PCelerity(thisP) .gt. zeroR)
-            w_uQ(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) !bugfix SAZ 23022022 
-            w_dQ(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_uQ(thisP) = - onehalfR * length(thisP)  / ( - PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_dQ(thisP) = + onehalfR * length(thisP)  / ( + PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
 
         !% apply limiters to timescales

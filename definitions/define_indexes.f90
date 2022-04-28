@@ -359,6 +359,8 @@ module define_indexes
         enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
         enumerator :: er_Setting                    !% percent open setting for a link element
+        enumerator :: er_TotalSlotVolume            !% slot volume
+        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area

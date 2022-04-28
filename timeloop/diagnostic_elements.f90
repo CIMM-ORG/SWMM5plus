@@ -111,10 +111,16 @@ module diagnostic_elements
             case default
                 print *, 'CODE ERROR element type unknown for # ', thisType
                 print *, 'which has key ',trim(reverseKey(thisType))
+                !stop 
                 call util_crashpoint( 9472)
                 return
             end select
         end do
+
+
+        !% HACK not sure what we need for diagnostic aux variables
+        !% The weir geometry is set in weir routines, as is flowrate, head, and velocity
+        call diagnostic_auxiliary_variables (thisCol, Npack)
 
     end subroutine diagnostic_by_type
 !%

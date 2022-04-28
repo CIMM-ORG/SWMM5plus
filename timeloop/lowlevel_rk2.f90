@@ -1258,53 +1258,55 @@ module lowlevel_rk2
         !% Compute preissmann slot for conduits in ETM methods
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol, Npack
-        integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
-        real(8), pointer    :: AreaN0(:), BreadthMax(:), ellMax(:), fullarea(:)
-        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
-        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:)  
-        real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
+        integer, pointer    :: thisP(:), SlotMethod
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
+        real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: volumeN0(:), dSlotVolume(:)
+        real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
+        real(8), pointer    :: PreissmannNumber, PreissmannCelerity, cfl, grav
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
         !% pointer packed element indexes
         thisP => elemP(1:Npack,thisCol)
-        !% pointers to elemR columns
-        AreaN0     => elemR(:,er_Area_N0)
-        BreadthMax => elemR(:,er_BreadthMax)
-        ellMax     => elemR(:,er_ell_max)
-        fullArea   => elemR(:,er_FullArea)
-        fullVolume => elemR(:,er_FullVolume)
+        volume     => elemR(:,er_Volume)
+        volumeN0   => elemR(:,er_Volume_N0)
+        fullvolume => elemR(:,er_FullVolume)
+        fullarea   => elemR(:,er_FullArea)
+        ell        => elemR(:,er_ell)
         length     => elemR(:,er_Length)
         PNumber    => elemR(:,er_Preissmann_Number)
         PCelerity  => elemR(:,er_Preissmann_Celerity)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
+        SlotVolume => elemR(:,er_TotalSlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
-        volume     => elemR(:,er_Volume)
-        velocity   => elemR(:,er_velocity)
-        !% pointers to elemI columns
-        fUp        => elemI(:,ei_Mface_uL)
-        fDn        => elemI(:,ei_Mface_dL)
-        !% pointer to faceR column
-        fPNumber   => faceR(:,fr_Preissmann_Number)
-        !% pointer to necessary settings struct
+        SlotHydRadius => elemR(:,er_SlotHydRadius)
+        BreadthMax    => elemR(:,er_BreadthMax)
+        dSlotVolume   => elemR(:,er_dSlotVolume)
+
         SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
-        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
-        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
+        PreissmannNumber    => setting%PreissmannSlot%PreissmannNumber
+        PreissmannCelerity  => setting%PreissmannSlot%PreissmannCelerity
         cfl                 => setting%VariableDT%CFL_target
         grav                => setting%Constant%gravity
 
         select case (SlotMethod)
 
+        case (VariableSlot)
+            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+            dSlotVolume(thisP) = volume(thisP) - max(volumeN0(thisP),fullvolume(thisP))
+            SlotWidth(thisP)  = fullarea(thisP) / ( (PreissmannNumber ** twoR) * ell(thisP))
+            SlotArea(thisP)   = dSlotVolume(thisP) / length(thisP)
+            SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
         case (StaticSlot)
             SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
             !% SWMM5 uses 1% of width max as slot width
             ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
             !% HACK: modeling for acoustic wavespeed
-            SlotWidth(thisP) = (grav * fullArea(thisP)) / (TargetPCelerity**2.0)
+            SlotWidth(thisP) = (grav * fullarea(thisP)) / (PreissmannCelerity**2.0)
             !% HACK: old code based on a target CFL
-            ! SlotWidth(thisP)  = (grav*fullArea(thisP)*tDelta**twoR)/&
+            ! SlotWidth(thisP)  = (grav*fullarea(thisP)*tDelta**twoR)/&
                 ! (cfl*length(thisP))**twoR
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
             SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)

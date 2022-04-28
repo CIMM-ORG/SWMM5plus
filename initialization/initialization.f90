@@ -188,7 +188,6 @@ contains
         call util_crashstop(190873)
 
         !% --- translate the link-node system into a finite-volume network
-        print*, "network_define"
         call network_define_toplevel ()
         call util_crashstop(329873)
 
@@ -248,14 +247,9 @@ contains
         else 
             !% be silent    
         end if    
-        
         !% --- initial conditions all are setup here
-        print*, "Initial Conditions"
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
-
-        !% --- allocate other temporary arrays (initialized to null)
-        call util_allocate_temporary_arrays()
 
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
@@ -627,16 +621,32 @@ contains
                     node%I(ii, ni_node_type) = nJm
                 end select
             end if 
-
-            !% exception: nJ2 strictly has one upstream and one downstream link
-            !% other cases where a nJ2 has only two upstream or two downstream 
-            !% links will be considered as a nJm
-            if ((node%I(ii, ni_node_type) == nJ2) .and. &
-                ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
-                 (node%I(ii,ni_N_link_d) > oneI))) then
-                    ! write(*,*) '... switching to a 2 links nJm junction type'
-                    node%I(ii, ni_node_type) = nJm
-            end if
+        
+            ! if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
+            !     !write(*,*) '... is outfall type'
+            !     node%I(ii, ni_node_type) = nBCdn
+            ! else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
+            !     !write(*,*) '... is storage type'
+            !     node%I(ii, ni_node_type) = nJm
+            !     node%YN(ii, nYN_has_storage) = .true.
+            ! else if ((total_n_links == twoI)          .and. &
+            !          (node%I(ii,ni_N_link_u) == oneI) .and. &
+            !          (node%I(ii,ni_N_link_d) == oneI) )then
+            !     !write(*,*) '... is 2 junction type'        
+            !     node%I(ii, ni_node_type) = nJ2
+            ! else if (total_n_links >= twoI) then
+            !     !write(*,*) '... is 3+ junction type'
+            !     node%I(ii, ni_node_type) = nJm
+            ! else if (total_n_links == oneI) then  !% brh 20211217
+            !     !write(*,*) '... is 1 junction is an upstream BC
+            !     node%I(ii, ni_node_type) = nJ1
+            ! else 
+            !     write(*,*) 'CODE or INP FILE ERROR, unexpected else condition '
+            !     write(*,*) 'Node type is undefined for node',ii
+            !     stop 
+            !       call util_crashpoint(98075)               
+            ! end if
+            !write(*,*)
 
             !write(*,*) 'call api_nodef_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)

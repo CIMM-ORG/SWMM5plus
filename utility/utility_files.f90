@@ -407,14 +407,11 @@ contains
         !%------------------------------------------------------------------
         !% Description
         !% Deletes the duplicate input files in the tmp directory
-        !% Each image will delete its own temporary input file
-        !% Only applies if there is more than one image
+        !% each image will delete its own temporary input file
         !%------------------------------------------------------------------
 
         if (setting%File%duplicate_input_file) then 
-            if (num_images() > 1) then
-                call execute_command_line (('rm '//setting%File%inp_file))
-            end if
+            call execute_command_line (('rm '//setting%File%inp_file))
         end if
 
     end subroutine util_file_delete_duplicate_input

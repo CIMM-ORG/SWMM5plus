@@ -854,7 +854,7 @@ contains
                     ! write a time counter
                     write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
                         'time step = ',step,'; model time = ',thistime, &
-                        ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
+                        ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,dt)
 
                     ! write estimate of time remaining
                     thistime = seconds_to_completion
@@ -909,16 +909,9 @@ contains
         else    
             thisDT => dt
         end if
-
-        !print *, 'in tl_get_max_CFL'
-        !print *, size(thisP), Npack
-
-        if (Npack > 0) then 
-            outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                            maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
-        else
-            outvalue = zeroR
-        end if
+        
+        outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
+                        maxval(( abs(PCelerity(thisP))) * thisDT / length(thisP)))
 
         ! print * , ' '
         ! print *, velocity(thisP)
