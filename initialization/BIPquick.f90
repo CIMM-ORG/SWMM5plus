@@ -60,6 +60,7 @@ contains
         integer       :: effective_root, ideal_junction
         integer       :: phantom_node_idx, phantom_link_idx
         integer       :: connectivity
+        real(8)       :: balance
     !%-------------------------------------------------------------------
     !% Preliminaries    
 
@@ -126,9 +127,9 @@ contains
             ! endif
             if ( mp == num_images() ) then
                 print*, "Last Sweep Bypass"
-                packed_node_idx = pack(node%I(:,ni_idx), (node%I(:, ni_P_image) == nullValueI ) .and. node%I(:, ni_idx) /= nullValueI)
+                packed_node_idx = pack(node%I(:,ni_idx), ( node%I(:, ni_P_image) == nullValueI ) .and. node%I(:, ni_idx) /= nullValueI )
                 node%I(packed_node_idx, ni_P_image) = mp
-                packed_link_idx = pack(link%I(:,li_idx), (link%I(:, li_P_image) == nullValueI ) .and. link%I(:, li_idx) /= nullValueI)
+                packed_link_idx = pack(link%I(:,li_idx), ( link%I(:, li_P_image) == nullValueI ) .and. link%I(:, li_idx) /= nullValueI )
                 link%I(packed_link_idx, li_P_image) = mp
                 exit
             end if
@@ -238,7 +239,9 @@ contains
         call calc_is_boundary()
 
         connectivity = connectivity_metric()
-        if (this_image() == 1) print *, 'Connectivity_metric: ', connectivity
+        balance = part_size_balance_metric()
+        if (this_image() == 1) print *, 'Connectivity metric: ', connectivity, 'Balance metric: ', balance
+        
 
         call init_bip_timer_stop()
     !%-------------------------------------------------------------------
@@ -287,6 +290,7 @@ contains
         weight_range(:,:) = zeroR
         accounted_for_links(:) = .false.
         phantom_link_tracker(:) = nullValueI
+        part_size(:) = zeroR
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -344,8 +348,9 @@ contains
         ! ----------------------------------------------------------------------------------------------------------------
             character(64) :: subroutine_name = 'bip_network_processing'
 
-            integer :: upstream_link, upstream_node, uplink_counter
-            integer ii, jj, uplinks
+            integer              :: upstream_link, upstream_node, uplink_counter
+            integer              :: ii, jj, uplinks
+            integer, allocatable :: not_null_nodes(:), pack_uplinks(:,:)
         ! ----------------------------------------------------------------------------------------------------------------
         if (crashYN) return
         if (setting%Debug%File%BIPquick) &
@@ -380,9 +385,45 @@ contains
             end do
         end do
 
+        ! not_null_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_idx) /= nullValueI))
+        ! pack_uplinks = node%I(not_null_nodes, ni_MlinkStart:ni_MlinkEnd)
+        ! print*, pack_uplinks
+        ! stop 1738
+
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine bip_network_processing
+!
+!============================================================================
+!============================================================================
+!
+    subroutine bip_network_processing_new()
+        ! ----------------------------------------------------------------------------------------------------------------
+        !
+        ! Description:
+        !   This subroutine is a preprocessing step.  Reimagining the adjacency matrix as an N x N dependency matrix.
+        !   I.e. A node row will have 0s and 1s corresponding to whether that node is downstream of the column node
+        !
+        ! ----------------------------------------------------------------------------------------------------------------
+            character(64) :: subroutine_name = 'bip_network_processing_new'
+
+            integer              :: upstream_link, upstream_node, uplink_counter
+            integer              :: ii, jj, uplinks
+            integer, allocatable :: not_null_nodes(:), pack_uplinks(:,:)
+        ! ----------------------------------------------------------------------------------------------------------------
+        if (crashYN) return
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% Pseudocode
+        ! I think the logic for the original bip_network_preprocessing() routine will work, 
+        ! but I'll need to add some lines of code that goes back and adds the upstream nodes... 
+        ! that should take a good amount of time
+
+
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine bip_network_processing_new
 !
 !============================================================================
 !============================================================================
@@ -467,6 +508,9 @@ contains
             B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
                 + calc_link_weights(link%I(jj, li_idx))
         end do
+        ! pack_not_null_links = pack(link%I(:, li_idx), link%I(:, li_idx) /= nullValueI)
+        ! pack_li_Mnode_d = link%I(pack_not_null_links, li_Mnode_d)
+        
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -521,6 +565,7 @@ contains
                     call calc_upstream_weight(weight_index, upstream_node_list(jj))
                 end if
             end do
+            
         end if
 
         if (setting%Debug%File%BIPquick) &
@@ -606,9 +651,9 @@ contains
         character(64) :: subroutine_name = 'trav_subnetwork'
 
         integer, intent(in out) :: root, image
-        !integer :: upstream_node_list(3)
-        integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
-        integer :: ii, jj, kk
+        integer, allocatable    :: link_Mnode_d(:)
+        integer                 :: upstream_node_list(max_up_branch_per_node) !% brh20211219
+        integer                 :: ii, jj, kk
         !--------------------------------------------------------------------------
         if (crashYN) return
         if (setting%Debug%File%BIPquick) &
@@ -627,11 +672,13 @@ contains
             upstream_node_list = B_nodeI(root, :)
 
             !% Find the links that are in the subnetwork and mark them as being added to a partition
-            do jj = 1, size(link%I, 1)
-                if ( link%I(jj, li_Mnode_d) == root ) then
-                    partitioned_links(jj) = .true.
-                end if
-            end do
+            ! do jj = 1, size(link%I, 1)
+            !     if ( link%I(jj, li_Mnode_d) == root ) then
+            !         partitioned_links(jj) = .true.
+            !     end if
+            ! end do
+            link_Mnode_d = pack(link%I(:, li_idx), link%I(:, li_Mnode_d) == root)
+            partitioned_links(link_Mnode_d) = .true. 
 
             !% Iterate through the upstream nodes
             do jj = 1, size(upstream_node_list)
@@ -1269,22 +1316,47 @@ contains
         character(64) :: subroutine_name = 'connectivity_metric'
 
         integer  :: connectivity, ii
+        integer, allocatable :: pack_boundary_nodes(:)
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        connectivity = 0
-
         !% The sum of the ni_P_is_boundary column is the connectivity value
-        do ii = 1, size(node%I, 1)
-            connectivity = connectivity + node%I(ii, ni_P_is_boundary)
-        end do
+        connectivity = sum(node%I(:, ni_P_is_boundary))
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function connectivity_metric
+
+    function part_size_balance_metric() result(balance)
+        !-------------------------------------ni_P_is_boundary----------------------------------
+        ! Description: This subroutine is used to calculate the number of nodes that belong
+        !   to multiple partitions
+        !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'part_size_balance_metric'
+
+        integer  :: mp
+        real(8)  :: balance
+        integer, allocatable :: packed_link_lengths(:)
+
+        !--------------------------------------------------------------------------
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        do mp = 1, num_images()
+            packed_link_lengths = pack(link%I(:, li_idx), link%I(:, li_P_image) == mp)
+            part_size(mp) = sum(link%R(packed_link_lengths, lr_Length))
+        end do
+
+        balance = ( maxval(part_size(:)) - minval(part_size(:)) ) / sum(part_size(:))
+
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    end function part_size_balance_metric
 !
 !==========================================================================
 !==========================================================================

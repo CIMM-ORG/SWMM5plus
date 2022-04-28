@@ -36,7 +36,10 @@
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
         }
-    },    
+    },  
+    "Partitioning" : {
+        "PartitioningMethod" : "random"
+    },  
     "Output" : {
         "Verbose" : true,
         "Warning" : true,

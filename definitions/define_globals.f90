@@ -141,6 +141,7 @@ module define_globals
 
     !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)
+    integer, allocatable :: B_nodeI_big(:,:)
     real(8), allocatable :: B_nodeR(:,:)
     integer, allocatable :: B_roots(:)
     real(8), allocatable :: weight_range(:,:)
@@ -149,6 +150,7 @@ module define_globals
     logical, allocatable :: partitioned_links(:)
     logical, allocatable :: accounted_for_links(:)
     integer, allocatable :: phantom_link_tracker(:)
+    integer, allocatable :: part_size(:)
 
     !% Partitioning module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable :: adjacent_links(:)

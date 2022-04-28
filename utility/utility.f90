@@ -240,20 +240,20 @@ module utility
             !eCons(thisP) = dt * (fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP)) &
             !              - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)      
                           
-            do ii = 1,size(thisP)
-                if (abs(eCons(thisP(ii))) > 1.0e-4) then
-                    print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
-                    print *,  eCons(thisP(ii))
-                    print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
-                    print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
-                    print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
-                            - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
-                    print *, elemR(thisP(ii),er_VolumeOverFlow)
-                    do kk=1,num_images()
-                        stop 358783
-                    end do
-                end if
-            end do  
+            ! do ii = 1,size(thisP)
+            !     if (abs(eCons(thisP(ii))) > 1.0e-4) then
+            !         print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
+            !         print *,  eCons(thisP(ii))
+            !         print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
+            !         print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
+            !         print *, VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
+            !                 - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
+            !         print *, elemR(thisP(ii),er_VolumeOverFlow)
+            !         do kk=1,num_images()
+            !             stop 358783
+            !         end do
+            !     end if
+            ! end do  
 
         end if
 

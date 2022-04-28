@@ -2,7 +2,8 @@ module utility_deallocate
 
     use define_indexes
     use define_globals
-    use define_settings, only: setting
+    use define_settings
+    ! use define_settings, only: setting
 
     implicit none
 
@@ -88,6 +89,20 @@ contains
 
         deallocate(image_full, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'image_full')
+
+        !% If BIPquick is being used for Partitioning, allocate additional arrays
+        if (setting%Partitioning%PartitioningMethod == BQuick) then
+            deallocate(B_nodeI)
+            deallocate(B_nodeI_big)
+            deallocate(B_nodeR)
+            deallocate(totalweight_visited_nodes)
+            deallocate(partitioned_nodes)
+            deallocate(partitioned_links)
+            deallocate(weight_range)
+            deallocate(accounted_for_links)
+            deallocate(phantom_link_tracker)
+            deallocate(part_size)
+        end if
 
         !%-------------------------------------------------------------------
         !% closing

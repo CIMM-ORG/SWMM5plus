@@ -188,10 +188,12 @@ contains
         call util_crashstop(190873)
 
         !% --- translate the link-node system into a finite-volume network
+        print*, "network_define"
         call network_define_toplevel ()
         call util_crashstop(329873)
 
         !% --- iinitialize boundary and ghost elem arrays for inter image data transfer
+        print*, "boundary ghost elem array"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293378)
 
@@ -248,6 +250,7 @@ contains
             !% be silent    
         end if    
         !% --- initial conditions all are setup here
+        print*, "Initial Conditions"
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
 

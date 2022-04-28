@@ -66,12 +66,15 @@ subroutine partitioning_toplevel()
             if (setting%Partitioning%PartitioningMethod == Default) then
                 if (setting%Output%Verbose) write(*,"(A)")  "... using Default Partitioning..."
                 call init_partitioning_default()
+                if (setting%Output%Verbose) write(*,"(A)")  "... finished Default Partitioning..."
             else if (setting%Partitioning%PartitioningMethod == Random) then
                 if (setting%Output%Verbose) write(*,"(A)")  "... using Random Partitioning..."
                 call init_partitioning_random()
+                if (setting%Output%Verbose) write(*,"(A)")  "... finished Random Partitioning..."
             else if (setting%Partitioning%PartitioningMethod == BLink) then
                 if (setting%Output%Verbose) write(*,"(A)")  "... using Balanced Link Partitioning..."
                 call init_partitioning_linkbalance()
+                if (setting%Output%Verbose) write(*,"(A)")  "... finished Balanced Link Partitioning..."
             else if (setting%Partitioning%PartitioningMethod == BQuick) then
                 if (setting%Output%Verbose) write(*,"(A)") "... using BIPquick Partitioning..."
                 call BIPquick_toplevel()
@@ -331,19 +334,6 @@ subroutine init_partitioning_default()
     do ii = 1, size(node%I, 1)
 
         !% This if statement increments the num_attributed_elements by the number of elements associated with that node type
-
-        ! if ( node%I(ii, ni_node_type) == nBCup ) then
-        !     num_attributed_elements = num_attributed_elements + N_elem_nBCup
-        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
-        !     num_attributed_elements = num_attributed_elements + N_elem_nBCdn
-        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
-        !     num_attributed_elements = num_attributed_elements + N_elem_nStorage
-        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
-        !     num_attributed_elements = num_attributed_elements + N_elem_nJ2
-        ! else if ( node%I(ii, ni_node_type) == nJm ) then
-        !     num_attributed_elements = num_attributed_elements + N_elem_nJm
-        ! end if
-
         !% brh20211217 -- revised to add nJ1
         select case (node%I(ii, ni_node_type))
         case (nBCup)
@@ -361,7 +351,6 @@ subroutine init_partitioning_default()
         case default 
             print *, 'CODE ERROR: unknown node type # of ',node%I(ii, ni_node_type)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
-            !stop 
             call util_crashpoint(1098226)
             return
         end select
@@ -381,7 +370,6 @@ subroutine init_partitioning_default()
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
         current_node_image = node%I(ii, ni_P_image)
-        !adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
         adjacent_links = node%I(ii, ni_MlinkStart:ni_MlinkEnd)        !% brh20211219
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
@@ -473,18 +461,6 @@ subroutine init_partitioning_random()
         end do
 
         !% elem_per_image is incremented by the number of elements associated with each node type
-        ! if ( node%I(ii, ni_node_type) == nBCup ) then
-        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCup
-        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
-        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
-        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
-        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
-        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
-        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
-        ! else if ( node%I(ii, ni_node_type) == nJm ) then
-        !     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
-        ! end if
-
         !% brh20211217 -- revised to add nJ1
         select case (node%I(ii, ni_node_type))
         case (nBCup)
@@ -597,7 +573,7 @@ subroutine init_partitioning_linkbalance()
         end do
     end if
     if (setting%Debug%File%partitioning) then
-        print *, link%I(:, li_P_image), "node%I(:, li_P_image)"
+        print *, link%I(:, li_P_image), "link%I(:, li_P_image)"
         print *, node%I(:, ni_P_image), "node%I(:, ni_P_image)"
         print *, node%I(:, ni_P_is_boundary), "node%I(:, ni_P_is_boundary)"
     end if
@@ -641,19 +617,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
         !% The current image is the one to which the current link has been assigned
         current_image = node%I(ii, ni_P_image)
 
-        ! !% elem_per_image for the current image is incremented by the number of elements associated with each node type
-        ! if ( node%I(ii, ni_node_type) == nBCup ) then
-        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
-        ! else if ( node%I(ii, ni_node_type) == nBCdn ) then
-        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCdn
-        ! else if ( node%I(ii, ni_node_type) == nStorage ) then
-        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nStorage
-        ! else if ( node%I(ii, ni_node_type) == nJ2 ) then
-        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
-        ! else if ( node%I(ii, ni_node_type) == nJm ) then
-        !     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
-        ! end if
-
+        !% elem_per_image for the current image is incremented by the number of elements associated with each node type
         !% brh20211217 -- revised to add nJ1
         select case (node%I(ii, ni_node_type))
         case (nBCup)

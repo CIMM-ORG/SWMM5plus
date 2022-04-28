@@ -50,9 +50,11 @@ contains
         !--------------------------------------------------------------------
 
         !% get the slope of each link given the node Z values
+        print*, "Init Linkslope"
         call init_network_linkslope ()
 
         !% divide the link node networks in elements and faces
+        print*, "Network Elements Create"
         call init_network_datacreate ()
 
         ! print *, ' in ',trim(subroutine_name)
@@ -96,10 +98,12 @@ contains
 
         !% replaces ni_elemface_idx of nJ2 nodes for the upstream elem
         !% of the face associated with the node
+        print*, "Update nJ2"
         call init_network_update_nj2_elem ()
 
         !% look for small CC elements in the network and elongates them
         !% to a user defined value
+        print*, "Element length adjust"
         call init_network_CC_elem_length_adjust ()
 
         sync all

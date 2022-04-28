@@ -234,6 +234,7 @@ contains
             call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
             allocate(B_nodeI(size(node%I,1), max_up_branch_per_node))
+            allocate(B_nodeI_big(size(node%I,1), size(node%I,1)))
             allocate(B_nodeR(size(node%R,1), twoI))
             allocate(B_roots(N_nBCdn))
             allocate(totalweight_visited_nodes(size(node%I, oneI)))
@@ -242,6 +243,7 @@ contains
             allocate(weight_range(size(link%I, oneI), twoI))
             allocate(accounted_for_links(size(link%I, oneI)))
             allocate(phantom_link_tracker(size(link%I, oneI)))
+            allocate(part_size(num_images()))
         end if
     end subroutine util_allocate_partitioning_arrays
 !
