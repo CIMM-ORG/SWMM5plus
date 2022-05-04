@@ -3,6 +3,7 @@ shopt -s extglob
 
 # --------------------------------------------------------------------------------------
 
+# source /opt/intel/oneapi/setvars.sh 
 . ./build_vars.sh
 . ./build_dependencies.sh
 
@@ -105,5 +106,5 @@ echo Complete!
 echo "To update number of processors in the system:"
 echo "Please execute >>> source ~/.bashrc"
 
-
+# source ~/.bashrc
 
