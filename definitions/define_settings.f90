@@ -377,6 +377,7 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
+        logical :: AdjustLinkLengthYN = .true.
         real(8) :: LinkShortingFactor  = 0.33
         real(8) :: MinElemLengthFactor = 0.50
         integer :: MinElemLengthMethod = ElemLengthAdjust
@@ -954,6 +955,11 @@ contains
 
     !% Discretization. =====================================================================
         !% -- Nominal element length adjustment
+        !%                      Discretization.AdjustLinkLengthYN
+        call json%get('Discretization.AdjustLinkLengthYN', logical_value, found)
+        if (found) setting%Discretization%AdjustLinkLengthYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdjustLinkLengthYN not found'
+
         !%                      Discretization.LinkShortingFactor
         call json%get('Discretization.LinkShortingFactor', real_value, found)
         if (found) setting%Discretization%LinkShortingFactor = real_value

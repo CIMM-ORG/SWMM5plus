@@ -601,7 +601,7 @@ contains
         !--------------------------------------------------------------------------
 
             integer, intent(in) :: thisLink
-            integer, pointer    :: geometryType
+            integer, pointer    :: geometryType, tidx
 
             character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
         !--------------------------------------------------------------------------
@@ -623,23 +623,23 @@ contains
                     !% store geometry specific data
                     elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-                    elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Rectangular_Breadth)
-                    elemR(:,er_Area)         = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
-                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullHydDepth) = link%R(thisLink,lr_FullDepth)  !% 20220406brh
+                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Breadth)
+                    elemR(:,er_Area)          = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
+                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                    elemR(:,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullHydDepth)  = link%R(thisLink,lr_FullDepth)  !% 20220406brh
                     elemR(:,er_FullPerimeter) = twoR * link%R(thisLink,lr_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth) !% 20220406brh
-                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)      = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
-                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                            elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                    elemR(:,er_ell_max)       = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                 elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
 
             case (lTrapezoidal)
@@ -715,6 +715,29 @@ contains
                                                 (elemR(:,er_FullDepth) ** twoR))
                 endwhere
 
+            case (lIrregular)
+                tidx => link%I(thisLink,li_transect_idx)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_geometryType)  = irregular
+                    elemI(:,ei_transect_idx)  = tidx
+                    elemR(:,er_BreadthMax)    = transectR(tidx,tr_widthMax)
+                    elemR(:,er_FullDepth)     = transectR(tidx,tr_depthFull)
+                    elemR(:,er_FullArea)      = transectR(tidx,tr_areaFull)
+                    elemR(:,er_FullPerimeter) = transectR(tidx,tr_areaFull) / transectR(tidx,tr_hydRadiusFull)
+                    elemR(:,er_FullHydDepth)  = transectR(tidx,tr_areaFull) / transectR(tidx,tr_widthFull)
+                    elemR(:,er_ZbreadthMax)   = transectR(tidx,tr_depthAtBreadthMax) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) + elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   =  transectR(tidx,tr_areaBelowBreadthMax)
+                    elemR(:,er_ell_max) = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                           elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax)
+                endwhere
+                
+
+                print *, 'working on irregular cross-sections'
+                call util_crashpoint(448792)
+                return
+                
             case default
 
                 print *, 'In, ', subroutine_name
@@ -817,6 +840,7 @@ contains
             print *, 'which has key ',trim(reverseKey(geometryType))
             !stop 
             call util_crashpoint(887344)
+            stop
             return
         end select
 

@@ -65,6 +65,7 @@
         "energy_correction_factor" : 1.0
     },
     "Discretization" : {
+        "AdjustLinkLengthYN" : true,
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",

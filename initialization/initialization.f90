@@ -19,6 +19,7 @@ module initialization
     use output
     use pack_mask_arrays
     use utility_crash
+    use xsect_tables
 
     implicit none
 
@@ -76,6 +77,7 @@ contains
 
         !% --- define the reverse keys (used mainly for debugging)
         call define_keys_reverse()
+        call define_apikeys_reverse()
         !% NOTES:
         !%    reverseKey(ii) gives you the text name of the ii key
         !%    there are also two useful subroutines:
@@ -144,12 +146,17 @@ contains
         call util_crashstop(43974)
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
         call util_crashstop(31973)
+
+        !% --- setup the irregular transect arrays
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
+        call init_transect_array()
+        call util_crashstop(42873)
         
         !% --- initialize globals that are run-time dependent
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
 
         !% --- allocate storage for subcatchment arrays
@@ -487,18 +494,25 @@ contains
         node%I(:,ni_N_link_d) = 0
 
         do ii = 1, SWMM_N_link
+            !print *, 'starting link ',ii
             link%I(ii,li_idx) = ii
-            link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction)
-            link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
-            link%I(ii,li_link_sub_type) = interface_get_linkf_attribute(ii, api_linkf_sub_type)
-            link%I(ii,li_geometry) = interface_get_linkf_attribute(ii, api_linkf_geometry)
+            link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
+            link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
+            link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
 
+            !print *, ' '
+            !print *, 'calling interface_get_linkf_attribute for api_linkf_geometry ',ii
+            link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
+
+            !print *, ii, link%I(ii,li_geometry), reverseKey(link%I(ii,li_geometry))
+
+            !print *, 'aaa'
             if (link%I(ii,li_link_direction) == 1) then
-                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
-                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
+                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1,.true.) + 1 ! node1 in C starts from 0
+                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2,.true.) + 1 ! node2 in C starts from 0
             else if (link%I(ii,li_link_direction) == -1) then
-                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
-                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
+                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node2,.true.) + 1 ! node2 in C starts from 0
+                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node1,.true.) + 1 ! node1 in C starts from 0
             else
                 write(*,*) 'Fatal error: link direction should be 1 or -1'
                 stop 79456456
@@ -515,18 +529,19 @@ contains
             !% types via an external JSON file for links whose path can be specified in
             !% setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
-            link%R(ii,lr_Length) = interface_get_linkf_attribute(ii, api_linkf_conduit_length)
+            !print *, 'bbb'
+            link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
-            link%R(ii,lr_BreadthScale) = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax)
+            link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
-            link%R(ii,lr_LeftSlope) = interface_get_linkf_attribute(ii, api_linkf_left_slope)
-            link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
-            link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
-            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
-            link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
-            link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
-            link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)
-            link%R(ii,lr_OutletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset2)
+            link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
+            link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
+            link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
+            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+            link%R(ii,lr_InitialDepth)    = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
+            link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+            link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii,api_linkf_offset1,           .false.)
+            link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii,api_linkf_offset2,           .false.)
             !write(*,*) 'api_nodef_initDepth 1'
             link%R(ii,lr_InitialUpstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth) - &
                                                     link%R(ii,lr_InletOffset), zeroR)
@@ -534,15 +549,16 @@ contains
             link%R(ii,lr_InitialDnstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth) - &
                                                     link%R(ii,lr_OutletOffset), zeroR)
 
+            !print *, 'ccc'
             !% special element attributes
-            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions)
-            link%I(ii,li_curve_id) = interface_get_linkf_attribute(ii, api_linkf_curveid)
-            link%R(ii,lr_DischargeCoeff1) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1)
-            link%R(ii,lr_DischargeCoeff2) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2)
-            link%R(ii,lr_initSetting) = interface_get_linkf_attribute(ii, api_linkf_initSetting)
-            link%R(ii,lr_yOn) = interface_get_linkf_attribute(ii, api_linkf_yOn)
-            link%R(ii,lr_yOff) = interface_get_linkf_attribute(ii, api_linkf_yOff)
-            link%R(ii,lr_SideSlope) = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope)
+            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
+            link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
+            link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
+            link%R(ii,lr_initSetting)         = interface_get_linkf_attribute(ii, api_linkf_initSetting,          .false.)
+            link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
+            link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
+            link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
             !% SWMM5 doesnot distinguish between channel and conduit
             !% however we need that distinction to set up the init condition
             if ( (link%I(ii,li_link_type) == lPipe)          .and. &
@@ -559,8 +575,17 @@ contains
                 link%I(ii,li_link_type) = lChannel
             end if
 
+            !% 20220421brh
+            !% Irregular cross-sections (TRANSECTS in SWMM input file)
+            if (link%I(ii,li_geometry) == lIrregular) then
+                link%I(ii,li_transect_idx) = interface_get_linkf_attribute(ii, api_linkf_transectidx,.true.)
+                !print *, 'irregular cross-section transect ID ',link%I(ii,li_transect_idx)
+            end if
+            !% 20220421brh
+
+            !print *, 'ddd'
             !% brh20211207s
-            link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag) == 1)
+            link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag,.true.) == 1)
             !% brh20211207e
         end do
 
@@ -707,6 +732,24 @@ contains
 
         !% Update Link/Node names
         call interface_update_linknode_names()
+
+        !% Check for small links if automatic resizing is not used.
+        if (.not. setting%Discretization%AdjustLinkLengthYN) then
+            do ii = 1, SWMM_N_link
+                if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
+                    if (link%R(ii,lr_Length) < 1.5 * setting%Discretization%NominalElemLength) then
+                        print *, 'SWMM input file links are smaller than 1.5 * NominalElemLength'
+                        print *, 'Found link length of ',link%R(ii,lr_Length)
+                        print *, 'Link index is ',ii
+                        print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
+                        print *, 'Either change setting.Discretization.AdjustLinkLengthYN to true, or'
+                        print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
+                        call util_crashpoint(447298)
+                    end if
+                end if
+            end do
+        end if
+
         if (setting%Debug%File%initialization) then
             !%-----------------------------------------------------------------------------
             print *, 'idx,    nodeType,    linkU,    linkD,   curveID, patternRes'
@@ -726,6 +769,218 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine init_transect_array ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initializes the transect storage for EPA-SWMM Irregular cross-sections
+        !% Note that N_transect is set from EPA-SWMM in interface_init()
+        !%------------------------------------------------------------------
+        !% Declarations     
+            integer :: ii, jj, kk
+            integer :: nflip(1)
+            real(8), allocatable :: Darray(:), Aarray(:), Warray2(:,:)
+            real(8), pointer     :: depthU(:,:), areaForDepthU(:,:)
+            real(8), pointer     :: hydradForDepthU(:,:),widthForDepthU(:,:)
+            real(8), pointer     :: areaU(:,:), depthForAreaU(:,:)
+            real(8), pointer     :: hydradForAreaU(:,:),widthForAreaU(:,:)
+            real(8), pointer     :: depthFull(:), areaFull(:), hydradFull(:)
+            real(8), pointer     :: widthFull(:), widthMax(:)
+            real(8), pointer     :: areaBelowBreadthMax(:), depthAtBreadthMax(:)
+            real(8)              :: depthIncrement, areaIncrement
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (N_transect < 1) return
+
+             !% --- get the number of depth levels in the SWMM-C transect tables from EPA-SWMM
+            SWMM_N_transect_depth_items = interface_get_N_TRANSECT_TBL()
+
+            !% --- match the transect # in EPA-SWM in SWMM5+
+            !%     HACK, we may want make these independent in the future
+            N_transect_depth_items  = SWMM_N_transect_depth_items
+            N_transect_area_items   = SWMM_N_transect_depth_items
+
+            !% local arrays
+            allocate(Darray(N_transect_depth_items))
+            Darray(:) = (/ (jj,jj=0,N_transect_depth_items-1)/)
+
+            allocate(Aarray(N_transect_area_items))
+            Aarray(:) = (/ (jj,jj=0,N_transect_area_items-1)/)
+
+            !% --- a temporary width array
+            allocate(Warray2(N_transect, N_transect_depth_items))
+
+            !% --- allocation transect storage
+            call util_allocate_transect()
+
+        !%------------------------------------------------------------------
+        !% Alias:
+            !% --- tables based on uniform discretization of depth
+            depthU              => transectTableDepthR(:,:,tt_depth)
+            areaForDepthU       => transectTableDepthR(:,:,tt_area)
+            hydradForDepthU     => transectTableDepthR(:,:,tt_hydradius)
+            widthForDepthU      => transectTableDepthR(:,:,tt_width)
+
+            !% tables based on uniform discretization of area
+            areaU               => transectTableAreaR(:,:,tt_area)
+            depthForAreaU       => transectTableAreaR(:,:,tt_depth)
+            hydradForAreaU      => transectTableAreaR(:,:,tt_hydradius)
+            widthForAreaU       => transectTableAreaR(:,:,tt_width)
+
+            areaFull            => transectR(:,tr_areaFull)
+            depthFull           => transectR(:,tr_depthFull)
+            widthMax            => transectR(:,tr_widthMax)
+            widthFull           => transectR(:,tr_widthFull)
+            hydradFull          => transectR(:,tr_hydRadiusFull)
+            areaBelowBreadthMax => transectR(:,tr_areaBelowBreadthMax)
+            depthAtBreadthMax   => transectR(:,tr_depthAtBreadthMax)
+        !%------------------------------------------------------------------
+
+        !% --- get transect scalar date from EPA-SWMM
+        do ii=1,SWMM_N_transect
+            transectI(ii,ti_idx) = ii
+            transectR(ii,tr_depthFull)         = interface_get_transectf_attribute(ii,api_transectf_yFull)
+            transectR(ii,tr_areaFull)          = interface_get_transectf_attribute(ii,api_transectf_aFull)
+            transectR(ii,tr_hydRadiusFull)     = interface_get_transectf_attribute(ii,api_transectf_rFull)
+            transectR(ii,tr_widthMax)          = interface_get_transectf_attribute(ii,api_transectf_wMax)
+            transectR(ii,tr_depthAtBreadthMax) = interface_get_transectf_attribute(ii,api_transectf_ywMax)
+            transectR(ii,tr_sectionFactor)     = interface_get_transectf_attribute(ii,api_transectf_sMax)
+            transectR(ii,tr_areaAtMaxFlow)     = interface_get_transectf_attribute(ii,api_transectf_aMax)
+            transectR(ii,tr_lengthFactor)      = interface_get_transectf_attribute(ii,api_transectf_lengthFactor)
+            transectR(ii,tr_roughness)         = interface_get_transectf_attribute(ii,api_transectf_roughness)
+        end do
+
+        !% ---- HACK if N_transect /= SWMM_N_transect then we need additional initialization
+        if (N_transect .ne. SWMM_N_transect) then
+            print *, 'CODE ERROR: transect initialization not set up for mismatch with EPA-SWMM'
+            call util_crashpoint(449872)
+        end if
+
+        !% --- get the transect ID names from EPA-SWMM
+        call interface_update_transectID_names ()
+
+        !% --- get the transect table info from EPA-SWMM (normalized)
+        !%     this gets Transect.aTbl, Transect.hradTbl Transect.widthTbl Transect.areaTbl
+        !%     and stores in the transectTableDepthR() array
+        call interface_get_transect_table ()
+
+        !% --- convert EPA-SWMM normalized tables to dimensional values for processing here
+        areaForDepthU   = areaForDepthU   * spread(areaFull,2,N_transect_depth_items)
+        widthForDepthU  = widthForDepthU  * spread(widthMax,2,N_transect_depth_items)
+        hydradForDepthU = hydradForDepthU * spread(hydradFull,2,N_transect_depth_items)
+
+        !% --- compute additional transect data
+        !%     EPA-SWMM only stores width, area, and hydraulic radius for irregular
+        !%     cross-sections with uniform depth discretization. SWMM5+ stores
+        !%     the actual depth discretization as well.
+        do ii=1,N_transect
+            !% --- EPA-SWMM assigns linear depth increment 
+            !%     see function transect_validate in transect.c
+            !%     Compute and store the uniformly-discretized depth
+            depthIncrement = depthFull(ii) / ( real(N_transect_depth_items - 1,8) )
+            depthU(ii,:) = depthIncrement * Darray
+
+            !% --- full width is not stored by EPA-SWMM, but is needed for
+            !%     SWMM5+. This value is TTable width data at largest depth value
+            widthFull(ii) = widthForDepthU(ii,N_transect_depth_items)               
+        end do
+
+        !% ------------------------------------------------------------------------
+        !% --- BUGFIX -- REMOVE THIS IF EPA-SWMM UPDATED FOR Transect.ywMax
+        !%     EPA-SWMM does not store the ywMax in Transect[index].ywMax
+        !%     See xsect_setIrregXsectParams() in xsect.c
+        !%     The value of ywMax is computed for each cross-section, but
+        !%     is not stored as part of the Transect object.
+        !%     Possible fix in EPA-SWMM is: Transect[index].ywMax = xsect->ywMax;
+        !%     Here we provide a separate computation of yMax, which gets stored
+        !%     in transectR(:,tr_depthAtBreadthMax)
+
+            !% --- compute the change in width for each depth increment
+            Warray2 = widthForDepthU(:,2:N_transect_depth_items) - widthForDepthU(:,1:N_transect_depth_items-1)
+
+            !% --- identify negative width increments (decreasing width)
+            where (Warray2 < zeroR)
+                Warray2 = -oneR
+            elsewhere
+                Warray2 = oneR
+            endwhere
+            !% --- find the depth at max breadth
+            do ii=1,N_transect
+                !% --- get the index for the flip from increasing to decreasing width
+                nflip = findloc(Warray2(ii,:),-oneR)
+                !% --- if width never decreases, use max depth
+                if (nflip(1) .eq. 0) nflip = N_transect_depth_items
+                !% --- set the depth from the depth table
+                depthAtBreadthMax(ii) = depthU(ii,nflip(1)) 
+            end do
+        !% END BUGFIX
+        !% ------------------------------------------------------------------------
+
+        !% --- update the area below the maximum width
+        do ii=1,N_transect
+            !% --- lookup the area below the max breadth
+            areaBelowBreadthMax(ii) = xsect_table_lookup_singular ( &
+                                    depthAtBreadthMax(ii), areaForDepthU(ii,:),N_transect_depth_items)
+        end do
+
+        !% --- compute the uniform area transect tables by using the
+        !%     nonuniform area as a lookup table for the uniform depth
+        do ii=1,N_transect
+            !% --- get the uniform increments of area
+            areaIncrement = areaFull(ii) / ( dble(N_transect_area_items - 1) )
+            areaU(ii,:) = areaIncrement * Aarray
+
+            !% --- call the lookups for the first level with error checking
+            depthForAreaU(ii,1) = xsect_nonuniform_lookup_singular &
+                (areaU(ii,1), areaForDepthU(ii,:), depthU(ii,:), .true.)
+
+            hydradForAreaU(ii,1) = xsect_nonuniform_lookup_singular &
+                (depthForAreaU(ii,1),depthU(ii,:), hydradForDepthU(ii,:),.true. )
+
+            widthForAreaU(ii,1) = xsect_nonuniform_lookup_singular &
+                    (depthForAreaU(ii,1), depthU(ii,:), widthForDepthU(ii,:),.true. )
+
+            !% --- cycle through the uniform area values in this transect to 
+            !%     find the associated depth     
+            do kk=2,N_transect_area_items
+                depthForAreaU(ii,kk) = xsect_nonuniform_lookup_singular &
+                    (areaU(ii,kk), areaForDepthU(ii,:), depthU(ii,:), .false.)
+            end do
+
+            !% --- using the new depthForAreaU, find the hydradius at those depths
+            do kk=2,N_transect_area_items
+                hydradForAreaU(ii,kk) = xsect_nonuniform_lookup_singular &
+                    (depthForAreaU(ii,kk), depthU(ii,:), hydradForDepthU(ii,:),.false. )
+            end do
+
+            !% --- using the new depthForAreaU, find the width at those depths
+            do kk=2,N_transect_area_items
+                widthForAreaU(ii,kk) = xsect_nonuniform_lookup_singular &
+                    (depthForAreaU(ii,kk), depthU(ii,:), widthForDepthU(ii,:),.false. )
+            end do
+   
+        end do
+
+        !% --- Normalize all tables
+            depthU          = depthU          / spread(depthFull  ,2,N_transect_depth_items)
+            areaForDepthU   = areaForDepthU   / spread(areaFull   ,2,N_transect_depth_items)
+            hydradForDepthU = hydradForDepthU / spread(hydradFull ,2,N_transect_depth_items)
+            widthForDepthU  = widthForDepthU  / spread(widthMax   ,2,N_transect_depth_items)
+
+            areaU           = areaU           / spread(areaFull   ,2,N_transect_area_items)
+            depthForAreaU   = depthForAreaU   / spread(depthFull  ,2,N_transect_area_items)
+            hydradForAreaU  = hydradForAreaU  / spread(hydradFull ,2,N_transect_area_items)
+            widthForAreaU   = widthForAreaU   / spread(widthMax   ,2,N_transect_area_items)
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+            deallocate(Darray)
+            deallocate(Aarray)
+
+    end subroutine init_transect_array
 !%
 !%==========================================================================
 !%==========================================================================

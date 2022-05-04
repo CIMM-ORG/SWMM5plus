@@ -28,6 +28,7 @@ module utility_allocate
     ! public members
     public :: util_allocate_secondary_coarrays
     public :: util_allocate_linknode
+    public :: util_allocate_transect
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -174,6 +175,38 @@ contains
             if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_linknode
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_transect ()
+
+        !% 2D transectI
+        allocate(transectI(N_transect,Ncol_transectI),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectI')
+        transectI(:,:) = nullvalueI
+
+        !% 2D transectR
+        allocate(transectR(N_transect,Ncol_transectR),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectR')
+        transectR(:,:) = nullvalueR
+
+        !% 3D transectTableDepthR -- data by uniform depth depth
+        allocate(transectTableDepthR(N_transect,N_transect_depth_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
+        transectTableDepthR(:,:,:) = nullvalueR
+        
+        !% 3D transectTableAreaA -- data by uniform area discretization
+        allocate(transectTableAreaR(N_transect,N_transect_area_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
+        transectTableDepthR(:,:,:) = nullvalueR
+
+        !% 1D transectID
+        allocate(transectID(SWMM_N_transect),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectID')
+        transectID(:) = ""
+
+    end subroutine util_allocate_transect    
 !%
 !%==========================================================================
 !%==========================================================================

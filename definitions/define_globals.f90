@@ -19,6 +19,7 @@ module define_globals
     !% reverseKeys is an array to find the string name of a key number in define_keys
     !% used for debugging
     character(len=32), allocatable :: reverseKey(:)
+    
 
 
    ! integer :: iet(3) = (/80, 34, 35/)
@@ -84,6 +85,12 @@ module define_globals
 
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
+
+    integer, allocatable, target :: transectI(:,:)
+    real(8), allocatable, target :: transectR(:,:)
+    real(8), allocatable, target :: transectTableDepthR(:,:,:)
+    real(8), allocatable, target :: transectTableAreaR(:,:,:)
+    character(len=16), allocatable, target :: transectID(:)
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -296,6 +303,11 @@ module define_globals
     integer :: SWMM_N_pollutant
     integer :: SWMM_N_control
     integer :: SWMM_N_divider
+    integer :: SWMM_N_transect
+    integer :: SWMM_N_transect_depth_items
+    integer :: N_transect
+    integer :: N_transect_depth_items
+    integer :: N_transect_area_items
     integer :: N_link
     integer :: N_node
     integer :: N_headBC
@@ -317,18 +329,18 @@ module define_globals
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 
-    !% Number of API parameters
+    !% Number of API parameters  ! REVISED APPROACH 20220422brh
     !% brh20211207s
     !rm integer, parameter :: N_api_node_attributes = api_node_overflow
-    integer, parameter :: N_api_nodef_attributes = api_nodef_rptFlag
+    !integer, parameter :: N_api_nodef_attributes = api_nodef_totalEnd
     !rm integer, parameter :: N_api_link_attributes = api_linkf_conduit_length
-    integer, parameter :: N_api_linkf_attributes = api_linkf_rptFlag
+    !integer, parameter :: N_api_linkf_attributes = api_linkf_commonBreak-1
     !% brh20211207e
-    integer, parameter :: N_api_linkf_type_attributes = api_linkf_sub_type - N_api_linkf_attributes
-    integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_xsect_yFull - N_api_linkf_type_attributes
-    integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
-                                                        + N_api_linkf_xsect_attributes
-    integer, parameter :: N_api_total_table_attributes = api_table_refers_to
+    !integer, parameter :: N_api_linkf_type_attributes  = api_linkf_typeBreak  - api_nodef_totalEnd -1
+    !integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_totalEnd   - api_linkf_typeBreak -1
+    !integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
+    !                                                   + N_api_linkf_xsect_attributes
+    !integer, parameter :: N_api_total_table_attributes = api_table_refers_to
 
     !% Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray

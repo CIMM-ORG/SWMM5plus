@@ -35,7 +35,7 @@ char errmsg[1024];
 
 // Initializes the EPA-SWMM simulation. It creates an Interface
 // variable (details about Interface in interface.h). The
-// function opens de SWMM input file and creates report and
+// function opens the SWMM input file and creates report and
 // output files. Although the .inp is parsed within swmm_start,
 // not every property is extracted, e.g., slopes of trapezoidal channels.
 // In swmm.c
@@ -146,10 +146,10 @@ int DLLEXPORT api_get_node_results(
 
     jj = project_findObject(NODE, node_name);
 
-    *inflow   = Node[jj].inflow;
-    *overflow = Node[jj].overflow;
-    *depth    = Node[jj].newDepth;
-    *volume   = Node[jj].newVolume;
+    *inflow   = CFTOCM(Node[jj].inflow);
+    *overflow = CFTOCM(Node[jj].overflow);
+    *depth    = FTTOM (Node[jj].newDepth);
+    *volume   = CFTOCM(Node[jj].newVolume);
 
     return 0;
 }
@@ -166,9 +166,9 @@ int DLLEXPORT api_get_link_results(
 
     jj = project_findObject(LINK, link_name);
 
-    *flow   = Link[jj].newFlow;
-    *depth  = Link[jj].newDepth;
-    *volume = Link[jj].newVolume;
+    *flow   = CFTOCM(Link[jj].newFlow);
+    *depth  = FTTOM (Link[jj].newDepth);
+    *volume = CFTOCM(Link[jj].newVolume);
 
     return 0;
 }
@@ -199,7 +199,6 @@ double DLLEXPORT api_get_TotalDuration()
 {
     return TotalDuration;
 }
-
 //===============================================================================
 int DLLEXPORT api_get_flowBC(
     int node_idx, double current_datetime, double* flowBC)
@@ -260,7 +259,8 @@ int DLLEXPORT api_get_flowBC(
                 }
             }
         }
-        *flowBC += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
+        // convert EPA-SWMM cubic ft/s to cubic meters/s
+        *flowBC += CFTOCM(total_factor * Node[node_idx].dwfInflow->avgValue);
     }
 
     // handle external inflows
@@ -273,6 +273,7 @@ int DLLEXPORT api_get_flowBC(
         // pp is the pattern #
         pp = Node[node_idx].extInflow->basePat; // pattern
         //printf(" base pat %d \n ",pp);
+        // convert EPA-SWMM cubic ft/s to cubic m/s
         bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
         //printf(" bline %f \n ",bline);
         if (pp >= 0)
@@ -316,20 +317,20 @@ int DLLEXPORT api_get_flowBC(
         }
         else if (bline > 0)  // no pattern, but baseline inflow provided
         {
-            total_extinflow += bline;
+            total_extinflow += bline;  //already converted to cubic m/s
         }
 
         // external inflow from time series are added to baseline and pattern
         // jj is the time series
-        jj = Node[node_idx].extInflow->tSeries; // tseries
+        jj = Node[node_idx].extInflow->tSeries; // tseries 
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
         if (jj >= 0)
         {
-            total_extinflow += table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor;
+            total_extinflow += CFTOCM(table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor);
         }
 
         // add the external inflows to the dry weather flows stored in flowBC
-        *flowBC += total_extinflow;
+        *flowBC += total_extinflow; // already converted to cubic m/s
     }
     return 0;
 }
@@ -467,16 +468,15 @@ int DLLEXPORT api_get_SWMM_controls(
     
     *min_route_step = MinRouteStep;
 
-    *min_surface_area = MinSurfArea;
+    *min_surface_area = FT2TOM2(MinSurfArea);
 
     *min_slope = MinSlope;
 
-    *head_tol = HeadTol;
+    *head_tol = FTTOM(HeadTol);
 
-    *sys_flow_tol = SysFlowTol;
+    *sys_flow_tol = CFTOCM(SysFlowTol);
 
-    *lat_flow_tol = LatFlowTol;
-
+    *lat_flow_tol = CFTOCM(LatFlowTol);
 
     //printf(" RouteModel = %d \n",RouteModel);
 
@@ -1112,7 +1112,14 @@ int DLLEXPORT api_get_linkf_attribute(
     error = check_api_is_initialized("api_get_linkf_attribute");
     if (error) return error;
 
+    //printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+
+// the following are in the order of the enumeration in define_api_keys.f90 and api.h
     switch (attr) {
+
+        case linkf_ID :
+            *value = link_idx;
+            break;
 
         case linkf_subIndex :
             *value = Link[link_idx].subIndex;
@@ -1120,10 +1127,6 @@ int DLLEXPORT api_get_linkf_attribute(
         
         case linkf_direction :
             *value = Link[link_idx].direction;
-            break;
-
-        case linkf_type : 
-            *value = Link[link_idx].type;
             break;
 
         case linkf_node1 :
@@ -1142,83 +1145,52 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = FTTOM(Link[link_idx].offset2);
             break;
 
-        case linkf_xsect_type :
-            *value = Link[link_idx].xsect.type;
-            break;
-
-        case linkf_xsect_wMax :
-            *value = FTTOM(Link[link_idx].xsect.wMax); 
-            break;
-
-        case linkf_xsect_yBot :
-            *value = FTTOM(Link[link_idx].xsect.yBot);
-            break;
-
-        case linkf_xsect_yFull : 
-            *value = FTTOM(Link[link_idx].xsect.yFull);
-            break;
-
         case linkf_q0 :
             *value = CFTOCM(Link[link_idx].q0);
+            break;    
+
+        case linkf_flow :
+            *value = CFTOCM(Link[link_idx].newFlow);
+            break;
+
+        case linkf_depth :
+            *value = FTTOM(Link[link_idx].newDepth);
+            break;
+
+        case linkf_volume :
+            *value = CFTOCM(Link[link_idx].newVolume);
+            break;
+
+        case linkf_froude :
+            *value = Link[link_idx].froude;
             break;
         
-        case linkf_sub_type :
-            switch (Link[link_idx].type) {
-                case CONDUIT :
-                    *value = API_NULL_VALUE_I;
-                    break;
-                case ORIFICE :
-                    *value = Orifice[Link[link_idx].subIndex].type;
-                    break;
-                case WEIR :
-                    *value = Weir[Link[link_idx].subIndex].type;
-                    break;
-                case OUTLET :
-                    *value = Outlet[Link[link_idx].subIndex].curveType;
-                    break;
-                case PUMP :
-                    *value = Pump[Link[link_idx].subIndex].type;
-                    break;
-                default :
-                    *value = 0;
-            }
+        case linkf_setting :
+            *value = Link[link_idx].setting;
             break;
 
-        case linkf_conduit_roughness :
-            switch (Link[link_idx].type) {
-                case CONDUIT :
-                    *value = Conduit[Link[link_idx].subIndex].roughness;
-                    break;
-                default :
-                    *value = 0;
-            }    
+        case linkf_left_slope :
+            *value = api->double_vars[api_left_slope][link_idx];
             break;
 
-        case linkf_conduit_length : 
-            switch (Link[link_idx].type) {
-                case CONDUIT :
-                    *value = FTTOM(Conduit[Link[link_idx].subIndex].length);
-                    break;
-                case ORIFICE :
-                    *value = 0.01;
-                    break;
-                case WEIR :
-                    *value = 0.01;
-                case OUTLET :
-                    *value = 0.01;
-                    break;
-                case PUMP :
-                    *value = 0.01;
-                    break;
-                default :
-                    *value = 0;
-            }
+        case linkf_right_slope :
+            *value = api->double_vars[api_right_slope][link_idx];
             break;
 
         case linkf_weir_end_contractions :
             switch (Link[link_idx].type) {
                 case WEIR :
                     *value = Weir[Link[link_idx].subIndex].endCon;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+
+        case linkf_weir_side_slope :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].slope;
                     break;
                 default :
                     *value = 0;
@@ -1279,8 +1251,8 @@ int DLLEXPORT api_get_linkf_attribute(
                     *value = 0;
             }
             break;
-        
-        case linkf_yOn :
+
+       case linkf_yOn :
             switch (Link[link_idx].type) {
                 case PUMP :
                     *value = Pump[Link[link_idx].subIndex].yOn;
@@ -1300,56 +1272,108 @@ int DLLEXPORT api_get_linkf_attribute(
             }
             break;
 
-        case linkf_weir_side_slope :
+        case linkf_conduit_roughness :
             switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = Conduit[Link[link_idx].subIndex].roughness;
+                    break;
+                default :
+                    *value = 0;
+            }    
+            break;
+
+        case linkf_conduit_length : 
+            switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = FTTOM(Conduit[Link[link_idx].subIndex].length);
+                    break;
+                case ORIFICE :
+                    *value = 0.01;
+                    break;
                 case WEIR :
-                    *value = Weir[Link[link_idx].subIndex].slope;
+                    *value = 0.01;
+                case OUTLET :
+                    *value = 0.01;
+                    break;
+                case PUMP :
+                    *value = 0.01;
                     break;
                 default :
                     *value = 0;
             }
             break;
 
-        case linkf_flow :
-            *value = CFTOCM(Link[link_idx].newFlow);
+        case linkf_rptFlag :
+            if (Link[link_idx].rptFlag)
+                *value = 1;
+            else
+                *value = 0; 
+            break;  
+
+        case linkf_commonBreak :
+            // placeholder with no action
+            *value = 0;
             break;
 
-        case linkf_depth :
-            *value = FTTOM(Link[link_idx].newDepth);
+        case linkf_type : 
+            *value = Link[link_idx].type;
             break;
 
-        case linkf_volume :
-            *value = CFTOCM(Link[link_idx].newVolume);
+        case linkf_sub_type :
+            switch (Link[link_idx].type) {
+                case CONDUIT :
+                    *value = API_NULL_VALUE_I;
+                    break;
+                case ORIFICE :
+                    *value = Orifice[Link[link_idx].subIndex].type;
+                    break;
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].type;
+                    break;
+                case OUTLET :
+                    *value = Outlet[Link[link_idx].subIndex].curveType;
+                    break;
+                case PUMP :
+                    *value = Pump[Link[link_idx].subIndex].type;
+                    break;
+                default :
+                    *value = 0;
+            }
             break;
 
-        case linkf_froude :
-            *value = Link[link_idx].froude;
+        case linkf_typeBreak :
+            // placehoder with no action
+            *value = 0;
             break;
 
-        case linkf_setting :
-            *value = Link[link_idx].setting;
-            break;
-
-        case linkf_left_slope :
-            *value = api->double_vars[api_left_slope][link_idx];
-            break;
-
-        case linkf_right_slope :
-            *value = api->double_vars[api_right_slope][link_idx];
+        case linkf_xsect_type :
+            *value = Link[link_idx].xsect.type;
             break;
 
         case linkf_geometry :
-            printf(" ****** api_get_linkf_attribute called for unsupported attr = linkf_geometry at 2875 %d ",attr);
+            printf(" ****** api_get_linkf_attribute called for unsupported attr = linkf_geometry at 2875 %d \n ",attr);
             break;
-            case linkf_rptFlag :
-                if (Link[link_idx].rptFlag)
-                    *value = 1;
-                else
-                    *value = 0; 
-            break;        
+
+        case linkf_xsect_wMax :
+            *value = FTTOM(Link[link_idx].xsect.wMax); 
+            break;
+
+        case linkf_xsect_yBot :
+            *value = FTTOM(Link[link_idx].xsect.yBot);
+            break;
+
+        case linkf_xsect_yFull : 
+            *value = FTTOM(Link[link_idx].xsect.yFull);
+            break;
+
+        case linkf_transectid :
+            *value = Link[link_idx].xsect.transect;
+            break;
+        
+              
         default :             
-            printf(" ****** api_get_linke_attribute called without supported attr at 837954 %d ",attr);
-            *value = API_NULL_VALUE_I;               
+            printf(" ****** api_get_linkf_attribute called without supported attr at 837954 %d \n ",attr);
+            *value = API_NULL_VALUE_I;              
     }
 
     // if (attr == linkf_subIndex)
@@ -1489,6 +1513,90 @@ int DLLEXPORT api_get_linkf_attribute(
     return 0;
 }
 //===============================================================================
+int DLLEXPORT api_get_transectf_attribute(
+    int transect_idx, int attr, double* value)
+//===============================================================================
+{
+    int error;
+
+    error = check_api_is_initialized("api_get_transectf_attribute");
+    if (error) return error;
+
+// the following are in the order of the enumeration in define_api_keys.f90 and api.h
+    switch (attr) {
+        case transectf_yFull :
+            *value = FTTOM(Transect[transect_idx].yFull);
+            break;
+        case transectf_aFull :
+            *value = FT2TOM2(Transect[transect_idx].aFull);
+            break;
+        case transectf_rFull :
+            *value = FTTOM(Transect[transect_idx].rFull);    
+            break;
+        case transectf_wMax :
+            *value = FTTOM(Transect[transect_idx].wMax);    
+            break;
+        case transectf_ywMax :
+            // Note that EPA-SWMM does NOT store data in Transect[transect_idx].ywMax
+            // See xsect_setIrreguXsectParams() where ywMax is computed for the cross
+            // section but is not stored in the transect structure itself.
+            // Unless this bug is fixed, we will overwrite this read init_transect_array()
+            *value = FTTOM(Transect[transect_idx].ywMax);    
+            break;
+        case transectf_sMax :
+            // units are ft^(4/3), so requires conversion to m^4/3
+            *value = pow(FTTOM(pow(Transect[transect_idx].sMax,0.75)),4.0/3.0);    
+            break;
+        case transectf_aMax :
+            *value = FT2TOM2(Transect[transect_idx].aMax);    
+            break;
+        case transectf_lengthFactor :
+            *value = Transect[transect_idx].lengthFactor;    // non-dimensional
+            break;
+        case transectf_roughness :
+            *value = Transect[transect_idx].roughness;    // non-dimensional
+            break;
+        default :
+            printf(" ***** api_get_transect_attribute called without support attr at 239873 %d ",attr);   
+    }
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_transect_table(
+    int transect_idx, int table_len,
+    double* tarea, double* twidth, double* thydradius)
+//===============================================================================
+// obtains the area, depth, and hydraulic radius entries for a transect
+{
+    int error;
+    int ii;
+
+    error = check_api_is_initialized("api_get_transect_table");
+    if (error) return error;
+
+    // note that these do not need unit conversions because they
+    // are normalized 0 to 1
+    for(ii=0; ii<table_len; ii++)
+         {
+             tarea[ii]      = Transect[transect_idx].areaTbl [ii];
+             twidth[ii]     = Transect[transect_idx].widthTbl[ii];
+             thydradius[ii] = Transect[transect_idx].hradTbl [ii];
+         }
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_N_TRANSECT_TBL()
+//===============================================================================
+// this is the SWMM-C number of depth levels in transect table
+{
+    int error;
+
+    error = check_api_is_initialized("api_get_N_TRANSECT_TBL");
+    if (error) return error;
+
+    return N_TRANSECT_TBL;
+}
+//===============================================================================
 int DLLEXPORT api_get_num_objects(
     int object_type)
 //===============================================================================
@@ -1508,8 +1616,11 @@ int DLLEXPORT api_get_object_name(
     int error, ii;
     int obj_len = -1;
 
+    // printf("in get_object_name object type %d \n ",object_type);
+
     error = check_api_is_initialized("api_get_object_name");
     if (error) return error;
+
     error = api_get_object_name_len(object_idx, object_type, &obj_len);
     if (error) return error;
 
@@ -1532,6 +1643,8 @@ int DLLEXPORT api_get_object_name(
     //         return api_err_not_developed;
     // }
 
+   
+
     if (object_type == NODE)
     {
         for(ii=0; ii<obj_len; ii++)
@@ -1546,6 +1659,13 @@ int DLLEXPORT api_get_object_name(
             object_name[ii] = Link[object_idx].ID[ii];
         }
     }
+    else if (object_type == TRANSECT)
+    {
+        for(ii=0; ii<obj_len; ii++)
+        {
+            object_name[ii] = Transect[object_idx].ID[ii];
+        }
+    }    
     else
     {
         strcpy(object_name, "");
@@ -1575,6 +1695,10 @@ int DLLEXPORT api_get_object_name_len(
             break;
         case LINK :
             *len = strlen(Link[object_idx].ID);
+            return 0;
+            break;
+        case TRANSECT :
+            *len = strlen(Transect[object_idx].ID);
             return 0;
             break;
         default :
@@ -1694,7 +1818,6 @@ int DLLEXPORT api_get_table_attribute(
     // }
     return 0;
 }
-
 //===============================================================================
 int DLLEXPORT api_get_first_entry_table(
     int table_idx, int table_type, double* xx, double* yy)
@@ -1710,44 +1833,44 @@ int DLLEXPORT api_get_first_entry_table(
             // unit conversion depending on the type of curve
             switch (Curve[table_idx].curveType) {
                 case STORAGE_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH); 
-                    *yy /= (SI_Uint_Conversiton(LENGTH) * SI_Uint_Conversiton(LENGTH));
+                    *xx /= SI_Unit_Conversion(LENGTH); 
+                    *yy /= (SI_Unit_Conversion(LENGTH) * SI_Unit_Conversion(LENGTH));
                     break;
                 case DIVERSION_CURVE:
-                    *xx /= SI_Uint_Conversiton(FLOW);
-                    *yy /= SI_Uint_Conversiton(FLOW);
+                    *xx /= SI_Unit_Conversion(FLOW);
+                    *yy /= SI_Unit_Conversion(FLOW);
                     break;
                 case TIDAL_CURVE:
-                    *yy /= SI_Uint_Conversiton(LENGTH);
+                    *yy /= SI_Unit_Conversion(LENGTH);
                     break;
                 case RATING_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH);
-                    *yy /= SI_Uint_Conversiton(FLOW);
+                    *xx /= SI_Unit_Conversion(LENGTH);
+                    *yy /= SI_Unit_Conversion(FLOW);
                     break;
                 case SHAPE_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH);
-                    *yy /= SI_Uint_Conversiton(LENGTH);
+                    *xx /= SI_Unit_Conversion(LENGTH);
+                    *yy /= SI_Unit_Conversion(LENGTH);
                     break;
                 case CONTROL_CURVE:
                     break;
                 case WEIR_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH);
+                    *xx /= SI_Unit_Conversion(LENGTH);
                     break;
                 case PUMP1_CURVE:
-                    *xx /= SI_Uint_Conversiton(VOLUME);
-                    *yy /= SI_Uint_Conversiton(FLOW);
+                    *xx /= SI_Unit_Conversion(VOLUME);
+                    *yy /= SI_Unit_Conversion(FLOW);
                     break;
                 case PUMP2_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH);
-                    *yy /= SI_Uint_Conversiton(FLOW);
+                    *xx /= SI_Unit_Conversion(LENGTH);
+                    *yy /= SI_Unit_Conversion(FLOW);
                     break;
                 case PUMP3_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH);
-                    *yy /= SI_Uint_Conversiton(FLOW);
+                    *xx /= SI_Unit_Conversion(LENGTH);
+                    *yy /= SI_Unit_Conversion(FLOW);
                     break;
                 case PUMP4_CURVE:
-                    *xx /= SI_Uint_Conversiton(LENGTH);
-                    *yy /= SI_Uint_Conversiton(FLOW);
+                    *xx /= SI_Unit_Conversion(LENGTH);
+                    *yy /= SI_Unit_Conversion(FLOW);
                     break;
                 default:
                     return 0;
@@ -1792,48 +1915,48 @@ int DLLEXPORT api_get_next_entry_table(
                     // unit conversion depending on the type of curve
             switch (Curve[table_idx].curveType) {
                 case STORAGE_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
-                    *yy = Curve[table_idx].y2 * SI_Uint_Conversiton(LENGTH) / SI_Uint_Conversiton(VOLUME);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
+                    *yy = Curve[table_idx].y2 * SI_Unit_Conversion(LENGTH) / SI_Unit_Conversion(VOLUME);
                     break;
                 case DIVERSION_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(FLOW);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(FLOW);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(FLOW);
                     break;
                 case TIDAL_CURVE:
                     *xx = Curve[table_idx].x2;
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(LENGTH);
                     break;
                 case RATING_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(FLOW);
                     break;
                 case CONTROL_CURVE:
                     *xx = Curve[table_idx].x2;
                     *yy = Curve[table_idx].y2;
                     break;
                 case SHAPE_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(LENGTH);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(LENGTH);
                     break;
                 case WEIR_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
                     *yy = Curve[table_idx].y2;
                     break;
                 case PUMP1_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(VOLUME);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(VOLUME);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(FLOW);
                     break;
                 case PUMP2_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(FLOW);
                     break;break;
                 case PUMP3_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(FLOW);
                     break;
                 case PUMP4_CURVE:
-                    *xx = Curve[table_idx].x2 / SI_Uint_Conversiton(LENGTH);
-                    *yy = Curve[table_idx].y2 / SI_Uint_Conversiton(FLOW);
+                    *xx = Curve[table_idx].x2 / SI_Unit_Conversion(LENGTH);
+                    *yy = Curve[table_idx].y2 / SI_Unit_Conversion(FLOW);
                     break;
                 default:
                     *xx = Curve[table_idx].x2;
@@ -1923,6 +2046,9 @@ int DLLEXPORT api_update_nodeResult(
     int node_idx, int resultType, double newNodeResult)
 //===============================================================================
 {
+    // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
+    // needs to have unit conversions added if it is to be used
+
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -1953,6 +2079,10 @@ int DLLEXPORT api_update_linkResult(
     int link_idx, int resultType, double newLinkResult)
 //===============================================================================
 {
+
+    // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
+    // needs to have unit conversions added if it is to be used
+
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -2331,31 +2461,6 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     
     return 0;
 }
-
-// //===============================================================================
-// int DLLEXPORT api_get_subcatch_runoff_nodeName(
-//     int sc_idx, int *nodeIdx)
-// //===============================================================================
-// {
-//     printf(" in api_get_subcatch_runoff_nodeName");
-
-//     if ( ErrorCode ) return error_getCode(ErrorCode);
-//     if ( ! api->IsInitialized )
-//     {
-//         report_writeErrorMsg(ERR_NOT_OPEN, "");
-//         return error_getCode(ErrorCode);
-//     }
-
-    
-//     *runoff = CFTOCM(Subcatch[sc_idx].newRunoff);
-//     printf("... sc_idx, newRunoff CMS %d , %f \n",sc_idx,Subcatch[sc_idx].newRunoff);
-
-//     api_get_object_name(
-//     int sc_indx, char* object_name, int object_type)
-    
-//     return 0;
-// }
-
 // -------------------------------------------------------------------------
 // |
 // |  Private functionalities

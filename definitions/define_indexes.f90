@@ -69,9 +69,10 @@ module define_indexes
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         enumerator :: li_num_phantom_links   ! Number of phantom links associated 
         enumerator :: li_weir_EndContrations
-        enumerator :: li_curve_id            ! cure id if the link is associated with any curve
+        enumerator :: li_curve_id            ! curve id if the link is associated with any curve
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
+        enumerator :: li_transect_idx         ! transect index if the link is associated with an irregular geometry transect
         enumerator :: li_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_linkI = li_lastplusone-1
@@ -193,7 +194,7 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: lr_Length = 1
-        enumerator :: lr_AdjustedLength ! lenght adjustment if multi-link junction is present
+        enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
         enumerator :: lr_BreadthScale
@@ -304,6 +305,7 @@ module define_indexes
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
          enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
+         enumerator :: ei_transect_idx               !% index of the transect
          enumerator :: ei_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemI = ei_lastplusone-1
@@ -473,6 +475,7 @@ module define_indexes
         enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_triangular_nonsurcharged      !% CC triangular channels that are not surcharged
+        enumerator :: epg_CC_irregular                     !% CC irregular channels (never surcharged?)
         enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
@@ -1032,6 +1035,43 @@ module define_indexes
                             Ncol_storage_curve, &
                             Ncol_pump_curve, &
                             Ncol_outlet_curve)
+
+    !% transect integer array indexes
+    enum, bind(c)
+        enumerator :: ti_idx = 1
+        enumerator :: ti_lastplusone 
+    end enum    
+
+    integer, parameter :: Ncol_transectI = ti_lastplusone-1
+
+    !% transect real array indexes
+    enum, bind(c)
+        enumerator :: tr_depthFull = 1     ! depth when full (yFull in EPA-SWMM)
+        enumerator :: tr_areaFull          ! area when full (aFull in EPA_SWMM)
+        enumerator :: tr_hydRadiusFull     ! hydradius when full (hFull in EPA-SWMM)
+        enumerator :: tr_widthMax          ! max width (wMax in EPA-SWMM)
+        enumerator :: tr_depthAtBreadthMax ! depth at max width (ywMax in EPA-SWMM)
+        enumerator :: tr_sectionFactor     ! section factor at max flow (sMax in EPA-SWMM)
+        enumerator :: tr_areaAtMaxFlow     ! area at max flow (aMax in EPA-SWMM)
+        enumerator :: tr_lengthFactor      ! floodplain / channel length (lengthFactor in EPA-SWMM)
+        enumerator :: tr_roughness         ! Mannings n (roughness in EPA-SWMM)
+        enumerator :: tr_widthFull         ! not in EPA-SWMM
+        enumerator :: tr_areaBelowBreadthMax ! not in EPA-SWMM
+        enumerator :: tr_lastplusone
+    end enum
+
+    integer, parameter :: Ncol_transectR = tr_lastplusone-1
+
+    !% transect table real array indexes
+    enum, bind(c)
+        enumerator :: tt_depth = 1    ! depth derived from uniform distribution in EPA-SWMM
+        enumerator :: tt_area         ! stores EPA-SWMM Transect.areaTbl
+        enumerator :: tt_hydradius    ! stores EPA-SWMM Transect.hradTbl
+        enumerator :: tt_width        ! stores EPA-SWMM Transect.widthTbl
+        enumerator :: tt_lastplusone
+    end enum
+    
+    integer, parameter :: Ncol_transectTable = tt_lastplusone-1
     !
     !==========================================================================
     ! definitions

@@ -55,14 +55,6 @@ contains
         !% divide the link node networks in elements and faces
         call init_network_datacreate ()
 
-        ! print *, ' in ',trim(subroutine_name)
-        ! ii=123
-        ! !print *, size(elemI,DIM=1),size(elemI,DIM=2)
-        ! print *, 'Element Type = ' ,elemI(ii,ei_elementType)
-        ! print *, 'Geometry Type = ',elemI(ii,ei_geometryType)
-        ! print *, 'this link       ',elemI(ii,ei_link_Gidx_SWMM)
-
-        ! stop 
         !call util_crashpoint(397805)        
 
         ! print *, ' '
@@ -540,7 +532,7 @@ contains
 
             !print *, 'DDD ',ElemLocalCounter, FaceLocalCounter 
         end do
-
+        
         ! print *, ' ======================================='
         !     print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
         !     print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
@@ -1968,12 +1960,23 @@ contains
             MinElemLength = NominalLength * MinLengthFactor
 
             do ii = 1,N_elem(this_image())
+                if ((elementType(ii) == CC) .and. (elementLength(ii) < zeroR)) then
+                    print *, 'CODE ERROR: negative element length at element ',elementIdx(ii)
+                    write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii)
+                    write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
+                    write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+                    call util_crashpoint(209837)
+                end if
+
                 if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
                     if (setting%Output%Verbose) then
                         !print*, 'In, ', subroutine_name
                         print *, ' '
-                        write(*,"(A,i8,A,i5)") '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
+                        write(*,"(A,i8,A,i5)")       '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
                         write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
+                        write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
+                        write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+
                     end if
                     elementLength(ii) = MinElemLength
                 end if
@@ -1994,7 +1997,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!
+!%
     subroutine init_network_identify_boundary_element()
         !%-----------------------------------------------------------------
         !% Description:
@@ -2024,9 +2027,12 @@ contains
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_identify_boundary_element
-!
-!==========================================================================
-! END OF MODULE
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%=========================================================================
+!%
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
+!%
 end module network_define

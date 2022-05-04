@@ -11,7 +11,8 @@
         },
     },    
     "Discretization" : {
-        "NominalElemLength" : 1000.00
+        "AdjustLinkLengthYN" : false,
+        "NominalElemLength" : 10.00
     },
     "Output" : {
         "StoredLevels" : 100,
