@@ -1,0 +1,153 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "Lavaca_Trap_NoIC_EndTime",
+        "Short" : "Lavaca"
+    },
+    "Discretization" : {
+        "LinkShortingFactor" : 0.33,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "NominalElemLength" : 150.00
+    },
+    "Limiter" : {
+        "BC" : {
+            "UseInflowLimiterYN" : true,
+            "Approach" : "FroudeNumber",
+            "FroudeInflowMaximum" : 1.5
+        },
+        "Channel" : {
+            "LargeDepthFactor" : 10.0
+        },
+        "Flowrate" : {
+            "FaceVolumeTransport" : 0.5,
+            "UseFaceVolumeTransportYN" : true
+        },
+        "Velocity" : {
+            "UseLimitMaxYN" : true,
+            "Maximum" : 10.0
+        },
+        "ArraySize" : {
+            "TemporalInflows" : 10,
+            "TotalInflows" : 50
+        },
+        "Dt" : {
+            "UseLimitMinYN" : true,
+            "Minimum"     : 1e-4
+        }
+    },    
+    "Output" : {
+        "Verbose" : true,
+        "Warning" : true,
+        "StoredLevels" : 100,
+        "CommandLine" : {
+            "quietYN" : false,
+            "interval" : 100
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
+        },
+        "Report" : {
+            "useSWMMinpYN" :true,
+            "provideYN" : true,
+            "suppress_MultiLevel_Output" : false,
+            "StartTime" : 0.0,
+            "TimeInterval" : 300.0,
+            "TimeUnits" : "Hours"
+        }
+    },
+    "Partitioning" : {
+        "PartitioningMethod" : "bquick"
+    },
+    "Profile" : {
+        "useYN" : true
+    },
+    "Simulation" : {
+        "useHydrology" : false,
+        "useHydraulics" : true
+    },
+    "TestCase" : {
+        "UseTestCaseYN" : false,
+        "TestName" : ""
+    },
+    "Time" : {
+        "useSWMMinpYN" : true,
+        "matchHydrologyStep" : true,
+        "DtTol" : 1e-1,
+        "Hydraulics" : {
+            "Dt" : 10.0
+        },
+        "Hydrology" : {
+            "Dt" : 600.0
+        }
+    }, 
+    "Debug" : {
+        "File" : {
+            "adjust" : false,
+            "boundary_conditions" : false,
+            "c_library" : false,
+            "define_globals" : false,
+            "define_indexes" : false,
+            "define_keys" : false,
+            "define_settings" : false,
+            "define_types" : false,
+            "diagnostic_elements" : false,
+            "face" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "discretization"  : false,
+            "initial_condition" : false,
+            "initialization" : false,
+            "interface" : false,
+            "jump" : false,
+            "lowlevel_rk2" : false,
+            "network_define" : false,
+            "orifice_elements" : false,
+	        "OutputYN" : false,
+            "pack_mask_arrays" : false,
+            "partitioning" : true,
+            "pump_elements" : false,
+            "rectangular_channel" : false,
+            "trapezoidal_channel" : false,
+            "runge_kutta2" : false,
+            "timeloop" : false,
+            "update" : false,
+            "utility" : false,
+            "utility_allocate" : false,
+            "utility_deallocate" : false,
+            "utility_array" : false,
+            "utility_datetime" : false,
+            "utility_interpolate" : false,
+            "utility_output" : false,
+            "utility_string" : false,
+            "weir_elements" : false
+        },
+        "FileGroup" : {
+            "all" : false,
+            "definitions" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "initialization" : false,
+            "interface" : false,
+            "OutputYN" : false,
+            "timeloop" : false,
+            "utility" : false
+        },
+         "SetupYN"  : true,
+        "OutputYN" : true
+    }
+}
