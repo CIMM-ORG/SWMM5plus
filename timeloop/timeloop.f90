@@ -387,7 +387,7 @@ contains
             stop 497895
         end select    
 
-        call util_accumulate_volume_conservation () 
+        !call util_accumulate_volume_conservation () 
 
         !%-------------------------------------------------------------------
         !% closing

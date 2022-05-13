@@ -326,7 +326,10 @@ int DLLEXPORT api_get_flowBC(
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
         if (jj >= 0)
         {
-            total_extinflow += CFTOCM(table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor);
+            // Unit conertion for External Files
+            // FlowUnitWords[]  = { w_CFS, w_GPM, w_MGD, w_CMS, w_LPS, w_MLD, NULL};
+            // Corresponding FlowUnits are  0  ,    1 ,    2 ,    3 ,    4 ,    5 ,
+            total_extinflow += (table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor) / QCF_SI[FlowUnits];
         }
 
         // add the external inflows to the dry weather flows stored in flowBC
