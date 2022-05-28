@@ -589,7 +589,8 @@ subroutine init_partitioning_linkbalance()
                     clink_image = link%I(clink, li_P_image)
                     if ( (assigned_image /= nullValueI) .and. &
                         (assigned_image /= clink_image) ) then
-                        node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
+                        ! node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
+                        node%I(ii, ni_P_is_boundary) = 1
                     end if
                     if (clink_image < assigned_image) then
                         assigned_image = clink_image
