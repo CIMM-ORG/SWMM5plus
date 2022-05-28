@@ -104,56 +104,58 @@ enum api_nodef_attributes {
   // brh20211207s
   //node_overflow                    // xx
   nodef_overflow,                    // 29
-  nodef_rptFlag                      // 30
+  nodef_rptFlag,                      // 30
+  // brh20220221
+  nodef_hasFlapGate                   // 31
 };
 
 // these "linkf" are identical to the fortran api_linkf_... values
 enum api_linkf_attributes {
-  linkf_ID = 33,
-  linkf_subIndex,  // 34 *
-  linkf_direction, // 35 *
-  linkf_node1,     // 36 *
-  linkf_node2,     // 37 *
-  linkf_offset1,   // 38 *
-  linkf_offset2,   // 39 *
-  linkf_q0,        // 40 *
-  linkf_flow,      // 41 *
-  linkf_depth,     // 42 *
-  linkf_volume,    // 43 *
-  linkf_froude,    // 44 *
-  linkf_setting,   // 45 *
-  linkf_left_slope,        // 46 *
-  linkf_right_slope,       // 47 *
-  linkf_weir_end_contractions,  // 48 *
-  linkf_weir_side_slope,        // 49 *
-  linkf_curveid,           // 50 *
-  linkf_discharge_coeff1,       // 51 *
-  linkf_discharge_coeff2,       // 52 *
-  linkf_initSetting,            // 53 *
-  linkf_yOn,                    // 54 *
-  linkf_yOff,                   // 55 *
-  linkf_conduit_roughness,      // 56 *
-  linkf_conduit_length,         // 57 *
+  linkf_ID = 34,
+  linkf_subIndex,  // 35 *
+  linkf_direction, // 36 *
+  linkf_node1,     // 37 *
+  linkf_node2,     // 38 *
+  linkf_offset1,   // 39 *
+  linkf_offset2,   // 40 *
+  linkf_q0,        // 41 *
+  linkf_flow,      // 42 *
+  linkf_depth,     // 43 *
+  linkf_volume,    // 44 *
+  linkf_froude,    // 45 *
+  linkf_setting,   // 46 *
+  linkf_left_slope,        // 47 *
+  linkf_right_slope,       // 48 *
+  linkf_weir_end_contractions,  // 49 *
+  linkf_weir_side_slope,        // 50 *
+  linkf_curveid,           // 51 *
+  linkf_discharge_coeff1,       // 52 *
+  linkf_discharge_coeff2,       // 53 *
+  linkf_initSetting,            // 54 *
+  linkf_yOn,                    // 55 *
+  linkf_yOff,                   // 56 *
+  linkf_conduit_roughness,      // 57 *
+  linkf_conduit_length,         // 58 *
   // brh 20211207s
-  linkf_rptFlag,           // 58 new in api.c
+  linkf_rptFlag,           // 59 new in api.c
   // brh 20211207s
   // --- special elements attributes
-  linkf_commonBreak,             // 59
-  linkf_type,                   // 60 *
-  linkf_sub_type,               // 61 *
-  linkf_typeBreak,              // 62
+  linkf_commonBreak,             // 60
+  linkf_type,                   // 61 *
+  linkf_sub_type,               // 62 *
+  linkf_typeBreak,              // 63
   // --- xsect attributes
-  linkf_xsect_type,        // 63 *
-  linkf_geometry,          // 64 missing in api.c
-  linkf_xsect_wMax,        // 65 *
-  linkf_xsect_yBot,        // 66 *
-  linkf_xsect_yFull,        // 67 *
-  linkf_transectid          // 68
+  linkf_xsect_type,        // 64 *
+  linkf_geometry,          // 65 missing in api.c
+  linkf_xsect_wMax,        // 66 *
+  linkf_xsect_yBot,        // 67 *
+  linkf_xsect_yFull,        // 68 *
+  linkf_transectid          // 69
 };
 
 // these ar identical to transect values in define_api_keys
 enum api_transectf_attributes {
-  transectf_ID = 71,
+  transectf_ID = 72,
   transectf_yFull,
   transectf_aFull,
   transectf_rFull,

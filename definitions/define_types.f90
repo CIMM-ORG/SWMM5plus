@@ -103,6 +103,11 @@ module define_types
         integer,      allocatable :: I(:,:)[:]   !% integer data for links
         real(8),      allocatable :: R(:,:)[:]   !% real data for links
         logical,      allocatable :: YN(:,:)[:]  !% logical data for links
+        integer,      allocatable :: transectI(:,:) !% integer data for irregular transects
+        real(8),      allocatable :: transectR(:,:) !% real data for irregular transects
+        real(8),      allocatable :: transectTableDepthR(:,:,:) !% table of real values by uniform depth distribution
+        real(8),      allocatable :: transectTableAreaR(:,:,:)  !% table of real values by uniform area distribution 
+        type(string), allocatable :: transectID(:) !% string transect ID from EPA-SWMM input
         type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
         type(LinkPack)            :: P        !% pack for links
     end type LinkArray
@@ -130,6 +135,7 @@ module define_types
         real(8),     allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
         integer,     allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
         real(8),     allocatable :: headRI(:)               !% values of interpolated heads at current time
+        logical,     allocatable :: hasFlapGateYN(:)        !% logical for whether BC has a flap gate
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
 

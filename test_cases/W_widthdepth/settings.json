@@ -11,13 +11,13 @@
         },
     },    
     "Discretization" : {
-        "AdjustLinkLengthYN" : false,
-        "NominalElemLength" : 10.00
+        "AdjustLinkLengthYN" : true,
+        "NominalElemLength" : 15.00
     },
     "Output" : {
         "StoredLevels" : 100,
         "CommandLine" : {
-            "interval" : 10
+            "interval" : 1
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -36,8 +36,15 @@
             "isWaveSpeedOut"    : false
         }
     },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "StaticSlot",
+        "TargetPreissmannCelerity" : 0.01
+    },
     "SmallDepth" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.1
-    }
+    },
+    "Solver" : {
+        "MomentumSourceMethod" : "T00"
+    },
 }

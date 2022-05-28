@@ -510,11 +510,7 @@ contains
 
         SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
 
-        SWMM_N_transect = get_num_objects(API_TRANSECT)
-
-        !% --- Set number of transects in SWMM5+ identical to EPA-SWMM
-        !%     HACK, may want to set these different in the future.
-        N_transect = SWMM_N_transect
+        SWMM_N_link_transect = get_num_objects(API_TRANSECT)
                 
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
@@ -535,7 +531,7 @@ contains
             print *, ''
             !stop 
             call util_crashpoint( 309786)
-            return
+            !return
             !% HACK -- developer's note:
             !% Unfortunately, the parse error returns a code of 200 in the get_num_objects()
             !% function, which is appears as SWMM_N_link=200 and SWMM_N_node=200. As it is
@@ -651,7 +647,7 @@ contains
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 !stop 
                 call util_crashpoint( 8673489)
-                return
+                !return
             end if
         end do
 
@@ -663,7 +659,7 @@ contains
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 !stop 
                 call util_crashpoint( 48705)
-                return
+                !return
             end if
         end do
 
@@ -698,17 +694,18 @@ contains
         character(64) :: subroutine_name = "interface_update_transectID_names"
         !%-----------------------------------------------------------------------------
 
-        do ii = 1, SWMM_N_transect
+        do ii = 1, SWMM_N_link_transect
 
             !print *, ii, 'API_TRANSECT ',API_TRANSECT, trim(transectID(ii))
             call load_api_procedure("api_get_object_name")
-            errstat = ptr_api_get_object_name(ii-1, transectID(ii), API_TRANSECT)
+            !errstat = ptr_api_get_object_name(ii-1, link%transectID(ii), API_TRANSECT)
+            errstat = ptr_api_get_object_name(ii-1, link%transectID(ii)%str, API_TRANSECT)
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 !stop 
                 call util_crashpoint(498273)
-                return
+                !return
             end if
 
         end do
@@ -776,7 +773,7 @@ contains
             print *, trim(reverseKey_api(attr))
             !stop 
             call util_crashpoint( 948705)
-            return
+            !return
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
@@ -784,17 +781,19 @@ contains
             print *, trim(reverseKey_api(attr))
             !stop 
             call util_crashpoint( 397904)
-            return
+            !return
         end if
-
-        !% Substracts 1 to every Fortran index (it becomes a C index)
+        
+        !% --- Subtract 1 from every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_nodef_attribute")
+        !% --- get the node value
         error = ptr_api_get_nodef_attribute(node_idx-1, attr, node_value)
         !print *, '   node value ',node_value
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
-        if ((attr == api_nodef_extInflow_tSeries) .or. (attr == api_nodef_extInflow_basePat_idx)) then
+        if (    (attr == api_nodef_extInflow_tSeries    )    &
+           .or. (attr == api_nodef_extInflow_basePat_idx)  ) then
             if (node_value /= -1) node_value = node_value + 1
         end if
 
@@ -802,6 +801,7 @@ contains
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
             "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
+            
     end function interface_get_nodef_attribute
 !%
 !%=============================================================================
@@ -836,7 +836,7 @@ contains
             print *, "error: unexpected link index value", link_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(9987355)
-            return
+            !return
         end if
 
         !if (attr == 30) then
@@ -847,7 +847,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint( 498705)
-            return
+            !return
 
         elseif     ( (attr  >   api_linkf_start) .and. (  attr <  api_linkf_commonbreak)) then
             !% --- for link attributes 1 to < api_linkf_commonBreak
@@ -864,7 +864,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(2098734)
-            return
+            !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
 
@@ -1235,7 +1235,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(98273)        
-            return
+            !return
 
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
@@ -1726,7 +1726,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(878293)    
-            return         
+            !return         
         end if
 
         if (setting%Debug%File%interface)  then
@@ -1750,18 +1750,18 @@ contains
             character(64) :: subroutine_name = 'interface_get_transectf_attribute'
         !%-----------------------------------------------------------------------------
 
-        if ((transect_idx > SWMM_N_transect) .or. (transect_idx < 1)) then
+        if ((transect_idx > SWMM_N_link_transect) .or. (transect_idx < 1)) then
             print *, "error: unexpected tranect index value", transect_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(992255)
-            return
+            !return
         end if
 
         if     (  attr .le. api_transectf_start) then
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(2333235)
-            return
+            !return
 
         elseif (  attr == api_transectf_ID) then
             !% skip this -- handled elsewhere
@@ -1775,45 +1775,48 @@ contains
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
 
-            select case (attr)
-                case (api_transectf_yFull)
-                    transectR(transect_idx,tr_depthFull) = transect_value
-                case (api_transectf_aFull)
-                    transectR(transect_idx,tr_areaFull) = transect_value
-                case (api_transectf_rFull)
-                    transectR(transect_idx,tr_hydRadiusFull) = transect_value
-                case (api_transectf_wMax)
-                    transectR(transect_idx,tr_widthMax) = transect_value
-                case (api_transectf_ywMax)
-                    transectR(transect_idx,tr_depthAtBreadthMax) = transect_value
-                case (api_transectf_sMax)
-                    transectR(transect_idx,tr_sectionFactor) = transect_value
-                case (api_transectf_aMax)
-                    transectR(transect_idx,tr_areaAtMaxFlow) = transect_value
-                case (api_transectf_lengthFactor)
-                    transectR(transect_idx,tr_lengthFactor) = transect_value
-                case (api_transectf_roughness)
-                    transectR(transect_idx,tr_roughness) = transect_value
-                case default
-                    write(*,*)
-                    write(*,*) '****** Unexpected case default '
-                    write(*,*) '   attr = ',attr
-                    write(*,*) '   ',trim(reverseKey_api(attr))
-                    write(*,*) '******'
-                    call util_crashpoint(667832)
-            end select
+            !% --- return with transect_value for output
+            return
+
+            ! select case (attr)
+            !     case (api_transectf_yFull)
+            !         transectR(transect_idx,tr_depthFull) = transect_value
+            !     case (api_transectf_aFull)
+            !         link%transectR(transect_idx,tr_areaFull) = transect_value
+            !     case (api_transectf_rFull)
+            !         link%transectR(transect_idx,tr_hydRadiusFull) = transect_value
+            !     case (api_transectf_wMax)
+            !         link%transectR(transect_idx,tr_widthMax) = transect_value
+            !     case (api_transectf_ywMax)
+            !         link%transectR(transect_idx,tr_depthAtBreadthMax) = transect_value
+            !     case (api_transectf_sMax)
+            !         link%transectR(transect_idx,tr_sectionFactor) = transect_value
+            !     case (api_transectf_aMax)
+            !         link%transectR(transect_idx,tr_areaAtMaxFlow) = transect_value
+            !     case (api_transectf_lengthFactor)
+            !         link%transectR(transect_idx,tr_lengthFactor) = transect_value
+            !     case (api_transectf_roughness)
+            !         link%transectR(transect_idx,tr_roughness) = transect_value
+            !     case default
+            !         write(*,*)
+            !         write(*,*) '****** Unexpected case default '
+            !         write(*,*) '   attr = ',attr
+            !         write(*,*) '   ',trim(reverseKey_api(attr))
+            !         write(*,*) '******'
+            !         call util_crashpoint(667832)
+            ! end select
 
         elseif (  attr .ge. api_transectf_end ) then
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(883782)
-            return
+            !return
 
         else
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(273672)
-            return
+            !return
         end if
 
     end function interface_get_transectf_attribute
@@ -1847,13 +1850,13 @@ contains
 
         !print *, 'in interface_get_transect_table'
         
-        do ii=1,SWMM_N_transect
+        do ii=1,SWMM_N_link_transect
 
             error = ptr_api_get_transect_table(&
                 ii-1, SWMM_N_transect_depth_items,    &
-                transectTableDepthR(ii,:,tt_area),  &
-                transectTableDepthR(ii,:,tt_width),  &
-                transectTableDepthR(ii,:,tt_hydradius))
+                link%transectTableDepthR(ii,:,tt_area),  &
+                link%transectTableDepthR(ii,:,tt_width),  &
+                link%transectTableDepthR(ii,:,tt_hydradius))
 
             ! if (ii==1) then
             !     print *, ii,'==================='
@@ -1896,7 +1899,7 @@ contains
             print *, "error: unexpected table attribute value", attr
             !stop 
             call util_crashpoint( 28704)
-            return
+            !return
         end if
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
@@ -1904,7 +1907,7 @@ contains
             print *, trim(reverseKey_api(attr))
             !stop 
             call util_crashpoint( 498734)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1977,7 +1980,7 @@ contains
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 835551)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -2019,7 +2022,7 @@ contains
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 837014)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -2068,7 +2071,7 @@ contains
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 8367894)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -2299,7 +2302,7 @@ contains
             print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
             !stop 
             call util_crashpoint(42987)
-            return
+            !return
         end if
 
         if (setting%Debug%File%interface)  &
@@ -3003,7 +3006,7 @@ contains
                  " has not been handled in load_api_procedure"
                 !stop 
                 call util_crashpoint(420987)
-                return
+                !return
         end select
 
         if (setting%Debug%File%interface)  &
@@ -3151,7 +3154,7 @@ contains
             write(*,*)
             !stop 
             call util_crashpoint( 63455)
-            return
+            !return
         end if
     end subroutine print_api_error
 !%

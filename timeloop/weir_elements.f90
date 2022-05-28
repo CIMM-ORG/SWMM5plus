@@ -6,6 +6,7 @@ module weir_elements
     use define_settings, only: setting
     use common_elements
     use adjust
+    use utility, only: util_CLprint
 
     !%----------------------------------------------------------------------------- 
     !% Description:
@@ -33,7 +34,7 @@ module weir_elements
         
         character(64) :: subroutine_name = 'weir_toplevel'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%weir_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -42,7 +43,7 @@ module weir_elements
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
             (eIdx, esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection)
-        
+
         !% find effective head difference accross weir element
         call weir_effective_head_delta (eIdx)
         
@@ -52,6 +53,10 @@ module weir_elements
         else
             call weir_flow (eIdx, esr_Weir_EffectiveHeadDelta, .true.)
         endif
+        
+        !print *, 'in weir toplevel'
+        !call util_CLprint()
+        !stop 98374
         
         !% update weir geometry from head
         call weir_geometry_update (eIdx)
@@ -78,7 +83,7 @@ module weir_elements
         logical, pointer :: CanSurcharge, IsSurcharged
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         !% input
         Head   => elemR(eIdx,er_Head)
         !% output
@@ -92,6 +97,9 @@ module weir_elements
         !% setting default surcharge condition as false
         IsSurcharged = .false.
         !%-----------------------------------------------------------------------------
+
+        !print *, 'in weir stuff 298374'
+        !print *, Head, Zcrest
 
         if (Head <= Zcrest) then
             EffectiveHeadDelta = zeroR
@@ -124,7 +132,7 @@ module weir_elements
         real(8), pointer :: Flowrate, EffectiveFullDepth, EffectiveHeadDelta
         real(8) :: CoeffOrifice
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         FlowDirection      => elemSI(eIdx,esi_Weir_FlowDirection)
         Flowrate           => elemR(eIdx,er_Flowrate) 
         EffectiveFullDepth => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
@@ -162,7 +170,7 @@ module weir_elements
         real(8) :: Zmidpt, CrestLength, SubCorrectionTriangular, SubCorrectionRectangular
         real(8) :: ratio
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
         EndContractions  => elemSI(eIdx,esi_Weir_EndContractions)
         FlowDirection    => elemSI(eIdx,esi_Weir_FlowDirection)
@@ -184,6 +192,10 @@ module weir_elements
         !% These are changed below if needed
         SubCorrectionTriangular = oneR
         SubCorrectionRectangular = oneR
+
+        !print *, reverseKey(SpecificWeirType)
+        !call util_CLprint()
+        
     
         select case (SpecificWeirType)
         case (transverse_weir)
@@ -203,6 +215,8 @@ module weir_elements
 
             Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
                     CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
+
+            !print *, EffectiveHeadDelta        
 
         case (side_flow)
             WeirExponent          => Setting%Weir%SideFlow%WeirExponent
@@ -309,7 +323,7 @@ module weir_elements
         integer, pointer :: SpecificWeirType
         logical, pointer :: IsSurcharged
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
 
         Head        => elemR(eIdx,er_Head)
@@ -390,14 +404,14 @@ module weir_elements
         end select
 
         !% apply geometry limiters
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_ell,       setting%ZeroValue%Depth) 
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area,    .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth,   .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth,   .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth,   .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_ell,       setting%ZeroValue%Depth,   .false.) 
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth,.false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth,.false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume,  .true.)
 
     end subroutine weir_geometry_update
 !%    

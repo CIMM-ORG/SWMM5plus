@@ -6,6 +6,7 @@ module lowlevel_rk2
     use define_keys
     use utility, only: util_sign_with_ones
     use utility_output
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -29,6 +30,7 @@ module lowlevel_rk2
     public :: ll_continuity_add_source_CCJM_AC_surcharged
     public :: ll_momentum_Ksource_CC
     public :: ll_momentum_source_CC
+    public :: ll_momentum_lateral_source_CC
     public :: ll_momentum_gamma_CC
     public :: ll_momentum_solve_CC
     public :: ll_momentum_velocity_CC
@@ -97,6 +99,13 @@ module lowlevel_rk2
         !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
         !% downstream branches
         elemR(thisP,outCol) = eQlat(thisP)
+
+        ! print *, 'in ll_continuity_netflowrate_JM'
+        ! print *, elemR(iet(1),outCol)
+        ! do ii=1,max_branch_per_node,2
+        !     print *, fQ(fup(iet(1)+ii)), real(isbranch(iet(1)+ii  ),8)
+        !     print *, fQ(fdn(iet(1)+ii+1)), real(isbranch(iet(1)+ii+1),8)
+        ! end do
 
         !% approach using branch Q
         ! do ii = 1,max_branch_per_node,2
@@ -389,6 +398,7 @@ module lowlevel_rk2
             stop 2382
         end select
 
+        !print *, ' Ksource ',elemR(780,outCol)
         !print *, 'in ll_momentum_Ksource_CC'
         !print *, elemR(1,outCol), fAup(idn(1))* eHead(1) * grav, fAdn(iup(1)) * eHead(1) * grav
 
@@ -448,6 +458,7 @@ module lowlevel_rk2
                     ) &
                 + eKsource(thisP)
 
+        !print *, '  source ',elemR(780,outCol)
         !print *, 'in ll_momentum_source_CC'
         !print *, fQ(iup(1)), fUdn(iup(1))
         !print *, fQ(idn(1)), fUup(idn(1))
@@ -459,6 +470,44 @@ module lowlevel_rk2
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine ll_momentum_source_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_momentum_lateral_source_CC (inoutCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adding lateral inflow source term to momentum
+        !% EXPERIMENTAL 20220524 -- DO NOT USE
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: inoutCol, thisCol, Npack
+            real(8), pointer :: Qlat(:), Area(:)
+            integer, pointer :: thisP(:)
+            character(64)    :: subroutine_name = "ll_momentum_lateral_source_CC"
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        if (setting%Debug%File%lowlevel_rk2) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisP    => elemP(1:Npack,thisCol)
+            Qlat     => elemR(:,er_FlowrateLateral)
+            Area     => elemR(:,er_Area)
+        !%------------------------------------------------------------------
+
+       ! print *, ' before qlat source ',elemR(780,inoutCol)    
+
+        !% HACK the onehalfR should be replaced with a coefficient
+        elemR(thisP,inoutCol) = elemR(thisP,inoutCol) &
+            + (Qlat(thisP))**2 / Area(thisP)
+
+        !print *, ' after qlat source ',elemR(780,inoutCol)     
+        !%------------------------------------------------------------------
+        !% Closing:
+        if (setting%Debug%File%lowlevel_rk2) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine ll_momentum_lateral_source_CC
 !%
 !%==========================================================================
 !%==========================================================================
@@ -487,6 +536,8 @@ module lowlevel_rk2
                 * grav * (mn(thisP)**twoR) * velocity(thisP)  &
                 / &
                 ( rh(thisP)**fourthirdsR )
+
+       ! print *, ' gamma ',elemR(780,outCol)        
 
     end subroutine ll_momentum_gamma_CC
 !%
@@ -525,10 +576,14 @@ module lowlevel_rk2
         Msource => elemR(:,er_SourceMomentum)
         GammaM  => elemR(:,er_GammaM)
 
+        !print *, ' Msource ', elemR(780,er_SourceMomentum)
+        !print *, ' Gamma   ', elemR(780,er_GammaM)
+
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
+        !print *, ' M       ',elemR(780,outCol)
         !print *, 'in ll_momentum_solve_CC'
         !print *, elemR(1,outCol)
         !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)        
@@ -554,8 +609,11 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
         !% compute velocity
 
+        !print *, ' flowrate ', momentum(780) / elemR(780,er_Length)
+
         elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
 
+        !print *, ' velocity ',elemR(780,inoutCol)
         ! print*
         ! print*, 'in ll_momentum_velocity_CC'
         ! print*, elemR(thisP,inoutCol), 'new velocity'
@@ -741,7 +799,7 @@ module lowlevel_rk2
         integer, intent(in) :: whichTM, istep
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
-        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:), fFlowMax(:)
+        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) !%, fFlowMax(:)
         real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
         real(8), pointer :: eVolume(:), eLength(:), dt, grav, epsH, crk(:)
         real(8), pointer :: eRough(:)
@@ -762,7 +820,7 @@ module lowlevel_rk2
         eRough       => elemR(:,er_Roughness)
 
         fFlow        => faceR(:,fr_Flowrate)
-        fFlowMax     => faceR(:,fr_Flowrate_Max)
+        !fFlowMax     => faceR(:,fr_Flowrate_Max)
         iFaceUp      => elemI(:,ei_Mface_uL)
         iFaceDn      => elemI(:,ei_Mface_dL)
 
@@ -816,6 +874,22 @@ module lowlevel_rk2
                                       + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
                                     ) / gamma
 
+
+                                    ! if ((setting%Time%Now > 607.45) .and. (this_image() == 4) .and. (ii == 18)) then
+                                    !     write(6,*) ' ======================'
+                                    !     write(6,*) 'in ll rk2', ii, tM, tB
+                                    !     write(6,*) 'tFup elemUp ',tFup,  faceI(tFup,fi_Melem_uL), trim(reverseKey(elemI(faceI(tFup,fi_Melem_uL),ei_elementType)))
+                                    !     write(6,*) 'fHead_d   ',fHead_d(tFup)
+                                    !     write(6,*) 'eHead     ',eHead(tB)
+                                    !     write(6,*) 'dHead     ', dHead
+                                    !     write(6,*) 'gamma     ', gamma
+                                    !     write(6,*) 'eFlow     ',eFlow(tB)
+                                    !     !write(6,*), 'btm ', zBtm(tB)
+                                    !     write(6,*) ' ====================='
+                                    !     flush(6)
+                                        
+                                    ! end if               
+
                         if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
                             eFlow(tB) = zeroR
                         end if
@@ -828,7 +902,7 @@ module lowlevel_rk2
                         end if
 
                         if (abs(eVelocity(tB)) > vMax) then
-                            eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
+                            eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
 
                     end if
@@ -864,7 +938,7 @@ module lowlevel_rk2
                         end if
 
                         if (abs(eVelocity(tB)) > vMax) then
-                            eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
+                            eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
 
                         !print *, 'flowrate here dn ',eFlow(tB)
@@ -1004,7 +1078,7 @@ module lowlevel_rk2
     !         endwhere
 
     !         where (abs(eVelocity(thisP+kk)) > vMax)
-    !             eVelocity(thisP+kk) = sign(0.99 * vMax, eVelocity(thisP+kk))
+    !             eVelocity(thisP+kk) = sign(0.99d0 * vMax, eVelocity(thisP+kk))
     !         endwhere
     !     end do
 
@@ -1239,7 +1313,7 @@ module lowlevel_rk2
                             eVelocity(tB) = Msource(tB) / eVolume(tB)
                         end if
                         if (abs(eVelocity(tB)) > vMax) then
-                            eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
+                            eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
                         eFlow(tB) = eVelocity(tB) * eArea(tB)
                     end if
@@ -1321,6 +1395,10 @@ module lowlevel_rk2
                 PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
             end where
 
+            ! if (this_image() == 3) then
+            !     print *, fPNumber(fUp(426)), fPNumber(fDn(426)), TargetPCelerity
+            ! end if
+
             !% Slot calculations
             where (SlotArea(thisP) .gt. zeroR)
                 !% use the preissmann number from the faces
@@ -1335,12 +1413,14 @@ module lowlevel_rk2
                 PNumber(thisP) = (PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP)
             end where
 
+           
+
         case default
             !% should not reach this stage
             print*, 'In ', subroutine_name
             print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
             print *, 'which has key ',trim(reverseKey(SlotMethod))
-            stop 38756
+            call util_crashpoint(39872)
 
         end select
         ! if (util_output_must_report()) then

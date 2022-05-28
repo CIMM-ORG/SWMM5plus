@@ -64,9 +64,11 @@ contains
 
             integer, allocatable :: tempP(:)
 
+            logical :: writeYN
+
         !%--------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -137,13 +139,34 @@ contains
         !% Adust the end time for the dtTol (precision error in epoch to seconds conversion)
         do while (setting%Time%Now <= (setting%Time%End - dtTol))
 
-            !write(*,"(A)") ' ... beginning time loop'
+            !% --- check for blowup conditions
+            call util_crashcheck (44804)
+            call util_crashstop (44804)
+
+                ! sync all
+                ! do ii=1,num_images()
+                !     sync all
+                !     if ((this_image()==1) .and. (ii==1)) then
+                !         write(6,*) ' ... beginning time loop ===================',this_image(),setting%Time%Now
+                !         flush(6)
+                !         !wait(6)
+                !         !call sleep(1)
+                !     end if
+                !     sync all
+                ! end do 
+                ! sync all
 
             !% --- push the old values down the stack 
             call tl_save_previous_values()
 
+                ! write(6,*) 'timeloop 01 ',this_image(), crashI
+                ! call flush(6)
+
             !% store the runoff from hydrology on a hydrology step
             if (doHydrology) call tl_hydrology()
+
+                !call util_syncwrite('timeloop 02 ',crashI)
+
 
             !% --- main hydraulics time steop
             if (doHydraulics) then       
@@ -160,7 +183,15 @@ contains
                 !% ***** BUGCHECK -- the lateral flowrate is cumulative of BC and hydrology, 
                 !% ***** so check that it is zeroed before the first BC added.
                 call bc_update() 
-                if (crashI==1) return
+
+                
+                    !call util_syncwrite('    timeloop aaa ',crashI)
+
+
+                if (crashI==1) then
+                    call util_crashpoint (884782)
+                end if
+            
 
                 !% HACK put lateral here for now -- moved from face_interpolation.
                 !% set lateral to zero
@@ -174,6 +205,12 @@ contains
                 thisBC  => BC%P%BClat
                 Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
 
+                !print *, 'QLATERAL before hydrology '
+                !print *, Qlateral(780)
+
+                !write(6,*) '   timeloop bbb ',this_image()
+                ! flush(6)
+
                 !% --- add subcatchment inflows
                 if (useHydrology) then 
                     sImage => subcatchI(:,si_runoff_P_image)
@@ -183,6 +220,7 @@ contains
 
                     do mm = 1,SWMM_N_subcatch
                         !% --- only if this image holds this node
+                        !print *, mm, eIdx(mm), Qlateral(eIdx(mm)), Qrate(mm)
                         if (this_image() .eq. sImage(mm)) then
                             Qlateral(eIdx(mm)) = Qlateral(eIdx(mm)) + Qrate(mm)
                         end if
@@ -191,11 +229,19 @@ contains
                     !% continue
                 end if
 
-                ! write (*,*) ' '
-                ! write(*,"(A,f12.2,A)") 'time loop ',timeNow/3600.0, ' ===================================================================='
+
+                    !outstring = '    timeloop ccc '
+                    !call util_syncwrite
+
+              
+                write (*,*) ' '
+                write(*,"(A,f12.2,A)") 'time loop ',timeNow/3600.0, ' ===================================================================='
 
                 !% --- perform hydraulic routing
                 call tl_hydraulics()
+
+                    !outstring = '    timeloop ddd '
+                    !call util_syncwrite
 
                 !% --- close the clock tick for hydraulic loop evaluation
                 sync all
@@ -209,6 +255,9 @@ contains
                 end if 
 
             end if
+
+                !call util_syncwrite('timeloop 03 ',crashI)
+                
 
             !% --- handle output reporting
             if (setting%Output%Report%provideYN) then 
@@ -242,19 +291,30 @@ contains
                 end if
             end if    
 
+                ! write(6,*) 'timeloop 04 ',this_image(), crashI
+                ! call flush(6)
+
             call util_crashstop(13978)
 
             !% --- restart the hydraulics time tick
+            sync all
             if (this_image()==1) then
                 call system_clock(count=cval,count_rate=crate,count_max=cmax)
                 setting%Time%WallClock%HydraulicsStart = cval
             end if 
 
+                ! write(6,*) 'timeloop 05 ',this_image(), crashI
+                ! call flush(6)
+
+            sync all
             !% ---increment the time step and counters for the next time loop
             call tl_increment_counters(doHydraulics, doHydrology)
 
+                ! write(6,*) 'timeloop 06 ',this_image(), crashI
+                ! call flush(6)
+ 
             ! !% --- check for a crash
-            ! if (crashYN) then
+            ! !if (crashYN) then
             !     if ((setting%Output%Report%provideYN) .and. &
             !     (.not. setting%Output%Report%suppress_MultiLevel_Output)) then
             !         call outputML_store_data (.true.)
@@ -263,6 +323,7 @@ contains
             ! end if
 
             !% --- close the hydraulics time tick
+            sync all
             if (this_image()==1) then
                 call system_clock(count=cval,count_rate=crate,count_max=cmax)
                 setting%Time%WallClock%HydraulicsStop = cval
@@ -272,7 +333,28 @@ contains
                     - setting%Time%WallClock%HydraulicsStart
             end if
 
-            !print *, 'end of time loop'
+ 
+                ! sync all
+                ! do ii=1,num_images()
+                !     sync all
+                !     flush(6)
+                !     if ((this_image()==1) .and. (ii==1)) then 
+                !         flush(6)
+                !         write(6,*) ' ... end of time loop ======================',this_image(), crashI
+                !         flush(6)
+                !         !wait(6)
+                !         !call sleep(1)
+                !     else
+                !         flush(6)
+                !     end if
+                !     sync all
+                ! end do
+                ! sync all
+
+
+            call util_crashstop (773623)
+
+
         end do  !% end of time loop
 
         sync all
@@ -303,7 +385,7 @@ contains
             character(64) :: subroutine_name = 'tl_hydrology'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% wall clock tick
@@ -355,7 +437,7 @@ contains
             character(64)    :: subroutine_name = 'tl_hydraulics'
         !%-------------------------------------------------------------------
         !% Preliminaries:
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -376,8 +458,20 @@ contains
             !% dual-method, ETM for open channel, AC for surcharge
             call rk2_toplevel_ETMAC() 
         case (ETM)
+        !    print *, ' '
+        !    print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+        !    call util_CLprint ()
+
+                !outstring = '    tl_hydraulics 111 '
+                !call util_syncwrite
+
             !% ETM with Preissmann slot for surcharge
             call rk2_toplevel_ETM()
+            
+                !outstring = '    tl_hydraulics 222 '
+                !call util_syncwrite
+
+            !call util_CLprint ()
         case (AC)
             !% AC for both open-channel and surcharge
             call rk2_toplevel_AC()
@@ -415,7 +509,7 @@ contains
             character(64)          :: subroutine_name = 'tl_increment_counters'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
@@ -524,7 +618,7 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             logical, pointer :: matchHydrologyStep, useHydrology
-            real(8)          :: oldDT
+            real(8)          :: oldDT, maxVelocity
             real(8)          :: timeleft, thisCFL
             real(8), pointer :: targetCFL, maxCFL, maxCFLlow, timeNow, dtTol
             real(8), pointer :: increaseFactor
@@ -536,14 +630,10 @@ contains
             integer, pointer :: stepNow, stepNext, stepfinal, lastCheckStep, checkStepInterval
             !rm integer, pointer :: thisCol, Npack, thisP(:)
             character(64)    :: subroutine_name = 'tl_update_hydraulics_timestep'
-
-            !integer :: bcElemDn(2)
-            !real(8), pointer :: volume(:), smallVolume(:), flowrate(:), topwidth(:), depth(:)
-
             !integer :: kk !temporary
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -574,9 +664,9 @@ contains
         oldDT =  setting%Time%Hydraulics%Dt  ! not a pointer (important!)
         newDT => setting%Time%Hydraulics%Dt
         
-        !print *, '=============================================='
-        !print *, 'oldDT ',oldDT
-        !print *, 'newDT ',newDT
+        ! print *, '=============================================='
+        ! print *, 'oldDT ',oldDT
+        ! print *, 'newDT ',newDT
 
         if ((matchHydrologyStep) .and. (useHydrology)) then 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
@@ -584,6 +674,8 @@ contains
             timeLeft = nextHydrologyTime - lastHydraulicsTime
             if (timeLeft .le. dtTol) timeLeft = oldDT
             thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,timeleft)  
+
+            ! print *, 'this CFL 01 ',thisCFL
 
             !% --- check to see if a single time step to match the hydrology time is possible
             if (thisCFL < maxCFL) then
@@ -598,6 +690,8 @@ contains
                         !% --- increase the oldDT by the maximum allowed
                         newDT = increaseFactor * oldDT
                     end if
+
+                    ! print *, 'newDT 02   ', newDT
                 else
                     !% --- small time left, don't bother with it, go back to the old dt
                     newDT = oldDT
@@ -607,6 +701,9 @@ contains
                         !% --- if CFL to large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
                     end if
+
+                    ! print *, 'this CFL 03 ',thisCFL
+                    ! print *, 'newDT 03    ',newDT
                 end if
             else
                 !% --- if more than one time step is needed, compute the needed steps 
@@ -616,6 +713,8 @@ contains
                     write(*,*) 'warning -- really high CFL, setting dt to minimum to prevent overflow'
                     newDT = setting%Limiter%Dt%Minimum + setting%Time%DtTol
                     neededSteps = 1000
+
+                    ! print *, 'newDT 04    ',newDT
                 else
                     !% --- note that neededSteps will be 2 or larger else thisCFL < maxCFL
                     neededSteps = ceiling( thisCFL / targetCFL )
@@ -633,6 +732,9 @@ contains
                         !% --- if CFL to large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
                     end if
+
+                    ! print *, 'this CFL 05 ',thisCFL
+                    ! print *, 'newDT 05    ',newDT
                 end if
             end if
         else
@@ -640,12 +742,14 @@ contains
             !% --- allowing hydrology and hydraulics to occur at different times
             thisCFL = tl_get_max_cfl(ep_CC_Q_NOTsmalldepth,oldDT)
 
-            !print *, 'thisCFL ',thisCFL
+            ! print *, 'thisCFL 06 ',thisCFL
 
             if (thisCFL > maxCFL) then
                 !% --- decrease the time step to the target CFL and reset the checkStep counter
                 newDT = oldDT * targetCFL / thisCFL
                 lastCheckStep = stepNow
+
+                ! print *, 'newDT 07    ',newDT
             else
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
                 if (stepNow > lastCheckStep + checkStepInterval) then
@@ -656,6 +760,9 @@ contains
                         newDT = OldDT * targetCFL / thisCFL  ! 20220214brh
                         lastCheckStep = stepNow
                     end if
+
+                    ! print *, 'thisCFL 08 ',thisCFL
+                    ! print *, 'newDT   08 ',newDT
                 end if
             end if
         end if
@@ -663,9 +770,10 @@ contains
         !% 20220328brh time step limiter for inflows into small or zero volumes
         !print *, 'dt before limit ', newDT
         call tl_limit_BCinflow_dt (newDT)
-        !print *, 'dt BC limit     ',newDT
+        ! print *, 'dt BC limit     ',newDT
+
         call tl_limit_LatInflow_dt (newDT)
-        !print *, 'dt Qlat limit   ',newDt
+        ! print *, 'dt Qlat limit   ',newDt
 
         !% --- if dt is large and there is more than 2 steps, then round to an integer number
         if ((matchHydrologyStep) .and. (useHydrology) .and. (neededSteps .le. 2)) then
@@ -674,9 +782,13 @@ contains
             if (newDT > fiveR) then
                 !% --- round larger dt to counting numbers
                 newDT = real(floor(newDT),8)
+
+                ! print *, 'newDT 10    ',newDT
             elseif (newDT > oneR) then
                 !% --- round smaller dt to two decimal places
                 newDT = real(floor(newDT * onehundredR),8) / onehundredR
+
+                ! print *, 'newDT 11    ',newDT   
             else
                 !%  HACK -- should round to 3 places for smaller numbers
             end if
@@ -699,6 +811,15 @@ contains
                 call util_crashpoint(1123938)
             end if
 
+            ! print*, 'timeNow = ', timeNow
+            ! print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
+            ! maxVelocity = maxval( &
+            !     elemR(elemP(1:npack_elemP(ep_CC_Q_NOTsmalldepth),ep_CC_Q_NOTsmalldepth),er_Velocity) )
+            ! print*, 'max velocity  ', maxVelocity
+            ! print*, 'max V locate  ', findloc(elemR(:,er_Velocity),maxVelocity)
+            ! print*, 'max wavespeed ', maxval( &
+            !     elemR(elemP(1:npack_elemP(ep_CC_Q_NOTsmalldepth),ep_CC_Q_NOTsmalldepth),er_WaveSpeed) )
+
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulics_timestep
@@ -720,7 +841,7 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_solver_select'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -765,7 +886,7 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_save_previous_values'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%  push the old values down the stack
@@ -801,7 +922,7 @@ contains
             real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
             character(8) :: timeunit
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         dt            => setting%Time%Hydraulics%Dt
@@ -896,6 +1017,7 @@ contains
             real(8), pointer    :: thisDT
             integer, pointer :: Npack, thisP(:)
             real(8), pointer :: velocity(:), wavespeed(:), length(:), PCelerity(:)
+            integer :: itemp(1), ip, fup, fdn, eup, edn
         !%-------------------------------------------------------------------
             Npack              => npack_elemP(thisCol)
             thisP              => elemP(1:Npack,thisCol)
@@ -916,6 +1038,29 @@ contains
         if (Npack > 0) then 
             outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
                             maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
+        !    print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP))) 
+        !    itemp = maxloc(abs(velocity(thisP))) 
+        !    ip = thisP(itemp(1))
+        !    fup = elemI(ip,ei_Mface_uL)
+        !    fdn = elemI(ip,ei_Mface_dL)
+        !    eup = faceI(fup,fi_Melem_uL)
+        !    edn = faceI(fdn,fi_Melem_dL)
+           !print *, ' at max loc '
+           !print *, trim(reverseKey(elemI(ip,ei_elementType))), ' ', trim(reverseKey(elemI(ip,ei_geometryType)))
+           !print *, trim(reverseKey(elemI(eup,ei_elementType))), ' ', trim(reverseKey(elemI(eup,ei_geometryType)))
+           !print *, trim(reverseKey(elemI(edn,ei_elementType))), ' ', trim(reverseKey(elemI(edn,ei_geometryType)))
+           !print *, velocity(ip), wavespeed(ip), Pcelerity(ip)
+           !print *, elemR(ip,er_Depth), elemR(ip,er_Area), elemR(ip,er_Length)
+           !print *, faceR(fup,fr_Flowrate), faceR(fdn,fr_Flowrate)
+           
+        !    print *, elemR(eup,er_Head), elemR(ip,er_Head), elemR(edn,er_Head)
+        !    print *, elemR(eup,er_Zbottom), elemR(ip,er_Zbottom), elemR(ip,er_Zbottom)
+        !    print *, elemR(eup,er_Depth), elemR(ip,er_Depth), elemR(edn,er_Depth)
+        !    print *, elemI(eup,ei_link_Gidx_SWMM), elemI(ip,ei_link_Gidx_SWMM), elemI(edn,ei_link_Gidx_SWMM)
+        !    print *, eup, ip, edn
+        !    stop 29873
+
+                     
         else
             outvalue = zeroR
         end if
@@ -959,7 +1104,7 @@ contains
             real(8) :: newDTlimit
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (crashYN) return
+            !if (crashYN) return
             temp_BCupI(:,:) = nullValueI
             temp_BCupR(:,:) = nullValueR
         !%------------------------------------------------------------------
@@ -1056,7 +1201,7 @@ contains
             integer :: thisCol
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (crashYN) return
+            !if (crashYN) return
         !%------------------------------------------------------------------
         !% Aliases:
             Qlat       => elemR(:,er_Temp01)

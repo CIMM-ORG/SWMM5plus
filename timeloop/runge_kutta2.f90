@@ -10,7 +10,7 @@ module runge_kutta2
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use adjust
     use diagnostic_elements
-    use utility, only: util_CLprint
+    use utility, only: util_CLprint, util_syncwrite
     use utility_crash
 
     implicit none
@@ -40,27 +40,35 @@ module runge_kutta2
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%runge_kutta2) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
         !% Aliases
         !%-----------------------------------------------------------------
-        !% --- RK2 solution step -- single time advance step for CC and JM
-        
-        ! print *, 'AAA'
-        ! call util_CLprint ()
+        !% --- reset the overflow counter
+        elemR(:,er_VolumeOverFlow) = zeroR
 
+        !print *, this_image(), 'AAA  start of RK2 ==================================',setting%Time%Step
+            !call util_CLprint ('AAA  start of RK2 ==================================')
+
+        !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
         call rk2_step_ETM (istep)
 
-        ! print *, 'BBB'
-        ! call util_CLprint ()
+        !print *, this_image(),'BBB after volume/momentum step 1---------------------------',setting%Time%Step
+            !call util_CLprint ('BBB after volume/momentum step 1---------------------------')
 
+            ! outstring = '    rk2 BBB '
+            ! call util_syncwrite
+   
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         call update_auxiliary_variables (ETM)
 
-        ! print *, 'CCC'
+            ! outstring = '    rk2 CCC '
+            ! call util_syncwrite
+
+        ! print *, this_image(),'CCC  after update aux step 1-----------------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
@@ -68,101 +76,110 @@ module runge_kutta2
         call adjust_zero_and_small_depth_elem (ETM, .false.)
         call util_crashstop(340927)
 
-        ! print *, 'DDD'
+        ! print *, this_image(), 'DDD  after adjust zero/small elem-----------------',setting%Time%Step
         ! call util_CLprint ()
+        !call sleep(1)
      
         !% --- RK2 solution step  -- all face interpolation
+        sync all
         call face_interpolation(fp_all,ETM)
 
-        ! print *, 'EEE'
+        ! print *, this_image(), 'EEE  after face interpolation step 1---------------',setting%Time%Step
         ! call util_CLprint ()
+        !call sleep(1)
 
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .true.)
         call util_crashstop(440223)
 
-        ! print *, 'FFF'
+        ! print *, this_image(),'FFF  after zero/small face step 1-----------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
         call util_crashstop(402873)
 
-        ! print *, 'GGG'
+        ! print *, this_image(),'GGG  after diagnostic step 1 ----------------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
 
-        ! print *, 'HHH'
+        ! print *, this_image(),'HHH  after Vfilter step 1 -------------------------',setting%Time%Step
         ! call util_CLprint ()
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ETM)
 
-        ! print *, 'III'
+        ! print *, this_image(),'III  after consQ store step 1 ----------------------',setting%Time%Step
         ! call util_CLprint ()
+
+        !% --- reset the overflow counter (we only save conservation in the 2nd step)
+        elemR(:,er_VolumeOverFlow) = zeroR
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
         istep=2
         call rk2_step_ETM (istep)
-
-        ! print *, 'JJJ'
-        ! call util_CLprint ()
+        
+        ! print *, this_image(),'JJJ  after volume rk2 step 2 -----------------------',setting%Time%Step
+        !call util_CLprint ()
 
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         call update_auxiliary_variables(ETM)  
 
-        ! print *, 'KKK'
+        !print *, this_image(),'KKK  after update aux step 2 --------------------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         call adjust_zero_and_small_depth_elem (ETM, .false.)
         call util_crashstop(12973)
 
-        ! print *, 'LLL'
+        !print *,this_image(),'LLL  after zero/small elem step 2 -------------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- RK2 solution step -- update all faces
+        sync all
         call face_interpolation(fp_all,ETM)
 
-        ! print *, 'MMM'
+        ! print *, this_image(),'MMM  after face interp step 2 --------------------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
-        ! print *, 'NNN'
+        ! print *, this_image(),'NNN  after zero/small face step 2 ---------------------',setting%Time%Step
         ! call util_CLprint ()
         
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
         call util_crashstop(662398)
 
-        ! print *, 'OOO'
+        !print *, this_image(),'OOO  after diagnostic step 2 -------------------------',setting%Time%Step
         ! call util_CLprint ()
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_Vfilter (ETM)
         call util_crashstop(449872)
 
-        ! print *, 'PPP'
+        ! print *, this_image(),'PPP  after Vfilter step 2-----------------------------',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
         call adjust_zero_and_small_depth_elem (ETM, .true.)
         call util_crashstop(64987)
 
-        ! print *, 'QQQ'
+        ! print *, this_image(),'QQQ  after zero/small elem step 2 (2nd time)',setting%Time%Step
         ! call util_CLprint ()
 
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
-        ! print *, 'ZZZ'
-        ! call util_CLprint ()
+        !print *, this_image(),'ZZZ  after accumulate overflow step 2',setting%Time%Step
+        !call util_CLprint ()
+
+
 
         !%-----------------------------------------------------------------
         !% closing
@@ -180,7 +197,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_AC'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%runge_kutta2) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -205,7 +222,7 @@ module runge_kutta2
         integer, pointer :: Npack
         character(64) :: subroutine_name = 'rk2_toplevel_ETMAC'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%runge_kutta2) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
@@ -230,6 +247,7 @@ module runge_kutta2
         call update_auxiliary_variables(ALLtm)
 
         !% step 4 -- all face interpolation
+        sync all
         call face_interpolation(fp_all,ALLtm)
         
 
@@ -256,6 +274,7 @@ module runge_kutta2
             call update_auxiliary_variables (AC)
 
             !% step 6(f,g) -- update faces for AC elements
+            !% HACK -- need to sync some of the processors before this, but cannot sync all because some have N_ac <1
             call face_interpolation (fp_AC,AC)
             
 
@@ -280,6 +299,7 @@ module runge_kutta2
             call update_auxiliary_variables(ETM)
 
             !% step 8(d,e) -- update all faces
+            !% HACK -- need to sync some of the processors before this, but cannot sync all because some have N_ac <1
             call face_interpolation (fp_all,ALLtm)
         end if
 
@@ -307,18 +327,25 @@ module runge_kutta2
         integer, intent(in) :: istep
         integer :: tmType
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         !%
         !% perform the continuity step of the rk2 for ETM
         call rk2_continuity_step_ETM(istep)
 
+        ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
+        ! call util_CLprint ()
+
         !% only adjust extremely small element volumes that have been introduced
-        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume/twentyR, col_elemP(ep_CCJM_H_ETM))
+        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume/twentyR, col_elemP(ep_CCJM_H_ETM), .true.)
+
+        ! print *, this_image(),'    bbbb  after rk2 call to adjust limit by zero',this_image()
+        ! call util_CLprint ()
 
         !% perform the momentum step of the rk2 for ETM
         call rk2_momentum_step_ETM(istep)
 
-       
+        ! print *, this_image(),'    cccc  after rk2 call to rk2_momentum_step_ETM',this_image()
+        ! call util_CLprint ()
 
     end subroutine rk2_step_ETM
 !%
@@ -332,7 +359,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: istep
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         !% AC continuity
         call rk2_continuity_step_AC(istep)
         !% AC momentum
@@ -353,7 +380,7 @@ module runge_kutta2
         logical :: isreset
         !%-----------------------------------------------------------------------------
         !%
-        if (crashYN) return
+        !if (crashYN) return
         !% Baseline continuity source:
         !% Compute net flowrates for channels, conduits and special elements
         thisPackCol => col_elemP(ep_CC_H_ETM)
@@ -362,9 +389,9 @@ module runge_kutta2
             call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
         end if
 
-        !print *, '----------aaaa '
-        !write(*,"(5f12.7)") elemR(ietmp,er_SourceContinuity)
-        !write(*,"(5f12.7)") elemR(1:3,er_SourceContinuity)
+        ! print *, '----------aaaa '
+        ! write(*,"(5f12.7)") elemR(iet(1),er_SourceContinuity)
+
 
         !% compute net flowrates for junction mains
         thisPackCol => col_elemP(ep_JM_ETM)
@@ -373,9 +400,8 @@ module runge_kutta2
             call ll_continuity_netflowrate_JM (er_SourceContinuity, thisPackCol, Npack)
         end if
 
-        !print *, '------------bbbb  '
-        !write(*,"(5f12.7)") elemR(ietmp,er_SourceContinuity)
-        !write(*,"(5f12.7)") elemR(1:3,er_SourceContinuity)
+        ! print *, '------------bbbb  '
+        ! write(*,"(5f12.7)") elemR(iet(1),er_SourceContinuity)
 
         !% Solve for volume in ETM step
         thisPackCol => col_elemP(ep_CCJM_H_ETM)
@@ -384,9 +410,8 @@ module runge_kutta2
             call ll_continuity_volume_CCJM_ETM (er_Volume, thisPackCol, Npack, istep)
         end if
 
-        !print *, '------------cccc  '
-        !write(*,"(5f12.7)") elemR(ietmp,er_Volume)
-        !write(*,"(5f12.7)") elemR(1:3,er_Volume)
+        ! print *, '------------cccc  '
+        ! write(*,"(5f12.7)") elemR(iet(1),er_Volume)
 
         !% compute slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
@@ -398,11 +423,10 @@ module runge_kutta2
             end if
         endif
 
-        !print *, '------------dddd  '
-        !write(*,"(5f12.7)") elemR(ietmp,er_Volume)
-        !write(*,"(5f12.7)") elemR(1:3,er_Volume)
+        ! print *, '------------dddd  '
+        ! write(*,"(5f12.7)") elemR(iet(1),er_Volume)
 
-        !
+
 
     end subroutine rk2_continuity_step_ETM
 !%
@@ -419,7 +443,7 @@ module runge_kutta2
         logical :: isreset
         !%-----------------------------------------------------------------------------
         !%
-        if (crashYN) return
+        !if (crashYN) return
         !% Compute net flowrates for channels, conduits and special elements
         thisPackCol => col_elemP(ep_CC_AC)
         Npack => npack_elemP(thisPackCol)
@@ -455,7 +479,7 @@ module runge_kutta2
         end if
 
         !% adjust near-zero elements
-        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_AC))
+        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_AC), .true.)
 
     end subroutine rk2_continuity_step_AC
 !%
@@ -474,7 +498,7 @@ module runge_kutta2
         Npack       => npack_elemP(thisPackCol)
         !%-----------------------------------------------------------------------------
         !%
-        if (crashYN) return
+        !if (crashYN) return
         if (Npack > 0) then
             !print *, '... vel    :',elemR(1:2,er_Velocity)
 
@@ -485,6 +509,9 @@ module runge_kutta2
             !% Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
             !print *, '... sM      :',elemR(1:3,er_SourceMomentum)
+
+            !% EXPERIMENT 20220524 adding lateral inflow source
+            !call ll_momentum_lateral_source_CC (er_SourceMomentum, thisPackCol, Npack)
 
             !% Common Gamma for momentum on channels and conduits for  ETM
             call ll_momentum_gamma_CC (er_GammaM, thisPackCol, Npack)
@@ -502,6 +529,9 @@ module runge_kutta2
 
         call ll_junction_branch_flowrate_and_velocity(ETM,istep)
 
+        ! print *, '   in rk2momentum 555'
+        ! call util_CLprint()
+
     end subroutine rk2_momentum_step_ETM
 !%
 !%==========================================================================
@@ -517,7 +547,7 @@ module runge_kutta2
         integer, parameter  :: thisMethod = AC
         !%-----------------------------------------------------------------------------
         !%
-        if (crashYN) return
+        !if (crashYN) return
         thisCol => col_elemP(ep_CC_Q_AC)
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
@@ -556,7 +586,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
 
         !% brh20211212 hard stop until fixe is made
         print *, 'CODE ERROR problems with CCJB_eETM_i_fAC mask need to be fixed'
@@ -592,7 +622,7 @@ module runge_kutta2
         integer, pointer ::  thisCol, Npack
         !%-----------------------------------------------------------------------------
         !%
-        if (crashYN) return
+        !if (crashYN) return
         thisCol => col_elemP(ep_CCJB_eETM_i_fAC)
         Npack   => npack_elemP(thisCol)
 
@@ -618,7 +648,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         !%
         thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
         Npack => npack_elemP(thisCol)
@@ -648,7 +678,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
         Npack => npack_elemP(thisCol)
 

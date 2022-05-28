@@ -37,7 +37,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_toplevel'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -77,7 +77,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_effective_head_delta'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -141,7 +141,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_flow'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -259,7 +259,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_geometry_update'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -301,13 +301,13 @@ module orifice_elements
             case (circular)
                 YoverYfull  = Depth / EffectiveFullDepth
                 Area        = FullArea * &
-                        xsect_table_lookup_singular (YoverYfull, ACirc, NACirc)
+                        xsect_table_lookup_singular (YoverYfull, ACirc)  !% 20220506brh removed NACirc
                 Volume      = Area * Length
                 Topwidth    = EffectiveFullDepth * &
-                        xsect_table_lookup_singular (YoverYfull, TCirc, NTCirc)
+                        xsect_table_lookup_singular (YoverYfull, TCirc) !% 20220506brh removed NTCirc
                 HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
                 hydRadius   = onefourthR * EffectiveFullDepth * &
-                        xsect_table_lookup_singular (YoverYfull, RCirc, NRCirc)
+                        xsect_table_lookup_singular (YoverYfull, RCirc)  !% 20220506brh removed NRCirc
                 Perimeter   = min(Area / hydRadius, &
                         FullArea / (onefourthR * EffectiveFullDepth))
             case default
@@ -317,13 +317,13 @@ module orifice_elements
         end select
 
         !% apply geometry limiters
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area,     .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth,    .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth,    .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth,    .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth, .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth, .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume,   .true.)
 
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

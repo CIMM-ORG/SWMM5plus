@@ -19,10 +19,10 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_types.f90\
               $DEF_DIR/define_api_keys.f90\
               $DEF_DIR/define_globals.f90\
-              $UTIL_DIR/utility_crash.f90\
               $DEF_DIR/define_keys.f90\
               $DEF_DIR/define_settings.f90\
               $DEF_DIR/define_indexes.f90\
+              $UTIL_DIR/utility_crash.f90\
               $DEF_DIR/define_xsect_tables.f90\
               $UTIL_DIR/utility.f90\
               $UTIL_DIR/utility_datetime.f90\
@@ -50,6 +50,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $GEO_DIR/trapezoidal_channel.f90\
               $GEO_DIR/triangular_channel.f90\
               $GEO_DIR/circular_conduit.f90\
+              $GEO_DIR/irregular_channel.f90\
               $GEO_DIR/storage_geometry.f90
               $GEO_DIR/geometry.f90\
               $TL_DIR/common_elements.f90\

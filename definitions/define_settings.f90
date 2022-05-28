@@ -368,6 +368,14 @@ module define_settings
         real(8) :: energy_correction_factor = 1.0 
     end type ConstantType
 
+    !% setting%Crash
+    type CrashType
+        real(8) :: DepthMax  !% maximum depth exceedence in 1 cell that causes crash
+        real(8) :: HeadMax   !% maximum head exceedence in 1 cell that causes crash
+        real(8) :: FlowrateMax   !% maximum flow exceedence in 1 cell that causes crash
+        real(8) :: PercentVelocityAtLimit  !% percentage of cells at velocity limit that causes crash
+    end type
+
     !% setting%Debug
     type DebugType
         type(DebugFileYNType) :: File
@@ -457,7 +465,8 @@ module define_settings
     end type LimiterType
 
     type LinkType
-        integer ::        DefaultInitDepthType = LinearlyVarying ! uniform, linear, exponential
+        ! UniformDepth, LinearlyVaryingDepth, IncreasingDepth,  FixedHead
+        integer ::        DefaultInitDepthType = LinearlyVaryingDepth 
         ! HACK - TODO file for properties of specific links
     end type LinkType
 
@@ -622,6 +631,7 @@ module define_settings
         type(BCPropertiesType)   :: BC
         type(CaseNameType)       :: CaseName  ! name of case
         type(ConstantType)       :: Constant ! Constants
+        type(CrashType)          :: Crash    !% conditions where code is considered crashin
         type(DebugType)          :: Debug
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
@@ -954,6 +964,9 @@ contains
         if (found) setting%Constant%gravity = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Constant.gravity not found'
 
+    !% Crash =====================================================================
+        !%                       Crash. are set by code    
+
     !% Discretization. =====================================================================
         !% -- Nominal element length adjustment
         !%                      Discretization.AdjustLinkLengthYN
@@ -1197,15 +1210,17 @@ contains
         if (found) then            
             call util_lower_case(c)
             if (c == 'linear') then
-                setting%Link%DefaultInitDepthType = LinearlyVarying
+                setting%Link%DefaultInitDepthType = LinearlyVaryingDepth
             else if (c == 'uniform') then
-                setting%Link%DefaultInitDepthType = Uniform
+                setting%Link%DefaultInitDepthType = UniformDepth
             else if (c == 'exponential') then
-                setting%Link%DefaultInitDepthType = ExponentialDecay
+                setting%Link%DefaultInitDepthType = ExponentialDepth
+            else if (c == 'fixedhead') then
+                setting%Link%DefaultInitDepthTYpe = FixedHead
             else
                 write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... linear, uniform, exponential'
+                write(*,"(A)") '... linear, uniform, exponential, fixedhead'
                 stop 93775
             end if
         end if

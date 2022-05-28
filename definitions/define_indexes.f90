@@ -63,7 +63,7 @@ module define_indexes
         enumerator :: li_Mnode_u             ! map to upstream node connecting to link
         enumerator :: li_Mnode_d             ! map to downstram node connecting to link
         enumerator :: li_assigned            ! given 1 when link is assigned
-        enumerator :: li_InitialDepthType    ! Uniform, LinearlyVarying, ExponentialDecay
+        enumerator :: li_InitialDepthType    ! UniformDepth, LinearlyVaryingDepth, ExponentialDepth, FixedHead
         enumerator :: li_length_adjusted     ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
         enumerator :: li_P_image             ! image number assigned from BIPquick
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
@@ -184,6 +184,7 @@ module define_indexes
         enumerator :: nYN_has_storage
         enumerator :: nYN_isOutput
         enumerator :: nYN_is_phantom_node
+        enumerator :: nYN_hasFlapGate
         enumerator :: nYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_nodeYN  = nYN_lastplusone-1
@@ -205,7 +206,7 @@ module define_indexes
         enumerator :: lr_RightSlope
         enumerator :: lr_Roughness
         enumerator :: lr_InitialFlowrate
-        enumerator :: lr_InitialDepth
+        !enumerator :: lr_InitialDepth
         enumerator :: lr_InitialUpstreamDepth
         enumerator :: lr_InitialDnstreamDepth
         enumerator :: lr_ParabolaValue
@@ -216,15 +217,15 @@ module define_indexes
         enumerator :: lr_yOn                   ! startup depth for pumps
         enumerator :: lr_yOff                  ! shutoff depth for pumps    
         enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
-        enumerator :: lr_Flowrate
-        enumerator :: lr_Depth
-        enumerator :: lr_DepthUp
-        enumerator :: lr_DepthDn
-        enumerator :: lr_Volume
-        enumerator :: lr_Velocity
-        enumerator :: lr_Capacity
-        enumerator :: lr_ZbottomUp
-        enumerator :: lr_ZbottomDn
+        !enumerator :: lr_Flowrate
+        !enumerator :: lr_Depth
+        !enumerator :: lr_DepthUp
+        !enumerator :: lr_DepthDn
+        !enumerator :: lr_Volume
+        !enumerator :: lr_Velocity
+        !enumerator :: lr_Capacity
+        enumerator :: lr_ZbottomUp             ! Z bottom of upstream node
+        enumerator :: lr_ZbottomDn             ! Z bottom of downstream node
         enumerator :: lr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
@@ -245,6 +246,7 @@ module define_indexes
     !% Column indexes for BC%xYN(:,:)
     enum, bind(c)
         enumerator :: bYN_read_input_file = 1
+        enumerator :: bYN_hasFlapGate
         enumerator :: bYN_lastplusone !% must be last enum item
     end enum
 
@@ -305,7 +307,8 @@ module define_indexes
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
          enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
-         enumerator :: ei_transect_idx               !% index of the transect
+         enumerator :: ei_link_transect_idx         !% index of the link transect in link array
+         enumerator :: ei_transect_idx              !% index of transect in transect array
          enumerator :: ei_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemI = ei_lastplusone-1
@@ -460,7 +463,8 @@ module define_indexes
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements    
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
-        enumerator :: ep_CC_Q_NOTsmalldepth        !% all Q conduits used for CFL computation 
+        enumerator :: ep_CC_Q_NOTsmalldepth         !% all Q conduits used for CFL computation 
+        enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemP = ep_lastplusone-1
@@ -475,7 +479,7 @@ module define_indexes
         enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_triangular_nonsurcharged      !% CC triangular channels that are not surcharged
-        enumerator :: epg_CC_irregular                     !% CC irregular channels (never surcharged?)
+        enumerator :: epg_CC_irregular_nonsurcharged        !% CC irregular channels that are not surcharged
         enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
@@ -508,7 +512,8 @@ module define_indexes
         !% brh20211210e
         enumerator :: eYN_isDummy
         !% ss20220125
-        enumerator :: eYN_isBoundary                    !% TRUE if the element is connected to a shared face thus a boundary element of a partition
+        enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
+        enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemYN = eYN_lastplusone-1
@@ -552,6 +557,7 @@ module define_indexes
         enumerator :: esi_Outlet_FlowDirection = 1     !% outlet flow direction
         enumerator :: esi_Outlet_SpecificType          !% specifc outlet type
         enumerator :: esi_Outlet_CurveID               !% outlet curve id
+        enumerator :: esi_Outlet_hasFlapGate           !% 1 if true, 0 if false
         enumerator :: esi_Outlet_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSI_outlet = esi_Orifice_lastplusone-1
@@ -852,7 +858,7 @@ module define_indexes
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
-        enumerator :: fr_Flowrate_Max           !% maximum flowrate based on upstream element
+        !enumerator :: fr_Flowrate_Max           !% maximum flowrate based on upstream element
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
         enumerator :: fr_Zbottom                !% zbottom of faces

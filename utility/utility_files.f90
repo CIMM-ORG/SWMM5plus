@@ -798,7 +798,7 @@ contains
             else
                 print *, 'CODE ERROR: need to create the tmp file before getting filenames'
                 call util_crashpoint(449872)
-                return
+                !return
             end if
         end if
 
@@ -882,7 +882,7 @@ contains
             print *, 'format size used for setting up input files. '
             print *, 'The quick fix is to limit the number of images to ',99999
             call util_crashpoint(31937)
-            return
+            !return
         else
             write(newfilename,"(A,A,i5.5,A,A)") trim(kernel),'_',timage,trim(divider),trim(extension)
         end if

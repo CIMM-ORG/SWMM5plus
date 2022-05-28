@@ -40,7 +40,7 @@ module diagnostic_elements
         
         character(64) :: subroutine_name = 'diagnostic_toplevel'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%diagnostic_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -52,10 +52,9 @@ module diagnostic_elements
 
         if (Npack > 0) then
             call diagnostic_by_type (thisCol, Npack)
-            if (crashI==1) return
-            call face_interpolation (fp_Diag, dummy)
         end if
-
+        call face_interpolation (fp_Diag, dummy)
+       
         if (setting%Profile%useYN) call util_profiler_stop (pfc_diagnostic_toplevel)
 
         if (setting%Debug%File%diagnostic_elements)  &
@@ -81,7 +80,7 @@ module diagnostic_elements
         integer, pointer :: thisType, thisP(:)
         integer :: ii
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         thisP => elemP(1:Npack,thisCol)
 
         !% this cycles through the individual elements, but each
@@ -103,7 +102,7 @@ module diagnostic_elements
                 print *, 'CODE ERROR: Pump has not yet been developed'
                 print *, 'which has key ',trim(reverseKey(thisType))
                 call util_crashpoint(564321)
-                return
+                !return
 
             case (outlet)
                 call outlet_toplevel (thisP(ii))
@@ -112,7 +111,7 @@ module diagnostic_elements
                 print *, 'CODE ERROR element type unknown for # ', thisType
                 print *, 'which has key ',trim(reverseKey(thisType))
                 call util_crashpoint( 9472)
-                return
+                !return
             end select
         end do
 

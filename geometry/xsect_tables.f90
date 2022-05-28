@@ -14,7 +14,12 @@ module xsect_tables
 
     implicit none
 
-    public
+    private
+
+    public :: xsect_table_lookup
+    public :: xsect_table_lookup_array
+    public :: xsect_table_lookup_singular
+    public :: xsect_nonuniform_lookup_singular
 
 contains
 
@@ -122,11 +127,12 @@ contains
 !==========================================================================
 !
     subroutine xsect_table_lookup &
-        (inoutArray, normalizedInput, table, nItems, thisP)
+        (inoutArray, normalizedInput, table, thisP)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% interpolates the normalized value from the lookup table.
-        !% this subroutine is vectorized array operation.
+        !% this subroutine is vectorized array operation when all the values in
+        !% the normalizedInput array are looked up over the same table.
         !% Note that are the index into the table must be uniformly-distributed
         !% i.e. the delta between the input table indexes must be the same
         !% for every interval. This allows the normalized input to be divded by
@@ -135,11 +141,14 @@ contains
         !%-----------------------------------------------------------------------------
         real(8), intent(inout)    :: inoutArray(:)
         real(8), intent(in)       :: normalizedInput(:), table(:)
-        integer, intent(in)       :: nItems, thisP(:)
+        integer, intent(in)       :: thisP(:)
         integer, pointer          :: position(:)
+        integer                   :: nItems, ii
         real(8)                   :: delta
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
+
+        nItems = size(table)
 
         !% pointer towards the position in the lookup table
         !% this is pointed towards temporary column
@@ -147,8 +156,25 @@ contains
 
         delta = oneR / (nItems - oneR)
 
-        !% this finds the position in the table for interpolation
-        position(thisP) = int(normalizedInput(thisP) / delta) +oneI
+        ! if ((this_image() == 7) .and. (setting%Time%Step > 39418)) then
+        !     print *, '                               delta ', delta
+        !     print *, '               normalizedInput/delta'
+        !     !print *, normalizedInput(thisP) / delta
+        !     do ii=1,size(thisP)
+        !         print *, ii, normalizedInput(thisP(ii)) / delta
+        !         print *, ii, int(normalizedInput(thisP(ii)) / delta)
+        !     end do
+        ! end if
+
+        !% --- Find the integer (lower) position in the table for interpolation
+        !%     Note that fortran int() always gets the integer smaller than the value
+        where (normalizedInput(thisP) / delta + oneR < real(nItems,8))
+            position(thisP) = int(normalizedInput(thisP) / delta) +oneI
+        elsewhere
+            !% --- don't try to convert larger values to a position 
+            !%     (possible integer overflow)
+            position(thisP) = nItems
+        endwhere
 
         !% find the normalized output from the lookup table
         where (position(thisP) .LT. oneI)
@@ -189,8 +215,107 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine xsect_table_lookup_array &
+        (inoutArray, normalizedInput, table, thisP)   
+  !%-----------------------------------------------------------------------------
+        !% Description:
+        !% interpolates the normalized value from the lookup table.
+        !% This subroutine handles the case where each element in thisP must
+        !% be looked up over separate table (i.e., for irregular cross-sections)
+        !% Note that are the index into the table must be uniformly-distributed
+        !% i.e. the delta between the input table indexes must be the same
+        !% for every interval. This allows the normalized input to be divded by
+        !% the delta to return the position in the array.
+        !%
+        !% NOTE: if the normalized input is outside the table it will be 
+        !% truncted to the table max or min values to be consistent with the
+        !% lookup interpolation.
+        !%
+        !%-----------------------------------------------------------------------------
+        real(8), intent(inout)    :: inoutArray(:)
+        real(8), intent(inout)    :: normalizedInput(:)
+        real(8), intent(in)       :: table(:,:)
+        integer, intent(in)       :: thisP(:)
+        integer, pointer          :: position(:), tidx(:)
+        integer                   :: nItems, ii, kk
+        real(8)                   :: delta
+        !%-----------------------------------------------------------------------------
+        !if (crashYN) return
+
+        nItems = size(table,2)
+
+        !% --- pointer to table index that is unique for each element
+        !%     note that table() array must always be table(tidx(),...)
+        tidx => elemI(:,ei_transect_idx)
+
+        !% --- pointer towards the position in the lookup table
+        !%     this uses the temporary column
+        position => elemI(:,ei_Temp01)
+
+        delta = oneR / (nItems - oneR)
+
+        !% this finds the position in the table for interpolation
+        position(thisP) = int(normalizedInput(thisP) / delta) +oneI
+
+        !% --- handle the cases where the normalized input is below zero or greater than one
+        !%     THIS AFFECTS THE NORMALIZED INPUT
+        where (position(thisP) .LT. oneI)
+            position(thisP) = oneI
+            normalizedInput(thisP) = zeroR
+        elsewhere (position(thisP) .GT. nItems)
+            position(thisP) = nItems-1
+            normalizedInput(thisP) = oneR
+        endwhere
+
+        !% --- find the linearly interpolated normalized output from the lookup table
+        !%     each element (kk) has a different table
+        do concurrent (ii=1:size(thisP))
+            kk = thisP(ii)
+            inoutArray(kk) = table(tidx(kk),position(kk)) &
+                + (normalizedInput(kk) - real((position(kk) - oneI),8) * delta) &
+                 *(table(tidx(kk),position(kk) + oneI) - table(tidx(kk),position(kk))) / delta
+        end do
+
+        !% --- use quadratic interpolation for small values
+        do concurrent (ii=1:size(thisP))
+            kk = thisP(ii)
+            if (position(kk) .LE. twoI) then
+                inoutArray(kk) = max(zeroR,                                            &
+                    inoutArray(kk)                                                     & 
+                    + (  (normalizedInput(kk) - real((position(kk) - oneI),8) * delta) &
+                        *(normalizedInput(kk) - real((position(kk)       ),8) * delta) &
+                         / (delta*delta) )                                             &
+                     *(   onehalfR * table(tidx(kk),position(kk)     )                 &
+                        -            table(tidx(kk),position(kk)+oneI)                 &
+                        + onehalfR * table(tidx(kk),position(kk)+twoI) ) )
+            end if
+        end do
+
+        ! !% quadratic interpolation for low value of normalizedInput
+        ! where (position(thisP) .LE. twoI)
+        !     inoutArray(thisP) = max(zeroR,                                                   &
+        !             inoutArray(thisP)                                                        & 
+        !             + (  (normalizedInput(thisP) - real((position(thisP) - oneI),8) * delta) &
+        !                 *(normalizedInput(thisP) - real((position(thisP)       ),8) * delta) &
+        !                  / (delta*delta) )                                                   &
+        !              *(   onehalfR * table(tidx(thisP),position(thisP)     )                             &
+        !                 -            table(tidx(thisP),position(thisP)+oneI)                             &
+        !                 + onehalfR * table(tidx(thisP),position(thisP)+twoI) ) )
+        !             !%(inoutArray(thisP) + (inoutArray(thisP) - delta) * &
+        !             !%(inoutArray(thisP) - twoI * delta) / (delta*delta) *         &
+        !             !%(table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
+        ! endwhere
+
+        !% reset the temporary values to nullvalue
+        position(thisP) = nullvalueI
+
+    end subroutine xsect_table_lookup_array
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function xsect_table_lookup_singular &
-        (normalizedInput, table, nItems) result (output)
+        (normalizedInput, table) result (output)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% interpolatesfrom the lookup table. 
@@ -202,17 +327,22 @@ contains
         !% this function is singular operation.
         !%-----------------------------------------------------------------------------
         real(8), intent(in)       :: normalizedInput, table(:)
-        integer, intent(in)       :: nItems
+        integer                   :: nItems
         integer                   :: position
         real(8)                   :: delta
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
+
+        nItems = size(table)
 
         delta = oneR / (nItems - oneR)
 
         !% --- Compute the floor (integer not exceeding normalized/delta)
         !%     that is the lower index position in the lookup table
         position = int(normalizedInput / delta) + oneI
+
+        !print *, 'position ',position
+        !print *,  normalizedInput, delta
 
         !% find the normalized output from the lookup table
         if (position .LT. oneI) then
@@ -222,13 +352,15 @@ contains
                   (position .LT. nItems ) ) then
 
             !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
-            output = table(position+oneI) &
+            output = table(position) &
                                 + (normalizedInput - real((position - oneI),8) * delta) &
                                  *(table(position+oneI) - table(position)) / delta
 
         else if (position .GE. nItems) then
             output = table(nItems)
         end if
+        
+        !print *, 'output 1', output
 
         !% quadratic interpolation for low value of normalizedInput
         if (position .LE. twoI) then
@@ -244,6 +376,8 @@ contains
                     ! (normalizedOutput - twoI * delta) / (delta*delta) *         &
                     ! (table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
         end if
+
+        !print *, 'output 2', output
 
     end function xsect_table_lookup_singular
 !%
@@ -266,7 +400,6 @@ contains
             real(8), intent(in)  :: invalue
             real(8), intent(in)  :: tableIn(:), tableOut(:)
             logical, intent(in)  :: isFirstCall
-            real(8), allocatable :: deltaIn(:)   
             integer :: nItems, ii, kk
             character(64) :: subroutine_name = 'xsect_nonuniform_lookup_singular'
         !%-----------------------------------------------------------------
@@ -277,24 +410,23 @@ contains
             nItems = size(tableIn)
             if (isFirstCall) then
                 !% --- check the table sizes
+                if (nItems .le. 2) then
+                    print *, 'CODE OR INPUT ERROR: table size of at least 3 is required'
+                    call util_crashpoint(443823)
+                end if
                 if (size(tableIn) .ne. size(tableOut)) then
                     print *, 'CODE ERROR: mismatch in table sizes in ',trim(subroutine_name)
                     call util_crashpoint(223874)
                     return
-                end if
-                
-                !% --- initialize the delta of the input to check for uniformly increasing
-                allocate(deltaIn(nItems-1))
-                do ii=1,size(tableIn)-1    
-                    deltaIn(ii) = tableIn(ii+1) - tableIn(ii)
+                end if        
+                !% --- check that tableIn index is uniformly increasing
+                do ii=1,nItems-1    
+                    if ((tableIn(ii+1) - tableIn(ii)).le. zeroR) then
+                        print *, 'CODE ERROR: table input is not uniformly increasing'
+                        call util_crashpoint(442873)
+                        return
+                    end if
                 end do
-                if (any(deltaIn .le. zeroR)) then
-                    print *, 'CODE ERROR: table input is not uniformly increasing'
-                    call util_crashpoint(442873)
-                    return
-                end if
-
-                deallocate(deltaIn)
             end if
         !%-----------------------------------------------------------------        
         if (invalue .le. tableIn(1)) then

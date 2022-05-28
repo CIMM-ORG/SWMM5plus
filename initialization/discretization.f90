@@ -25,21 +25,30 @@ contains
     !   Put it here for now but can be moved to somewhere else
     !
     !-----------------------------------------------------------------------------
-        integer :: ii, Adjustment_flag
-        real(8) :: temp_length
-        real(8), pointer :: elem_nominal_length, elem_shorten_cof
-        character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
+        integer          :: ii, Adjustment_flag
+        real(8)          :: temp_length
+        real(8), pointer :: elem_nominal_length
+        real(8)          :: elem_shorten_cof
+        character(64)    :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elem_nominal_length => setting%Discretization%NominalElemLength
-        elem_shorten_cof    => setting%Discretization%LinkShortingFactor
-
+        
         do ii =1, N_link
-            temp_length = link%R(ii,lr_Length) ! lenght of link ii
+            !% --- default shorting coefficient (reset for each link)
+            elem_shorten_cof = setting%Discretization%LinkShortingFactor
+
+            temp_length = link%R(ii,lr_Length) ! length of link ii
             Adjustment_flag = oneI
+           
+            !% --- adjust the shortening for small link lengths 20220520brh 
+            if (temp_length < (oneR + twoR*elem_shorten_cof) * elem_nominal_length) then
+                !% --- limit the shortening to 1/4 of the total element length (1/8 on either side)
+                elem_shorten_cof = temp_length / (elem_nominal_length * eightR)
+            end if
 
             if ( node%I(link%I(ii,li_Mnode_u), ni_node_type) == nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for upstream M junction
@@ -51,6 +60,17 @@ contains
                 Adjustment_flag = Adjustment_flag + oneI
             end if
 
+            ! if (ii==30) then
+            !     print *, 'here in ',trim(subroutine_name)
+            !     print *, temp_length
+            !     if ((temp_length < onehalfR * link%R(ii,lr_Length)) &
+            !        .and. (temp_length < elem_nominal_length) ) then
+            !         print *, temp_length,  link%R(ii,lr_Length)
+            !     end if
+            !     print *, temp_length,  link%R(ii,lr_Length)
+            !     stop 29873
+            ! end if
+
             if ((link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe)) then
                 link%R(ii,lr_AdjustedLength) = temp_length
                 link%I(ii,li_length_adjusted) = Adjustment_flag
@@ -60,6 +80,7 @@ contains
                 link%R(ii,lr_AdjustedLength) = link%R(ii,lr_ElementLength)
                 link%I(ii,li_length_adjusted) = DiagAdjust
             end if
+
         end do
 
         if (setting%Debug%File%discretization)  &
@@ -83,7 +104,7 @@ contains
         character(64) :: subroutine_name = 'init_discretization_nominal'
 
     !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

@@ -35,7 +35,7 @@ contains
             character(64) :: subroutine_name = "bc_update"
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -114,13 +114,14 @@ contains
         real(8) :: ttime, tnow, tend
         character(64) :: subroutine_name = "bc_step"
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         tnow = setting%Time%Now
         tend = setting%Time%End
 
+        !% --- flow BC 
         if (N_flowBC > 0) then
             do ii = 1, N_flowBC
                 nidx = BC%flowI(ii, bi_node_idx)
@@ -155,11 +156,12 @@ contains
                     // node%Names(nidx)%str // " should always read from an input file")
                     !stop 
                     call util_crashpoint( 87453)
-                    return
+                    !return
                 end if
             end do
         end if
 
+        !% --- Head BC (outfall)
         if (N_headBC > 0) then
             do ii = 1, N_headBC
                 nidx = BC%headI(ii, bi_node_idx)
@@ -220,7 +222,7 @@ contains
             character(64)       :: subroutine_name = "bc_fetch_flow"
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -271,7 +273,7 @@ contains
         integer, pointer    :: nodeIdx, faceIdx, elemUpIdx
         character(64)       :: subroutine_name = "bc_fetch_head"
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -377,7 +379,7 @@ contains
                 write(*,*), 'CODE ERROR? unexpected else in BC'
                 !stop 
                 call util_crashpoint( 987098) 
-                return   
+                !return   
             end if
         end do
 
@@ -416,7 +418,7 @@ contains
                     write(*,*), 'CODE ERROR? unexpected else in BC'
                     !stop 
                     call util_crashpoint( 786985)    
-                    return
+                    !return
                 end if
 
             !% --- normal flow at outlet   
@@ -461,7 +463,7 @@ contains
                     // node%Names(nodeIdx)%str // " node")
                 !stop 
                 call util_crashpoint( 86474)
-                return
+                !return
             end if
         end do
 
@@ -487,7 +489,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
         real(8)              :: Q2g, critDepthEstimate, ratio, sideSlope, epsilon_c, tc0
         character(64) :: subroutine_name = 'bc_get_CC_critical_depth'
     !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -549,7 +551,7 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                 print *, 'which has key ',trim(reverseKey(elemGeometry))
                 !stop 
                 call util_crashpoint( 389753)
-                return
+                !return
             end select
         end if
 
@@ -627,7 +629,7 @@ function bc_critDepth_ridder (elemIdx, Q, yEstimate) result (criticalDepth)
     FullDepth => elemR(elemIdx,er_FullDepth)
 
     Y1 = zeroR
-    Y2 = 0.99*FullDepth
+    Y2 = 0.99d0*FullDepth
 
     !% check if critical flow at full depth < target flow
     Q2 = bc_get_critical_flow(elemIdx,Y2,zeroR)
@@ -763,8 +765,8 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
 
     case (circular)
         YoverYfull = Depth/fullDepth
-        Area     = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc, NACirc)
-        Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc, NTCirc), &
+        Area     = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc ) !% 20220506brh removed NACirc
+        Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc), &   !% 20220506brh removed NTirc
                     setting%ZeroValue%Topwidth)
 
         Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
@@ -775,7 +777,7 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
         print *, 'which has key ',trim(reverseKey(elemGeometry))
         !stop 
         call util_crashpoint( 84198)
-        return
+        !return
      end select
 
 end function bc_get_critical_flow

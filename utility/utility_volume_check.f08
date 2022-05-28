@@ -43,7 +43,7 @@ module utility_volume_check
 
     !     character(64) :: subroutine_name = 'util_volume_conservation'
 
-    !     if (crashYN) return
+    !     !if (crashYN) return
     !     if (setting%Debug%File%utility_volume_check) print *, '*** enter ',subroutine_name
 
     !     select case(diagnostic_type)
@@ -80,7 +80,7 @@ module utility_volume_check
 
         character(64) :: subroutine_name = 'util_volume_bc'
 
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_volume_check) print *, '*** enter ',subroutine_name
 
 

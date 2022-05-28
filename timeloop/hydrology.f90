@@ -41,7 +41,7 @@ module hydrology
     !         character(64) :: subroutine_name = 'hydrology_runoff'
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
-    !         if (icrash) return
+    !         
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------
@@ -76,7 +76,7 @@ module hydrology
     !         character(64) :: subroutine_name = 'hydro_'
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
-    !         if (icrash) return
+    !        
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------
@@ -103,7 +103,7 @@ module hydrology
     !         character(64) :: subroutine_name = 'hydro_'
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
-    !         if (icrash) return
+    !         
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------

@@ -8,11 +8,13 @@ module geometry
     use trapezoidal_channel
     use triangular_channel
     use circular_conduit
+    use irregular_channel
     use storage_geometry
+    use xsect_tables
     use adjust
     use utility_profiler
     use utility_crash
-    use utility, only: util_CLprint
+    use utility, only: util_CLprint, util_syncwrite
 
 
     implicit none
@@ -50,7 +52,7 @@ module geometry
             character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !!if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -92,7 +94,7 @@ module geometry
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
                     call util_crashpoint(7389)
-                    return
+                    !return
                     !stop 7389
             end select
             call util_crashstop(49872)
@@ -100,39 +102,41 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
-            ! print *, 'CCC -- 002- aaa',elemR(48,er_Volume)
-            ! call util_CLprint ()    
+        !print *, this_image(),  '    geomTL aaa ',setting%Time%Step
+        ! call util_CLprint ()    
+
 
         !% assign all geometry for surcharged elements CC, JM (and JB?)
         call geo_surcharged (thisColP_surcharged)
 
-        ! print *, 'CCC -- 002- bbb',elemR(48,er_Volume)
+        !print *, this_image(),  '    geomTL bbb',this_image(),setting%Time%Step
         ! call util_CLprint () 
 
         !% reset all zero or near-zero volumes in non-surcharged CC and JM
-        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
 
-        ! print *, 'CCC -- 002- ccc',elemR(48,er_Volume)
+        ! print *, this_image(),  '    geomTL ccc',this_image(),setting%Time%Step
         ! call util_CLprint () 
 
         !% compute the depth on all non-surcharged elements of CC and JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
-        ! print *, 'CCC -- 002- ddd',elemR(48,er_Volume)
+        ! print *, this_image(),  '    geomTL  ddd',this_image(),setting%Time%Step
         ! call util_CLprint () 
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM
-        call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
 
-        ! print *, 'CCC -- 002- eee',elemR(48,er_Volume)
+        !print *,this_image(),  '     geomTL  eee',this_image(),setting%Time%Step
         ! call util_CLprint () 
 
         !% compute the head on all non-surcharged elements of CC and JM
         call geo_head_from_depth (thisColP_NonSurcharged)
 
-        ! print *, 'CCC -- 002- fff',elemR(49,er_Volume)
-        ! call util_CLprint () 
 
+        !print *, this_image(),  '    geomTL  fff',this_image(),setting%Time%Step
+        ! call util_CLprint () 
+ 
         ! print *, 'in ',trim(subroutine_name),elemR(49,er_VolumeOverFlow), elemR(49,er_Volume)
 
         !% limit volume for incipient surcharge. This is done after depth is computed
@@ -141,8 +145,8 @@ module geometry
         !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
-        ! print *, 'CCC -- 002- ggg'
-        ! call util_CLprint () 
+        !print *, this_image(),  '    geomTL  ggg',this_image(),setting%Time%Step
+        ! call util_CLprint ()  
 
         ! print *, 'in ',trim(subroutine_name),elemR(48,er_VolumeOverFlow)
 
@@ -152,7 +156,10 @@ module geometry
         !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
 
-        ! print *, 'CCC -- 002- hhh'
+            ! outstring = '    geomTL  hhh '
+            ! call util_syncwrite()
+
+        !print *, this_image(),  '    geomTL  hhh',setting%Time%Step
         ! call util_CLprint () 
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
@@ -161,8 +168,10 @@ module geometry
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
-        ! print *, 'CCC -- 002- iii'
-        ! call util_CLprint () 
+            ! outstring = '    geomTL  iii '
+            ! call util_syncwrite()
+        !print *, this_image(),  '    geomTL  iii',setting%Time%Step
+        ! call util_CLprint ()  
 
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
@@ -170,60 +179,67 @@ module geometry
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
-        ! print *, 'CCC -- 002- jjj'
+        ! print *, this_image(),  '    geomTL  jjj',this_image()
         ! call util_CLprint () 
 
         !% reset all zero or near-zero areas in non-surcharged CC and JM
-        call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged, .false.)
 
-        ! print *, 'CCC -- 002- kkk'
-        ! call util_CLprint () 
+        ! print *, this_image(),  '    geomTL kkk',this_image()
+        ! call util_CLprint ()   
 
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        ! print *, 'CCC -- 002- lll'
+        ! print *, this_image(),  '    geomTL  lll', this_image()
         ! call util_CLprint () 
 
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
-        call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged, .false.)
 
-        ! print *, 'CCC -- 002- mmm'
+        ! print *, this_image(),  '    geomTL  mmm',this_image()
         ! call util_CLprint () 
 
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        ! print *, 'CCC -- 002- nnn'
+        ! print *, this_image(),  '    geomTL  nnn',this_image()
         ! call util_CLprint () 
 
         !% compute hyddepth
         call geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        ! print *, 'CCC -- 002- ooo'
-        ! call util_CLprint () 
+        ! print *, this_image(),  '    geomTL  ooo',this_image()
+        ! call util_CLprint ()   
 
-        !% compute hydradius
+        !% compute hydradius  (applies to all nonsurcharged)
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
 
-        ! print *, 'CCC -- 002- qqq'
+        ! print *, this_image(),  '    geomTL  qqq',this_image()
         ! call util_CLprint () 
 
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell (thisColP_all)
 
+        ! print *,  this_image(),  '    geomTL  rrr',this_image()
+        ! call util_CLprint () 
+
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
 
+        ! print *,  this_image(),  '    geomTL  sss',this_image()
+        ! call util_CLprint () 
+
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
 
-        ! print *, 'CCC -- 002- sss'
+
+        ! print *, this_image(),  '    geomTL ttt',this_image()
         ! call util_CLprint () 
 
         !% compute the dHdA that are only for AC nonsurcharged
@@ -231,7 +247,8 @@ module geometry
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
 
-        ! print *, 'CCC -- 002- ttt'
+
+        ! print *,  this_image(),  '    geomTL uuu',this_image()
         ! call util_CLprint () 
 
         call util_crashstop(322983)
@@ -272,14 +289,18 @@ module geometry
         !% SmallVolume_xxx,
         !%-------------------------------------------------------------------
             integer, intent(in) :: whichTM, thisColP_JM
+
             integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
             real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
-            real(8), pointer :: fullhyddepth(:)
-            real(8), pointer :: grav
+            real(8), pointer :: fullhyddepth(:), thisTable(:,:)
+            real(8), pointer :: grav        
+
+            real(8) :: depthnorm
             integer :: tB, ii, kk
+
         !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
         !real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
 
@@ -289,7 +310,7 @@ module geometry
             character(64) :: subroutine_name = 'geo_assign_JB'
         !%---------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !!if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
@@ -320,18 +341,58 @@ module geometry
             grav => setting%Constant%gravity
         !%------------------------------------------------------------------
 
+        ! if (setting%Time%Now > 608.45) then
+        !     write(6,*) 'in geoassign_JB ',this_image()
+        !     write(6,*) 'npack ', Npack
+        !     flush(6)
+        ! end if
+       
+
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP_JM)
+
+            !if (setting%Time%Now > 608.45) then
+            !    write(6,*) this_image(), 'thisP ',thisP
+            !    flush(6)
+            !end if
+
             !% cycle through the all the main junctions and each of its branches
             do ii=1,Npack
+
+                ! if (setting%Time%Now > 608.45) then
+                !     write(6,*) 'i=',this_image(),'rem = ',Npack - ii, ii
+                !     flush(6)
+                ! end if
+                
                 tM => thisP(ii) !% junction main ID
+
+                ! if ((setting%Time%Now > 608.45) .and. (this_image() == 4) .and. (ii == 18)) then
+                !     write(6,*) 'tM ',tM
+                !     flush(6)
+                ! end if
+                !print *,'JB: ii, tM, nPack', ii,tM, Npack
                 !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
                     !% cycle through the possible junction branches
                     do kk=1,max_branch_per_node
+                        
                         tB = tM + kk !% junction branch ID
+
+                        ! if ((setting%Time%Now > 608.45) .and. (this_image() == 4) .and. (ii == 18)) then
+                        !     write(6,*) 'kk, tB',kk, tB
+                        !     write(6,*) 'branchexists ', BranchExists(tB)
+                        !     flush(6)
+                        ! end if
+
+                        !print *, 'branch: kk, tB',kk, tB
+                        !print *, 'head tm, zbottom', head(tM), zBtm(tB)
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
+                            ! if ((setting%Time%Now > 608.45) .and. (this_image() == 4) .and. (ii == 18)) then
+                            !     write(6,*) 'head', head(tM)
+                            !     write(6,*) 'btm ', zBtm(tB)
+                            !     flush(6)
+                            ! end if
                             if ( head(tM) > zBtm(tB) ) then
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
@@ -341,6 +402,16 @@ module geometry
                                 !% is not updated until after face interpolation                                
                                 head(tB) = head(tM)  + branchsign(kk) * sign(oneR,velocity(tB)) &
                                     * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
+
+                                    ! if ((setting%Time%Now > 608.45) .and. (this_image() == 4) .and. (ii == 18)) then
+                                    !     write(6,*) 'head2', head(tB)
+                                    !     write(6,*) 'branchsign',branchsign(kk)
+                                    !     write(6,*) 'velocity ',velocity(tB)
+                                    !     write(6,*) 'Kfac ',Kfac(tB)
+                                    !     write(6,*) 'grav',grav  
+                                    !     !write(6,*), 'btm ', zBtm(tB)
+                                    !     flush(6)
+                                    ! end if   
                             else
                                 !% for main head below the branch bottom entrance we assign a
                                 !% Froude number of one on an inflow to the junction main. Note
@@ -353,10 +424,17 @@ module geometry
                                     *(velocity(tB)**twoR) / (twoR * grav)   !% 20220307 brh ADDED 2 to factor
                             end if
                            
-                            
                             !% compute provisional depth
                             depth(tB) = head(tB) - zBtm(tB)
 
+                            ! if ((setting%Time%Now > 608.45) .and. (this_image() == 4) .and. (ii == 18)) then
+                            !     write(6,*), 'depth ', depth(tB)
+                            !     write(6,*), 'fullD ', fulldepth(tB)
+                            !     flush(6)
+                            ! end if  
+
+                            !print *, 'depth head ',depth(tB), head(tB)
+                            
                             !if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
                             !    print *, 'depth, head, zbtm',depth(ietU1(2)), fulldepth(ietU1(2)), head(ietU1(2)),zBtm(ietU1(2))
                             !end if
@@ -376,6 +454,7 @@ module geometry
                                 topwidth(tB)  = setting%ZeroValue%Topwidth
                                 hydRadius(tB) = fulldepth(tB) / fullperimeter(tB)
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+
                             elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
                                 ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
                                 !     print *, 'zero'
@@ -400,6 +479,7 @@ module geometry
                                 !% HACK
                                 dHdA(tB)      = oneR / topwidth(tB)
                                 ! dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
                                 ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
                                 !     print *, 'negative'
@@ -413,6 +493,7 @@ module geometry
                                 hydRadius(tB) = zeroR
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                                 !dHdA(tB)      = setting%ZeroValue%Topwidth
+
                             else
                                 !print *, 'Im here , not zerovalue '
                                 ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
@@ -433,9 +514,14 @@ module geometry
                                     hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
+
+                                    ! if (tB == 4021) then
+                                    !     print *, 'in rectangular'
                                     ! print *, area(tB), topwidth(tB), hydDepth(tB)
                                     ! print *, perimeter(tB), hydRadius(tB),ell(tB)
                                     ! print *, dHdA(tB)
+                                    ! end if
+
                                 case (triangular)
                                     ! print *, 'im triangular ',tB
                                     ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
@@ -461,6 +547,7 @@ module geometry
                                     hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
                                     dHdA(tB)     = oneR / topwidth(tB)
+
                                 case (circular)
                                     ! print *, 'im circular',tB
                                     ! if ((tB == ietU1(2)) .and. (setting%Time%Now/3600.0 > 388.0) ) then
@@ -473,12 +560,36 @@ module geometry
                                     perimeter(tB)= circular_perimeter_from_hydradius_singular (tB)
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for circular
                                     dHdA(tB)     = oneR / topwidth(tB)
+
+                                case (irregular)
+                                    !% get the transect by depth table 
+                                    thisTable => transectTableDepthR(elemI(tB,ei_transect_idx),:,:)
+                                    depthnorm     = depth(tB)/fulldepth(tB)
+
+                                    area(tB)      = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_area))
+                                    !% xsect quadratic interp for small values can produce zero
+                                    area(tB)      = max(area(tB), setting%ZeroValue%Area)
+
+                                    topwidth(tB)  = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_width))
+                                    !% xsect quadratic interp for small values can produce zero
+                                    topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%TopWidth)
+
+                                    hydDepth(tB)  = area(tB) / topwidth(tB)
+
+                                    hydRadius(tB) = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_hydradius))
+                                    !% xsect quadratic interp for small values can produce zero
+                                    hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth))
+                                    
+                                    perimeter(tB) = area(tB) / hydRadius(tB)
+                                    ell(tB)       = hydDepth(tB)  !% HACK -- assumes irregular is continuously-increasing in width
+                                    dHdA(tB)      = oneR / topwidth(tB)
+
                                 case default
                                     print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
                                     print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
                                     print *, 'in ',trim(subroutine_name)
                                     call util_crashpoint(399848)
-                                    return
+                                    !return
                                     !stop 399848
                                 end select
                             end if
@@ -497,6 +608,12 @@ module geometry
         !% Note, the above can only be made a concurrent loop if we replace the tM
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
+
+        
+        ! print *, 'end of JB ',this_image(), crashYN
+        ! flush(6)
+        ! flush(101)
+        ! sync all
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
 
@@ -522,7 +639,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_surcharged'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack => npack_elemP(thisColP)
         !%-------------------------------------------------
         if (setting%Debug%File%geometry) &
@@ -558,39 +675,58 @@ module geometry
             character(64) :: subroutine_name = 'geo_depth_from_volume'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !!if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
         !% cycle through different geometries
-        !% RECTANGULAR
+
+        !call util_CLprint('start of geo depth from volume')        
+
+        !% --- RECTANGULAR
         thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% TRAPEZOIDAL
+        !call util_CLprint('after rectangular') 
+
+        !% --- TRAPEZOIDAL
         thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% TRIANGULAR
+        !call util_CLprint('after trapezoidal') 
+
+        !% --- TRIANGULAR
         thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% CIRCULAR
+        !call util_CLprint('after triangular') 
+
+        !% --- CIRCULAR
         thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !call util_CLprint('after circular') 
+
+        !% --- IRREGULAR
+        thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !call util_CLprint('after irregular') 
         !% HACK Needs additional geometries
 
         !% JM with functional geomtery
@@ -600,12 +736,16 @@ module geometry
             call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !call util_CLprint('after functional storage') 
+
         !% JM with tabular geomtery
         thisCol => col_elemPGx(epg_JM_tabularStorage_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
+
+        !call util_CLprint('after tabular storage') 
 
         !% JM with artificial storage
         thisCol => col_elemPGx(epg_JM_impliedStorage_nonsurcharged)
@@ -614,6 +754,7 @@ module geometry
             call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !call util_CLprint('after implied storage') 
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%geometry) &
@@ -636,7 +777,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_limit_incipient_surcharge'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack      => npack_elemP(thisColP)
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)
@@ -687,7 +828,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_head_from_depth'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack     => npack_elemP(thisColP)
         depth     => elemR(:,er_Depth)
         fulldepth => elemR(:,er_FullDepth)
@@ -708,7 +849,6 @@ module geometry
     end subroutine geo_head_from_depth
 !%
 !%==========================================================================
-!
 !%==========================================================================
 !%
     subroutine geo_area_from_volume (thisColP)
@@ -723,7 +863,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_area_from_volume'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack  => npack_elemP(thisColP)
         area   => elemR(:,er_Area)
         volume => elemR(:,er_Volume)
@@ -757,34 +897,44 @@ module geometry
         character(64) :: subroutine_name = 'geo_topwidth_from_depth'
         !%-----------------------------------------------------------------------------
         !% cycle through different geometries
-        if (crashYN) return
+        !!if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- TRIANGULAR
         Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
             call triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- IRREGULAR
+        Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+            call irregular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -805,35 +955,47 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_perimeter_from_depth'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
+
+        !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRIANGULAR
         Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
             call triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        !%     note this requires first using the table lookup for hydraulic radius
+        Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+            call irregular_hydradius_from_depth (elemPGx, Npack, thisCol)
+            call irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
         end if
 
         !% HACK NEED OTHER GEOMETRIES
@@ -857,36 +1019,45 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
+
+        !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRIANGULAR
         Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
             call triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+            call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
         end if
 
         !% HACK need other geometries
@@ -909,7 +1080,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hydradius_from_area_perimeter'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -944,7 +1115,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -988,7 +1159,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell_singular'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1026,7 +1197,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_dHdA'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1061,7 +1232,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1085,8 +1256,11 @@ module geometry
 
         !%-----------------------------------------------------------------------------
 
+        
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
+
+            !print *, 'in geo_slot',this_image(), thisP
 
             where (SlotVolume(thisP) .gt. zeroR) 
                 volume(thisP) = volume(thisP)  + SlotVolume(thisP)

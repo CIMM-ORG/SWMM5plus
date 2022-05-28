@@ -560,6 +560,18 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             break;   
 
+        case nodef_hasFlapGate :
+            switch (Node[node_idx].type) {
+                case OUTFALL :             
+                    *value = Outfall[Node[node_idx].subIndex].hasFlapGate;
+                    break;
+                default :    
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting nodef_hasFlapGate for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;
+            }
+            break;
         case nodef_invertElev  :
             *value = FTTOM(Node[node_idx].invertElev);
             break;
@@ -2045,6 +2057,7 @@ int DLLEXPORT api_write_output_line(
 int DLLEXPORT api_update_nodeResult(
     int node_idx, int resultType, double newNodeResult)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
     // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
     // needs to have unit conversions added if it is to be used
@@ -2078,6 +2091,7 @@ int DLLEXPORT api_update_nodeResult(
 int DLLEXPORT api_update_linkResult(
     int link_idx, int resultType, double newLinkResult)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
 
     // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
@@ -2116,6 +2130,7 @@ int DLLEXPORT api_update_linkResult(
 int DLLEXPORT api_export_linknode_properties(
     int units)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
     //  link
     int li_idx[Nobjects[LINK]];
@@ -2131,7 +2146,7 @@ int DLLEXPORT api_export_linknode_properties(
     float lr_InitialDnstreamDepth[Nobjects[LINK]];
     int li_InitialDepthType[Nobjects[LINK]]; //
     float lr_BreadthScale[Nobjects[LINK]]; //
-    float lr_InitialDepth[Nobjects[LINK]]; //
+    //float lr_InitialDepth[Nobjects[LINK]]; //
 
     //  node
     int ni_idx[Nobjects[NODE]];
@@ -2242,7 +2257,22 @@ int DLLEXPORT api_export_linknode_properties(
 
         lr_InitialFlowrate[i] = Link[i].q0 * flow_units;
         lr_InitialUpstreamDepth[i] = Node[li_Mnode_u[i]].initDepth * length_units;
-        lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units;
+        lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units; 
+
+        // // check for a flap gate at an outfall node.
+        // // if it exists, set the downstream depth to zero to be modified later
+        // if (Node[li_Mnode_d[i]].type == OUTFALL) {
+        //     lr_InitialDnstreamDepth[i] = 0.0;
+        //         // if (Outfall[Node[li_Mnode_d[i]].subIndex].hasFlapGate) {
+        //         //     lr_InitialDnstreamDepth[i] = 0.0;
+        //         // } else {
+        //         //     lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units;
+        //         // }
+        // } else {
+        //     lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units;
+        // }
+
+        
     }
 
     // Nodes
@@ -2300,6 +2330,7 @@ int DLLEXPORT api_export_linknode_properties(
 int DLLEXPORT api_export_link_results(
     int link_idx)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
 	FILE* tmp;
     DateTime days;
@@ -2342,6 +2373,7 @@ int DLLEXPORT api_export_link_results(
 int DLLEXPORT api_export_node_results(
     int node_idx)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
 	FILE* tmp;
     DateTime days;

@@ -36,7 +36,7 @@ module pump_elements
 
         character(64) :: subroutine_name = 'pump_toplevel'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pump_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

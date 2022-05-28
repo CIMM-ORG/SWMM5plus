@@ -39,7 +39,7 @@ contains
         integer :: ii
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -101,7 +101,7 @@ contains
         !--------------------------------------------------------------------------
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -126,7 +126,7 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -163,7 +163,7 @@ contains
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -222,7 +222,7 @@ contains
         !%------------------------------------------------------------------
         !% Preliminaries
             if (setting%Output%Report%suppress_MultiLevel_Output) return
-            if (crashYN) return
+            !if (crashYN) return
         !%------------------------------------------------------------------
         !% Aliases
             eIdx => elemI(:,ei_Lidx)
@@ -258,7 +258,7 @@ contains
         !%-----------------------------------------------------------------
         !% Preliminaries
             if (setting%Output%Report%suppress_MultiLevel_Output) return
-            if (crashYN) return
+            !if (crashYN) return
         !%-----------------------------------------------------------------
         !% Aliases:
             fIdx => faceI(:,fi_Lidx)
@@ -291,7 +291,7 @@ contains
     !     integer, pointer :: mcol
     !     character(64) :: subroutine_name = 'mask_faces_whole_array_static'
     !     !--------------------------------------------------------------------------
-    !     if (crashYN) return
+    !     !if (crashYN) return
     !     if (setting%Debug%File%pack_mask_arrays) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -319,13 +319,13 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
-        !% rectangular channels, conduits 
+        !% --- rectangular channels, conduits 
         ptype => col_elemPGalltm(epg_CC_rectangular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -364,7 +364,7 @@ contains
                 ))
         end if
 
-        !% trapezoidal channels 
+        !% --- trapezoidal channels 
         ptype => col_elemPGalltm(epg_CC_trapezoidal_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -395,7 +395,7 @@ contains
                 ))
         end if
 
-        !% triangular channels 
+        !% --- triangular channels 
         ptype => col_elemPGalltm(epg_CC_triangular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -426,34 +426,7 @@ contains
                 ))
         end if
 
-        !% irregular channels
-        ptype => col_elemPGalltm(epg_CC_irregular)
-        npack => npack_elemPGalltm(ptype)
-        npack = count( &
-                (elemI(:,ei_elementType) == CC)  &
-                .and. &
-                (elemI(:,ei_geometryType) == irregular) &
-                .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
-
-        if (npack > 0) then
-            elemPGalltm(1:npack, ptype) = pack(eIdx, &
-                (elemI(:,ei_elementType) == CC)  &
-                .and. &
-                (elemI(:,ei_geometryType) == irregular) &
-                .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ))
-        end if
-
-        !% circular conduits 
+        !% --- circular conduits 
         ptype => col_elemPGalltm(epg_CC_circular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -484,7 +457,38 @@ contains
                 ))
         end if
 
-        !% junction main with functional geometry relationship
+        !% --- irregular channels
+        ptype => col_elemPGalltm(epg_CC_irregular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+        !% --- junction main with functional geometry relationship
         ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -519,7 +523,7 @@ contains
                 ))
         end if
 
-        !% junction main with tabular geometry relationship
+        !% --- junction main with tabular geometry relationship
         ptype => col_elemPGalltm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -554,7 +558,7 @@ contains
                 ))
         end if
 
-        !% junction main with artificial storage relationship -- for ALL tm
+        !% --- junction main with artificial storage relationship -- for ALL tm
         ptype => col_elemPGalltm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -604,7 +608,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -694,7 +698,7 @@ contains
         end if
 
        !% irregular channels 
-        ptype => col_elemPGac(epg_CC_irregular)
+        ptype => col_elemPGac(epg_CC_irregular_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -836,22 +840,19 @@ contains
 !==========================================================================
 !
     subroutine pack_geometry_etm_elements()
-        !--------------------------------------------------------------------------
-        !% packed arrays for geometry types
-        !--------------------------------------------------------------------------
-
-        integer, pointer :: ptype, npack, eIDx(:)
-
-        character(64) :: subroutine_name = 'pack_geometry_etm_elements'
-
-        !--------------------------------------------------------------------------
-        if (crashYN) return
+        !%--------------------------------------------------------------------------
+        !% packed arrays for geometry types that are explicit time marching (ETM)
+        !%--------------------------------------------------------------------------
+            integer, pointer :: ptype, npack, eIDx(:)
+            character(64) :: subroutine_name = 'pack_geometry_etm_elements'
+        !%--------------------------------------------------------------------------
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
-        !% rectangular channels, conduits 
+        !% --- rectangular channels, conduits nonsurcharged
         ptype => col_elemPGetm(epg_CC_rectangular_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -884,7 +885,7 @@ contains
                 )
         end if
 
-        !% trapezoidal channels, conduits 
+        !% --- trapezoidal channels, conduits nonsurcharged
         ptype => col_elemPGetm(epg_CC_trapezoidal_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -909,7 +910,7 @@ contains
                 )
         end if
 
-        !% triangular channels, conduits 
+        !% --- triangular channels, conduits nonsurcharged
         ptype => col_elemPGetm(epg_CC_triangular_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -934,7 +935,7 @@ contains
                 )
         end if
 
-        !% circular conduits and junction main
+        !% --- circular conduits and junction main nonsurcharged
         ptype => col_elemPGetm(epg_CC_circular_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -959,7 +960,32 @@ contains
                 )
         end if
 
-        !% junction main with functional geometry relationship
+        !% --- irregular channels nonsurcharged
+        ptype => col_elemPGetm(epg_CC_irregular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
+        !% --- junction main with functional geometry relationship, nonsurcharged
         ptype => col_elemPGetm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -988,7 +1014,7 @@ contains
                 )
         end if
 
-        !% junction main with functional geometry relationship
+        !% --- junction main with functional geometry relationship, nonsurcharged
         ptype => col_elemPGetm(epg_JM_tabularStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -1018,7 +1044,7 @@ contains
         end if
 
 
-        !% junction main with artificial storage relationship -- for ETM
+        !% --- junction main with artificial storage relationship -- for ETM, nonsurcharged
         ptype => col_elemPGetm(epg_JM_impliedStorage_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -1071,7 +1097,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1377,7 +1403,7 @@ contains
         integer, pointer :: ptype, npack, fup, fdn, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2334,7 +2360,7 @@ contains
             print *, 'which has key ',trim(reverseKey(whichTM))
             !stop 
             call util_crashpoint(3987053)
-            return
+            !return
         end select
         
 
@@ -2449,7 +2475,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2553,7 +2579,7 @@ contains
         integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2638,7 +2664,7 @@ contains
         integer(kind=8) :: crate, cmax, cval
         character(64) :: subroutine_name = 'pack_static_shared_faces'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2748,7 +2774,7 @@ contains
         integer(kind=8) :: crate, cmax, cval
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             
@@ -2954,7 +2980,7 @@ contains
     !     integer :: ii, jj, link_output_idx_length, node_output_idx_length
     !     character(64)    :: subroutine_name = 'pack_link_node_output'
     !     !% --------------------------------------------------------------------------
-    !     if (crashYN) return
+    !     !if (crashYN) return
     !     if (setting%Debug%File%pack_mask_arrays) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
