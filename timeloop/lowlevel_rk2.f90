@@ -361,7 +361,8 @@ module lowlevel_rk2
         !% different T00, T10, T20 methods
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: outCol, thisCol, Npack
-        real(8), pointer :: fAdn(:), fAup(:), fHdn(:), fHup(:), eHead(:), grav
+        real(8), pointer :: fAdn(:), fAup(:), fHdn(:), fHup(:), eHead(:)
+        real(8), pointer :: eArea(:), grav
         integer, pointer :: iup(:), idn(:), thisP(:)
         !%-----------------------------------------------------------------------------
         thisP  => elemP(1:Npack,thisCol)
@@ -370,6 +371,7 @@ module lowlevel_rk2
         fHdn   => faceR(:,fr_Head_d)
         fHup   => faceR(:,fr_Head_u)
         eHead  => elemR(:,er_Head)
+        eArea  => elemR(:,er_Area)
         iup    => elemI(:,ei_Mface_uL)
         idn    => elemI(:,ei_Mface_dL)
         grav => setting%constant%gravity
@@ -380,10 +382,6 @@ module lowlevel_rk2
             elemR(thisP,outCol) = grav * ( &
                 ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) )
 
-                ! print *, 'faup : ', fAup(idn(thisP(1:2)))
-                ! print *, 'fadn : ', fAdn(iup(thisP(1:2)))
-                ! print *, 'head : ', eHead(thisP(1:2))
-
         case (T10)
             elemR(thisP,outCol) = grav * onehalfR *  ( &
                 +fAup(idn(thisP)) * fHdn(iup(thisP))   &
@@ -392,6 +390,52 @@ module lowlevel_rk2
             elemR(thisP,outCol) = grav * onesixthR *  (                       &
                 +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
                 -fAdn(iup(thisP)) * ( fHup(idn(thisP)) + fourR * eHead(thisP) ) )
+
+        case (T10s2)   
+          
+            elemR(thisP,outCol) = onehalfR * grav &
+                                *(+( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) &
+                                  -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP) &
+                                 )
+        case (TA1)
+            elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+                                * (                                              &
+                                -   onefourthR  * fHdn(iup(thisP))                 &
+                                +   threehalfR  * eHead(thisP)                     &
+                                -   onefourthR  * fHup(idn(thisP))                 &
+                                )
+        case (TA2)
+            !% EXPERIMENTAL, DO NOT USE
+            ! elemR(thisP,outCol) = grav   &
+            !                     * (                                                 &
+            !                     + eArea(thisP) * ( fHdn(iup(thisP)) - eHead(thisP) ) &
+            !                     + fAup(idn(thisP)) * eHead(thisP)                      &
+            !                     - fAdn(iup(thisP)) * fHdn(iup(thisP))                     &
+            !                     )                        
+            ! elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !                     * (                                              &
+            !                     +   onefourthR  * fHdn(iup(thisP))                 &
+            !                     +   onehalfR    * eHead(thisP)                     &
+            !                     +   onefourthR  * fHup(idn(thisP))                 &
+            !                     )
+            ! elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !                     * (                                              &
+            !                     - onehalfR  *  fHdn(iup(thisP))                 &
+            !                     + twoR      * eHead(thisP)                     &
+            !                     - onehalfR  * fHup(idn(thisP))                 &
+            !                     )   
+            !  elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !                     * (                                              &
+            !                     +   onefourthR  * fHdn(iup(thisP))                 &
+            !                     -   threehalfR    * eHead(thisP)                     &
+            !                     +   onefourthR  * fHup(idn(thisP))                 &
+            !                     )                                         
+            ! elemR(thisP,outCol) = onehalfR * grav &
+            !                     *(+( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) &
+            !                       -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP) &
+            !                       +  fAup(idn(thisP)) * fHup(idn(thisP))                  &
+            !                       -  fAdn(iup(thisP)) * fHdn(iup(thisP))                  &
+            !                     )
         case default
             print *, 'CODE ERROR setting.Solver.MomentumSourceMethod type unknown for # ', setting%Solver%MomentumSourceMethod
             print *, 'which has key ',trim(reverseKey(setting%Solver%MomentumSourceMethod))
@@ -443,6 +487,12 @@ module lowlevel_rk2
             delta = onehalfR
         case (T20)
             delta = onesixthR
+        case (T10s2)
+            delta = onehalfR
+        case (TA1)
+            delta = zeroR
+        case (TA2)
+            delta = zeroR
         case default
             print *, 'CODE ERROR setting.Solver.MomentumSourceMethod type unknown for # ', setting%Solver%MomentumSourceMethod
             print *, 'which has key ',trim(reverseKey(setting%Solver%MomentumSourceMethod))
@@ -495,6 +545,9 @@ module lowlevel_rk2
             Qlat     => elemR(:,er_FlowrateLateral)
             Area     => elemR(:,er_Area)
         !%------------------------------------------------------------------
+
+            print *, 'CODE ERROR: momentum lateral source sould not be used'
+            stop 559873
 
        ! print *, ' before qlat source ',elemR(780,inoutCol)    
 

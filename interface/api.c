@@ -326,14 +326,17 @@ int DLLEXPORT api_get_flowBC(
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
         if (jj >= 0)
         {
-            // Unit conertion for External Files
+            // Unit conversion for External Files
             // FlowUnitWords[]  = { w_CFS, w_GPM, w_MGD, w_CMS, w_LPS, w_MLD, NULL};
             // Corresponding FlowUnits are  0  ,    1 ,    2 ,    3 ,    4 ,    5 ,
             total_extinflow += (table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor) / QCF_SI[FlowUnits];
+            //printf(" inflow = %g %g %d \n ",total_extinflow, sfactor, FlowUnits);
         }
 
         // add the external inflows to the dry weather flows stored in flowBC
+        // printf(" flowBC = %g  \n ", total_extinflow);
         *flowBC += total_extinflow; // already converted to cubic m/s
+        
     }
     return 0;
 }

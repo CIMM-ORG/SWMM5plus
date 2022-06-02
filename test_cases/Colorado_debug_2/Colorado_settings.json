@@ -40,24 +40,24 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 100,
+        "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1
+            "interval" : 10000
         },
         "DataOut" :{
-            "isAreaOut"         : false,
+            "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
-            "isFluxConsOut"     : false,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : false,
+            "isFluxConsOut"     : true,
+            "isFroudeNumberOut" : true,
+            "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
-            "isVelocityOut"     : false,
+            "isVelocityOut"     : true,
             "isVolumeOut"       : false,
             "isWaveSpeedOut"    : false
         },
@@ -77,6 +77,11 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
+    "Solver" : {
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "TA1",
+        "ReferenceHead"     : 0.0
+    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -94,10 +99,10 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.7,
-        "CFL_target" : 0.5,
-        "CFL_lo_max" : 0.4,
-        "decreaseFactor" : 0.8,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.4,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     }

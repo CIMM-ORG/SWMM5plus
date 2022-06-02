@@ -21,7 +21,7 @@ END_TIME       00:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             5
-REPORT_STEP          01:00:00
+REPORT_STEP          00:10:00
 WET_STEP             00:15:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:01:00 
@@ -722,21 +722,21 @@ DRY_ONLY         NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-9001      FLOW      9001      FLOW      1.0      1.0
-104_13      FLOW      104_13      FLOW      1.0      1.0            
-104_12      FLOW      104_12      FLOW      1.0      1.0            
-104_11      FLOW      104_11      FLOW      1.0      1.0            
-104_10      FLOW      104_10      FLOW      1.0      1.0            
-104_9      FLOW      104_9      FLOW      1.0      1.0            
-104_8      FLOW      104_8      FLOW      1.0      1.0            
-104_7      FLOW      104_7      FLOW      1.0      1.0            
-104_6      FLOW      104_6      FLOW      1.0      1.0            
-104_5      FLOW      104_5      FLOW      1.0      1.0            
-104_4      FLOW      104_4      FLOW      1.0      1.0            
-104_3      FLOW      104_3      FLOW      1.0      1.0            
-104_2      FLOW      104_2      FLOW      1.0      1.0            
-104_1      FLOW      104_1      FLOW      1.0      1.0            
-104_0      FLOW      104_0      FLOW      1.0      1.0  
+9001      FLOW      9001      FLOW      1.0      0.001
+104_13      FLOW      104_13      FLOW      1.0      0.0            
+104_12      FLOW      104_12      FLOW      1.0      0.0            
+104_11      FLOW      104_11      FLOW      1.0      0.0            
+104_10      FLOW      104_10      FLOW      1.0      0.0            
+104_9      FLOW      104_9      FLOW      1.0        0.0            
+104_8      FLOW      104_8      FLOW      1.0        0.0            
+104_7      FLOW      104_7      FLOW      1.0        0.0            
+104_6      FLOW      104_6      FLOW      1.0         10000.0            
+104_5      FLOW      104_5      FLOW      1.0        0.0            
+104_4      FLOW      104_4      FLOW      1.0        0.0            
+104_3      FLOW      104_3      FLOW      1.0        0.0            
+104_2      FLOW      104_2      FLOW      1.0        0.0            
+104_1      FLOW      104_1      FLOW      1.0        0.0            
+104_0      FLOW      104_0      FLOW      1.0        0.0  
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     

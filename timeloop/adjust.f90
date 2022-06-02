@@ -656,11 +656,14 @@ module adjust
             fQ      => faceR(:,fr_Flowrate)
             fQCons  => faceR(:,fr_Flowrate_Conservative)
         !% -----------------------------------------------------------------
-        !% choose either zero or an inflow
+        !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
         fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
-        !% reset the conservative fluxes
+        !% --- Set inflow from adjacent cell based on head gradient
+        call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+
+        !% --- reset the conservative fluxes
         if (ifixQCons) then
             fQCons(fup(thisP)) = fQ(fup(thisP))
             fQCons(fdn(thisP)) = fQ(fdn(thisP))
@@ -796,7 +799,10 @@ module adjust
             integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
             integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
-            real(8), pointer :: dt, elemVol(:) !% 20220122brh
+            real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
+            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: elemH(:), elemL(:), elemVol(:)
+            real(8), pointer :: dt, grav
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -820,11 +826,21 @@ module adjust
         !%------------------------------------------------------------------
         !% Aliases:
             faceQ     => faceR(:,fr_Flowrate)
+            faceHu    => faceR(:,fr_Head_u)
+            faceHd    => faceR(:,fr_Head_d)
+            faceAu    => faceR(:,fr_Area_u)
+            faceAd    => faceR(:,fr_Area_d)
+            faceDu    => faceR(:,fr_HydDepth_u)
+            faceDd    => faceR(:,fr_HydDepth_d)
             fQCons    => faceR(:,fr_Flowrate_Conservative)
             elemQ     => elemR(:,er_Flowrate)
+            elemH     => elemR(:,er_Head)
+            elemL     => elemR(:,er_Length)
+            
             elemVol   => elemR(:,er_Volume_N0)
             isbranch  => elemSI(:,esi_JunctionBranch_Exists)
             dt        => setting%Time%Hydraulics%Dt
+            grav      => setting%constant%gravity
             fdn       => elemI(:,ei_Mface_dL)
             fup       => elemI(:,ei_Mface_uL)
         !%------------------------------------------------------------------
@@ -838,7 +854,7 @@ module adjust
                 faceQ(fdn(thisP)) = min(elemQ(thisP)     , faceQ(fdn(thisP)) )      
                 !%     upstream face value is either the inflow from face or zero
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), zeroR)
-                 !% --- downstream outflow is limited to 1/3 the element volume 
+                !% --- downstream outflow is limited to 1/3 the element volume 
                 faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), elemVol(thisP) / (threeR * dt) )   !% 20220122brh
             elsewhere
                 !% --- flow in upstream direction
@@ -850,6 +866,36 @@ module adjust
                 !% --- upstream out flow is limited to 1/3 the element volume !% 20220122brh
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
             endwhere
+
+            !% 20220531brh
+            !% --- provide inflow rate from large head differences with small volume cells
+            !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
+            call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+
+            ! !% --- For the downstream face, dH/dx < 0 leads to a negative Q
+            ! !%     Only applies where head gradient implies flow into the small volume and the
+            ! !%     depth at the face is twice the small depth cutoff
+            ! where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
+            !         .and. &
+            !         (faceDu(fdn(thisP)) > twoR * setting%SmallDepth%DepthCutoff) )
+            !     faceQ(fdn(thisP)) = min(                                                 &
+            !         faceQ(fdn(thisP)),                                                   &
+            !         dt * grav * faceAu(fdn(thisP)) * (elemH(thisP) - faceHu(fdn(thisP))) &
+            !         / (onehalfR * (elemL(thisP)))                                        &
+            !         )
+            ! end where
+            ! !% --- for the upstream face dH/dx > 0 leads to a positive Q
+            ! !%     Only applies where head gradient implies flow into the small volume and the
+            ! !%     depth on the face is twice the small depth cutoff
+            ! where ( (elemH(thisP) < faceHd(fup(thisP)) ) &
+            !         .and. &
+            !         (faceDd(fup(thisP)) > twoR * setting%SmallDepth%DepthCutoff) )
+            !     faceQ(fup(thisP)) = max(                                                 &
+            !         faceQ(fdn(thisP)),                                                   &
+            !         dt * grav * faceAd(fup(thisP)) * (faceHd(fup(thisP)) - elemH(thisP)) &
+            !         / (onehalfR * (elemL(thisP)))                                        &
+            !         )
+            ! end where
 
             if (ifixQCons) then
                 !% update the conservative face Q
@@ -1131,7 +1177,81 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine adjust_Vshaped_head_surcharged
-        !%    
+!%    
+!%==========================================================================  
+!%==========================================================================  
+!%
+    subroutine adjust_faceflux_for_headgradient (thisP, thisDepthCutoff)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Adjusts the face flux for a head gradient when the depth of the
+        !% face is more than twice the input thisDepthCutoff
+        !% Should only be applied to faces of zero depth or small depth cells  
+        !% thisP should be a packed set of element indexes that are either
+        !% small depth or zero depth elements 
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer,  intent(in) :: thisP(:)
+            real(8),  intent(in) :: thisDepthCutoff
+            !logical, intent(in) ::  ifixQCons
+            !integer, intent(in) :: whichTM
+            integer, pointer :: fdn(:), fup(:)
+            !integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
+            real(8), pointer :: faceQ(:), elemQ(:) !, fQCons(:)
+            real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
+            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: elemH(:), elemL(:) !, elemVol(:)
+            real(8), pointer :: dt, grav
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Aliases:
+            faceQ     => faceR(:,fr_Flowrate)
+            faceHu    => faceR(:,fr_Head_u)
+            faceHd    => faceR(:,fr_Head_d)
+            faceAu    => faceR(:,fr_Area_u)
+            faceAd    => faceR(:,fr_Area_d)
+            faceDu    => faceR(:,fr_HydDepth_u)
+            faceDd    => faceR(:,fr_HydDepth_d)
+            !fQCons    => faceR(:,fr_Flowrate_Conservative)
+            !elemQ     => elemR(:,er_Flowrate)
+            elemH     => elemR(:,er_Head)
+            elemL     => elemR(:,er_Length)
+            
+            !elemVol   => elemR(:,er_Volume_N0)
+            !isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            dt        => setting%Time%Hydraulics%Dt
+            grav      => setting%constant%gravity
+            fdn       => elemI(:,ei_Mface_dL)
+            fup       => elemI(:,ei_Mface_uL)
+        !%------------------------------------------------------------------
+        !% --- For the downstream face, dH/dx < 0 leads to a negative Q
+        !%     Only applies where head gradient implies flow into the small volume and the
+        !%     depth at the face is twice the small depth cutoff
+        where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
+                .and. &
+                (faceDu(fdn(thisP)) > twoR * thisDepthCutoff) )
+            faceQ(fdn(thisP)) = min(                                                 &
+                faceQ(fdn(thisP)),                                                   &
+                dt * grav * faceAu(fdn(thisP)) * (elemH(thisP) - faceHu(fdn(thisP))) &
+                / (onehalfR * (elemL(thisP)))                                        &
+                )
+        end where
+
+        !% --- for the upstream face dH/dx > 0 leads to a positive Q
+        !%     Only applies where head gradient implies flow into the small volume and the
+        !%     depth on the face is twice the small depth cutoff
+        where ( (elemH(thisP) < faceHd(fup(thisP)) ) &
+                .and. &
+                (faceDd(fup(thisP)) > twoR * thisDepthCutoff) )
+            faceQ(fup(thisP)) = max(                                                 &
+                faceQ(fdn(thisP)),                                                   &
+                dt * grav * faceAd(fup(thisP)) * (faceHd(fup(thisP)) - elemH(thisP)) &
+                / (onehalfR * (elemL(thisP)))                                        &
+                )
+        end where
+
+    end subroutine adjust_faceflux_for_headgradient 
+!%
 !%==========================================================================
 !%==========================================================================
 !%

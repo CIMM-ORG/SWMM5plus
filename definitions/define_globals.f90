@@ -44,8 +44,9 @@ module define_globals
     ! integer :: ietD1(3) = (/47 ,49, 115/)
     ! integer :: iftD1(1) =       (/48/)
 
-    integer :: iet(7) = (/777, 778, 779, 780, 781, 782, 783/)
-     
+    integer :: iet(5) = (/36,37,38,39,40/)
+    integer :: ift(4) = (/40,41,42,43/)
+      
 
     integer(kind=8) :: irecCount = 0
 

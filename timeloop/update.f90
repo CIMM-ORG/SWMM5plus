@@ -94,8 +94,8 @@ module update
         !% compute element Froude numbers for CC, JM
         call update_Froude_number_element (thisCol_all)
 
-        ! print *, 'update 004 after Froude Number',this_image()
-        ! call util_CLprint ()
+         !print *, 'update 004 after Froude Number',this_image()
+        !  call util_CLprint ('before interpweights in update')
 
         !% compute element face interpolation weights on CC, JM
         call update_CCtm_interpweights(thisCol_all, whichTM)
@@ -314,6 +314,9 @@ module update
         !     end if
         end if
 
+        ! print *, 'in update_CCtm_interpweights'
+        ! print *, '*** AAA vel - wave ',Velocity(iet) - wavespeed(iet)
+        ! print *, '*** AAA vel + wave ',Velocity(iet) + wavespeed(iet)
 
         !% timescale interpolation weights for flowrate
         !% Modified from original approach by Froude number weighting
@@ -336,6 +339,9 @@ module update
             w_dQ(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
 
+        ! print *, '*** BBB  w_uQ    ',w_uQ(iet)
+        ! print *, '*** CCC  w_dQ    ',w_dQ(iet)
+
         !% apply limiters to timescales
         where (w_uQ(thisP) < zeroR)
             w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
@@ -347,6 +353,9 @@ module update
             w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
+        ! print *, '*** DDD  w_uQ    ',w_uQ(iet)
+        ! print *, '*** EEE  w_dQ    ',w_dQ(iet)
+
         where (w_dQ(thisP) < zeroR)
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
         endwhere
@@ -357,12 +366,15 @@ module update
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
+        ! print *, '*** FFF  w_uQ    ',w_uQ(iet)
+        ! print *, '*** GGG  w_dQ    ',w_dQ(iet)
+
         !% timescale interpolation for geometry are identical to flowrate
         !% but may be modified elsewhere
         w_uG(thisP) = w_uQ(thisP)
         w_dG(thisP) = w_dQ(thisP)
 
-        !% timascale interpolation for the preissmann number only depends on the preissmann celerity
+        !% timescale interpolation for the preissmann number only depends on the preissmann celerity
         w_uP(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) 
         w_dP(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) 
 
@@ -401,12 +413,18 @@ module update
             !w_uH(thisP) = setting%Limiter%InterpWeight%Minimum !do not use!
         endwhere
 
+        ! print *, '*** HHH  w_uQ    ',w_uQ(iet)
+        ! print *, '*** III  w_dQ    ',w_dQ(iet)
+
         ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
         where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
             w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
             !w_dH(thisP) = setting%Limiter%InterpWeight%Minimum ! do not use!
         endwhere
+
+        ! print *, '*** JJJ  w_uQ    ',w_uQ(iet)
+        ! print *, '*** KKK  w_dQ    ',w_dQ(iet)
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

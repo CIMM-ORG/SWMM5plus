@@ -598,10 +598,10 @@ module define_settings
     !% setting%VariableDT
     type VariableDTType
         logical :: ApplyYN = .true.
-        real(8) :: CFL_hi_max = 0.7
-        real(8) :: CFL_target = 0.5
-        real(8) :: CFL_lo_max = 0.3
-        real(8) :: CFL_inflow_max = 0.5
+        real(8) :: CFL_hi_max = 0.5
+        real(8) :: CFL_target = 0.4
+        real(8) :: CFL_lo_max = 0.2
+        real(8) :: CFL_inflow_max = 0.4
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2 
         integer :: NstepsForCheck = 10
@@ -1520,10 +1520,16 @@ contains
                 setting%Solver%MomentumSourceMethod = T10
             else if (c == 't20') then
                 setting%Solver%MomentumSourceMethod = T20
+            else if (c == 't10s2') then
+                setting%Solver%MomentumSourceMethod = T10s2
+            else if (c == 'ta1') then
+                setting%Solver%MomentumSourceMethod = TA1
+            else if (c == 'ta2') then
+                setting%Solver%MomentumSourceMethod = TA2
             else
                 write(*,"(A)") 'Error - json file - setting.Solver.MomentumSourceMethod of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... T00, T10, T20'
+                write(*,"(A)") '... T00, T10, T20, T10s2, TA1, TA2'
                 stop 110985
             end if
         end if
@@ -1745,6 +1751,11 @@ contains
         call json%get('VariableDT.CFL_lo_max', real_value, found)
         if (found) setting%VariableDT%CFL_lo_max = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_lo_max not found'
+        
+         !%                       CFL_inflow_max
+        call json%get('VariableDT.CFL_inflow_max', real_value, found)
+        if (found) setting%VariableDT%CFL_lo_max = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_inflow_max not found'
         
         ! !%                       decreaseFactor
         ! call json%get('VariableDT.decreaseFactor', real_value, found)

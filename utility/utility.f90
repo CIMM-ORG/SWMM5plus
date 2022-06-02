@@ -655,8 +655,10 @@ module utility
             character (len = *), intent(in) :: inputstring
             integer :: ii, nn, fD, eD
             integer, pointer :: fup(:), fdn(:), eup(:), edn(:)
-            real(8), pointer :: dt
+            real(8), pointer :: dt, oneVec(:)
             real(8) :: hr
+
+            real(8) :: Qextra(4)
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------
@@ -666,20 +668,96 @@ module utility
             eup => faceI(:,fi_Melem_uL)
             edn => faceI(:,fi_Melem_dL)
             dt  => setting%Time%Hydraulics%Dt
+            oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
 
-        print *, ' '
-        write(6,*) this_image(), trim(inputstring), setting%Time%Step
+        !do ii=1,N_elem(this_image())
+        !    print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+        !end do
 
-        print *, 'link breadth   ',link%R(1,lr_BreadthScale)
+            stop 29873
+        
+            !if (setting%Time%Now > zeroR) return
 
-        print *, 'volume ', elemR(1,er_Volume)
-        print *, 'depth  ', elemR(1,er_Depth)
-        print *, 'area   ', elemR(1,er_Area)
-        print *, 'head   ', elemR(1,er_Head)
-        print *, 'zbottom', elemR(1,er_Zbottom)
-        print *, 'link#  ', elemI(1,ei_link_Gidx_SWMM)
-        print *, 'node#  ', elemI(1,ei_node_Gidx_SWMM)
+        !if (setting%Time%Now < 3600.0*124.0) return
+        !if (setting%Time%Now < 3600.0*125.0) return   
+        ! print *, ' '
+        print *, trim(inputstring)
+        write (*,*) 'is zero depth ', elemYN(iet,eYN_isZeroDepth)
+        write (*,*) 'is small depth', elemYN(iet,eYN_isSmallDepth)
+
+        write(*,"(A,10f12.3)") 'Head     ', elemR(iet(1),er_Head), &
+                                            elemR(iet(2),er_Head), &
+                                            elemR(iet(3),er_Head), &
+                                            elemR(iet(4),er_Head), &
+                                            elemR(iet(5),er_Head)
+        ! write(*,"(A,10f12.3)") 'Head face up   ', faceR(ift(1),fr_Head_u), &
+        !                                     faceR(ift(2),fr_Head_u), &
+        !                                     faceR(ift(3),fr_Head_u), &
+        !                                     faceR(ift(4),fr_Head_u)  
+
+        ! write(*,"(A,10f12.3)") 'Head face dn   ', faceR(ift(1),fr_Head_d), &
+        !                                     faceR(ift(2),fr_Head_d), &
+        !                                     faceR(ift(3),fr_Head_d), &
+        !                                     faceR(ift(4),fr_Head_d)                                                                          
+
+            ! write(*,"(A,10f12.3)") 'Froude   ', elemR(iet(1),er_FroudeNumber), &
+            !                                     elemR(iet(2),er_FroudeNumber), &
+            !                                     elemR(iet(3),er_FroudeNumber), &
+            !                                     elemR(iet(4),er_FroudeNumber), &
+            !                                     elemR(iet(5),er_FroudeNumber)
+
+        
+        write(*,"(A,10f12.3)") 'Q lat    ', elemR(iet(1),er_FlowrateLateral), &
+                                            elemR(iet(2),er_FlowrateLateral), &
+                                            elemR(iet(3),er_FlowrateLateral), &
+                                            elemR(iet(4),er_FlowrateLateral), &
+                                            elemR(iet(5),er_FlowrateLateral)
+
+        write(*,"(A,10f12.3)") 'Q elem   ', elemR(iet(1),er_Flowrate), &
+                                            elemR(iet(2),er_Flowrate), &
+                                            elemR(iet(3),er_Flowrate), &
+                                            elemR(iet(4),er_Flowrate), &
+                                            elemR(iet(5),er_Flowrate)
+        write(*,"(A,10f12.3)") 'Q face         ', faceR(ift(1),fr_Flowrate), &
+                                                  faceR(ift(2),fr_Flowrate), &
+                                                  faceR(ift(3),fr_Flowrate), &
+                                                  faceR(ift(4),fr_Flowrate)
+  
+        ! Qextra = sign(oneVec(1:4), elemR(iet(1:4),er_Head) - elemR(iet(2:5),er_Head) )                               &
+        !        * onehalfR * (oneR / elemR(iet(1:4),er_Roughness) + oneR / elemR(iet(2:5),er_Roughness))               &
+        !        * onehalfR * (faceR(ift,fr_Area_d) + faceR(ift,fr_Area_u))                                             &
+        !        * onehalfR * ( (elemR(iet(1:4),er_HydRadius)**twothirdR) + (elemR(iet(2:5),er_HydRadius)**twothirdR) ) &
+        !        * ( onehalfR * abs(elemR(iet(1:4),er_Head) - elemR(iet(2:5),er_Head) )                                 &
+        !            / (elemR(iet(1:4),er_Length) + elemR(iet(2:5),er_Length)) )**(onehalfR)
+              
+
+        ! write(*,"(A,10f12.3)") 'Q extra         ',  Qextra
+
+        ! write(*,"(A,10f12.3)") 'weight   ', elemR(iet(1),er_InterpWeight_dQ), &
+        !                                     elemR(iet(2),er_InterpWeight_uQ), elemR(iet(2),er_InterpWeight_dQ), &
+        !                                     elemR(iet(3),er_InterpWeight_uQ), elemR(iet(3),er_InterpWeight_dQ), &
+        !                                     elemR(iet(4),er_InterpWeight_uQ), elemR(iet(4),er_InterpWeight_dQ), &
+        !                                     elemR(iet(5),er_InterpWeight_uQ)
+        !print *, setting%Time%Now
+            !print *, eup(fup(iet))
+            !print *, edn(fdn(iet))
+
+        !stop 29873
+
+
+        ! print *, ' '
+        ! write(6,*) this_image(), trim(inputstring), setting%Time%Step
+
+        ! print *, 'link breadth   ',link%R(1,lr_BreadthScale)
+
+        ! print *, 'volume ', elemR(1,er_Volume)
+        ! print *, 'depth  ', elemR(1,er_Depth)
+        ! print *, 'area   ', elemR(1,er_Area)
+        ! print *, 'head   ', elemR(1,er_Head)
+        ! print *, 'zbottom', elemR(1,er_Zbottom)
+        ! print *, 'link#  ', elemI(1,ei_link_Gidx_SWMM)
+        ! print *, 'node#  ', elemI(1,ei_node_Gidx_SWMM)
 
         ! if (this_image()==4) then
         !     write(6,*) this_image(), '----    ',faceR(431,fr_Head_d), elemR(458,er_Head)

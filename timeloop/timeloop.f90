@@ -54,7 +54,7 @@ contains
             real(8), pointer :: timeEnd, timeNow, dtTol, dtHydraulics
             character(64)    :: subroutine_name = 'timeloop_toplevel'
             integer(kind=8) :: cval, crate, cmax
-            integer :: kk !temporary
+            integer :: jj, kk, nidx !temporary
 
             !% temporary for lateral flow testing
             integer :: mm
@@ -167,6 +167,14 @@ contains
 
                 !call util_syncwrite('timeloop 02 ',crashI)
 
+            ! do jj=1,N_flowBC
+            !     nidx = BC%flowI(jj, bi_node_idx)
+            !     print *, jj,nidx
+            !     do kk=1,5
+            !         print *, BC%flowR_timeseries(jj, kk, br_time), BC%flowR_timeseries(jj, kk, br_value)
+            !     end do
+            ! end do
+            ! stop 498723
 
             !% --- main hydraulics time steop
             if (doHydraulics) then       
@@ -206,7 +214,8 @@ contains
                 Qlateral(thisP) = Qlateral(thisP) + BC%flowRI(thisBC)  
 
                 !print *, 'QLATERAL before hydrology '
-                !print *, Qlateral(780)
+                !print *, setting%Time%Now/3600.0, Qlateral(40)
+                !stop 29873
 
                 !write(6,*) '   timeloop bbb ',this_image()
                 ! flush(6)
@@ -234,8 +243,10 @@ contains
                     !call util_syncwrite
 
               
-                write (*,*) ' '
-                write(*,"(A,f12.2,A)") 'time loop ',timeNow/3600.0, ' ===================================================================='
+                ! if (setting%Time%Now > 3600.0*124) then
+                ! write (*,*) ' '
+                ! write(*,"(A,f12.4,A)") 'time loop ',timeNow/3600.0, ' ===================================================================='
+                ! end if 
 
                 !% --- perform hydraulic routing
                 call tl_hydraulics()
@@ -1131,8 +1142,6 @@ contains
             !% ensure flowrate used for limiter is  positive and non-zero
             !tinyQ(:) = setting%Eps%Velocity
             BCQ(:) = max( abs(BC%FlowRI(BC%P%BCup)), setting%Eps%Velocity)
-
-            !print *, 'BCQ', BCQ
 
             !% store the element indexes downstream of a BCup face
             BCelemIdx =  faceI(BC%flowI(BC%P%BCup,bi_face_idx), fi_Melem_dL)
