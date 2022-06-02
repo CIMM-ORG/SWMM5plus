@@ -1095,13 +1095,13 @@ module adjust
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, multiplier, smallDepth
-            real(8), pointer :: elemCrown(:), Vvalue(:), elemFullD(:)
+            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            !if (crashYN) return              
+            if (crashYN) return              
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1118,7 +1118,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 23943)
-                !return
+                return
             end select 
 
             !% coefficient for the blending adjustment (between 0.0 and 1.0)
@@ -1137,7 +1137,7 @@ module adjust
             faceHeadDn => faceR(:,fr_Head_d)          
             elemHead   => elemR(:,er_Head)    
             elemCrown  => elemR(:,er_Zcrown)
-            elemFullD  => elemR(:,er_FullDepth)
+            elemEllMax => elemR(:,er_ell_max)
             w_uH       => elemR(:,er_InterpWeight_uH)
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
@@ -1147,12 +1147,12 @@ module adjust
         !%-------------------------------------------------------------------
         !% find the cells that are deep enough to use the V filter
         !% The surcharge head must be larger than some multiple of the conduit full depth
-        ! Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemFullD(thisP))
-        ! where (Vvalue(thisP) > oneR)
-        !     Vvalue(thisP) = oneR
-        ! elsewhere
-        !     Vvalue(thisP) = zeroR
-        ! endwhere
+        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemEllMax(thisP))
+        where (Vvalue(thisP) > oneR)
+            Vvalue(thisP) = oneR
+        elsewhere
+            Vvalue(thisP) = zeroR !% HACK: to apply v shape head correction for all cases
+        endwhere
 
         !% identify the V-shape locations
         Vvalue(thisP) =  (util_sign_with_ones(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
