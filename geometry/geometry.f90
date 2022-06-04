@@ -7,6 +7,7 @@ module geometry
     use rectangular_channel
     use trapezoidal_channel
     use triangular_channel
+    !use rectangular_triangular_channel
     use circular_conduit
     use storage_geometry
     use adjust
@@ -673,6 +674,12 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+         if (Npack > 0) then
+             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+             call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+         end if
+
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -723,6 +730,12 @@ module geometry
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
+
+         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+         if (Npack > 0) then
+             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+             call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+         end if
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
@@ -776,6 +789,12 @@ module geometry
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
+
+         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+         if (Npack > 0) then
+             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+             call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+         end if
 
         !% HACK need other geometries
         if (setting%Debug%File%geometry) &

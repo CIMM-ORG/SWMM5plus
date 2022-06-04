@@ -521,6 +521,7 @@ contains
             link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
             link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
+            link%R(ii,lr_BottomDepth) = interface_get_linkf_attribute(ii, api_linkf_bottomdepth)
             link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)
             link%R(ii,lr_OutletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset2)
             !write(*,*) 'api_nodef_initDepth 1'

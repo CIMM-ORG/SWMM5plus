@@ -1045,6 +1045,24 @@ contains
                     !% thus, set that link%R column to nullvalueR
                     link_value = nullvalueR
                 end if
+            else if (link_value == API_RECT_TRIANG) then
+                if (attr == api_linkf_geometry) then
+                    link_value = lRect_triang
+                else if (attr == api_linkf_xsect_wMax) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                    thisposition = trim(subroutine_name)//'_S18'
+                    call print_api_error(error, thisposition)
+                else if (attr == api_linkf_xsect_yFull) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                    thisposition = trim(subroutine_name)//'_T19'
+                    call print_api_error(error, thisposition)
+                else
+                    !% rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
+                    !% thus, set that link%R column to nullvalueR
+                    link_value = nullvalueR
+                end if
             else
                 !% some links like pumps or outlets does not have any geometric features
                 !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR

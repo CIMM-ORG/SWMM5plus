@@ -694,6 +694,30 @@ contains
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                 endwhere
+            case (lRect_triang)
+
+                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_geometryType)                            = rect_triang
+                    elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_BottomDepth)                             = link%R(thisLink,lr_BottomDepth)
+                    elemR(:,er_BottomSlope)                             = elemSGR(:,esgr_Rectangular_Triangular_Slope) / (twoR * elemR(:,er_BottomDepth))
+
+                    elemR(:,er_BottomArea)   = elemSGR(:,esgr_rectangular_Triangular_TopBreadth) * elemR(:,er_Depth)
+                    elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Rectangular_Triangular_Slope) &
+                                                + elemR(:,er_BottomArea)
+                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemR(:,er_FullDepth) * elemR(:, er_FullDepth) * elemSGR(:,esgr_Triangular_Slope) 
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+
+                endwhere
 
             case default
 
@@ -1419,6 +1443,25 @@ contains
                 elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
 
                 elemR(JBidx,er_AreaBelowBreadthMax)   = elemR(JBidx,er_FullArea) / twoR !% 20220124brh
+
+            case (lRect_triang)
+
+                elemI(JBidx,ei_geometryType) = rect_triang
+
+                !% store geometry specific data
+                elemSGR(JBidx,esgr_Rectangular_Triangular_TopBreadth)  = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullDepth)                  = link%R(BranchIdx,lr_FullDepth)
+                elemR(JBidx,er_BottomDepth)                = link%R(BranchIdx,lr_BottomDepth)
+                elemSGR(JBidx,esgr_Rectangular_Triangular_Slope)       = elemSGR(JBidx,esgr_Rectangular_Triangular_TopBreadth) / &
+                                                                (twoR * elemR(JBidx,er_BottomDepth))
+                elemR(JBidx,er_ZBreadthMax)                = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                elemR(JBidx,er_BreadthMax)                 = link%R(BranchIdx,lr_BreadthScale)
+                elemR(JBidx,er_FullArea)                   =  elemR(JBidx,er_BottomDepth) * elemR(JBidx,er_BottomDepth) * &
+                                                                elemSGR(JBidx,esgr_Rectangular_Triangular_Slope) + &
+                                                                (elemR(JBidx,er_FullDepth) - elemR(JBidx,er_BottomDepth)) * &
+                                                                elemSGR(JBidx,esgr_Rectangular_Triangular_TopBreadth)
+                elemR(JBidx,er_AreaBelowBreadthMax)        = elemR(JBidx,er_FullArea)
+
             case default
 
                 print *, 'In, ', subroutine_name
