@@ -1245,27 +1245,34 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = trapezoidal_weir
+                    elemSI(:,esi_Weir_GeometryType)          = trapezoidal
                     !% real data
+                    elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)  
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff2)
                     elemSR(:,esr_Weir_TrapezoidalBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_SideSlope)
                     elemSR(:,esr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_SideSlope)
+                    elemSR(:,esr_Weir_FullArea)              = ( elemSR(:,esr_Weir_TrapezoidalBreadth) &
+                                                                + onehalfR  &
+                                                                * (  elemSR(:,esr_Weir_TrapezoidalLeftSlope) &
+                                                                    + elemSR(:,esr_Weir_TrapezoidalRightSlope) &
+                                                                    ) * elemSR(:,esr_Weir_FullDepth) &
+                                                                ) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
                     !%     assumes channel is rectangular and  twice the breadth of weir and
-                    !%     used weir crown and add the weir effective depth as the maximum overflow
+                    !%     used weir crown as the maximum overflow
                     elemI(:,ei_geometryType)            = rectangular
                     elemSGR(:,esgr_Rectangular_Breadth) = twoR * (  elemSR(:,esr_Weir_TrapezoidalBreadth) &
                                                                +    elemSR(:,esr_Weir_EffectiveFullDepth) &
                                                                 *(  elemSR(:,esr_Weir_TrapezoidalLeftSlope) &
                                                                   + elemSR(:,esr_Weir_TrapezoidalRightSlope)) )
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom) &
-                                                            + elemSR(:,esr_Weir_EffectiveFullDepth)  
+                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)  
                 endwhere
 
             case (lSideFlowWeir)
@@ -1273,22 +1280,24 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = side_flow
+                    elemSI(:,esi_Weir_GeometryType)          = rectangular
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
                     !%     assumes channel is rectangular and twice the breadth of weir and
-                    !%     used weir crown and add the weir effective depth as the maximum overflow
+                    !%     used weir crown as the maximum overflow
                     elemI(:,ei_geometryType)            = rectangular
                     elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Weir_RectangularBreadth) 
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom) &
-                                                            + elemSR(:,esr_Weir_EffectiveFullDepth)   
+                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)
                 endwhere
 
             case (lRoadWayWeir)
@@ -1305,22 +1314,25 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = vnotch_weir
+                    elemSI(:,esi_Weir_GeometryType)          = triangular
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
+                    elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_FullDepth) * elemSR(:, esr_Weir_FullDepth) &
+                                                                * elemSR(:,esr_Weir_TriangularSideSlope) 
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
                     !%     assumes channel is rectangular and twice the breadth of weir and
-                    !%     used weir crown and add the weir effective depth as the maximum overflow
+                    !%     used weir crown as the maximum overflow
                     elemI(:,ei_geometryType)            = rectangular
                     elemSGR(:,esgr_Rectangular_Breadth) = fourR * elemSR(:,esr_Weir_EffectiveFullDepth) &
                                                                 * elemSR(:,esr_Weir_TriangularSideSlope)
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom) &
-                                                            + elemSR(:,esr_Weir_EffectiveFullDepth)   
+                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)
                 endwhere
 
             case (lTransverseWeir)
@@ -1328,33 +1340,32 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = transverse_weir
+                    elemSI(:,esi_Weir_GeometryType)          = rectangular
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
                     !%     assumes channel is rectangular and twice the breadth of weir and
-                    !%     used weir crown and add the weir effective depth as the maximum overflow
+                    !%     used weir crown as the maximum overflow
                     elemI(:,ei_geometryType)            = rectangular
                     elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Weir_RectangularBreadth) 
-                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom) &
-                                                            + elemSR(:,esr_Weir_EffectiveFullDepth)   
+                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                     
+                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)
                 endwhere
 
             case default
 
                 print *, 'In ', trim(subroutine_name)
                 print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
-                print *, 'which has key ',trim(reverseKey(specificWeirType))
-                !stop 
+                print *, 'which has key ',trim(reverseKey(specificWeirType)) 
                 call util_crashpoint(99834)
-                !return
-
         end select
 
         !% --- set minimum crest height as 101% of the zero depth value for all weirs
@@ -1427,39 +1438,50 @@ contains
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
         case (lRectangular_closed)  !% brh20211219 added Rect_closed
+
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                 !% integer data
-                elemI(:,ei_geometryType)          = rectangular_closed
+                elemSI(:,esi_Orifice_GeometryType)       = rectangular_closed
                 !% real data
-                elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
+                elemSR(:,esr_Orifice_FullDepth)          = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                 elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
+                elemSR(:,esr_Orifice_FullArea)           = elemSR(:,esr_Orifice_RectangularBreadth) * elemSR(:,esr_Orifice_FullDepth)
+                elemSR(:,esr_Orifice_EffectiveFullArea)  = elemSR(:,esr_Orifice_RectangularBreadth) * elemSR(:,esr_Orifice_EffectiveFullDepth)    
 
-                !% --- HACK the default background channel
+                !% --- default channel geometry (overwritten later by adjacent CC shape)
+                !%     assumes channel is rectangular and twice the breadth of orifice and
+                !%     used orifice crown as the maximum overflow
+                elemI(:,ei_geometryType)            = rectangular
                 elemR(:,esgr_Rectangular_Breadth)   = twoR * elemSR(:,esr_Orifice_RectangularBreadth)
-                elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth) 
-                !% note -- full depth already used
+                elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)
+                elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)  
             end where
 
         case (lCircular)
+
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                 !% integer data
-                elemI(:,ei_geometryType)    = circular
+                elemSI(:,esi_Orifice_GeometryType)       = circular
                 !% real data
+                elemSR(:,esr_Orifice_FullDepth)          = link%R(thisLink,lr_FullDepth)
                 elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
+                elemSR(:,esr_Orifice_FullArea)           = (pi / fourR) * elemSR(:,esr_Orifice_FullDepth) ** twoR
+                elemSR(:,esr_Orifice_EffectiveFullArea)  = (pi / fourR) * elemSR(:,esr_Orifice_EffectiveFullDepth) ** twoR
                 elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                 elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
 
-                !% --- HACK the default background channel
-                elemR(:,esgr_Rectangular_Breadth)   = twoR * elemSR(:,esr_Orifice_EffectiveFullDepth)
+                !% --- default channel geometry (overwritten later by adjacent CC shape)
+                !%     assumes channel is rectangular and twice the breadth of weir and
+                !%     used weir crown and add the weir effective depth as the maximum overflow
+                elemI(:,ei_geometryType)            = rectangular
+                elemR(:,esgr_Rectangular_Breadth)   = twoR * elemSR(:,esr_Orifice_FullDepth)
                 elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth) 
-                elemR(:,er_FullDepth)               = elemSR(:,esr_Orifice_Zcrown) - elemR(:,er_Zbottom) &
-                                                         + elemSR(:,esr_Orifice_EffectiveFullDepth)
-                
+                elemR(:,er_FullDepth)               = elemSR(:,esr_Orifice_Zcrown) - elemR(:,er_Zbottom)
             end where
 
         case default
@@ -1482,7 +1504,6 @@ contains
 
         !% --- initialize a default rectangular channel as the background of the weir
         call init_IC_diagnostic_default_geometry (thisLink)
-
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1642,7 +1663,7 @@ contains
             elemR(:,er_FullArea)                = elemR(:,er_FullDepth) * elemR(:,er_BreadthMax)
             elemR(:,er_FullVolume)              = elemR(:,er_FullArea)  * elemR(:,er_Length)
             elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
-            elemR(:,er_ell_max)                  = elemR(:,er_FullDepth)
+            elemR(:,er_ell_max)                 = elemR(:,er_FullDepth)
 
             !% store IC data
             elemR(:,er_Area)          = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
@@ -1735,12 +1756,12 @@ contains
             end if
 
             !% --- the element type upstream
-            select case (elemI(Aidx,ei_elementType))
+            select case (elemI(Aidx,ei_elementType)[Ci])
                 case (CC)
                     !% --- if an upstream element is a channel/conduit, use this for the background channel
                     !%     geometry of the diagnostic element in which the weir/orifice/pump/outlet is embeded
                     elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
-                    elemI(thisP,thisCol)         = elemI(Aidx,thisCol)[Ci]
+                    elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
                     !% --- copy special geometry
                     call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
                 
@@ -1760,12 +1781,12 @@ contains
                     end if
 
                     !% --- the element type downstream
-                    select case (elemI(Aidx,ei_elementType))
+                    select case (elemI(Aidx,ei_elementType)[Ci])
                         case (CC)
                             !% --- if a downstream element is a channel/conduit, use this for the
                             !%     geometry of the element in which the weir/orifice/pump is embeded
                             elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
-                            elemI(thisP,thisCol)         = elemI(Aidx,thisCol)[Ci]
+                            elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
                             !% --- copy over special geometry
                             call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
                         

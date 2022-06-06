@@ -630,6 +630,7 @@ module define_indexes
         enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
         enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
         enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
+        enumerator ::  esr_Orifice_EffectiveFullArea        !% effective full depth after control intervention
         enumerator ::  esr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
         enumerator ::  esr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
         enumerator ::  esr_Orifice_RectangularBreadth       !% rectangular orifice breadth
