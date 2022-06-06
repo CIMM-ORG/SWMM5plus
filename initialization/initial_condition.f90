@@ -1408,9 +1408,6 @@ contains
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_link_sub_type)
 
-        print *, 'CODE ERROR need orifice default geometry, similar to weir'
-        call util_crashpoint(44982)
-
         select case (specificOrificeType)
         !% copy orifice specific data
         case (lBottomOrifice)
