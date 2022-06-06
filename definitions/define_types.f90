@@ -29,29 +29,6 @@ module define_types
         real(8), dimension(:,:), allocatable :: ValueArray
     end type
 
-    !%  control data
-    type controlType
-        integer :: Idx
-        integer :: LinkId
-        integer :: ElemId
-        real(8), dimension(:), allocatable :: TimeArray
-        real(8), dimension(:), allocatable :: HeightArray
-        real(8), dimension(:), allocatable :: AreaArray
-        real(8)    :: HeightStart
-        real(8)    :: HeightNow
-        real(8)    :: AreaNow
-        real(8)    :: AreaPrior
-        real(8)    :: FullDepth
-        real(8)    :: GateTimeChange1
-        real(8)    :: GateTimeChange2
-        real(8)    :: GateHeightChange1
-        real(8)    :: GateHeightChange2
-        real(8)    :: HeightMinimum
-        real(8)    :: GateSpeed
-        logical :: CanMove
-        logical :: MovedThisStep
-    end type controlType
-
     !%  diagnostic%Volume
     type diagnosticVolumeType
         integer  :: Step
