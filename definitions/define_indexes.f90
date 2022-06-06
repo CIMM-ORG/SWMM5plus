@@ -539,6 +539,7 @@ module define_indexes
         enumerator :: esi_Weir_EndContractions = 1      !% number of endcontractions of the weir
         enumerator :: esi_Weir_FlowDirection            !% weir flow direction
         enumerator :: esi_Weir_SpecificType             !% specific weir type
+        enumerator :: esi_Weir_GeometryType             !% specific weir geometry type
         enumerator :: esi_Weir_lastplusone !% must be last enum item
     end enum
 
@@ -548,6 +549,7 @@ module define_indexes
         !% define the column indexes for elemSi(:,:) orifice elements
         enumerator :: esi_Orifice_FlowDirection = 1     !% orifice flow direction
         enumerator :: esi_Orifice_SpecificType          !% specifc orifice type
+        enumerator :: esi_Orifice_GeometryType          !% specifc orifice geometry type
         enumerator :: esi_Orifice_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSI_orifice = esi_Orifice_lastplusone-1
@@ -607,6 +609,8 @@ module define_indexes
     enum, bind(c)
         enumerator ::  esr_Weir_Rectangular = 1         !% discharge coefficient for the rectangular portion
         enumerator ::  esr_Weir_Triangular              !% discharge coefficient for triangular weir part
+        enumerator ::  esr_Weir_FullDepth               !% original weir opening
+        enumerator ::  esr_Weir_FullArea                !% original weir opening area
         enumerator ::  esr_Weir_EffectiveFullDepth      !% effective full depth after control intervention
         enumerator ::  esr_Weir_EffectiveHeadDelta      !% effective head delta across weir
         enumerator ::  esr_Weir_NominalDownstreamHead   !% nominal downstream head
@@ -623,6 +627,8 @@ module define_indexes
 
     enum, bind(c)
         enumerator ::  esr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
+        enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
+        enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
         enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
         enumerator ::  esr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
         enumerator ::  esr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
