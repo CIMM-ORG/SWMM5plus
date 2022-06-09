@@ -43,7 +43,7 @@ module rectangular_triangular_channel
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), bottomdepth(:), volume(:), length(:), breadth(:), sideslope(:)
-        real(8) :: bottomvolume
+        !real(8) :: bottomvolume(:)
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol) 
         depth       => elemR(:,er_Depth)
@@ -54,13 +54,15 @@ module rectangular_triangular_channel
         sideslope   => elemSGR(:,esgr_rectangular_Triangular_Slope)
         !%-----------------------------------------------------------------------------  
 
-        bottomvolume = (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP)
+        !bottomvolume = (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP)
 
-        if(volume(thisP) <= bottomvolume) then
+        where(volume(thisP) <= (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP))
             depth(thisP) = sqrt((volume(thisP)/length(thisP)) / sideslope(thisP))
-        else
-            depth(thisP) = (volume(thisP) - bottomvolume) / (length(thisP) * breadth(thisP)) + bottomdepth(thisP)
-        endif
+        endwhere
+
+        where(volume(thisP) > (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP))
+            depth(thisP) = (volume(thisP) - (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP)) / (length(thisP) * breadth(thisP)) + bottomdepth(thisP)
+        endwhere
 
     end subroutine rectangular_triangular_depth_from_volume
     !%  
@@ -134,11 +136,13 @@ module rectangular_triangular_channel
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
 
-        if(elemR(thisP,er_Depth) <= elemR(thisP,er_BottomDepth)) then
+        where(depth(thisP) <= bottomdepth(thisP))
             topwidth(thisP) = twoR * sideslope(thisP) * depth(thisP)
-        else
+        endwhere
+
+        where(depth(thisP) > bottomdepth(thisP))
             topwidth(thisP) = breadth(thisP)
-        endif
+        endwhere
 
     end subroutine rectangular_triangular_topwidth_from_depth
 !%    
@@ -188,12 +192,14 @@ module rectangular_triangular_channel
         perimeter   => elemR(:,er_Perimeter)
         !%-----------------------------------------------------------------------------
 
-        if(depth(thisP) <= bottomdepth(thisP)) then
+        where(depth(thisP) <= bottomdepth(thisP))
             perimeter(thisP) = twoR * sqrt(((breadth(thisP) ** twoR) / fourR) + (depth(thisP) ** twoR))
-        else
+        endwhere
+
+        where(depth(thisP) > bottomdepth(thisP))
             perimeter(thisP) = (twoR * sqrt(((breadth(thisP) ** twoR) / fourR) + (bottomdepth(thisP) ** twoR))) & !triangular section
                                 + (twoR * ((depth(thisP) - bottomdepth(thisP)) + breadth(thisP)))           !rectangular section
-        endif
+        endwhere
 
     end subroutine rectangular_triangular_perimeter_from_depth
 !%    
@@ -246,12 +252,14 @@ module rectangular_triangular_channel
         bottomdepth => elemR(:,er_BottomDepth)
         !%-----------------------------------------------------------------------------
 
-        if (depth(thisP) <= bottomdepth(thisP)) then
+        where(depth(thisP) <= bottomdepth(thisP))
             hyddepth(thisP) = depth(thisP) / twoR
-        else
+        endwhere
+
+        where(depth(thisP) > bottomdepth(thisP))
             hyddepth(thisP) = (bottomdepth(thisP) / twoR) &         !triangular section
                             + (depth(thisP) - bottomdepth(thisP))   !rectangular Section
-        endif
+        endwhere
 
     end subroutine rectangular_triangular_hyddepth_from_depth
 !%    

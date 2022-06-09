@@ -7,7 +7,7 @@ module geometry
     use rectangular_channel
     use trapezoidal_channel
     use triangular_channel
-    !use rectangular_triangular_channel
+    use rectangular_triangular_channel
     use circular_conduit
     use storage_geometry
     use adjust
