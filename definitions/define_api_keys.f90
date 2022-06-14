@@ -537,7 +537,6 @@ module define_api_keys
         enumerator :: api_linkf_q0        ! 8
         enumerator :: api_linkf_flow      ! 9
         enumerator :: api_linkf_depth     ! 10
-        enumerator :: api_linkf_bottomdepth ! 11 *
         enumerator :: api_linkf_volume    ! 11
         enumerator :: api_linkf_froude    ! 12
         enumerator :: api_linkf_setting   ! 13
