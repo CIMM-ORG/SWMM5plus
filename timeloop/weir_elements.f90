@@ -324,26 +324,26 @@ module weir_elements
         logical, pointer :: IsSurcharged
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
+        !% pointers
         SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
-
-        Head        => elemR(eIdx,er_Head)
-        Length      => elemR(eIdx,er_Length)
-        Zbottom     => elemR(eIdx,er_Zbottom)
-        Depth       => elemR(eIdx,er_Depth)
         Area        => elemR(eIdx,er_Area)
-        Volume      => elemR(eIdx,er_Volume)
-        Topwidth    => elemR(eIdx,er_Topwidth)
-        Perimeter   => elemR(eIdx,er_Perimeter)
+        Depth       => elemR(eIdx,er_Depth)
+        ell         => elemR(eIdx,er_ell)
+        Head        => elemR(eIdx,er_Head)
         HydDepth    => elemR(eIdx,er_HydDepth)
-        ell         => elemR(eIdx,er_ell) !
         HydRadius   => elemR(eIdx,er_HydRadius)
-        Zcrest                  => elemSR(eIdx,esr_Weir_Zcrest)
-        Zcrown                  => elemSR(eIdx,esr_Weir_Zcrown)
+        Length      => elemR(eIdx,er_Length)
+        Perimeter   => elemR(eIdx,er_Perimeter)
+        Topwidth    => elemR(eIdx,er_Topwidth)
+        Volume      => elemR(eIdx,er_Volume)
+        Zbottom     => elemR(eIdx,er_Zbottom)
         RectangularBreadth      => elemSR(eIdx,esr_Weir_RectangularBreadth)
         TrapezoidalBreadth      => elemSR(eIdx,esr_Weir_TrapezoidalBreadth)
         TriangularSideSlope     => elemSR(eIdx,esr_Weir_TriangularSideSlope)
         TrapezoidalLeftSlope    => elemSR(eIdx,esr_Weir_TrapezoidalLeftSlope)
         TrapezoidalRightSlope   => elemSR(eIdx,esr_Weir_TrapezoidalRightSlope)
+        Zcrest                  => elemSR(eIdx,esr_Weir_Zcrest)
+        Zcrown                  => elemSR(eIdx,esr_Weir_Zcrown)
         
         IsSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%-----------------------------------------------------------------------------     

@@ -212,6 +212,10 @@ contains
         if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
 
+        !% --- initialize simple controls from json file
+        if (setting%Output%Verbose) print *, "begin initializing control"
+        call init_controls() 
+
         !% --- HYDROLOGY
         if (setting%Simulation%useHydrology) then 
             if (SWMM_N_subcatch > 0) then
@@ -1180,6 +1184,62 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_curves
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_controls()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%   initialize simple controls from SWMM5+ settings file
+        !%-----------------------------------------------------------------------------
+        integer              :: ii, jj, lIdx
+        integer, pointer     :: nControls
+        integer, allocatable :: packedElemArray(:)
+        character(64)        :: subroutine_name = 'init_controls'
+        !%-----------------------------------------------------------------------------
+        ! if (crashYN) return
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+            !% pointer to the number of control in the settings file
+            nControls => setting%Control%NumControl
+
+            !% only initialize controls if it is present in the settings file
+            if (nControls > zeroI) then
+                allocate(setting%Control%LinkIdx(nControls))
+                setting%Control%LinkIdx = nullvalueI
+                allocate(setting%Control%ElemIdx(nControls))
+                setting%Control%ElemIdx = nullvalueI
+                !% allocate the previous settings as 1.0
+                do ii = 1,nControls
+                    do jj = 1,size(link%I,dim=1)
+                        if (link%Names(jj)%str == trim(setting%Control%Links(ii))) then
+                            lIdx = jj
+                            setting%Control%LinkIdx(ii) = lIdx
+                            packedElemArray = pack(elemI(:,ei_Lidx),(elemI(:,ei_link_Gidx_SWMM) == lIdx))
+                            if (size(packedElemArray)<oneI) then
+                                print*, packedElemArray, 'packedElemArray'
+                                print*, "Error - json file - setting " // 'Could not find the link ', trim(setting%Control%Links(ii)), ' in the network'
+                            end if
+                            !% HACK: take the first element of the subsequent link as controlled element
+                            !% that means, for conduits the first element will be controlled
+                            !% for orifice and weirs it will not matter
+                            setting%Control%ElemIdx(ii) = packedElemArray(1)
+                            deallocate(packedElemArray)
+                        end if
+                    end do
+                    !% check for valid links in the control settings
+                    if (setting%Control%LinkIdx(ii) == nullvalueI) then
+                        print*, "Error - json file - setting " // 'Could not find then link ', trim(setting%Control%Links(ii)), ' in the network'
+                        stop
+                    end if
+                end do 
+            end if
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    end subroutine init_controls
 !%
 !%==========================================================================
 !%==========================================================================

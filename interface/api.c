@@ -1293,6 +1293,9 @@ int DLLEXPORT api_get_linkf_attribute(
                 case OUTLET :
                     *value = Outlet[Link[link_idx].subIndex].qExpon;
                     break;
+                case ORIFICE :
+                    *value = Orifice[Link[link_idx].subIndex].orate;
+                    break;
                 default :
                     *value = 0;
             }

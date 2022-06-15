@@ -721,6 +721,9 @@ contains
         !% --- repack all the dynamic arrays
         call pack_dynamic_arrays()
 
+        !% --- evaluate controls defined in the setting file
+        call control_evaluate()
+
         !% --- ensure that the conservative flux terms are exactly zero in the entire array
         !%     so that we can be confident of conservation computation. 
         faceR(:,fr_Flowrate_Conservative) = zeroR  
@@ -1791,6 +1794,51 @@ contains
             elemR(:,er_Temp04) = nullvalueR
 
     end subroutine tl_limit_LatInflow_dt
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine control_evaluate()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Evaluates control and updates elemR(:,er_setting) column
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer          :: ii, loc
+            integer, pointer :: nControls, eIdx
+            real(8), pointer :: TimeNow, TargetSetting(:), TimeArray(:), SettingArray(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        ! if (crashYN) return
+        !%------------------------------------------------------------------
+        !% Aliases:
+        TimeNow   => setting%Time%Now 
+        nControls => setting%Control%NumControl
+        TargetSetting  => elemR(:,er_TargetSetting)
+
+        !% only use controls if it is present in the settings file
+        if (nControls > zeroI) then
+            do ii = 1,nControls
+                eIdx          => setting%Control%ElemIdx(ii)
+                TimeArray     => setting%Control%TimeArray(:,ii)
+                SettingArray  => setting%Control%SettingsArray(:,ii)
+
+                !% now find where the current time (TImeNow) falls between
+                !% the control time array (TimeArray)
+                !% here, it is found using the maxloc Intrinsic function
+                !% Returns the location of the minimum value of all elements 
+                !% in an array, a set of elements in an array, or elements in 
+                !% a specified dimension of an array. This function works only when
+                !% the current time is above the minimum value in the TimeArray array
+                if (TimeNow > minval(TimeArray)) then
+                    loc = maxloc(TimeArray, 1, TimeArray <= TimeNow)
+                    !% setting can not be greater than 1
+                    TargetSetting(eIdx) = min(SettingArray(loc), oneR)
+                end if
+            end do
+        end if
+
+    end subroutine control_evaluate 
 !%
 !%==========================================================================
 !% END OF MODULE
