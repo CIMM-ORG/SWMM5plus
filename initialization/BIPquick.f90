@@ -61,7 +61,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
         !% Preliminaries
         if (this_image() .ne. 1) return
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -200,7 +200,7 @@ contains
                     print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
                     print*, "Suggestion: Use a different number of processors"
                     call util_crashpoint(233874)
-                    return
+                    !return
                     !stop 233874
 
                 end if
@@ -240,7 +240,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
             character(64) :: subroutine_name = 'bip_allocate_arrays'
         ! -----------------------------------------------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -272,7 +272,7 @@ contains
             character(64) :: subroutine_name = 'bip_allocate_arrays'
             integer       :: ii, counter
         ! -----------------------------------------------------------------------------------------------------------------
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%BIPquick) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -301,7 +301,7 @@ contains
             integer :: upstream_link, upstream_node, uplink_counter
             integer ii, jj, uplinks
         ! ----------------------------------------------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -354,7 +354,7 @@ contains
         integer, intent(in) :: link_index
         real(8)             :: weight, length, element_length
         ! --------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% Sometimes the Interface gives garbage for these values so I need to adjust
@@ -392,7 +392,7 @@ contains
         integer :: ii, jj, links_iter
 
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -427,7 +427,7 @@ contains
         integer, intent(in out) :: root
         integer :: jj
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -482,7 +482,7 @@ contains
         integer :: ii, weight_index, root
 
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -542,7 +542,7 @@ contains
         integer :: upstream_node_list(max_up_branch_per_node) !% brh20211219
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -601,7 +601,7 @@ contains
         integer :: jj
 
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -668,7 +668,7 @@ contains
         real(8) :: nearest_overestimate
         integer :: ii
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -764,7 +764,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -827,7 +827,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -887,7 +887,7 @@ contains
         real(8) :: length_from_start, total_length, start_weight, weight_ratio, link_weight
         integer :: upstream_node
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% The length of the spanning_link
@@ -937,7 +937,7 @@ contains
         integer :: kk
         real    :: l1, l2, y1, y2
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1074,7 +1074,7 @@ contains
         integer   :: jj
 
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1123,7 +1123,7 @@ contains
         if ( total_clipped_weight <= zeroR ) then
             print*, "BIPquick Case 3: Haven't removed any weight"
             call util_crashpoint(557324)
-            return
+            !return
             !stop 557324
         end if
 
@@ -1171,7 +1171,7 @@ contains
         integer    :: ii, kk
 
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

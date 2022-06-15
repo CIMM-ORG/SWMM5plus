@@ -54,6 +54,7 @@ int DLLEXPORT api_initialize(
     int error;
     api = (Interface*) malloc(sizeof(Interface));
     error = swmm_open(f1, f2, f3);
+
     if (error) {
         api->IsInitialized = FALSE;
         return 0;
@@ -66,6 +67,7 @@ int DLLEXPORT api_initialize(
     api->IsInitialized = TRUE;
     error = api_load_vars();
     if (!run_routing) IgnoreRouting = TRUE;
+
     return 0;
 }
 
@@ -212,6 +214,12 @@ int DLLEXPORT api_get_flowBC(
     double total_factor = 1;
     double total_extinflow = 0;
 
+   //printf("          starting api_get_flowBC-===========================- \n");
+    //printf(" filename %s \n",Finflows.name);
+
+    //jj = Node[node_idx].extInflow->tSeries; 
+    //printf("          table-x1, table->x2 here %e %e \n", Tseries[jj].x1- 36526.0,Tseries[jj].x2- 36526.0);
+
     *flowBC = 0;
     datetime_decodeDate(current_datetime, &tyear, &tmonth, &tday);
     datetime_decodeTime(current_datetime, &thour, &tmin,   &tsec);
@@ -220,6 +228,11 @@ int DLLEXPORT api_get_flowBC(
     // handle dry weather inflows
     attr = nodef_has_dwfInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
+
+    
+    //printf("          node idx %d \n ",node_idx);
+    //printf("          dry weather flow val %g \n ",val);
+
     if (val == 1) { // node_has_dwfInflow 
         for(ii=0; ii<4; ii++)
         {
@@ -261,21 +274,28 @@ int DLLEXPORT api_get_flowBC(
         }
         // convert EPA-SWMM cubic ft/s to cubic meters/s
         *flowBC += CFTOCM(total_factor * Node[node_idx].dwfInflow->avgValue);
+        //printf("*flowBC %g \n",CFTOCM(total_factor * Node[node_idx].dwfInflow->avgValue));
     }
 
     // handle external inflows
     attr = nodef_has_extInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
-    //printf("\n here node_idx %d \n",node_idx);
-    //printf(" val = %f \n ",val);
-    //printf(" MONTHLY %d \n ", MONTHLY_PATTERN);
+    //printf("          here node_idx %d \n",node_idx);
+    //printf("          external inflow val = %f \n ",val);
+    //printf("          MONTHLY %d \n ", MONTHLY_PATTERN);
+
     if (val == 1) { // node_has_extInflow
         // pp is the pattern #
         pp = Node[node_idx].extInflow->basePat; // pattern
-        //printf(" base pat %d \n ",pp);
+
+        //printf("          base pat %d \n ",pp);
+        //printf("          pattern numbers %d %d %d %d \n", MONTHLY_PATTERN, DAILY_PATTERN,HOURLY_PATTERN,WEEKEND_PATTERN);
+
         // convert EPA-SWMM cubic ft/s to cubic m/s
         bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
-        //printf(" bline %f \n ",bline);
+
+        //printf("          bline at top %f \n ",bline);
+
         if (pp >= 0)
         {
             ptype = Pattern[pp].type;
@@ -314,27 +334,46 @@ int DLLEXPORT api_get_flowBC(
                     printf(" unexpected default reached in api_get_flowBC at B -- needs debugging");
                     return -1;
             }
+            //printf("total_extinflow at pattern %g \n ", total_extinflow);
         }
         else if (bline > 0)  // no pattern, but baseline inflow provided
         {
             total_extinflow += bline;  //already converted to cubic m/s
+            //printf("total_extinflow (at bline) %g \n ", total_extinflow);
         }
 
         // external inflow from time series are added to baseline and pattern
         // jj is the time series
         jj = Node[node_idx].extInflow->tSeries; // tseries 
+        
+        //printf("          Node time series %d \n", jj);
+        //printf("          totalextinflow = %g  \n ",total_extinflow);
+
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
         if (jj >= 0)
         {
-            // Unit conertion for External Files
+            // Unit conversion for External Files
             // FlowUnitWords[]  = { w_CFS, w_GPM, w_MGD, w_CMS, w_LPS, w_MLD, NULL};
             // Corresponding FlowUnits are  0  ,    1 ,    2 ,    3 ,    4 ,    5 ,
+            //printf("          totalextinflow = %g  \n ",total_extinflow);
             total_extinflow += (table_tseriesLookup(&Tseries[jj], current_datetime, FALSE) * sfactor) / QCF_SI[FlowUnits];
+            //printf("          current datetime %g \n ",current_datetime - 36526.0);
+            //printf("          CALLING table_tseriesLookup \n");
+            //total_extinflow = table_tseriesLookup(&Tseries[jj], current_datetime, FALSE);
+            //printf("          after table_tseriesLookup \n");
+            //printf(" table lookup %g \n",table_tseriesLookup(&Tseries[jj], current_datetime, FALSE));
+            //printf("          inflow = %g %g %g %d \n ",total_extinflow, sfactor,QCF_SI[FlowUnits], FlowUnits);
         }
 
         // add the external inflows to the dry weather flows stored in flowBC
+         //printf("          flowBC = %g  \n ", total_extinflow);
         *flowBC += total_extinflow; // already converted to cubic m/s
+        
     }
+    //printf("          table-x1, table->x2 here %g %g \n", Tseries[jj].x1,Tseries[jj].x2);
+    //printf("          leaving api_get_flowBC ==================================\n");
+    //printf("\n");
+
     return 0;
 }
 
@@ -358,6 +397,7 @@ int DLLEXPORT api_get_headBC(
     {
         case FIXED_OUTFALL:
             *headBC = FTTOM(Outfall[ii].fixedStage);
+            //printf(" here %d %g \n ", ii, Outfall[ii].fixedStage);
             return 0;
 
         // case NORMAL_OUTFALL:
@@ -563,6 +603,18 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             break;   
 
+        case nodef_hasFlapGate :
+            switch (Node[node_idx].type) {
+                case OUTFALL :             
+                    *value = Outfall[Node[node_idx].subIndex].hasFlapGate;
+                    break;
+                default :    
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting nodef_hasFlapGate for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;
+            }
+            break;
         case nodef_invertElev  :
             *value = FTTOM(Node[node_idx].invertElev);
             break;
@@ -625,7 +677,10 @@ int DLLEXPORT api_get_nodef_attribute(
 
         case nodef_extInflow_tSeries :
             if (Node[node_idx].extInflow)
-                *value = Node[node_idx].extInflow->tSeries;
+            {
+                // printf(" in api_get_nodef_attribute node+idx, tseries %d %d \n", node_idx,Node[node_idx].extInflow->tSeries);
+                *value = Node[node_idx].extInflow->tSeries;  
+            }
             else
             {
                 *value = API_NULL_VALUE_I;
@@ -945,8 +1000,7 @@ int DLLEXPORT api_get_nodef_attribute(
     // else if (attr == nodef_extInflow_basePat_type)
     // {
     //     //printf("   nodef_extInflow_basePat_type attr = 14 \n");
-    //     bpat = Node[node_idx].extInflow->basePat;
-        
+    //     bpat = Node[node_idx].extInflow->basePat;  
     //     //printf(" bpat %d",bpat);
     //     if (bpat >= 0) // baseline pattern exists
     //         *value = Pattern[bpat].type;
@@ -1065,7 +1119,6 @@ int DLLEXPORT api_get_nodef_attribute(
     // // brh20211207s
     // //else if (attr == node_depth)
     // else if (attr == nodef_newDepth)
-
     // {
     //     // printf("   node_depth = 24 \n");
     //     // printf("   nodef_newDepth attr = 24 \n");
@@ -1239,6 +1292,9 @@ int DLLEXPORT api_get_linkf_attribute(
                     break;
                 case OUTLET :
                     *value = Outlet[Link[link_idx].subIndex].qExpon;
+                    break;
+                case ORIFICE :
+                    *value = Orifice[Link[link_idx].subIndex].orate;
                     break;
                 default :
                     *value = 0;
@@ -1995,23 +2051,64 @@ int DLLEXPORT api_get_next_entry_table(
 
 //===============================================================================
 int DLLEXPORT api_get_next_entry_tseries(
-    int tseries_idx)
+    int tseries_idx, double timemax)
 //===============================================================================
 {
     int success;
     double x2, y2;
 
+    success = TRUE;
+    // store the present upper values of time series x=time, y=value
     x2 = Tseries[tseries_idx].x2;
     y2 = Tseries[tseries_idx].y2;
-    success = table_getNextEntry(&(Tseries[tseries_idx]), &(Tseries[tseries_idx].x2), &(Tseries[tseries_idx].y2));
-    if (success == TRUE)
+
+    //printf("x2, timemax %g %g \n ",x2, timemax);
+
+    // only get a new table entry if the present upper time (x2) is less than the maximum time.
+    if (x2 < timemax)
     {
-        Tseries[tseries_idx].x1 = x2;
-        Tseries[tseries_idx].y1 = y2;
+        success = table_getNextEntry(&(Tseries[tseries_idx]), &(Tseries[tseries_idx].x2), &(Tseries[tseries_idx].y2));
+        // overwrite the x1,y1 with the old values for x2, y2
+        // otherwise, no changes.
+        if (success == TRUE)
+        {
+            Tseries[tseries_idx].x1 = x2;
+            Tseries[tseries_idx].y1 = y2;
+        }
     }
+
+    // // only overwrite the time
+    // if (success == TRUE)
+    // {
+    //     if (x2 < timemax) 
+    //     {
+    //         Tseries[tseries_idx].x1 = x2;
+    //         Tseries[tseries_idx].y1 = y2;
+    //     }      
+    // }
     return success;
 }
+//===============================================================================
+int DLLEXPORT api_reset_timeseries_to_start(
+    int tseries_idx)
+//  
+//  Input: SWMM index of time series
+//  Output: TRUE if success in resetting to first entry
+//          FALSE if unsuccessful.   
+//===============================================================================
+{
+    int success;
+    double xx, yy;
 
+    //printf("calling table_getFirstEntry \n");
+    success = table_getFirstEntry(&Tseries[tseries_idx], &xx, &yy);
+    Tseries[tseries_idx].x1 = xx;
+    Tseries[tseries_idx].y1 = yy;
+    //printf(" xx, yy %e %e  \n", xx - 36526.0,yy);
+    //printf("Success %d \n",success);
+
+    return success;
+}
 //===============================================================================
 // --- Output Writing (Post Processing)
 // * The follwing functions should only be executed after finishing
@@ -2048,6 +2145,7 @@ int DLLEXPORT api_write_output_line(
 int DLLEXPORT api_update_nodeResult(
     int node_idx, int resultType, double newNodeResult)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
     // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
     // needs to have unit conversions added if it is to be used
@@ -2081,6 +2179,7 @@ int DLLEXPORT api_update_nodeResult(
 int DLLEXPORT api_update_linkResult(
     int link_idx, int resultType, double newLinkResult)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
 
     // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
@@ -2119,6 +2218,7 @@ int DLLEXPORT api_update_linkResult(
 int DLLEXPORT api_export_linknode_properties(
     int units)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
     //  link
     int li_idx[Nobjects[LINK]];
@@ -2134,7 +2234,7 @@ int DLLEXPORT api_export_linknode_properties(
     float lr_InitialDnstreamDepth[Nobjects[LINK]];
     int li_InitialDepthType[Nobjects[LINK]]; //
     float lr_BreadthScale[Nobjects[LINK]]; //
-    float lr_InitialDepth[Nobjects[LINK]]; //
+    //float lr_InitialDepth[Nobjects[LINK]]; //
 
     //  node
     int ni_idx[Nobjects[NODE]];
@@ -2245,7 +2345,22 @@ int DLLEXPORT api_export_linknode_properties(
 
         lr_InitialFlowrate[i] = Link[i].q0 * flow_units;
         lr_InitialUpstreamDepth[i] = Node[li_Mnode_u[i]].initDepth * length_units;
-        lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units;
+        lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units; 
+
+        // // check for a flap gate at an outfall node.
+        // // if it exists, set the downstream depth to zero to be modified later
+        // if (Node[li_Mnode_d[i]].type == OUTFALL) {
+        //     lr_InitialDnstreamDepth[i] = 0.0;
+        //         // if (Outfall[Node[li_Mnode_d[i]].subIndex].hasFlapGate) {
+        //         //     lr_InitialDnstreamDepth[i] = 0.0;
+        //         // } else {
+        //         //     lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units;
+        //         // }
+        // } else {
+        //     lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units;
+        // }
+
+        
     }
 
     // Nodes
@@ -2303,6 +2418,7 @@ int DLLEXPORT api_export_linknode_properties(
 int DLLEXPORT api_export_link_results(
     int link_idx)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
 	FILE* tmp;
     DateTime days;
@@ -2345,6 +2461,7 @@ int DLLEXPORT api_export_link_results(
 int DLLEXPORT api_export_node_results(
     int node_idx)
 //===============================================================================
+// PRESENTLY NOT USED 20220521
 {
 	FILE* tmp;
     DateTime days;

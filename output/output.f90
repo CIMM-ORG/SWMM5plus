@@ -274,7 +274,7 @@ contains
                 write (*,"(A)") ' which has key ',trim(reverseKey(elementType(ii)))
                 !stop 
                 call util_crashpoint( 487834)
-                return
+                !return
             end select
         end do
         !%------------------------------------------------------------------
@@ -651,7 +651,7 @@ contains
             write(*,*) setting%Output%Report%TimeUnits
             !stop 
             call util_crashpoint( 583003)
-            return
+            !return
         end select
 
         !%------------------------------------------------------------------
@@ -829,7 +829,7 @@ contains
             write(*,*) setting%Output%Report%TimeUnits
             !stop 
             call util_crashpoint( 99624)
-            return
+            !return
         end select
 
         !%------------------------------------------------------------------
@@ -1133,7 +1133,7 @@ contains
             write(*,"(A)") 'Suggest increasing setting.Output.StoredLevels.'
             !stop 
             call util_crashpoint(220973)
-            return
+            !return
         end if
 
         !% -----------------------------------------------
@@ -1156,7 +1156,7 @@ contains
             write(*,"(A)") trim(file_name)
             !stop 
             call util_crashpoint(982736)
-            return
+            !return
         end if
 
         !% ----------------------------------
@@ -1260,7 +1260,7 @@ contains
             write(*,"(A)") trim(file_name)
             !stop 
             call util_crashpoint(92763)
-            return
+            !return
         end if
 
         !% --- BEGIN WRITING
@@ -1451,7 +1451,7 @@ contains
             write(*,"(A)") trim(thisFile)
             !stop 
             call util_crashpoint( 309870)
-            return
+            !return
         end if
 
         !% --- get the total number of combined files written
@@ -1509,7 +1509,7 @@ contains
             write(*,*) setting%Output%Report%TimeUnits
             !stop 
             call util_crashpoint( 883345)
-            return
+            !return
         end select
 
 
@@ -1538,7 +1538,7 @@ contains
                     write(*,"(A,i5)") '... iostat value = ',ios
                     !stop 
                     call util_crashpoint(209837)
-                    return
+                    !return
                 end if
 
                 !% -------------------------------
@@ -1555,7 +1555,7 @@ contains
                     write(*,"(A,i5)") '...but needs to read in ',nLevel
                     !stop 
                     call util_crashpoint(87364)
-                    return
+                    !return
                 end if
 
                 !% -------------------------------------------
@@ -1578,7 +1578,7 @@ contains
                         write(*,"(A,i5)") '...but needs to read in ',nTypeElem
                         !stop 
                         call util_crashpoint(209837)
-                        return
+                        !return
                     end if
 
                     !% --- read and store the fixed integer data
@@ -1746,7 +1746,7 @@ contains
                                     write(*,'(A,i8)') '... Global Element Index = ',pOutElem_Gidx(kk)
                                     !stop 
                                     call util_crashpoint(98293)
-                                    return
+                                    !return
                                 end if
                                 !% -- store the node index for each of the output elements
                                 !OutElem_SWMMnodeIdx(kk) = SWMMnode
@@ -1787,7 +1787,7 @@ contains
                                 write(*,'(A)') '... appears to be not part of the SWMM node set.'
                                 !stop 
                                 call util_crashpoint(11298)
-                                return
+                                !return
                             else
                                 !% -- store the link index for each of the output elements
                                 !OutFace_SWMMnodeIdx(kk) = SWMMnode
@@ -2072,7 +2072,7 @@ contains
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
                                     !stop 
                                     call util_crashpoint( 7778734)
-                                    return
+                                    !return
                                 end select
                             end do
                         end if
@@ -2151,7 +2151,7 @@ contains
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
                                     !stop 
                                     call util_crashpoint( 559345)
-                                    return
+                                    !return
                                 end select
                             end do
                         end if
@@ -2235,7 +2235,7 @@ contains
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_faceR(pp-1))
                                     !stop 
                                     call util_crashpoint( 2285334)
-                                    return
+                                    !return
                                 end select
                             end do
                         end if
@@ -2278,14 +2278,14 @@ contains
                             write (*,"(A,i8)") 'ERROR (code): link%Name(SWMMlink)%str not allocated for SWMMlink=',SWMMlink
                             !stop 
                             call util_crashpoint(10347)
-                            return
+                            !return
                         end if
 
                         if (len(link%Names(SWMMlink)%str) == 0) then
                             write(*,"(A,i8)") 'ERROR (code)): link%Name(kk)%str is empty for SWMMlink= ',SWMMlink
                             !stop 
                             call util_crashpoint(110387)
-                            return
+                            !return
                         end if
 
                         if (len(link%Names(SWMMlink)%str) > len(tlinkname)) then
@@ -2296,7 +2296,7 @@ contains
                             write(*,"(A)") trim(link%Names(SWMMlink)%str)
                             !stop 
                             call util_crashpoint(443134)
-                            return
+                            !return
                         end if
 
                         !% --- use a temporary name for convenience
@@ -2409,14 +2409,14 @@ contains
                             write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
                             !stop 
                             call util_crashpoint(667567)
-                            return
+                            !return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) == 0) then
                             write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
                             !stop 
                             call util_crashpoint(77987)
-                            return
+                            !return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
@@ -2427,7 +2427,7 @@ contains
                             write(*,"(A)") trim(node%Names(SWMMnode)%str)
                             !stop 
                             call util_crashpoint(98163)
-                            return
+                            !return
                         end if
 
                         !% --- use a temporary name for convenience
@@ -2539,14 +2539,14 @@ contains
                             write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
                             !stop 
                             call util_crashpoint(98763)
-                            return
+                            !return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) == 0) then
                             write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
                             !stop 
                             call util_crashpoint(1208)
-                            return
+                            !return
                         end if
 
                         if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
@@ -2557,7 +2557,7 @@ contains
                             write(*,"(A)") trim(node%Names(SWMMnode)%str)
                             !stop 
                             call util_crashpoint(12087)
-                            return
+                            !return
                         end if
 
                         !% --- use a temporary name for convenience
@@ -2792,7 +2792,7 @@ contains
             print *, 'which has key ',trim(reverseKey(FeatureType))
             !stop 
             call util_crashpoint( 663986)
-            return
+            !return
         end select
 
         !% --- ROW 3 --- SWMM INDEX NUMBER IN CODE
@@ -2844,7 +2844,7 @@ contains
             print *, 'which has key ',trim(reverseKey(FeatureType))
             !stop 
             call util_crashpoint( 873853)   
-            return
+            !return
         end select
 
         !% --- ROW 10 --- EXPECTED NUMBER OF DATA ROWS (time levels)
@@ -2882,7 +2882,7 @@ contains
                 print *, 'which has key ',trim(reverseKey(FeatureType))
                 !stop 
                 call util_crashpoint( 93873)
-                return
+                !return
             end select
         end if
 
@@ -4082,7 +4082,7 @@ contains
                     write(*,"(A)") trim(file_name)
                     !stop 
                     call util_crashpoint(223077)
-                    return
+                    !return
                 end if
                 !% --- write the filename
                 write(fnunit,"(A)") trim(file_name)
@@ -4108,7 +4108,7 @@ contains
                         write(*,"(A)") trim(file_name)
                         !stop 
                         call util_crashpoint(329928)
-                        return
+                        !return
                     end if
                 !% --- write the prior filenames from memory to the file and the delete
                 do kk=1,setting%Output%StoredFileNames
@@ -4162,7 +4162,7 @@ contains
                 write(*,"(A,i6)") 'and the unit number is ',fnunit 
                 !stop 
                 call util_crashpoint( 339182)
-                return
+                !return
             end if     
             inquire(UNIT=fnunit,OPENED=isopen)
 
@@ -4178,7 +4178,7 @@ contains
                 write(*,"(A,i5)") '... iostat value = ',ios
                 !stop 
                 call util_crashpoint( 89075)
-                return
+                !return
             end if
             rewind(unit=fnunit)
             do ii=1,nWritten

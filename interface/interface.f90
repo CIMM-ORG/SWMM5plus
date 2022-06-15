@@ -36,6 +36,7 @@ module interface
     public :: interface_get_table_attribute
     public :: interface_get_num_table_entries
     public :: interface_get_first_entry_table
+    public :: interface_reset_timeseries_to_start
     public :: interface_get_next_entry_table
     public :: interface_get_obj_name_len
     public :: interface_update_linknode_names
@@ -318,12 +319,20 @@ module interface
             real(c_double),        intent(inout) :: y
         end function api_get_next_entry_table
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_next_entry_tseries(tseries_idx) &
+        integer(c_int) function api_get_next_entry_tseries(tseries_idx, timemax) &
             BIND(C, name="api_get_next_entry_tseries")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in   ) :: tseries_idx
+            real(c_double), value, intent(in   ) :: timemax
         end function api_get_next_entry_tseries
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_reset_timeseries_to_start(tseries_idx) &
+            BIND(C, name="reset_timeseries_to_start")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in   ) :: tseries_idx
+        end function api_reset_timeseries_to_start
         !% -------------------------------------------------------------------------------
         ! --- Output Writing (Post Processing)
         !% -------------------------------------------------------------------------------
@@ -441,6 +450,7 @@ module interface
     procedure(api_get_first_entry_table),      pointer :: ptr_api_get_first_entry_table
     procedure(api_get_next_entry_table),       pointer :: ptr_api_get_next_entry_table
     procedure(api_get_next_entry_tseries),     pointer :: ptr_api_get_next_entry_tseries
+    procedure(api_reset_timeseries_to_start),  pointer :: ptr_api_reset_timeseries_to_start
     procedure(api_write_output_line),          pointer :: ptr_api_write_output_line
     procedure(api_update_nodeResult),          pointer :: ptr_api_update_nodeResult
     procedure(api_update_linkResult),          pointer :: ptr_api_update_linkResult
@@ -510,11 +520,7 @@ contains
 
         SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
 
-        SWMM_N_transect = get_num_objects(API_TRANSECT)
-
-        !% --- Set number of transects in SWMM5+ identical to EPA-SWMM
-        !%     HACK, may want to set these different in the future.
-        N_transect = SWMM_N_transect
+        SWMM_N_link_transect = get_num_objects(API_TRANSECT)
                 
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
@@ -535,7 +541,7 @@ contains
             print *, ''
             !stop 
             call util_crashpoint( 309786)
-            return
+            !return
             !% HACK -- developer's note:
             !% Unfortunately, the parse error returns a code of 200 in the get_num_objects()
             !% function, which is appears as SWMM_N_link=200 and SWMM_N_node=200. As it is
@@ -651,7 +657,7 @@ contains
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 !stop 
                 call util_crashpoint( 8673489)
-                return
+                !return
             end if
         end do
 
@@ -663,7 +669,7 @@ contains
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 !stop 
                 call util_crashpoint( 48705)
-                return
+                !return
             end if
         end do
 
@@ -698,17 +704,18 @@ contains
         character(64) :: subroutine_name = "interface_update_transectID_names"
         !%-----------------------------------------------------------------------------
 
-        do ii = 1, SWMM_N_transect
+        do ii = 1, SWMM_N_link_transect
 
             !print *, ii, 'API_TRANSECT ',API_TRANSECT, trim(transectID(ii))
             call load_api_procedure("api_get_object_name")
-            errstat = ptr_api_get_object_name(ii-1, transectID(ii), API_TRANSECT)
+            !errstat = ptr_api_get_object_name(ii-1, link%transectID(ii), API_TRANSECT)
+            errstat = ptr_api_get_object_name(ii-1, link%transectID(ii)%str, API_TRANSECT)
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 !stop 
                 call util_crashpoint(498273)
-                return
+                !return
             end if
 
         end do
@@ -776,7 +783,7 @@ contains
             print *, trim(reverseKey_api(attr))
             !stop 
             call util_crashpoint( 948705)
-            return
+            !return
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
@@ -784,17 +791,19 @@ contains
             print *, trim(reverseKey_api(attr))
             !stop 
             call util_crashpoint( 397904)
-            return
+            !return
         end if
-
-        !% Substracts 1 to every Fortran index (it becomes a C index)
+        
+        !% --- Subtract 1 from every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_nodef_attribute")
+        !% --- get the node value
         error = ptr_api_get_nodef_attribute(node_idx-1, attr, node_value)
         !print *, '   node value ',node_value
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
-        if ((attr == api_nodef_extInflow_tSeries) .or. (attr == api_nodef_extInflow_basePat_idx)) then
+        if (    (attr == api_nodef_extInflow_tSeries    )    &
+           .or. (attr == api_nodef_extInflow_basePat_idx)  ) then
             if (node_value /= -1) node_value = node_value + 1
         end if
 
@@ -802,6 +811,7 @@ contains
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
             "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
+            
     end function interface_get_nodef_attribute
 !%
 !%=============================================================================
@@ -836,7 +846,7 @@ contains
             print *, "error: unexpected link index value", link_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(9987355)
-            return
+            !return
         end if
 
         !if (attr == 30) then
@@ -847,7 +857,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint( 498705)
-            return
+            !return
 
         elseif     ( (attr  >   api_linkf_start) .and. (  attr <  api_linkf_commonbreak)) then
             !% --- for link attributes 1 to < api_linkf_commonBreak
@@ -864,7 +874,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(2098734)
-            return
+            !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
 
@@ -1235,7 +1245,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(98273)        
-            return
+            !return
 
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
@@ -1726,7 +1736,7 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(878293)    
-            return         
+            !return         
         end if
 
         if (setting%Debug%File%interface)  then
@@ -1750,18 +1760,18 @@ contains
             character(64) :: subroutine_name = 'interface_get_transectf_attribute'
         !%-----------------------------------------------------------------------------
 
-        if ((transect_idx > SWMM_N_transect) .or. (transect_idx < 1)) then
+        if ((transect_idx > SWMM_N_link_transect) .or. (transect_idx < 1)) then
             print *, "error: unexpected tranect index value", transect_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(992255)
-            return
+            !return
         end if
 
         if     (  attr .le. api_transectf_start) then
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(2333235)
-            return
+            !return
 
         elseif (  attr == api_transectf_ID) then
             !% skip this -- handled elsewhere
@@ -1775,45 +1785,48 @@ contains
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
 
-            select case (attr)
-                case (api_transectf_yFull)
-                    transectR(transect_idx,tr_depthFull) = transect_value
-                case (api_transectf_aFull)
-                    transectR(transect_idx,tr_areaFull) = transect_value
-                case (api_transectf_rFull)
-                    transectR(transect_idx,tr_hydRadiusFull) = transect_value
-                case (api_transectf_wMax)
-                    transectR(transect_idx,tr_widthMax) = transect_value
-                case (api_transectf_ywMax)
-                    transectR(transect_idx,tr_depthAtBreadthMax) = transect_value
-                case (api_transectf_sMax)
-                    transectR(transect_idx,tr_sectionFactor) = transect_value
-                case (api_transectf_aMax)
-                    transectR(transect_idx,tr_areaAtMaxFlow) = transect_value
-                case (api_transectf_lengthFactor)
-                    transectR(transect_idx,tr_lengthFactor) = transect_value
-                case (api_transectf_roughness)
-                    transectR(transect_idx,tr_roughness) = transect_value
-                case default
-                    write(*,*)
-                    write(*,*) '****** Unexpected case default '
-                    write(*,*) '   attr = ',attr
-                    write(*,*) '   ',trim(reverseKey_api(attr))
-                    write(*,*) '******'
-                    call util_crashpoint(667832)
-            end select
+            !% --- return with transect_value for output
+            return
+
+            ! select case (attr)
+            !     case (api_transectf_yFull)
+            !         transectR(transect_idx,tr_depthFull) = transect_value
+            !     case (api_transectf_aFull)
+            !         link%transectR(transect_idx,tr_areaFull) = transect_value
+            !     case (api_transectf_rFull)
+            !         link%transectR(transect_idx,tr_hydRadiusFull) = transect_value
+            !     case (api_transectf_wMax)
+            !         link%transectR(transect_idx,tr_widthMax) = transect_value
+            !     case (api_transectf_ywMax)
+            !         link%transectR(transect_idx,tr_depthAtBreadthMax) = transect_value
+            !     case (api_transectf_sMax)
+            !         link%transectR(transect_idx,tr_sectionFactor) = transect_value
+            !     case (api_transectf_aMax)
+            !         link%transectR(transect_idx,tr_areaAtMaxFlow) = transect_value
+            !     case (api_transectf_lengthFactor)
+            !         link%transectR(transect_idx,tr_lengthFactor) = transect_value
+            !     case (api_transectf_roughness)
+            !         link%transectR(transect_idx,tr_roughness) = transect_value
+            !     case default
+            !         write(*,*)
+            !         write(*,*) '****** Unexpected case default '
+            !         write(*,*) '   attr = ',attr
+            !         write(*,*) '   ',trim(reverseKey_api(attr))
+            !         write(*,*) '******'
+            !         call util_crashpoint(667832)
+            ! end select
 
         elseif (  attr .ge. api_transectf_end ) then
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(883782)
-            return
+            !return
 
         else
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(273672)
-            return
+            !return
         end if
 
     end function interface_get_transectf_attribute
@@ -1847,13 +1860,13 @@ contains
 
         !print *, 'in interface_get_transect_table'
         
-        do ii=1,SWMM_N_transect
+        do ii=1,SWMM_N_link_transect
 
             error = ptr_api_get_transect_table(&
                 ii-1, SWMM_N_transect_depth_items,    &
-                transectTableDepthR(ii,:,tt_area),  &
-                transectTableDepthR(ii,:,tt_width),  &
-                transectTableDepthR(ii,:,tt_hydradius))
+                link%transectTableDepthR(ii,:,tt_area),  &
+                link%transectTableDepthR(ii,:,tt_width),  &
+                link%transectTableDepthR(ii,:,tt_hydradius))
 
             ! if (ii==1) then
             !     print *, ii,'==================='
@@ -1896,7 +1909,7 @@ contains
             print *, "error: unexpected table attribute value", attr
             !stop 
             call util_crashpoint( 28704)
-            return
+            !return
         end if
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
@@ -1904,7 +1917,7 @@ contains
             print *, trim(reverseKey_api(attr))
             !stop 
             call util_crashpoint( 498734)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1977,7 +1990,7 @@ contains
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 835551)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -2019,7 +2032,7 @@ contains
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 837014)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -2068,7 +2081,7 @@ contains
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 8367894)
-            return
+            !return
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -2206,69 +2219,128 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_next_inflow_time(bc_idx, tnow) result(tnext)
+    function interface_reset_timeseries_to_start(bc_idx) result(tstart)    
         !%---------------------------------------------------------------------
         !% Description:
+        !% resets the current entry point for the time series associated with
+        !% the bc_idx
         !%---------------------------------------------------------------------
         integer, intent(in) :: bc_idx
-        real(8), intent(in) :: tnow
-        real(8)             :: tnext, t1, t2, tnextp
-        integer             :: nidx, nres, tseries, success
-        character(64) :: subroutine_name 
-        !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_next_inflow_time'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        real(8)             :: tstart
+        integer             :: tseries_idx, nidx, error
+        real(8)             :: tdata(2)
 
+        !% --- get the node index
         nidx = BC%flowI(bc_idx, bi_node_idx)
+        !% --- get the time series index
+        tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+        print *, 'in interface_reset_timeseries_to_start, tseries_idx', tseries_idx
+        !% --- reset the entry point
+        call load_api_procedure("api_reset_timeseries_to_start")
+        error = ptr_api_reset_timeseries_to_start(tseries_idx-1)
+        print *, 'after api_reset_timeseries...'
+
+    end function interface_reset_timeseries_to_start
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_next_inflow_time(bc_idx, tnow, timemaxEpoch) result(tnext)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Gets the next inflow time. If the next time is less than the maximum
+        !% time (timemax) then the Tseries.x1 and .y1 stored values will be changed
+        !% to the new value.
+        !% NOTE: timemax is the "Epoch" time used in EPA-SWMM, but the
+        !% output from this is local time with time=0 as the start of the simulation
+        !%
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: bc_idx
+            real(8), intent(in) :: tnow, timemaxEpoch
+            real(8)             :: tnext, t1, t2, tnextp
+            integer             :: tseries_idx, success
+            integer             :: year, month, day, hours, minutes, seconds
+            integer, pointer    :: nidx, nres
+            character(64) :: subroutine_name = 'interface_get_next_inflow_time'
+        !%---------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+        !% Aliases:
+            !% --- node index for this BC
+            nidx => BC%flowI(bc_idx, bi_node_idx)
+            !% --- get node pattern resolution
+            nres => node%I(nidx, ni_pattern_resolution)
+        !%---------------------------------------------------------------------
+        !% --- consistency checking
         if (.not. node%YN(nidx, nYN_has_inflow)) then
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
-        nres = node%I(nidx, ni_pattern_resolution)
+
         if (nres >= 0) then
+            !% --- get the next time for pattern resolution
+            !%     Note that nres=0 returns nullvalueR
             tnextp = util_datetime_get_next_time(tnow, nres)
+
             if (node%YN(nidx, nYN_has_extInflow)) then
-                tseries = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
-                if (tseries >= 0) then
-                    success = get_next_entry_tseries(tseries)
-                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1)
-                    tnext = util_datetime_epoch_to_secs(tnext)
-                    if (success == 0) then ! unsuccessful
+                !% --- for external inflows (file), get the timeseries index
+                tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+
+               ! print *, 'node idx tseries_idx',nidx,tseries_idx
+               ! print *, 'tnow, tmaxeppoch ',tnow, timemaxEpoch
+
+                if (tseries_idx >= 0) then
+                    !% --- this gets the Tseries.x2 values
+                    !%     Note the Tseries.x1 values will be overwritten by the .x2 values
+                    !%     only if the x2 value is less than timemax. This prepares for the
+                    !%     the next step of storing for SWMM5+
+                    success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
+
+                    if (success == 1) then
+                        !% --- gets time in days at what is now the x2 pointer 
                         tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
+                        !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
+
                         tnext = util_datetime_epoch_to_secs(tnext)
-                        if (tnext == tnow) then
-                            tnext = setting%Time%End
-                            setting%BC%disableInterpolationYN = .true.
-                        !% brh20211207s
-                        else
-                            ! write(*,*)
-                            ! write(*,*) '****** Unexpected else in ',subroutine_name,' at 4479823'
-                            ! write(*,*) '   tnext = ', tnext
-                            ! write(*,*) '   tnow  = ', tnow
-                            ! write(*,*) '   skipping error condition'
-                            ! write(*,*) '******'
-                            ! stop 
-                            !call util_crashpoint( 4479823)
-                        !% brh20211207e    
-                        end if
-                    !% brh20211207s
                     else
-                        ! write(*,*)
-                        ! write(*,*) '****** Unexpected else in ',subroutine_name,' at 4589709'
-                        ! write(*,*) '   success = ', success
-                        ! write(*,*) '   skipping error condition'
-                        ! write(*,*) '******'
-                        ! stop 
-                        !call util_crashpoint( 4589709)
-                    !% brh20211207e                          
+                        !% --- failure to read time later than tnow from file
+                        print *, ' '
+                        write(*,"(A)") 'INPUT FILE FAILURE'
+                        write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
+                        tnext = util_datetime_secs_to_epoch(tnow)
+                        call util_datetime_decodedate(tnext, year, month, day)
+                        call util_datetime_decodetime(tnext, hours, minutes, seconds)
+                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                        tnext = util_datetime_epoch_to_secs(timemaxEpoch)
+                        write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
+                        call util_datetime_decodedate(timemaxEpoch, year, month, day)
+                        call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
+                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                        write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
+                        print *, ' '
+                        
+                        call util_crashpoint(2098734)
+                        !stop 2098734
                     end if
                 else
+                    !% --- if no external file, use the end time
+                    !% HACK -- what are we doing here?
                     tnext = setting%Time%End
                 end if
+            else
+                !% --- continue, no action if there isn't an external inflow    
             end if
+            !% --- the next time is the smaller of the value in the the timeseries or
+            !%     the time associated with the pattern.
+            !%     HACK -- NEED TO CHECK PATTERN OPERATION
             tnext = min(tnext, tnextp)
         else
+            !% --- HACK - if pattern resolution < 0 then set output tnext to the end time.
+            !% SHOULD THIS BE A FAILURE POINT?
             tnext = setting%Time%End
+            call util_crashpoint(2390483)
         end if
 
         if (setting%Debug%File%interface)  &
@@ -2281,25 +2353,30 @@ contains
     function interface_get_next_head_time(bc_idx, tnow) result(tnext)
         !%---------------------------------------------------------------------
         !% Description
+        !% Gets the next head time
+        !% HACK -- this is incomplete and does not read from file
+        !% ONLY SUPPORTS FIXED HEAD BC
         !%---------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        real(8), intent(in) :: tnow
-        real(8)             :: tnext, tnextp
-        integer             :: nidx, nres, tseries
-        character(64) :: subroutine_name
+            integer, intent(in) :: bc_idx
+            real(8), intent(in) :: tnow
+            real(8)             :: tnext
+            integer, pointer    :: nidx
+            character(64) :: subroutine_name = 'interface_get_next_head_time'
         !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_next_head_time'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        nidx = BC%headI(bc_idx, bi_node_idx)
+        !% Preliminaries
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------    
+        !% Aliases
+            nidx => BC%headI(bc_idx, bi_node_idx)
+        !%---------------------------------------------------------------------
         if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
             tnext = setting%Time%End
         else
-            print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
+            print *, "Error, unsupported head boundary condition for node " // trim(node%Names(nidx)%str)
             !stop 
             call util_crashpoint(42987)
-            return
+            !return
         end if
 
         if (setting%Debug%File%interface)  &
@@ -2318,18 +2395,30 @@ contains
         real(8), intent(in) :: tnow
         integer             :: error, nidx
         real(8)             :: epochNow, bc_value
-        character(64) :: subroutine_name
+        character(64) :: subroutine_name  = 'interface_get_flowBC'
         !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_flowBC'
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         nidx = BC%flowI(bc_idx, bi_node_idx)
+
+        !print *, ' '
+        !print *, '     in ',trim(subroutine_name)
+        !print *, '     nidx , node name',nidx, trim(node%Names(nidx)%str)
+
         epochNow = util_datetime_secs_to_epoch(tnow)
         call load_api_procedure("api_get_flowBC")
         error = ptr_api_get_flowBC(nidx-1, epochNow, bc_value)
-        call print_api_error(error, subroutine_name)
+        !print *, '    out of ptr_api_get_flowBC, before api_error'
+        !call print_api_error(error, subroutine_name)
 
+        !% TEMPORARY!
+        ! if (bc_value < zeroR) then
+        !     print *,'     negative value ',bc_value
+        !     stop 448723
+        ! end if
+
+        !print *,'     ...leaving interface_get_flowBC================='
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2527,6 +2616,8 @@ contains
         SWMM_N_divider = get_num_objects(API_DIVIDER)
 
 
+        !print *, 'route_step ', route_step
+        !stop 44987
 
         thisWarning(:) = .false.
         thisVariable(:) = ''
@@ -2978,6 +3069,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_times)
             case ("api_get_next_entry_tseries")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
+            case ("api_reset_timeseries_to_start")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_reset_timeseries_to_start)    
             case ("api_find_object")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
             case ("api_run_step")
@@ -3003,7 +3096,7 @@ contains
                  " has not been handled in load_api_procedure"
                 !stop 
                 call util_crashpoint(420987)
-                return
+                !return
         end select
 
         if (setting%Debug%File%interface)  &
@@ -3014,11 +3107,12 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function get_next_entry_tseries(k) result(success)
+    function get_next_entry_tseries(tseries_idx,timemax) result(success)
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer, intent(in   ) :: k
+        integer, intent(in   ) :: tseries_idx
+        real(8), intent(in   ) :: timemax
         integer                :: success
         character(64)          :: subroutine_name
         !%---------------------------------------------------------------------
@@ -3027,7 +3121,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call load_api_procedure("api_get_next_entry_tseries")
-        success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
+        success = ptr_api_get_next_entry_tseries(tseries_idx-1,timemax) ! Fortran to C convention
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -3151,7 +3245,7 @@ contains
             write(*,*)
             !stop 
             call util_crashpoint( 63455)
-            return
+            !return
         end if
     end subroutine print_api_error
 !%

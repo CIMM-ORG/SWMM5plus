@@ -40,7 +40,7 @@ module pump_elements
 
         character(64) :: subroutine_name = 'pump_toplevel'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%pump_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -63,7 +63,7 @@ module pump_elements
         real(8), pointer :: Head, FlowRate, UpFaceHead, DnFaceHead, PSetting
         real(8), pointer :: Depth, DnFaceZbottom
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        ! if (crashYN) return
         PumpType => elemSI(eIdx,esi_Pump_SpecificType)
         CurveID  => elemSI(eIdx,esi_Pump_CurveID)
         Head     => elemR(eIdx,er_Head)

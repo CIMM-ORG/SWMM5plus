@@ -21,31 +21,25 @@ module define_globals
     character(len=32), allocatable :: reverseKey(:)
     
 
+    ! integer :: iet(10) = (/45,46,48,47,49,115,116,  113, 114,50/)
+    ! integer :: ift(3) = (/47,48,            49/)
+      
+    !integer :: iet(2) = (/193,1 /)
+    !integer :: ift(3) = (/205,1, 2/)
 
-   ! integer :: iet(3) = (/80, 34, 35/)
-   ! integer :: ift(2) = (/32, 33/)
+   !  integer :: iet(2) = (/192,216/)
+   !  integer :: ift(3) = (/203,204,217/)
 
-   ! integer :: iet(3) = (/25, 65, 67/)
-   ! integer :: ift(2) = (/23, 60/)
+   !integer :: iet(10) = (/45, 46, 47, 48, 49, 50, 113, 114, 115, 116/)
+   ! integer :: ift(3) = (/205,1,2/)
 
-   ! integer :: iet(2) = (/1, 2/)
-   ! integer :: ift(3) = (/1, 2, 3/)
-
-    !integer :: iet(15) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,48,47/)
-    !integer :: ift(14) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,47/)
-
-    integer :: ietU1(3) =   (/46, 48, 47/)
-    integer :: iftU1(1) =     (/47 /)
-
-
-    integer :: ietU2(3) = (/ 114, 50, 47/)
-    integer :: iftU2(1) =   (/ 49/)
-
-    integer :: ietD1(3) = (/47 ,49, 115/)
-    integer :: iftD1(1) =       (/48/)
-     
+    ! integer :: iet(4) = (/48, 50, 47, 49/)
+    ! integer :: ift(3) = (/47, 49, 48/)
 
     integer(kind=8) :: irecCount = 0
+
+    character (len=256) ::  outstring[*]
+
 
 !% ===================================================================================
 !% VARIABLES
@@ -55,8 +49,11 @@ module define_globals
 !% referred to with a short name
 
 
-    logical :: crashYN = .false. !% error condition
+    !logical :: crashYN = .false. !% error condition
     integer :: crashI = 0 
+
+    !% set to true if present time step is a spin-up time step
+    logical :: inSpinUpYN
 
 !% ===================================================================================
 !% ARRAYS
@@ -88,9 +85,9 @@ module define_globals
 
     integer, allocatable, target :: transectI(:,:)
     real(8), allocatable, target :: transectR(:,:)
-    real(8), allocatable, target :: transectTableDepthR(:,:,:)
-    real(8), allocatable, target :: transectTableAreaR(:,:,:)
-    character(len=16), allocatable, target :: transectID(:)
+    real(8), allocatable, target :: transectTableDepthR(:,:,:) ! transect table by depth
+    real(8), allocatable, target :: transectTableAreaR(:,:,:)  ! transect table by area
+    character(len=64), allocatable, target :: transectID(:)
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -246,6 +243,9 @@ module define_globals
     character (len=64), allocatable :: profiler_procedure_name(:)
     integer, allocatable :: profiler_procedure_level(:)
 
+    !% counter for transects
+    integer :: lastTransectIdx = 0
+
 !% ===================================================================================
 !% CONSTANTS
 !% ===================================================================================
@@ -303,9 +303,9 @@ module define_globals
     integer :: SWMM_N_pollutant
     integer :: SWMM_N_control
     integer :: SWMM_N_divider
-    integer :: SWMM_N_transect
+    integer :: SWMM_N_link_transect  ! # of irregular cross-section transects defined for links
     integer :: SWMM_N_transect_depth_items
-    integer :: N_transect
+    integer :: N_transect            ! # of irregular cross-section transects for elements
     integer :: N_transect_depth_items
     integer :: N_transect_area_items
     integer :: N_link
@@ -381,10 +381,10 @@ module define_globals
     integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
     integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
 
-    ! defaults from initial depth type in links
-    integer, parameter :: Uniform           = 1
-    integer, parameter :: LinearlyVarying   = 2
-    integer, parameter :: ExponentialDecay  = 3
+    ! ! defaults from initial depth type in links
+    ! integer, parameter :: Uniform           = 1
+    ! integer, parameter :: LinearlyVarying   = 2
+    ! integer, parameter :: ExponentialDecay  = 3
 
     ! default for number of functional storage
     integer :: N_FunctionalStorage = 0

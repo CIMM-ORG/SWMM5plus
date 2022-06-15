@@ -40,18 +40,18 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 100,
+        "StoredLevels" : 10000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 100
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : false,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
-            "isFluxConsOut"     : false,
+            "isFluxConsOut"     : true,
             "isFroudeNumberOut" : false,
-            "isHeadOut"         : false,
+            "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
             "isSlotWidthOut"    : false,
@@ -75,7 +75,13 @@
     },
     "Simulation" : {
         "useHydrology" : false,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "useSpinUp"                 : true,
+        "stopAfterSpinUp"           : false,
+        "SpinUpDays"                : 15.0
+    },
+    "Solver" : {
+        "MomentumSourceMethod" : "T00"
     },
     "TestCase" : {
         "UseTestCaseYN" : false,

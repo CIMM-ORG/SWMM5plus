@@ -28,7 +28,8 @@ module utility_allocate
     ! public members
     public :: util_allocate_secondary_coarrays
     public :: util_allocate_linknode
-    public :: util_allocate_transect
+    public :: util_allocate_link_transect
+    public :: util_allocate_element_transect
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -106,7 +107,7 @@ contains
             integer       :: ii, obj_name_len
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%utility_allocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -179,7 +180,49 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine util_allocate_transect ()
+    subroutine util_allocate_link_transect ()
+
+        integer :: ii
+
+        !% 2D transectI
+        allocate(link%transectI(SWMM_N_link_transect,Ncol_transectI),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectI')
+        link%transectI(:,:) = nullvalueI
+
+        !% 2D transectR
+        allocate(link%transectR(SWMM_N_link_transect,Ncol_transectR),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectR')
+        link%transectR(:,:) = nullvalueR
+
+        !% 3D transectTableDepthR -- data by uniform depth depth
+        allocate(link%transectTableDepthR(SWMM_N_link_transect,N_transect_depth_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
+        link%transectTableDepthR(:,:,:) = nullvalueR
+        
+        !% 3D transectTableAreaA -- data by uniform area discretization
+        allocate(link%transectTableAreaR(SWMM_N_link_transect,N_transect_area_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectTableAreaR')
+        link%transectTableAreaR(:,:,:) = nullvalueR
+
+        !% 1D transectID
+        allocate(link%transectID(SWMM_N_link_transect),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectID')
+        
+        !% --- HACK -- using fixed len=16 for transectID. Should be changed
+        !%     similar to allocation of link%Names to get length of ID
+        do ii = 1,SWMM_N_link_transect
+            allocate(character(16) :: link%transectID(ii)%str, stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'character(32) :: link%transectID%str')
+            link%transectID(ii)%str = '0'
+        end do
+
+
+    end subroutine util_allocate_link_transect    
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_element_transect ()
 
         !% 2D transectI
         allocate(transectI(N_transect,Ncol_transectI),stat=allocation_status,errmsg=emsg)
@@ -198,15 +241,15 @@ contains
         
         !% 3D transectTableAreaA -- data by uniform area discretization
         allocate(transectTableAreaR(N_transect,N_transect_area_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
-        transectTableDepthR(:,:,:) = nullvalueR
+        call util_allocate_check(allocation_status, emsg, 'transectTableAreaR')
+        transectTableAreaR(:,:,:) = nullvalueR
 
         !% 1D transectID
-        allocate(transectID(SWMM_N_transect),stat=allocation_status,errmsg=emsg)
+        allocate(transectID(N_transect),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'transectID')
         transectID(:) = ""
 
-    end subroutine util_allocate_transect    
+    end subroutine util_allocate_element_transect    
 !%
 !%==========================================================================
 !%==========================================================================
@@ -226,7 +269,7 @@ contains
             integer       :: ii, obj_name_len
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%utility_allocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -256,7 +299,7 @@ contains
 !%==========================================================================
 !%    
     subroutine util_allocate_partitioning_arrays()
-        if (crashYN) return
+        !if (crashYN) return
         allocate(adjacent_links(max_branch_per_node))
         allocate(elem_per_image(num_images()))
         allocate(image_full(num_images()))
@@ -314,7 +357,7 @@ contains
         character(64) :: subroutine_name = 'util_allocate_elemX_faceX'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -416,7 +459,7 @@ contains
         !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'util_allocate_columns'
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -456,7 +499,7 @@ contains
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -474,17 +517,25 @@ contains
             call util_allocate_check (allocation_status, emsg, 'BC%headYN')
             BC%headYN(:,:) = nullvalueL
 
-            allocate(BC%headR_timeseries(N_headBC, setting%BC%TimeSlotsStored, N_headR), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%headR_timeseries')
-            BC%headR_timeseries(:,:,:) = nullvalueR
+            allocate(BC%headR(N_headBC, N_headR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headR')
+            BC%headR(:,:) = nullvalueR
 
-            allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%headIdx')
-            BC%headIdx(:) = nullvalueI
+            allocate(BC%headTimeseries(N_headBC, setting%BC%TimeSlotsStored, N_headR_TS), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headTimeseries')
+            BC%headTimeseries(:,:,:) = nullvalueR
 
-            allocate(BC%headRI(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%headRI')
-            BC%headRI(:) = nullvalueR
+            !allocate(BC%headI(:,bi_TS_upper_idx)(N_headBC), stat=allocation_status, errmsg=emsg)
+            !call util_allocate_check (allocation_status, emsg, 'BC%headI(:,bi_TS_upper_idx)')
+            !BC%headI(:,bi_TS_upper_idx)(:) = nullvalueI
+
+            !allocate(BC%head_value(N_headBC), stat=allocation_status, errmsg=emsg)
+            !call util_allocate_check (allocation_status, emsg, 'BC%head_value')
+            !BC%head_value(:) = nullvalueR
+
+            !allocate(BC%hasFlapGateYN(N_headBC), stat=allocation_status, errmsg=emsg)
+            !call util_allocate_check (allocation_status, emsg, 'BC%hasFlapGateYN')
+            !BC%hasFlapGateYN = .false.
 
         end if
 
@@ -497,17 +548,13 @@ contains
             call util_allocate_check (allocation_status, emsg, 'BC%flowYN')
             BC%flowYN(:,:) = nullvalueL
 
-            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%TimeSlotsStored, N_flowR), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%flowR_timeseries')
-            BC%flowR_timeseries(:,:,:) = nullvalueR
+            allocate(BC%flowR(N_flowBC, N_flowR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowR')
+            BC%flowR(:,:) = nullvalueR
 
-            allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%flowIdx')
-            BC%flowIdx(:) = nullvalueI
-
-            allocate(BC%flowRI(N_flowBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%flowRI(N_flowBC)')
-            BC%flowRI(:) = nullvalueR
+            allocate(BC%flowTimeseries(N_flowBC, setting%BC%TimeSlotsStored, N_flowR_TS), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowTimeseries')
+            BC%flowTimeseries(:,:,:) = nullvalueR
             
         end if
 
@@ -525,7 +572,7 @@ contains
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1052,7 +1099,7 @@ contains
         integer             :: ii, jj
         character(64)       :: subroutine_name = 'util_allocate_col_elemI'
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1102,7 +1149,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemP'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1148,7 +1195,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGalltm'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1194,7 +1241,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGac'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1240,7 +1287,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGetm'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1282,7 +1329,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemR'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1318,7 +1365,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSI'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1354,7 +1401,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSR'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1390,7 +1437,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSGR'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1426,7 +1473,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemWDI'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1462,7 +1509,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemWDI'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1498,7 +1545,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemYN'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1534,7 +1581,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceI'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1570,7 +1617,7 @@ contains
     !     character(64)       :: subroutine_name = 'util_allocate_col_faceM'
 
     !     !-----------------------------------------------------------------------------
-    !     if (crashYN) return
+    !     !if (crashYN) return
     !     if (setting%Debug%File%utility_allocate) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1610,7 +1657,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceP'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1660,7 +1707,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_facePS'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1703,7 +1750,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceR'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1739,7 +1786,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceYN'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1770,7 +1817,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_curves'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1800,13 +1847,13 @@ contains
         character(64) :: subroutine_name = 'util_allocate_boundary_ghost_elem_array'
 
         !-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         Nelems => N_elem(this_image())
-        nrow = count(elemYN(1:Nelems,eYN_isBoundary))
+        nrow = count(elemYN(1:Nelems,eYN_isBoundary_up)) + count(elemYN(1:Nelems,eYN_isBoundary_dn))
         ncol => Ncol_elemBGR
 
         allocate(elemGR(nrow, ncol), stat=allocation_status, errmsg=emsg)
@@ -1842,7 +1889,7 @@ contains
             character(64)       :: subroutine_name = 'util_allocate_curve_entries'
         !%-----------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%utility_allocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
@@ -1868,7 +1915,7 @@ contains
         !% sizes
         !%-----------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
         !%-----------------------------------------------------------------
 
         !% array of integers of same size as number of BCup face
@@ -1910,7 +1957,7 @@ contains
             character(64):: subroutine_name = 'util_allocate_check'
 
         !-----------------------------------------------------------------------------
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%utility) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

@@ -45,7 +45,7 @@ subroutine partitioning_toplevel()
         real(8) :: part_size_balance
         character(64) :: subroutine_name = 'partitioning_toplevel'
     !% --------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
     !% --------------------------------------------------------
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -80,7 +80,7 @@ subroutine partitioning_toplevel()
             else
                 print *, "Error, partitioning method not supported"
                 call util_crashpoint(87095)
-                return
+                !return
                 !stop 
             end if
         end if
@@ -155,7 +155,7 @@ subroutine init_partitioning_bquick_diagnostic ()
     integer, dimension(:), allocatable, target :: nodeIndexes
     character(64) :: subroutine_name = 'init_partitioning_bquick_diagnostic'
 !% --------------------------------------------------------
-    if (crashYN) return
+    !if (crashYN) return
 !% --------------------------------------------------------
     !% pointers
     nominalElemLength => setting%Discretization%NominalElemLength
@@ -191,7 +191,7 @@ subroutine init_partitioning_bquick_diagnostic ()
                 print*, 'Error: phantom node', pNode, 'doesnot have any up or dn phantom link'
                 !stop 
                 call util_crashpoint(147856)
-                return
+                !return
             end if
 
             !% print diagnistic of the spanning and phantom links
@@ -285,7 +285,7 @@ subroutine init_partitioning_default()
     real(8) :: partition_threshold
     logical :: partition_correct
 
-    if (crashYN) return
+    !if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -366,7 +366,7 @@ subroutine init_partitioning_default()
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
             !stop 
             call util_crashpoint(1098226)
-            return
+            !return
         end select
 
 
@@ -417,7 +417,7 @@ subroutine init_partitioning_random()
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold, rand_num
     !% ----------------------------------------------------------------------------------------------------------------
-    if (crashYN) return
+    !if (crashYN) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
 
@@ -507,7 +507,7 @@ subroutine init_partitioning_random()
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
             !stop 
             call util_crashpoint(1098226)
-            return
+            !return
         end select
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
@@ -557,7 +557,7 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (crashYN) return
+    !if (crashYN) return
     if (setting%Debug%File%partitioning) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -625,7 +625,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
     integer :: part_size_balance
     integer :: ii, current_image, max_elem, min_elem
     ! -----------------------------------------------------------------------------------------------------------------
-    if (crashYN) return
+    !if (crashYN) return
     !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
@@ -677,7 +677,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
             print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
             !stop 
             call util_crashpoint(73875)
-            return
+            !return
         end select
     end do
 

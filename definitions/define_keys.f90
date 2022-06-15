@@ -173,6 +173,9 @@
         enumerator :: T00                   !% type of momentum source
         enumerator :: T10                   !% type of momentum source
         enumerator :: T20                   !% type of momentum source
+        enumerator :: T10s2                 !% type of momentum source
+        enumerator :: TA1                   !% type of momentum source
+        enumerator :: TA2                   !% type of momentum source
         !% type of face interpolation for downstream JB
         enumerator :: static
         enumerator :: dynamic
@@ -221,6 +224,12 @@
         enumerator :: DepthValue
         enumerator :: VolumeValue
         enumerator :: AreaValue
+        !% keys for initial depth distribution
+        enumerator :: LinearlyVaryingDepth
+        enumerator :: UniformDepth
+        enumerator :: ExponentialDepth
+        enumerator :: FixedHead
+        !% last items for bookkeeping
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone
     end enum
@@ -380,6 +389,9 @@
         reverseKey(T00) = 'T00'
         reverseKey(T10) = 'T10'
         reverseKey(T20) = 'T20'
+        reverseKey(T10s2) = 'T10s2'
+        reverseKey(TA1) = 'TA1'
+        reverseKey(TA2) = 'TA2'
         reverseKey(static) = 'static'
         reverseKey(dynamic) = 'dynamic'
         reverseKey(doesnotexist) = 'doesnotexist'
@@ -419,7 +431,11 @@
         reverseKey(DepthValue)  = 'DepthValue'
         reverseKey(VolumeValue) = 'VolumeValue'
         reverseKey(AreaValue)   = 'AreaValue'
-        reverseKey(undefinedKey)= 'undefinedKey'
+        reverseKey(LinearlyVaryingDepth)   = 'LinearlyVaryingDepth'
+        reverseKey(UniformDepth)           = 'UniformDepth'
+        reverseKey(ExponentialDepth)       = 'ExponentialDepth'
+        reverseKey(FixedHead)              = 'FixedHead'
+        reverseKey(undefinedKey)     = 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 
         !%------------------------------------------------------------------
@@ -612,6 +628,9 @@
         write(*,'(A," = ",i4)') trim(reverseKey(T00)) , T00
         write(*,'(A," = ",i4)') trim(reverseKey(T10)) , T10
         write(*,'(A," = ",i4)') trim(reverseKey(T20)) , T20
+        write(*,'(A," = ",i4)') trim(reverseKey(T10s2)) , T10s2
+        write(*,'(A," = ",i4)') trim(reverseKey(TA1)) , TA1
+        write(*,'(A," = ",i4)') trim(reverseKey(TA2)) , TA2
         write(*,'(A," = ",i4)') trim(reverseKey(tabl_depth_outlet)) , tabl_depth_outlet
         write(*,'(A," = ",i4)') trim(reverseKey(tabl_head_outlet)) , tabl_head_outlet
         write(*,'(A," = ",i4)') trim(reverseKey(TabularStorage)) , TabularStorage
