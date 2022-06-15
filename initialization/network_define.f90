@@ -55,37 +55,6 @@ contains
         !% divide the link node networks in elements and faces
         call init_network_datacreate ()
 
-        !call util_crashpoint(397805)        
-
-        ! print *, ' '
-        ! print *, ' elements ---------------------------------------------'
-        ! do ii =1,N_elem(1)
-        !     write(*,"(A, 10i9)") trim(reverseKey(elemI(ii,ei_elementType))), &
-        !         elemI(ii,ei_Lidx), &
-        !         elemI(ii,ei_Mface_uL), &
-        !         elemI(ii,ei_Mface_dL)
-        ! end do
-
-        ! print *, ' ======================================='
-        ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
-        ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
-        ! print *, ' ======================================='
-        ! !stop 
-        !call util_crashpoint(77869)
-
-        ! print *, 'why do elements 15 and 16 have the same downstream face?'
-        ! stop 
-        !call util_crashpoint(398705)
-
-        ! print *, ' '
-        ! print *, ' faces ---------------------------------------------------'
-        ! do ii=1,N_face(1)
-        !     write(*,"(A,10i9)") trim(reverseKey(faceI(ii,fi_BCtype))), &
-        !         faceI(ii,fi_Lidx), &
-        !         faceI(ii,fi_Melem_uL), &
-        !         faceI(ii,fi_Melem_dL)
-        ! end do
-
         !% replaces ni_elemface_idx of nJ2 nodes for the upstream elem
         !% of the face associated with the node
         call init_network_update_nj2_elem ()
@@ -134,12 +103,12 @@ contains
             '==================================================================='
             print*, 'image = ', this_image()
             print*, '.......................Elements...............................'
-            print*
-            print*, 'a)   ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM'
-            do jj = 1,N_elem(this_image())
-                print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_BIPquick), &
-                elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM)
-            end do
+            ! print*
+            ! print*, 'a)   ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM'
+            ! do jj = 1,N_elem(this_image())
+            !     print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_BIPquick), &
+            !     elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM)
+            ! end do
             print*
             print*, 'b)   ei_Lidx      ei_Type      Mface_uL    Mface_dL     elem_length     Zbottom'
             do jj = 1,N_elem(this_image())
@@ -177,6 +146,8 @@ contains
             print*
             !call execute_command_line('')
         end if
+
+          !  stop 49870
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
@@ -247,20 +218,32 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%network_define) then
+       ! if (setting%Debug%File%network_define) then
             !% provide output for debugging
-            print *, subroutine_name,'--------------------------------'
-            print *, 'link ID,               Slope,             length'
-            do mm=1, N_link
-                print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
-            end do
-            print *, ' '
-            print *, ' node assigments '
-            print *, 'link ID,         nodeUp,         nodeDn'
-            do mm=1, N_link 
-                print *, mm, link%I(mm,li_Mnode_u), link%I(mm,li_Mnode_d)
-            end do
-        end if
+        !     print *, subroutine_name,'--------------------------------'
+        !     print *, 'link ID,               Slope,             length'
+        !     do mm=1, N_link
+        !    !    print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
+        !     end do
+    !         print *, ' '
+    !         print *, ' node assigments '
+    !         print *, 'link ID,         nodeUp,         nodeDn'
+    !         do mm=1, N_link 
+    !             print *, ' '
+    !             print *, mm, link%I(mm,li_Mnode_u), link%I(mm,li_Mnode_d)
+    !             print *, trim(link%Names(mm)%str), ' ; ', trim(node%Names(link%I(mm,li_Mnode_u))%str), ' ; ', trim(node%Names(link%I(mm,li_Mnode_d))%str)
+    !         end do
+
+    !         print *, ' '
+    !         do mm=1, N_node
+    !             print *, ' '
+    !             print *, mm, node%I(mm,ni_Mlink_u1), node%I(mm,ni_Mlink_d1)
+    !             print *, trim(node%names(mm)%str), ' ; '
+               
+    !         end do
+    !    ! end if
+
+    !         stop 30987
 
         !%------------------------------------------------------------------
         !% closing
@@ -361,7 +344,7 @@ contains
         !%-----------------------------------------------------------------
         !% Declarations:
             integer, allocatable :: nJ2_nodes(:)
-            integer              :: N_nJ2_nodes
+            integer              :: N_nJ2_nodes, ii
             character(64) :: subroutine_name = 'init_network_update_nj2_elem'
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -379,6 +362,13 @@ contains
             node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
 
         end if
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! do ii=1,N_node
+        !     print *, ii, node%I(ii,ni_elemface_idx), 'name = ',trim(node%Names(ii)%str)
+        ! end do
+
+        ! stop 3987
 
         !%-----------------------------------------------------------------
         !% Closing
@@ -1019,8 +1009,8 @@ contains
                 end if
 
                 !% counter for element z bottom calculation
-                !zCenter     = zCenter     - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
-                !zDownstream = zDownstream - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
+                zCenter     = zCenter     - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
+                zDownstream = zDownstream - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
 
                 !% Advance the element counter
                 ElemLocalCounter  = ElemLocalCounter  + oneI

@@ -79,7 +79,9 @@ module utility_crash
 
         !% --- blow up tests for individual cells
         call util_crash_blowuptest (er_Depth,    setting%Crash%DepthMax,    'depth',    iscrash)
+
         call util_crash_blowuptest (er_Head,     setting%Crash%HeadMax,     'head',     iscrash)
+
         call util_crash_blowuptest (er_Flowrate, setting%Crash%FlowrateMax, 'flowrate', iscrash)
 
         !% --- blow up test for too many cells close to velocity limit
@@ -91,7 +93,7 @@ module utility_crash
             iscrash = .true.
             print *, ' '
             print *, '========================================================== ', this_image()
-            print *, '               SIMULATION BLOWING UP'
+            print *, '            SIMULATION BLOWING UP util_crashcheck'
             print *, 'Too many cells at artificial velocity limit'
             print *, nlarge, ' of ',N_elem(this_image()), ' cells on image ',this_image()
             print *, 'are at velocity near ',setting%Limiter%Velocity
@@ -99,6 +101,10 @@ module utility_crash
 
         !% assign crashpoint
         if (iscrash) call util_crashpoint (indexnumber)
+
+        !% set the crashI
+        if (iscrash) crashI = 1
+        
 
         !%------------------------------------------------------------------
     end subroutine util_crashcheck
@@ -187,7 +193,7 @@ module utility_crash
             iscrash = .true.
             print *, ' '
             print *, '========================================================== ', this_image()
-            print *, '                SIMULATION BLOWING UP'
+            print *, '      SIMULATION BLOWING UP util_crash_blowuptest'
             print *, trim(blowupType),' >    ',thislimit
             print *, 'at element index number', locOfMax
             print *, 'on image               ', this_image()

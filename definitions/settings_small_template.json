@@ -35,6 +35,11 @@
             "isWaveSpeedOut"    : false
         }
     },
+    "Simulation" :{
+        "useSpinUp" : true,
+        "SpinUpDays" : 10.0,
+        "stopAfterSpinUp" : false
+    },
     "SmallDepth" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.1

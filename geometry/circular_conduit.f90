@@ -156,18 +156,18 @@ module circular_conduit
 !%==========================================================================      
 !%==========================================================================
 !%
-    real(8) function circular_area_from_depth_singular (indx) result (outvalue)
+    real(8) function circular_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for circular cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: depth(:), AoverAfull(:), YoverYfull(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
         real(8), pointer    :: fullArea(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
         !!if (crashYN) return
-        depth      => elemR(:,er_Depth)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
         AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
@@ -175,7 +175,7 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
-        YoverYfull(indx) = depth(indx) / fulldepth(indx)
+        YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get A/Afull from the lookup table using Y/Yfull
         AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ACirc) !% 20220506brh removed NACirc
@@ -223,22 +223,21 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_topwidth_from_depth_singular (indx) result (outvalue)
+    real(8) function circular_topwidth_from_depth_singular (indx,depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a circular cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
-        YoverYfull(indx) = depth(indx) / fulldepth(indx)
+        YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Tmax (fullDepth for circular cross-section)
@@ -294,7 +293,7 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_perimeter_from_hydradius_singular (indx) result (outvalue)
+    real(8) function circular_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -303,16 +302,17 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: hydRadius(:), area(:), fullperimeter(:)
+        real(8), intent(in) :: hydradius
+        real(8), pointer ::  area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        hydRadius     => elemR(:,er_HydRadius)
         area          => elemR(:,er_Area)
         fullperimeter => elemR(:,er_FullPerimeter)
         !%-----------------------------------------------------------------------------
 
-        outvalue = min(area(indx) / hydRadius(indx), fullperimeter(indx))
-        !% HACK: perimeter correction is needed when the pipe is empt
+        outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
+
+        !% HACK: perimeter correction is needed when the pipe is empty
+
     end function circular_perimeter_from_hydradius_singular
 !%
 !%==========================================================================
@@ -358,7 +358,7 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_hyddepth_from_topwidth_singular (indx) result (outvalue)
+    real(8) function circular_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -366,12 +366,10 @@ module circular_conduit
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), depth(:)
+        real(8), intent(in) :: topwidth, depth
+        real(8), pointer    :: area(:), fullHydDepth(:)
         !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        depth        => elemR(:,er_Depth)
         area         => elemR(:,er_Area)
-        topwidth     => elemR(:,er_Topwidth)
         fullHydDepth => elemR(:,er_FullHydDepth)
         !%--------------------------------------------------
 
@@ -380,11 +378,11 @@ module circular_conduit
         !% full and empty condition.
 
         !% when conduit is empty
-        if (depth(indx) <= setting%ZeroValue%Depth) then
+        if (depth <= setting%ZeroValue%Depth) then
             outvalue = setting%ZeroValue%Depth
         else
             !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth(indx), fullHydDepth(indx))
+            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
         endif
 
     end function circular_hyddepth_from_topwidth_singular
@@ -392,7 +390,7 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_hydradius_from_depth_singular (indx) result (outvalue)
+    real(8) function circular_hydradius_from_depth_singular (indx,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -400,16 +398,15 @@ module circular_conduit
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
-        YoverYfull(indx) = depth(indx) / fulldepth(indx)
+        YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Rmax (fullDepth/4)

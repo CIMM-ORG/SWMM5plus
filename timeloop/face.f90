@@ -5,6 +5,7 @@ module face
     use define_keys
     use define_settings, only: setting
     use adjust
+    use geometry
     use jump
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
@@ -70,21 +71,20 @@ module face
         !% --- face reconstruction of all the interior faces
         call face_interpolation_interior (faceCol)
 
-        ! print *,this_image(), '    0000 after face interpolation interior', this_image()
-        ! call util_CLprint ()
-        !call sleep(1)
+            ! print *,this_image(), '    0000 after face interpolation interior', this_image()
+            !call util_CLprint ('    after face interp interior')
 
         !% --- face reconstruction of all the shared faces
         call face_interpolation_shared (faceCol)
 
-        ! print *, this_image(),'    1111 after face interpolation shared', this_image()
-        ! call util_CLprint ()
-        !call sleep(1)
+            ! print *, this_image(),'    1111 after face interpolation shared', this_image()
+            !call util_CLprint ('    after face interp shared')
+
 
         call face_interpolate_bc (isBConly)
 
-        !print *,this_image(),'    2222 after face interpolate BC', this_image()
-        !call util_CLprint ()
+            !print *,this_image(),'    2222 after face interpolate BC', this_image()
+            !call util_CLprint ('    after face interp BC')
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -304,7 +304,7 @@ module face
             idx_P     => BC%P%BCup(:)
         !%-------------------------------------------------------------------
         !% enforce stored inflow BC    
-        faceR(idx_fBC, fr_Flowrate) = BC%flowRI(idx_P)
+        faceR(idx_fBC, fr_Flowrate) = BC%flowR(idx_P,br_value)
 
         !% enforce zero flow on J1 faces
         faceR(idx_fJ1, fr_Flowrate) = zeroR
@@ -410,7 +410,7 @@ module face
     !     eFlowSet = [er_FlowrateLateral]
 
     !     do ii=1,size(eFlowSet)
-    !         elemR(elem_P,eFlowSet(ii)) = BC%flowRI(idx_P)
+    !         elemR(elem_P,eFlowSet(ii)) = BC%flowR(idx_P,br_value)
     !     end do
     !     !% For lateral flow, just update the flow at the element >> elemR(flow) + BC_lateral_flow
 
@@ -429,10 +429,11 @@ module face
         !%-------------------------------------------------------------------
         !% Declarations
             logical, intent(in) :: isBConly
-            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+            !integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: ii
             integer, pointer :: idx_fBC(:), eup(:), idx_P(:)
-            real :: DownStreamBcHead
+            integer, pointer :: elemUpstream
+            real(8), pointer :: depthBC(:), headBC(:), eHead(:)
             character(64) :: subroutine_name = 'face_interpolation_dnBC'
         !%--------------------------------------------------------------------
         !% Preliminaries
@@ -440,44 +441,72 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
         !% Aliases
-            eup     => faceI(:,fi_Melem_uL)
-            idx_fBC => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
-            idx_P   => BC%P%BCdn
+            eup       => faceI(:,fi_Melem_uL)
+            idx_fBC   => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+            idx_P     => BC%P%BCdn
+            depthBC   => BC%headR(:,br_Temp01)
+            headBC    => BC%headR(:,br_value)
+            eHead     => elemR(:,er_Head)
         !%--------------------------------------------------------------------   
         !% For fixed, tidal, and timeseries BC
         !% The BC is imagined as enforced on a ghost cell outside the boundary
         !% so the face value is given by linear interpolation using ghost and interior cells 
 
-        !% --- downstream face head update
-        faceR(idx_fBC, fr_Head_u) = 0.5 * (elemR(eup(idx_fBC), er_Head) + BC%headRI(idx_P)) 
-        !% --- the downstream side of face is the same as the upstream face
-        faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
 
+        !% --- upstream face head is the BC
+        !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
+        faceR(idx_fBC, fr_Head_u) = headBC(idx_P)
+        !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
+        faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
+        
         !% --- for a flap gate on a BC with higher head downstream
-        where ( BC%headYN(idx_P, bYN_hasFlapGate) .and. (elemR(eup(idx_fBC), er_Head)  < BC%headRI(idx_P)) )
+        where ( BC%headYN(idx_P, bYN_hasFlapGate) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
             !% --- reset the head on the upstream and downstream side of face for closed gate
-            faceR(idx_fBC, fr_Head_u) = elemR(eup(idx_fBC), er_Head)
-            faceR(idx_fBC, fr_Head_d) = BC%headRI(idx_P)
+            faceR(idx_fBC, fr_Head_u) = eHead(eup(idx_fBC))
+            faceR(idx_fBC, fr_Head_d) = headBC(idx_P)
         endwhere
         
+        !% --- get geometry for face from upstream element shape
         if (.not. isBConly) then
+            !% --- get the depth on the face (upstream) from BC (temporary store)
+            !%     this ensures that if gate is closed the depth is the upstream depth
+            depthBC(idx_P) = faceR(idx_fBC, fr_Head_u) - faceR(idx_fBC,fr_Zbottom)
 
-            fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-            fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-            eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+            !% --- compute hyddepth, topwidth, area geometry from depth based on relationship for upstream element
+            !%     but using the depthBC at the upstream side of the face (which may be closed gate)   
+            do ii=1,size(idx_fBC)
+                elemUpstream => eup(idx_fBC(ii))
+                faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
+                faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
+                faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular    (elemUpstream,depthBC(idx_P(ii)))
+            end do
+            !% --- store downstream side of face
+            faceR(idx_fBC,fr_Topwidth_d) = faceR(idx_fBC,fr_Topwidth_u) 
+            faceR(idx_fBC,fr_Area_d)     = faceR(idx_fBC,fr_Area_u) 
+            faceR(idx_fBC,fr_HydDepth_d) = facer(idx_fBC,fr_HydDepth_u)
 
-            faceR(idx_fBC, fr_Flowrate) = elemR(eup(idx_fBC), er_Flowrate) !% Copying the flow from the upstream element
-            faceR(idx_fBC,fr_Preissmann_Number) = elemR(eup(idx_fBC),er_Preissmann_Number) !% Copying the preissmann number
+            !stop 2987355
+
+            !% 20220609brh removed this approach
+            ! fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+            ! fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+            ! eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+
+            !% --- set the flowrate to the upstream element value
+            faceR(idx_fBC, fr_Flowrate)          = elemR(eup(idx_fBC), er_Flowrate)
+
+            !% --- set the Preissmann number to the upstream element value
+            faceR(idx_fBC, fr_Preissmann_Number) = elemR(eup(idx_fBC), er_Preissmann_Number) 
 
             !% --- set to zero flow for closed gate
-            where ( BC%headYN(idx_P, bYN_hasFlapGate) .and. (faceR(idx_fBC, fr_Head_u) < BC%headRI(idx_P)) )
+            where ( BC%headYN(idx_P, bYN_hasFlapGate) .and. (faceR(idx_fBC, fr_Head_u) < BC%headR(idx_P,br_value)) )
                 faceR(idx_fBC, fr_Flowrate) = zeroR
             end where
 
-            do ii=1,size(fGeoSetD)
-                faceR(idx_fBC, fGeoSetD(ii)) = elemR(eup(idx_fBC), eGeoSet(ii)) !% Copying other geo factors from the upstream element
-                faceR(idx_fBC, fGeoSetU(ii)) = faceR(idx_fBC, fGeoSetD(ii))
-            end do
+            ! do ii=1,size(fGeoSetD)
+            !     faceR(idx_fBC, fGeoSetD(ii)) = elemR(eup(idx_fBC), eGeoSet(ii)) !% Copying other geo factors from the upstream element
+            !     faceR(idx_fBC, fGeoSetU(ii)) = faceR(idx_fBC, fGeoSetD(ii))
+            ! end do
 
             !% --- ensure face area_u is not smaller than zerovalue
             where (faceR(idx_fBC,fr_Area_d) < setting%ZeroValue%Area)
@@ -551,7 +580,7 @@ module face
 
     !     do ii=1,size(fHeadSetD)
     !         !%  linear interpolation using ghost and interior cells
-    !         faceR(face_P, fHeadSetU(ii)) = 0.5 * (elemR(eup(face_P), er_Head) + BC%headRI(idx_P)) !% downstream head update
+    !         faceR(face_P, fHeadSetU(ii)) = 0.5 * (elemR(eup(face_P), er_Head) + BC%headR(idx_P,br_value)) !% downstream head update
     !         faceR(face_P, fHeadSetD(ii)) = faceR(face_P, fHeadSetU(ii))
     !     end do
 

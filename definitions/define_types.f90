@@ -126,16 +126,18 @@ module define_types
 
     type BCArray
         integer,     allocatable :: flowI(:,:)              !% integer data for inflow BCs
+        real(8),     allocatable :: flowR(:,:)
         logical,     allocatable :: flowYN(:,:)             !% logical data for inflow BCs
-        real(8),     allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
-        integer,     allocatable :: flowIdx(:)              !% indexes of current entry in flowR_timeseries
-        real(8),     allocatable :: flowRI(:)               !% values of interpolated inflows at current time
+        real(8),     allocatable :: flowTimeseries(:,:,:) !% time series data for inflow BC
+        !integer,     allocatable :: flow_idx(:)              !% indexes of current entry in flowR_timeseries
+        !real(8),     allocatable :: flow_value(:)          !% values of interpolated inflows at current time
         integer,     allocatable :: headI(:,:)              !% integer data for elevation BCs
+        real(8),     allocatable :: headR(:,:)
         logical,     allocatable :: headYN(:,:)             !% logical data for head BCs
-        real(8),     allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
-        integer,     allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
-        real(8),     allocatable :: headRI(:)               !% values of interpolated heads at current time
-        logical,     allocatable :: hasFlapGateYN(:)        !% logical for whether BC has a flap gate
+        real(8),     allocatable :: headTimeseries(:,:,:) !% time series data for elevation BC
+       ! integer,     allocatable :: headI_idx(:)              !% indexes of current entry in headR_timeseries
+        !real(8),     allocatable :: headR_value(:)               !% values of interpolated heads at current time
+        !logical,     allocatable :: hasFlapGateYN(:)        !% logical for whether BC has a flap gate -- HACK (move to flowYN array)
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
 

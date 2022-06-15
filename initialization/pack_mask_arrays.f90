@@ -2434,11 +2434,11 @@ contains
 
 
          
-        !print *, 'CC_Q_NOTsmalldepth'
-        !% ep_CC_Q_NOTsmalldepth  ====================================
+        !print *, 'CC_NOTsmalldepth'
+        !% ep_CC_NOTsmalldepth  ====================================
         !% Flow solution that are NOT small volume or zero depth
         !% -- needed to limit where CFL is computed and volume conservation
-        ptype => col_elemP(ep_CC_Q_NOTsmalldepth)
+        ptype => col_elemP(ep_CC_NOTsmalldepth)
         npack => npack_elemP(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -2457,6 +2457,35 @@ contains
                 (.not. elemYN(:,eYN_isSmallDepth))   &
                 .and. &
                 (.not. elemYN(:,eYN_isZeroDepth))     )
+        end if
+
+        !print *, 'CCJBJM_NOTsmalldepth'
+        !% ep_CCJBJM_NOTsmalldepth  ====================================
+        !% Flow solution that are NOT small volume or zero depth
+        !% -- needed to limit where CFL is computed
+        ptype => col_elemP(ep_CCJBJM_NOTsmalldepth)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (      &
+                      ( elemI(:,ei_elementType) == CC) &
+                 .or. ( elemI(:,ei_elementType) == JM) &
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (      &
+                      ( elemI(:,ei_elementType) == CC) &
+                 .or. ( elemI(:,ei_elementType) == JM) &
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     ) 
         end if
 
 

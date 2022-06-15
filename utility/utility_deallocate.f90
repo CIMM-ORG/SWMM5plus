@@ -433,14 +433,14 @@ contains
             deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg, 'BC%flowI')
 
-            deallocate(BC%flowR_timeseries, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check (deallocation_status, emsg, 'BC%flowR_timeseries')
+            deallocate(BC%flowTimeseries, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'BC%flowTimeseries')
 
-            deallocate(BC%flowIdx, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check (deallocation_status, emsg, 'BC%flowIdx')
+            deallocate(BC%flowR, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'BC%flow_R')
 
-            deallocate(BC%flowRI, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check (deallocation_status, emsg, 'BC%flowRI')
+            deallocate(BC%flowYN, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'BC%flowYN')
 
             if (allocated(BC%P%BCup)) then
                 deallocate(BC%P%BCup, stat=deallocation_status, errmsg=emsg)
@@ -457,14 +457,14 @@ contains
             deallocate(BC%headI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg, 'BC%headI')
 
-            deallocate(BC%headR_timeseries, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check (deallocation_status, emsg, 'BC%headR_timeseries')
+            deallocate(BC%headTimeseries, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'BC%headTimeseries')
 
-            deallocate(BC%headIdx, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check (deallocation_status, emsg, 'BC%headIdx')
+            deallocate(BC%headYN, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'BC%headYN')
 
-            deallocate(BC%headRI, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check (deallocation_status, emsg, 'BC%headRI')
+            deallocate(BC%headR, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg, 'BC%headR')
 
             if (allocated(BC%P%BCdn)) then
                 deallocate(BC%P%BCdn, stat=deallocation_status, errmsg=emsg)

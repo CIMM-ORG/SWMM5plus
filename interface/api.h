@@ -284,8 +284,9 @@ int DLLEXPORT api_get_num_table_entries(int table_idx, int table_type, int* num_
 int DLLEXPORT api_get_table_attribute(int table_idx, int attr, double* value);
 int DLLEXPORT api_get_first_entry_table(int table_idx, int table_type, double* x, double* y);
 int DLLEXPORT api_get_next_entry_table(int table_idx, int table_type, double* x, double* y);
-int DLLEXPORT api_get_next_entry_tseries(int tseries_idx);
+int DLLEXPORT api_get_next_entry_tseries(int tseries_idx, double timemax);
 
+int DLLEXPORT api_reset_timeseries_to_start(int tseries_idx);
 
 // Output fcns
 int DLLEXPORT api_write_output_line(double t);

@@ -722,47 +722,34 @@ DRY_ONLY         NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-9001        FLOW      9001        FLOW      1.0      0.01
-104_13      FLOW      104_13      FLOW      1.0      1000.0            
-104_12      FLOW      104_12      FLOW      1.0      1000.0            
-104_11      FLOW      104_11      FLOW      1.0      1000.0            
-104_10      FLOW      104_10      FLOW      1.0      1000.0            
-104_9      FLOW      104_9      FLOW      1.0        1000.0            
-104_8      FLOW      104_8      FLOW      1.0        1000.0            
-104_7      FLOW      104_7      FLOW      1.0        1000.0            
-104_6      FLOW      104_6      FLOW      1.0        1000.0            
-104_5      FLOW      104_5      FLOW      1.0        1000.0            
-104_4      FLOW      104_4      FLOW      1.0        1000.0            
-104_3      FLOW      104_3      FLOW      1.0        1000.0            
-104_2      FLOW      104_2      FLOW      1.0        1000.0            
-104_1      FLOW      104_1      FLOW      1.0        1000.0            
-104_0      FLOW      104_0      FLOW      1.0        1000.0  
+9001             FLOW               9001           FLOW      1.0      1.0
+
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
-9001      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/9001.dat"
-104_13      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_12      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_11      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_10      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_9      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_8      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_7      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_6      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_5      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_4      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_3      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_2      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_1      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
-104_0      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104.dat"
+9001      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/9001a.dat"
+104_13      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_12      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_11      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_10      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_9      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_8      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_7      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_6      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_5      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_4      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_3      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_2      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_1      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
+104_0      FILE      "/home/bhodges/SWMMengine_Public/SWMM5plus/test_cases/Colorado_debug_2/Subset_ExtFiles/104a.dat"
 
 
 
 [REPORT]
 ;;Reporting Options
 SUBCATCHMENTS NONE
-NODES NONE
+NODES 9001 9013
 LINKS ALL
 
 [TAGS]

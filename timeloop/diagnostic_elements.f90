@@ -9,6 +9,8 @@ module diagnostic_elements
     use pump_elements
     use orifice_elements
     use outlet_elements
+    use adjust
+    use utility, only: util_CLprint
     use utility_profiler
     use utility_crash, only: util_crashpoint
 
@@ -52,8 +54,14 @@ module diagnostic_elements
 
         if (Npack > 0) then
             call diagnostic_by_type (thisCol, Npack)
+
+            !% reset any face values affected
+            call face_interpolation (fp_Diag, dummy)
+
+            !% --- reset the zero and small depth fluxes
+            call adjust_zero_and_small_depth_face (ALLtm, .false.)
+
         end if
-        call face_interpolation (fp_Diag, dummy)
        
         if (setting%Profile%useYN) call util_profiler_stop (pfc_diagnostic_toplevel)
 

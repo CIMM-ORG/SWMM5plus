@@ -14,14 +14,15 @@ SKIP_STEADY_STATE    YES
 
 START_DATE           01/01/2000
 START_TIME           00:00:00
-REPORT_START_DATE    01/01/2000
-REPORT_START_TIME    00:00:00
-END_DATE       03/31/2000
-END_TIME       00:00:00
-REPORT_STEP          00:10:00
+REPORT_START_DATE    01/07/2000
+REPORT_START_TIME    06:00:00
+END_DATE       01/07/2000
+END_TIME       12:00:00
+REPORT_STEP          00:01:00
 WET_STEP             00:15:00
 DRY_STEP             01:00:00
-ROUTING_STEP         0:00:01
+ROUTING_STEP         0:01:00 
+
 INERTIAL_DAMPING     PARTIAL
 NORMAL_FLOW_LIMITED  BOTH
 FORCE_MAIN_EQUATION  D-W
@@ -483,104 +484,104 @@ DRY_ONLY         NO
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
 630035931      FLOW      630035931      FLOW      1.0      1.0
-108_32      FLOW      108_32      FLOW      1.0      0.0            
-108_31      FLOW      108_31      FLOW      1.0      0.0            
-108_30      FLOW      108_30      FLOW      1.0      0.0            
-108_29      FLOW      108_29      FLOW      1.0      0.0            
-108_28      FLOW      108_28      FLOW      1.0      0.0            
-108_27      FLOW      108_27      FLOW      1.0      0.0            
-108_26      FLOW      108_26      FLOW      1.0      0.0            
-108_25      FLOW      108_25      FLOW      1.0      0.0            
-108_24      FLOW      108_24      FLOW      1.0      0.0            
-108_23      FLOW      108_23      FLOW      1.0      0.0            
-108_22      FLOW      108_22      FLOW      1.0      0.0            
-108_21      FLOW      108_21      FLOW      1.0      0.0            
-108_20      FLOW      108_20      FLOW      1.0      0.0            
-108_19      FLOW      108_19      FLOW      1.0      0.0            
-108_18      FLOW      108_18      FLOW      1.0      0.0            
-108_17      FLOW      108_17      FLOW      1.0      0.0            
-108_16      FLOW      108_16      FLOW      1.0      0.0            
-108_15      FLOW      108_15      FLOW      1.0      0.0            
-108_14      FLOW      108_14      FLOW      1.0      0.0            
-108_13      FLOW      108_13      FLOW      1.0      0.0            
-108_12      FLOW      108_12      FLOW      1.0      0.0            
-108_11      FLOW      108_11      FLOW      1.0      0.0            
-108_10      FLOW      108_10      FLOW      1.0      0.0            
-108_9      FLOW      108_9      FLOW      1.0      0.0            
-108_8      FLOW      108_8      FLOW      1.0      0.0            
-108_7      FLOW      108_7      FLOW      1.0      0.0            
-108_6      FLOW      108_6      FLOW      1.0      0.0            
-108_5      FLOW      108_5      FLOW      1.0      0.0            
-108_4      FLOW      108_4      FLOW      1.0      0.0            
-108_3      FLOW      108_3      FLOW      1.0      0.0            
-108_2      FLOW      108_2      FLOW      1.0      0.0            
-108_1      FLOW      108_1      FLOW      1.0      0.0            
-108_0      FLOW      108_0      FLOW      1.0      0.0   
-107_8      FLOW      107_8      FLOW      1.0      0.0            
-107_7      FLOW      107_7      FLOW      1.0      0.0            
-107_6      FLOW      107_6      FLOW      1.0      0.0            
-107_5      FLOW      107_5      FLOW      1.0      0.0            
-107_4      FLOW      107_4      FLOW      1.0      0.0            
-107_3      FLOW      107_3      FLOW      1.0      0.0            
-107_2      FLOW      107_2      FLOW      1.0      0.0            
-107_1      FLOW      107_1      FLOW      1.0      0.0            
-107_0      FLOW      107_0      FLOW      1.0      0.0 
-104_0      FLOW      104_0      FLOW      1.0      0.0            
-105_0      FLOW      105_0      FLOW      1.0      0.0            
-106_53      FLOW      106_53      FLOW      1.0      0.0            
-106_52      FLOW      106_52      FLOW      1.0      0.0            
-106_51      FLOW      106_51      FLOW      1.0      0.0            
-106_50      FLOW      106_50      FLOW      1.0      0.0            
-106_49      FLOW      106_49      FLOW      1.0      0.0            
-106_48      FLOW      106_48      FLOW      1.0      0.0            
-106_47      FLOW      106_47      FLOW      1.0      0.0            
-106_46      FLOW      106_46      FLOW      1.0      0.0            
-106_45      FLOW      106_45      FLOW      1.0      0.0            
-106_44      FLOW      106_44      FLOW      1.0      0.0            
-106_43      FLOW      106_43      FLOW      1.0      0.0            
-106_42      FLOW      106_42      FLOW      1.0      0.0            
-106_41      FLOW      106_41      FLOW      1.0      0.0            
-106_40      FLOW      106_40      FLOW      1.0      0.0            
-106_39      FLOW      106_39      FLOW      1.0      0.0            
-106_38      FLOW      106_38      FLOW      1.0      0.0            
-106_37      FLOW      106_37      FLOW      1.0      0.0            
-106_36      FLOW      106_36      FLOW      1.0      0.0            
-106_35      FLOW      106_35      FLOW      1.0      0.0            
-106_34      FLOW      106_34      FLOW      1.0      0.0            
-106_33      FLOW      106_33      FLOW      1.0      0.0            
-106_32      FLOW      106_32      FLOW      1.0      0.0            
-106_31      FLOW      106_31      FLOW      1.0      0.0            
-106_30      FLOW      106_30      FLOW      1.0      0.0            
-106_29      FLOW      106_29      FLOW      1.0      0.0            
-106_28      FLOW      106_28      FLOW      1.0      0.0            
-106_27      FLOW      106_27      FLOW      1.0      0.0            
-106_26      FLOW      106_26      FLOW      1.0      0.0            
-106_25      FLOW      106_25      FLOW      1.0      0.0            
-106_24      FLOW      106_24      FLOW      1.0      0.0            
-106_23      FLOW      106_23      FLOW      1.0      0.0            
-106_22      FLOW      106_22      FLOW      1.0      0.0            
-106_21      FLOW      106_21      FLOW      1.0      0.0            
-106_20      FLOW      106_20      FLOW      1.0      0.0            
-106_19      FLOW      106_19      FLOW      1.0      0.0            
-106_18      FLOW      106_18      FLOW      1.0      0.0            
-106_17      FLOW      106_17      FLOW      1.0      0.0            
-106_16      FLOW      106_16      FLOW      1.0      0.0            
-106_15      FLOW      106_15      FLOW      1.0      0.0            
-106_14      FLOW      106_14      FLOW      1.0      0.0            
-106_13      FLOW      106_13      FLOW      1.0      0.0            
-106_12      FLOW      106_12      FLOW      1.0      0.0            
-106_11      FLOW      106_11      FLOW      1.0      0.0            
-106_10      FLOW      106_10      FLOW      1.0      0.0            
-106_9      FLOW      106_9      FLOW      1.0      0.0            
-106_8      FLOW      106_8      FLOW      1.0      0.0            
-106_7      FLOW      106_7      FLOW      1.0      0.0            
-106_6      FLOW      106_6      FLOW      1.0      0.0            
-106_5      FLOW      106_5      FLOW      1.0      0.0            
-106_4      FLOW      106_4      FLOW      1.0      0.0            
-106_3      FLOW      106_3      FLOW      1.0      0.0            
-106_2      FLOW      106_2      FLOW      1.0      0.0            
-106_1      FLOW      106_1      FLOW      1.0      0.0            
-106_0      FLOW      106_0      FLOW      1.0      0.0     
+108_32      FLOW      108_32      FLOW      1.0      1.0            
+108_31      FLOW      108_31      FLOW      1.0      1.0            
+108_30      FLOW      108_30      FLOW      1.0      1.0            
+108_29      FLOW      108_29      FLOW      1.0      1.0            
+108_28      FLOW      108_28      FLOW      1.0      1.0            
+108_27      FLOW      108_27      FLOW      1.0      1.0            
+108_26      FLOW      108_26      FLOW      1.0      1.0            
+108_25      FLOW      108_25      FLOW      1.0      1.0            
+108_24      FLOW      108_24      FLOW      1.0      1.0            
+108_23      FLOW      108_23      FLOW      1.0      1.0            
+108_22      FLOW      108_22      FLOW      1.0      1.0            
+108_21      FLOW      108_21      FLOW      1.0      1.0            
+108_20      FLOW      108_20      FLOW      1.0      1.0            
+108_19      FLOW      108_19      FLOW      1.0      1.0            
+108_18      FLOW      108_18      FLOW      1.0      1.0            
+108_17      FLOW      108_17      FLOW      1.0      1.0            
+108_16      FLOW      108_16      FLOW      1.0      1.0            
+108_15      FLOW      108_15      FLOW      1.0      1.0            
+108_14      FLOW      108_14      FLOW      1.0      1.0            
+108_13      FLOW      108_13      FLOW      1.0      1.0            
+108_12      FLOW      108_12      FLOW      1.0      1.0            
+108_11      FLOW      108_11      FLOW      1.0      1.0            
+108_10      FLOW      108_10      FLOW      1.0      1.0            
+108_9      FLOW      108_9      FLOW      1.0      1.0            
+108_8      FLOW      108_8      FLOW      1.0      1.0            
+108_7      FLOW      108_7      FLOW      1.0      1.0            
+108_6      FLOW      108_6      FLOW      1.0      1.0            
+108_5      FLOW      108_5      FLOW      1.0      1.0            
+108_4      FLOW      108_4      FLOW      1.0      1.0            
+108_3      FLOW      108_3      FLOW      1.0      1.0            
+108_2      FLOW      108_2      FLOW      1.0      1.0            
+108_1      FLOW      108_1      FLOW      1.0      1.0            
+108_0      FLOW      108_0      FLOW      1.0      1.0   
+107_8      FLOW      107_8      FLOW      1.0      1.0            
+107_7      FLOW      107_7      FLOW      1.0      1.0            
+107_6      FLOW      107_6      FLOW      1.0      1.0            
+107_5      FLOW      107_5      FLOW      1.0      1.0            
+107_4      FLOW      107_4      FLOW      1.0      1.0            
+107_3      FLOW      107_3      FLOW      1.0      1.0            
+107_2      FLOW      107_2      FLOW      1.0      1.0            
+107_1      FLOW      107_1      FLOW      1.0      1.0            
+107_0      FLOW      107_0      FLOW      1.0      1.0 
+104_0      FLOW      104_0      FLOW      1.0      1.0            
+105_0      FLOW      105_0      FLOW      1.0      1.0            
+106_53      FLOW      106_53      FLOW      1.0      1.0            
+106_52      FLOW      106_52      FLOW      1.0      1.0            
+106_51      FLOW      106_51      FLOW      1.0      1.0            
+106_50      FLOW      106_50      FLOW      1.0      1.0            
+106_49      FLOW      106_49      FLOW      1.0      1.0            
+106_48      FLOW      106_48      FLOW      1.0      1.0            
+106_47      FLOW      106_47      FLOW      1.0      1.0            
+106_46      FLOW      106_46      FLOW      1.0      1.0            
+106_45      FLOW      106_45      FLOW      1.0      1.0            
+106_44      FLOW      106_44      FLOW      1.0      1.0            
+106_43      FLOW      106_43      FLOW      1.0      1.0            
+106_42      FLOW      106_42      FLOW      1.0      1.0            
+106_41      FLOW      106_41      FLOW      1.0      1.0            
+106_40      FLOW      106_40      FLOW      1.0      1.0            
+106_39      FLOW      106_39      FLOW      1.0      1.0            
+106_38      FLOW      106_38      FLOW      1.0      1.0            
+106_37      FLOW      106_37      FLOW      1.0      1.0            
+106_36      FLOW      106_36      FLOW      1.0      1.0            
+106_35      FLOW      106_35      FLOW      1.0      1.0            
+106_34      FLOW      106_34      FLOW      1.0      1.0            
+106_33      FLOW      106_33      FLOW      1.0      1.0            
+106_32      FLOW      106_32      FLOW      1.0      1.0            
+106_31      FLOW      106_31      FLOW      1.0      1.0            
+106_30      FLOW      106_30      FLOW      1.0      1.0            
+106_29      FLOW      106_29      FLOW      1.0      1.0            
+106_28      FLOW      106_28      FLOW      1.0      1.0            
+106_27      FLOW      106_27      FLOW      1.0      1.0            
+106_26      FLOW      106_26      FLOW      1.0      1.0            
+106_25      FLOW      106_25      FLOW      1.0      1.0            
+106_24      FLOW      106_24      FLOW      1.0      1.0            
+106_23      FLOW      106_23      FLOW      1.0      1.0            
+106_22      FLOW      106_22      FLOW      1.0      1.0            
+106_21      FLOW      106_21      FLOW      1.0      1.0            
+106_20      FLOW      106_20      FLOW      1.0      1.0            
+106_19      FLOW      106_19      FLOW      1.0      1.0            
+106_18      FLOW      106_18      FLOW      1.0      1.0            
+106_17      FLOW      106_17      FLOW      1.0      1.0            
+106_16      FLOW      106_16      FLOW      1.0      1.0            
+106_15      FLOW      106_15      FLOW      1.0      1.0            
+106_14      FLOW      106_14      FLOW      1.0      1.0            
+106_13      FLOW      106_13      FLOW      1.0      1.0            
+106_12      FLOW      106_12      FLOW      1.0      1.0            
+106_11      FLOW      106_11      FLOW      1.0      1.0            
+106_10      FLOW      106_10      FLOW      1.0      1.0            
+106_9      FLOW      106_9      FLOW      1.0      1.0            
+106_8      FLOW      106_8      FLOW      1.0      1.0            
+106_7      FLOW      106_7      FLOW      1.0      1.0            
+106_6      FLOW      106_6      FLOW      1.0      1.0            
+106_5      FLOW      106_5      FLOW      1.0      1.0            
+106_4      FLOW      106_4      FLOW      1.0      1.0            
+106_3      FLOW      106_3      FLOW      1.0      1.0            
+106_2      FLOW      106_2      FLOW      1.0      1.0            
+106_1      FLOW      106_1      FLOW      1.0      1.0            
+106_0      FLOW      106_0      FLOW      1.0      1.0     
 630036028      FLOW      630036028      FLOW      1.0      1.0            
     
 

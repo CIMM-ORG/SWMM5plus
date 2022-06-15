@@ -36,6 +36,7 @@ module interface
     public :: interface_get_table_attribute
     public :: interface_get_num_table_entries
     public :: interface_get_first_entry_table
+    public :: interface_reset_timeseries_to_start
     public :: interface_get_next_entry_table
     public :: interface_get_obj_name_len
     public :: interface_update_linknode_names
@@ -318,12 +319,20 @@ module interface
             real(c_double),        intent(inout) :: y
         end function api_get_next_entry_table
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_next_entry_tseries(tseries_idx) &
+        integer(c_int) function api_get_next_entry_tseries(tseries_idx, timemax) &
             BIND(C, name="api_get_next_entry_tseries")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in   ) :: tseries_idx
+            real(c_double), value, intent(in   ) :: timemax
         end function api_get_next_entry_tseries
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_reset_timeseries_to_start(tseries_idx) &
+            BIND(C, name="reset_timeseries_to_start")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in   ) :: tseries_idx
+        end function api_reset_timeseries_to_start
         !% -------------------------------------------------------------------------------
         ! --- Output Writing (Post Processing)
         !% -------------------------------------------------------------------------------
@@ -441,6 +450,7 @@ module interface
     procedure(api_get_first_entry_table),      pointer :: ptr_api_get_first_entry_table
     procedure(api_get_next_entry_table),       pointer :: ptr_api_get_next_entry_table
     procedure(api_get_next_entry_tseries),     pointer :: ptr_api_get_next_entry_tseries
+    procedure(api_reset_timeseries_to_start),  pointer :: ptr_api_reset_timeseries_to_start
     procedure(api_write_output_line),          pointer :: ptr_api_write_output_line
     procedure(api_update_nodeResult),          pointer :: ptr_api_update_nodeResult
     procedure(api_update_linkResult),          pointer :: ptr_api_update_linkResult
@@ -2209,69 +2219,128 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_next_inflow_time(bc_idx, tnow) result(tnext)
+    function interface_reset_timeseries_to_start(bc_idx) result(tstart)    
         !%---------------------------------------------------------------------
         !% Description:
+        !% resets the current entry point for the time series associated with
+        !% the bc_idx
         !%---------------------------------------------------------------------
         integer, intent(in) :: bc_idx
-        real(8), intent(in) :: tnow
-        real(8)             :: tnext, t1, t2, tnextp
-        integer             :: nidx, nres, tseries, success
-        character(64) :: subroutine_name 
-        !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_next_inflow_time'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        real(8)             :: tstart
+        integer             :: tseries_idx, nidx, error
+        real(8)             :: tdata(2)
 
+        !% --- get the node index
         nidx = BC%flowI(bc_idx, bi_node_idx)
+        !% --- get the time series index
+        tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+        print *, 'in interface_reset_timeseries_to_start, tseries_idx', tseries_idx
+        !% --- reset the entry point
+        call load_api_procedure("api_reset_timeseries_to_start")
+        error = ptr_api_reset_timeseries_to_start(tseries_idx-1)
+        print *, 'after api_reset_timeseries...'
+
+    end function interface_reset_timeseries_to_start
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_next_inflow_time(bc_idx, tnow, timemaxEpoch) result(tnext)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Gets the next inflow time. If the next time is less than the maximum
+        !% time (timemax) then the Tseries.x1 and .y1 stored values will be changed
+        !% to the new value.
+        !% NOTE: timemax is the "Epoch" time used in EPA-SWMM, but the
+        !% output from this is local time with time=0 as the start of the simulation
+        !%
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: bc_idx
+            real(8), intent(in) :: tnow, timemaxEpoch
+            real(8)             :: tnext, t1, t2, tnextp
+            integer             :: tseries_idx, success
+            integer             :: year, month, day, hours, minutes, seconds
+            integer, pointer    :: nidx, nres
+            character(64) :: subroutine_name = 'interface_get_next_inflow_time'
+        !%---------------------------------------------------------------------
+        !% Preliminaries:
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+        !% Aliases:
+            !% --- node index for this BC
+            nidx => BC%flowI(bc_idx, bi_node_idx)
+            !% --- get node pattern resolution
+            nres => node%I(nidx, ni_pattern_resolution)
+        !%---------------------------------------------------------------------
+        !% --- consistency checking
         if (.not. node%YN(nidx, nYN_has_inflow)) then
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
-        nres = node%I(nidx, ni_pattern_resolution)
+
         if (nres >= 0) then
+            !% --- get the next time for pattern resolution
+            !%     Note that nres=0 returns nullvalueR
             tnextp = util_datetime_get_next_time(tnow, nres)
+
             if (node%YN(nidx, nYN_has_extInflow)) then
-                tseries = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
-                if (tseries >= 0) then
-                    success = get_next_entry_tseries(tseries)
-                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1)
-                    tnext = util_datetime_epoch_to_secs(tnext)
-                    if (success == 0) then ! unsuccessful
+                !% --- for external inflows (file), get the timeseries index
+                tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+
+               ! print *, 'node idx tseries_idx',nidx,tseries_idx
+               ! print *, 'tnow, tmaxeppoch ',tnow, timemaxEpoch
+
+                if (tseries_idx >= 0) then
+                    !% --- this gets the Tseries.x2 values
+                    !%     Note the Tseries.x1 values will be overwritten by the .x2 values
+                    !%     only if the x2 value is less than timemax. This prepares for the
+                    !%     the next step of storing for SWMM5+
+                    success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
+
+                    if (success == 1) then
+                        !% --- gets time in days at what is now the x2 pointer 
                         tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
+                        !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
+
                         tnext = util_datetime_epoch_to_secs(tnext)
-                        if (tnext == tnow) then
-                            tnext = setting%Time%End
-                            setting%BC%disableInterpolationYN = .true.
-                        !% brh20211207s
-                        else
-                            ! write(*,*)
-                            ! write(*,*) '****** Unexpected else in ',subroutine_name,' at 4479823'
-                            ! write(*,*) '   tnext = ', tnext
-                            ! write(*,*) '   tnow  = ', tnow
-                            ! write(*,*) '   skipping error condition'
-                            ! write(*,*) '******'
-                            ! stop 
-                            !call util_crashpoint( 4479823)
-                        !% brh20211207e    
-                        end if
-                    !% brh20211207s
                     else
-                        ! write(*,*)
-                        ! write(*,*) '****** Unexpected else in ',subroutine_name,' at 4589709'
-                        ! write(*,*) '   success = ', success
-                        ! write(*,*) '   skipping error condition'
-                        ! write(*,*) '******'
-                        ! stop 
-                        !call util_crashpoint( 4589709)
-                    !% brh20211207e                          
+                        !% --- failure to read time later than tnow from file
+                        print *, ' '
+                        write(*,"(A)") 'INPUT FILE FAILURE'
+                        write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
+                        tnext = util_datetime_secs_to_epoch(tnow)
+                        call util_datetime_decodedate(tnext, year, month, day)
+                        call util_datetime_decodetime(tnext, hours, minutes, seconds)
+                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                        tnext = util_datetime_epoch_to_secs(timemaxEpoch)
+                        write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
+                        call util_datetime_decodedate(timemaxEpoch, year, month, day)
+                        call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
+                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                        write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
+                        print *, ' '
+                        
+                        call util_crashpoint(2098734)
+                        !stop 2098734
                     end if
                 else
+                    !% --- if no external file, use the end time
+                    !% HACK -- what are we doing here?
                     tnext = setting%Time%End
                 end if
+            else
+                !% --- continue, no action if there isn't an external inflow    
             end if
+            !% --- the next time is the smaller of the value in the the timeseries or
+            !%     the time associated with the pattern.
+            !%     HACK -- NEED TO CHECK PATTERN OPERATION
             tnext = min(tnext, tnextp)
         else
+            !% --- HACK - if pattern resolution < 0 then set output tnext to the end time.
+            !% SHOULD THIS BE A FAILURE POINT?
             tnext = setting%Time%End
+            call util_crashpoint(2390483)
         end if
 
         if (setting%Debug%File%interface)  &
@@ -2284,22 +2353,27 @@ contains
     function interface_get_next_head_time(bc_idx, tnow) result(tnext)
         !%---------------------------------------------------------------------
         !% Description
+        !% Gets the next head time
+        !% HACK -- this is incomplete and does not read from file
+        !% ONLY SUPPORTS FIXED HEAD BC
         !%---------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        real(8), intent(in) :: tnow
-        real(8)             :: tnext, tnextp
-        integer             :: nidx, nres, tseries
-        character(64) :: subroutine_name
+            integer, intent(in) :: bc_idx
+            real(8), intent(in) :: tnow
+            real(8)             :: tnext
+            integer, pointer    :: nidx
+            character(64) :: subroutine_name = 'interface_get_next_head_time'
         !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_next_head_time'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        nidx = BC%headI(bc_idx, bi_node_idx)
+        !% Preliminaries
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------    
+        !% Aliases
+            nidx => BC%headI(bc_idx, bi_node_idx)
+        !%---------------------------------------------------------------------
         if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
             tnext = setting%Time%End
         else
-            print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
+            print *, "Error, unsupported head boundary condition for node " // trim(node%Names(nidx)%str)
             !stop 
             call util_crashpoint(42987)
             !return
@@ -2321,18 +2395,30 @@ contains
         real(8), intent(in) :: tnow
         integer             :: error, nidx
         real(8)             :: epochNow, bc_value
-        character(64) :: subroutine_name
+        character(64) :: subroutine_name  = 'interface_get_flowBC'
         !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_flowBC'
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         nidx = BC%flowI(bc_idx, bi_node_idx)
+
+        !print *, ' '
+        !print *, '     in ',trim(subroutine_name)
+        !print *, '     nidx , node name',nidx, trim(node%Names(nidx)%str)
+
         epochNow = util_datetime_secs_to_epoch(tnow)
         call load_api_procedure("api_get_flowBC")
         error = ptr_api_get_flowBC(nidx-1, epochNow, bc_value)
-        call print_api_error(error, subroutine_name)
+        !print *, '    out of ptr_api_get_flowBC, before api_error'
+        !call print_api_error(error, subroutine_name)
 
+        !% TEMPORARY!
+        ! if (bc_value < zeroR) then
+        !     print *,'     negative value ',bc_value
+        !     stop 448723
+        ! end if
+
+        !print *,'     ...leaving interface_get_flowBC================='
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2530,6 +2616,8 @@ contains
         SWMM_N_divider = get_num_objects(API_DIVIDER)
 
 
+        !print *, 'route_step ', route_step
+        !stop 44987
 
         thisWarning(:) = .false.
         thisVariable(:) = ''
@@ -2981,6 +3069,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_times)
             case ("api_get_next_entry_tseries")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
+            case ("api_reset_timeseries_to_start")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_reset_timeseries_to_start)    
             case ("api_find_object")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
             case ("api_run_step")
@@ -3017,11 +3107,12 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function get_next_entry_tseries(k) result(success)
+    function get_next_entry_tseries(tseries_idx,timemax) result(success)
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer, intent(in   ) :: k
+        integer, intent(in   ) :: tseries_idx
+        real(8), intent(in   ) :: timemax
         integer                :: success
         character(64)          :: subroutine_name
         !%---------------------------------------------------------------------
@@ -3030,7 +3121,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call load_api_procedure("api_get_next_entry_tseries")
-        success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
+        success = ptr_api_get_next_entry_tseries(tseries_idx-1,timemax) ! Fortran to C convention
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

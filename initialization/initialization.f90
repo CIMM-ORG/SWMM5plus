@@ -319,6 +319,8 @@ contains
         end if
         call util_crashstop(103897)
 
+        
+
         !% --- wait for all processors before exiting to the time loop
         sync all
 
@@ -370,6 +372,7 @@ contains
         !% Closing
             call init_check_setup_conditions()
             call init_timer_stop ()
+
             if (setting%Simulation%stopAfterInitializationYN) then
                 if (this_image() == 1) then
                     write(*,*) ' '
@@ -1300,6 +1303,7 @@ contains
                 isToNode(ii) = .true.
             end if   
             
+            !print *, 'in ',trim(subroutine_name)
             !print *, ii, nodeIdx(ii), trim(reverseKey(nodeType(nodeIdx(ii))))
 
             !% only handle the subcatchment on images with its connected node
@@ -1382,11 +1386,13 @@ contains
         setting%Time%Now   = zeroR
         setting%Time%Step  = zeroI
 
+        setting%Time%Hydraulics%Dt = setting.VariableDT.InitialDt
+
         if (setting%Time%useSWMMinpYN) then 
             !% set the start/stop times and time steps from SWMM *.inp file
             setting%Time%StartEpoch    = setting%SWMMinput%StartEpoch
             setting%Time%EndEpoch      = setting%SWMMinput%EndEpoch
-            setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep
+            !setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep -- do not use!
             setting%Time%Hydrology%Dt  = setting%SWMMinput%WetStep
             ! HACK ??                  = setting%SWMMinput%DryStep
             ! HACK ??                  = setting%SWMMinput%TotalDuration

@@ -923,25 +923,10 @@ module lowlevel_rk2
                                   * abs(eFlow(tB)) * (eRough(tB)**2) &
                                   / (eArea(tB) * eRH(tB)**(fourthirdsR))
 
+                        !% --- note that the dHead is upstream - downstream
                         eFlow(tB) = (   eFlow(tB)                                                &
                                       + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                    ) / gamma
-
-
-                                    ! if ((setting%Time%Now > 607.45) .and. (this_image() == 4) .and. (ii == 18)) then
-                                    !     write(6,*) ' ======================'
-                                    !     write(6,*) 'in ll rk2', ii, tM, tB
-                                    !     write(6,*) 'tFup elemUp ',tFup,  faceI(tFup,fi_Melem_uL), trim(reverseKey(elemI(faceI(tFup,fi_Melem_uL),ei_elementType)))
-                                    !     write(6,*) 'fHead_d   ',fHead_d(tFup)
-                                    !     write(6,*) 'eHead     ',eHead(tB)
-                                    !     write(6,*) 'dHead     ', dHead
-                                    !     write(6,*) 'gamma     ', gamma
-                                    !     write(6,*) 'eFlow     ',eFlow(tB)
-                                    !     !write(6,*), 'btm ', zBtm(tB)
-                                    !     write(6,*) ' ====================='
-                                    !     flush(6)
-                                        
-                                    ! end if               
+                                    ) / gamma        
 
                         if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
                             eFlow(tB) = zeroR
@@ -993,8 +978,6 @@ module lowlevel_rk2
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
-
-                        !print *, 'flowrate here dn ',eFlow(tB)
 
                     end if
                 end do

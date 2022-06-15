@@ -231,15 +231,23 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is
     integer, target :: Ncol_linkR = lr_lastplusone-1
 
-    !% Column indexes for BC%xI(:,:)
+    !% Column indexes for BC%xR(:,:) where x is head or flow
+    enum, bind(c)
+        enumerator :: br_value = 1   !% interpolated value for BC at this time step
+        enumerator :: br_Temp01      !% temporary array
+        enumerator :: br_lastplusone !% must be last enum item
+    end enum
+
+    !% Column indexes for BC%xI(:,:) where x is head or flow
     enum, bind(c)
         enumerator :: bi_idx = 1
         enumerator :: bi_node_idx
-        enumerator :: bi_face_idx    ! Index of face nBCup nodes
+        enumerator :: bi_face_idx    ! Index of face nBCup/dn nodes
         enumerator :: bi_elem_idx    ! Index of element associated with either nJ2 or nJm node with lateral inflow
         enumerator :: bi_category
         enumerator :: bi_subcategory
         enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
+        enumerator :: bi_TS_upper_idx  !% index of the current level in the timeseries storage
         enumerator :: bi_lastplusone !% must be last enum item
     end enum
 
@@ -250,6 +258,14 @@ module define_indexes
         enumerator :: bYN_lastplusone !% must be last enum item
     end enum
 
+    !% Column indexes (3rd index) for BC%xTimeseries(:,:,:) where X is flow or head
+    enum, bind(c)
+        enumerator :: brts_time = 1
+        enumerator :: brts_value
+        enumerator :: brts_lastplusone !% must be last enum item
+    end enum
+
+
     !% HACK - we will probably want to create a different set of indexes for BC%flowI and BC%headI tables
     !% For instance, BC%flowI tables will probably need addititonal information to distribute flowrates
     !% over link elements.
@@ -257,16 +273,11 @@ module define_indexes
     integer, parameter :: N_headI = bi_lastplusone-1
     integer, parameter :: N_flowYN = bYN_lastplusone-1
     integer, parameter :: N_headYN = bYN_lastplusone-1
+    integer, parameter :: N_flowR  = br_lastplusone-1
+    integer, parameter :: N_headR  = br_lastplusone-1
+    integer, parameter :: N_flowR_TS = brts_lastplusone - 1
+    integer, parameter :: N_headR_TS = brts_lastplusone - 1
 
-    !% Column indexes for BC_xR_timeseries(:,:,:)
-    enum, bind(c)
-        enumerator :: br_time = 1
-        enumerator :: br_value
-        enumerator :: br_lastplusone !% must be last enum item
-    end enum
-    ! HACK - we will probably want to change the dimensions of BC%flowR and BC%headR real tables
-    integer, parameter :: N_headR = br_lastplusone-1
-    integer, parameter :: N_flowR = br_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%YN(:,:) arrays
@@ -463,7 +474,8 @@ module define_indexes
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements    
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
-        enumerator :: ep_CC_Q_NOTsmalldepth         !% all Q conduits used for CFL computation 
+        enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth 
+        enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_lastplusone !% must be last enum item
     end enum

@@ -517,21 +517,25 @@ contains
             call util_allocate_check (allocation_status, emsg, 'BC%headYN')
             BC%headYN(:,:) = nullvalueL
 
-            allocate(BC%headR_timeseries(N_headBC, setting%BC%TimeSlotsStored, N_headR), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%headR_timeseries')
-            BC%headR_timeseries(:,:,:) = nullvalueR
+            allocate(BC%headR(N_headBC, N_headR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headR')
+            BC%headR(:,:) = nullvalueR
 
-            allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%headIdx')
-            BC%headIdx(:) = nullvalueI
+            allocate(BC%headTimeseries(N_headBC, setting%BC%TimeSlotsStored, N_headR_TS), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headTimeseries')
+            BC%headTimeseries(:,:,:) = nullvalueR
 
-            allocate(BC%headRI(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%headRI')
-            BC%headRI(:) = nullvalueR
+            !allocate(BC%headI(:,bi_TS_upper_idx)(N_headBC), stat=allocation_status, errmsg=emsg)
+            !call util_allocate_check (allocation_status, emsg, 'BC%headI(:,bi_TS_upper_idx)')
+            !BC%headI(:,bi_TS_upper_idx)(:) = nullvalueI
 
-            allocate(BC%hasFlapGateYN(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%hasFlapGateYN')
-            BC%hasFlapGateYN = .false.
+            !allocate(BC%head_value(N_headBC), stat=allocation_status, errmsg=emsg)
+            !call util_allocate_check (allocation_status, emsg, 'BC%head_value')
+            !BC%head_value(:) = nullvalueR
+
+            !allocate(BC%hasFlapGateYN(N_headBC), stat=allocation_status, errmsg=emsg)
+            !call util_allocate_check (allocation_status, emsg, 'BC%hasFlapGateYN')
+            !BC%hasFlapGateYN = .false.
 
         end if
 
@@ -544,17 +548,13 @@ contains
             call util_allocate_check (allocation_status, emsg, 'BC%flowYN')
             BC%flowYN(:,:) = nullvalueL
 
-            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%TimeSlotsStored, N_flowR), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%flowR_timeseries')
-            BC%flowR_timeseries(:,:,:) = nullvalueR
+            allocate(BC%flowR(N_flowBC, N_flowR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowR')
+            BC%flowR(:,:) = nullvalueR
 
-            allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%flowIdx')
-            BC%flowIdx(:) = nullvalueI
-
-            allocate(BC%flowRI(N_flowBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg, 'BC%flowRI(N_flowBC)')
-            BC%flowRI(:) = nullvalueR
+            allocate(BC%flowTimeseries(N_flowBC, setting%BC%TimeSlotsStored, N_flowR_TS), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowTimeseries')
+            BC%flowTimeseries(:,:,:) = nullvalueR
             
         end if
 

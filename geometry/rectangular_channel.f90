@@ -72,19 +72,19 @@ module rectangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_area_from_depth_singular (indx) result (outvalue)
+    real(8) function rectangular_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for rectangular cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
-        outvalue = depth(indx) * breadth(indx)
+        outvalue = depth * breadth(indx)
 
     end function rectangular_area_from_depth_singular
 !%
@@ -124,12 +124,13 @@ module rectangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_topwidth_from_depth_singular (indx) result (outvalue)
+    real(8) function rectangular_topwidth_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a rectangular cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx 
+        real(8), intent(in) :: depth
         !%-----------------------------------------------------------------------------
         !%  
         outvalue = elemSGR(indx,esgr_Rectangular_Breadth)
@@ -163,7 +164,7 @@ module rectangular_channel
 !%==========================================================================    
 !%==========================================================================
 !%
-    real(8) function rectangular_perimeter_from_depth_singular (indx) result (outvalue)
+    real(8) function rectangular_perimeter_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -172,13 +173,13 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
         
-        outvalue = twoR * depth(indx) + breadth(indx)
+        outvalue = twoR * depth + breadth(indx)
 
     end function rectangular_perimeter_from_depth_singular
 !%    
@@ -208,24 +209,25 @@ module rectangular_channel
 !%==========================================================================  
 !%==========================================================================
 !%
-    real(8) function rectangular_hyddepth_from_depth_singular (indx) result (outvalue)
+    real(8) function rectangular_hyddepth_from_depth_singular (indx,depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes hydraulic depth from known depth for rectangular cross section of 
         !% a single element
         !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx     
+        integer, intent(in) :: indx   
+        real(8), intent(in) :: depth  
         !%-----------------------------------------------------------------------------  
 
-        outvalue = elemR(indx,er_Depth)
+        outvalue = depth
 
     end function rectangular_hyddepth_from_depth_singular 
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_hydradius_from_depth_singular (indx) result (outvalue)
+    real(8) function rectangular_hydradius_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -233,13 +235,13 @@ module rectangular_channel
         !% a single element 
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer :: breadth(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
         
-        outvalue = (depth(indx) * breadth(indx)) / ( twoR * depth(indx) + breadth(indx) )
+        outvalue = (depth * breadth(indx)) / ( twoR * depth + breadth(indx) )
 
     end function rectangular_hydradius_from_depth_singular
     !%    

@@ -70,12 +70,20 @@ module adjust
         end if
 
         call adjust_zerodepth_element_values (whichTM, CC) 
+
+            !call util_CLprint('-------------AAAA')
         
         call adjust_zerodepth_element_values (whichTM, JM) 
+
+            !call util_CLprint('-------------BBBB')
         
         call adjust_smalldepth_element_fluxes (whichTM)
+
+            !call util_CLprint('-------------CCCC')
         
         call adjust_limit_velocity_max (whichTM) 
+
+            !call util_CLprint('-------------DDDD')
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -591,10 +599,21 @@ module adjust
         !% --- define the small volume ratio, 
         !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
         svRatio(thisP) = min(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
+
+        !print *, 'svRatio ', svRatio(iet(1:2))
     
         !% use the larger of available roughness values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
         ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))   
+
+        !print *, 'mannings n', ManningsN(iet(1:2))
+
+        !print *, 'head diff ',fHead_d(fup(iet(1:2))) - fHead_u(fdn(iet(1:2)))
+        !print *, 'hydradius ',HydRadius(iet(1:2))
+        ! print *, 'face Up',fup(iet(1:2))
+        ! print *, 'face Dn',fdn(iet(1:2))
+        ! print *, 'head Upstream ',fhead_d(fup(iet(1:2)))
+        ! print *, 'head Dnstream ',fhead_u(fdn(iet(1:2)))
 
         !% chezy-manning velocity based on head slop
         CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
@@ -602,12 +621,18 @@ module adjust
             * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) )           &
             / ManningsN(thisP)
                 
+        !print *, 'CMvelocity ', CMvelocity(iet(1:2))
+
         !% blend the computed velocity with CM velocity
         VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
                             + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
+       ! print *, 'Velblend ', VelocityBlend(iet(1:2))
+
         !% new flowrate
         Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
+
+       ! print *, 'Flowrate ',Flowrate(iet(1:2))
 
         !% reset the temporary storage
         VelocityBlend(thisP) = nullvalueR
@@ -663,6 +688,8 @@ module adjust
         !% --- Set inflow from adjacent cell based on head gradient
         call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
 
+            !call util_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
+
         !% --- reset the conservative fluxes
         if (ifixQCons) then
             fQCons(fup(thisP)) = fQ(fup(thisP))
@@ -717,9 +744,9 @@ module adjust
         !%------------------------------------------------------------------
         do ii=1,max_branch_per_node,2
             fQ(fup(thisP+ii  )) = max(fQ(fup(thisP+ii  )),zeroR) * real(isbranch(thisP+ii  ),8)
-            fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)
-            
+            fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)    
         end do
+        
         if (ifixQCons) then
             do ii=1,max_branch_per_node,2
                 fQCons(fup(thisP+ii  )) = fQ(fup(thisP+ii  ))
@@ -871,31 +898,6 @@ module adjust
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
             call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
-
-            ! !% --- For the downstream face, dH/dx < 0 leads to a negative Q
-            ! !%     Only applies where head gradient implies flow into the small volume and the
-            ! !%     depth at the face is twice the small depth cutoff
-            ! where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
-            !         .and. &
-            !         (faceDu(fdn(thisP)) > twoR * setting%SmallDepth%DepthCutoff) )
-            !     faceQ(fdn(thisP)) = min(                                                 &
-            !         faceQ(fdn(thisP)),                                                   &
-            !         dt * grav * faceAu(fdn(thisP)) * (elemH(thisP) - faceHu(fdn(thisP))) &
-            !         / (onehalfR * (elemL(thisP)))                                        &
-            !         )
-            ! end where
-            ! !% --- for the upstream face dH/dx > 0 leads to a positive Q
-            ! !%     Only applies where head gradient implies flow into the small volume and the
-            ! !%     depth on the face is twice the small depth cutoff
-            ! where ( (elemH(thisP) < faceHd(fup(thisP)) ) &
-            !         .and. &
-            !         (faceDd(fup(thisP)) > twoR * setting%SmallDepth%DepthCutoff) )
-            !     faceQ(fup(thisP)) = max(                                                 &
-            !         faceQ(fdn(thisP)),                                                   &
-            !         dt * grav * faceAd(fup(thisP)) * (faceHd(fup(thisP)) - elemH(thisP)) &
-            !         / (onehalfR * (elemL(thisP)))                                        &
-            !         )
-            ! end where
 
             if (ifixQCons) then
                 !% update the conservative face Q
@@ -1100,8 +1102,7 @@ module adjust
             real(8), pointer :: w_uH(:), w_dH(:)
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (crashYN) return              
+        !% Preliminaries           
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1250,7 +1251,7 @@ module adjust
                 )
         end where
 
-    end subroutine adjust_faceflux_for_headgradient 
+    end subroutine adjust_faceflux_for_headgradient
 !%
 !%==========================================================================
 !%==========================================================================

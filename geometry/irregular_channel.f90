@@ -20,6 +20,7 @@ module irregular_channel
     public :: irregular_hydradius_from_depth
     public :: irregular_perimeter_from_hydradius_area
     public :: irregular_hyddepth_from_topwidth_area
+    public :: irregular_geometry_from_depth_singular
 
 contains
 !%==========================================================================
@@ -216,7 +217,36 @@ contains
 !%    
 !%==========================================================================
 !%==========================================================================
+!%   
+    real(8) function irregular_geometry_from_depth_singular &
+                (indx, table_idx, depth, zerovalue) result (outvalue)
+        !%----------------------------------------------------------------------
+        !% Description:
+        !%  Computes cross-sectional area for a given depth for a single element
+        !%----------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: indx, table_idx
+            real(8), intent(in) :: depth, zerovalue
+            real(8), pointer    :: fullDepth(:), thisTable(:)
+            real(8)             :: depthnorm
+        !%----------------------------------------------------------------------
+        !% Aliases
+            !% --- get the transect by depth table 
+            thisTable => transectTableDepthR(elemI(indx,ei_transect_idx),:,table_idx)
+            fullDepth => elemR(:,er_FullDepth)
+        !%----------------------------------------------------------------------
+        !% --- normalized depth
+        depthnorm     = depth/fulldepth(indx)
+
+        !% --- max is used because xsect quadratic interp for small values can produce zero
+        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)), &
+                        setting%ZeroValue%Area)
+
+    end function irregular_geometry_from_depth_singular    
 !%    
+!%==========================================================================
+!%==========================================================================
+!%       
 !%==========================================================================
 !% END MODULE
 !%==========================================================================

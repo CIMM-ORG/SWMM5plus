@@ -236,8 +236,6 @@ contains
         !call sleep(1)
         call init_IC_small_values_diagnostic_elements
 
-        
-
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         !call util_CLprint('before face_interpolation')
@@ -264,6 +262,11 @@ contains
         !call sleep(1)
         call init_IC_oneVectors ()
 
+        ! !% TEMPORARY TEST
+        ! print *, '**************************************************************************'
+        ! print *, 'TEMPORARY TEST INCREASING MANNINGS N'
+        ! print *, '**************************************************************************'
+        ! elemR(:,er_Roughness) = tenR * elemR(:,er_Roughness) 
     
 
         ! !% --- initialized the max face flowrate
@@ -2452,7 +2455,7 @@ contains
         !% Preliminaries
         !%------------------------------------------------------------------
         !% Aliases
-            thisCol    = ep_CC_Q_NOTsmalldepth
+            thisCol    = ep_CC_NOTsmalldepth
             npack      => npack_elemP(thisCol)
             thisP      => elemP(1:npack,thisCol)
             area       => elemR(:,er_Area)
@@ -3051,7 +3054,7 @@ contains
         !%    BCdn, and BClat) in the BC%xI(:,bi_category) column.
         !%
         !%-----------------------------------------------------------------------------
-        integer :: ii, nidx, ntype, counter_bc_er
+        integer :: ii, nidx, ntype, counter_bc_er, outfallType
         integer :: SWMMtseriesIdx, SWMMbasepatType
         character(64) :: subroutine_name = "init_bc"
         !%-----------------------------------------------------------------------------
@@ -3074,26 +3077,26 @@ contains
         !% --- Convention to denote that xR_timeseries arrays haven't been fetched
         if (N_flowBC > 0) then
             BC%flowI(:,bi_fetch) = 1
-            BC%flowIdx(:) = 0
+            BC%flowI(:,bi_TS_upper_idx) = 0  !% latest position of upper bound in flow table
             !% --- Convention to denote association between nodes and face/elements
             !%     BCup and BCdn BCs are associated with faces, thus bi_elem_idx is null
             !%    BClat BCs are associated with elements, thus bi_face_idx is null
             BC%flowI(:, bi_face_idx) = nullvalueI
             BC%flowI(:, bi_elem_idx) = nullvalueI
-            BC%flowR_timeseries = nullValueR
+            BC%flowTimeseries = nullValueR
         end if
         !print *, 'here ddd'
         if (N_headBC > 0) then
             BC%headI = nullvalueI
             BC%headI(:,bi_fetch) = 1
-            BC%headIdx(:) = 0
-            BC%headR_timeseries = nullValueR
+            BC%headI(:,bi_TS_upper_idx) = 0
+            BC%headTimeseries = nullValueR
         end if
 
         !% --- Initialize Inflow BCs
         if (N_flowBC > 0) then
             do ii = 1, N_flowBC
-                nidx = node%P%have_flowBC(ii)
+                nidx  = node%P%have_flowBC(ii)
                 ntype = node%I(nidx, ni_node_type)
 
                 !% Handle Inflow BCs (BCup and BClat only)
@@ -3114,6 +3117,9 @@ contains
                     BC%flowI(ii, bi_node_idx) = nidx
                     BC%flowI(ii, bi_idx) = ii
                     BC%flowYN(ii, bYN_read_input_file) = .true.
+
+                    !print *, 'in ',trim(subroutine_name)
+                    !print *, ii, trim(node%Names(nidx)%str), node%I(nidx, ni_elemface_idx)
 
                     !% HACK Pattern needs checking --- the following may be wrong! brh20211221
                     !% check whether there is a pattern (-1 is no pattern) for this inflow
@@ -3166,22 +3172,31 @@ contains
                 BC%headI(ii, bi_node_idx) = nidx
 
                 !% --- get the outfall type
-                if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_FREE_OUTFALL) then
+                outfallType = int(interface_get_nodef_attribute(nidx, api_nodef_outfall_type))
+                select case (outfallType)
+                case (API_FREE_OUTFALL)
                     BC%headI(ii, bi_subcategory) = BCH_free
                     BC%headYN(ii, bYN_read_input_file) = .false.
-                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_NORMAL_OUTFALL) then
+
+                case (API_NORMAL_OUTFALL)
                     BC%headI(ii, bi_subcategory) = BCH_normal
                     BC%headYN(ii, bYN_read_input_file) = .false.
-                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_FIXED_OUTFALL) then
+
+                case (API_FIXED_OUTFALL) 
                     BC%headI(ii, bi_subcategory) = BCH_fixed
-                    BC%headYN(ii, bYN_read_input_file) = .true.
-                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_TIDAL_OUTFALL) then
+                    BC%headYN(ii, bYN_read_input_file) = .false.
+
+                case (API_TIDAL_OUTFALL)
                     BC%headI(ii, bi_subcategory) = BCH_tidal
                     BC%headYN(ii, bYN_read_input_file) = .true.
-                else if (interface_get_nodef_attribute(nidx, api_nodef_outfall_type) == API_TIMESERIES_OUTFALL) then
+
+                case (API_TIMESERIES_OUTFALL)
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                     BC%headYN(ii, bYN_read_input_file) = .true.
-                end if
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(33875)
+                end select
 
                 !% --- check for a flap gate
                 if (interface_get_nodef_attribute(nidx, api_nodef_hasFlapGate) == oneR) then
@@ -3247,6 +3262,7 @@ contains
         !% Declarations
             real(8), pointer :: area, topwidth, volume, depth, length
             integer, pointer :: Npack, thisP(:)
+            integer :: ii
         !%------------------------------------------------------------------
         !% Aliases
             area     => setting%ZeroValue%Area
@@ -3257,15 +3273,36 @@ contains
         !%------------------------------------------------------------------
         if (.not. setting%ZeroValue%UseZeroValues) return
 
+        !% --- use set of all time-marching
         Npack => npack_elemP(ep_ALLtm)
         if (Npack > 0) then
             thisP => elemP(1:Npack,ep_ALLtm)
-            !% the zero topwidth is 5% of the max breadth
-            topwidth = minval(elemR(thisP,er_BreadthMax)) / twentyR
-            !% the zerovalue area is the product of zerovalue depth and topwidth
-            area = topwidth * depth
+
+            !% --- temproary store of initial depth and replace with zero depth
+            elemR(:,er_Temp02) = elemR(:,er_Depth)
+            elemR(:,er_Depth) = depth
+
+            !% --- compute the topwidths for zero depth
+            !%     temporary store initial condition topwidth
+            elemR(:,er_Temp01) = elemR(:,er_Topwidth)
+            !% --- get the topwidth at zero depth using packed geometry arrays
+            call geo_topwidth_from_depth (elemPGalltm, npack_elemPGalltm, col_elemPGalltm)
+            !% --- use the minimum topwidth at zero depth as the smallest topwidth
+            topwidth = minval(elemR(thisP,er_Topwidth))             
+            !% --- return initial condition values to topwidth 
+            elemR(:,er_Topwidth) = elemR(:,er_Temp01)
+            !% --- return initial condition values to depth
+            elemR(:,er_Depth)    = elemR(:,er_Temp02)
+          
+            !% OLD the zero topwidth is 5% of the max breadth        
+            !OLD topwidth = minval(elemR(thisP,er_BreadthMax)) / twentyR
+
+            !% the zerovalue area is 50% of the product of zerovalue depth and topwidth
+            area = onehalfR * topwidth * depth
+
             !% the zero value volume uses 5% of the volume at minimum depth
             volume = area * minval(elemR(thisP,er_Length)) / twentyR
+
             !print *, topwidth, area, depth, volume, minval(elemR(thisP,er_Length))
         else
             print *, 'unexpected error -- no time-marching elements found '

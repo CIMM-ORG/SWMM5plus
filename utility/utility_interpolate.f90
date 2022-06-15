@@ -28,6 +28,11 @@ contains
             return
         end if
         Y = Y1 + (X - X1) * (Y2 - Y1) / (X2 - X1)
+        ! print *, 'X-X1  ',X-X1
+        ! print *, 'Y2-Y1 ', Y2-Y1
+        ! print *, 'X2-X1 ',X2-X1
+        ! print *, 'Y1    ',Y1
+        ! print *, 'Y     ',Y
     end function util_interpolate_linear
 !%  
 !%==========================================================================

@@ -36,12 +36,12 @@ module define_settings
         logical :: UseDensityCorrection = .false.
         ! Note: setting the lowcutoff to zero can cause small truncation error velocities
         ! to cause waves that buildup over time into a sloshing flow. The lowcutoff avoid this
-        real(8) :: DensityHighCutoff = 0.1
-        real(8) :: DensityLowCutoff = 1e-10
+        real(8) :: DensityHighCutoff = 0.1d0
+        real(8) :: DensityLowCutoff = 1.0d-10
         ! fraction of residual that is corrected - generally should be 1.0
-        real(8) :: FullPipeFactor = 1.0
+        real(8) :: FullPipeFactor = 1.0d0
         ! fraction of residual that is corrected - generally should be 1.0
-        real(8) :: OpenPipeFactor = 1.0
+        real(8) :: OpenPipeFactor = 1.0d0
     end type ACmethodAnomalyType
 
     !% setting%ACmethod%ImplicitCoef
@@ -55,27 +55,27 @@ module define_settings
     !% setting%ACmethod%CFL
     type ACmethodCFLType
         ! maximum cfl for the AC dtau -- may be higher than 1.0)
-        real(8) :: CFLmax = 2.0
+        real(8) :: CFLmax = 2.0d0
         ! small maximum cfl when reset to larger dtau
-        real(8) :: CFLsmall = 0.05
+        real(8) :: CFLsmall = 0.05d0
     end type ACmethodCFLType
 
     !% setting%ACmethod%Celerity
     type ACmethodCelerityType
         ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
-        real(8) :: RC = 1.0
+        real(8) :: RC = 1.0d0
     end type ACmethodCelerityType
 
     !% setting%ACmethod%Convergence
     type ACmethodConvergenceType
         ! AC convergence change in absolute L2 norm when cutting off AC
-        real(8) :: Habsolute = 1e-5
+        real(8) :: Habsolute = 1.0d-5
         ! AC convergence relative change in L2 norm when cutting off AC
-        real(8) :: Hrelative = 1e-2
+        real(8) :: Hrelative = 1.0d-2
         ! AC convergence change in absolute L2 norm when cutting off AC
-        real(8) :: Qabsolute = 1e-5
+        real(8) :: Qabsolute = 1.0d-5
         ! AC convergence relative change in L2 norm when cutting off AC
-        real(8) :: Qrelative = 1e-2
+        real(8) :: Qrelative = 1.0d-2
     end type ACmethodConvergenceType
 
     !% setting%ACmethod%Iter
@@ -91,19 +91,19 @@ module define_settings
     !% setting%ACmethod%Switch
     type ACmethodSwitchType
         ! switch to AC solver if area/areaMax >  0.9
-        real(8) :: Area = 0.9
+        real(8) :: Area = 0.9d0
         ! 5% buffer for the switch
-        real(8) :: Buffer = 0.05
+        real(8) :: Buffer = 0.05d0
         ! switch to AC solver if depth/depthMax >  0.9
-        real(8) :: Depth = 0.9
+        real(8) :: Depth = 0.9d0
     end type ACmethodSwitchType
 
     !% setting%Adjust%Flowrate
     type AdjustFlowrateType
         logical :: ApplyYN = .true.
         integer :: Approach = vshape
-        real(8) :: Coef = 1.0
-        real(8) :: SmallDepthMultiplier = 3.0
+        real(8) :: Coef = 1.0d0
+        real(8) :: SmallDepthMultiplier = 3.0d0
     end type AdjustFlowrateType
 
     !% setting%Adjust%Head
@@ -111,7 +111,7 @@ module define_settings
         logical :: ApplyYN = .true.
         integer :: Approach = vshape_surcharge_only
         real(8) :: Coef = 1.0
-        real(8) :: FullDepthMultiplier = 1.0
+        real(8) :: FullDepthMultiplier = 1.0d0
     end type AdjustHeadType
 
     ! !% setting%Adjust%WidthDepth
@@ -127,9 +127,9 @@ module define_settings
 
     !% setting%Time%CPU
     type CPUTimeType
-        real (8) :: EpochStartSeconds = 0.0
-        real (8) :: EpochNowSeconds  = 0.0
-        real (8) :: EpochFinishSeconds  = 0.0
+        real (8) :: EpochStartSeconds = 0.0d0
+        real (8) :: EpochNowSeconds  = 0.0d0
+        real (8) :: EpochFinishSeconds  = 0.0d0
     end type CPUTimeType
 
     !% setting%Output%DataLink
@@ -175,7 +175,9 @@ module define_settings
     !% setting%Limiter%Dt
     type LimiterDtType
         logical :: UseLimitMinYN = .true.
-        real(8) :: Minimum     = 1e-3
+        real(8) :: Minimum     = 1.0d-3
+        logical :: UseLimitMaxYN = .true.
+        real(8) :: Maximum     = 86400.0d0
     end type LimiterDtType
 
     ! !% setting%Limiter%Flowrate -- presently not used brh20220101
@@ -188,14 +190,14 @@ module define_settings
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
-        real(8) :: Maximum = 1e6
-        real(8) :: Minimum = 1e-6
+        real(8) :: Maximum = 1.0d6
+        real(8) :: Minimum = 1.0d-6
     end type LimiterInterpWeightType
 
     !% setting%Limiter%Velocity
     type LimiterVelocityType
         logical :: UseLimitMaxYN = .true.
-        real(8) :: Maximum = 10.0 ! m/s
+        real(8) :: Maximum = 10.0d0 ! m/s
     end type LimiterVelocityType
 
     !% setting%Output%Report
@@ -203,8 +205,8 @@ module define_settings
         logical :: useSWMMinpYN = .true.
         logical :: provideYN = .true.
         logical :: suppress_MultiLevel_Output = .false.
-        real(8) :: StartTime = 0.0
-        real(8) :: TimeInterval = 300.0
+        real(8) :: StartTime = 0.0d0
+        real(8) :: TimeInterval = 300.0d0
         integer :: ThisStep
         integer :: TimeUnits = InHours
     end type ReportType
@@ -215,7 +217,7 @@ module define_settings
        real(8) :: Dt
        real(8) :: LastTime
        real(8) :: NextTime
-       integer :: Step
+       integer(kind=8) :: Step
     end type TimeStepType
 
     !% setting%File%UnitNumber
@@ -351,7 +353,7 @@ module define_settings
 
     ! setting%BC
     type BCPropertiesType
-        integer :: TimeSlotsStored        = 10
+        integer :: TimeSlotsStored        = 100
         logical :: disableInterpolationYN = .false.
     end type BCPropertiesType
 
@@ -364,8 +366,8 @@ module define_settings
 
     ! setting%Constant
     type ConstantType
-        real(8) :: gravity = 9.81 ! m^2/s
-        real(8) :: energy_correction_factor = 1.0 
+        real(8) :: gravity = 9.81d0 ! m^2/s
+        real(8) :: energy_correction_factor = 1.0d0 
     end type ConstantType
 
     !% setting%Crash
@@ -387,22 +389,22 @@ module define_settings
     !% setting%Discretization
     type DiscretizationType
         logical :: AdjustLinkLengthYN = .true.
-        real(8) :: LinkShortingFactor  = 0.33
-        real(8) :: MinElemLengthFactor = 0.50
+        real(8) :: LinkShortingFactor  = 0.33d0
+        real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
-        real(8) :: NominalElemLength   = 10.0
+        real(8) :: NominalElemLength   = 10.0d0
     end type DiscretizationType
 
     ! setting%Eps
     type EpsilonType
         !% +- small non-dimensional range for hyd jump discrimination
-        real(8) :: FroudeJump = 0.1
+        real(8) :: FroudeJump = 0.1d0
         !% Fractional increase in depth under froude limitation
         !rm 20220207brh real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
         !% small velocity
-        real(8) :: Velocity = 1.0e-6
+        real(8) :: Velocity = 1.0d-6
         !% small head difference (tolerance for no flow)
-        real(8) :: Head = 1.0e-6
+        real(8) :: Head = 1.0d-6
     end type EpsilonType
 
     !rm 20220207brh
@@ -447,9 +449,9 @@ module define_settings
     ! setting%Junction
     type JunctionType
         !rm 20220207brh logical :: isDynamicYN    = .false.
-        !rm 20220207brh real(8) :: CFLlimit     = 0.5   !% limiter on CFL to control dynamic junction
+        !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
-        !rm 20220207brh real(8) :: HeadCoef     = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
+        !rm 20220207brh real(8) :: HeadCoef     = 1.0d0   !% junction branch head coef for diagnostic junction (must be > 0)
         real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
     end type JunctionType
 
@@ -508,8 +510,8 @@ module define_settings
     !% setting%PreissmannSlot
     type PreissmannSlotType
         integer :: PreissmannSlotMethod = DynamicSlot
-        real(8) :: TargetPreissmannCelerity = 0.01
-        real(8) :: PreissmannAlpha = 3.0
+        real(8) :: TargetPreissmannCelerity = 0.01d0
+        real(8) :: PreissmannAlpha = 3.0d0
     end type PreissmannSlotType
 
     !% setting%Profile
@@ -527,6 +529,9 @@ module define_settings
         logical :: stopAfterInitializationYN = .false.
         logical :: useHydrology = .true.
         logical :: useHydraulics = .true.
+        logical :: useSpinUp     = .true.
+        logical :: stopAfterSpinUp = .false.
+        real(8) :: SpinUpDays    = 10.d0
     end type SimulationType
 
     ! setting%SmallDepth
@@ -534,23 +539,23 @@ module define_settings
         ! Dont using small volumes for weir case.
         ! Needed to be changed later SmallVolumeType
         !logical :: UseSmallVolumesYN = .true.
-        real(8) :: DepthCutoff = 0.03 ! m
-        real(8) :: ManningsN = 0.1
+        real(8) :: DepthCutoff = 0.03d0 ! m
+        real(8) :: ManningsN = 0.1d0
     end type SmallDepthType
 
     ! setting%Solver
     type SolverType
         logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
-        integer :: MomentumSourceMethod = T00
+        integer :: MomentumSourceMethod = TA1
         integer :: SolverSelect = ETM
-        real(8) :: SwitchFractionDn = 0.8
-        real(8) :: SwitchFractionUp = 0.9
+        real(8) :: SwitchFractionDn = 0.8d0
+        real(8) :: SwitchFractionUp = 0.9d0
         real(8) :: ReferenceHead = zeroR
         real(8) :: AverageZbottom = zeroR
         real(8) :: MaxZbottom = zeroR
         real(8) :: MinZbottom = zeroR
-        real(8), dimension(2) :: crk2 = [0.5, 1.0]
+        real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]
     end type SolverType
 
     type TestCaseType
@@ -573,9 +578,9 @@ module define_settings
     type TimeType
         logical            :: useSWMMinpYN = .true.
         logical            :: matchHydrologyStep = .true.
-        real(8)            :: DtTol = 1e-1   !% tolerance when comparing Now time and accumulation of time steps.
+        real(8)            :: DtTol = 1.0d-1   !% tolerance when comparing Now time and accumulation of time steps.
         character(14)      :: DateTimeStamp
-        integer            :: Step  !% count of the number of steps (either hydrology, hydraulics, or combined)
+        integer(kind=8)    :: Step  !% count of the number of steps (either hydrology, hydraulics, or combined)
         real(8)            :: Start
         real(8)            :: Now
         real(8)            :: End
@@ -598,25 +603,27 @@ module define_settings
     !% setting%VariableDT
     type VariableDTType
         logical :: ApplyYN = .true.
-        real(8) :: CFL_hi_max = 0.5
-        real(8) :: CFL_target = 0.4
-        real(8) :: CFL_lo_max = 0.2
-        real(8) :: CFL_inflow_max = 0.4
+        real(8) :: CFL_hi_max = 0.5d0
+        real(8) :: CFL_target = 0.4d0
+        real(8) :: CFL_lo_max = 0.2d0
+        real(8) :: CFL_inflow_max = 0.4d0
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
-        real(8) :: increaseFactor = 1.2 
+        real(8) :: increaseFactor = 1.2d0 
+        real(8) :: InitialDt = 1.d0
         integer :: NstepsForCheck = 10
-        integer :: LastCheckStep = 0
+        integer(kind=8) :: LastCheckStep = 0
     end type VariableDTType
 
     !% setting%ZeroValue
     !% Note that Depth is the setting users should change
     type ZerovalueType
         logical :: UseZeroValues = .true.
-        real(8) :: Area = 1.0e-3 ! m^2 -- set by code
-        real(8) :: Depth = 1.0e-3 ! m
-        real(8) :: Topwidth = 1.0 ! m -- set by code
-        real(8) :: Volume = 1.0e-2 ! m^3 -- set by code
+        real(8) :: Area = 1.d-3 ! m^2 -- set by code
+        real(8) :: Depth = 1.d-3 ! m
+        real(8) :: Topwidth = 1.d0 ! m -- set by code
+        real(8) :: Volume = 1.d-2 ! m^3 -- set by code
         real(8) :: VolumeResetLevel !m^3 -- set by code
+        real(8) :: Velocity = 1.d-3
     end type ZerovalueType
 
     !%===================================================================
@@ -1486,6 +1493,21 @@ contains
         call json%get('Simulation.stopAfterInitializationYN', logical_value, found)
         if (found) setting%Simulation%stopAfterInitializationYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.stopAfterInitializationYN not found'
+
+        !%                       useSpinUp
+        call json%get('Simulation.useSpinUp', logical_value, found)
+        if (found) setting%Simulation%useSpinUp = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.useSpinUp not found'
+
+        !%                       stopAfterSpinUp
+        call json%get('Simulation.stopAfterSpinUp', logical_value, found)
+        if (found) setting%Simulation%stopAfterSpinUp = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.stopAfterSpinUp not found'
+
+        !%                       SpinUpDays
+        call json%get('Simulation.SpinUpDays', real_value, found)
+        if (found) setting%Simulation%SpinUpDays = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.SpinUpDays not found'
   
     !% SmallDepth. =====================================================================    
         !%                       DepthCutoff

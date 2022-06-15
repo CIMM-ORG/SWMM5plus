@@ -7,6 +7,7 @@ module utility_datetime
                                api_monthly
     use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR, &
         sixtyR, twentyfourR
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -27,6 +28,10 @@ module utility_datetime
 !%==========================================================================
 !%
     function util_datetime_get_next_time(secsTime, resolution_type) result(nextSecsTime)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% gets the 
+        !%------------------------------------------------------------------
         real(8), intent(in) :: secsTime
         integer, intent(in) :: resolution_type
         real(8)             :: epochTime
@@ -47,13 +52,17 @@ module utility_datetime
             nextSecsTime = util_datetime_get_next_weekendday_hour(epochTime)
         else if (resolution_type == 0) then
             nextSecsTime = nullvalueR
+            !print *, 'in util_datetime', nextSecsTime
         else
-            print *, "Resolution type not supported, use"
-            print *, "(1) monthly, (2) daily, (3) hourly, (4) weekend"
-            stop 
+            nextSecsTime = nullvalueR
+            print *, "Resolution type not supported, use..."
+            print *, "...(1) monthly, (2) daily, (3) hourly, (4) weekend"
+            call util_crashpoint(329873)
         end if
 
-        nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
+        if ((resolution_type .gt. 0) .and. (resolution_type .le. 4)) then
+            nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
+        end if
 
         if (setting%Debug%File%utility_datetime) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

@@ -75,11 +75,14 @@
     },
     "Simulation" : {
         "useHydrology" : false,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "useSpinUp" : true,
+        "stopAfterSpinUp" : false,
+        "SpinUpDays" : 60
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "TA1",
+        "MomentumSourceMethod" : "T00",
         "ReferenceHead"     : 0.0
     },
     "TestCase" : {
