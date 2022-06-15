@@ -69,9 +69,10 @@ module define_indexes
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         enumerator :: li_num_phantom_links   ! Number of phantom links associated 
         enumerator :: li_weir_EndContrations
-        enumerator :: li_curve_id            ! cure id if the link is associated with any curve
+        enumerator :: li_curve_id            ! curve id if the link is associated with any curve
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
+        enumerator :: li_transect_idx         ! transect index if the link is associated with an irregular geometry transect
         enumerator :: li_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_linkI = li_lastplusone-1
@@ -193,7 +194,7 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: lr_Length = 1
-        enumerator :: lr_AdjustedLength ! lenght adjustment if multi-link junction is present
+        enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
         enumerator :: lr_BreadthScale
@@ -304,6 +305,7 @@ module define_indexes
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
          enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
+         enumerator :: ei_transect_idx               !% index of the transect
          enumerator :: ei_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemI = ei_lastplusone-1
@@ -322,6 +324,7 @@ module define_indexes
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
+        enumerator :: er_ell_max                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
         enumerator :: er_Flowrate_N1                !% flowrate (time N-1)
@@ -348,19 +351,21 @@ module define_indexes
         enumerator :: er_InterpWeight_dH            !% interpolation Weight, downstream for head
         enumerator :: er_InterpWeight_uQ            !% interpolation Weight, upstream, for flowrate
         enumerator :: er_InterpWeight_dQ            !% interpolation Weight, downstream, for flowrate
+        enumerator :: er_InterpWeight_uP            !% interpolation Weight, upstream, for Preissmann number
+        enumerator :: er_InterpWeight_dP            !% interpolation Weight, downstream, for Preissmann number
         enumerator :: er_Ksource                    !% k source term for AC solver
         enumerator :: er_Length                     !% length of element (static)
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
+        enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
-        enumerator :: er_TotalSlotVolume            !% slot volume
-        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_Setting                    !% percent open setting for a link element
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
-        enumerator :: er_SlotHydRadius              !% slot hydraulic radius        
+        enumerator :: er_SlotHydRadius              !% slot hydraulic radius 
+        enumerator :: er_SlotVolume                 !% slot volume       
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume
@@ -369,6 +374,9 @@ module define_indexes
         enumerator :: er_SourceMomentum             !% source term for momentum equation
         enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp02                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp03                     !% temporary array (use and set to null in a single procedure)
+        enumerator :: er_Temp04                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Topwidth                   !% topwidth of flow at free surface
         enumerator :: er_Velocity                   !% velocity (latest)
         enumerator :: er_Velocity_N0                !% velocity time N
@@ -467,6 +475,7 @@ module define_indexes
         enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_triangular_nonsurcharged      !% CC triangular channels that are not surcharged
+        enumerator :: epg_CC_irregular                     !% CC irregular channels (never surcharged?)
         enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
@@ -776,12 +785,15 @@ module define_indexes
         enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
+        enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
         enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uH           !% interpolation Weight, upstream for head boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dQ           !% interpolation Weight, downstream, for flowrate boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uQ           !% interpolation Weight, upstream, for flowrate boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_dP           !% interpolation Weight, downstream, for preissman number boundary/ghost element
+        enumerator ::  ebgr_InterpWeight_uP           !% interpolation Weight, upstream, for preissman number boundary/ghost element
         enumerator ::  ebgr_lastplusone               !% must be last enum item boundary/ghost element
     end enum
     !% note, this must be changed to whatever the last enum element is!
@@ -852,6 +864,7 @@ module define_indexes
         enumerator :: fr_Topwidth_u             !% topwidth on upstream side of face
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
+        enumerator :: fr_Preissmann_Number      !% preissmann number at face
 
         !% HACK: THE FOLLOWING MAY NEED TO BE RESTORED
         ! enumerator :: fr_Zbottom_u             !% Bottom elevation on upstream side of face
@@ -915,6 +928,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: pfc_initialize_all = 1
         enumerator :: pfc_init_partitioning
+        enumerator :: pfc_init_BIPquick
         enumerator :: pfc_init_network_define_toplevel
         enumerator :: pfc_init_bc
         enumerator :: pfc_init_IC_setup
@@ -1024,6 +1038,43 @@ module define_indexes
                             Ncol_storage_curve, &
                             Ncol_pump_curve, &
                             Ncol_outlet_curve)
+
+    !% transect integer array indexes
+    enum, bind(c)
+        enumerator :: ti_idx = 1
+        enumerator :: ti_lastplusone 
+    end enum    
+
+    integer, parameter :: Ncol_transectI = ti_lastplusone-1
+
+    !% transect real array indexes
+    enum, bind(c)
+        enumerator :: tr_depthFull = 1     ! depth when full (yFull in EPA-SWMM)
+        enumerator :: tr_areaFull          ! area when full (aFull in EPA_SWMM)
+        enumerator :: tr_hydRadiusFull     ! hydradius when full (hFull in EPA-SWMM)
+        enumerator :: tr_widthMax          ! max width (wMax in EPA-SWMM)
+        enumerator :: tr_depthAtBreadthMax ! depth at max width (ywMax in EPA-SWMM)
+        enumerator :: tr_sectionFactor     ! section factor at max flow (sMax in EPA-SWMM)
+        enumerator :: tr_areaAtMaxFlow     ! area at max flow (aMax in EPA-SWMM)
+        enumerator :: tr_lengthFactor      ! floodplain / channel length (lengthFactor in EPA-SWMM)
+        enumerator :: tr_roughness         ! Mannings n (roughness in EPA-SWMM)
+        enumerator :: tr_widthFull         ! not in EPA-SWMM
+        enumerator :: tr_areaBelowBreadthMax ! not in EPA-SWMM
+        enumerator :: tr_lastplusone
+    end enum
+
+    integer, parameter :: Ncol_transectR = tr_lastplusone-1
+
+    !% transect table real array indexes
+    enum, bind(c)
+        enumerator :: tt_depth = 1    ! depth derived from uniform distribution in EPA-SWMM
+        enumerator :: tt_area         ! stores EPA-SWMM Transect.areaTbl
+        enumerator :: tt_hydradius    ! stores EPA-SWMM Transect.hradTbl
+        enumerator :: tt_width        ! stores EPA-SWMM Transect.widthTbl
+        enumerator :: tt_lastplusone
+    end enum
+    
+    integer, parameter :: Ncol_transectTable = tt_lastplusone-1
     !
     !==========================================================================
     ! definitions

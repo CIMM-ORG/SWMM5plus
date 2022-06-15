@@ -43,7 +43,7 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 5000
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -101,9 +101,9 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.4,
-        "CFL_lo_max" : 0.3,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4,
         "NstepsForCheck" : 1
     },
     "ZeroValue" : {

@@ -2,9 +2,9 @@
 *.o
 *.rpt
 *.out
+*.spt
 *.csv
 *.zip
-*.out
 *.so
 *.png
 *.mod

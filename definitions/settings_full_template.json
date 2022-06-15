@@ -65,6 +65,7 @@
         "energy_correction_factor" : 1.0
     },
     "Discretization" : {
+        "AdjustLinkLengthYN" : true,
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -165,9 +166,8 @@
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot",
-        "PreissmannNumber" : 1.0,
-        "PreissmannCelerity" : 0.01
+        "PreissmannSlotMethod" : "DynamicSlot",
+        "TargetPreissmannCelerity" : 0.01
     },
     "Profile" : {
         "useYN" : false

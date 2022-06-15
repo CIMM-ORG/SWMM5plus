@@ -19,14 +19,31 @@ module define_globals
     !% reverseKeys is an array to find the string name of a key number in define_keys
     !% used for debugging
     character(len=32), allocatable :: reverseKey(:)
+    
 
 
    ! integer :: iet(3) = (/80, 34, 35/)
    ! integer :: ift(2) = (/32, 33/)
 
-    integer :: iet(3) = (/25, 65, 67/)
-    integer :: ift(2) = (/23, 60/)
+   ! integer :: iet(3) = (/25, 65, 67/)
+   ! integer :: ift(2) = (/23, 60/)
 
+   ! integer :: iet(2) = (/1, 2/)
+   ! integer :: ift(3) = (/1, 2, 3/)
+
+    !integer :: iet(15) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,48,47/)
+    !integer :: ift(14) = (/34,35,36,37,38,39,40,41,42,43,44,45,46,47/)
+
+    integer :: ietU1(3) =   (/46, 48, 47/)
+    integer :: iftU1(1) =     (/47 /)
+
+
+    integer :: ietU2(3) = (/ 114, 50, 47/)
+    integer :: iftU2(1) =   (/ 49/)
+
+    integer :: ietD1(3) = (/47 ,49, 115/)
+    integer :: iftD1(1) =       (/48/)
+     
 
     integer(kind=8) :: irecCount = 0
 
@@ -68,6 +85,12 @@ module define_globals
 
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
+
+    integer, allocatable, target :: transectI(:,:)
+    real(8), allocatable, target :: transectR(:,:)
+    real(8), allocatable, target :: transectTableDepthR(:,:,:)
+    real(8), allocatable, target :: transectTableAreaR(:,:,:)
+    character(len=16), allocatable, target :: transectID(:)
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -207,6 +230,13 @@ module define_globals
     integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+
+    !% Temporary arrays that don't fit in any of the standard array structures
+    !% brh 20220401
+    integer, allocatable, target :: temp_BCupI(:,:)  !% number of BCup faces.
+    real(8), allocatable, target :: temp_BCupR(:,:)
+    integer :: N_tempBCupI = 1
+    integer :: N_tempBCupR = 4
     
     !% Profiling Timer
     type(wall_clk) :: timer
@@ -273,6 +303,11 @@ module define_globals
     integer :: SWMM_N_pollutant
     integer :: SWMM_N_control
     integer :: SWMM_N_divider
+    integer :: SWMM_N_transect
+    integer :: SWMM_N_transect_depth_items
+    integer :: N_transect
+    integer :: N_transect_depth_items
+    integer :: N_transect_area_items
     integer :: N_link
     integer :: N_node
     integer :: N_headBC
@@ -294,18 +329,18 @@ module define_globals
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 
-    !% Number of API parameters
+    !% Number of API parameters  ! REVISED APPROACH 20220422brh
     !% brh20211207s
     !rm integer, parameter :: N_api_node_attributes = api_node_overflow
-    integer, parameter :: N_api_nodef_attributes = api_nodef_rptFlag
+    !integer, parameter :: N_api_nodef_attributes = api_nodef_totalEnd
     !rm integer, parameter :: N_api_link_attributes = api_linkf_conduit_length
-    integer, parameter :: N_api_linkf_attributes = api_linkf_rptFlag
+    !integer, parameter :: N_api_linkf_attributes = api_linkf_commonBreak-1
     !% brh20211207e
-    integer, parameter :: N_api_linkf_type_attributes = api_linkf_sub_type - N_api_linkf_attributes
-    integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_xsect_yFull - N_api_linkf_type_attributes
-    integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
-                                                        + N_api_linkf_xsect_attributes
-    integer, parameter :: N_api_total_table_attributes = api_table_refers_to
+    !integer, parameter :: N_api_linkf_type_attributes  = api_linkf_typeBreak  - api_nodef_totalEnd -1
+    !integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_totalEnd   - api_linkf_typeBreak -1
+    !integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
+    !                                                   + N_api_linkf_xsect_attributes
+    !integer, parameter :: N_api_total_table_attributes = api_table_refers_to
 
     !% Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray
@@ -353,6 +388,9 @@ module define_globals
 
     ! default for number of functional storage
     integer :: N_FunctionalStorage = 0
+
+    !% maximum cfl across the network. Used for reporting 
+    real(8) :: cfl_max
 
     !% datetime related variables
     integer, parameter :: datedelta = 693594

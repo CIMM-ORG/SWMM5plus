@@ -71,7 +71,7 @@
         }
     },
     "Profile" : {
-        "useYN" : false
+        "useYN" : true
     },
     "Simulation" : {
         "useHydrology" : false,

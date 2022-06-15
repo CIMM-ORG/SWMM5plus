@@ -426,6 +426,33 @@ contains
                 ))
         end if
 
+        !% irregular channels
+        ptype => col_elemPGalltm(epg_CC_irregular)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
         !% circular conduits 
         ptype => col_elemPGalltm(epg_CC_circular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
@@ -665,6 +692,28 @@ contains
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
+
+       !% irregular channels 
+        ptype => col_elemPGac(epg_CC_irregular)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+
         
         !% circular conduits 
         ptype => col_elemPGac(epg_CC_circular_nonsurcharged)

@@ -13,12 +13,10 @@ module utility_allocate
     implicit none
 
 !-----------------------------------------------------------------------------
-!
 ! Description:
 !   This has all the large array allocation. The only other allocation
 !   should be in boundary conditions (module bc)
 !   All the top-level storage should be allocated in this module
-!
 !-----------------------------------------------------------------------------
 
     private
@@ -30,6 +28,7 @@ module utility_allocate
     ! public members
     public :: util_allocate_secondary_coarrays
     public :: util_allocate_linknode
+    public :: util_allocate_transect
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -45,6 +44,7 @@ module utility_allocate
     public :: util_allocate_curve_entries
     public :: util_allocate_check
     public :: util_allocate_boundary_ghost_elem_array
+    public :: util_allocate_temporary_arrays
 
 
 contains
@@ -175,6 +175,38 @@ contains
             if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_linknode
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_transect ()
+
+        !% 2D transectI
+        allocate(transectI(N_transect,Ncol_transectI),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectI')
+        transectI(:,:) = nullvalueI
+
+        !% 2D transectR
+        allocate(transectR(N_transect,Ncol_transectR),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectR')
+        transectR(:,:) = nullvalueR
+
+        !% 3D transectTableDepthR -- data by uniform depth depth
+        allocate(transectTableDepthR(N_transect,N_transect_depth_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
+        transectTableDepthR(:,:,:) = nullvalueR
+        
+        !% 3D transectTableAreaA -- data by uniform area discretization
+        allocate(transectTableAreaR(N_transect,N_transect_area_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
+        transectTableDepthR(:,:,:) = nullvalueR
+
+        !% 1D transectID
+        allocate(transectID(SWMM_N_transect),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'transectID')
+        transectID(:) = ""
+
+    end subroutine util_allocate_transect    
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1800,21 +1832,22 @@ contains
 !==========================================================================
 !
     subroutine util_allocate_curve_entries (curve_idx, num_entries)
-        !-----------------------------------------------------------------------------
-        !
-        !
-        !-----------------------------------------------------------------------------
-
-        integer, intent(in) :: curve_idx, num_entries
-        character(64)       :: subroutine_name = 'util_allocate_curve_entries'
-
-        !-----------------------------------------------------------------------------
-        if (crashYN) return
-        if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% allocate the value array of curve
-
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% allocates the curve table of curve_indx for the number of values
+        !% expected (num_entries)
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: curve_idx, num_entries
+            character(64)       :: subroutine_name = 'util_allocate_curve_entries'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (crashYN) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+                
+        !% allocate the value array of curve of the given curve_idx
         allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'curve entries')
 
@@ -1824,8 +1857,42 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_curve_entries
-!
-!==========================================================================
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_temporary_arrays ()
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% allocates miscellaneous temporary arrays that don't fit standard
+        !% sizes
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (crashYN) return
+        !%-----------------------------------------------------------------
+
+        !% array of integers of same size as number of BCup face
+        if (size(BC%P%BCup) > 0) then
+            allocate( temp_BCupI(size(BC%P%BCup),N_tempBCupI), stat=allocation_status, errmsg= emsg)
+            call util_allocate_check (allocation_status, emsg, 'temp_BCupI')
+
+            allocate( temp_BCupR(size(BC%P%BCup),N_tempBCupR), stat=allocation_status, errmsg= emsg)
+            call util_allocate_check (allocation_status, emsg, 'temp_BCupR')
+        else
+            !% if no BCup faces, then use size 1 to prevent seg fault
+            allocate( temp_BCupI(1,N_tempBCupI), stat=allocation_status, errmsg= emsg)
+            call util_allocate_check (allocation_status, emsg, 'temp_BCupI')
+
+            allocate( temp_BCupR(1,N_tempBCupR), stat=allocation_status, errmsg= emsg)
+            call util_allocate_check (allocation_status, emsg, 'temp_BCupR')
+        end if
+
+        temp_BCupI(:,:) = nullvalueI
+        temp_BCupR(:,:) = nullvalueR
+
+    end subroutine util_allocate_temporary_arrays
+!%    
+!%==========================================================================
 !==========================================================================
 !
     subroutine util_allocate_check(allocation_status, emsg, locationstring)
@@ -1858,5 +1925,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_check
+!%    
+!%==========================================================================
 
+!% END OF MODULE
+!%==========================================================================
+!%
 end module utility_allocate

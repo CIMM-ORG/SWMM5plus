@@ -111,7 +111,7 @@ module define_settings
         logical :: ApplyYN = .true.
         integer :: Approach = vshape_surcharge_only
         real(8) :: Coef = 1.0
-        real(8) :: FullDepthMultiplier = 2.0
+        real(8) :: FullDepthMultiplier = 1.0
     end type AdjustHeadType
 
     ! !% setting%Adjust%WidthDepth
@@ -150,6 +150,7 @@ module define_settings
         logical :: isVolumeConsOut          = .true.
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
+        logical :: isPreissmannNumberOut    = .false.
     end type DataOutType
 
     !% setting%Limiter%ArraySize
@@ -248,6 +249,7 @@ module define_settings
         integer (kind=8):: TimeMarchStart = 0
         integer (kind=8):: TimeMarchEnd = 0
         integer (kind=8):: InitializationEnd = 0
+        integer (kind=8):: PartitionEnd = 0
         integer (kind=8):: FinalOutputStart = 0
         integer (kind=8):: SharedStart_A = 0
         integer (kind=8):: SharedStop_A = 0
@@ -376,6 +378,7 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
+        logical :: AdjustLinkLengthYN = .true.
         real(8) :: LinkShortingFactor  = 0.33
         real(8) :: MinElemLengthFactor = 0.50
         integer :: MinElemLengthMethod = ElemLengthAdjust
@@ -495,9 +498,9 @@ module define_settings
 
     !% setting%PreissmannSlot
     type PreissmannSlotType
-        integer :: PreissmannSlotMethod = VariableSlot
-        real(8) :: PreissmannNumber = 1.0
-        real(8) :: PreissmannCelerity = 0.01
+        integer :: PreissmannSlotMethod = DynamicSlot
+        real(8) :: TargetPreissmannCelerity = 0.01
+        real(8) :: PreissmannAlpha = 3.0
     end type PreissmannSlotType
 
     !% setting%Profile
@@ -589,6 +592,7 @@ module define_settings
         real(8) :: CFL_hi_max = 0.7
         real(8) :: CFL_target = 0.5
         real(8) :: CFL_lo_max = 0.3
+        real(8) :: CFL_inflow_max = 0.5
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2 
         integer :: NstepsForCheck = 10
@@ -952,6 +956,11 @@ contains
 
     !% Discretization. =====================================================================
         !% -- Nominal element length adjustment
+        !%                      Discretization.AdjustLinkLengthYN
+        call json%get('Discretization.AdjustLinkLengthYN', logical_value, found)
+        if (found) setting%Discretization%AdjustLinkLengthYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdjustLinkLengthYN not found'
+
         !%                      Discretization.LinkShortingFactor
         call json%get('Discretization.LinkShortingFactor', real_value, found)
         if (found) setting%Discretization%LinkShortingFactor = real_value
@@ -1336,6 +1345,11 @@ contains
         call json%get('Output.DataOut.isPreissmannCelerityOut', logical_value, found)
         if (found) setting%Output%DataOut%isPreissmannCelerityOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannCelerityOut not found'
+
+        !%                       Dataout.isPreissmannNumberOut
+        call json%get('Output.DataOut.isPreissmannNumberOut', logical_value, found)
+        if (found) setting%Output%DataOut%isPreissmannNumberOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannNumberOut not found'
              
         !% --- Report settings
         !%                       Report.useSWMMinpYN
@@ -1415,26 +1429,26 @@ contains
             call util_lower_case(c)
             if (c == 'staticslot') then
                 setting%PreissmannSlot%PreissmannSlotMethod = StaticSlot
-            else if (c == 'variableslot') then
-                setting%PreissmannSlot%PreissmannSlotMethod = VariableSlot
+            else if (c == 'dynamicslot') then
+                setting%PreissmannSlot%PreissmannSlotMethod = DynamicSlot
             else
                 write(*,"(A)") 'Error - json file - setting.PreissmannSlot%PreissmannSlotMethod of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... staticslot, variableslot'
+                write(*,"(A)") '... StaticSlot, DynamicSlot'
                 stop 22496
             end if
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
-        
-        !%                      PreissmannNumber          
-        call json%get('PreissmannSlot.PreissmannNumber', real_value, found)
-        if (found) setting%PreissmannSlot%PreissmannNumber = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannNumber not found'
 
-        !%                      PreissmannCelerity
-        call json%get('PreissmannSlot.PreissmannCelerity', real_value, found)
-        if (found) setting%PreissmannSlot%PreissmannCelerity = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannCelerity not found'
+        !%                      TargetPreissmannCelerity
+        call json%get('PreissmannSlot.TargetPreissmannCelerity', real_value, found)
+        if (found) setting%PreissmannSlot%TargetPreissmannCelerity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.TargetPreissmannCelerity not found'
+
+        !%                      PreissmannAlpha
+        call json%get('PreissmannSlot.PreissmannAlpha', real_value, found)
+        if (found) setting%PreissmannSlot%PreissmannAlpha = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannAlpha not found'
 
     !% Profile. =====================================================================
         !%                       Profile.useYN
