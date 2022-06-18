@@ -216,6 +216,7 @@ module define_indexes
         enumerator :: lr_yOff                  ! shutoff depth for pumps    
         enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
         enumerator :: lr_BottomDepth
+        enumerator :: lr_BottomArea
         enumerator :: lr_Flowrate
         enumerator :: lr_Depth
         enumerator :: lr_DepthUp

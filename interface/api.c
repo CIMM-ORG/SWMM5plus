@@ -1154,6 +1154,10 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = FTTOM(Link[link_idx].xsect.yBot);
             break;
 
+        case linkf_xsect_aBot :
+            *value = CFTOCM(Link[link_idx].xsect.aBot);
+            break;
+            
         case linkf_xsect_yFull : 
             *value = FTTOM(Link[link_idx].xsect.yFull);
             break;

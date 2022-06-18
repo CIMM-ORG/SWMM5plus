@@ -42,27 +42,29 @@ module rectangular_triangular_channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), bottomdepth(:), volume(:), length(:), breadth(:), sideslope(:)
-        !real(8) :: bottomvolume(:)
+        real(8), pointer :: depth(:), bottomdepth(:), bottomarea(:), volume(:), length(:), breadth(:), sideslope(:)
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol) 
         depth       => elemR(:,er_Depth)
         bottomdepth => elemR(:,er_BottomDepth)
+        bottomarea  => elemR(:,er_BottomArea)
         volume      => elemR(:,er_Volume)
         length      => elemR(:,er_Length)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
-        sideslope   => elemSGR(:,esgr_rectangular_Triangular_Slope)
+        sideslope   => elemR(:,er_BottomSlope)
         !%-----------------------------------------------------------------------------  
 
-        !bottomvolume = (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP)
-
-        where(volume(thisP) <= (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP))
+        where(volume(thisP) <= bottomarea(thisP)*length(thisP))
             depth(thisP) = sqrt((volume(thisP)/length(thisP)) / sideslope(thisP))
         endwhere
 
-        where(volume(thisP) > (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP))
-            depth(thisP) = (volume(thisP) - (sideslope(thisP) * (bottomdepth(thisP) ** twoR)) * length(thisP)) / (length(thisP) * breadth(thisP)) + bottomdepth(thisP)
+        where(volume(thisP) > bottomarea(thisP)*length(thisP))
+            depth(thisP) = bottomdepth(thisP) + ((volume(thisP)/length(thisP)) - bottomarea(thisP)) / breadth(thisP)
         endwhere
+
+        if (setting%Debug%File%geometry) &
+                print *, 'depth =   ' , depth(thisP), 'volume = ', volume(thisP)
+                
 
     end subroutine rectangular_triangular_depth_from_volume
     !%  
@@ -85,6 +87,9 @@ module rectangular_triangular_channel
                         + ((elemR(indx,er_Depth) - elemR(indx,er_BottomDepth) * elemSGR(indx,esgr_rectangular_Triangular_TopBreadth))) !rectangular section
         end if
 
+        !if (setting%Debug%File%geometry) &
+            !print *, 'area = ' , outvalue
+
     end function rectangular_triangular_area_from_depth
 !%
 !%==========================================================================
@@ -101,7 +106,7 @@ module rectangular_triangular_channel
         !%-----------------------------------------------------------------------------
         depth       => elemR(:,er_Depth)
         bottomdepth => elemR(:,er_BottomDepth)
-        sideslope   => elemSGR(:,esgr_rectangular_Triangular_Slope)
+        sideslope   => elemR(:,er_BottomSlope)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         
@@ -111,6 +116,9 @@ module rectangular_triangular_channel
             outvalue = (bottomdepth(indx) * bottomdepth(indx) * sideslope(indx)) &  !triangular section
                         + ((depth(indx) - bottomdepth(indx)) * breadth(indx))       !rectangular section
         endif
+
+        if (setting%Debug%File%geometry) &
+        print *, 'area = ' , outvalue
 
     end function rectangular_triangular_area_from_depth_singular
 !%
@@ -130,7 +138,7 @@ module rectangular_triangular_channel
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol) 
         topwidth    => elemR(:,er_Topwidth)
-        sideslope   => elemSGR(:,esgr_rectangular_Triangular_Slope)
+        sideslope   => elemR(:,er_BottomSlope)
         depth       => elemR(:,er_Depth)
         bottomdepth => elemR(:,er_BottomDepth)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
@@ -143,6 +151,10 @@ module rectangular_triangular_channel
         where(depth(thisP) > bottomdepth(thisP))
             topwidth(thisP) = breadth(thisP)
         endwhere
+
+        if (setting%Debug%File%geometry) &
+                print *, 'topwidth = ' , topwidth(thisP)
+
 
     end subroutine rectangular_triangular_topwidth_from_depth
 !%    
@@ -158,7 +170,7 @@ module rectangular_triangular_channel
         real(8), pointer :: depth(:), bottomdepth(:), sideslope(:), breadth(:)
         !%-----------------------------------------------------------------------------
         depth       => elemR(:,er_Depth)
-        sideslope   => elemSGR(:,esgr_rectangular_Triangular_Slope)
+        sideslope   => elemR(:,er_BottomSlope)
         bottomdepth => elemR(:,er_BottomDepth)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
@@ -169,6 +181,8 @@ module rectangular_triangular_channel
             outvalue = breadth(indx)
         endif
 
+        if (setting%Debug%File%geometry) &
+        print *, 'topwidth = ' , outvalue
     end function rectangular_triangular_topwidth_from_depth_singular
 !%
 !%==========================================================================
@@ -201,6 +215,8 @@ module rectangular_triangular_channel
                                 + (twoR * ((depth(thisP) - bottomdepth(thisP)) + breadth(thisP)))           !rectangular section
         endwhere
 
+        if (setting%Debug%File%geometry) &
+                print *, 'perimeter = ' , perimeter(thisP)
     end subroutine rectangular_triangular_perimeter_from_depth
 !%    
 !%==========================================================================    
@@ -229,6 +245,9 @@ module rectangular_triangular_channel
                         + (twoR * ((depth(indx) - bottomdepth(indx)) + breadth(indx)))            !rectangular section
 
         endif
+
+        if (setting%Debug%File%geometry) &
+        print *, 'perimeter = ' , outvalue
 
     end function rectangular_triangular_perimeter_from_depth_singular
 !%    
@@ -261,6 +280,9 @@ module rectangular_triangular_channel
                             + (depth(thisP) - bottomdepth(thisP))   !rectangular Section
         endwhere
 
+        if (setting%Debug%File%geometry) &
+                print *, 'hydepth = ' , hyddepth(thisP)
+
     end subroutine rectangular_triangular_hyddepth_from_depth
 !%    
 !%==========================================================================  
@@ -287,6 +309,8 @@ module rectangular_triangular_channel
                      + (depth(indx) - bottomdepth(indx))    !rectangular section
         endif
 
+        if (setting%Debug%File%geometry) &
+        print *, 'hyddepth = ' , outvalue
     end function rectangular_triangular_hyddepth_from_depth_singular 
 !%    
 !%==========================================================================
@@ -303,7 +327,7 @@ module rectangular_triangular_channel
         real(8), pointer :: depth(:), bottomdepth(:), breadth(:), sideslope(:)
         !%-----------------------------------------------------------------------------
         depth       => elemR(:,er_Depth)
-        sideslope   => elemSGR(:,esgr_rectangular_Triangular_Slope)
+        sideslope   => elemR(:,er_BottomSlope)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         bottomdepth => elemR(:,er_BottomDepth)
         !%-----------------------------------------------------------------------------
@@ -314,6 +338,9 @@ module rectangular_triangular_channel
             outvalue = ((sideslope(indx) * bottomdepth(indx)) / (twoR * sqrt(oneR + (sideslope(indx) ** twoR)))) &                          !triangular section
                      + (((depth(indx) - bottomdepth(indx)) * breadth(indx)) / (breadth(indx) + (twoR * (depth(indx) - bottomdepth(indx))))) !rectangular section
         endif
+
+        if (setting%Debug%File%geometry) &
+        print *, 'hydradius = ' , outvalue
 
     end function rectangular_triangular_hydradius_from_depth_singular
     !%    

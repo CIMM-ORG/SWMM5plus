@@ -564,6 +564,7 @@ module define_api_keys
         enumerator :: api_linkf_xsect_wMax   ! 31
         enumerator :: api_linkf_xsect_yBot   ! 32
         enumerator :: api_linkf_xsect_yFull  ! 33
+        enumerator :: api_linkf_xsect_aBot   ! 34*
 
     end enum
 

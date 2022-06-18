@@ -145,7 +145,8 @@ enum api_linkf_attributes {
   linkf_geometry,          // 30 missing in api.c
   linkf_xsect_wMax,        // 31 *
   linkf_xsect_yBot,        // 32 *
-  linkf_xsect_yFull        // 33 *
+  linkf_xsect_yFull,        // 33 *
+  linkf_xsect_aBot,        // 34 *
 };
 
 // API vars are those necessary for external applications

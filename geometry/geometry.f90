@@ -485,6 +485,13 @@ module geometry
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% RECT_TRIANG
+        thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !% HACK Needs additional geometries
 
         !% JM with functional geomtery
@@ -674,11 +681,11 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
-         if (Npack > 0) then
-             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
-             call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
-         end if
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
@@ -731,11 +738,11 @@ module geometry
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
-         if (Npack > 0) then
-             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
-             call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
-         end if
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
@@ -790,11 +797,11 @@ module geometry
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
-         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
-         if (Npack > 0) then
-             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
-             call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-         end if
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
 
         !% HACK need other geometries
         if (setting%Debug%File%geometry) &

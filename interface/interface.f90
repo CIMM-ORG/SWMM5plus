@@ -1058,6 +1058,11 @@ contains
                     error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                     thisposition = trim(subroutine_name)//'_T19'
                     call print_api_error(error, thisposition)
+                else if (attr == api_linkf_xsect_yBot) then
+                    call load_api_procedure("api_get_linkf_attribute")
+                    error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
+                    thisposition = trim(subroutine_name)//'_T19'
+                    call print_api_error(error, thisposition)
                 else
                     !% rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
                     !% thus, set that link%R column to nullvalueR

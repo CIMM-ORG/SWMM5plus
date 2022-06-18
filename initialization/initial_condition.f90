@@ -699,13 +699,14 @@ contains
                 where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_geometryType)                            = rect_triang
                     elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Rectangular_Triangular_Slope)        = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * link%R(thisLink,lr_BottomDepth))
                     elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_BottomDepth)                             = link%R(thisLink,lr_BottomDepth)
+                    elemR(:,er_BottomArea)                              = elemR(:,er_BottomDepth) * elemR(:, er_BottomDepth) * elemSGR(:,esgr_Rectangular_Triangular_Slope) 
                     elemR(:,er_BottomSlope)                             = elemSGR(:,esgr_Rectangular_Triangular_Slope) / (twoR * elemR(:,er_BottomDepth))
 
-                    elemR(:,er_BottomArea)   = elemSGR(:,esgr_rectangular_Triangular_TopBreadth) * elemR(:,er_Depth)
-                    elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Rectangular_Triangular_Slope) &
-                                                + elemR(:,er_BottomArea)
+                    elemR(:,er_Area)         = elemR(:,er_BottomArea) &
+                                                + (elemSGR(:,esgr_rectangular_Triangular_TopBreadth) * (elemR(:,er_FullDepth)-elemR(:,er_BottomDepth)))
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
                     elemR(:,er_Area_N1)      = elemR(:,er_Area)
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
