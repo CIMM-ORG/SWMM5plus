@@ -19,6 +19,7 @@ module timeloop
               interface_call_runoff_execute, &
               interface_get_newRunoffTime
     use utility_crash
+    use control_hydraulics, only: control_update
 
     implicit none
 
@@ -97,6 +98,8 @@ contains
         startTime   = setting%Time%Start
         endTime     = setting%Time%End
         reportStart = setting%Output%Report%StartTime
+
+        !print *, 'top of time loop'
         
     ! !% initialize the times
         ! setting%Time%Hydrology%LastTime  = timeNow  
@@ -140,6 +143,7 @@ contains
         !     doHydrologyStepYN = .false.
     ! endif 
 
+
         !% --- set spinup controls and call spinup
         if (setting%Simulation%useSpinUp) then
             inSpinUpYN = .true.        
@@ -178,16 +182,20 @@ contains
             setting%Time%WallClock%TimeMarchStart = cval
         end if 
         
+        !print *, 'about to call tl_initialize_loop'
+
         !% --- set up for simulation after spin-up
         inSpinUpYN     = .false.
         SpinUpOutputYN = .false.
         !% --- initialize the time settings
         call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN)
 
+        !print *, 'about to call tl_outerloop'
+
         !-- perform the time-marching loop
         call tl_outerloop(doHydrologyStepYN, doHydraulicsStepYN, SpinUpOutputYN)
 
-
+        !print *, 'finished tl_outerloop'
 
     !% ========================================================================================
         !% BEGIN DO LOOP
@@ -259,7 +267,7 @@ contains
         !             !% --- using the full runoff rate for this period
         !             Qrate => subcatchR(:,sr_RunoffRate_baseline)
 
-        !             do mm = 1,SWMM_N_subcatch
+        !             do mm = 1,setting%SWMMinput%N_subcatch
         !                 !% --- only if this image holds this node
         !                 !print *, mm, eIdx(mm), Qlateral(eIdx(mm)), Qrate(mm)
         !                 if (this_image() .eq. sImage(mm)) then
@@ -395,20 +403,24 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             logical, intent(inout) :: doHydrologyStepYN, doHydraulicsStepYN
-            real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
-            real(8), pointer :: lastHydrologyTime, lastHydraulicsTime, dtTol
+            real(8), pointer :: nextHydrologyTime, nextHydraulicsTime, nextControlRuleTime
+            real(8), pointer :: lastHydrologyTime, lastHydraulicsTime, lastControlRuleTime, dtTol
         !%------------------------------------------------------------------
         !% Aliases  
-            nextHydrologyTime  => setting%Time%Hydrology%NextTime
-            nextHydraulicsTime => setting%Time%Hydraulics%NextTime
-            lastHydrologyTime  => setting%Time%Hydrology%LastTime
-            lastHydraulicsTime => setting%Time%Hydraulics%LastTime 
-            dtTol              => setting%Time%DtTol 
+            nextControlRuleTime => setting%Time%ControlRule%NextTime
+            nextHydrologyTime   => setting%Time%Hydrology%NextTime
+            nextHydraulicsTime  => setting%Time%Hydraulics%NextTime
+            lastControlRuleTime => setting%Time%ControlRule%LastTime
+            lastHydrologyTime   => setting%Time%Hydrology%LastTime
+            lastHydraulicsTime  => setting%Time%Hydraulics%LastTime 
+            dtTol               => setting%Time%DtTol 
         !%------------------------------------------------------------------
 
         !% --- set the last time storage
-        lastHydrologyTime  = setting%Time%Start
-        lastHydraulicsTime = setting%Time%Start
+        lastHydrologyTime   = setting%Time%Start
+        lastHydraulicsTime  = setting%Time%Start
+        lastControlRuleTime = setting%Time%Start
+
 
         !% local T/F that changes with each time step depending on whether or 
         !% not the hydrology or hydraulics are conducted in that step
@@ -425,6 +437,7 @@ contains
 
         !% get the initial dt and the next hydraulics time
         if (setting%Simulation%useHydraulics) then
+            call tl_smallestBC_timeInterval ()
             call tl_update_hydraulics_timestep()
             call util_crashstop(229873)
         else
@@ -438,6 +451,9 @@ contains
             call util_crashpoint(268743)
             call util_crashstop(268743)
         end if
+
+        !% --- set the next control rule evaluation time
+        nextControlRuleTime = lastControlRuleTime + real(setting%SWMMinput%RuleStep,8)
 
         !% check to see if there is an initial step to hydrology
         !% if not, then skip the initial tl_hydrology
@@ -485,8 +501,8 @@ contains
                     BCupdateYN = .true.
                 end if
     
-                    !write(6,*) ' ... beginning time loop ===============',setting%Time%Now/3600.d0
-                    !call util_CLprint ('at start of time loop')
+                    write(6,*) ' ... beginning time loop ===============',setting%Time%Now/3600.d0
+                    call util_CLprint ('at start of time loop')
     
                 !% --- push the old values down the stack 
                 call tl_save_previous_values()
@@ -505,24 +521,30 @@ contains
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
     
-                    !% HACK -- much of the following needs to be combined into an upper level BC subroutine
-    
-                    !% --- get updated boundary conditions
-                    if (BCupdateYN) call bc_update() 
+                    print *, 'about to update BC in timeloop'
 
-                    if (BCupdateYN) call tl_lateral_inflow()
-    
-                    ! !% HACK put lateral here for now -- moved from face_interpolation.
-                    ! !% set lateral to zero
-                    ! Qlateral => elemR(:,er_FlowrateLateral)
-                    ! Qlateral(:) = zeroR 
-            
-                    ! !% --- add lateral inflow BC to lateral inflow accumulator
-                    ! npack   => npack_elemP(ep_BClat)
-                    ! !% --- note that thisP and thisBC must be the same size or there is something wrong
-                    ! thisP   => elemP(1:npack,ep_BClat)
-                    ! thisBC  => BC%P%BClat
-                    ! Qlateral(thisP) = Qlateral(thisP) + BC%flowR(thisBC,br_value) 
+                    !% --- get updated boundary conditions
+                    if (BCupdateYN) then
+                        call bc_update() 
+                        call tl_lateral_inflow()
+                        call tl_smallestBC_timeInterval ()
+                    end if
+
+                    print *, 'about to perform control rules '
+
+                    !% --- perform control rules
+                    if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
+                        if (setting%Time%Now .ge. setting%Time%ControlRule%NextTime) then
+                            !% --- evaluate all the controls
+                            !%     required for all images because monitorI data are spread
+                            !%     across all images.
+                            call control_update ()
+                            !% --- set the next time the controls will be evaluated
+                            setting%Time%ControlRule%NextTime = setting%Time%Now + real(setting%SWMMinput%RuleStep,8)
+                        end if
+                    end if
+
+                    print *, 'about to call tl_subcatchment_lateral_inflow'
     
                     !% --- add subcatchment inflows
                     !%     note, this has "useHydrology" and not "doHydrologyStepYN" because the
@@ -532,6 +554,7 @@ contains
     
                     !% --- perform hydraulic routing
                     call tl_hydraulics()
+
     
                     !% --- close the clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -594,30 +617,6 @@ contains
                 !% ---increment the time step and counters for the next time loop
                 call tl_increment_timestep_and_counters(doHydraulicsStepYN, doHydrologyStepYN)
     
-            !% --- check for exit of spinup period - reset clock to start simulation
-                ! if (thisSpinUpYN) then
-                !     print *, 'here times '
-                !     print *, setting%Time%Now, setting%Simulation%SpinUpDays * seconds_per_day, dtTol
-                !     if (setting%Time%Now .ge. setting%Simulation%SpinUpDays * seconds_per_day - dtTol) then
-                !         !% --- spin-up is finished
-                !         print *, 'finished spinup', setting%Simulation%stopAfterSpinUp
-                !         inSpinUpYN = .false.
-                !         if (.not. setting%Simulation%stopAfterSpinUp) then
-                !             !% reset the time to begin loop again.
-                !             thisEndTime = setting%Time%End - dtTol
-                !             timeNow = zeroR
-                !             setting%Time%Hydrology%LastTime  = timeNow  
-                !             setting%Time%Hydraulics%LastTime = timeNow
-                !             print *, 'times inside ', thisEndTime, timeNow
-                !         else
-                !             !% --- stopAfterSpinUp == true
-                !             !%     outer do loop will be complete and run will finish  
-                !         end if
-                !         print *, 'times at end: ', thisEndTime, timeNow
-                !         !stop 4540987
-                !     end if 
-             ! end if
-    
                 !% --- close the hydraulics time tick
                 sync all
                 if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -628,6 +627,8 @@ contains
                         + setting%Time%WallClock%HydraulicsStop &
                         - setting%Time%WallClock%HydraulicsStart
                 end if
+
+                
     
                 !% --- check for blowup conditions
                 call util_crashcheck (773623)
@@ -678,7 +679,7 @@ contains
 
         !% cycle through the subcatchments to get the runoff 
         !% ii-1 required in arg as C arrays start from 0
-        do ii = 1,SWMM_N_subcatch
+        do ii = 1,setting%SWMMinput%N_subcatch
             sRunoff(ii) = interface_get_subcatch_runoff(ii-1)  
         end do
 
@@ -720,9 +721,6 @@ contains
 
         !% --- repack all the dynamic arrays
         call pack_dynamic_arrays()
-
-        !% --- evaluate controls defined in the setting file
-        call control_evaluate()
 
         !% --- ensure that the conservative flux terms are exactly zero in the entire array
         !%     so that we can be confident of conservation computation. 
@@ -815,7 +813,7 @@ contains
             Qrate => subcatchR(:,sr_RunoffRate_baseline)
             Qlateral => elemR(:,er_FlowrateLateral)
         !%------------------------------------------------------------------
-        do mm = 1,SWMM_N_subcatch
+        do mm = 1,setting%SWMMinput%N_subcatch
             !% --- only if this image holds this node
             !print *, mm, eIdx(mm), Qlateral(eIdx(mm)), Qrate(mm)
             if (this_image() .eq. sImage(mm)) then
@@ -1158,6 +1156,12 @@ contains
         call tl_limit_LatInflow_dt (newDT)
             ! print *, 'dt Qlat limit   ',newDt
 
+        !% --- limit by inflow/head external boundary conditions time intervals
+        if (setting%VariableDT%limitByBC_YN) then
+            !print *, 'here limiting ',newDT, setting%BC%smallestTimeInterval
+            newDT = min(setting%BC%smallestTimeInterval,newDT)
+        end if
+
         !% --- if dt is large and there is more than 2 steps, then round to an integer number
         if ((matchHydrologyStep) .and. (useHydrology) .and. (neededSteps .le. 2)) then
             !% don't round the dt
@@ -1176,6 +1180,7 @@ contains
                 !%  HACK -- should round to 3 places for smaller numbers
             end if
         end if
+
 
         ! print *, 'newDT 10',newDT
         ! print *, ' '
@@ -1798,47 +1803,76 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine control_evaluate()
+    subroutine tl_smallestBC_timeInterval ()
         !%------------------------------------------------------------------
-        !% Description:
-        !% Evaluates control and updates elemR(:,er_setting) column
+        !% Description
+        !% gets the smallest time interval in the latest BC data
         !%------------------------------------------------------------------
-        !% Declarations:
-            integer          :: ii, loc
-            integer, pointer :: nControls, eIdx
-            real(8), pointer :: TimeNow, TargetSetting(:), TimeArray(:), SettingArray(:)
+        !% Declarations
+            real(8) :: smallHead, smallFlow
         !%------------------------------------------------------------------
-        !% Preliminaries:
-        ! if (crashYN) return
-        !%------------------------------------------------------------------
-        !% Aliases:
-        TimeNow   => setting%Time%Now 
-        nControls => setting%Control%NumControl
-        TargetSetting  => elemR(:,er_TargetSetting)
 
-        !% only use controls if it is present in the settings file
-        if (nControls > zeroI) then
-            do ii = 1,nControls
-                eIdx          => setting%Control%ElemIdx(ii)
-                TimeArray     => setting%Control%TimeArray(:,ii)
-                SettingArray  => setting%Control%SettingsArray(:,ii)
-
-                !% now find where the current time (TImeNow) falls between
-                !% the control time array (TimeArray)
-                !% here, it is found using the maxloc Intrinsic function
-                !% Returns the location of the minimum value of all elements 
-                !% in an array, a set of elements in an array, or elements in 
-                !% a specified dimension of an array. This function works only when
-                !% the current time is above the minimum value in the TimeArray array
-                if (TimeNow > minval(TimeArray)) then
-                    loc = maxloc(TimeArray, 1, TimeArray <= TimeNow)
-                    !% setting can not be greater than 1
-                    TargetSetting(eIdx) = min(SettingArray(loc), oneR)
-                end if
-            end do
+        if (N_headBC > 0) then
+            smallHead = minval(BC%headR(:,br_timeInterval))
+        else
+            smallHead = abs(nullvalueR)
+        end if
+        
+        if (N_flowBC > 0) then
+            smallFlow = minval(BC%flowR(:,br_timeInterval))
+        else    
+            smallFlow = abs(nullvalueR)
         end if
 
-    end subroutine control_evaluate 
+        setting%BC%smallestTimeInterval = min(smallFlow, smallHead)
+
+    end subroutine tl_smallestBC_timeInterval
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+    !% OBSOLETE APPROACH
+    ! subroutine control_evaluate()
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Evaluates control and updates elemR(:,er_Setting) column
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer          :: ii, loc
+    !         integer, pointer :: nControls, eIdx
+    !         real(8), pointer :: TimeNow, TargetSetting(:), TimeArray(:), SettingArray(:)
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !     ! if (crashYN) return
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !     TimeNow   => setting%Time%Now 
+    !     nControls => setting%Control%NumControl
+    !     TargetSetting  => elemR(:,er_TargetSetting)
+
+    !     !% only use controls if it is present in the settings file
+    !     if (nControls > zeroI) then
+    !         do ii = 1,nControls
+    !             eIdx          => setting%Control%ElemIdx(ii)
+    !             TimeArray     => setting%Control%TimeArray(:,ii)
+    !             SettingArray  => setting%Control%SettingsArray(:,ii)
+
+    !             !% now find where the current time (TImeNow) falls between
+    !             !% the control time array (TimeArray)
+    !             !% here, it is found using the maxloc Intrinsic function
+    !             !% Returns the location of the minimum value of all elements 
+    !             !% in an array, a set of elements in an array, or elements in 
+    !             !% a specified dimension of an array. This function works only when
+    !             !% the current time is above the minimum value in the TimeArray array
+    !             if (TimeNow > minval(TimeArray)) then
+    !                 loc = maxloc(TimeArray, 1, TimeArray <= TimeNow)
+    !                 !% setting can not be greater than 1
+    !                 TargetSetting(eIdx) = min(SettingArray(loc), oneR)
+    !             end if
+    !         end do
+    !     end if
+
+    ! end subroutine control_evaluate 
 !%
 !%==========================================================================
 !% END OF MODULE

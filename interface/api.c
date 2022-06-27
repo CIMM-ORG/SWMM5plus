@@ -45,6 +45,143 @@ char errmsg[1024];
 // but it is passed as a void pointer. This is because the object
 // is also used by the Fortran engine. Treating Interface as void*
 // facilitates interoperability
+//===============================================================================
+int DLLEXPORT api_controls_count(
+    int* nRules, int* nPremise, int* nThenAction, int* nElseAction)
+//===============================================================================
+    ///
+    /// Input: integers that will be overwritten
+    /// Output: counts of various control rules
+    /// Purpose: provide sizes for setting arrays in SWMM5+
+{
+    int ii;
+    ii = controls_display();
+    *nRules      = controls_count_rules();
+    *nPremise    = controls_count_premise();
+    *nThenAction = controls_count_thenAction();
+    *nElseAction = controls_count_elseAction();
+
+    return 0;
+}
+
+//===============================================================================
+int DLLEXPORT api_controls_get_premise_data(
+    int* locationL,        int* locationR,
+    int* islinkL,          int* islinkR,
+    int* attributeL,       int* attributeR, 
+    int* thisPremiseLevel, int rIdx)
+//===============================================================================
+    ///
+    /// Input: values that will be ovewritten
+    /// Output: values containging control premise information
+    /// Purpose: gets data for the monitoring arrays for SWMM5+
+{
+    int success = 0;
+
+    //printf(" rIDX here in api %d \n ",rIdx);
+
+    success = controls_get_premise_data( 
+                locationL,  locationR, 
+                islinkL,    islinkR, 
+                attributeL, attributeR, 
+                thisPremiseLevel,rIdx);         
+
+    return success;
+}
+
+//===============================================================================
+int DLLEXPORT api_controls_get_action_data(
+    int* location,     
+    int* attribute,
+    int* thisActionLevel, int rIdx, int isThen)
+//===============================================================================
+    ///
+    /// Input: values that will be ovewritten
+    /// Output: values containging control action information
+    /// Purpose: gets data for the action arrays for SWMM5+
+{
+    int success = 0;
+
+    //printf(" rIDX here in api %d \n ",rIdx);
+
+    success = controls_get_action_data( 
+                location,  
+                attribute,
+                thisActionLevel,rIdx,isThen);
+
+    return success;
+}
+
+//===============================================================================
+int DLLEXPORT api_controls_transfer_monitor_data(     
+    double Depth, double Volume, double Inflow, double Flow, 
+    double StatusSetting, double TimeLastSet, int idx, int isLink)
+//===============================================================================
+    ///
+    /// Input: values from SWMM5+ finite-volume solution applied to 
+    /// EPA-SWMM Link or Node with LinkNodeNum index.
+    /// Purpose: set up EPA-SWMM link/nodes for control evaluation
+{
+    if (isLink)
+    {
+        Link[idx].newDepth = MTOFT(Depth);
+        // Head is not valid for links
+        // Volume is not valid for links
+        // Inflow is not valid for links
+        Link[idx].newFlow  = CMTOCFT(Flow);
+        // note that for conduit and pumps, the following is the r_STATUS
+        // while for orifice, weirs and outlets this is the r_SETTING
+        // but they both get stored in the same place in the Link[].setting
+        // HACK POSSIBLE PROBLEM IN EPA-SWMM, OUTLET not handled in controls.c/getVariableValue
+        Link[idx].setting  = StatusSetting;
+        Link[idx].timeLastSet = TimeLastSet;
+    }
+    else
+    {
+        Node[idx].newDepth = MTOFT(Depth);
+        // Head is not stored for nodes in EPA-SWMM, so r_HEAD in controls
+        // is handled by newDepth and stored invertElev
+        Node[idx].newVolume  = CMTOCFT(Volume);
+        Node[idx].newLatFlow = CMTOCFT(Inflow);
+        // Flow is not valid for nodes
+        // Status/Setting is not valid for nodes
+        // TimeLastSet is not valid for nodes
+    }
+    return 0;
+}    
+
+//===============================================================================
+int DLLEXPORT api_controls_execute(
+    double currentTimeEpoch, double ElapsedDays, double dtDays)
+//===============================================================================
+    /// Purpose: calls the controls_evaluate in EPA-SWMM
+{
+
+    controls_evaluate(currentTimeEpoch, ElapsedDays, dtDays); 
+
+    return 0; 
+}
+
+//===============================================================================
+int DLLEXPORT api_teststuff()
+//===============================================================================
+{
+    int ii, nPremise, nThenAction, nElseAction;
+
+    printf(" \n \n in api_teststuff \n \n ");
+
+    ii = controls_display();
+
+    nPremise    = controls_count_premise();
+    nThenAction = controls_count_thenAction();
+    nElseAction = controls_count_elseAction();
+
+    //printf("\n %d \n ",nElseAction);
+
+    printf(" \n N premise, then, else locations: %d %d %d \n", nPremise, nThenAction, nElseAction);
+
+    return 0;
+}
 
 //===============================================================================
 int DLLEXPORT api_initialize(
@@ -228,7 +365,6 @@ int DLLEXPORT api_get_flowBC(
     // handle dry weather inflows
     attr = nodef_has_dwfInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
-
     
     //printf("          node idx %d \n ",node_idx);
     //printf("          dry weather flow val %g \n ",val);
@@ -277,7 +413,7 @@ int DLLEXPORT api_get_flowBC(
         //printf("*flowBC %g \n",CFTOCM(total_factor * Node[node_idx].dwfInflow->avgValue));
     }
 
-    // handle external inflows
+    // check to see if external inflow exists
     attr = nodef_has_extInflow;
     api_get_nodef_attribute(node_idx, attr, &val);
     //printf("          here node_idx %d \n",node_idx);
@@ -382,64 +518,53 @@ int DLLEXPORT api_get_headBC(
     int node_idx, double current_datetime, double* headBC)
 //===============================================================================
 {
-    int ii = Node[node_idx].subIndex;
-
-//     printf("  in api_get_headBC with outfall %d \n",Outfall[ii].type);
-//     printf("     node_idx = %d \n",node_idx);
-//     printf("     subIdx   = %d \n",ii);
-//     printf("     FIXED_OUTFALL = %d \n",FIXED_OUTFALL);
-//     printf("     NORMAL_OUTFALL = %d \n",NORMAL_OUTFALL);
-//     printf("     FREE_OUTFALL = %d \n",FREE_OUTFALL);
-//     printf("     TIDAL_OUTFALL = %d \n",TIDAL_OUTFALL);
-//    printf("     TIMESERIES_OUTFALL = %d \n",TIMESERIES_OUTFALL);
+    double   xx, yy;                           // x,y values in a table
+    int      kidx;                            // table index
+    int      ii = Node[node_idx].subIndex;    // outfall index
     
+    //     printf("  in api_get_headBC with outfall %d \n",Outfall[ii].type);
+    //     printf("     node_idx = %d \n",node_idx);
+    //     printf("     subIdx   = %d \n",ii);
+    //     printf("     FIXED_OUTFALL = %d \n",FIXED_OUTFALL);
+    //     printf("     NORMAL_OUTFALL = %d \n",NORMAL_OUTFALL);
+    //     printf("     FREE_OUTFALL = %d \n",FREE_OUTFALL);
+    //     printf("     TIDAL_OUTFALL = %d \n",TIDAL_OUTFALL);
+    //    printf("     TIMESERIES_OUTFALL = %d \n",TIMESERIES_OUTFALL);
+    
+    // this mimics node.c/ outfall_setOutletDepth
     switch (Outfall[ii].type)
-    {
+    { 
+        case FREE_OUTFALL:
+            // free outfall merely returns invert elevation, with yCrit and yNorm
+            // computation made in BC code of SWMM5+
+            *headBC = FTTOM(Node[node_idx].invertElev);
+            return 0;
+
+        case NORMAL_OUTFALL:
+            // normal outfall merely returns invert elevation, with yNorm
+            // computation made in BC code of SWMM5+
+            *headBC = FTTOM(Node[node_idx].invertElev);
+            return 0;    
+
         case FIXED_OUTFALL:
             *headBC = FTTOM(Outfall[ii].fixedStage);
             //printf(" here %d %g \n ", ii, Outfall[ii].fixedStage);
             return 0;
 
-        // case NORMAL_OUTFALL:
-        //     *headBC = API_NULL_VALUE_I;
-        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
-        //     printf("Error for outfall type NORMAL_OUTFALL \n");
-        //     return api_err_not_developed;
+        case TIDAL_OUTFALL:
+            // --- tidal outfall is always in terms of stage height
+            kidx = Outfall[ii].tideCurve;
+            table_getFirstEntry(&Curve[kidx], &xx, &yy);
+            xx += (current_datetime - floor(current_datetime) ) * 24.0;
+            *headBC = FTTOM(table_lookup(&Curve[kidx], xx )); 
+            return 0;
 
-        // case FREE_OUTFALL:
-        //     *headBC = API_NULL_VALUE_I;
-        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
-        //     printf("Error for outfall type FREE_OUTFALL \n");
-        //     return api_err_not_developed;
-
-        // case TIDAL_OUTFALL:
-        //     *headBC = API_NULL_VALUE_I;
-        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
-        //     printf("Error for outfall type TIDAL_OUTFALL \n");
-        //     return api_err_not_developed;
-
-        // case TIMESERIES_OUTFALL:    
-        //     *headBC = API_NULL_VALUE_I;
-        //     sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
-        //     api_report_writeErrorMsg(api_err_not_developed, errmsg);
-        //     printf("Error for outfall type TIMESERIES_OUTFALL \n");
-        //     return api_err_not_developed;
+        case TIMESERIES_OUTFALL:  
+            // --- timeseries outfall is given as a stage series (not depth) 
+            kidx = Outfall[ii].stageSeries;
+            *headBC     = FTTOM(table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE)); 
+            return 0;
         
-        case FREE_OUTFALL:
-            *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
-            return 0;
-
-        case NORMAL_OUTFALL:
-            *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
-            return 0;
-
-        case TIMESERIES_OUTFALL:
-            *headBC = FTTOM(Node[node_idx].initDepth + Node[node_idx].invertElev);
-            return 0;
-
         default:
             *headBC = API_NULL_VALUE_I;
             sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[ii].type, Node[node_idx].ID);
@@ -450,7 +575,7 @@ int DLLEXPORT api_get_headBC(
 }
 
 //===============================================================================
-int DLLEXPORT api_get_SWMM_controls(
+int DLLEXPORT api_get_SWMM_setup(
     int*  flow_units,
     int*  route_model,
     int*  allow_ponding,
@@ -460,6 +585,7 @@ int DLLEXPORT api_get_SWMM_controls(
     int*  force_main_eqn,
     int*  max_trials,
     int*  normal_flow_limiter,
+    int*  rule_step,
     int*  surcharge_method,
     int*  tempdir_provided,
     double* variable_step,
@@ -472,11 +598,11 @@ int DLLEXPORT api_get_SWMM_controls(
     double* sys_flow_tol,
     double* lat_flow_tol)
 //===============================================================================
-// Note, at this time this only gets the SWMM controls that are important to hydraulics
+    // Note, at this time this only gets the SWMM setup that are important to hydraulics
 {
     int error;
 
-    error = check_api_is_initialized("api_get_SWMM_controls");
+    error = check_api_is_initialized("api_get_SWMM_setup");
     if (error) return error;
 
     *flow_units = FlowUnits;
@@ -496,6 +622,8 @@ int DLLEXPORT api_get_SWMM_controls(
     *max_trials = MaxTrials;
 
     *normal_flow_limiter = NormalFlowLtd;
+
+    *rule_step = RuleStep;
 
     *surcharge_method = SurchargeMethod;
 
@@ -530,6 +658,7 @@ int DLLEXPORT api_get_SWMM_controls(
 
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_SWMM_times(
     double* starttime_epoch,
@@ -577,7 +706,7 @@ int DLLEXPORT api_get_nodef_attribute(
     int node_idx, int attr, double* value)
 //===============================================================================
 {
-    int error, bpat, tseries_idx;
+    int error, bpat, idx, tseries_idx;
 
     //printf("==== %d \n",attr);
 
@@ -615,6 +744,94 @@ int DLLEXPORT api_get_nodef_attribute(
                     return api_err_wrong_type;
             }
             break;
+
+        
+        case nodef_head_tSeries :
+            if (Node[node_idx].type == OUTFALL)   
+            {
+                // the outfall index
+                idx = Node[node_idx].subIndex; 
+                //printf(" here in API %d %d \n ",Outfall[idx].type, TIMESERIES_OUTFALL);
+        
+                switch (Outfall[idx].type) {
+                    case TIMESERIES_OUTFALL:
+                        //printf(" outfall type in timeseries %d \n ",Outfall[idx].type);
+                         // the stage series
+                        *value = Outfall[idx].stageSeries;
+                        break;
+                    case TIDAL_OUTFALL:
+                        *value = Outfall[idx].tideCurve;
+                        break;
+                    default:
+                        //printf(" outfall type in default %d \n ",Outfall[idx].type);
+                        *value = API_NULL_VALUE_I;
+                        sprintf(errmsg, "Attemptint to extract node_head_tSeries for NODE %s, which doesn't have an time series [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                        api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                        return api_err_wrong_type;
+                }    
+            }
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Attempting to extract node_head_tSeries for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+        case nodef_head_tSeries_x1  :
+            if (Node[node_idx].type == OUTFALL)
+            {
+                // the outfall index
+                idx = Node[node_idx].subIndex;
+                tseries_idx = Outfall[idx].stageSeries;
+                if (tseries_idx >= 0)        
+                    *value = Tseries[tseries_idx].x1;
+                else
+                {
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting node_head_tSeries_x1 for NODE %s, which doesn't have a head timeseries [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;   
+                }
+                break;
+            }    
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Attempting to extract node_head_tSeries_x1 for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+        case nodef_head_tSeries_x2  :
+           if (Node[node_idx].type == OUTFALL)
+            {
+                // the outfall index
+                idx = Node[node_idx].subIndex;
+                tseries_idx = Outfall[idx].stageSeries;
+                if (tseries_idx >= 0)        
+                    *value = Tseries[tseries_idx].x2;
+                else
+                {
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting node_head_tSeries_x2 for NODE %s, which doesn't have a head timeseries [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;   
+                }
+                break;
+            }    
+            else
+            {
+                *value = API_NULL_VALUE_I;
+                sprintf(errmsg, "Attempting to extract node_head_tSeries_x2 for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                return api_err_wrong_type;
+            }
+            break;
+
+
         case nodef_invertElev  :
             *value = FTTOM(Node[node_idx].invertElev);
             break;
@@ -628,7 +845,7 @@ int DLLEXPORT api_get_nodef_attribute(
                 case OUTFALL :
                     error = api_get_headBC(node_idx, StartDateTime, value);
                     if (error) return error;
-                    *value -= FTTOM(Node[node_idx].invertElev);
+                    //*value -= FTTOM(Node[node_idx].invertElev);
                     break;
                 default :
                     *value = FTTOM(Node[node_idx].initDepth);
@@ -675,6 +892,7 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             break;
 
+                
         case nodef_extInflow_tSeries :
             if (Node[node_idx].extInflow)
             {
@@ -1225,6 +1443,14 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = Link[link_idx].setting;
             break;
 
+        case linkf_targetsetting :
+            *value = Link[link_idx].targetSetting;
+            break;
+
+        case linkf_timelastset :
+            *value = Link[link_idx].timeLastSet;
+            break;
+
         case linkf_left_slope :
             *value = api->double_vars[api_left_slope][link_idx];
             break;
@@ -1571,6 +1797,7 @@ int DLLEXPORT api_get_linkf_attribute(
     // }    
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_transectf_attribute(
     int transect_idx, int attr, double* value)
@@ -1581,7 +1808,7 @@ int DLLEXPORT api_get_transectf_attribute(
     error = check_api_is_initialized("api_get_transectf_attribute");
     if (error) return error;
 
-// the following are in the order of the enumeration in define_api_keys.f90 and api.h
+    // the following are in the order of the enumeration in define_api_keys.f90 and api.h
     switch (attr) {
         case transectf_yFull :
             *value = FTTOM(Transect[transect_idx].yFull);
@@ -1620,12 +1847,13 @@ int DLLEXPORT api_get_transectf_attribute(
     }
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_transect_table(
     int transect_idx, int table_len,
     double* tarea, double* twidth, double* thydradius)
 //===============================================================================
-// obtains the area, depth, and hydraulic radius entries for a transect
+    // obtains the area, depth, and hydraulic radius entries for a transect
 {
     int error;
     int ii;
@@ -1643,10 +1871,11 @@ int DLLEXPORT api_get_transect_table(
          }
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_N_TRANSECT_TBL()
 //===============================================================================
-// this is the SWMM-C number of depth levels in transect table
+    // this is the SWMM-C number of depth levels in transect table
 {
     int error;
 
@@ -1655,6 +1884,7 @@ int DLLEXPORT api_get_N_TRANSECT_TBL()
 
     return N_TRANSECT_TBL;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_num_objects(
     int object_type)
@@ -1667,6 +1897,7 @@ int DLLEXPORT api_get_num_objects(
     //     return api->num_objects[object_type - API_START_INDEX];
     return Nobjects[object_type];
 }
+
 //===============================================================================
 int DLLEXPORT api_get_object_name(
     int object_idx, char* object_name, int object_type)
@@ -1734,6 +1965,7 @@ int DLLEXPORT api_get_object_name(
     }
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_object_name_len(
     int object_idx, int object_type, int* len)
@@ -1785,6 +2017,7 @@ int DLLEXPORT api_get_object_name_len(
     //     return api_err_not_developed;
     // }
 }
+
 //===============================================================================
 int DLLEXPORT api_get_num_table_entries(
     int table_idx, int table_type, int* num_entries)
@@ -1835,6 +2068,7 @@ int DLLEXPORT api_get_num_table_entries(
 
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_table_attribute(
     int table_idx, int attr, double* value)
@@ -1877,6 +2111,7 @@ int DLLEXPORT api_get_table_attribute(
     // }
     return 0;
 }
+
 //===============================================================================
 int DLLEXPORT api_get_first_entry_table(
     int table_idx, int table_type, double* xx, double* yy)
@@ -1911,6 +2146,7 @@ int DLLEXPORT api_get_first_entry_table(
                     *yy /= SI_Unit_Conversion(LENGTH);
                     break;
                 case CONTROL_CURVE:
+                    printf(" \n \n CONTROL CURVE CALLED FOR, NOT IMPLMEMENTED YET? \n \n");
                     break;
                 case WEIR_CURVE:
                     *xx /= SI_Unit_Conversion(LENGTH);
@@ -2062,7 +2298,7 @@ int DLLEXPORT api_get_next_entry_tseries(
     x2 = Tseries[tseries_idx].x2;
     y2 = Tseries[tseries_idx].y2;
 
-    //printf("x2, timemax %g %g \n ",x2, timemax);
+    //printf("y2, x2, timemax %g %g %g \n ",y2, x2, timemax);
 
     // only get a new table entry if the present upper time (x2) is less than the maximum time.
     if (x2 < timemax)
@@ -2088,14 +2324,15 @@ int DLLEXPORT api_get_next_entry_tseries(
     // }
     return success;
 }
+
 //===============================================================================
 int DLLEXPORT api_reset_timeseries_to_start(
     int tseries_idx)
-//  
-//  Input: SWMM index of time series
-//  Output: TRUE if success in resetting to first entry
-//          FALSE if unsuccessful.   
 //===============================================================================
+    //  
+    //  Input: SWMM index of time series
+    //  Output: TRUE if success in resetting to first entry
+    //          FALSE if unsuccessful.   
 {
     int success;
     double xx, yy;
@@ -2109,6 +2346,7 @@ int DLLEXPORT api_reset_timeseries_to_start(
 
     return success;
 }
+
 //===============================================================================
 // --- Output Writing (Post Processing)
 // * The follwing functions should only be executed after finishing
@@ -2124,7 +2362,7 @@ int DLLEXPORT api_reset_timeseries_to_start(
 int DLLEXPORT api_write_output_line(
     double t)
 //===============================================================================
-// t: elapsed time in seconds
+    // t: elapsed time in seconds
 {
 
     // --- check that simulation can proceed
@@ -2145,7 +2383,7 @@ int DLLEXPORT api_write_output_line(
 int DLLEXPORT api_update_nodeResult(
     int node_idx, int resultType, double newNodeResult)
 //===============================================================================
-// PRESENTLY NOT USED 20220521
+    // PRESENTLY NOT USED 20220521
 {
     // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
     // needs to have unit conversions added if it is to be used
@@ -2179,7 +2417,7 @@ int DLLEXPORT api_update_nodeResult(
 int DLLEXPORT api_update_linkResult(
     int link_idx, int resultType, double newLinkResult)
 //===============================================================================
-// PRESENTLY NOT USED 20220521
+    // PRESENTLY NOT USED 20220521
 {
 
     // WARNING -- this stores data from SWMM5+ into EPA-SWMM and
@@ -2218,7 +2456,7 @@ int DLLEXPORT api_update_linkResult(
 int DLLEXPORT api_export_linknode_properties(
     int units)
 //===============================================================================
-// PRESENTLY NOT USED 20220521
+    // PRESENTLY NOT USED 20220521
 {
     //  link
     int li_idx[Nobjects[LINK]];
@@ -2418,7 +2656,7 @@ int DLLEXPORT api_export_linknode_properties(
 int DLLEXPORT api_export_link_results(
     int link_idx)
 //===============================================================================
-// PRESENTLY NOT USED 20220521
+    // PRESENTLY NOT USED 20220521
 {
 	FILE* tmp;
     DateTime days;
@@ -2461,7 +2699,7 @@ int DLLEXPORT api_export_link_results(
 int DLLEXPORT api_export_node_results(
     int node_idx)
 //===============================================================================
-// PRESENTLY NOT USED 20220521
+    // PRESENTLY NOT USED 20220521
 {
 	FILE* tmp;
     DateTime days;
@@ -2523,7 +2761,7 @@ int DLLEXPORT api_find_object(
 //===============================================================================
 int DLLEXPORT api_call_runoff_execute()
 //===============================================================================
-// calls the runoff_execute() procedure in SWMM-C
+    // calls the runoff_execute() procedure in SWMM-C
 {
     // printf(" in api_call_runoff_execute");
 
@@ -2581,6 +2819,7 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     
     return 0;
 }
+
 // -------------------------------------------------------------------------
 // |
 // |  Private functionalities
@@ -2740,6 +2979,7 @@ int add_link(
     api_report_writeErrorMsg(api_err_internal, "[api.c -> add_link]");
     return api_err_internal;
 }
+
 //===============================================================================
 int check_api_is_initialized(
     char * function_name)
@@ -2755,6 +2995,7 @@ int check_api_is_initialized(
     }
     return 0;
 }
+
 //===============================================================================
 int getTokens(
     char *ss)

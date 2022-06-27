@@ -1303,8 +1303,8 @@ contains
         !% OutLink...  leading size is total number of links with output
         !% OutNodeElem...  leading size is total number of nodes from elements
         !% OutNodeFace...   leading size is total number of nodes from faces
-        !% SWMMlink... leading size is total number of SWMM links (SWMM_N_link)
-        !% SWMMnode... leading size is total nuber of SWMM nodes (SWMM_N_node)
+        !% SWMMlink... leading size is total number of SWMM links (setting%SWMMinput%N_link)
+        !% SWMMnode... leading size is total nuber of SWMM nodes (setting%SWMMinput%N_node)
         !%
         !% The compliexity of this is due to the need to separate node reporting that
         !% is associated with a finite volume element (i.e., a junction) -- which is the
@@ -1718,14 +1718,14 @@ contains
                     if (ii==1) then
                         !% Moved to til_allocate_outputML_storage  brh 20220202
                         ! !% --- allocate space for storing the number of elements in each link (including non-output links)
-                        ! !% --- note this MUST be the size of the SWMM_N_link so that we can later pack indexes
-                        ! allocate(SWMMlink_num_elements(SWMM_N_link), stat=allocation_status, errmsg=emsg)
+                        ! !% --- note this MUST be the size of the setting%SWMMinput%N_link so that we can later pack indexes
+                        ! allocate(SWMMlink_num_elements(setting%SWMMinput%N_link), stat=allocation_status, errmsg=emsg)
                         ! call util_allocate_check(allocation_status, emsg, 'SWMMlink_num_elements')
                         ! SWMMlink_num_elements(:) = 0
 
                         ! !% --- allocate space for storing the number of elements in each node (including non-output nodes)
-                        ! !% --- note this MUST be the size of the SWMM_N_node so that we can later pack indexes
-                        ! allocate(SWMMnode_num_elements(SWMM_N_node), stat=allocation_status, errmsg=emsg)
+                        ! !% --- note this MUST be the size of the setting%SWMMinput%N_node so that we can later pack indexes
+                        ! allocate(SWMMnode_num_elements(setting%SWMMinput%N_node), stat=allocation_status, errmsg=emsg)
                         ! call util_allocate_check(allocation_status, emsg, 'SWMMnode_num_elements')
                         ! SWMMnode_num_elements(:) = 0
 
@@ -1772,7 +1772,7 @@ contains
                         !% Moved to til_allocate_outputML_storage  brh 20220202
                         ! !% --- allocate space for storing the number of faces in each node (including non-output node)
                         ! !% --- this should be one for all faces. It is allocate to be able to create common output routines
-                        ! allocate(SWMMnode_num_faces(SWMM_N_node), stat=allocation_status, errmsg=emsg)
+                        ! allocate(SWMMnode_num_faces(setting%SWMMinput%N_node), stat=allocation_status, errmsg=emsg)
                         ! call util_allocate_check(allocation_status, emsg, 'SWMMnode_num_faces')
                         ! SWMMnode_num_faces(:) = 0
 
@@ -1817,10 +1817,10 @@ contains
                         nOutLink = count(SWMMlink_num_elements > 0)
 
                         !% code error check
-                        if (SWMM_N_link .ne. (size(link%I(:,li_idx))-additional_rows)) then
-                            write(*,"(A)") 'ERROR (code): we assumed size of SWMM_N_link and size of li_idx are identical...'
+                        if (setting%SWMMinput%N_link .ne. (size(link%I(:,li_idx))-additional_rows)) then
+                            write(*,"(A)") 'ERROR (code): we assumed size of setting%SWMMinput%N_link and size of li_idx are identical...'
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
-                            write(*,"(A)") '... SWMM_N_link is ',SWMM_N_link
+                            write(*,"(A)") '... setting%SWMMinput%N_link is ',setting%SWMMinput%N_link
                             write(*,"(A)") ',... size(link%I(:,li_idx)) is ',(size(link%I(:,li_idx))-additional_rows)
                             ! stop 
                             !call util_crashpoint(1093874)
@@ -1835,7 +1835,7 @@ contains
                             !% --- create the packed index list of SWMM output links
                             allocate(OutLink_pSWMMidx(nOutLink), stat=allocation_status, errmsg=emsg)
                             call util_allocate_check(allocation_status, emsg, 'OutLink_pSWMMidx')
-                            OutLink_pSWMMidx(:) = pack( (/ (mm, mm=1,SWMM_N_link) /) ,(SWMMlink_num_elements > 0))
+                            OutLink_pSWMMidx(:) = pack( (/ (mm, mm=1,setting%SWMMinput%N_link) /) ,(SWMMlink_num_elements > 0))
 
                             !% --- SPACE FOR DATA
                             !% --- Create a space to store all the elem data for each link and the set of time levels
@@ -1885,10 +1885,10 @@ contains
                         nOutNodeElem = count(SWMMnode_num_elements > 0)
 
                         !% code error check
-                        if (SWMM_N_node .ne. (size(node%I(:,ni_idx))-additional_rows)) then
-                            write(*,"(A)") 'ERROR (code): we assumed size of SWMM_N_node and size of ni_idx are identical...'
+                        if (setting%SWMMinput%N_node .ne. (size(node%I(:,ni_idx))-additional_rows)) then
+                            write(*,"(A)") 'ERROR (code): we assumed size of setting%SWMMinput%N_node and size of ni_idx are identical...'
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
-                            write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
+                            write(*,"(A)") '... setting%SWMMinput%N_node is ',setting%SWMMinput%N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
                             ! stop 
                             !call util_crashpoint(12209)
@@ -1899,7 +1899,7 @@ contains
                             !% --- create the packed index list of SWMM output nodes
                             allocate(OutNodeElem_pSWMMidx(nOutNodeElem), stat=allocation_status, errmsg=emsg)
                             call util_allocate_check(allocation_status, emsg, 'OutNodeElem_pSWMMidx')
-                            OutNodeElem_pSWMMidx(:) = pack( (/ (mm, mm=1,SWMM_N_node)/),(SWMMnode_num_elements > 0))
+                            OutNodeElem_pSWMMidx(:) = pack( (/ (mm, mm=1,setting%SWMMinput%N_node)/),(SWMMnode_num_elements > 0))
 
                             !% --- SPACE FOR DATA
                             !% --- allocate storage of packed node indexes for each link
@@ -1949,10 +1949,10 @@ contains
                         nOutNodeFace = count(SWMMnode_num_faces > 0)
 
                         !% code error check
-                        if (SWMM_N_node .ne. (size(node%I(:,ni_idx))- additional_rows)) then
-                            write(*,"(A)") 'ERROR (code): we assumed size of SWMM_N_node and size of ni_idx are identical...'
+                        if (setting%SWMMinput%N_node .ne. (size(node%I(:,ni_idx))- additional_rows)) then
+                            write(*,"(A)") 'ERROR (code): we assumed size of setting%SWMMinput%N_node and size of ni_idx are identical...'
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
-                            write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
+                            write(*,"(A)") '... setting%SWMMinput%N_node is ',setting%SWMMinput%N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
                             ! stop 
                             !call util_crashpoint(221078)
@@ -1963,7 +1963,7 @@ contains
                             !% --- create the packed index list of SWMM output nodes
                             allocate(OutNodeFace_pSWMMidx(nOutNodeFace), stat=allocation_status, errmsg=emsg)
                             call util_allocate_check(allocation_status, emsg, 'OutNodeFace_pSWMMidx')
-                            OutNodeFace_pSWMMidx(:) = pack((/ (mm,mm=1,SWMM_N_node)/),(SWMMnode_num_faces > 0))
+                            OutNodeFace_pSWMMidx(:) = pack((/ (mm,mm=1,setting%SWMMinput%N_node)/),(SWMMnode_num_faces > 0))
 
                             !% --- SPACE FOR DATA
                             !% --- Create a space to store all the face data for each node and the set of time levels
@@ -3242,7 +3242,7 @@ contains
     !                 !% so then store the id of the phantom link for output
     !                 phantom_counter = 0
     !                 if (link%I(link_idx, li_parent_link) == link_idx) then
-    !                     do jj = SWMM_N_link+1, N_link
+    !                     do jj = setting%SWMMinput%N_link+1, N_link
     !                         if (link%I(jj, li_parent_link) == link_idx) then
     !                             link_output_idx(pp+phantom_counter+1) = jj
     !                             phantom_counter = phantom_counter + 1
@@ -3273,13 +3273,13 @@ contains
     !         if (.not. file_exists) then
     !             !% --- if links_input_file is not specified we output all the links up to the maximum allowed
     !             pp = 1 !% parent link
-    !             !do link_idx = 1, SWMM_N_link
-    !             do while ( (pp <= SWMM_N_link) .and. (pp .le. setting%Output%max_links_csv))
+    !             !do link_idx = 1, setting%SWMMinput%N_link
+    !             do while ( (pp <= setting%SWMMinput%N_link) .and. (pp .le. setting%Output%max_links_csv))
     !                 phantom_counter = 0
     !                 link_output_idx(pp) = link_idx
     !                 !% --- only parent links have associated phantoms
     !                 if (link%I(link_idx, li_parent_link) == link_idx) then
-    !                     do jj = SWMM_N_link+1, N_link
+    !                     do jj = setting%SWMMinput%N_link+1, N_link
     !                         if (link%I(jj, li_parent_link) == link_idx) then
     !                             link_output_idx(pp+phantom_counter+1) = jj
     !                             phantom_counter = phantom_counter + 1
@@ -3384,10 +3384,10 @@ contains
     !         !% --- store 1:setting%Output%max_nodes_csv nodes for output when file doesn't exist
     !         if (.not. file_exists) then
     !             !% --- Output all nodes (up to max) if CSV file
-    !             maxnode = max( SWMM_N_node, setting%Output%max_nodes_csv)
+    !             maxnode = max( setting%SWMMinput%N_node, setting%Output%max_nodes_csv)
     !             node_output_idx = (/ (ii, ii =1, maxnode)/)
     !             !% --- send warning if output is truncated
-    !             if (SWMM_N_node > maxnode) then
+    !             if (setting%SWMMinput%N_node > maxnode) then
     !                 write(*,"(A)") 'WARNING: stopped selecting nodes for csv output due to excessive number of nodes'
     !                 write(*,"(A,i5)") 'Maximum nodes set by setting.Output.max_nodes_csv as: ',setting%Output%max_links_csv
     !             end if

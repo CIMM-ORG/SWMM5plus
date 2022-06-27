@@ -22,6 +22,14 @@ module interface
     type(c_lib_type), public :: c_lib
     logical, public :: api_is_initialized = .false.
 
+    public :: interface_teststuff
+    public :: interface_controls_count
+    public :: interface_controls_get_premise_data
+    public :: interface_controls_get_action_data
+    public :: interface_controls_transfer_monitor_data
+    public :: interface_controls_execute
+    public :: interface_controls_get_action_results
+
     !% Public subroutines/functions
     public :: interface_init
     public :: interface_finalize
@@ -58,11 +66,76 @@ module interface
     public :: interface_get_NewRunoffTime
 
 !%==========================================================================
-!% PRIVATE
 !%==========================================================================
 
     ! Interface with SWMM shared library
     interface
+        !% -------------------------------------------------------------------------------
+        !% dummy for testing
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_teststuff() &
+            BIND(C, name='api_teststuff')
+            use, intrinsic :: iso_c_binding
+            implicit none
+        end function api_teststuff
+        !% -------------------------------------------------------------------------------
+        !% Controls and monitoring
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_controls_count(nRules, nPremise, nThenAction, nElseAction) &
+            BIND(C, name="api_controls_count")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), intent(inout) :: nRules
+            integer(c_int), intent(inout) :: nPremise
+            integer(c_int), intent(inout) :: nThenAction
+            integer(c_int), intent(inout) :: nElseAction
+        end function api_controls_count
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_controls_get_premise_data( &
+                locationL,        locationR,                   &
+                islinkL,          islinkR,                     &
+                attributeL,       attributeR,                  & 
+                thisPremiseLevel, rIdx)                        &
+            BIND(C, name="api_controls_get_premise_data")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), intent(inout) :: locationL,  locationR
+            integer(c_int), intent(inout) :: islinkL,    islinkR
+            integer(c_int), intent(inout) :: attributeL, attributeR
+            integer(c_int), intent(inout) :: thisPremiseLevel
+            integer(c_int), value, intent(in)    :: rIdx
+        end function api_controls_get_premise_data
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_controls_get_action_data(              &
+                location, attribute, thisActionLevel, rIdx, isThen)         &
+            BIND(C, name="api_controls_get_action_data")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), intent(inout) :: location, attribute, thisActionLevel
+            integer(c_int), value, intent(in) :: rIdx, isThen
+        end function api_controls_get_action_data
+       !% -------------------------------------------------------------------------------
+        integer(c_int) function api_controls_transfer_monitor_data ( &
+                Depth, Head, Volume, Inflow, Flow, StatusSetting,    &
+                TimeLastSet, LinkNodeIdx, isLink)                    &
+            BIND(C, name="api_controls_transfer_monitor_data")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double), value, intent(in) :: Depth, Head, Volume, Inflow, Flow
+            real(c_double), value, intent(in) :: StatusSetting, TimeLastSet
+            integer(c_int), value, intent(in) :: LinkNodeIdx, isLink
+        end function api_controls_transfer_monitor_data
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_controls_execute( &
+                currentTimeEpoch, ElapsedDays, dtDays) &
+            BIND(C, name="api_controls_execute")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double), value, intent(in) :: currentTimeEpoch, ElapsedDays, dtDays
+        end function api_controls_execute
+        !% -------------------------------------------------------------------------------
+
+
         !% -------------------------------------------------------------------------------
         !% Simulation
         !% -------------------------------------------------------------------------------
@@ -143,7 +216,7 @@ module interface
             real(c_double),        intent(inout) :: headBC
         end function api_get_headBC
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_get_SWMM_controls( &
+        integer(c_int) function api_get_SWMM_setup( &
             flow_units, &
             route_model, &
             allow_ponding, &
@@ -153,6 +226,7 @@ module interface
             force_main_eqn, &
             max_trials, &
             normal_flow_limiter, &
+            rule_step, &
             surcharge_method, &
             tempdir_provided, &
             variable_step, &
@@ -164,7 +238,7 @@ module interface
             head_tol, &
             sys_flow_tol, &
             lat_flow_tol ) &
-            BIND(C, name="api_get_SWMM_controls")
+            BIND(C, name="api_get_SWMM_setup")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), intent(inout) :: flow_units
@@ -176,6 +250,7 @@ module interface
             integer(c_int), intent(inout) :: force_main_eqn
             integer(c_int), intent(inout) :: max_trials
             integer(c_int), intent(inout) :: normal_flow_limiter
+            integer(c_int), intent(inout) :: rule_step
             integer(c_int), intent(inout) :: surcharge_method
             integer(c_int), intent(inout) :: tempdir_provided
             real(c_double), intent(inout) :: variable_step
@@ -187,7 +262,7 @@ module interface
             real(c_double), intent(inout) :: head_tol
             real(c_double), intent(inout) :: sys_flow_tol
             real(c_double), intent(inout) :: lat_flow_tol
-        end function api_get_SWMM_controls
+        end function api_get_SWMM_setup
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_times &
             (starttime_epoch, endtime_epoch, report_start_datetime, report_step, &
@@ -425,6 +500,13 @@ module interface
 !%==========================================================================
 !%
 
+    procedure(api_teststuff),                  pointer :: ptr_api_teststuff
+    procedure(api_controls_count),             pointer :: ptr_api_controls_count
+    procedure(api_controls_get_premise_data),  pointer :: ptr_api_controls_get_premise_data
+    procedure(api_controls_get_action_data),   pointer :: ptr_api_controls_get_action_data
+    procedure(api_controls_transfer_monitor_data), pointer :: ptr_api_controls_transfer_monitor_data
+    procedure(api_controls_execute),           pointer :: ptr_api_controls_execute
+
     procedure(api_initialize),                 pointer :: ptr_api_initialize
     procedure(api_finalize),                   pointer :: ptr_api_finalize
     procedure(api_run_step),                   pointer :: ptr_api_run_step
@@ -434,7 +516,7 @@ module interface
     procedure(api_get_end_datetime),           pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),                 pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),                 pointer :: ptr_api_get_headBC
-    procedure(api_get_SWMM_controls),          pointer :: ptr_api_get_SWMM_controls
+    procedure(api_get_SWMM_setup),             pointer :: ptr_api_get_SWMM_setup
     procedure(api_get_SWMM_times),             pointer :: ptr_api_get_SWMM_times
     procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
     procedure(api_get_nodef_attribute),        pointer :: ptr_api_get_nodef_attribute
@@ -472,6 +554,226 @@ contains
 !% PUBLIC
 !%=============================================================================
 
+    subroutine interface_teststuff()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% stub routine used for testing ideas for api development
+        !%---------------------------------------------------------------------
+            character(64) :: subroutine_name = 'interface_teststuff'
+        !%---------------------------------------------------------------------
+
+        call load_api_procedure("api_teststuff")
+        errstat = ptr_api_teststuff()
+        call print_api_error(errstat, subroutine_name)
+
+    end subroutine interface_teststuff
+!%
+!%=============================================================================
+!% Controls and monitoring
+!%=============================================================================
+!%   
+    subroutine interface_controls_count(nRules, nPremise, nThenAction, nElseAction)
+        !%---------------------------------------------------------------------
+        !% Description
+        !% gets the data for controls and monitoring
+        !%---------------------------------------------------------------------
+            integer, intent (inout) :: nRules, nPremise, nThenAction, nElseAction
+            character(64) :: subroutine_name = "interface_controls_count"
+        !%---------------------------------------------------------------------
+        
+        !% --- count the number of various control/monitoring information
+        call load_api_procedure("api_controls_count")
+        errstat = ptr_api_controls_count(nRules, nPremise, nThenAction, nElseAction)
+        call print_api_error(errstat, subroutine_name)
+
+    end subroutine interface_controls_count
+!%
+!%=============================================================================
+!%=============================================================================
+!%    
+    subroutine interface_controls_get_premise_data (     &
+            locationL,        locationR,                 &
+            islinkL,          islinkR,                   &
+            attributeL,       attributeR,                &
+            thisPremiseLevel, rIdx, success)
+        !%---------------------------------------------------------------------
+        !% Description
+        !% Gets the monitoring locations for control premises 
+        !%---------------------------------------------------------------------
+            integer, intent(inout) :: locationL, locationR
+            integer, intent(inout) :: islinkL, islinkR
+            integer, intent(inout) :: attributeL, attributeR
+            integer, intent(inout) :: thisPremiseLevel, success
+            integer, intent(in)    :: rIdx
+            character(65) :: subroutine_name = "interface_controls_get_premise_data"
+        !%---------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+
+        !print *, 'in ',trim(subroutine_name)
+
+        call load_api_procedure("api_controls_get_premise_data")
+
+        !print *, 'api load called  thisPremiseLevel = ',thisPremiseLevel
+
+        success = ptr_api_controls_get_premise_data( &
+                    locationL,        locationR,     &
+                    islinkL,          islinkR,       &
+                    attributeL,       attributeR,    & 
+                    thisPremiseLevel, rIdx)
+
+        !% output data of -1 is not valid, so return nullvalue
+        if (locationL  == -1 ) locationL  = nullValueI  
+        if (locationR  == -1 ) locationR  = nullValueI  
+        if (islinkL    == -1 ) islinkL    = nullValueI
+        if (islinkR    == -1 ) islinkR    = nullValueI
+        if (attributeL == -1 ) attributeL = nullValueI 
+        if (attributeR == -1 ) attributeR = nullValueI    
+
+        !% --- increment the location by 1 since EPA-SWMM starts at 0 with indexes
+        if (locationL .ne. nullvalueI) locationL = locationL + 1
+        if (locationR .ne. nullvalueI) locationR = locationR + 1
+
+        !print *, 'after api thisPremiseLevel = ',thisPremiseLevel
+
+    end subroutine interface_controls_get_premise_data
+!%    
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_controls_get_action_data (     &
+        location,                                            &
+        attribute,                                           &
+        thisActionLevel, rIdx, success, isThen)
+        !%---------------------------------------------------------------------
+        !% Description
+        !% Gets the action locations for controls 
+        !% isThen = 1 for a "then" action, 0 for an "else" action
+        !%---------------------------------------------------------------------
+            integer, intent(inout) :: location
+            integer, intent(inout) :: attribute
+            integer, intent(inout) :: thisActionLevel, success
+            integer, intent(in)    :: rIdx, isThen
+            character(65) :: subroutine_name = "interface_controls_get_action_data"
+        !%---------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+
+        !print *, 'in ',trim(subroutine_name)
+
+        call load_api_procedure("api_controls_get_action_data")
+
+        !print *, 'api load called  thisActionLevel = ',thisActionLevel
+
+        success = ptr_api_controls_get_action_data( &
+                    location,                       &
+                    attribute,                      & 
+                    thisActionLevel, rIdx, isThen)
+
+        !print *, 'after api thisActionLevel = ',thisActionLevel
+
+        !% output data of -1 is not valid, so return nullvalue
+        if (location  == -1 ) location  = nullValueI  
+        if (attribute == -1 ) attribute = nullValueI              
+
+        !% --- increment the output location by 1 since EPA-SWMM starts at 0 with indexes
+        if (location .ne. nullvalueI) location = location + 1
+
+    end subroutine interface_controls_get_action_data    
+!%    
+!%=============================================================================
+!%=============================================================================
+!%    
+    subroutine interface_controls_transfer_monitor_data &
+        (Depth, Head, Volume, Inflow, Flow, StatusSetting, TimeLastSet, &
+         LinkNodeNum, isLink)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% transfers the monitoring data from SWMM5+ into EPA-SWMM so that it
+        !% can be called for control actions using EPA-SWMM
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer :: success
+            integer, intent(in) :: LinkNodeNum, isLink
+            real(8), intent(in) :: Depth, Head, Volume, Inflow, Flow
+            real(8), intent(in) :: StatusSetting, TimeLastSet
+            real(8) :: TimeLastSetEpoch
+            character(65) :: subroutine_name = 'interface_controls_transfer_monitor_data'
+        !%---------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+        call load_api_procedure("api_controls_transfer_monitor_data")
+
+        !% ---convert timelast set to epoch days
+        TimeLastSetEpoch = util_datetime_secs_to_epoch(TimeLastSet)
+
+        !% --- send data into EPA-SWMM 
+        !%     Note the link/node index is decremented by 1 to account for 
+        !%     SWMM indexes starting a 0
+        success = ptr_api_controls_transfer_monitor_data(             &
+                    Depth, Head, Volume, Inflow, Flow, StatusSetting,  &
+                    TimeLastSetEpoch, LinkNodeNum-1, isLink)
+
+    end subroutine interface_controls_transfer_monitor_data
+!%    
+!%=============================================================================
+!%=============================================================================
+!%    
+    subroutine interface_controls_execute ()
+        !%---------------------------------------------------------------------
+        !% Description calls the api procedure that executes the controls_evaluate
+        !% in EPA-SWMM
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer :: success
+            real(8) :: currentTimeEpoch, ElapsedDays, dtDays
+        !%---------------------------------------------------------------------
+        !% -- convert elapsed seconds to SWMM time
+        currentTimeEpoch = util_datetime_secs_to_epoch(setting%Time%Now)
+
+        !% --- compute elapsed days since start of simulation
+        ElapsedDays = setting%Time%Now / seconds_per_day
+
+        !% --- compute time step in days
+        dtDays = setting%Time%Hydraulics%Dt / seconds_per_day
+
+        !% --- load the procedure
+        call load_api_procedure("api_controls_execute")
+
+        !% --- execute controls
+        success = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
+
+    end subroutine interface_controls_execute
+!%    
+!%=============================================================================
+!%=============================================================================
+!%   
+    subroutine interface_controls_get_action_results (targetsetting, timelastset, LinkIdx)
+        !%---------------------------------------------------------------------
+        !% Description
+        !% gets the updated target setting and time last set associated with the 
+        !% evaluation of EPA-SWMM controls
+        !%---------------------------------------------------------------------
+        !% Declarations
+        integer :: error
+        integer, intent(in) :: LinkIdx
+        real(8), intent(inout) :: targetsetting, timelastset
+
+        !% --- load the procedure
+        call load_api_procedure("api_get_linkf_attribute")
+
+        !% --- get the target setting
+        error = ptr_api_get_linkf_attribute(LinkIdx-1, api_linkf_targetsetting, targetsetting)
+
+        !% --- store in link
+        link%R(LinkIdx,lr_TargetSetting) = targetsetting
+
+        !% --- get the time last set
+        error = ptr_api_get_linkf_attribute(LinkIdx-1, api_linkf_timelastset, timelastset)
+
+        !% --- convert time last set to seconds and store in link
+        timelastset = util_datetime_epoch_to_secs(timelastset)
+        link%R(LinkIdx,lr_TimeLastSet) = timelastset
+
+    end subroutine interface_controls_get_action_results   
+!%    
 !%=============================================================================
 !%  Simulation subroutines/functions
 !%=============================================================================
@@ -507,20 +809,22 @@ contains
             dummyI)
         call print_api_error(error, subroutine_name)
         api_is_initialized = .true.
+        print *, ' ' !% needed because there is no \n after the EPA-SWMM printout of "Retrieving project data"
 
         !% --- Get number of objects in SWMM-C
-        SWMM_N_link = get_num_objects(API_LINK)
-        N_link = SWMM_N_link
+        setting%SWMMinput%N_link = get_num_objects(API_LINK)
+        N_link = setting%SWMMinput%N_link
 
-        SWMM_N_node = get_num_objects(API_NODE)
-        N_node = SWMM_N_node
+        setting%SWMMinput%N_node = get_num_objects(API_NODE)
+        N_node = setting%SWMMinput%N_node
 
-        SWMM_N_Curve = get_num_objects(API_CURVE)
-        N_curve = SWMM_N_Curve
+        setting%SWMMinput%N_curve = get_num_objects(API_CURVE)
+        N_curve = setting%SWMMinput%N_curve
 
-        SWMM_N_subcatch = get_num_objects(API_SUBCATCH)     
+        setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
 
-        SWMM_N_link_transect = get_num_objects(API_TRANSECT)
+        setting%SWMMinput%N_link_transect = get_num_objects(API_TRANSECT)
+
                 
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
@@ -544,7 +848,7 @@ contains
             !return
             !% HACK -- developer's note:
             !% Unfortunately, the parse error returns a code of 200 in the get_num_objects()
-            !% function, which is appears as SWMM_N_link=200 and SWMM_N_node=200. As it is
+            !% function, which is appears as setting%SWMMinput%N_link=200 and setting%SWMMinput%N_node=200. As it is
             !% relatively unlikely that a system will have exactly 200 of each, we are 
             !% simply calling the error condition when this happens.  We need to fix the
             !% API so that the error condition is correctly represented.
@@ -553,15 +857,15 @@ contains
         !% --- get the time start, end, and interval data from SWMM-C input file
         call interface_get_SWMM_times()
 
-        !% --- get the controls from the SWMM-C input file
-        call interface_get_SWMM_controls()
+        !% --- get the setup from the SWMM-C input file
+        call interface_get_SWMM_setup()
 
         !%----------------------------------------------------------------------
         !% closing
             if (setting%Debug%File%interface) then
                 print *, new_line("")
-                print *, "SWMM_N_link", SWMM_N_link
-                print *, "SWMM_N_node", SWMM_N_node
+                print *, "setting%SWMMinput%N_link", setting%SWMMinput%N_link
+                print *, "setting%SWMMinput%N_node", setting%SWMMinput%N_node
                 print *, new_line("")
                 print *, "SWMM start time", setting%Time%StartEpoch
                 print *, "SWMM end time", setting%Time%EndEpoch
@@ -649,7 +953,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        do ii = 1, SWMM_N_link
+        do ii = 1, setting%SWMMinput%N_link
             call load_api_procedure("api_get_object_name")
             errstat = ptr_api_get_object_name(ii-1, link%Names(ii)%str, API_LINK)
 
@@ -661,7 +965,7 @@ contains
             end if
         end do
 
-        do ii = 1, SWMM_N_node
+        do ii = 1, setting%SWMMinput%N_node
             call load_api_procedure("api_get_object_name")
             errstat = ptr_api_get_object_name(ii-1, node%Names(ii)%str, API_NODE)
 
@@ -676,12 +980,12 @@ contains
         if (setting%Debug%File%interface) then
             print *, new_line("")
             print *, "List of Links"
-            do ii = 1, SWMM_N_link
+            do ii = 1, setting%SWMMinput%N_link
                 print *, "- ", link%Names(ii)%str
             end do
             print *, new_line("")
             print *, "List of Nodes"
-            do ii = 1, SWMM_N_node
+            do ii = 1, setting%SWMMinput%N_node
                 print *, "- ", node%Names(ii)%str
             end do
             print *, new_line("")
@@ -704,7 +1008,7 @@ contains
         character(64) :: subroutine_name = "interface_update_transectID_names"
         !%-----------------------------------------------------------------------------
 
-        do ii = 1, SWMM_N_link_transect
+        do ii = 1, setting%SWMMinput%N_link_transect
 
             !print *, ii, 'API_TRANSECT ',API_TRANSECT, trim(transectID(ii))
             call load_api_procedure("api_get_object_name")
@@ -803,9 +1107,11 @@ contains
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
         if (    (attr == api_nodef_extInflow_tSeries    )    &
-           .or. (attr == api_nodef_extInflow_basePat_idx)  ) then
+           .or. (attr == api_nodef_extInflow_basePat_idx)    &
+           .or. (attr == api_nodef_head_tSeries) ) then
             if (node_value /= -1) node_value = node_value + 1
         end if
+
 
         !write(*,*) '.................'
         if (setting%Debug%File%interface) &
@@ -842,7 +1148,7 @@ contains
             "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
             !print *, 'API_CONDUIT', API_CONDUIT,',link_value',link_value
     
-        if ((link_idx > SWMM_N_link) .or. (link_idx < 1)) then
+        if ((link_idx > setting%SWMMinput%N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(9987355)
@@ -873,7 +1179,7 @@ contains
             !% this should never be called
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
-            call util_crashpoint(2098734)
+            call util_crashpoint(20987341)
             !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
@@ -1760,7 +2066,7 @@ contains
             character(64) :: subroutine_name = 'interface_get_transectf_attribute'
         !%-----------------------------------------------------------------------------
 
-        if ((transect_idx > SWMM_N_link_transect) .or. (transect_idx < 1)) then
+        if ((transect_idx > setting%SWMMinput%N_link_transect) .or. (transect_idx < 1)) then
             print *, "error: unexpected tranect index value", transect_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(992255)
@@ -1860,10 +2166,10 @@ contains
 
         !print *, 'in interface_get_transect_table'
         
-        do ii=1,SWMM_N_link_transect
+        do ii=1,setting%SWMMinput%N_link_transect
 
             error = ptr_api_get_transect_table(&
-                ii-1, SWMM_N_transect_depth_items,    &
+                ii-1, setting%SWMMInput%N_transect_depth_items,    &
                 link%transectTableDepthR(ii,:,tt_area),  &
                 link%transectTableDepthR(ii,:,tt_width),  &
                 link%transectTableDepthR(ii,:,tt_hydradius))
@@ -1912,7 +2218,7 @@ contains
             !return
         end if
 
-        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+        if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             print *, trim(reverseKey_api(attr))
             !stop 
@@ -1986,7 +2292,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+        if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 835551)
@@ -2028,7 +2334,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+        if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 837014)
@@ -2077,7 +2383,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+        if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             !stop 
             call util_crashpoint( 8367894)
@@ -2288,8 +2594,8 @@ contains
                 !% --- for external inflows (file), get the timeseries index
                 tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
 
-               ! print *, 'node idx tseries_idx',nidx,tseries_idx
-               ! print *, 'tnow, tmaxeppoch ',tnow, timemaxEpoch
+               !print *, 'node_idx, tseries_idx',nidx,tseries_idx
+               !print *, 'tnow, tmaxeppoch ',tnow/3600.0, timemaxEpoch
 
                 if (tseries_idx >= 0) then
                     !% --- this gets the Tseries.x2 values
@@ -2302,8 +2608,10 @@ contains
                         !% --- gets time in days at what is now the x2 pointer 
                         tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
                         !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
+                        !print *, 'tnext Flow out of interface ',tnext
 
                         tnext = util_datetime_epoch_to_secs(tnext)
+                        !print *, 'tnext Flow',tnext /3600.0
                     else
                         !% --- failure to read time later than tnow from file
                         print *, ' '
@@ -2350,16 +2658,20 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_next_head_time(bc_idx, tnow) result(tnext)
+    function interface_get_next_head_time(bc_idx, tnow, timemaxEpoch) result(tnext)
         !%---------------------------------------------------------------------
         !% Description
-        !% Gets the next head time
-        !% HACK -- this is incomplete and does not read from file
-        !% ONLY SUPPORTS FIXED HEAD BC
+         !% Gets the next  headtime. If the next time is less than the maximum
+        !% time (timemax) then the Tseries.x1 and .y1 stored values will be changed
+        !% to the new value.
+        !% NOTE: timemax is the "Epoch" time used in EPA-SWMM, but the
+        !% output from this is local time with time=0 as the start of the simulation
         !%---------------------------------------------------------------------
             integer, intent(in) :: bc_idx
-            real(8), intent(in) :: tnow
-            real(8)             :: tnext
+            real(8), intent(in) :: tnow, timemaxEpoch
+            real(8)             :: tnext, t1, t2, tnextp
+            integer             :: tseries_idx, success
+            integer             :: year, month, day, hours, minutes, seconds
             integer, pointer    :: nidx
             character(64) :: subroutine_name = 'interface_get_next_head_time'
         !%---------------------------------------------------------------------
@@ -2370,14 +2682,69 @@ contains
         !% Aliases
             nidx => BC%headI(bc_idx, bi_node_idx)
         !%---------------------------------------------------------------------
-        if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
-            tnext = setting%Time%End
-        else
-            print *, "Error, unsupported head boundary condition for node " // trim(node%Names(nidx)%str)
-            !stop 
-            call util_crashpoint(42987)
-            !return
-        end if
+        ! if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
+        !     tnext = setting%Time%End
+        ! else
+        !     print *, "Error, unsupported head boundary condition for node " // trim(node%Names(nidx)%str)
+        !     !stop 
+        !     call util_crashpoint(42987)
+        !     !return
+        ! end if
+
+        select case (BC%headI(bc_idx, bi_subcategory))  
+        case (BCH_fixed, BCH_normal, BCH_free) 
+            !% --- these cases should not be here!
+            return
+        case (BCH_tseries)
+            !% --- get the timeseries index
+            tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries)
+            if (tseries_idx >= 0) then
+                !% --- this gets the Tseries.x2 values
+                !%     Note the Tseries.x1 values will be overwritten by the .x2 values
+                !%     only if the x2 value is less than timemax. This prepares for the
+                !%     the next step of storing for SWMM5+
+                success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
+
+                if (success == 1) then
+                    !% --- gets time in days at what is now the x2 pointer 
+                    tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
+                    !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
+                    !print *, 'tnext Head out of interface ',tnext
+
+                    tnext = util_datetime_epoch_to_secs(tnext)
+                    !print *, 'tnext Head',tnext /3600.0
+                else
+                    !% --- failure to read time later than tnow from file
+                    print *, ' '
+                    write(*,"(A)") 'INPUT FILE FAILURE'
+                    write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
+                    tnext = util_datetime_secs_to_epoch(tnow)
+                    call util_datetime_decodedate(tnext, year, month, day)
+                    call util_datetime_decodetime(tnext, hours, minutes, seconds)
+                    write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                    tnext = util_datetime_epoch_to_secs(timemaxEpoch)
+                    write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
+                    call util_datetime_decodedate(timemaxEpoch, year, month, day)
+                    call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
+                    write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                    write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
+                    print *, ' '
+                    
+                    call util_crashpoint(609834)
+                end if
+            else
+                !% --- if no external file, use the end time
+                !% HACK -- what are we doing here? Should this be an error condition?
+                tnext = setting%Time%End
+            end if
+        case (BCH_tidal)
+            print *, 'CODE ERROR: tidal outfall not yet handled'
+            call util_crashpoint(446929)
+        case default
+            print *, BC%headI(bc_idx, bi_subcategory), trim(reverseKey(BC%headI(bc_idx, bi_subcategory)))
+            print *, 'CODE ERROR: unexpected case default'
+            call util_crashpoint(44822)
+        end select
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -2391,16 +2758,18 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        real(8), intent(in) :: tnow
-        integer             :: error, nidx
-        real(8)             :: epochNow, bc_value
-        character(64) :: subroutine_name  = 'interface_get_flowBC'
+            integer, intent(in) :: bc_idx
+            real(8), intent(in) :: tnow
+            integer             :: error
+            integer, pointer    :: nidx
+            real(8)             :: epochNow, bc_value
+            character(64) :: subroutine_name  = 'interface_get_flowBC'
         !%---------------------------------------------------------------------
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
 
-        nidx = BC%flowI(bc_idx, bi_node_idx)
+        nidx => BC%flowI(bc_idx, bi_node_idx)
 
         !print *, ' '
         !print *, '     in ',trim(subroutine_name)
@@ -2409,8 +2778,7 @@ contains
         epochNow = util_datetime_secs_to_epoch(tnow)
         call load_api_procedure("api_get_flowBC")
         error = ptr_api_get_flowBC(nidx-1, epochNow, bc_value)
-        !print *, '    out of ptr_api_get_flowBC, before api_error'
-        !call print_api_error(error, subroutine_name)
+        call print_api_error(error, subroutine_name)
 
         !% TEMPORARY!
         ! if (bc_value < zeroR) then
@@ -2431,17 +2799,19 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        real(8), intent(in) :: tnow
-        integer             :: error, nidx
-        real(8)             :: epochNow, bc_value
-        character(64) :: subroutine_name
+            integer, intent(in) :: bc_idx
+            real(8), intent(in) :: tnow
+            integer             :: error
+            integer, pointer    :: nidx
+            real(8)             :: epochNow, bc_value
+            character(64) :: subroutine_name = 'interface_get_headBC'
         !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_headBC'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
 
-        nidx = BC%headI(bc_idx, bi_node_idx)
+        nidx => BC%headI(bc_idx, bi_node_idx)
+
         epochNow = util_datetime_secs_to_epoch(tnow)
         call load_api_procedure("api_get_headBC")
         error = ptr_api_get_headBC(nidx-1, epochNow, bc_value)
@@ -2556,7 +2926,7 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    subroutine interface_get_SWMM_controls()
+    subroutine interface_get_SWMM_setup()
         !%---------------------------------------------------------------------
         !% Description
         !% gets control variables that have been input in the SWMM-C *.inp
@@ -2565,7 +2935,7 @@ contains
             integer       :: flow_units, route_model, allow_ponding
             integer       :: inertial_damping, num_threads, skip_steady_state
             integer       :: force_main_eqn, max_trials, normal_flow_limiter
-            integer       :: surcharge_method, tempdir_provided
+            integer       :: rule_step, surcharge_method, tempdir_provided
             real(8)       :: variable_step, lengthening_step, route_step
             real(8)       :: min_route_step, min_surface_area, min_slope
             real(8)       :: head_tol, sys_flow_tol, lat_flow_tol
@@ -2574,16 +2944,16 @@ contains
             logical       :: thisWarning(1:nset)
             character(64) :: thisProblem(1:nset)
             character(30) :: thisVariable(1:nset)
-            character(64) :: subroutine_name = 'interface_get_SWMM_controls'
+            character(64) :: subroutine_name = 'interface_get_SWMM_setup'
         !%----------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%interface)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%----------------------------------------------------------------------
 
-        call load_api_procedure("api_get_SWMM_controls")
+        call load_api_procedure("api_get_SWMM_setup")
 
-        error = ptr_api_get_SWMM_controls( &
+        error = ptr_api_get_SWMM_setup( &
             flow_units,  &
             route_model, &
             allow_ponding, &
@@ -2593,6 +2963,7 @@ contains
             force_main_eqn, &
             max_trials, &
             normal_flow_limiter, &
+            rule_step, &
             surcharge_method, &
             tempdir_provided, &
             variable_step, &
@@ -2608,16 +2979,21 @@ contains
         call print_api_error(error, subroutine_name)
 
         !% check for pollutants
-        SWMM_N_pollutant = get_num_objects(API_POLLUT)
+        setting%SWMMinput%N_pollutant = get_num_objects(API_POLLUT)
 
         !% check for controls
-        SWMM_N_control = get_num_objects(API_CONTROL)
+        setting%SWMMinput%N_control = get_num_objects(API_CONTROL)
         
-        SWMM_N_divider = get_num_objects(API_DIVIDER)
+        !% check for divider nodes
+        setting%SWMMinput%N_divider = get_num_objects(API_DIVIDER)
 
+        !% seconds between control rule evaluations
+        setting%SWMMinput%RuleStep = rule_step
+    
+        !print *, 'N control ', setting%SWMMinput%N_control
 
         !print *, 'route_step ', route_step
-        !stop 44987
+    
 
         thisWarning(:) = .false.
         thisVariable(:) = ''
@@ -2709,6 +3085,12 @@ contains
         thisVariable(ii) = 'NORMAL_FLOW_LIMITED'
         thisProblem(ii)  = 'have not been implemented, use NORMAL outfalls with caution.'
 
+
+        !% Rule Step is always OK
+        ii=ii+1
+        thisWarning(ii) = .false.
+        thisVariable(ii) = 'RULESTEP'
+
         !% only SLOT is allowed for surcharge method -- handled by JSON file
         ii=ii+1
         select case (surcharge_method)
@@ -2793,7 +3175,7 @@ contains
 
         !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20211223
         ii=ii+1
-        if (SWMM_N_pollutant > 0) then
+        if (setting%SWMMinput%N_pollutant > 0) then
             thisWarning(ii)  = .true.
             thisVariable(ii) = '[POLLUTANTS]'
             thisProblem(ii)  = 'are ignored in routing'
@@ -2801,7 +3183,7 @@ contains
 
         !% Controls in hydraulics not supported in SWMM5+ as of 20211223
         ii=ii+1
-        if (SWMM_N_control > 0) then
+        if (setting%SWMMinput%N_control > 0) then
             thisWarning(ii)  = .true.
             thisVariable(ii) = '[CONTROL]'
             thisProblem(ii)  = 'all ignored in routing.'
@@ -2809,7 +3191,7 @@ contains
 
         !% Dividers are not used in SWMM5+ as we do not support Kinematic Wave
         ii=ii+1
-        if (SWMM_N_divider > 0) then
+        if (setting%SWMMinput%N_divider > 0) then
             thisWarning(ii)  = .true.
             thisVariable(ii) = '[DIVIDER]'
             thisProblem(ii)  = 'are ignored.'
@@ -2835,7 +3217,7 @@ contains
         !% closing
             if (setting%Debug%File%interface)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine interface_get_SWMM_controls    
+    end subroutine interface_get_SWMM_setup    
 !%
 !%=============================================================================
 !%=============================================================================
@@ -3026,6 +3408,18 @@ contains
 
         !% Loads shared library funcitonalities
         select case (api_procedure_name)
+            case ("api_teststuff")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_teststuff)
+            case ("api_controls_count")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_controls_count)
+            case ("api_controls_get_premise_data")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_controls_get_premise_data)
+            case ("api_controls_get_action_data")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_controls_get_action_data)
+            case ("api_controls_transfer_monitor_data")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_controls_transfer_monitor_data)
+            case ("api_controls_execute")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_controls_execute)
             case ("api_initialize")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
             case ("api_finalize")
@@ -3063,8 +3457,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
             case ("api_get_headBC")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
-            case ("api_get_SWMM_controls")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_controls)
+            case ("api_get_SWMM_setup")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_setup)
             case ("api_get_SWMM_times")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_times)
             case ("api_get_next_entry_tseries")

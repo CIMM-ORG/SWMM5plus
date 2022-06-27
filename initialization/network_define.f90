@@ -52,16 +52,28 @@ contains
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
 
+        !print *, 'AAA'
+
         !% divide the link node networks in elements and faces
         call init_network_datacreate ()
+
+        !print *, 'BBB'
 
         !% replaces ni_elemface_idx of nJ2 nodes for the upstream elem
         !% of the face associated with the node
         call init_network_update_nj2_elem ()
 
+        !print *, 'CCC'
+
         !% look for small CC elements in the network and elongates them
         !% to a user defined value
         call init_network_CC_elem_length_adjust ()
+
+        !print *, 'DDD'
+
+        !% --- set up control/monitoring points 
+        !%     connect to elements on different images
+        !call init_network_conmon_elements()
 
         sync all
 
@@ -70,7 +82,7 @@ contains
         !     print *, elemI(ii,ei_geometryType), trim(reverseKey(elemI(ii,ei_geometryType)))
         ! end do
 
-        ! if (SWMM_N_link_transect > 0) then
+        ! if (setting%SWMMinput%N_link_transect > 0) then
         !     call init_network_transect ()
         ! end if
 
@@ -156,7 +168,7 @@ contains
     end subroutine network_define_toplevel
 !
 !==========================================================================
-! PRIVATE
+! PRIVATE -- 1st level
 !==========================================================================
 !%
     subroutine init_network_linkslope()
@@ -225,25 +237,25 @@ contains
         !     do mm=1, N_link
         !    !    print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
         !     end do
-    !         print *, ' '
-    !         print *, ' node assigments '
-    !         print *, 'link ID,         nodeUp,         nodeDn'
-    !         do mm=1, N_link 
-    !             print *, ' '
-    !             print *, mm, link%I(mm,li_Mnode_u), link%I(mm,li_Mnode_d)
-    !             print *, trim(link%Names(mm)%str), ' ; ', trim(node%Names(link%I(mm,li_Mnode_u))%str), ' ; ', trim(node%Names(link%I(mm,li_Mnode_d))%str)
-    !         end do
+        !         print *, ' '
+        !         print *, ' node assigments '
+        !         print *, 'link ID,         nodeUp,         nodeDn'
+        !         do mm=1, N_link 
+        !             print *, ' '
+        !             print *, mm, link%I(mm,li_Mnode_u), link%I(mm,li_Mnode_d)
+        !             print *, trim(link%Names(mm)%str), ' ; ', trim(node%Names(link%I(mm,li_Mnode_u))%str), ' ; ', trim(node%Names(link%I(mm,li_Mnode_d))%str)
+        !         end do
 
-    !         print *, ' '
-    !         do mm=1, N_node
-    !             print *, ' '
-    !             print *, mm, node%I(mm,ni_Mlink_u1), node%I(mm,ni_Mlink_d1)
-    !             print *, trim(node%names(mm)%str), ' ; '
-               
-    !         end do
-    !    ! end if
+        !         print *, ' '
+        !         do mm=1, N_node
+        !             print *, ' '
+        !             print *, mm, node%I(mm,ni_Mlink_u1), node%I(mm,ni_Mlink_d1)
+        !             print *, trim(node%names(mm)%str), ' ; '
+                
+        !         end do
+        !    ! end if
 
-    !         stop 30987
+        !         stop 30987
 
         !%------------------------------------------------------------------
         !% closing
@@ -288,12 +300,18 @@ contains
         !% Setting the local image value
         image = this_image()
 
+        !print *, 'aaa'
+
         !% initialize the global indexes of elements and faces
         call init_network_set_global_indexes &
             (image, ElemGlobalCounter, FaceGlobalCounter)
 
+        !print *, 'bbb'
+
         !% set the dummy element
         call init_network_set_dummy_elem ()
+
+        !print *, 'ccc'
 
         !% handle all the links and nodes in a partition
         call init_network_handle_partition &
@@ -306,12 +324,18 @@ contains
             ! !stop 
             !call util_crashpoint(77869)
 
+            !print *, 'ddd'
+
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
         call init_network_map_nodes (image)
 
+        !print *, 'eee'
+
         !% set interior face logical
         call init_network_set_interior_faceYN ()
+
+        !print *, 'fff'
 
         !% shared faces are mapped by copying data from different images
         !% thus a sync all is needed
@@ -320,8 +344,12 @@ contains
         !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
+        !print *, 'ggg'
+
         !% identify the boundary element connected to a shared faces
         call init_network_identify_boundary_element
+
+        !print *, 'hhh'
 
         !%------------------------------------------------------------------
         !% Closing
@@ -377,6 +405,151 @@ contains
     end subroutine init_network_update_nj2_elem
 !%
 !%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_network_CC_elem_length_adjust ()
+        !
+        !--------------------------------------------------------------------------
+        !
+        !--------------------------------------------------------------------------
+        integer          :: ii
+        integer, pointer :: AdjustType, elementType(:), elementIdx(:)
+        real(8), pointer :: NominalLength, MinLengthFactor, elementLength(:)
+        real(8)          :: MinElemLength
+        character(64)    :: subroutine_name = 'init_network_CC_elem_length_adjust'
+        !--------------------------------------------------------------------------
+        !if (crashYN) return
+
+        AdjustType      => setting%Discretization%MinElemLengthMethod
+        NominalLength   => setting%Discretization%NominalElemLength
+        MinLengthFactor => setting%Discretization%MinElemLengthFactor
+
+        elementIdx    => elemI(:,ei_Lidx)
+        elementType   => elemI(:,ei_elementType)
+        elementLength => elemR(:,er_Length)
+
+        select case (AdjustType)
+
+        case(RawElemLength)
+            !% do not do any adjustment and return the raw network
+            return
+
+        case (ElemLengthAdjust)
+
+            MinElemLength = NominalLength * MinLengthFactor
+
+            do ii = 1,N_elem(this_image())
+                if ((elementType(ii) == CC) .and. (elementLength(ii) < zeroR)) then
+                    print *, 'CODE ERROR: negative element length at element ',elementIdx(ii)
+                    write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii)
+                    write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
+                    write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
+                    write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+                    call util_crashpoint(209837)
+                end if
+
+                if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
+                    if (setting%Output%Verbose) then
+                        !print*, 'In, ', subroutine_name
+                        print *, ' '
+                        write(*,"(A,i8,A,i5)")       '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
+                        write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
+                        write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
+                        write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
+                        write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+
+                    end if
+                    elementLength(ii) = MinElemLength
+                end if
+            end do
+
+        case default
+            print*, 'In, ', subroutine_name
+            print *, 'CODE ERROR: AdjustType unknown for # ',AdjustType 
+            print *, 'which has key ',trim(reverseKey(AdjustType))
+            !stop 
+            call util_crashpoint(89537)
+            !return
+        end select
+
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_network_CC_elem_length_adjust
+!%
+!%==========================================================================    
+!%==========================================================================
+!%  
+    ! subroutine init_network_conmon_elements ()
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% initialzies the cmi_elem_idx and cmi_image for conmonI(:,:)
+    !     !% This creates connections to control/monitoring points across
+    !     !% images.
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer :: ii
+    !         integer, pointer :: cmElem(:), cmImage(:)
+    !         integer, pointer :: nidx, fidx, lidx
+    !         logical, pointer :: cmIsLink(:)
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !         cmIsLink => conmonYN(:,cmYN_isLink)
+    !         cmElem   => conmonI(:,cmi_elem_idx)
+    !         cmImage  => conmonI(:,cmi_image)
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (N_ConMon(this_image()) < 1) return !% skip if no controls needed
+    !     !%------------------------------------------------------------------
+    !     !% --- cycle through the control/monitoring points to find the
+    !     !%     associated element and the image it is located on.
+    !     do ii=1,N_ConMon(this_image())
+    !         if (cmIsLink(ii)) then
+    !             !% --- c/m point is a link
+    !             lidx => conmonI(ii,cmi_linknode_idx)
+    !             !% HACK NOT DONE
+    !             print *, 'CODE ERROR -- unfinished for control monitoring as link'
+    !             call util_crashpoint(598723)
+    !         else
+    !             !% --- c/m point is a node
+    !             nidx => conmonI(ii,cmi_linknode_idx)
+    !             select case (node%I(nidx,ni_node_type))
+    !             case (nJm)
+    !                 !% -- element is based on node assignment to element
+    !                 cmElem(ii)  = node%I(nidx,ni_elemface_idx)
+    !                 cmImage(ii) = node%I(nidx,ni_P_image)
+    !             case (nJ1)
+    !                 print *, 'USER CONFIGURATION ERROR:'
+    !                 print *, 'upstream node of Type 1 pump is a boundary node.'
+    !                 print *, 'In SWMM5+ the boundary node cannot have a volume,'
+    !                 print *, 'so a Type 1 pump is not allowed.'
+    !                 call util_crashpoint(68732)
+    !             case (nJ2)
+    !                 !% --- element assigned is upstream of the face
+    !                 !% --- check if partition boundary
+    !                 if (node%I(nidx,ni_P_is_boundary) > 0) then
+    !                     print *, 'CODE UNFINISHED -- case of node as partition boundary not handled'
+    !                     print *, 'This might require looking at ghost array'
+    !                     call util_crashpoint(5524875)
+    !                 else
+    !                     !% --- node is not a partition boundary
+    !                     !% --- face associated with the nJ2 node
+    !                     fidx        => node%I(nidx,ni_face_idx)
+    !                     !% --- the connected image
+    !                     cmImage(ii) =  node%I(nidx,ni_P_image) 
+    !                     !% --- upstream element of the face on the image         
+    !                     cmElem(ii)  =  faceI(fidx,fi_Melem_uL)[cmImage(ii)]
+    !                 end if
+    !             case default
+    !                 print *, 'CODE ERROR: unexpected case default'
+    !                 call util_crashpoint(698723)
+    !             end select
+    !         end if
+    !     end do
+
+    ! end subroutine init_network_conmon_elements  
+!%
+!%==========================================================================    
+!% PRIVATE -- 2nd Level
 !%==========================================================================
 !%
     subroutine init_network_set_global_indexes &
@@ -569,6 +742,8 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% pack all the interior node indexes in a partition to find face maps
+
+        !print *, '111'
         packed_node_idx = pack(node%I(:,ni_idx),                       &
                               ((node%I(:,ni_P_image)   == image) .and. &
                               ((node%I(:,ni_node_type) == nJm ) .or.   &
@@ -577,17 +752,24 @@ contains
         !% number of interior nodes in a partition
         pNodes = size(packed_node_idx)
 
+       !print *, '222', pNodes
+
         !% cycle through all the nJm nodes and set the face maps
         do ii = 1,pNodes
             thisJunctionNode => packed_node_idx(ii)
             nodeType         => node%I(thisJunctionNode,ni_node_type)
+
+            !print *, '333 ',ii, reverseKey(nodeType)
 
             select case (nodeType)
             case (nJm)
                 JunctionElementIdx = pack( elemI(:,ei_Lidx), &
                                             ( elemI(:,ei_node_Gidx_BIPquick) == thisJunctionNode) )
 
+                !print *, '444 '
                 call init_network_map_nJm_branches (image, thisJunctionNode, JunctionElementIdx)
+
+                !print *, '555 '
 
                 !% deallocate temporary array
                 deallocate(JunctionElementIdx)
@@ -595,6 +777,7 @@ contains
             case (nJ2)
                 call init_network_map_nJ2 (image, thisJunctionNode)
 
+                !print *, '666 '
             case default    
                 write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
                 print *, 'Node Type # of ',nodeType
@@ -604,6 +787,8 @@ contains
                 !return
             end select
         end do
+
+        !print *, '999'
 
         !% deallocate temporary array
         deallocate(packed_node_idx)
@@ -1528,36 +1713,53 @@ contains
         !%do ii = 1,Nelem_in_Junction
         do ii = 1, max_branch_per_node + 1
 
+            !print *, '6666 ',ii
+
             !% now we are considering all the junction elements including
             !% junction main.
 
             !% all the even numbers are upstream branch elements
             !if ((ii == 2) .or. (ii == 4) .or. (ii == 6)) then
             if (ii > 1) then
+                !print *, 'first if '
                 select case (mod(ii,2))
                 case(0)
+                    !print *, 'case 0'
                     upBranchSelector = upBranchSelector + oneI
                     !% pointer to upstream branch
                     upBranchIdx => node%I(thisJNode,ni_idx_base1 + upBranchSelector)
 
                     !% condition for a link connecting this branch is valid and
                     !% included in this partition.
+                    !print *, 'aaaa'
 
                     if (upBranchIdx /= nullvalueI) then
+                        !print *, 'bbbb'
                         if (link%I(upBranchIdx,li_P_image) == image) then
+                            !print *, 'cccc'
                             !% find the last element index of the link
                             LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
+
+                            !print *, 'dddd'
 
                             !% pointer to the specific branch element
                             eIdx => JelemIdx(ii)
 
+                            !print *, 'eeee'
+
                             !% find the downstream face index of that last element
                             fLidx => elemI(eIdx,ei_Mface_uL)
+
+                            ! print *, 'ffff'
+                            ! print *, fLidx
+                            ! print *, fYN_isSharedFace
+                            ! print *, size(faceYN,1), size(faceYN,2)
+                            ! stop
 
                             !% if the face is a shared face across images,
                             !% it will not have any upstream local element
                             if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
-
+                                !print *, 'gggg'
                                 !% the upstream face of the upstream branch will be the
                                 !% last downstream face of the connected link
                                 !% here, one important thing to remember is that
@@ -1574,12 +1776,14 @@ contains
                                 !% local u/s element of the face
                                 faceI(fLidx,fi_Melem_uL) = LinkLastElem
                             end if
+                            !print *, 'hhhh'
                         end if
                     end if
 
             !% all odd numbers starting from 3 are downstream branch elements
             !elseif ((ii == 3) .or. (ii == 5) .or. (ii == 7)) then
                 case (1)
+                    !print *, 'case 1'
                     dnBranchSelector = dnBranchSelector + oneI
                     !% pointer to upstream branch
                     dnBranchIdx => node%I(thisJNode,ni_idx_base2 + dnBranchSelector)
@@ -1928,78 +2132,7 @@ contains
     end subroutine init_network_set_interior_faceYN
 !
 !==========================================================================
-!==========================================================================
-!
-    subroutine init_network_CC_elem_length_adjust ()
-        !
-        !--------------------------------------------------------------------------
-        !
-        !--------------------------------------------------------------------------
-        integer          :: ii
-        integer, pointer :: AdjustType, elementType(:), elementIdx(:)
-        real(8), pointer :: NominalLength, MinLengthFactor, elementLength(:)
-        real(8)          :: MinElemLength
-        character(64)    :: subroutine_name = 'init_network_CC_elem_length_adjust'
-        !--------------------------------------------------------------------------
-        !if (crashYN) return
 
-        AdjustType      => setting%Discretization%MinElemLengthMethod
-        NominalLength   => setting%Discretization%NominalElemLength
-        MinLengthFactor => setting%Discretization%MinElemLengthFactor
-
-        elementIdx    => elemI(:,ei_Lidx)
-        elementType   => elemI(:,ei_elementType)
-        elementLength => elemR(:,er_Length)
-
-        select case (AdjustType)
-
-        case(RawElemLength)
-            !% do not do any adjustment and return the raw network
-            return
-
-        case (ElemLengthAdjust)
-
-            MinElemLength = NominalLength * MinLengthFactor
-
-            do ii = 1,N_elem(this_image())
-                if ((elementType(ii) == CC) .and. (elementLength(ii) < zeroR)) then
-                    print *, 'CODE ERROR: negative element length at element ',elementIdx(ii)
-                    write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii)
-                    write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
-                    write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
-                    write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
-                    call util_crashpoint(209837)
-                end if
-
-                if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
-                    if (setting%Output%Verbose) then
-                        !print*, 'In, ', subroutine_name
-                        print *, ' '
-                        write(*,"(A,i8,A,i5)")       '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
-                        write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
-                        write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
-                        write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
-                        write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
-
-                    end if
-                    elementLength(ii) = MinElemLength
-                end if
-            end do
-
-        case default
-            print*, 'In, ', subroutine_name
-            print *, 'CODE ERROR: AdjustType unknown for # ',AdjustType 
-            print *, 'which has key ',trim(reverseKey(AdjustType))
-            !stop 
-            call util_crashpoint(89537)
-            !return
-        end select
-
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_network_CC_elem_length_adjust
-!%
-!%==========================================================================
 !%==========================================================================
 !%
     subroutine init_network_identify_boundary_element()

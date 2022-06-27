@@ -63,7 +63,7 @@ module storage_geometry
             else
                 !% else interpolate from the curve
                 call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
-                    curve_storage_depth)
+                    curve_storage_depth, 1)
             endif
         end do
 
@@ -93,7 +93,7 @@ module storage_geometry
 
             !% interpolate from the curve
             call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
-                curve_storage_depth)
+                curve_storage_depth,1)
         end do
 
     end subroutine storage_tabular_depth_from_volume
@@ -175,7 +175,7 @@ module storage_geometry
         curveID  => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
 
         call util_curve_lookup_singular(curveID, er_Depth, er_Volume, curve_storage_depth, &
-            curve_storage_volume)
+            curve_storage_volume, 1)
 
     end subroutine storage_interpolate_volume_from_depth_singular
 !%  
@@ -206,7 +206,7 @@ module storage_geometry
 
         !% add a new curveID
         N_FunctionalStorage = N_FunctionalStorage + oneI
-        CurveID  = SWMM_N_Curve + N_FunctionalStorage
+        CurveID  = setting%SWMMinput%N_curve + N_FunctionalStorage
       
         curve(CurveID)%ID       = CurveID
         curve(CurveID)%Type     = StorageCurve

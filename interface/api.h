@@ -25,6 +25,8 @@
 #define CFTOCM(cf) cf*0.0283168466 // Cubic feet to cubic meters
 #define FT2TOM2(sft) sft*0.09290304 // Square feet to square meters
 #define FTTOM(ft) ft*0.3048 // Feet to meters
+#define MTOFT(m) m/0.3048  // meters to feet
+#define CMTOCFT(cm) cm / 0.0283168466  // cubic meters to cubic feet
 #define API_NULL_VALUE_I -998877
 #define NUM_API_INT_VARS 0
 #define NUM_API_DOUBLE_VARS 2
@@ -70,101 +72,100 @@ enum api_output_link_attribute {
 };
 
 // these "nodef" are identical to the fortran api_nodef_... values
+// in define_api_keys.f90
 enum api_nodef_attributes {
   nodef_ID = 2,
-  nodef_type,            // 3
-  nodef_outfall_type,    // 4
-  nodef_invertElev,      // 5
-  nodef_initDepth,       // 6
-  nodef_StorageConstant,    // 7
-  nodef_StorageCoeff,       // 8
-  nodef_StorageExponent,    // 9
-  nodef_StorageCurveID,     // 10
-  nodef_extInflow_tSeries,   // 11
-  nodef_extInflow_tSeries_x1,  // 12
-  nodef_extInflow_tSeries_x2,   // 13
+  nodef_type,                       // 3
+  nodef_outfall_type,               // 4
+  nodef_invertElev,                 // 5
+  nodef_initDepth,                  // 6
+  nodef_StorageConstant,            // 7
+  nodef_StorageCoeff,               // 8
+  nodef_StorageExponent,            // 9
+  nodef_StorageCurveID,             // 10
+  nodef_extInflow_tSeries,          // 11
+  nodef_extInflow_tSeries_x1,       // 12
+  nodef_extInflow_tSeries_x2,       // 13
   nodef_extInflow_basePat_idx,      // 14
-  nodef_extInflow_basePat_type,  // 15
-  nodef_extInflow_baseline,      // 16
-  nodef_extInflow_sFactor,       // 17
-  nodef_has_extInflow,             // 18
+  nodef_extInflow_basePat_type,     // 15
+  nodef_extInflow_baseline,         // 16
+  nodef_extInflow_sFactor,          // 17
+  nodef_has_extInflow,              // 18
   nodef_dwfInflow_monthly_pattern,  // 19
   nodef_dwfInflow_daily_pattern,    // 20
-  nodef_dwfInflow_hourly_pattern,   // 221
+  nodef_dwfInflow_hourly_pattern,   // 21
   nodef_dwfInflow_weekend_pattern,  // 22
   nodef_dwfInflow_avgvalue,         // 23
   nodef_has_dwfInflow,              // 24
-  // brh20211207s
-  //node_depth,                     // xx
   nodef_newDepth,                   // 25
-  // brh20211207e
   nodef_fullDepth,                  // 26
   nodef_inflow,                     // 27
   nodef_volume,                     // 28
-  // brh20211207s
-  //node_overflow                    // xx
-  nodef_overflow,                    // 29
-  nodef_rptFlag,                      // 30
-  // brh20220221
-  nodef_hasFlapGate                   // 31
+  nodef_overflow,                   // 29
+  nodef_rptFlag,                    // 30
+  nodef_hasFlapGate,                // 31
+  nodef_head_tSeries,               // 32
+  nodef_head_tSeries_x1,            // 33
+  nodef_head_tSeries_x2,            // 34
+  nodef_has_extHead                 // 35
 };
-
-// these "linkf" are identical to the fortran api_linkf_... values
+// skip 2 numbers for index end and start flags
+// these "linkf" are identical to the fortran api_linkf_... values in define_api_keys.f90
 enum api_linkf_attributes {
-  linkf_ID = 34,
-  linkf_subIndex,  // 35 *
-  linkf_direction, // 36 *
-  linkf_node1,     // 37 *
-  linkf_node2,     // 38 *
-  linkf_offset1,   // 39 *
-  linkf_offset2,   // 40 *
-  linkf_q0,        // 41 *
-  linkf_flow,      // 42 *
-  linkf_depth,     // 43 *
-  linkf_volume,    // 44 *
-  linkf_froude,    // 45 *
-  linkf_setting,   // 46 *
-  linkf_left_slope,        // 47 *
-  linkf_right_slope,       // 48 *
-  linkf_weir_end_contractions,  // 49 *
-  linkf_weir_side_slope,        // 50 *
-  linkf_curveid,           // 51 *
-  linkf_discharge_coeff1,       // 52 *
-  linkf_discharge_coeff2,       // 53 *
-  linkf_initSetting,            // 54 *
-  linkf_yOn,                    // 55 *
-  linkf_yOff,                   // 56 *
-  linkf_conduit_roughness,      // 57 *
-  linkf_conduit_length,         // 58 *
-  // brh 20211207s
-  linkf_rptFlag,           // 59 new in api.c
-  // brh 20211207s
+  linkf_ID = 38,                // 38
+  linkf_subIndex,               // 39 *
+  linkf_direction,              // 40 *
+  linkf_node1,                  // 41 *
+  linkf_node2,                  // 42 *
+  linkf_offset1,                // 43 *
+  linkf_offset2,                // 44 *
+  linkf_q0,                     // 45 *
+  linkf_flow,                   // 46 *
+  linkf_depth,                  // 47 *
+  linkf_volume,                 // 48 *
+  linkf_froude,                 // 49 *
+  linkf_setting,                // 50 
+  linkf_targetsetting,          // 51
+  linkf_timelastset,            // 52 *
+  linkf_left_slope,             // 53 *
+  linkf_right_slope,            // 54 *
+  linkf_weir_end_contractions,  // 55 *
+  linkf_weir_side_slope,        // 56 *
+  linkf_curveid,                // 57 *
+  linkf_discharge_coeff1,       // 58 *
+  linkf_discharge_coeff2,       // 59 *
+  linkf_initSetting,            // 60 *
+  linkf_yOn,                    // 61 *
+  linkf_yOff,                   // 62 *
+  linkf_conduit_roughness,      // 63 *
+  linkf_conduit_length,         // 64 *
+  linkf_rptFlag,                // 65
+  linkf_commonBreak,            // 66
   // --- special elements attributes
-  linkf_commonBreak,             // 60
-  linkf_type,                   // 61 *
-  linkf_sub_type,               // 62 *
-  linkf_typeBreak,              // 63
+  linkf_type,                   // 67 *
+  linkf_sub_type,               // 68 *
+  linkf_typeBreak,              // 69
   // --- xsect attributes
-  linkf_xsect_type,        // 64 *
-  linkf_geometry,          // 65 missing in api.c
-  linkf_xsect_wMax,        // 66 *
-  linkf_xsect_yBot,        // 67 *
-  linkf_xsect_yFull,        // 68 *
-  linkf_transectid          // 69
+  linkf_xsect_type,         // 70 *
+  linkf_geometry,           // 71 
+  linkf_xsect_wMax,         // 72 *
+  linkf_xsect_yBot,         // 73 *
+  linkf_xsect_yFull,        // 74 *
+  linkf_transectid          // 75
 };
-
-// these ar identical to transect values in define_api_keys
+// skip 2 number for index start and end flags
+// these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 72,
-  transectf_yFull,
-  transectf_aFull,
-  transectf_rFull,
-  transectf_wMax,
-  transectf_ywMax,
-  transectf_sMax,
-  transectf_aMax,
-  transectf_lengthFactor,
-  transectf_roughness
+  transectf_ID = 78,       // 78
+  transectf_yFull,         // 79
+  transectf_aFull,         // 80
+  transectf_rFull,         // 81
+  transectf_wMax,          // 82
+  transectf_ywMax,         // 83
+  transectf_sMax,          // 84
+  transectf_aMax,          // 85
+  transectf_lengthFactor,  // 86
+  transectf_roughness      // 87
 };
 
 // API vars are those necessary for external applications
@@ -213,6 +214,29 @@ typedef struct {
 extern "C" {
 #endif
 
+// --- Controls
+
+int DLLEXPORT api_teststuff();
+int DLLEXPORT api_controls_count(int* nRules, int* nPremise, int* nThenAction, int* nElseAction);
+
+int DLLEXPORT api_controls_get_premise_data(
+    int* locationL,        int* locationR,
+    int* islinkL,          int* islinkR,
+    int* attributeL,       int* attributeR, 
+    int* thisPremiseLevel, int rIdx);
+
+int DLLEXPORT api_controls_get_action_data(
+    int* location,     
+    int* attribute,
+    int* thisActionLevel, int rIdx, int isThen);    
+ 
+int DLLEXPORT api_controls_transfer_monitor_data(     
+    double Depth, double Volume, double Inflow, double Flow, 
+    double StatusSetting, double TimeLastSet, int LinkNodeIdx, int isLink);
+
+int DLLEXPORT api_controls_execute(
+    double currentTimeEpoch, double ElapsedDays, double dtDays);
+
 // --- Simulation
 
 int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
@@ -246,7 +270,7 @@ int DLLEXPORT api_get_SWMM_times(
   double DLLEXPORT api_get_NewRunoffTime();
 //brh20211208e
 
-int DLLEXPORT api_get_SWMM_controls(
+int DLLEXPORT api_get_SWMM_setup(
     int*  flow_units,
     int*  route_model,
     int*  allow_ponding,
@@ -256,6 +280,7 @@ int DLLEXPORT api_get_SWMM_controls(
     int*  force_main_eqn,
     int*  max_trials,
     int*  normal_flow_limiter,
+    int*  rule_step,
     int*  surcharge_method,
     int*  tempdir_provided,
     double* variable_step,

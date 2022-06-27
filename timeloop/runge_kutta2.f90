@@ -7,6 +7,7 @@ module runge_kutta2
     use update
     use face
     use lowlevel_rk2
+    !use control_hydraulics, only: control_update
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use adjust
     use diagnostic_elements
@@ -87,6 +88,10 @@ module runge_kutta2
             !print *, this_image(),'FFF  after zero/small face step 1-----------------',setting%Time%Step
             !call util_CLprint ('FFF  after zero/small face step 1-----------------')
 
+        ! !% --- update the control/monitoring data
+        ! call control_update()
+        ! call util_crashstop(558293)
+
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel()
         call util_crashstop(402873)
@@ -144,6 +149,10 @@ module runge_kutta2
             !print *, this_image(),'NNN  after zero/small face step 2 ---------------------',setting%Time%Step
             !call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
         
+        ! !% --- update the control/monitoring data
+        ! call control_update()
+        ! call util_crashstop(558293)
+
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel()
         call util_crashstop(662398)

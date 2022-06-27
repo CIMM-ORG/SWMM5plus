@@ -238,6 +238,7 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
+        "limitByBC_YN" : true,
         "CFL_hi_max" : 0.5,
         "CFL_target" : 0.4,
         "CFL_lo_max" : 0.2,

@@ -20,6 +20,9 @@ module adjust
 
     private
 
+    public :: adjust_face_for_zero_setting
+    public :: adjust_face_for_zero_setting_singular
+
     public :: adjust_zero_and_small_depth_elem
     public :: adjust_zero_and_small_depth_face
     public :: adjust_Vfilter
@@ -44,6 +47,56 @@ module adjust
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
+!%
+    subroutine adjust_face_for_zero_setting_singular (iFidx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Input is a single face that is "closed" by a control action
+        !% where the upstream element elemR(:,er_Setting) = 0.0
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: iFidx  !% index of the face
+        !%------------------------------------------------------------------
+        faceR(iFidx, fr_Flowrate)              = zeroR
+        faceR(iFidx, fr_Flowrate_Conservative) = zeroR
+        faceR(iFidx, fr_Velocity_d)            = zeroR
+        faceR(iFidx, fr_Velocity_u)            = zeroR
+
+    end subroutine adjust_face_for_zero_setting_singular
+!%
+!%==========================================================================
+!%==========================================================================  
+!%
+    subroutine adjust_face_for_zero_setting ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets all zero fluxes on downstream faces of "closed" CC elements
+        !% i.e. where elemR(:,er_Setting) = 0.0
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: ptype, npack, thisP(:), dFace(:)
+        !%------------------------------------------------------------------
+        !% Aliases:    
+            ptype => col_elemP(ep_CC_isclosed)
+            npack => npack_elemP(ptype)
+            dFace => elemI(:,ei_Mface_dL)
+        !%------------------------------------------------------------------    
+        !% Preliminaries    
+            if (npack < 1) return
+        !%------------------------------------------------------------------ 
+        !% --- elements that are closed (er_Setting = 0.0)        
+        thisP => elemP(1:npack,ep_CC_isclosed)
+
+        !% --- force flows and velocities to zero
+        faceR(dface(thisP), fr_Flowrate)              = zeroR
+        faceR(dface(thisP), fr_Flowrate_Conservative) = zeroR
+        faceR(dface(thisP), fr_Velocity_d)            = zeroR
+        faceR(dface(thisP), fr_Velocity_u)            = zeroR
+
+    end subroutine adjust_face_for_zero_setting
+!%
+!%==========================================================================
+!%==========================================================================  
 !%
     subroutine adjust_zero_and_small_depth_elem (whichTM, isreset)
         !%------------------------------------------------------------------

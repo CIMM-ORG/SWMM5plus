@@ -7,6 +7,7 @@ module weir_elements
     use common_elements
     use adjust
     use utility, only: util_CLprint
+    use utility_crash, only: util_crashpoint
 
     !%----------------------------------------------------------------------------- 
     !% Description:
@@ -18,6 +19,7 @@ module weir_elements
     private
 
     public :: weir_toplevel
+    public :: weir_set_setting
 
     contains
     !%==========================================================================
@@ -39,7 +41,10 @@ module weir_elements
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
-        !%  
+
+        !% --- set the Setting for the fractional open
+        call weir_set_setting (eIdx)  
+
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
             (eIdx, esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection)
@@ -69,8 +74,32 @@ module weir_elements
     end subroutine weir_toplevel    
 !%
 !%==========================================================================
-!% PRIVATE
 !%==========================================================================   
+!%
+    subroutine weir_set_setting (eIdx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% adjusts weir values for 0 <= er_setting <= 1.0
+        !% patterned after EPA-SWMM link.c/weir_setSetting
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: eIdx
+        !%------------------------------------------------------------------
+        !% --- instantaneous adjustment
+        elemR(eIdx,er_Setting) = elemR(eIdx,er_TargetSetting)
+
+        !% --- error check
+        !%     EPA-SWMM allows the weir setting to be between 0.0 and 1.0
+        if (.not. ((elemR(eIdx,er_Setting) .ge. 0.0) .and. (elemR(eIdx,er_Setting) .le. 1.0))) then
+            print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
+            call util_crashpoint(668723)
+        end if
+
+    end subroutine weir_set_setting
+!% 
+!%==========================================================================   
+!% PRIVATE
+!%==========================================================================       
 !%  
     subroutine weir_effective_head_delta (eIdx)
         !%-----------------------------------------------------------------------------

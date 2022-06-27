@@ -36,6 +36,8 @@ module utility
     public :: util_CLprint
     public :: util_syncwrite
 
+    public :: util_unique_rank
+
     contains
 !%
 !%==========================================================================
@@ -1222,9 +1224,268 @@ module utility
         end if
         sync all
 
-    end subroutine util_syncwrite            
+    end subroutine util_syncwrite      
 !%
 !%==========================================================================    
+!%==========================================================================
+!%
+    subroutine util_unique_rank (xInput, xRanked, Nunique)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% input array (integer) xInput is ranked (small to large)
+        !% and duplicates discarded.
+        !% Modified from public domain code ORDERPACK 2.0 
+        !% written by Michel Olagnon, IFREMER Brest, michel.olagnon@ifremer.fr
+        !% accessed from www.fortran-2000.com/rank/ on June 21, 2022
+        !% Subroutine I_UNIRNK from module UNIRNK extracted and modified below
+        !% The approach uses Merge-sort ranking of an array, with removal of
+        !   duplicate entries.
+        !   The routine is similar to pure merge-sort ranking, but on
+        !   the last pass, it discards indices that correspond to
+        !   duplicate entries.
+        !   For performance reasons, the first 2 passes are taken
+        !   out of the standard loop, and use dedicated coding.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, dimension (:), intent (in)  :: xInput
+            integer, dimension (:), intent (out) :: xRanked
+            integer, intent (out) :: Nunique
+
+            integer, Dimension (SIZE(xRanked)) :: jwRankT
+            integer :: LmtnA, LmtnC, iRanking, iRanking1, iRanking2
+            integer :: nval, iInd, iwRankD, iwRank, iwRankF, jIndA, iIndA, iIndB
+            integer :: xTst, xValA, xValB
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases:   
+        !%------------------------------------------------------------------
+        nval    = Min (SIZE(xInput), SIZE(xRanked))
+        Nunique = nval
+    
+        select case (nval)
+        case (:0)
+            return
+        case (1)
+            xRanked (1) = 1
+            return
+        case default
+            continue
+        end select
+        !%
+        !%  Fill-in the index array, creating ordered couples
+        !%
+        do iInd = 2, nval, 2
+            if (xInput(iInd-1) < xInput(iInd)) then
+                xRanked (iInd-1) = iInd - 1
+                xRanked (iInd) = iInd
+            else
+                xRanked (iInd-1) = iInd
+                xRanked (iInd) = iInd - 1
+            end if
+        end Do
+        if (Modulo(nval, 2) /= 0) then
+            xRanked (nval) = nval
+        end if
+        !%
+        !%  We will now have ordered subsets A - B - A - B - ...
+        !%  and merge A and B couples into     C   -   C   - ...
+        !%
+        LmtnA = 2
+        LmtnC = 4
+        !%
+        !%  First iteration. The length of the ordered subsets goes from 2 to 4
+        !%
+        do
+            if (nval <= 4) exit
+            !%
+            !%   Loop on merges of A and B into C
+            !%
+            do iwRankD = 0, nval - 1, 4
+                if ((iwRankD+4) > nval) then
+                    if ((iwRankD+2) >= nval) Exit
+                    !%
+                    !%   1 2 3
+                    !%
+                    if (xInput(xRanked(iwRankD+2)) <= xInput(xRanked(iwRankD+3))) exit
+                    !%
+                    !%   1 3 2
+                    !%
+                    if (xInput(xRanked(iwRankD+1)) <= xInput(xRanked(iwRankD+3))) then
+                        iRanking2 = xRanked (iwRankD+2)
+                        xRanked (iwRankD+2) = xRanked (iwRankD+3)
+                        xRanked (iwRankD+3) = iRanking2
+                    !%
+                    !%   3 1 2
+                    !%
+                    else
+                        iRanking1 = xRanked (iwRankD+1)
+                        xRanked (iwRankD+1) = xRanked (iwRankD+3)
+                        xRanked (iwRankD+3) = xRanked (iwRankD+2)
+                        xRanked (iwRankD+2) = iRanking1
+                    end if
+                    exit
+                end if
+                !%
+                !%   1 2 3 4
+                !%
+                if (xInput(xRanked(iwRankD+2)) <= xInput(xRanked(iwRankD+3))) cycle
+                !%
+                !%   1 3 x x
+                !%
+                if (xInput(xRanked(iwRankD+1)) <= xInput(xRanked(iwRankD+3))) then
+                    iRanking2 = xRanked (iwRankD+2)
+                    xRanked (iwRankD+2) = xRanked (iwRankD+3)
+                    if (xInput(iRanking2) <= xInput(xRanked(iwRankD+4))) then
+                        !%   1 3 2 4
+                        xRanked (iwRankD+3) = iRanking2
+                    else
+                        !%   1 3 4 2
+                        xRanked (iwRankD+3) = xRanked (iwRankD+4)
+                        xRanked (iwRankD+4) = iRanking2
+                    end if
+                !%
+                !%   3 x x x
+                !%
+                else
+                    iRanking1 = xRanked (iwRankD+1)
+                    iRanking2 = xRanked (iwRankD+2)
+                    xRanked (iwRankD+1) = xRanked (iwRankD+3)
+                    if (xInput(iRanking1) <= xInput(xRanked(iwRankD+4))) then
+                        xRanked (iwRankD+2) = iRanking1
+                        if (xInput(iRanking2) <= xInput(xRanked(iwRankD+4))) then
+                            !%   3 1 2 4
+                            xRanked (iwRankD+3) = iRanking2
+                        else
+                            !%   3 1 4 2
+                            xRanked (iwRankD+3) = xRanked (iwRankD+4)
+                            xRanked (iwRankD+4) = iRanking2
+                        end If
+                    else
+                        !%   3 4 1 2
+                        xRanked (iwRankD+2) = xRanked (iwRankD+4)
+                        xRanked (iwRankD+3) = iRanking1
+                        xRanked (iwRankD+4) = iRanking2
+                    end if
+                end if
+            end do
+            !%
+            !%  The Cs become As and Bs
+            !%
+            LmtnA = 4
+            exit
+        end do
+        !%
+        !%  Iteration loop. Each time, the length of the ordered subsets
+        !%  is doubled.
+        !%
+        do
+            if (2*LmtnA >= nval) exit
+            iwRankF = 0
+            LmtnC = 2 * LmtnC
+            !%
+            !%   Loop on merges of A and B into C
+            !%
+            do
+                iwRank  = iwRankF
+                iwRankD = iwRankF + 1
+                jIndA   = iwRankF + LmtnA
+                iwRankF = iwRankF + LmtnC
+                if (iwRankF >= nval) then
+                    if (jIndA >= nval) exit
+                    iwRankF = nval
+                end if
+                iIndA = 1
+                iIndB = jIndA + 1
+                !%
+                !%  One steps in the C subset, that we create in the final rank array
+                !%
+                !%  Make a copy of the rank array for the iteration
+                !%
+                jwRankT (1:LmtnA) = xRanked (iwRankD:jIndA)
+                xValA = xInput (jwRankT(iIndA))
+                xValB = xInput (xRanked(iIndB))
+                !%
+                do
+                    iwRank = iwRank + 1
+                    !%
+                    !%  We still have unprocessed values in both A and B
+                    !%
+                    if (xValA > xValB) then
+                        xRanked (iwRank) = xRanked (iIndB)
+                        iIndB = iIndB + 1
+                        if (iIndB > iwRankF) then
+                            !%  Only A still with unprocessed values
+                            xRanked (iwRank+1:iwRankF) = jwRankT (iIndA:LmtnA)
+                            exit
+                        end if
+                        xValB = xInput (xRanked(iIndB))
+                    else
+                        xRanked (iwRank) = jwRankT (iIndA)
+                        iIndA = iIndA + 1
+                        if (iIndA > LmtnA) exit! Only B still with unprocessed values
+                        xValA = xInput (jwRankT(iIndA))
+                    end if
+                end do
+            end do
+            !%
+            !%  The Cs become As and Bs
+            !%
+            LmtnA = 2 * LmtnA
+        end Do
+        !%
+        !%   Last merge of A and B into C, with removal of duplicates.
+        !%
+        iIndA = 1
+        iIndB = LmtnA + 1
+        Nunique = 0
+        !%
+        !%  One steps in the C subset, that we create in the final rank array
+        !%
+        jwRankT (1:LmtnA) = xRanked (1:LmtnA)
+        if (iIndB <= nval) then
+            xTst = Min(xInput(jwRankT(1)), xInput(xRanked(iIndB))) - 1
+        else
+            xTst = xInput(jwRankT(1)) - 1
+        end if
+        do iwRank = 1, nval
+            !%
+            !%  We still have unprocessed values in both A and B
+            !%
+            if (iIndA <= LmtnA) then
+                if (iIndB <= nval) then
+                    if (xInput(jwRankT(iIndA)) > xInput(xRanked(iIndB))) then
+                        iRanking = xRanked (iIndB)
+                        iIndB = iIndB + 1
+                    else
+                        iRanking = jwRankT (iIndA)
+                        iIndA = iIndA + 1
+                    end if
+                else
+                !%
+                !%  Only A still with unprocessed values
+                !%
+                    iRanking = jwRankT (iIndA)
+                    iIndA = iIndA + 1
+                end if
+            else
+                !%
+                !%  Only B still with unprocessed values
+                !%
+                iRanking = xRanked (iwRank)
+            end If
+            if (xInput(iRanking) > xTst) then
+                xTst = xInput (iRanking)
+                Nunique = Nunique + 1
+                xRanked (Nunique) = iRanking
+            end if
+        end do
+            
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine util_unique_rank        
+!%
+!%==========================================================================          
 !%==========================================================================
 !%
         !%------------------------------------------------------------------
@@ -1243,6 +1504,6 @@ module utility
         !% Closing:
 !%
 !%==========================================================================
-!% END OF MODULE
+!% end OF MODULE
 !%==========================================================================
 end module utility

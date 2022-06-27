@@ -61,13 +61,6 @@ module define_globals
 
 
     !% Number of maximum branches for a junction
-
-    !% ADDBRANCH
-    !% always MUST be the same number up and down
-    !integer, parameter :: max_up_branch_per_node = 3
-    !integer, parameter :: max_dn_branch_per_node = 3 
-    !integer, parameter :: max_branch_per_node = 6
-
     !% note that these must always be matched with the same
     !% number of up and down nodes. 
     integer, parameter :: max_up_branch_per_node = 5   !% ADDBRANCH
@@ -108,8 +101,8 @@ module define_globals
     integer, allocatable, target :: col_elemSI(:)[:]                               !% columns of elemSI array
     integer, allocatable, target :: col_elemSR(:)[:]                               !% columns of elemSR array
     integer, allocatable, target :: col_elemSGR(:)[:]                              !% columns of elemSGR array
-    integer, allocatable, target :: col_elemWDI(:)[:]                              !% columns of elemWDI array
-    integer, allocatable, target :: col_elemWDR(:)[:]                              !% columns of elemWDR array
+    !integer, allocatable, target :: col_elemWDI(:)[:]                              !% columns of elemWDI array
+    !integer, allocatable, target :: col_elemWDR(:)[:]                              !% columns of elemWDR array
     integer, allocatable, target :: col_elemYN(:)[:]                               !% columns of elemYN array
     integer, allocatable, target :: col_faceI(:)[:]                                !% columns of faceI array
     integer, allocatable, target :: col_faceM(:)[:]                                !% columns of faceM array
@@ -117,6 +110,9 @@ module define_globals
     integer, allocatable, target :: col_facePS(:)[:],      npack_facePS(:)[:]      !% columns and number of packs for facePS array
     integer, allocatable, target :: col_faceR(:)[:]                                !% columns of faceR array
     integer, allocatable, target :: col_faceYN(:)[:]                               !% columns of faceYN array
+    ! integer, allocatable, target :: col_conmonI(:)[:]                              !% columns of conmomI array
+    ! integer, allocatable, target :: col_conmonR(:)[:]                              !% columns of conmonR array
+    ! integer, allocatable, target :: col_conmonYN(:)[:]                             !% columns of conmonYN array
 
     !%  number of dummy row in elem arrays (do not change)
     integer, parameter :: N_dummy_elem = 1
@@ -129,6 +125,12 @@ module define_globals
     integer, allocatable, target :: N_OutElem(:)[:]
     !% output nodes on each image
     integer, allocatable, target :: N_OutFace(:)[:]
+    !% number of control action and monitoring points in system (identical on each image)
+    integer,  target :: N_ActionPoint
+    integer,  target :: N_MonitorPoint
+
+    !% --- packed array of columns from elemR used in conmonR
+    integer, allocatable, target :: cmR_eR_col(:)
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]       !% coarray for elements
@@ -144,6 +146,20 @@ module define_globals
     real(8), allocatable, target :: elemSR(:,:)[:]      !% coarray for special elemen Real
     real(8), allocatable, target :: elemSGR(:,:)[:]     !% coarray for special element geometry Real
     real(8), allocatable, target :: elemGR(:,:)         !% array to copy required ghost element data (not a coarray)
+
+    ! integer, allocatable, target :: conmonI(:,:)        !% element data for control/monitoring points (not a coarray)
+    ! real(8), allocatable, target :: conmonR(:,:)        !% real data for control/monitoring points (not a coarray)
+    ! logical, allocatable, target :: conmonYN(:,:)       !% logical data for control/monitoring points (not a coarray)
+
+    integer, allocatable, target :: actionI(:,:)        !% action data for EPA-SWMM controls
+    real(8), allocatable, target :: actionR(:,:)        !% actionR MIGHT NOT BE NEEDED
+    !logical, allocatable, target :: actionYN(:,:)
+
+    integer, allocatable, target :: monitorI(:,:)       !% monitor data for EPA-SWMM controls
+    real(8), allocatable, target :: monitorR(:,:)
+    !logical, allocatable, target :: monitorYN(:,:)   
+
+    real(8), allocatable, target :: monitorPassR(:)[:]  !% monitor data to be passed between coarrays
 
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]       !% coarray for faces real data
@@ -251,7 +267,7 @@ module define_globals
 !% ===================================================================================
 
     !% note that nullvalueI < 0 is required
-    integer, parameter :: nullvalueI = 998877
+    integer, parameter :: nullvalueI = 998877        !% note this places limit on largest network!
     real(8), parameter :: nullvalueR = 9.98877e16
     logical, parameter :: nullvalueL = .false.
     real(8), parameter :: negoneR = -1.0
@@ -271,6 +287,8 @@ module define_globals
     real(8), parameter :: onethousandR = 1000.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
+    real(8), parameter :: oneOneThounsandthR = oneR / onethousandR
+    real(8), parameter :: oneOneHundredthR = oneR / onehundredR
     real(8), parameter :: onetenthR = oneR / tenR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
@@ -297,14 +315,14 @@ module define_globals
     integer, parameter :: sixI = 6
 
     !% Number of objects
-    integer :: SWMM_N_subcatch
-    integer :: SWMM_N_link
-    integer :: SWMM_N_node
-    integer :: SWMM_N_pollutant
-    integer :: SWMM_N_control
-    integer :: SWMM_N_divider
-    integer :: SWMM_N_link_transect  ! # of irregular cross-section transects defined for links
-    integer :: SWMM_N_transect_depth_items
+    !integer :: SWMM_N_subcatch
+    !integer :: SWMM_N_link
+    !integer :: SWMM_N_node
+    !integer :: SWMM_N_pollutant
+    !integer :: SWMM_N_control
+    !integer :: SWMM_N_divider
+    !integer :: setting%SWMMinput%N_link_transect  ! # of irregular cross-section transects defined for links
+    !integer :: SWMM_N_transect_depth_items
     integer :: N_transect            ! # of irregular cross-section transects for elements
     integer :: N_transect_depth_items
     integer :: N_transect_area_items
@@ -324,7 +342,8 @@ module define_globals
     integer :: N_etm
     integer :: N_link_output
     integer :: N_node_output
-    integer :: SWMM_N_Curve
+    integer :: N_monitor_types = 7 !% # of data types transferred from monitorR in monitorPassR
+    !integer :: SWMM_N_curve
     integer :: N_Curve
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace

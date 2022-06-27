@@ -494,101 +494,102 @@ module define_api_keys
     !% Note that api.h must be changed if any enum changed!
     enum, bind(c)
         enumerator :: api_nodef_start = 1
-        enumerator :: api_nodef_ID    !2
-        enumerator :: api_nodef_type   ! 3
-        enumerator :: api_nodef_outfall_type  !4
-        enumerator :: api_nodef_invertElev    !5
-        enumerator :: api_nodef_initDepth     !6
-        enumerator :: api_nodef_StorageConstant   !7
-        enumerator :: api_nodef_StorageCoeff      !8
-        enumerator :: api_nodef_StorageExponent   !9
-        enumerator :: api_nodef_StorageCurveID    !10
-        enumerator :: api_nodef_extInflow_tSeries !11
-        enumerator :: api_nodef_extInflow_tSeries_x1  !12
-        enumerator :: api_nodef_extInflow_tSeries_x2  !13
-        enumerator :: api_nodef_extInflow_basePat_idx     !14
-        !% brh20211707s 
-        !enumerator :: api_node_extInflow_baseline    !moved
-        enumerator :: api_nodef_extInflow_basePat_type   !15
-        enumerator :: api_nodef_extInflow_baseline    !16
-        !% brh202211207e
-        enumerator :: api_nodef_extInflow_sFactor        !17
-        enumerator :: api_nodef_has_extInflow            !18
+        enumerator :: api_nodef_ID                         !2 must match nodef_ID in api.h
+        enumerator :: api_nodef_type                       !3
+        enumerator :: api_nodef_outfall_type               !4
+        enumerator :: api_nodef_invertElev                 !5
+        enumerator :: api_nodef_initDepth                  !6
+        enumerator :: api_nodef_StorageConstant            !7
+        enumerator :: api_nodef_StorageCoeff               !8
+        enumerator :: api_nodef_StorageExponent            !9
+        enumerator :: api_nodef_StorageCurveID             !10
+        enumerator :: api_nodef_extInflow_tSeries          !11
+        enumerator :: api_nodef_extInflow_tSeries_x1       !12
+        enumerator :: api_nodef_extInflow_tSeries_x2       !13
+        enumerator :: api_nodef_extInflow_basePat_idx      !14
+        enumerator :: api_nodef_extInflow_basePat_type     !15
+        enumerator :: api_nodef_extInflow_baseline         !16
+        enumerator :: api_nodef_extInflow_sFactor          !17
+        enumerator :: api_nodef_has_extInflow              !18
         enumerator :: api_nodef_dwfInflow_monthly_pattern  !19
         enumerator :: api_nodef_dwfInflow_daily_pattern    !20
         enumerator :: api_nodef_dwfInflow_hourly_pattern   !21
         enumerator :: api_nodef_dwfInflow_weekend_pattern  !22
         enumerator :: api_nodef_dwfInflow_avgvalue         !23
-        enumerator :: api_nodef_has_dwfInflow   !24
-        !% brh20211207s 
-        enumerator :: api_nodef_newDepth        !25
-        !% brh20211207e 
-        enumerator :: api_nodef_fullDepth       !26  x!24
-        enumerator :: api_nodef_inflow          !27  x!25
-        enumerator :: api_nodef_volume          !28  x!26
-        enumerator :: api_nodef_overflow        !29  x!27
-        enumerator :: api_nodef_rptFlag     !30
-        !% brh 20220521
-        enumerator :: api_nodef_hasFlapGate  !31
-        enumerator :: api_nodef_end         !32
+        enumerator :: api_nodef_has_dwfInflow              !24
+        enumerator :: api_nodef_newDepth                   !25
+        enumerator :: api_nodef_fullDepth                  !26
+        enumerator :: api_nodef_inflow                     !27
+        enumerator :: api_nodef_volume                     !28
+        enumerator :: api_nodef_overflow                   !29 
+        enumerator :: api_nodef_rptFlag                    !30
+        enumerator :: api_nodef_hasFlapGate                !31
+        enumerator :: api_nodef_head_tSeries               !32
+        enumerator :: api_nodef_head_tSeries_x1            !33
+        enumerator :: api_nodef_head_tSeries_x2            !34
+        enumerator :: api_nodef_has_extHead                !35
+        enumerator :: api_nodef_end                        !36 -- must be last ...nodef...
 
-        enumerator :: api_linkf_start     ! 33
-        enumerator :: api_linkf_ID        ! 34
-        enumerator :: api_linkf_subIndex  ! 35
-        enumerator :: api_linkf_direction ! 36
-        enumerator :: api_linkf_node1     ! 37
-        enumerator :: api_linkf_node2     ! 38
-        enumerator :: api_linkf_offset1   ! 39
-        enumerator :: api_linkf_offset2   ! 40
-        enumerator :: api_linkf_q0        ! 41
-        enumerator :: api_linkf_flow      ! 42
-        enumerator :: api_linkf_depth     ! 43
-        enumerator :: api_linkf_volume    ! 44
-        enumerator :: api_linkf_froude    ! 45
-        enumerator :: api_linkf_setting   ! 46
-        enumerator :: api_linkf_left_slope       ! 47
-        enumerator :: api_linkf_right_slope      ! 48  
-        enumerator :: api_linkf_weir_end_contractions ! 49
-        enumerator :: api_linkf_weir_side_slope   ! 50
-        enumerator :: api_linkf_curveid      ! 51
-        enumerator :: api_linkf_discharge_coeff1  ! 52
-        enumerator :: api_linkf_discharge_coeff2  ! 53
-        enumerator :: api_linkf_initSetting       ! 54
-        enumerator :: api_linkf_yOn               ! 55
-        enumerator :: api_linkf_yOff              ! 56
-        enumerator :: api_linkf_conduit_roughness ! 57
-        enumerator :: api_linkf_conduit_length    ! 58
-        enumerator :: api_linkf_rptFlag           ! 59
-        !% brh20211207s
-        enumerator :: api_linkf_commonBreak      ! 60  ! must be end of common types
-        !% brh20211207e
+        enumerator :: api_linkf_start                    ! 37
+        enumerator :: api_linkf_ID                       ! 38 must match linkf_ID in api.h
+        enumerator :: api_linkf_subIndex                 ! 39
+        enumerator :: api_linkf_direction                ! 40
+        enumerator :: api_linkf_node1                    ! 41
+        enumerator :: api_linkf_node2                    ! 42
+        enumerator :: api_linkf_offset1                  ! 43
+        enumerator :: api_linkf_offset2                  ! 44
+        enumerator :: api_linkf_q0                       ! 45
+        enumerator :: api_linkf_flow                     ! 46
+        enumerator :: api_linkf_depth                    ! 47
+        enumerator :: api_linkf_volume                   ! 48
+        enumerator :: api_linkf_froude                   ! 49
+        enumerator :: api_linkf_setting                  ! 50
+        enumerator :: api_linkf_targetsetting            ! 51
+        enumerator :: api_linkf_timelastset              ! 52
+        enumerator :: api_linkf_left_slope               ! 53
+        enumerator :: api_linkf_right_slope              ! 54  
+        enumerator :: api_linkf_weir_end_contractions    ! 55
+        enumerator :: api_linkf_weir_side_slope          ! 56
+        enumerator :: api_linkf_curveid                  ! 57
+        enumerator :: api_linkf_discharge_coeff1         ! 58
+        enumerator :: api_linkf_discharge_coeff2         ! 59
+        enumerator :: api_linkf_initSetting              ! 60
+        enumerator :: api_linkf_yOn                      ! 61
+        enumerator :: api_linkf_yOff                     ! 62
+        enumerator :: api_linkf_conduit_roughness        ! 63
+        enumerator :: api_linkf_conduit_length           ! 64
+        enumerator :: api_linkf_rptFlag                  ! 65
+        enumerator :: api_linkf_commonBreak              ! 66  ! must be end of common  ...linkf... types
+
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 61
-        enumerator :: api_linkf_sub_type     ! 62
-        enumerator :: api_linkf_typeBreak    ! 63  ! must be end of special types
-        ! --- xsect attributes 
-        enumerator :: api_linkf_xsect_type   ! 64
-        enumerator :: api_linkf_geometry     ! 65
-        enumerator :: api_linkf_xsect_wMax   ! 66
-        enumerator :: api_linkf_xsect_yBot   ! 67
-        enumerator :: api_linkf_xsect_yFull  ! 68
-        enumerator :: api_linkf_transectidx  ! 69
-        enumerator :: api_linkf_end     ! 70  ! must be end of the xsect attributes
+        enumerator :: api_linkf_type         ! 67  ! must match linkf_type in api.h
+        enumerator :: api_linkf_sub_type     ! 68
+        enumerator :: api_linkf_typeBreak    ! 69  ! must be end of ...linkf... special types
+        ! --- xsect attributes for linkf
+        enumerator :: api_linkf_xsect_type   ! 70
+        enumerator :: api_linkf_geometry     ! 71
+        enumerator :: api_linkf_xsect_wMax   ! 72
+        enumerator :: api_linkf_xsect_yBot   ! 73
+        enumerator :: api_linkf_xsect_yFull  ! 74
+        enumerator :: api_linkf_transectidx  ! 75
+        enumerator :: api_linkf_end          ! 76  ! must be end of the ...linkf... xsect attributes
+        !% --- transect data
+        enumerator :: api_transectf_start   ! 77
+        enumerator :: api_transectf_ID      ! 78
+        enumerator :: api_transectf_yFull   ! 79
+        enumerator :: api_transectf_aFull   ! 80
+        enumerator :: api_transectf_rFull   ! 81
+        enumerator :: api_transectf_wMax    ! 82
+        enumerator :: api_transectf_ywMax   ! 83
+        enumerator :: api_transectf_sMax    ! 84
+        enumerator :: api_transectf_aMax    ! 85
+        enumerator :: api_transectf_lengthFactor    ! 86
+        enumerator :: api_transectf_roughness       ! 87
+        enumerator :: api_transectf_end             ! 88
 
-        enumerator :: api_transectf_start   ! 71
-        enumerator :: api_transectf_ID      ! 72
-        enumerator :: api_transectf_yFull   ! 73
-        enumerator :: api_transectf_aFull   ! 74
-        enumerator :: api_transectf_rFull   ! 75
-        enumerator :: api_transectf_wMax    ! 76
-        enumerator :: api_transectf_ywMax   ! 77
-        enumerator :: api_transectf_sMax    ! 78
-        enumerator :: api_transectf_aMax    ! 79
-        enumerator :: api_transectf_lengthFactor    ! 80
-        enumerator :: api_transectf_roughness       ! 81
-        enumerator :: api_transectf_end             ! 82
 
-        enumerator :: api_keyslastplusone  ! 83
+
+        enumerator :: api_keyslastplusone  ! 87
     end enum
 
     ! !% API link attributes
@@ -716,7 +717,9 @@ module define_api_keys
             reverseKey_api(api_nodef_volume) = 'api_nodef_volume'
             reverseKey_api(api_nodef_overflow) = 'api_nodef_overflow'
             reverseKey_api(api_nodef_rptFlag) = 'api_nodef_rptFlag'
+            reverseKey_api(api_nodef_head_tSeries) = "api_nodef_head_tSeries"
             reverseKey_api(api_nodef_end) = 'api_nodef_end'
+
             reverseKey_api(api_linkf_start) = 'api_linkf_start'
             reverseKey_api(api_linkf_ID) = 'api_linkf_ID'
             reverseKey_api(api_linkf_subIndex) = 'api_linkf_subIndex'
@@ -731,6 +734,8 @@ module define_api_keys
             reverseKey_api(api_linkf_volume) = 'api_linkf_volume'
             reverseKey_api(api_linkf_froude) = 'api_linkf_froude'
             reverseKey_api(api_linkf_setting) = 'api_linkf_setting'
+            reverseKey_api(api_linkf_targetsetting) = 'api_linkf_targetsetting'
+            reverseKey_api(api_linkf_timelastset) = 'api_linkf_timelastset'
             reverseKey_api(api_linkf_left_slope) = 'api_linkf_left_slope'
             reverseKey_api(api_linkf_right_slope) = 'api_linkf_right_slope'
             reverseKey_api(api_linkf_weir_end_contractions) = 'api_linkf_weir_end_contractions'
@@ -767,7 +772,7 @@ module define_api_keys
             reverseKey_api(api_transectf_lengthFactor) = "api_transectf_lengthFactor"
             reverseKey_api(api_transectf_roughness) = "api_transectf_roughness"
             reverseKey_api(api_transectf_end) = "api_transectf_end"
-
+            
             reverseKey_api(api_keyslastplusone) = 'api_keyslastplusone'
         !%------------------------------------------------------------------
         !% Closing
