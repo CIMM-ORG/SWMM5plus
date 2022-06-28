@@ -1,5 +1,5 @@
 module utility_unit_testing
-  use interface
+  use interface_
   use utility_allocate
   use discretization
   use define_indexes

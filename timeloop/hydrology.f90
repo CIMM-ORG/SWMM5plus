@@ -4,7 +4,7 @@ module hydrology
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use interface
+    use interface_
     !use utility
 
     implicit none

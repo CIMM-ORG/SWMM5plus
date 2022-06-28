@@ -6,7 +6,7 @@ module initialization
     use define_indexes
     use discretization
     use initial_condition
-    use interface
+    use interface_
     use network_define
     use partitioning
     use utility
