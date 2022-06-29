@@ -5,7 +5,7 @@ module output
     use define_globals
     use define_settings
     use define_types
-    use interface
+    use interface_
     use utility_datetime
     use utility_allocate
     use utility_deallocate

@@ -3,7 +3,7 @@ module finalization
     use define_settings, only: setting
     use define_globals
     use define_indexes
-    use interface
+    use interface_
     use utility
     use utility_datetime
     use utility_deallocate

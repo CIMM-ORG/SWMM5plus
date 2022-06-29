@@ -1,6 +1,6 @@
 module boundary_conditions
 
-    use interface
+    use interface_
     use define_indexes
     use define_keys
     use define_globals

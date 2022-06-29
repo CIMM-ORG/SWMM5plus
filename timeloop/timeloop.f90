@@ -13,7 +13,7 @@ module timeloop
     use boundary_conditions
     use utility_profiler
     use utility_datetime
-    use interface, &
+    use interface_, &
         only: interface_export_link_results, &
               interface_get_subcatch_runoff, &
               interface_call_runoff_execute, &

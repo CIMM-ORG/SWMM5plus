@@ -3,7 +3,7 @@ module control_hydraulics
     use define_globals
     use define_settings
     use define_indexes
-    use interface
+    use interface_
     use orifice_elements
     use weir_elements
     use pump_elements
