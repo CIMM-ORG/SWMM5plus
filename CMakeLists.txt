@@ -16,7 +16,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
 set(FETCHCONTENT_QUIET "OFF")
 
-set(BUILD_COARRAY_NUM_IMAGES $ENV{FOR_COARRAY_NUM_IMAGES} CACHE STRING "Set up the number of processors to use for parallel SWMM5+.")
+set(BUILD_COARRAY_NUM_IMAGES 1 CACHE STRING "Set up the number of processors to use for parallel SWMM5+.")
 
 
 
@@ -44,12 +44,12 @@ if(NOT json_fortran_POPULATED)
 endif()
 
 if(NOT HDF5_FOUND)
-    message(WARNING "HDF5 not found. Will download and install locally.")
+    message(WARNING "HDF5 Fortran not found. Will download and install locally.")
     if(NOT hdf5_POPULATED)
         FetchContent_Populate(hdf5)
         ExternalProject_Add(hdf5
         SOURCE_DIR ${hdf5_SOURCE_DIR}
-        CONFIGURE_COMMAND ${hdf5_SOURCE_DIR}/configure --enable-fortran
+        CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran
         BINARY_DIR ${hdf5_BINARY_DIR}
         BUILD_COMMAND ${MAKE})
     endif()
