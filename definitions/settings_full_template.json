@@ -156,6 +156,8 @@
         "Report" : {
             "useSWMMinpYN" : true,
             "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,

@@ -92,7 +92,9 @@ echo
 
 if [[ $compile_fortran = "true" ]]
 then
-    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o SWMM
+    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -I/usr/local/hdf5/include \
+    -L/usr/local/hdf5/lib /usr/local/hdf5/lib/libhdf5hl_fortran.a /usr/local/hdf5/lib/libhdf5_hl.a \
+    /usr/local/hdf5/lib/libhdf5_fortran.a /usr/local/hdf5/lib/libhdf5.a -lm -Wl,-rpath -Wl,/usr/local/hdf5/lib -ldl -o SWMM
 fi
 
 echo
