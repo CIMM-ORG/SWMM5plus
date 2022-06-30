@@ -474,7 +474,8 @@ module define_indexes
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements    
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
-        enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth 
+        enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
+        enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
         enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_lastplusone !% must be last enum item

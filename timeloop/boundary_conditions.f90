@@ -464,6 +464,9 @@ contains
             call bc_interpolate_timeseries ( &
                     interpV(ii), BC%flowTimeSeries, tnow, ii, lower_idx, upper_idx(ii) )
 
+            !% HACK: do not let BC value to get smaller than zero
+            interpV(ii) = max(interpV(ii),zeroR)
+            
             !% --- error checking
             ! if (lower_idx <= 0) then 
             !     !% lower_idx <= 0 is an error condition

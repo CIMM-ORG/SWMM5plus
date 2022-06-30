@@ -391,6 +391,8 @@ module define_globals
 
     !% maximum cfl across the network. Used for reporting 
     real(8) :: cfl_max
+    real(8) :: cfl_max_CC
+    real(8) :: cfl_max_JBJM
 
     !% datetime related variables
     integer, parameter :: datedelta = 693594
