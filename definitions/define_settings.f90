@@ -353,8 +353,9 @@ module define_settings
 
     ! setting%BC
     type BCPropertiesType
-        integer :: TimeSlotsStored        = 100
+        integer :: TimeSlotsStored        = 1000
         logical :: disableInterpolationYN = .false.
+        real(8) :: smallestTimeInterval   = 86400.d0
     end type BCPropertiesType
 
     ! setting%CaseName
@@ -416,6 +417,8 @@ module define_settings
         real(8) :: Velocity = 1.0d-6
         !% small head difference (tolerance for no flow)
         real(8) :: Head = 1.0d-6
+        !% small time (prevent division by zero)
+        real(8) :: TimeStep = 1.0d-6
     end type EpsilonType
 
     !rm 20220207brh
@@ -575,6 +578,16 @@ module define_settings
     end type TestCaseType
 
     type SWMMinputType
+        integer :: N_control = zeroI
+        integer :: N_curve = zeroI
+        integer :: N_divider = zeroI
+        integer :: N_link = zeroI
+        integer :: N_link_transect = zeroI
+        integer :: N_node = zeroI
+        integer :: N_pollutant = zeroI
+        integer :: N_subcatch = zeroI
+        integer :: N_transect_depth_items = zeroI
+        integer :: RuleStep = nullvalueI 
         real(8) :: ReportStartTimeEpoch = nullvalueR
         real(8) :: ReportTimeInterval = nullvalueR
         real(8) :: StartEpoch = nullvalueR
@@ -599,6 +612,7 @@ module define_settings
         real(8)            :: EndEpoch   = nullvalueR
         type(TimeStepType) :: Hydraulics
         type(TimeStepType) :: Hydrology
+        type(TimeStepType) :: ControlRule
         type(WallClockType):: WallClock
         type(CPUTimeType)  :: CPU
     end type TimeType
@@ -614,6 +628,7 @@ module define_settings
     !% setting%VariableDT
     type VariableDTType
         logical :: ApplyYN = .true.
+        logical :: limitByBC_YN = .true.  !% limits time step by BC step for inflows/head
         real(8) :: CFL_hi_max = 0.5d0
         real(8) :: CFL_target = 0.4d0
         real(8) :: CFL_lo_max = 0.2d0
@@ -1847,8 +1862,13 @@ contains
         !%                       ApplyYN
         call json%get('VariableDT.ApplyYN', logical_value, found)
         if (found) setting%VariableDT%ApplyYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.Apply not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.ApplyYN not found'
         
+         !%                       limitByBC_YN
+        call json%get('VariableDT.limitByBC_YN', logical_value, found)
+        if (found) setting%VariableDT%limitByBC_YN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.limitByBC_YN not found'
+
         !%                       CFL_hi_max
         call json%get('VariableDT.CFL_hi_max', real_value, found)
         if (found) setting%VariableDT%CFL_hi_max = real_value

@@ -9,6 +9,7 @@ module orifice_elements
     use define_xsect_tables
     use utility, only: util_sign_with_ones
     use xsect_tables
+    use utility_crash, only: util_crashpoint
 
 
     implicit none
@@ -21,6 +22,7 @@ module orifice_elements
     private
 
     public :: orifice_toplevel
+    public :: orifice_set_setting
 
     contains
 !%
@@ -42,20 +44,26 @@ module orifice_elements
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
         !% find the opening of the orifice due to control intervention
-        call orifice_set_settings (eIdx)
+        print *, 'calling orifice_set_setting'
+        call orifice_set_setting (eIdx)
 
+        print *, 'calling common_head_and_flowdirection'
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
 
+        print *, 'calling orifice_effective_head_delta'
         !% find effective head on orifice element
          call orifice_effective_head_delta (eIdx)
 
+         print *, 'calling orifice_flow'
         !% find flow on orifice element
         call orifice_flow (eIdx)
 
+        print *, 'calling orifice_geometry_update'
         !% update orifice geometry from head
         call orifice_geometry_update (eIdx)
 
+        print *, 'calling common_velocity_from_flowrate_singular'
          !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
@@ -64,13 +72,12 @@ module orifice_elements
     end subroutine orifice_toplevel
 !%
 !%==========================================================================
-!% PRIVATE
 !%==========================================================================
 !%
-    subroutine orifice_set_settings (eIdx)
+    subroutine orifice_set_setting (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !%   evaluate the orifie setting based on control update
+        !%   evaluate the orifice setting based on control update
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
 
@@ -87,7 +94,7 @@ module orifice_elements
         FullDepth          => elemSR(eIdx,esr_Orifice_FullDepth)
         EffectiveFullDepth => elemSR(eIdx,esr_Orifice_EffectiveFullDepth)
         Orate              => elemSR(eIdx,esr_Orifice_Orate)
-        CurrentSetting     => elemR(eIdx,er_setting)
+        CurrentSetting     => elemR(eIdx,er_Setting)
         TargetSetting      => elemR(eIdx,er_TargetSetting)
         dt                 => setting%Time%Hydraulics%Dt
         
@@ -97,11 +104,19 @@ module orifice_elements
         else
             delta = TargetSetting - CurrentSetting
             step = dt / Orate
-            if (step + 0.001 >= abs(delta)) then
+            if (step + oneOneThounsandthR >= abs(delta)) then
                 CurrentSetting = TargetSetting
             else
-                CurrentSetting = CurrentSetting + util_sign_with_ones(delta) * step
+                !CurrentSetting = CurrentSetting + util_sign_with_ones(delta) * step
+                CurrentSetting = CurrentSetting + sign(step,delta)
             end if
+        end if
+
+        !% --- error check
+        !%     EPA-SWMM allows the orifice setting to be between 0.0 and 1.0
+        if (.not. ((CurrentSetting .ge. 0.0) .and. (CurrentSetting .le. 1.0))) then
+            print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
+            call util_crashpoint(623943)
         end if
 
         !% find effective orifice opening
@@ -109,9 +124,10 @@ module orifice_elements
 
         if (setting%Debug%File%orifice_elements)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine orifice_set_settings
+    end subroutine orifice_set_setting
 !%
 !%==========================================================================
+!% PRIVATE
 !%==========================================================================
 !%
     subroutine orifice_effective_head_delta (eIdx)
@@ -308,6 +324,8 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        print *, 'in ',trim(subroutine_name), ' with ',eIdx
+
         !% pointers
         GeometryType       => elemSI(eIdx,esi_Orifice_GeometryType)
         Area               => elemR(eIdx,er_Area)
@@ -335,8 +353,11 @@ module orifice_elements
             Depth = Zcrown - Zcrest
         end if
 
+        print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
+
         !% set geometry
         select case (GeometryType)
+
             case (rectangular_closed)
                 Area      =  RectangularBreadth * Depth
                 Volume    = Area * Length !% HACK this is not the correct volume in the element
@@ -344,7 +365,10 @@ module orifice_elements
                 HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
+
             case (circular)
+                print *, 'Depth              ',Depth
+                print *, 'EffectiveFullDepth ',EffectiveFullDepth
                 YoverYfull  = Depth / EffectiveFullDepth
                 Area        = EffectiveFullArea * &
                         xsect_table_lookup_singular (YoverYfull, ACirc)  !% 20220506brh removed NACirc

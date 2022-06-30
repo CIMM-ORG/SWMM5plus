@@ -2046,6 +2046,24 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
+        !print *, 'CC closed elements'
+        !% ep_CC_isclosed =====================================================
+        !% --- all CC elements that are closed by elemR(:,er_Setting) = 0.0
+        ptype => col_elemP(ep_CC_isclosed)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == CC ) &
+                .and. &
+                (elemR(:,er_Setting) == zeroR ) )
+
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC ) &
+                .and. &
+                (elemR(:,er_Setting) == zeroR ) )        
+        end if
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_dynamic_elements

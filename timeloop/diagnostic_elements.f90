@@ -59,7 +59,7 @@ module diagnostic_elements
             call face_interpolation (fp_Diag, dummy)
 
             !% --- reset the zero and small depth fluxes
-            call adjust_zero_and_small_depth_face (ALLtm, .false.)
+            call adjust_zero_and_small_depth_face (ETM, .false.)
 
         end if
        

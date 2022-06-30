@@ -561,12 +561,12 @@ subroutine init_partitioning_linkbalance()
     if (setting%Debug%File%partitioning) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-    if (SWMM_N_link < num_images()) then
+    if (setting%SWMMinput%N_link < num_images()) then
         call init_partitioning_default()
     else
         do rank = 0, num_images()-1
-            count = SWMM_N_link / num_images()
-            remainder = mod(SWMM_N_link, num_images())
+            count = setting%SWMMinput%N_link / num_images()
+            remainder = mod(setting%SWMMinput%N_link, num_images())
 
             if (rank < remainder) then
                 ! The first 'remainder' ranks get 'count + 1' tasks each

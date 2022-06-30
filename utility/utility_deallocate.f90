@@ -385,11 +385,11 @@ contains
         deallocate(col_elemSGR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'col_elemSGR')
         !==== col_elemWDI ====
-        deallocate(col_elemWDI, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'col_elemWDI')
+        !deallocate(col_elemWDI, stat=deallocation_status, errmsg=emsg)
+        !call util_deallocate_check(deallocation_status, emsg, 'col_elemWDI')
         !==== col_elemWDR ====
-        deallocate(col_elemWDR, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'col_elemWDR')
+        !deallocate(col_elemWDR, stat=deallocation_status, errmsg=emsg)
+        !call util_deallocate_check(deallocation_status, emsg, 'col_elemWDR')
         !==== col_elemYN ====
         deallocate(col_elemYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'col_elemYN')

@@ -3,7 +3,7 @@ module finalization
     use define_settings, only: setting
     use define_globals
     use define_indexes
-    use interface
+    use interface_
     use utility
     use utility_datetime
     use utility_deallocate
@@ -173,7 +173,7 @@ contains
                 write(*,"(A,i9)")  ' Total number of time levels written              = ',setting%Output%NumberOfTimeLevelSaved
                 write(*,"(A,i9)")  ' Total number of finite-volume elements written   = ',sum(N_OutElem(:))
                 write(*,"(A,i9)")  ' Total number of finite-volume faces written      = ',sum(N_OutFace(:))
-                write(*,"(A,2i9)") ' Total number of SWMM links, nodes in system      = ',SWMM_N_link, SWMM_N_node
+                write(*,"(A,2i9)") ' Total number of SWMM links, nodes in system      = ',setting%SWMMinput%N_link, setting%SWMMinput%N_node
                 write(*,"(A,2i9)") ' Total number of finite-volume elements in system = ',sum(N_elem)
                 write(*,"(A,2i9)") ' Total number of time steps                       = ',setting%Time%step
                 write(*,"(A,e12.3)") ' FLOP scale (time steps x elements)               = ',&

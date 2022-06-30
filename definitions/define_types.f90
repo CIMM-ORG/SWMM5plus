@@ -77,6 +77,7 @@ module define_types
     end type NodeArray
 
     type LinkArray
+      !  integer,      allocatable :: SWMMlinkI(:,:)[:]  !% integer data for original SWMM link system
         integer,      allocatable :: I(:,:)[:]   !% integer data for links
         real(8),      allocatable :: R(:,:)[:]   !% real data for links
         logical,      allocatable :: YN(:,:)[:]  !% logical data for links

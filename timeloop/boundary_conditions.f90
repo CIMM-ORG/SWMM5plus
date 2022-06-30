@@ -1,6 +1,6 @@
 module boundary_conditions
 
-    use interface
+    use interface_
     use define_indexes
     use define_keys
     use define_globals
@@ -176,6 +176,7 @@ contains
                     if (TS_upper_idx == 0) then 
                         !% --- first fetch of data from file
                         call bc_fetch_flow(ii)
+
                     else
                         !% --- get the current upper bound of time interval
                         ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time) 
@@ -184,7 +185,7 @@ contains
                             if (TS_upper_idx == TimeSlotsStored) then
                                 !% --- if we're at the end, we need to fetch more data from file
                                 call bc_fetch_flow(ii)
-                                
+        
                             elseif (TS_upper_idx < TimeSlotsStored) then
                                 !% --- there's still more stored BC data to cycle through
                                 !% --- create a counter
@@ -217,6 +218,9 @@ contains
                             !% --- no action, update of BC storage not needed   
                         end if
                     end if
+                    !% --- get the size of the time interval
+                    BC%flowR(ii, br_timeInterval) =   BC%flowTimeseries(ii, TS_upper_idx,   brts_time) &
+                                                    - BC%flowTimeseries(ii, TS_upper_idx-1, brts_time)
                 else
                     !% --- HACK-future expansions should include getting BC from a data structure
                     !%     or external code through API
@@ -232,15 +236,14 @@ contains
             !% --- cycle through all the head BC
             do ii = 1, N_headBC
                 !print *, 'ii in HeadBC bc_step', ii
-                !% --- get the node index
-                nidx = BC%headI(ii, bi_node_idx)
-                !print *, 'nidx ', nidx
-                !% --- get the upper index of the time series
-                TS_upper_idx => BC%headI(ii,bi_TS_upper_idx)
-                !print *, 'TS_upper_idx ',TS_upper_idx
                 !% --- check that this BC has an input file
                 !print *, 'has file ',(BC%headYN(ii,bYN_read_input_file))
                 if (BC%headYN(ii,bYN_read_input_file)) then
+                    !% --- get the node index
+                    nidx = BC%headI(ii, bi_node_idx)
+                    !% --- get the upper index of the time series
+                    TS_upper_idx => BC%headI(ii,bi_TS_upper_idx)
+                    !print *, 'TS_upper_idx ',TS_upper_idx
                     if (TS_upper_idx == 0) then 
                         !% --- first fetch of data from file
                         call bc_fetch_head(ii)
@@ -282,8 +285,19 @@ contains
                             end if
                         end if
                     end if  
+
+                    !% --- get the size of the time interval
+                    BC%headR(ii, br_timeInterval) =   BC%headTimeseries(ii, TS_upper_idx,   brts_time) &
+                                                    - BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+                    !stop 29873
+
+                    ! print *, 'Time Series for Head'
+                    ! do mm=1,TimeSlotsStored
+                    !     print *, BC%headTimeseries(ii,mm,brts_time), BC%headTimeseries(ii,mm,brts_value)
+                    ! end do
+                    !stop 2098732
                 else
-                    !% --- no BC file for this outfall    
+                    !% --- no BC file for this outfall -- BCH_fixed,..normal...free    
                     !% --- HACK-should have error checking that BC has appropriate setting
                 end if
             end do
@@ -348,12 +362,15 @@ contains
             !%     This uses the Epoch time as the last possible time (EPA-SWMM indexes of epoch time)
             new_inflow_time = interface_get_next_inflow_time(bc_idx, new_inflow_time,  timeEndEpoch)
 
+            !print *, 'inflow time ',new_inflow_time, timeEndEpoch
+
             !% --- truncate the time in the table to the minimum of the end time and the next time
             new_inflow_time = min(timeEnd,new_inflow_time)
 
             !% --- set the timeseries to the new inflow time
             BC%flowTimeseries(bc_idx, ii, brts_time) = new_inflow_time
 
+            !% --- get the new inflow value
             BC%flowTimeseries(bc_idx, ii, brts_value) = interface_get_flowBC(bc_idx, new_inflow_time)
 
             !% --- exit the loop if we've reached the maximum time for the simulation
@@ -375,56 +392,80 @@ contains
 !%==========================================================================
 !%
     subroutine bc_fetch_head(bc_idx)
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        integer             :: ii, NN
-        real(8)             :: new_head_time
-        real(8)             :: new_head_value, normDepth, critDepth
-        integer, pointer    :: nodeIdx, faceIdx, elemUpIdx
-        character(64)       :: subroutine_name = "bc_fetch_head"
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Descriptions
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: bc_idx
+            integer             :: ii
+            integer, pointer    :: NN, bc_level
+            real(8)             :: new_head_time
+            real(8)             :: new_head_value
+            real(8)             :: tdummy
+            real(8), pointer    :: timeEnd, timeEndEpoch
+            ! normDepth, critDepth
+            !integer, pointer    :: nodeIdx, faceIdx, elemUpIdx
+            character(64)       :: subroutine_name = "bc_fetch_head"
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%boundary_conditions)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases
+            NN => setting%BC%TimeSlotsStored
+            bc_level     => BC%headI(bc_idx,bi_TS_upper_idx)
+            timeEnd      => setting%Time%End
+            timeEndEpoch => setting%Time%EndEpoch
+        !%-------------------------------------------------------------------
 
-        NN = setting%BC%TimeSlotsStored
-
-        if (BC%headI(bc_idx,bi_TS_upper_idx) == 0) then ! First fetch
-
-            BC%headTimeseries(bc_idx, 1, brts_time) = setting%Time%Start
-            BC%headTimeseries(bc_idx, 1, brts_value) &
-                 = interface_get_headBC(bc_idx, setting%Time%Start) &
-                 - setting%Solver%ReferenceHead
-
+        !% --- check to see if this is the first fetch or a subsequent fetch.
+        if (bc_level == 0) then 
+            !% --- first fetch is always the simulation start time with interpolated value 
+            BC%headTimeseries(bc_idx, 1, brts_time)  = setting%Time%Start
+            BC%headTimeseries(bc_idx, 1, brts_value) = interface_get_headBC(bc_idx, setting%Time%Start) &
+                                                         - setting%Solver%ReferenceHead
             ! print *, ' '
             ! print *, 'in AAA ',trim(subroutine_name)
-            ! print *, setting%Solver%ReferenceHead, BC%headTimeseries(bc_idx, 1, brts_value)
-
-
-        else ! last value becomes first
-            BC%headTimeseries(bc_idx, 1, brts_time) = BC%headTimeseries(bc_idx, NN, brts_time)
-            BC%headTimeseries(bc_idx, 1, brts_value)  &
-                = BC%headTimeseries(bc_idx, NN, brts_value)
+            ! print *, BC%headTimeseries(bc_idx, 1, brts_time), BC%headTimeseries(bc_idx, 1, brts_value)
+        else 
+            !% --- on subsequent fetches we set the last value as the new first value
+            BC%headTimeseries(bc_idx, 1, brts_time)  = BC%headTimeseries(bc_idx, NN, brts_time)
+            BC%headTimeseries(bc_idx, 1, brts_value) = BC%headTimeseries(bc_idx, NN, brts_value)
 
                 ! print *, ' '
                 ! print *, 'in BBB ',trim(subroutine_name)
-                ! print *, setting%Solver%ReferenceHead, BC%headTimeseries(bc_idx, 1, brts_value)    
+                ! print *, BC%headTimeseries(bc_idx, 1, brts_time), BC%headTimeseries(bc_idx, 1, brts_value)    
         end if
 
+        !% --- read in additional data to fill the timeseries arrays
         do ii = 2, NN
-            new_head_time = min(setting%Time%End, interface_get_next_head_time(bc_idx, setting%Time%Start))
-            BC%headTimeseries(bc_idx, ii, brts_time) = new_head_time
-            BC%headTimeseries(bc_idx, ii, brts_value) &
-                 = interface_get_headBC(bc_idx, new_head_time) &
-                 - setting%Solver%ReferenceHead
+            !% --- get the next head time from the Time Series and advance the Tseries.x1 and Tseries.x2 locations
+            !%     This uses the Epoch time as the last possible time (EPA-SWMM indexes of epoch time)
+            new_head_time = interface_get_next_head_time(bc_idx, new_head_time,  timeEndEpoch)
+
+            ! print *, ii, 'new_head_time', new_head_time, timeEndEpoch
+
+            !new_head_time = min(setting%Time%End, interface_get_next_head_time(bc_idx, setting%Time%Start))
+
+            !% --- truncate the time in the table to the minimum of the end time and the next time
+            new_head_time = min(timeEnd,new_head_time)
+
+            !% --- set the timeseries to the new head time
+            BC%headTimeseries(bc_idx, ii, brts_time)  = new_head_time
+            !% --- get the new head value
+            BC%headTimeseries(bc_idx, ii, brts_value) = interface_get_headBC(bc_idx, new_head_time) &
+                                                             - setting%Solver%ReferenceHead
 
             ! print *, ' '
             ! print *, 'in CCC ',trim(subroutine_name)
-            ! print *, setting%Solver%ReferenceHead, BC%headTimeseries(bc_idx, 1, brts_value)
+            ! print *, BC%headTimeseries(bc_idx, ii, brts_time), BC%headTimeseries(bc_idx, ii, brts_value)
 
+            !% --- exit the loop if we've reached the maximum time for the simulation
             if (new_head_time == setting%Time%End) exit
         end do
+        !% set the current location of the upper bound for interpolation to location 2
         BC%headI(bc_idx,bi_TS_upper_idx) = 2
+
 
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -570,6 +611,7 @@ contains
             elemUpIdx   => faceI(faceIdx,fi_Melem_uL)
             
             select case (BC%headI(ii,bi_subcategory))
+
             case (BCH_tseries,BCH_tidal)
                 !% --- get the index below the current upper index
                 lower_idx   =  upper_idx(ii) - 1

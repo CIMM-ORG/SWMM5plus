@@ -4,7 +4,7 @@ module hydrology
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use interface
+    use interface_
     !use utility
 
     implicit none
@@ -53,7 +53,7 @@ module hydrology
     !     !% Multiple subcatchments can drain to a single element, but each
     !     !% subcatchment connects to only one element, so we cannot array
     !     !% process between subcatchR and elemR
-    !     do ii =1,SWMM_N_subcatch
+    !     do ii =1,setting%SWMMinput%N_subcatch
     !         thisE => subcatchI(ii,si_runoff_elemIdx) 
     !         latFlowRate(thisE) = latFlowRate(thisE) + subcatchFlowRate(ii)
     !     end do

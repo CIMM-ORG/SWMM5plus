@@ -71,6 +71,11 @@ module face
         !% --- face reconstruction of all the interior faces
         call face_interpolation_interior (faceCol)
 
+        !% --- force zero fluxes on closed element downstream faces
+        !%     note this does not require a "faceCol" argument as we
+        !%     will execute this for both fp_all and fp_Diag calls
+        call adjust_face_for_zero_setting ()
+
             ! print *,this_image(), '    0000 after face interpolation interior', this_image()
             !call util_CLprint ('    after face interp interior')
 

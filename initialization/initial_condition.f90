@@ -26,7 +26,7 @@ module initial_condition
     use storage_geometry
     use adjust
     use xsect_tables
-    use interface, only: interface_get_nodef_attribute
+    use interface_, only: interface_get_nodef_attribute
     use utility_profiler
     use utility_allocate
     use utility_deallocate
@@ -77,6 +77,14 @@ contains
                 !return
             end select      
         !%-------------------------------------------------------------------    
+        !% --- default the TimeLastSet to 0.0 (elapsed) for all elements
+        elemR(:,er_TimeLastSet) = zeroR
+
+        !% --- initialize all the element Setting as 1
+        !%     this is fully open for links, weirs, orifices, outlets, and on for pumps.
+        elemR(1:size(elemR,1)-1,er_TargetSetting) = oneR
+        elemR(1:size(elemR,1)-1,er_Setting)       = oneR
+
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         !call util_CLprint('before init_IC_from_linkdata')
@@ -101,9 +109,6 @@ contains
         !call sleep(1)
         call init_IC_from_nodedata ()
 
-        !% initialize all the element settings as oneR
-        elemR(1:size(elemR,1)-1,er_TargetSetting) = oneR
-        elemR(1:size(elemR,1)-1,er_setting)       = oneR
 
         !% --- set up the transect arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
@@ -3106,6 +3111,7 @@ contains
             !%    BClat BCs are associated with elements, thus bi_face_idx is null
             BC%flowI(:, bi_face_idx) = nullvalueI
             BC%flowI(:, bi_elem_idx) = nullvalueI
+            BC%flowR(:, br_timeInterval) = abs(nullvalueR)
             BC%flowTimeseries = nullValueR
         end if
         !print *, 'here ddd'
@@ -3113,6 +3119,7 @@ contains
             BC%headI = nullvalueI
             BC%headI(:,bi_fetch) = 1
             BC%headI(:,bi_TS_upper_idx) = 0
+            BC%headR(:, br_timeInterval) = abs(nullvalueR)
             BC%headTimeseries = nullValueR
         end if
 
@@ -3178,7 +3185,7 @@ contains
         !% --- Initialize Head BCs
         if (N_headBC > 0) then
             do ii = 1, N_headBC
-                nidx = node%P%have_headBC(ii)
+                nidx =  node%P%have_headBC(ii)
                 ntype = node%I(nidx, ni_node_type)
 
                 if (ntype == nBCdn) then
@@ -3216,6 +3223,7 @@ contains
                 case (API_TIMESERIES_OUTFALL)
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                     BC%headYN(ii, bYN_read_input_file) = .true.
+
                 case default
                     print *, 'CODE ERROR: unexpected case default'
                     call util_crashpoint(33875)
