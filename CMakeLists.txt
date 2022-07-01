@@ -6,7 +6,11 @@ project(SWMM5Plus VERSION 0.0.1)
 enable_language (Fortran)
 
 if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-    message(FATAL_ERROR "Intel Fortran compiler not found. Exiting.")
+    message(FATAL_ERROR "Intel Fortran compiler not found. Found ${CMAKE_Fortran_COMPILER_ID} instead. Run:
+    \n$ source path/to/intel/oneapi/setvars.sh
+    \n$ export FC=ifort
+    \nRemove all files in build directory: $ rm -rf *
+    \nRun cmake again. Exiting.")
 endif()
 
 set(HDF5_PREFER_PARALLEL true)
@@ -43,17 +47,17 @@ if(NOT json_fortran_POPULATED)
   FetchContent_Populate(json_fortran)
 endif()
 
-if(NOT HDF5_FOUND)
-    message(WARNING "HDF5 Fortran not found. Will download and install locally.")
-    if(NOT hdf5_POPULATED)
-        FetchContent_Populate(hdf5)
-        ExternalProject_Add(hdf5
-        SOURCE_DIR ${hdf5_SOURCE_DIR}
-        CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran
-        BINARY_DIR ${hdf5_BINARY_DIR}
-        BUILD_COMMAND ${MAKE})
-    endif()
-endif()
+
+message(WARNING "HDF5 will download and install locally.")
+
+FetchContent_Populate(hdf5)
+ExternalProject_Add(hdf5
+SOURCE_DIR ${hdf5_SOURCE_DIR}
+CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran
+BINARY_DIR ${hdf5_BINARY_DIR}
+BUILD_COMMAND ${MAKE}
+COMMAND make install)
+
 
 #Following sh script
 file(COPY ${epaswmm5_SOURCE_DIR}/src/ DESTINATION ${CMAKE_SOURCE_DIR}/interface/src)
@@ -91,8 +95,7 @@ file(GLOB
         ${CMAKE_SOURCE_DIR}/finalization/*.f90
         ${CMAKE_SOURCE_DIR}/main/*.f90
 
-        ${hdf5_BINARY_DIR}/hdf5/include/
-        ${hdf5_BINARY_DIR}/hdf5/lib/
+        
         ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5hl_fortran.a
         ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_hl.a
         ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_fortran.a
@@ -111,6 +114,10 @@ add_executable(SWMM
     ${SWMM5X_SOURCES}
 )
 target_compile_options(SWMM PUBLIC "$<$<COMPILE_LANGUAGE:Fortran>:-coarray-num-images=${BUILD_COARRAY_NUM_IMAGES}>")
+target_include_directories(SWMM PUBLIC
+    ${hdf5_BINARY_DIR}/hdf5/include/
+    ${hdf5_BINARY_DIR}/hdf5/lib/
+)
 add_dependencies(SWMM hdf5)
 
 if (DEFINED ENV{FOR_COARRAY_NUM_IMAGES})
