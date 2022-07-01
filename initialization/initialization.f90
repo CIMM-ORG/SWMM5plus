@@ -861,8 +861,8 @@ contains
         end do
 
         !% Check for small links if automatic resizing is not used.
-        if (.not. setting%Discretization%AdjustLinkLengthYN) then
-            do ii = 1, setting%SWMMinput%N_link
+        if (setting%Discretization%MinElemLengthMethod /= ElemLengthAdjust) then
+            do ii = 1, N_link
                 if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
                     if (link%R(ii,lr_Length) < 1.5 * setting%Discretization%NominalElemLength) then
                         print *, 'SWMM input file links are smaller than 1.5 * NominalElemLength'

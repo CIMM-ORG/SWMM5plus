@@ -77,37 +77,6 @@ contains
 
         sync all
 
-        ! print *, 'elemI(:,ei_geometrytype)'
-        ! do ii=1,size(elemI,1)
-        !     print *, elemI(ii,ei_geometryType), trim(reverseKey(elemI(ii,ei_geometryType)))
-        ! end do
-
-        ! if (setting%SWMMinput%N_link_transect > 0) then
-        !     call init_network_transect ()
-        ! end if
-
-        ! print *, ' '
-        ! print *, ' elements'
-        ! do ii =1,N_elem(1)
-        !     write(*,"(A, 10i9)") trim(reverseKey(elemI(ii,ei_elementType))), &
-        !         elemI(ii,ei_Lidx), &
-        !         elemI(ii,ei_Mface_uL), &
-        !         elemI(ii,ei_Mface_dL)
-        ! end do
-
-        ! print *, ' '
-        ! print *, ' faces'
-        ! do ii=1,N_face(1)
-        !     write(*,"(A,10i9)") trim(reverseKey(faceI(ii,fi_BCtype))), &
-        !         faceI(ii,fi_Lidx), &
-        !         faceI(ii,fi_Melem_uL), &
-        !         faceI(ii,fi_Melem_dL)
-        ! end do
-
-        
-        ! stop 
-        !call util_crashpoint(39705)
-
         !% print result
         if (setting%Debug%File%network_define) then
             print*
@@ -1170,7 +1139,7 @@ contains
                 !print *, '======================================'
 
                 !% real data
-                elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_AdjustedLength)/link%I(thisLink,li_N_element)
+                elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_ElementLength)
                 elemR(ElemLocalCounter,er_Zbottom)          = zCenter
 
                 !%................................................................

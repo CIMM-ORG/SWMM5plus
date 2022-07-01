@@ -933,10 +933,6 @@ contains
         ! call co_broadcast(doHydraulicsStepYN, minImg)
         ! call co_broadcast(doHydrologyStepYN, minImg)
 
-        !% find the cfl for reporting
-        cfl_max = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,dtHydraulics)
-        call co_max(cfl_max)
-
         if ((.not. inSpinUpYN) .or. & 
             ((inSpinUpYN) .and. (setting%Simulation%stopAfterSpinUp)) ) then
             if (util_output_must_report()) reportStep = reportStep + 1
@@ -1195,6 +1191,14 @@ contains
 
         !% increment the hydraulics time clock
         nextHydraulicsTime = lastHydraulicsTime + newDT
+        
+        !% find the cfl for reporting
+        cfl_max = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+        ! cfl_max_CC = tl_get_max_cfl(ep_CC_NOTsmalldepth,newDT)
+        ! cfl_max_JBJM = tl_get_max_cfl(ep_JBJM_NOTsmalldepth,newDT)
+        call co_max(cfl_max)
+        ! call co_max(cfl_max_CC)
+        ! call co_max(cfl_max_JBJM)
 
         !stop 29873
 
@@ -1451,13 +1455,15 @@ contains
 
                     ! write a time counter
                     if (.not. inSpinUpYN) then
-                        write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
+                        write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
                             'time step = ',step,'; model time = ',thistime, &
-                            ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
+                            ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
+                        !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
                     else
                         write(*,"(A15,i8,a17,f9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
                             'spin-up step = ',step,'; model time = ',thistime, &
-                          ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
+                          ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
+                        !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
                     end if
                     if (.not. inSpinUpYN) then
                         ! write estimate of time remaining
@@ -1606,10 +1612,7 @@ contains
             ! print *, 'new 2 DTlimit ',DTlimit
 
             !% use the smaller value of the new limit or the input
-            thisDT = min(newDTlimit,thisDT)
-
-            !print *, 'thisDT ',thisDT
-            ! print *, 'new DTlimit 3',DTlimit
+            thisDT = min(newDTlimit,thisDT) 
 
             !% return to null value storage
             temp_BCupI(:,:) = nullValueI

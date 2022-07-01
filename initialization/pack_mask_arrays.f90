@@ -2477,6 +2477,33 @@ contains
                 (.not. elemYN(:,eYN_isZeroDepth))     )
         end if
 
+        !print *, 'JBJM_NOTsmalldepth'
+        !% ep_JBJM_NOTsmalldepth  ====================================
+        !% Flow solution that are NOT small volume or zero depth
+        !% -- needed to limit where CFL is computed
+        ptype => col_elemP(ep_JBJM_NOTsmalldepth)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (      &
+                      ( elemI(:,ei_elementType) == JM) &
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (      &
+                      ( elemI(:,ei_elementType) == JM) &
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     ) 
+        end if
+
         !print *, 'CCJBJM_NOTsmalldepth'
         !% ep_CCJBJM_NOTsmalldepth  ====================================
         !% Flow solution that are NOT small volume or zero depth
