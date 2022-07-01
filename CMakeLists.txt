@@ -13,8 +13,6 @@ if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     \nRun cmake again. Exiting.")
 endif()
 
-set(HDF5_PREFER_PARALLEL true)
-find_package(HDF5 "1.12.2" COMPONENTS Fortran)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
@@ -116,6 +114,8 @@ add_executable(SWMM
 target_compile_options(SWMM PUBLIC "$<$<COMPILE_LANGUAGE:Fortran>:-coarray-num-images=${BUILD_COARRAY_NUM_IMAGES}>")
 target_include_directories(SWMM PUBLIC
     ${hdf5_BINARY_DIR}/hdf5/include/
+)
+target_link_directories(SWMM PUBLIC
     ${hdf5_BINARY_DIR}/hdf5/lib/
 )
 add_dependencies(SWMM hdf5)
