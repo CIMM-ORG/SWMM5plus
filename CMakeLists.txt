@@ -1,7 +1,7 @@
 include(FetchContent)
 include(ExternalProject)
 
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.16.0)
 project(SWMM5Plus VERSION 0.0.1)
 enable_language (Fortran)
 
