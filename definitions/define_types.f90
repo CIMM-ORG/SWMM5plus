@@ -29,29 +29,6 @@ module define_types
         real(8), dimension(:,:), allocatable :: ValueArray
     end type
 
-    !%  control data
-    type controlType
-        integer :: Idx
-        integer :: LinkId
-        integer :: ElemId
-        real(8), dimension(:), allocatable :: TimeArray
-        real(8), dimension(:), allocatable :: HeightArray
-        real(8), dimension(:), allocatable :: AreaArray
-        real(8)    :: HeightStart
-        real(8)    :: HeightNow
-        real(8)    :: AreaNow
-        real(8)    :: AreaPrior
-        real(8)    :: FullDepth
-        real(8)    :: GateTimeChange1
-        real(8)    :: GateTimeChange2
-        real(8)    :: GateHeightChange1
-        real(8)    :: GateHeightChange2
-        real(8)    :: HeightMinimum
-        real(8)    :: GateSpeed
-        logical :: CanMove
-        logical :: MovedThisStep
-    end type controlType
-
     !%  diagnostic%Volume
     type diagnosticVolumeType
         integer  :: Step
@@ -100,9 +77,15 @@ module define_types
     end type NodeArray
 
     type LinkArray
+      !  integer,      allocatable :: SWMMlinkI(:,:)[:]  !% integer data for original SWMM link system
         integer,      allocatable :: I(:,:)[:]   !% integer data for links
         real(8),      allocatable :: R(:,:)[:]   !% real data for links
         logical,      allocatable :: YN(:,:)[:]  !% logical data for links
+        integer,      allocatable :: transectI(:,:) !% integer data for irregular transects
+        real(8),      allocatable :: transectR(:,:) !% real data for irregular transects
+        real(8),      allocatable :: transectTableDepthR(:,:,:) !% table of real values by uniform depth distribution
+        real(8),      allocatable :: transectTableAreaR(:,:,:)  !% table of real values by uniform area distribution 
+        type(string), allocatable :: transectID(:) !% string transect ID from EPA-SWMM input
         type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
         type(LinkPack)            :: P        !% pack for links
     end type LinkArray
@@ -121,15 +104,18 @@ module define_types
 
     type BCArray
         integer,     allocatable :: flowI(:,:)              !% integer data for inflow BCs
+        real(8),     allocatable :: flowR(:,:)
         logical,     allocatable :: flowYN(:,:)             !% logical data for inflow BCs
-        real(8),     allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
-        integer,     allocatable :: flowIdx(:)              !% indexes of current entry in flowR_timeseries
-        real(8),     allocatable :: flowRI(:)               !% values of interpolated inflows at current time
+        real(8),     allocatable :: flowTimeseries(:,:,:) !% time series data for inflow BC
+        !integer,     allocatable :: flow_idx(:)              !% indexes of current entry in flowR_timeseries
+        !real(8),     allocatable :: flow_value(:)          !% values of interpolated inflows at current time
         integer,     allocatable :: headI(:,:)              !% integer data for elevation BCs
+        real(8),     allocatable :: headR(:,:)
         logical,     allocatable :: headYN(:,:)             !% logical data for head BCs
-        real(8),     allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
-        integer,     allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
-        real(8),     allocatable :: headRI(:)               !% values of interpolated heads at current time
+        real(8),     allocatable :: headTimeseries(:,:,:) !% time series data for elevation BC
+       ! integer,     allocatable :: headI_idx(:)              !% indexes of current entry in headR_timeseries
+        !real(8),     allocatable :: headR_value(:)               !% values of interpolated heads at current time
+        !logical,     allocatable :: hasFlapGateYN(:)        !% logical for whether BC has a flap gate -- HACK (move to flowYN array)
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
 

@@ -73,20 +73,20 @@ module triangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function triangular_area_from_depth_singular (indx) result (outvalue)
+    real(8) function triangular_area_from_depth_singular (indx,depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for triangular cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:), sideslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:), sideslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         sideslope => elemSGR(:,esgr_Triangular_Slope)
         breadth => elemSGR(:,esgr_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
-        outvalue = sideslope(indx) * (depth(indx) ** twoR)
+        outvalue = sideslope(indx) * (depth ** twoR)
 
     end function triangular_area_from_depth_singular
 !%
@@ -117,19 +117,19 @@ module triangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function triangular_topwidth_from_depth_singular (indx) result (outvalue)
+    real(8) function triangular_topwidth_from_depth_singular (indx,depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a triangular cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx 
-        real(8), pointer :: depth(:), sideslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    :: sideslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         sideslope => elemSGR(:,esgr_Triangular_Slope)
         !%-----------------------------------------------------------------------------
         !%  
-        outvalue = twoR * sideslope(indx) * depth(indx)
+        outvalue = twoR * sideslope(indx) * depth
 
     end function triangular_topwidth_from_depth_singular
 !%
@@ -160,7 +160,7 @@ module triangular_channel
 !%==========================================================================    
 !%==========================================================================
 !%
-    real(8) function triangular_perimeter_from_depth_singular (indx) result (outvalue)
+    real(8) function triangular_perimeter_from_depth_singular (indx,depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -169,13 +169,13 @@ module triangular_channel
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    :: breadth(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         
-        outvalue = twoR * sqrt(((breadth(indx) ** twoR) / fourR) + (depth(indx) ** twoR))
+        outvalue = twoR * sqrt(((breadth(indx) ** twoR) / fourR) + (depth ** twoR))
 
     end function triangular_perimeter_from_depth_singular
 !%    
@@ -205,7 +205,7 @@ module triangular_channel
 !%==========================================================================  
 !%==========================================================================
 !%
-    real(8) function triangular_hyddepth_from_depth_singular (indx) result (outvalue)
+    real(8) function triangular_hyddepth_from_depth_singular (indx,depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -213,16 +213,17 @@ module triangular_channel
         !% a single element
         !%-----------------------------------------------------------------------------   
         integer, intent(in) :: indx     
+        real(8), intent(in) :: depth
         !%-----------------------------------------------------------------------------  
 
-        outvalue = elemR(indx,er_Depth) / twoR
+        outvalue = depth / twoR
 
     end function triangular_hyddepth_from_depth_singular 
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function triangular_hydradius_from_depth_singular (indx) result (outvalue)
+    real(8) function triangular_hydradius_from_depth_singular (indx,depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -230,14 +231,14 @@ module triangular_channel
         !% a single element 
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:), sideslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    :: breadth(:), sideslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         sideslope => elemSGR(:,esgr_Triangular_Slope)
-        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
+        breadth   => elemSGR(:,esgr_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         
-        outvalue = (sideslope(indx) * depth(indx)) / (twoR * sqrt(oneR + sideslope(indx) ** twoR))
+        outvalue = (sideslope(indx) * depth) / (twoR * sqrt(oneR + sideslope(indx) ** twoR))
 
     end function triangular_hydradius_from_depth_singular
     !%    

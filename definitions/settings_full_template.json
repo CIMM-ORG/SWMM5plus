@@ -65,6 +65,7 @@
         "energy_correction_factor" : 1.0
     },
     "Discretization" : {
+        "AdjustLinkLengthYN" : true,
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -165,17 +166,19 @@
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot",
-        "PreissmannNumber" : 1.0,
-        "PreissmannCelerity" : 0.01
+        "PreissmannSlotMethod" : "DynamicSlot",
+        "TargetPreissmannCelerity" : 0.01
     },
     "Profile" : {
         "useYN" : false
     },
     "Simulation" : {
-        "useHydrology" : true,
-        "useHydraulics" : true,
-        "stopAfterInitializationYN" : false
+        "stopAfterInitializationYN" : false,
+        "useHydrology"              : true,
+        "useHydraulics"             : true,
+        "useSpinUp"                 : true,
+        "stopAfterSpinUp"           : false,
+        "SpinUpDays"                : 10.0
     },
     "SmallDepth" : {
         "DepthCutoff" : 0.01,
@@ -235,11 +238,14 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.7,
-        "CFL_target" : 0.5,
-        "CFL_lo_max" : 0.3,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.2,
         "increaseFactor" : 1.2,
-        "NstepsForCheck" : 10
+        "NstepsForCheck" : 10,
+        "InitialDt"      : 1.0
     },
     "ZeroValue" : {
         "UseZeroValues" : true,

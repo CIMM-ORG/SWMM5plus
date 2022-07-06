@@ -6,7 +6,7 @@ module initialization
     use define_indexes
     use discretization
     use initial_condition
-    use interface
+    use interface_
     use network_define
     use partitioning
     use utility
@@ -19,6 +19,8 @@ module initialization
     use output
     use pack_mask_arrays
     use utility_crash
+    use xsect_tables
+    use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
 
     implicit none
 
@@ -65,9 +67,10 @@ contains
             integer    :: iUpSet(max_up_branch_per_node,4)
             integer    :: iDnSet(max_dn_branch_per_node,4)
             integer    :: nUpBranch, nDnBranch
+
+            integer :: tM, tB, tF, tE
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
@@ -76,6 +79,7 @@ contains
 
         !% --- define the reverse keys (used mainly for debugging)
         call define_keys_reverse()
+        call define_apikeys_reverse()
         !% NOTES:
         !%    reverseKey(ii) gives you the text name of the ii key
         !%    there are also two useful subroutines:
@@ -108,8 +112,9 @@ contains
         end if
 
         !% --- create duplicate input files
+        !%     this is required because each image needs its own copy of the input files
         call util_file_duplicate_input ()
-        call util_crashstop(2293883)
+        call util_crashstop(2983)
         sync all
 
         !% --- initialize the time stamp used for output (must be after json is read)
@@ -117,11 +122,11 @@ contains
         sync all
 
         !% --- setup the output file directories. 
-        !%        This will create a new directory with a timestamp for output
+        !%     This will create a new directory with a timestamp for output
         call util_file_setup_output_folders()
         sync all
 
-        !% -- program header
+        !% --- print program header
         if ((setting%Output%Verbose) .and. (this_image() == 1)) &
              call util_print_programheader ()    
 
@@ -144,64 +149,88 @@ contains
         call util_crashstop(43974)
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
         call util_crashstop(31973)
+
+        !% --- set up the control/monitoring element arrays associated with type1 pumps and controls
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin con/mon from links"
+        ! call init_conmon_from_links()
+        ! call util_crashstop(49223)
+
+
+        !% --- setup the irregular transect arrays associated with SWMM-C input links
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
+        call init_link_transect_array()
+        call util_crashstop(42873)
         
         !% --- initialize globals that are run-time dependent
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
 
         !% --- allocate storage for subcatchment arrays
         if (setting%Simulation%useHydrology) then 
-            !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment allocation"
+            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment allocation"
             call util_allocate_subcatch()
         else    
             !% continue without hydrology    
         end if
 
         !% --- store the SWMM-C curves in equivalent Fortran arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
         call util_crashstop(53454)
 
         !% --- break the link-node system into partitions for multi-processor operation
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
-        call util_crashstop(52973)
+        call util_crashstop(5297)
 
         !% --- default keys  brh20220103
-        elemI(:,ei_elementType) = undefinedKey
+        elemI(:,ei_elementType)  = undefinedKey
         elemI(:,ei_geometryType) = undefinedKey
-        elemI(:,ei_HeqType) = undefinedKey
-        elemI(:,ei_QeqType) = undefinedKey
-        elemI(:,ei_specificType) = undefinedKey
+        elemI(:,ei_HeqType)      = undefinedKey
+        elemI(:,ei_QeqType)      = undefinedKey
+        !elemI(:,ei_specificType) = undefinedKey
         
+        !% --- error checking
         if (.not. setting%Simulation%useHydraulics) then 
             if (this_image() == 1) then
                 write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
                 write(*,*) '...this presently is not supported in SWMM5+'
             end if
             !stop 
-            call util_crashpoint(879815)
+            call util_crashpoint(8815)
         end if  
-        call util_crashstop(190873)
+        call util_crashstop(1973)
 
-        !% --- translate the link-node system into a finite-volume network
+        !%   NETWORK DEFINITION
+        !%   translate the link-node system into a finite-volume network
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
         call network_define_toplevel ()
-        call util_crashstop(329873)
+        call util_crashstop(3293)
 
-        !% --- iinitialize boundary and ghost elem arrays for inter image data transfer
+        !%   LINK-ELEM DATA BROADCAST
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
+        call init_linkarray_broadcast()
+        call util_crashstop(550987)
+
+        !% --- initialize boundary and ghost elem arrays for inter image data transfer
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
-        call util_crashstop(2293378)
+        call util_crashstop(2293)
 
         !% --- initialize the time variables
-        !if (setting%Output%Verbose) print *, "begin initializing time"
+        if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
 
-        !% --- initialize the subcatchments connecting to SWMM-C
+        !% --- initialize simple controls from json file
+        if (setting%Output%Verbose) print *, "begin initializing simulation controls"
+        call init_simulation_controls() 
+
+        !% --- HYDROLOGY
         if (setting%Simulation%useHydrology) then 
-            if (SWMM_N_subcatch > 0) then
+            if (setting%SWMMinput%N_subcatch > 0) then
                 if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment initialization"
                 call init_subcatchment()
             else 
@@ -216,11 +245,12 @@ contains
         end if
         call util_crashstop(320983)
 
-        !% --- initialize the output reports
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
-        call init_report()
+        !% --- OUTPUT
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
 
-        !% --- set up initial conditions in the FV network
+       
+        !% --- ERROR CHECK
+        !%     fail SWMM5+ for simulation that does NOT require hydraulics
         if (.not. setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
             if (this_image() == 1) then
                 write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
@@ -231,25 +261,45 @@ contains
         end if
         call util_crashstop(223873)
     
+        !% --- COMMAND LINE OUTPUT
         if ((setting%Output%Verbose) .and. (this_image() == 1)) then 
             !print *, "begin initial conditions"
             if (this_image() == 1) then
                 if ((N_link > 5000) .or. (N_node > 5000)) then
                     write(*,"(A)") " ... setting initial conditions -- may take several minutes for big systems ..."
-                    write(*,"(A,i8,A,i8,A)") "      SWMM system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
+                    write(*,"(A,i8,A,i8,A)") "      SWMM system has ", setting%SWMMinput%N_link, " links and ", setting%SWMMinput%N_node, " nodes"
                     write(*,"(A,i8,A)")      "      FV system has   ", sum(N_elem(:)), " elements"
                 else 
                     !% no need to write for small systems
                 end if
             else 
-                !% only print for 1 processor
+                !% skip printing for other processors
             end if
         else 
             !% be silent    
         end if    
-        !% --- initial conditions all are setup here
+        call init_report()
+        
+        !% --- INITIAL CONDITIONS
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC"
+        !call util_CLprint ('before init_IC_toplevel')
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
+        !call sleep(1)
+
+        !% --- SET CRASH (BLOWUP) LIMITS
+        call util_crash_initialize
+
+        ! print *, 2227, trim(reverseKey(elemI(2227,ei_elementType))), ' ', trim(reverseKey(elemI(2227,ei_geometryType)))
+        ! print *, elemR(2227,er_Flowrate)
+        ! stop 298731
+
+        !print *, 'in initialization 3049498'
+        !call util_CLprint()
+        !stop 3049498
+
+        !% --- allocate other temporary arrays (initialized to null)
+        call util_allocate_temporary_arrays()
 
         !% initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
@@ -259,7 +309,7 @@ contains
         !%        but that caused linking problems due to pack/mask calls
         if (setting%Output%Report%provideYN) then 
             if (setting%Simulation%useHydraulics) then !% 
-                !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin setup of output files"
+                if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin setup of output files"
                 !% --- Get the output element and face locations
                 !print *, 'starting outputML_selection'
                 call outputML_selection ()                
@@ -285,13 +335,68 @@ contains
         end if
         call util_crashstop(103897)
 
+
+        !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
+        call control_init_monitoring_and_action_from_EPASWMM()
+        call util_crashstop(62873)
+
+        !      !% --- temporary testing
+        ! print *, 'CALLING INTERFACE_TESTSTUFF'
+        ! call interface_teststuff ()
+
         !% --- wait for all processors before exiting to the time loop
         sync all
+
+        ! if (this_image()==4) then
+        !     tM = 457
+        !     tB = 458
+        !     tF = 431
+        !     tE = 832
+        !     print *, 'tM tB, tF ',tM, tB, tF, elemI(tB,ei_Mface_uL)
+        !     print *,  'tE ',tE, faceI(tF,fi_Melem_uL) 
+        !     print *, elemI(tM,ei_node_Gidx_SWMM)
+        !     print *, trim(node%Names(elemI(tM,ei_node_Gidx_SWMM))%str)
+        ! end if
+
+        !if (this_image()==3) then
+           ! do ii=1,N_node
+           !     print *, ii, trim(node%Names(ii)%str)
+           ! end do
+            ! do ii=1,N_link
+            !     print *, ii, trim(link%Names(ii)%str)
+            ! end do
+           !do ii=1,N_elem(3) 
+           !    print *, ii, elemI(ii, ei_node_Gidx_SWMM)
+           !end do
+            ! do ii=1,N_elem(3) 
+            !    print *, ii, elemI(ii, ei_link_Gidx_SWMM)
+            ! end do
+            ! print *, elemI(458,ei_Mface_uL)
+            ! print *, elemI(460,ei_Mface_uL)
+            ! print *, elemI(462,ei_Mface_uL)
+            ! print *, elemI(464,ei_Mface_uL)
+            ! print *, elemI(466,ei_Mface_uL)
+            ! print *, faceI(431,fi_Melem_uL)
+            ! print *, faceI(433,fi_Melem_uL)
+            ! print *, faceI(435,fi_Melem_uL)
+            ! print *, faceI(437,fi_Melem_uL)
+            ! print *, faceI(439,fi_Melem_uL)
+            !print *, faceI(384,fi_Melem_uL)
+            !print *, faceI(384,fi_Melem_dL)
+        !end if
+
+        
+        !print *, this_image(), elemR(:,er_Depth)
+    
+        !call util_CLprint('At end of initialization')
+        !stop 445782
     
         !%------------------------------------------------------------------- 
         !% Closing
             call init_check_setup_conditions()
             call init_timer_stop ()
+
             if (setting%Simulation%stopAfterInitializationYN) then
                 if (this_image() == 1) then
                     write(*,*) ' '
@@ -305,12 +410,6 @@ contains
                 end if
                 !stop 
                 call util_crashpoint(333578)
-            end if
-            if (crashYN) then  !% if crash in initialization, write the output and exit
-                if (setting%Output%Report%provideYN) then 
-                    call outputML_store_data (.true.)
-                end if
-                return
             end if
             call util_crashstop(440987)
 
@@ -373,7 +472,7 @@ contains
         character(len=13) :: datetimestamp
         character(64) :: subroutine_name = 'init_timestamp'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         call date_and_time(values = thisTime)
         write(cyear, "(i4)") thisTime(1)
         write(cmonth,"(i2)") thisTime(2)
@@ -464,85 +563,111 @@ contains
             character(64) :: subroutine_name = 'init_linknode_arrays'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             if (.not. api_is_initialized) then
                 print *, "ERROR: API is not initialized"
                 !stop
-                call util_crashpoint(29873)
-                return
+                call util_crashpoint(39873)
+                !return
             end if
         !%-----------------------------------------------------------------------------
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
-        link%I(:,li_num_phantom_links) = 0
+        !link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
-        do ii = 1, SWMM_N_link
-            link%I(ii,li_idx) = ii
-            link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction)
-            link%I(ii,li_link_type) = interface_get_linkf_attribute(ii, api_linkf_type)
-            link%I(ii,li_link_sub_type) = interface_get_linkf_attribute(ii, api_linkf_sub_type)
-            link%I(ii,li_geometry) = interface_get_linkf_attribute(ii, api_linkf_geometry)
+        !% -----------------------
+        !% --- LINK DATA
+        !% -----------------------
+        do ii = 1, setting%SWMMinput%N_link
 
+            !% --- store the basic link data
+            link%I(ii,li_idx) = ii
+            link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
+            link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
+            link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
+            link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
+
+            !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
-                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
-                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
+                !% --- for standard channel/conduits where upstream is 
+                !%     higher bottom elevation than downstream
+                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1,.true.) + 1 ! node1 in C starts from 0
+                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2,.true.) + 1 ! node2 in C starts from 0
             else if (link%I(ii,li_link_direction) == -1) then
-                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node2) + 1 ! node2 in C starts from 0
-                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node1) + 1 ! node1 in C starts from 0
+                !% --- when upstream has lower bottom elevation than downstream,
+                !%     EPA-SWMM swaps the connectionso prevent a negative slope. 
+                !%     We can handle a negative slope in FV method, so switch the 
+                !%     nodes back tocorrect orientation
+                link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node2,.true.) + 1 ! node2 in C starts from 0
+                link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node1,.true.) + 1 ! node1 in C starts from 0
             else
                 write(*,*) 'Fatal error: link direction should be 1 or -1'
-                stop 79456456
+                stop 794564
             end if 
+            !% --- the ''parent'' link is the input EPA-SWMM link, which may be broken up by partitioning
             link%I(ii,li_parent_link) = ii
 
+            !% --- set link ID for the nodes upstream and downstream of thisLink (ii)
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
             node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
             node%I(link%I(ii,li_Mnode_u), ni_idx_base2 + node%I(link%I(ii,li_Mnode_u), ni_N_link_d)) = ii
 
-            !% HACK All links have the same initial depth type which is the default one
-            !% a better approach would be to allow specific links to have specific depth
-            !% types via an external JSON file for links whose path can be specified in
-            !% setting%Link%PropertiesFile
+            !% --- set the approach used for computing the initial depth
+            !%     HACK All links have the same initial depth type which is the default one
+            !%     a better approach would be to allow specific links to have specific depth
+            !%     types via an external JSON file for links whose path can be specified in
+            !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
-            link%R(ii,lr_Length) = interface_get_linkf_attribute(ii, api_linkf_conduit_length)
-            !% link%R(ii,lr_TopWidth): defined in network_define.f08
-            link%R(ii,lr_BreadthScale) = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax)
-            !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
-            link%R(ii,lr_LeftSlope) = interface_get_linkf_attribute(ii, api_linkf_left_slope)
-            link%R(ii,lr_RightSlope) = interface_get_linkf_attribute(ii, api_linkf_right_slope)
-            link%R(ii,lr_Roughness) = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness)
-            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0)
-            link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
-            link%R(ii,lr_FullDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull)
-            link%R(ii,lr_BottomDepth) = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot)
-            !link%R(ii,lr_BottomArea) = interface_get_linkf_attribute(ii, api_linkf_xsect_aBot) !% needs fixing
-            link%R(ii,lr_InletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset1)
-            link%R(ii,lr_OutletOffset) = interface_get_linkf_attribute(ii,api_linkf_offset2)
-            !write(*,*) 'api_nodef_initDepth 1'
-            link%R(ii,lr_InitialUpstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth) - &
-                                                    link%R(ii,lr_InletOffset), zeroR)
-            !write(*,*) 'api_nodef_initDepth 2'
-            link%R(ii,lr_InitialDnstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth) - &
-                                                    link%R(ii,lr_OutletOffset), zeroR)
 
-            !% special element attributes
-            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions)
-            link%I(ii,li_curve_id) = interface_get_linkf_attribute(ii, api_linkf_curveid)
-            link%R(ii,lr_DischargeCoeff1) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1)
-            link%R(ii,lr_DischargeCoeff2) = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2)
-            link%R(ii,lr_initSetting) = interface_get_linkf_attribute(ii, api_linkf_initSetting)
-            link%R(ii,lr_yOn) = interface_get_linkf_attribute(ii, api_linkf_yOn)
-            link%R(ii,lr_yOff) = interface_get_linkf_attribute(ii, api_linkf_yOff)
-            link%R(ii,lr_SideSlope) = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope)
-            !% SWMM5 doesnot distinguish between channel and conduit
-            !% however we need that distinction to set up the init condition
+            link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
+            link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
+            link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
+            link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
+            link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
+            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+            link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+            link%R(ii,lr_BottomDepth)     = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
+            link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
+            link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+            !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
+            !% link%R(ii,lr_TopWidth): defined in network_define.f08
+
+            link%R(ii,lr_Setting)         = interface_get_linkf_attribute(ii, api_linkf_setting,     .false.)
+            link%R(ii,lr_TimeLastSet)     = interface_get_linkf_attribute(ii, api_linkf_timelastset, .false. )
+
+            !% --- removed depths from being initialized here because these are actually node attributes
+            ! print *, 'read in depth ',link%R(ii,lr_InitialDnstreamDepth) ,link%R(ii,lr_InitialUpstreamDepth) 
+            ! link%R(ii,lr_InitialDepth)    = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
+            ! !write(*,*) 'api_nodef_initDepth 1'
+            ! link%R(ii,lr_InitialUpstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_u), api_nodef_initDepth) - &
+            !                                         link%R(ii,lr_InletOffset), zeroR)
+            ! !write(*,*) 'api_nodef_initDepth 2'
+            ! link%R(ii,lr_InitialDnstreamDepth) = max(interface_get_nodef_attribute(link%I(ii,li_Mnode_d), api_nodef_initDepth) - &
+            !                                         link%R(ii,lr_OutletOffset), zeroR)
+
+            ! print *, 'mod depth ',link%R(ii,lr_InitialDnstreamDepth) 
+            ! if (ii==118) stop 998734
+
+    
+            !% --- special element attributes
+            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
+            link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
+            link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
+            link%R(ii,lr_initSetting)         = interface_get_linkf_attribute(ii, api_linkf_initSetting,          .false.)
+            link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
+            link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
+            link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
+
+            !% --- SWMM5 does not distinguish between channel and conduit
+            !%     however we need that distinction to set up the init condition
             if ( (link%I(ii,li_link_type) == lPipe)          .and. &
                  ( &
                  (link%I(ii,li_geometry) == lRectangular)    .or. &
@@ -557,29 +682,31 @@ contains
                 link%I(ii,li_link_type) = lChannel
             end if
 
-            !% brh20211207s
-            link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag) == 1)
-            !% brh20211207e
+            !% --- Irregular cross-sections (TRANSECTS in SWMM input file)
+            if (link%I(ii,li_geometry) == lIrregular) then
+               link%I(ii,li_transect_idx) = interface_get_linkf_attribute(ii, api_linkf_transectidx,.true.)
+            end if
+
+            !% --- set output links
+            link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag,.true.) == 1)
+
+            ! !% --- Check if type1 pump and add control and monitor point for later array allocation
+            ! if (link%I(ii,li_link_sub_type) == lType1Pump) then
+            !     N_ControlPoint = N_ControlPoint + 1
+            !     N_MonitorPoint = N_MonitorPoint + 1
+            ! end if
+
         end do
 
-        !% check for errors in number of connections
-        ! print *, ' '
-        ! print *, '=========================================================='
-        ! print *, '  in ',trim(subroutine_name)
-        ! print *, 'printing number of connections up and down on each node'
+        !% --- ERROR CHECK for number of connections
         do ii = 1,N_node
-
-            !print *, ii, node%I(ii, ni_N_link_u),  node%I(ii, ni_N_link_d)
-
             if (node%I(ii, ni_N_link_u) > max_up_branch_per_node) then
                 if (this_image() == 1) then
                     write(*,*) 'FATAL ERROR IN INPUT FILE'
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_up_branch_per_node,' upstream connections'
                     write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
                 end if
-                !stop 
                 call util_crashpoint(387666)
-                return
             end if
 
             if (node%I(ii, ni_N_link_u) > max_dn_branch_per_node) then
@@ -588,13 +715,13 @@ contains
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_dn_branch_per_node,' downstream connections'
                     write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
                 end if
-                !stop 
                 call util_crashpoint(86752)
-                return
             end if
-
         end do
         
+        !% -----------------------
+        !% --- NODE DATA
+        !% -----------------------
         do ii = 1, N_node
             !write(*,*) '======= starting node ',ii
             !write(*,*)
@@ -605,6 +732,14 @@ contains
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
                 !write(*,*) '... is outfall type'
                 node%I(ii, ni_node_type) = nBCdn
+
+                !% --- check for a flap gate on an outfall
+                if (interface_get_nodef_attribute(ii, api_nodef_hasFlapGate) == 1) then
+                    node%YN(ii, nYN_hasFlapGate) = .true.
+                else
+                    node%YN(ii, nYN_hasFlapGate) = .false.
+                end if
+
             else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
                 !write(*,*) '... is storage type'
                 node%I(ii, ni_node_type) = nJm
@@ -613,16 +748,27 @@ contains
                 !% --- classify by number of links connected
                 select case (total_n_links)
                 case (oneI)
-                    !write(*,*) '... is 1 junction is an upstream BC
+                    ! write(*,*) '... is 1 junction is an upstream BC'
                     node%I(ii, ni_node_type) = nJ1
                 case (twoI)
-                    !write(*,*) '... is 2 junction type'        
+                    ! write(*,*) '... is 2 junction type'        
                     node%I(ii, ni_node_type) = nJ2
                 case default 
-                    !write(*,*) '... is 3+ junction type'
+                    ! write(*,*) '... is 3+ junction type'
                     node%I(ii, ni_node_type) = nJm
                 end select
             end if 
+
+            !% exception: nJ2 strictly has one upstream and one downstream link
+            !% other cases where a nJ2 has only two upstream or two downstream 
+            !% links will be considered as a nJm
+            if ((node%I(ii, ni_node_type) == nJ2) .and. &
+                ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
+                 (node%I(ii,ni_N_link_d) > oneI))) then
+                    ! write(*,*) '... switching to a 2 links nJm junction type'
+                    node%I(ii, ni_node_type) = nJm
+            end if
+
             !write(*,*) 'call api_nodef_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
             !write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
@@ -646,7 +792,7 @@ contains
 
             !write(*,*) 'call api_nodef_initDepth'
             node%R(ii,nr_InitialDepth)      = interface_get_nodef_attribute(ii, api_nodef_initDepth)
-            !write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth)
+            !write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth), ii
             !write(*,*)
 
             !write(*,*) 'call api_nodef_invertElev'
@@ -692,8 +838,46 @@ contains
             !% brh20211207e
         end do
 
-        !% Update Link/Node names
+        !% --- Store the Link/Node names
         call interface_update_linknode_names()
+
+        !% --- ERROR CHECK connections for outfalls
+        do ii = 1,N_node
+            if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
+                !% --- check if outfall has more than one upstream connection
+                if( node%I(ii, ni_N_link_u) > 1) then
+                    write(*,*) 'FATAL ERROR IN INPUT FILE'
+                    write(*,*) 'Outfall has more than 1 upstream link, which is not supported by SWMM5+'
+                    write(*,"(A,A)") 'Node name iin file is ',trim(node%Names(ii)%str)
+                    call util_crashpoint(99374)
+                endif
+                !% --- check if outfall has a downstream connection
+                if ( node%I(ii, ni_N_link_d) > 0) then
+                    write(*,*) 'FATAL ERROR IN INPUT FILE'
+                    write(*,*) 'Outfall has a downstream connection, which is not supported by SWMM5+'
+                    write(*,"(A,A)") 'Node name iin file is ',trim(node%Names(ii)%str)
+                    call util_crashpoint(847822)
+                end if
+            end if
+        end do
+
+        !% Check for small links if automatic resizing is not used.
+        if (setting%Discretization%MinElemLengthMethod /= ElemLengthAdjust) then
+            do ii = 1, N_link
+                if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
+                    if (link%R(ii,lr_Length) < 1.5 * setting%Discretization%NominalElemLength) then
+                        print *, 'SWMM input file links are smaller than 1.5 * NominalElemLength'
+                        print *, 'Found link length of ',link%R(ii,lr_Length)
+                        print *, 'Link index is ',ii
+                        print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
+                        print *, 'Either change setting.Discretization.AdjustLinkLengthYN to true, or'
+                        print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
+                        call util_crashpoint(447298)
+                    end if
+                end if
+            end do
+        end if
+
         if (setting%Debug%File%initialization) then
             !%-----------------------------------------------------------------------------
             print *, 'idx,    nodeType,    linkU,    linkD,   curveID, patternRes'
@@ -713,6 +897,272 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
+!%
+!%==========================================================================
+
+!%==========================================================================
+!%
+    ! subroutine init_conmon_from_links ()
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% allocates and initializes the storage for control and monitoring
+    !     !% arrays. Requires that the number of con/mon points needed for each
+    !     !% image is set in the N_conmon array
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer :: cmIdx, ii
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     if (N_ConMon(this_image()) < 1) return  !% no control/monitoring points
+
+       
+
+    !     call util_allocate_conmon ()
+
+    !     !% --- set a counter for the control/monitoring points
+    !     cmIdx = 0
+
+    !     !% --- cycle through link array to find all the control points
+    !     do ii = 1, setting%SWMMinput%N_link
+    !         !% --- look for type 1 pumps
+    !         if (link%I(ii,li_link_sub_type) == lType1Pump) then
+    !             !% --- increment the counter for this control index
+    !             cmIdx = cmIdx + 1
+    !             !% --- error checking if the number of expected c/m points is exceeded
+    !             if (cmIdx > N_ConMon(this_image())) then
+    !                 print *, 'CODE ERROR: mismatch in control points'
+    !                 call util_crashpoint(778723)
+    !             end if
+    !             !% --- set the c/m index
+    !             conmonI(cmIdx,cmi_idx) = cmIdx
+    !             !% --- Type 1 pumps connect to a node
+    !             conmonYN(cmIdx,cmYN_isLink) = .false.
+    !             !% --- get the index of the upstream node that is the control point
+    !             conmonI(cmIdx,cmi_linknode_idx) = link%I(ii,li_Mnode_u)
+    !         end if
+
+    !         !% HACK NEED ALGORITHMS FOR OTHER CONTROL POINTS
+            
+    !     end do
+
+
+
+
+    ! end subroutine init_conmon_from_links   
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine init_link_transect_array ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initializes the transect storage for EPA-SWMM irregular cross-sections
+        !% Note that the transect index number DOES NOT correspond to the link
+        !% index number. There are generally more links than transects, and a
+        !% transect may be assigned to more than one link.
+        !% Note that setting%SWMMinput%N_link_transect is set from EPA-SWMM in interface_init()
+        !%------------------------------------------------------------------
+        !% Declarations     
+            integer :: ii, jj, kk
+            integer :: nflip(1)
+            real(8), allocatable :: Darray(:), Aarray(:), Warray2(:,:)
+            real(8), pointer     :: depthU(:,:), areaForDepthU(:,:)
+            real(8), pointer     :: hydradForDepthU(:,:),widthForDepthU(:,:)
+            real(8), pointer     :: areaU(:,:), depthForAreaU(:,:)
+            real(8), pointer     :: hydradForAreaU(:,:),widthForAreaU(:,:)
+            real(8), pointer     :: depthFull(:), areaFull(:), hydradFull(:)
+            real(8), pointer     :: widthFull(:), widthMax(:)
+            real(8), pointer     :: areaBelowBreadthMax(:), depthAtBreadthMax(:)
+            real(8)              :: depthIncrement, areaIncrement
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%SWMMinput%N_link_transect < 1) return
+
+             !% --- get the number of depth levels in the SWMM-C transect tables from EPA-SWMM
+            setting%SWMMInput%N_transect_depth_items = interface_get_N_TRANSECT_TBL()
+
+            !% --- match the transect # in EPA-SWM in SWMM5+
+            !%     HACK, we may want make these independent in the future
+            N_transect_depth_items  = setting%SWMMInput%N_transect_depth_items
+            N_transect_area_items   = setting%SWMMInput%N_transect_depth_items
+
+            !% local arrays
+            allocate(Darray(N_transect_depth_items))
+            Darray(:) = (/ (jj,jj=0,N_transect_depth_items-1)/)
+
+            allocate(Aarray(N_transect_area_items))
+            Aarray(:) = (/ (jj,jj=0,N_transect_area_items-1)/)
+
+            !% --- a temporary width array
+            allocate(Warray2(setting%SWMMinput%N_link_transect, N_transect_depth_items))
+
+            !% --- allocation transect storage
+            call util_allocate_link_transect()
+
+        !%------------------------------------------------------------------
+        !% Alias:
+            !% --- tables based on uniform discretization of depth
+            depthU              => link%transectTableDepthR(:,:,tt_depth)
+            areaForDepthU       => link%transectTableDepthR(:,:,tt_area)
+            hydradForDepthU     => link%transectTableDepthR(:,:,tt_hydradius)
+            widthForDepthU      => link%transectTableDepthR(:,:,tt_width)
+
+            !% tables based on uniform discretization of area
+            areaU               => link%transectTableAreaR(:,:,tt_area)
+            depthForAreaU       => link%transectTableAreaR(:,:,tt_depth)
+            hydradForAreaU      => link%transectTableAreaR(:,:,tt_hydradius)
+            widthForAreaU       => link%transectTableAreaR(:,:,tt_width)
+
+            areaFull            => link%transectR(:,tr_areaFull)
+            depthFull           => link%transectR(:,tr_depthFull)
+            widthMax            => link%transectR(:,tr_widthMax)
+            widthFull           => link%transectR(:,tr_widthFull)
+            hydradFull          => link%transectR(:,tr_hydRadiusFull)
+            areaBelowBreadthMax => link%transectR(:,tr_areaBelowBreadthMax)
+            depthAtBreadthMax   => link%transectR(:,tr_depthAtBreadthMax)
+        !%------------------------------------------------------------------
+
+        !% --- get transect scalar date from EPA-SWMM
+        do ii=1,setting%SWMMinput%N_link_transect
+            link%transectI(ii,ti_idx) = ii
+            link%transectR(ii,tr_depthFull)         = interface_get_transectf_attribute(ii,api_transectf_yFull)
+            link%transectR(ii,tr_areaFull)          = interface_get_transectf_attribute(ii,api_transectf_aFull)
+            link%transectR(ii,tr_hydRadiusFull)     = interface_get_transectf_attribute(ii,api_transectf_rFull)
+            link%transectR(ii,tr_widthMax)          = interface_get_transectf_attribute(ii,api_transectf_wMax)
+            link%transectR(ii,tr_depthAtBreadthMax) = interface_get_transectf_attribute(ii,api_transectf_ywMax)
+            link%transectR(ii,tr_sectionFactor)     = interface_get_transectf_attribute(ii,api_transectf_sMax)
+            link%transectR(ii,tr_areaAtMaxFlow)     = interface_get_transectf_attribute(ii,api_transectf_aMax)
+            link%transectR(ii,tr_lengthFactor)      = interface_get_transectf_attribute(ii,api_transectf_lengthFactor)
+            link%transectR(ii,tr_roughness)         = interface_get_transectf_attribute(ii,api_transectf_roughness)
+        end do
+
+        !% --- get the transect ID names from EPA-SWMM
+        call interface_update_transectID_names ()
+
+        !% --- get the transect table info from EPA-SWMM (normalized)
+        !%     this gets Transect.aTbl, Transect.hradTbl Transect.widthTbl Transect.areaTbl
+        !%     and stores in the transectTableDepthR() array
+        call interface_get_transect_table ()
+
+        !% --- convert EPA-SWMM normalized tables to dimensional values for processing here
+        areaForDepthU   = areaForDepthU   * spread(areaFull,2,N_transect_depth_items)
+        widthForDepthU  = widthForDepthU  * spread(widthMax,2,N_transect_depth_items)
+        hydradForDepthU = hydradForDepthU * spread(hydradFull,2,N_transect_depth_items)
+
+        !% --- compute additional transect data
+        !%     EPA-SWMM only stores width, area, and hydraulic radius for irregular
+        !%     cross-sections with uniform depth discretization. SWMM5+ stores
+        !%     the actual depth discretization as well.
+        do ii=1,setting%SWMMinput%N_link_transect
+            !% --- EPA-SWMM assigns linear depth increment 
+            !%     see function transect_validate in transect.c
+            !%     Compute and store the uniformly-discretized depth
+            depthIncrement = depthFull(ii) / ( real(N_transect_depth_items - 1,8) )
+            depthU(ii,:) = depthIncrement * Darray
+
+            !% --- full width is not stored by EPA-SWMM, but is needed for
+            !%     SWMM5+. This value is TTable width data at largest depth value
+            widthFull(ii) = widthForDepthU(ii,N_transect_depth_items)               
+        end do
+
+        !% ------------------------------------------------------------------------
+        !% --- BUGFIX -- REMOVE THIS IF EPA-SWMM UPDATED FOR Transect.ywMax
+        !%     EPA-SWMM does not store the ywMax in Transect[index].ywMax
+        !%     See xsect_setIrregXsectParams() in xsect.c
+        !%     The value of ywMax is computed for each cross-section, but
+        !%     is not stored as part of the Transect object.
+        !%     Possible fix in EPA-SWMM is: Transect[index].ywMax = xsect->ywMax;
+        !%     Here we provide a separate computation of yMax, which gets stored
+        !%     in transectR(:,tr_depthAtBreadthMax)
+
+            !% --- compute the change in width for each depth increment
+            Warray2 = widthForDepthU(:,2:N_transect_depth_items) - widthForDepthU(:,1:N_transect_depth_items-1)
+
+            !% --- identify negative width increments (decreasing width)
+            where (Warray2 < zeroR)
+                Warray2 = -oneR
+            elsewhere
+                Warray2 = oneR
+            endwhere
+            !% --- find the depth at max breadth
+            do ii=1,setting%SWMMinput%N_link_transect
+                !% --- get the index for the flip from increasing to decreasing width
+                nflip = findloc(Warray2(ii,:),-oneR)
+                !% --- if width never decreases, use max depth
+                if (nflip(1) .eq. 0) nflip = N_transect_depth_items
+                !% --- set the depth from the depth table
+                depthAtBreadthMax(ii) = depthU(ii,nflip(1)) 
+            end do
+        !% END BUGFIX
+        !% ------------------------------------------------------------------------
+
+        !% --- update the area below the maximum width
+        do ii=1,setting%SWMMinput%N_link_transect
+            !% --- lookup the area below the max breadth
+            areaBelowBreadthMax(ii) = xsect_table_lookup_singular ( &
+                                    depthAtBreadthMax(ii), areaForDepthU(ii,:))
+        end do
+
+        !% --- compute the uniform area transect tables by using the
+        !%     nonuniform area as a lookup table for the uniform depth
+        do ii=1,setting%SWMMinput%N_link_transect
+            !% --- get the uniform increments of area
+            areaIncrement = areaFull(ii) / ( dble(N_transect_area_items - 1) )
+            areaU(ii,:) = areaIncrement * Aarray
+
+            !% --- call the lookups for the first level with error checking
+            depthForAreaU(ii,1) = xsect_nonuniform_lookup_singular &
+                (areaU(ii,1), areaForDepthU(ii,:), depthU(ii,:), .true.)
+
+            hydradForAreaU(ii,1) = xsect_nonuniform_lookup_singular &
+                (depthForAreaU(ii,1),depthU(ii,:), hydradForDepthU(ii,:),.true. )
+
+            widthForAreaU(ii,1) = xsect_nonuniform_lookup_singular &
+                    (depthForAreaU(ii,1), depthU(ii,:), widthForDepthU(ii,:),.true. )
+
+            !% --- cycle through the uniform area values in this transect to 
+            !%     find the associated depth     
+            do kk=2,N_transect_area_items
+                depthForAreaU(ii,kk) = xsect_nonuniform_lookup_singular &
+                    (areaU(ii,kk), areaForDepthU(ii,:), depthU(ii,:), .false.)
+            end do
+
+            !% --- using the new depthForAreaU, find the hydradius at those depths
+            do kk=2,N_transect_area_items
+                hydradForAreaU(ii,kk) = xsect_nonuniform_lookup_singular &
+                    (depthForAreaU(ii,kk), depthU(ii,:), hydradForDepthU(ii,:),.false. )
+            end do
+
+            !% --- using the new depthForAreaU, find the width at those depths
+            do kk=2,N_transect_area_items
+                widthForAreaU(ii,kk) = xsect_nonuniform_lookup_singular &
+                    (depthForAreaU(ii,kk), depthU(ii,:), widthForDepthU(ii,:),.false. )
+            end do
+   
+        end do
+
+        !% --- Normalize all tables
+            depthU          = depthU          / spread(depthFull  ,2,N_transect_depth_items)
+            areaForDepthU   = areaForDepthU   / spread(areaFull   ,2,N_transect_depth_items)
+            hydradForDepthU = hydradForDepthU / spread(hydradFull ,2,N_transect_depth_items)
+            widthForDepthU  = widthForDepthU  / spread(widthMax   ,2,N_transect_depth_items)
+
+            areaU           = areaU           / spread(areaFull   ,2,N_transect_area_items)
+            depthForAreaU   = depthForAreaU   / spread(depthFull  ,2,N_transect_area_items)
+            hydradForAreaU  = hydradForAreaU  / spread(hydradFull ,2,N_transect_area_items)
+            widthForAreaU   = widthForAreaU   / spread(widthMax   ,2,N_transect_area_items)
+    
+
+   
+
+        !%------------------------------------------------------------------
+        !% Closing:
+            deallocate(Darray)
+            deallocate(Aarray)
+            deallocate(Warray2)
+
+    end subroutine init_link_transect_array
 !%
 !%==========================================================================
 !%==========================================================================
@@ -745,7 +1195,7 @@ contains
         character(64) :: subroutine_name = 'init_curves'
 
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -753,7 +1203,7 @@ contains
             print *, "ERROR: API is not initialized"
             !stop 
             call util_crashpoint(84785)
-            return
+            !return
         end if
 
         !% we create additional curves for functional storage as well
@@ -761,12 +1211,12 @@ contains
         additional_storage_curves = count((node%YN(:,nYN_has_storage)) .and. &
                                           (node%I(:,ni_curve_ID) == 0))
 
-        Total_Curves = additional_storage_curves + SWMM_N_Curve
-        if (Total_Curves > SWMM_N_Curve) N_Curve = SWMM_N_Curve + additional_storage_curves
+        Total_Curves = additional_storage_curves + setting%SWMMinput%N_curve
+        if (Total_Curves > setting%SWMMinput%N_curve) N_Curve = setting%SWMMinput%N_curve + additional_storage_curves
         !% allocate the number of curve objets from SWMM5
         call util_allocate_curves()
 
-        do ii = 1, SWMM_N_Curve
+        do ii = 1, setting%SWMMinput%N_curve
             curve(ii)%ID = ii
             curve(ii)%Type = interface_get_table_attribute(ii, api_table_type)
             !% get the number of entries in a curve
@@ -789,6 +1239,62 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine init_simulation_controls()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%   initialize simulation controls from SWMM5+ settings file
+        !%-----------------------------------------------------------------------------
+        integer              :: ii, jj, lIdx
+        integer, pointer     :: nControls
+        integer, allocatable :: packedElemArray(:)
+        character(64)        :: subroutine_name = 'init_simulation_controls'
+        !%-----------------------------------------------------------------------------
+        ! if (crashYN) return
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+            !% pointer to the number of control in the settings file
+            nControls => setting%Control%NumControl
+
+            !% only initialize controls if it is present in the settings file
+            if (nControls > zeroI) then
+                allocate(setting%Control%LinkIdx(nControls))
+                setting%Control%LinkIdx = nullvalueI
+                allocate(setting%Control%ElemIdx(nControls))
+                setting%Control%ElemIdx = nullvalueI
+                !% allocate the previous settings as 1.0
+                do ii = 1,nControls
+                    do jj = 1,size(link%I,dim=1)
+                        if (link%Names(jj)%str == trim(setting%Control%Links(ii))) then
+                            lIdx = jj
+                            setting%Control%LinkIdx(ii) = lIdx
+                            packedElemArray = pack(elemI(:,ei_Lidx),(elemI(:,ei_link_Gidx_SWMM) == lIdx))
+                            if (size(packedElemArray)<oneI) then
+                                print*, packedElemArray, 'packedElemArray'
+                                print*, "Error - json file - setting " // 'Could not find the link ', trim(setting%Control%Links(ii)), ' in the network'
+                            end if
+                            !% HACK: take the first element of the subsequent link as controlled element
+                            !% that means, for conduits the first element will be controlled
+                            !% for orifice and weirs it will not matter
+                            setting%Control%ElemIdx(ii) = packedElemArray(1)
+                            deallocate(packedElemArray)
+                        end if
+                    end do
+                    !% check for valid links in the control settings
+                    if (setting%Control%LinkIdx(ii) == nullvalueI) then
+                        print*, "Error - json file - setting " // 'Could not find then link ', trim(setting%Control%Links(ii)), ' in the network'
+                        stop
+                    end if
+                end do 
+            end if
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    end subroutine init_simulation_controls
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_partitioning()
         !%-----------------------------------------------------------------------------
         !%
@@ -802,7 +1308,7 @@ contains
         integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -828,7 +1334,7 @@ contains
         if (setting%Profile%useYN) call util_profiler_start (pfc_init_partitioning)
 
         !% find the number of elements in a link based on nominal element length
-        do ii = 1, SWMM_N_link
+        do ii = 1, setting%SWMMinput%N_link
             call init_discretization_nominal(ii)
         end do
 
@@ -883,7 +1389,7 @@ contains
             character(64) :: subroutine_name = 'init_subcatchment'
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -899,14 +1405,17 @@ contains
         !elemI(:, ei_Nsubcatch) = zeroI
 
         !% cycle through subcatchments to set connections to runoff nodes in SWMM-C
-        do ii=1,SWMM_N_subcatch
+        do ii=1,setting%SWMMinput%N_subcatch
             !%Add 1 to the SWMM-C node to get the SWMM5+ node
             nodeIdx(ii) = interface_get_subcatch_runoff_nodeIdx(ii-1)+oneI
             if (nodeIdx(ii) < 1) then !% not a runoff node (SWMM-C flag)
                 isToNode(ii) = .false.
             else
                 isToNode(ii) = .true.
-            end if         
+            end if   
+            
+            !print *, 'in ',trim(subroutine_name)
+            !print *, ii, nodeIdx(ii), trim(reverseKey(nodeType(nodeIdx(ii))))
 
             !% only handle the subcatchment on images with its connected node
             if (this_image() .eq. node%I(nodeIdx(ii), ni_P_image)) then
@@ -946,7 +1455,7 @@ contains
                     print *, 'which has key of ',trim(reverseKey(nodeType(nodeIdx(ii))))
                     !stop 
                     call util_crashpoint(3758974)
-                    return
+                    !return
                 end select
                 !% store logical for elem
                 if (elemIdx(ii) .ne. nullvalueI) then 
@@ -956,7 +1465,8 @@ contains
             end if
         end do
 
-        ! do ii = 1,SWMM_N_subcatch
+        !stop 44987
+        ! do ii = 1,setting%SWMMinput%N_subcatch
         !     print *, ii
         !     print *,  ii, subcatchI(:,si_runoff_nodeIdx) ,  subcatchI(:,si_runoff_elemIdx) 
         ! end do
@@ -987,11 +1497,13 @@ contains
         setting%Time%Now   = zeroR
         setting%Time%Step  = zeroI
 
+        setting%Time%Hydraulics%Dt = setting.VariableDT.InitialDt
+
         if (setting%Time%useSWMMinpYN) then 
             !% set the start/stop times and time steps from SWMM *.inp file
             setting%Time%StartEpoch    = setting%SWMMinput%StartEpoch
             setting%Time%EndEpoch      = setting%SWMMinput%EndEpoch
-            setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep
+            !setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep -- do not use!
             setting%Time%Hydrology%Dt  = setting%SWMMinput%WetStep
             ! HACK ??                  = setting%SWMMinput%DryStep
             ! HACK ??                  = setting%SWMMinput%TotalDuration
@@ -1081,7 +1593,7 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1131,7 +1643,7 @@ contains
                     print *, 'CODE ERROR, unexpected else'
                     !stop 
                     call util_crashpoint(390715)
-                    return
+                    !return
                 end if !% multiple junction faces already counted
             end do
 
@@ -1182,6 +1694,73 @@ contains
 !%==========================================================================
 !%==========================================================================
 !% 
+    subroutine init_linkarray_broadcast()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Broadcasts the link data unique to a particular link image
+        !% to the other images (e.g., the local indexes of elements
+        !% in the link). This is clunky because you cannot broadcast
+        !% using a packed array of indices -- you have to do the entire array.
+        !% This approach works because every image knows which links belong
+        !% to which images through link%I(:,li_P_image)
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: ii, kk, cset(3)
+            integer, allocatable :: linkThisImage(:), tempI(:)[:]
+        !%------------------------------------------------------------------
+
+        sync all
+        do ii=1,num_images()
+            !% --- get all the links for each image
+            !%     Note that this_image() conducts this for every image, but
+            !%     only when this_image()==ii will the values be the ones 
+            !%     that are broadcast
+            linkThisImage = pack(link%I(:,li_idx), link%I(:,li_P_image) == ii)
+
+            !% --- check that this image has links, if so allocate 
+            !%     the temporary integer space as a coarray
+            if (size(linkThisImage) > 0) then
+                !% --- allocate every loop because we have different # of links on each image
+                allocate(tempI(size(linkThisImage))[*])
+                tempI(:) = zeroI
+            else
+                cycle
+            end if
+
+            !% --- columns to be broadcast
+            cset(1) = li_N_element
+            cset(2) = li_first_elem_idx
+            cset(3) = li_last_elem_idx
+
+            !% --- cycle through the columns to broadcast
+            do kk=1,3  !% increase this if more data needs to be broadcast in cset
+                !% --- store the link data in the single array
+                !%     note that if this data is all nullvalueI unless ii==this_image()
+                tempI = link%I(linkThisImage,cset(kk))[ii]
+                !% --- broadcast from the source image to all the others
+                !%     which overwrites the nullvalueI
+                call co_broadcast (tempI, source_image=ii)
+                !%
+                if (ii .ne. this_image()) then
+                    !% store the broadcast data back in the link array
+                    link%I(linkThisImage,cset(kk)) = tempI
+                end if
+            end do
+            
+            !% --- note we have to deallocate and allocate in every
+            !%     loop because the different images have different numbers of elements
+            deallocate(tempI)
+        end do    
+
+        !%------------------------------------------------------------------
+        !% Closing
+            deallocate(linkThisImage)
+        
+    end subroutine init_linkarray_broadcast
+!%
+!%==========================================================================
+!%==========================================================================
+!% 
     subroutine init_boundary_ghost_elem_array()
         !
         !--------------------------------------------------------------------------
@@ -1192,7 +1771,7 @@ contains
         integer, dimension(:), allocatable, target :: packed_shared_face_idx
         character(64)    :: subroutine_name = 'init_boundary_ghost_elem_array'
         !--------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1243,12 +1822,12 @@ contains
                     print*, 'error: condition not handeled single element with two shared faces'
                     !stop 
                     call util_crashpoint(914744)
-                    return
+                    !return
                 else
                     print*, 'should not reach this condition'
                     !stop 
                     call util_crashpoint(54673)
-                    return
+                    !return
                 end if
             end do
 

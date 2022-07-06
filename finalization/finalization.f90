@@ -3,7 +3,7 @@ module finalization
     use define_settings, only: setting
     use define_globals
     use define_indexes
-    use interface
+    use interface_
     use utility
     use utility_datetime
     use utility_deallocate
@@ -37,11 +37,11 @@ contains
             real(8) :: total_time,timemarch_time, hydraulics_time
             real(8) :: hydrology_time, loopoutput_time, initialization_time
             real(8) :: lastoutput_time, shared_time, volume_nonconservation
-            real(8) :: timemarch_seconds, shared_seconds
+            real(8) :: timemarch_seconds, shared_seconds, partition_time
             logical :: isLastStep
             character(8) :: total_units, timemarch_units, hydraulics_units
             character(8) :: hydrology_units, loopoutput_units, initialization_units
-            character(8) :: lastoutput_units, shared_units
+            character(8) :: lastoutput_units, shared_units, partition_units
             character(64) :: subroutine_name = 'finalize_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -89,7 +89,7 @@ contains
         sync all
 
         !% --- delete the duplicate input files
-        call util_file_delete_duplicate_input ()
+        ! call util_file_delete_duplicate_input ()
 
         !% --- stop the CPU time clock
         call cpu_time(setting%Time%CPU%EpochFinishSeconds)
@@ -136,7 +136,13 @@ contains
             initialization_time = real(setting%Time%WallClock%InitializationEnd &
                                      - setting%Time%WallClock%Start,kind=8)
             initialization_time = initialization_time / real(setting%Time%WallClock%CountRate,kind=8)
-            call util_datetime_display_time (initialization_time, initialization_units)          
+            call util_datetime_display_time (initialization_time, initialization_units) 
+
+            !% --- time spent in partitioning
+            partition_time = real(setting%Time%WallClock%PartitionEnd &
+                                     - setting%Time%WallClock%Start,kind=8)
+                                     partition_time = partition_time / real(setting%Time%WallClock%CountRate,kind=8)
+            call util_datetime_display_time (partition_time, partition_units) 
             
             !% --- time spent in the final output
             lastoutput_time = real(setting%Time%WallClock%End &
@@ -167,7 +173,7 @@ contains
                 write(*,"(A,i9)")  ' Total number of time levels written              = ',setting%Output%NumberOfTimeLevelSaved
                 write(*,"(A,i9)")  ' Total number of finite-volume elements written   = ',sum(N_OutElem(:))
                 write(*,"(A,i9)")  ' Total number of finite-volume faces written      = ',sum(N_OutFace(:))
-                write(*,"(A,2i9)") ' Total number of SWMM links, nodes in system      = ',SWMM_N_link, SWMM_N_node
+                write(*,"(A,2i9)") ' Total number of SWMM links, nodes in system      = ',setting%SWMMinput%N_link, setting%SWMMinput%N_node
                 write(*,"(A,2i9)") ' Total number of finite-volume elements in system = ',sum(N_elem)
                 write(*,"(A,2i9)") ' Total number of time steps                       = ',setting%Time%step
                 write(*,"(A,e12.3)") ' FLOP scale (time steps x elements)               = ',&
@@ -182,6 +188,7 @@ contains
                 write(*,*) ' '
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time in total                : ',total_time, ' ',trim(total_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in initialization : ',initialization_time, ' ',trim(initialization_units)
+                write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in partitioning   : ',partition_time, ' ',trim(partition_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in time-marching  : ',timemarch_time, ' ',trim(timemarch_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in loop output    : ',loopoutput_time, ' ',trim(loopoutput_units)
                 write(*,"(A,F9.2,A,A)") ' Wall-clock time spent in hydrology      : ',hydrology_time, ' ',trim(hydrology_units)

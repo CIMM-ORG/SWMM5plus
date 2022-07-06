@@ -3,6 +3,7 @@ shopt -s extglob
 
 # --------------------------------------------------------------------------------------
 
+# source /opt/intel/oneapi/setvars.sh 
 . ./build_vars.sh
 . ./build_dependencies.sh
 
@@ -18,10 +19,10 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_types.f90\
               $DEF_DIR/define_api_keys.f90\
               $DEF_DIR/define_globals.f90\
-              $UTIL_DIR/utility_crash.f90\
               $DEF_DIR/define_keys.f90\
               $DEF_DIR/define_settings.f90\
               $DEF_DIR/define_indexes.f90\
+              $UTIL_DIR/utility_crash.f90\
               $DEF_DIR/define_xsect_tables.f90\
               $UTIL_DIR/utility.f90\
               $UTIL_DIR/utility_datetime.f90\
@@ -50,6 +51,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $GEO_DIR/triangular_channel.f90\
               $GEO_DIR/rectangular_triangular_channel.f90\
               $GEO_DIR/circular_conduit.f90\
+              $GEO_DIR/irregular_channel.f90\
               $GEO_DIR/storage_geometry.f90
               $GEO_DIR/geometry.f90\
               $TL_DIR/common_elements.f90\
@@ -57,9 +59,10 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/orifice_elements.f90\
               $TL_DIR/outlet_elements.f90\
               $TL_DIR/pump_elements.f90\
-              $TL_DIR/lowlevel_rk2.f90\
+              $TL_DIR/control_hydraulics.f90\
               $TL_DIR/update.f90\
               $TL_DIR/face.f90\
+              $TL_DIR/lowlevel_rk2.f90\
               $TL_DIR/boundary_conditions.f90\
               $TL_DIR/diagnostic_elements.f90\
               $TL_DIR/runge_kutta2.f90\
@@ -106,5 +109,5 @@ echo Complete!
 echo "To update number of processors in the system:"
 echo "Please execute >>> source ~/.bashrc"
 
-
+# source ~/.bashrc
 

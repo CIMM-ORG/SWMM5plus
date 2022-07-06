@@ -9,10 +9,13 @@ module geometry
     use triangular_channel
     use rectangular_triangular_channel
     use circular_conduit
+    use irregular_channel
     use storage_geometry
+    use xsect_tables
     use adjust
     use utility_profiler
     use utility_crash
+    use utility, only: util_CLprint, util_syncwrite
 
 
     implicit none
@@ -26,6 +29,10 @@ module geometry
 
     public :: geometry_toplevel
     public :: geo_assign_JB  !BRHbugfix 20210813
+    public :: geo_topwidth_from_depth
+    public :: geo_hyddepth_from_depth_singular
+    public :: geo_topwidth_from_depth_singular
+    public :: geo_area_from_depth_singular
 
     contains
 !%==========================================================================
@@ -50,7 +57,7 @@ module geometry
             character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !!if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -92,7 +99,7 @@ module geometry
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
                     call util_crashpoint(7389)
-                    return
+                    !return
                     !stop 7389
             end select
             call util_crashstop(49872)
@@ -100,20 +107,42 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
+        !print *, this_image(),  '    geomTL aaa ',setting%Time%Step
+        ! call util_CLprint ()    
+
+
         !% assign all geometry for surcharged elements CC, JM (and JB?)
         call geo_surcharged (thisColP_surcharged)
 
+        !print *, this_image(),  '    geomTL bbb',this_image(),setting%Time%Step
+        ! call util_CLprint () 
+
         !% reset all zero or near-zero volumes in non-surcharged CC and JM
-        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
+
+        ! print *, this_image(),  '    geomTL ccc',this_image(),setting%Time%Step
+        ! call util_CLprint () 
 
         !% compute the depth on all non-surcharged elements of CC and JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
+        ! print *, this_image(),  '    geomTL  ddd',this_image(),setting%Time%Step
+        ! call util_CLprint () 
+
         !% reset all zero or near-zero depths in non-surcharged CC and JM
-        call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
+
+        !print *,this_image(),  '     geomTL  eee',this_image(),setting%Time%Step
+        ! call util_CLprint () 
 
         !% compute the head on all non-surcharged elements of CC and JM
         call geo_head_from_depth (thisColP_NonSurcharged)
+
+
+        !print *, this_image(),  '    geomTL  fff',this_image(),setting%Time%Step
+        ! call util_CLprint () 
+ 
+        ! print *, 'in ',trim(subroutine_name),elemR(49,er_VolumeOverFlow), elemR(49,er_Volume)
 
         !% limit volume for incipient surcharge. This is done after depth is computed
         !% so that the "depth" algorithm can include depths greater than fulldepth
@@ -121,11 +150,22 @@ module geometry
         !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
+        !print *, this_image(),  '    geomTL  ggg',this_image(),setting%Time%Step
+        ! call util_CLprint ()  
+
+        ! print *, 'in ',trim(subroutine_name),elemR(48,er_VolumeOverFlow)
+
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
         !% handle incipient surcharge
         !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged)
         call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
+
+            ! outstring = '    geomTL  hhh '
+            ! call util_syncwrite()
+
+        !print *, this_image(),  '    geomTL  hhh',setting%Time%Step
+        ! call util_CLprint () 
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
@@ -133,47 +173,88 @@ module geometry
         !% assign the head, depth, geometry on junction branches JB based on JM head
         call geo_assign_JB (whichTM, thisColP_JM)
 
+            ! outstring = '    geomTL  iii '
+            ! call util_syncwrite()
+        !print *, this_image(),  '    geomTL  iii',setting%Time%Step
+        ! call util_CLprint ()  
+
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
 
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
+        ! print *, this_image(),  '    geomTL  jjj',this_image()
+        ! call util_CLprint () 
+
         !% reset all zero or near-zero areas in non-surcharged CC and JM
-        call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged, .false.)
+
+        ! print *, this_image(),  '    geomTL kkk',this_image()
+        ! call util_CLprint ()   
 
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
+        ! print *, this_image(),  '    geomTL  lll', this_image()
+        ! call util_CLprint () 
+
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
-        call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged)
+        call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged, .false.)
+
+        ! print *, this_image(),  '    geomTL  mmm',this_image()
+        ! call util_CLprint () 
 
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        !% compute hyddepth
-        call geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
+        ! print *, this_image(),  '    geomTL  nnn',this_image()
+        ! call util_CLprint () 
 
-        !% compute hydradius
+        !% compute hyddepth
+        call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+
+        ! print *, this_image(),  '    geomTL  ooo',this_image()
+        ! call util_CLprint ()   
+
+        !% compute hydradius  (applies to all nonsurcharged)
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
+
+
+        ! print *, this_image(),  '    geomTL  qqq',this_image()
+        ! call util_CLprint () 
+
+        !% the modified hydraulic depth "ell" is used for AC computations and
+        !% for Froude number computations on all elements, whether ETM or AC.
+        call geo_ell_from_head (thisColP_all)
+
+        ! print *,  this_image(),  '    geomTL  rrr',this_image()
+        ! call util_CLprint () 
 
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
 
-        !% the modified hydraulic depth "ell" is used for AC computations and
-        !% for Froude number computations on all elements, whether ETM or AC.
-        call geo_ell (thisColP_all)
+        ! print *,  this_image(),  '    geomTL  sss',this_image()
+        ! call util_CLprint () 
 
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
+
+
+        ! print *, this_image(),  '    geomTL ttt',this_image()
+        ! call util_CLprint () 
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
+
+
+        ! print *,  this_image(),  '    geomTL uuu',this_image()
+        ! call util_CLprint () 
 
         call util_crashstop(322983)
 
@@ -213,16 +294,17 @@ module geometry
         !% SmallVolume_xxx,
         !%-------------------------------------------------------------------
             integer, intent(in) :: whichTM, thisColP_JM
+
             integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
             real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
-            real(8), pointer :: zCrown(:), fullarea(:), fulldepth(:), fullperimeter(:)
-            real(8), pointer :: fullhyddepth(:)
-            real(8), pointer :: grav
+            real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
+            real(8), pointer :: fullhyddepth(:), thisTable(:,:)
+            real(8), pointer :: grav       
+
+            real(8) :: depthnorm, zeroHydRadius
             integer :: tB, ii, kk
-        !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
-        !real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
 
         !% thisColP_JM is the column for the junction mains of a particular
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
@@ -230,7 +312,6 @@ module geometry
             character(64) :: subroutine_name = 'geo_assign_JB'
         !%---------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
@@ -251,7 +332,7 @@ module geometry
             volume        => elemR(:,er_Volume)
             zBtm          => elemR(:,er_Zbottom)
             zCrown        => elemR(:,er_Zcrown)
-            fullarea      => elemR(:,er_FullArea)
+            fullArea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_FullDepth)
             fullhyddepth  => elemR(:,er_FullHydDepth)
             fullperimeter => elemR(:,er_FullPerimeter)
@@ -263,14 +344,19 @@ module geometry
 
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP_JM)
+
             !% cycle through the all the main junctions and each of its branches
             do ii=1,Npack
+                
                 tM => thisP(ii) !% junction main ID
+
                 !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
                     !% cycle through the possible junction branches
                     do kk=1,max_branch_per_node
+                        
                         tB = tM + kk !% junction branch ID
+
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
                             if ( head(tM) > zBtm(tB) ) then
@@ -291,45 +377,38 @@ module geometry
                                 !% is not updated until after face interpolation
                                 head(tB) = zBtm(tB)  &
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
-                                    *(velocity(tB)**twoR) / (twoR * grav)   !% 20220307 brh ADDED 2 to factor
+                                    *(velocity(tB)**twoR) / (grav)   !% 20220307 brh ADDED 2 to factor -- removed 20220615
                             end if
+
+                            !% HACK -- the above uses a Froude number argument for head(TM) < zBtm(tB)
+                            !%      however, when the JB is surcharged we probably should be using the
+                            !%      K factor approach and require K=1.
                            
-                            
                             !% compute provisional depth
                             depth(tB) = head(tB) - zBtm(tB)
                             
                             if (depth(tB) .ge. fulldepth(tB)) then
                                 !% surcharged or incipient surcharged
                                 depth(tB)     = fulldepth(tB)
-                                area(tB)      = fullarea(tB)
+                                area(tB)      = fullArea(tB)
                                 hyddepth(tB)  = fullhyddepth(tB)
                                 perimeter(tB) = fullperimeter(tB)
                                 topwidth(tB)  = setting%ZeroValue%Topwidth
                                 hydRadius(tB) = fulldepth(tB) / fullperimeter(tB)
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+
                             elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
                                 !% negligible depth is treated with ZeroValues
                                 depth(tB)     = setting%ZeroValue%Depth
                                 area(tB)      = setting%ZeroValue%Area
-                               
-                                ! HACK fix
-                                !f (elemI(tB,ei_geometryType) == rectangular)  then
-                                !    topwidth(tB) = elemSGR(tB,esgr_Rectangular_Breadth)
-                                !else
-                                    topwidth(tB)  = setting%ZeroValue%Topwidth
-                                !end if
-                                !% HACK
+                                topwidth(tB)  = setting%ZeroValue%Topwidth
                                 hyddepth(tB)  = setting%ZeroValue%Area / topwidth(tB)
-                                ! hyddepth(tB)  = setting%ZeroValue%Area / setting%ZeroValue%Topwidth
-                                !% HACK
                                 perimeter(tB) = topwidth(tB) + setting%ZeroValue%Depth
-                                ! perimeter(tB) = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
                                 hydRadius(tB) = setting%ZeroValue%Area / perimeter(tB)
-                                !% HACK
                                 dHdA(tB)      = oneR / topwidth(tB)
-                                ! dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
-                                !% negative depth is treated as exactly zero
+                                !% negative depth without zero value treatment (not recommended!) is treated as exactly zero
                                 depth(tB) = zeroR
                                 area(tB)  = zeroR
                                 topwidth(tB) = zeroR
@@ -337,57 +416,107 @@ module geometry
                                 perimeter(tB) = zeroR
                                 hydRadius(tB) = zeroR
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
-                                !dHdA(tB)      = setting%ZeroValue%Topwidth
+
                             else
                                 !% not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
-                                case (rectangular)
-                                    area(tB)     = rectangular_area_from_depth_singular (tB)
-                                    topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
-                                    hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
-                                    perimeter(tB)= rectangular_perimeter_from_depth_singular (tB)
-                                    hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
+                                case (rectangular,rectangular_closed)
+                                    area(tB)     = rectangular_area_from_depth_singular      (tB, depth(tB))
+                                    topwidth(tB) = rectangular_topwidth_from_depth_singular  (tB, depth(tB))
+                                    hydDepth(tB) = rectangular_hyddepth_from_depth_singular  (tB, depth(tB))
+                                    perimeter(tB)= rectangular_perimeter_from_depth_singular (tB, depth(tB))
+                                    hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB, depth(tB))
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
+
                                 case (triangular)
-                                    area(tB)     = triangular_area_from_depth_singular (tB)
-                                    topwidth(tB) = triangular_topwidth_from_depth_singular (tB)
-                                    hydDepth(tB) = triangular_hyddepth_from_depth_singular (tB)
-                                    perimeter(tB)= triangular_perimeter_from_depth_singular (tB)
-                                    hydRadius(tB)= triangular_hydradius_from_depth_singular (tB)
+                                    area(tB)     = triangular_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = triangular_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydDepth(tB) = triangular_hyddepth_from_depth_singular  (tB,depth(tB))
+                                    perimeter(tB)= triangular_perimeter_from_depth_singular (tB,depth(tB))
+                                    hydRadius(tB)= triangular_hydradius_from_depth_singular (tB,depth(tB))
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
-                                case (trapezoidal)
-                                    area(tB)     = trapezoidal_area_from_depth_singular (tB)
-                                    topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
-                                    hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
-                                    perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB)
-                                    hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
+                                    
+                                case (trapezoidal)                                    
+                                    area(tB)     = rectangular_triangular_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydDepth(tB) = rectangular_triangular_hyddepth_from_depth_singular  (tB,depth(tB))
+                                    perimeter(tB)= rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB))
+                                    hydRadius(tB)= rectangular_triangular_hydradius_from_depth_singular (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (rect_triang)
+                                    area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular  (tB,depth(tB))
+                                    perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB,depth(tB))
+                                    hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB,depth(tB))
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for trapezoid
                                     dHdA(tB)     = oneR / topwidth(tB)
+
                                 case (circular)
-                                    area(tB)     = circular_area_from_depth_singular (tB)
-                                    topwidth(tB) = circular_topwidth_from_depth_singular (tB)
-                                    hydDepth(tB) = circular_hyddepth_from_topwidth_singular (tB)
-                                    hydRadius(tB)= circular_hydradius_from_depth_singular (tB)
-                                    perimeter(tB)= circular_perimeter_from_hydradius_singular (tB)
+                                    area(tB)     = circular_area_from_depth_singular          (tB,depth(tB))
+                                    topwidth(tB) = circular_topwidth_from_depth_singular      (tB,depth(tB))
+                                    hydDepth(tB) = circular_hyddepth_from_topwidth_singular   (tB,topwidth(tB),depth(tB))
+                                    hydRadius(tB)= circular_hydradius_from_depth_singular     (tB,depth(tB))
+                                    perimeter(tB)= circular_perimeter_from_hydradius_singular (tB,hydRadius(tB))
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for circular
                                     dHdA(tB)     = oneR / topwidth(tB)
+
+                                case (irregular)
+                                    area(tB)    = irregular_geometry_from_depth_singular ( &
+                                                        tB,tt_area, depth(tB), setting%ZeroValue%Depth)
+
+                                    topwidth(tB) = irregular_geometry_from_depth_singular ( &
+                                                        tB,tt_width, depth(tB), setting%ZeroValue%TopWidth)
+
+                                    zeroHydRadius = setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth)
+                                    hydRadius(tB) = irregular_geometry_from_depth_singular ( &
+                                                        tB,tt_hydradius, depth(tB), zeroHydRadius)                
+
+                                    hydDepth(tB)  = area(tB) / topwidth(tB)     
+                                    
+                                    perimeter(tB) = area(tB) / hydRadius(tB)
+                                    ell(tB)       = hydDepth(tB)  !% HACK -- assumes irregular is continuously-increasing in width
+                                    dHdA(tB)      = oneR / topwidth(tB)
+
+                                    ! !% get the transect by depth table 
+                                    ! thisTable => transectTableDepthR(elemI(tB,ei_transect_idx),:,:)
+                                    ! depthnorm     = depth(tB)/fulldepth(tB)
+
+                                    ! area(tB)      = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_area))
+                                    ! !% xsect quadratic interp for small values can produce zero
+                                    ! area(tB)      = max(area(tB), setting%ZeroValue%Area)
+
+                                    ! topwidth(tB)  = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_width))
+                                    ! !% xsect quadratic interp for small values can produce zero
+                                    ! topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%TopWidth)
+
+                                    ! hydRadius(tB) = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_hydradius))
+                                    ! !% xsect quadratic interp for small values can produce zero
+                                    ! hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth))
+                                    
+                                    
+
                                 case default
                                     print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
                                     print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
                                     print *, 'in ',trim(subroutine_name)
                                     call util_crashpoint(399848)
-                                    return
+                                    !return
                                     !stop 399848
                                 end select
                             end if
+                            !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
                         end if
                     end do
                 end if
             end do
         end if
+
         !% Note, the above can only be made a concurrent loop if we replace the tM
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
@@ -416,7 +545,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_surcharged'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack => npack_elemP(thisColP)
         !%-------------------------------------------------
         if (setting%Debug%File%geometry) &
@@ -452,46 +581,65 @@ module geometry
             character(64) :: subroutine_name = 'geo_depth_from_volume'
         !%-------------------------------------------------------------------
         !% Preliminaries
-            if (crashYN) return
+            !!if (crashYN) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
         !% cycle through different geometries
-        !% RECTANGULAR
+
+        !call util_CLprint('start of geo depth from volume')        
+
+        !% --- RECTANGULAR
         thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% TRAPEZOIDAL
+        !call util_CLprint('after rectangular') 
+
+        !% --- TRAPEZOIDAL
         thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% TRIANGULAR
+        !call util_CLprint('after trapezoidal') 
+
+        !% --- TRIANGULAR
         thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% CIRCULAR
+        !call util_CLprint('after triangular') 
+
+        !% --- CIRCULAR
         thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% RECT_TRIANG
+        !% -- RECT_TRIANG
         thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !call util_CLprint('after circular') 
+
+        !% --- IRREGULAR
+        thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !call util_CLprint('after irregular') 
         !% HACK Needs additional geometries
 
         !% JM with functional geomtery
@@ -501,12 +649,16 @@ module geometry
             call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !call util_CLprint('after functional storage') 
+
         !% JM with tabular geomtery
         thisCol => col_elemPGx(epg_JM_tabularStorage_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
+
+        !call util_CLprint('after tabular storage') 
 
         !% JM with artificial storage
         thisCol => col_elemPGx(epg_JM_impliedStorage_nonsurcharged)
@@ -515,6 +667,7 @@ module geometry
             call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !call util_CLprint('after implied storage') 
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%geometry) &
@@ -537,7 +690,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_limit_incipient_surcharge'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack      => npack_elemP(thisColP)
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)
@@ -545,6 +698,9 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+            ! print *, 'in ',trim(subroutine_name),elemR(49,er_VolumeOverFlow)
+            ! print *, geovalue(49), fullvalue(49), overflow(49)
 
         if (Npack > 0) then
             thisP      => elemP(1:Npack,thisColP)
@@ -565,6 +721,8 @@ module geometry
             !endwhere
         end if
 
+        ! print *, 'end of ',trim(subroutine_name),elemR(48,er_VolumeOverFlow)
+
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_limit_incipient_surcharge
@@ -583,7 +741,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_head_from_depth'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack     => npack_elemP(thisColP)
         depth     => elemR(:,er_Depth)
         fulldepth => elemR(:,er_FullDepth)
@@ -604,7 +762,6 @@ module geometry
     end subroutine geo_head_from_depth
 !%
 !%==========================================================================
-!
 !%==========================================================================
 !%
     subroutine geo_area_from_volume (thisColP)
@@ -619,7 +776,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_area_from_volume'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         Npack  => npack_elemP(thisColP)
         area   => elemR(:,er_Area)
         volume => elemR(:,er_Volume)
@@ -640,6 +797,115 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
+    real(8) function geo_area_from_depth_singular &
+        (idx, indepth) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the area for a given depth of a single element
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in)  :: indepth
+            integer, intent(in)  :: idx
+            character(64) :: subroutine_name = 'geo_area_from_depth_singular'
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        select case (elemI(idx,ei_geometryType))
+            
+        case (rectangular)
+            outvalue = rectangular_area_from_depth_singular (idx, indepth)
+        case (trapezoidal)
+            outvalue = trapezoidal_area_from_depth_singular (idx, indepth)
+        case (triangular)
+            outvalue = triangular_area_from_depth_singular (idx, indepth)
+        case (parabolic)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (power_function)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (rect_triang)
+            outvalue = rectangular_triangular_area_from_depth_singular (idx, indepth)
+        case (rect_round )
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (mod_basket)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (irregular)
+            outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
+        case (circular )
+            outvalue = circular_area_from_depth_singular (idx, indepth)
+        case (filled_circular)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (rectangular_closed)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (horiz_ellipse)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (vert_ellipse)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (arch)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (eggshaped)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (horseshoe)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (gothic)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (catenary)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (semi_elliptical)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (basket_handle)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (semi_circular)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (custom)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        case (force_main)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)   
+            call util_crashpoint(33234)
+        case default
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        end select
+           
+    end function geo_area_from_depth_singular
+!%
+!%==========================================================================    
+!%==========================================================================
+!%
     subroutine geo_topwidth_from_depth &
         (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------
@@ -653,44 +919,164 @@ module geometry
         character(64) :: subroutine_name = 'geo_topwidth_from_depth'
         !%-----------------------------------------------------------------------------
         !% cycle through different geometries
-        if (crashYN) return
+        !!if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- TRIANGULAR
         Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
             call triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- RECT_TRIANG
         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
             call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- IRREGULAR
+        Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+            call irregular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_topwidth_from_depth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_topwidth_from_depth_singular &
+        (idx, indepth) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the topwidth for a given depth of a single element
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in)  :: indepth
+            integer, intent(in)  :: idx
+            character(64) :: subroutine_name = 'geo_topwidth_from_depth_singular'
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        select case (elemI(idx,ei_geometryType))
+            
+        case (rectangular)
+            outvalue = rectangular_topwidth_from_depth_singular  (idx, indepth)
+        case (trapezoidal)
+            outvalue = trapezoidal_topwidth_from_depth_singular (idx, indepth)
+        case (triangular)
+            outvalue = triangular_topwidth_from_depth_singular  (idx, indepth)
+        case (parabolic)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (power_function)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (rect_triang)
+            outvalue = rectangular_triangular_topwidth_from_depth_singular  (idx, indepth)
+        case (rect_round )
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (mod_basket)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (irregular)
+            outvalue = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
+        case (circular )
+            outvalue = circular_topwidth_from_depth_singular  (idx, indepth)
+        case (filled_circular)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (rectangular_closed)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (horiz_ellipse)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (vert_ellipse)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (arch)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (eggshaped)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (horseshoe)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (gothic)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (catenary)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (semi_elliptical)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (basket_handle)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (semi_circular)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (custom)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (force_main)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)   
+            call util_crashpoint(4498734)
+        case default
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        end select
+           
+    end function geo_topwidth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -707,41 +1093,54 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_perimeter_from_depth'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
+
+        !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRIANGULAR
         Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
             call triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- RECT_TRIANG
         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
             call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        !%     note this requires first using the table lookup for hydraulic radius
+        Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+            call irregular_hydradius_from_depth (elemPGx, Npack, thisCol)
+            call irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
         end if
 
         !% HACK NEED OTHER GEOMETRIES
@@ -752,7 +1151,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Note that hyddepth is the average depth, which is only area/topwidth
@@ -765,48 +1164,173 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
+
+        !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
             call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- TRIANGULAR
         Npack => npack_elemPGx(epg_CC_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
             call triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% cycle through different geometries
+        !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- RECT_TRIANG
         Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
             call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- IRREGULAR
+        Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
+            call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
+        end if
+
         !% HACK need other geometries
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_hyddepth
+    end subroutine geo_hyddepth_from_depth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_hyddepth_from_depth_singular &
+        (idx, indepth) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the hydraulic depth for a given depth of a single element
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in)  :: indepth
+            integer, intent(in)  :: idx
+            real(8)              :: temp1, temp2
+            character(64) :: subroutine_name = 'geo_topwidth_from_depth_singular'
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        select case (elemI(idx,ei_geometryType))
+            
+        case (rectangular)
+            outvalue = indepth
+        case (trapezoidal)
+            outvalue = trapezoidal_hyddepth_from_depth_singular (idx, indepth)
+        case (triangular)
+            outvalue = triangular_hyddepth_from_depth_singular (idx, indepth)
+        case (parabolic)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (power_function)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (rect_triang)
+            outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
+        case (rect_round )
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (mod_basket)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (irregular)
+            !% --- get the area and topwidth, then compute the hydraulic depth
+            temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)
+            temp2 = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
+            outvalue = temp1 / temp2
+        case (circular )
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = circular_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (filled_circular)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (rectangular_closed)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (horiz_ellipse)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (vert_ellipse)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (arch)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (eggshaped)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (horseshoe)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (gothic)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (catenary)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (semi_elliptical)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (basket_handle)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (semi_circular)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (custom)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        case (force_main)
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)   
+            call util_crashpoint(4498734)
+        case default
+            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(4498734)
+        end select
+           
+    end function geo_hyddepth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -823,7 +1347,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hydradius_from_area_perimeter'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -845,7 +1369,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_ell (thisColP)
+    subroutine geo_ell_from_head (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% computes the value of "ell" -- the modified hydraulic depth
@@ -858,7 +1382,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -885,7 +1409,7 @@ module geometry
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_ell
+    end subroutine geo_ell_from_head
 !%
 !%==========================================================================
 !%==========================================================================
@@ -902,7 +1426,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell_singular'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -913,6 +1437,10 @@ module geometry
         breadthMax          => elemR(:,er_BreadthMax)
         areaBelowBreadthMax => elemR(:,er_AreaBelowBreadthMax)
         !%-----------------------------------------------------------------------------
+
+        print *, 'geo_ell_singular is obsolete?'
+        stop 59843
+
         if (head(indx) .le. ZbreadthMax(indx)) then
             outvalue =  area(indx) / topwidth(indx)
         else
@@ -940,7 +1468,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_dHdA'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -967,25 +1495,25 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
-        integer, pointer    :: thisP(:), Npack, SlotMethod
+        integer, pointer    :: thisP(:), Npack
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:), areaN0(:)
+        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:)
         real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:)
+        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack      => npack_elemP(thisColP)
         area       => elemR(:,er_Area)
-        areaN0     => elemR(:,er_Area_N0)
         volume     => elemR(:,er_Volume)
         volumeN0   => elemR(:,er_Volume_N0)
         Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
+        ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
         fullvolume => elemR(:,er_FullVolume)
         fullArea   => elemR(:,er_FullArea)
@@ -993,47 +1521,25 @@ module geometry
         headN0     => elemR(:,er_Head_N0)
         zbottom    => elemR(:,er_Zbottom)
         SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_TotalSlotVolume)
+        SlotVolume => elemR(:,er_SlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
 
-        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
+        
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
 
-            select case (SlotMethod)
+            !print *, 'in geo_slot',this_image(), thisP
 
-            case (VariableSlot)
-
-                where (SlotVolume(thisP) .gt. zeroR) 
-                    volume(thisP) = fullvolume(thisP) + SlotVolume(thisP)
-                    area(thisP)   = max(fullArea(thisP),areaN0(thisP)) + SlotArea(thisP)
-                    depth(thisP)  = max(fullDepth(thisP), (headN0(thisP)-zbottom(thisP))) + SlotDepth(thisP)
-                    head(thisP)   = zbottom(thisP) + depth(thisP)
-                    Overflow(thisP) = zeroR
-                end where 
-
-            case (StaticSlot)
-
-                where (SlotVolume(thisP) .gt. zeroR) 
-                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                    area(thisP)   = area(thisP)    + SlotArea(thisP)
-                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                    head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                    Overflow(thisP) = zeroR
-                end where 
-
-            case default
-                !% should not reach this stage
-                print*, 'In ', subroutine_name
-                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                print *, 'which has key ',trim(reverseKey(SlotMethod))
-                stop 48756
-    
-            end select
-
+            where (SlotVolume(thisP) .gt. zeroR) 
+                volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                area(thisP)   = area(thisP)    + SlotArea(thisP)
+                depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                Overflow(thisP) = zeroR
+            end where 
         end if
 
         if (setting%Debug%File%geometry) &

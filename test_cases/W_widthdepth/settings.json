@@ -1,0 +1,50 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "test",
+        "Short" : "test"
+    },
+    "Adjust" : {
+        "Flowrate" : {
+            "SmallDepthMultiplier" : 3.0
+        },
+    },    
+    "Discretization" : {
+        "AdjustLinkLengthYN" : true,
+        "NominalElemLength" : 15.00
+    },
+    "Output" : {
+        "StoredLevels" : 100,
+        "CommandLine" : {
+            "interval" : 1
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
+        }
+    },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "StaticSlot",
+        "TargetPreissmannCelerity" : 0.01
+    },
+    "SmallDepth" : {
+        "DepthCutoff" : 0.01,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "MomentumSourceMethod" : "T00"
+    },
+}

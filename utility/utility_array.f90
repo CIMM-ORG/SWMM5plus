@@ -31,7 +31,7 @@ module utility_array
         integer :: ii=0, min_val, max_val
         character(64) :: subroutine_name = 'util_image_number_calculation'
 
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

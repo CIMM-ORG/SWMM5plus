@@ -82,7 +82,7 @@
         enumerator :: nStorage              !% storage node
         enumerator :: nBCdn                 !% downstream BC node
         enumerator :: nBCup                 !% upstream BC node
-        enumerator :: nBClat                !% lateral BC node
+        !enumerator :: nBClat                !% lateral BC node
         !% SWMM5+ elements types
         enumerator :: CC                    !% conduit or channel element
         enumerator :: weir                  !% weir element
@@ -94,7 +94,7 @@
         enumerator :: ImpliedStorage        !% junction main storage is artificially created
         enumerator :: FunctionalStorage     !% junction main storage is cauculated from a user provided function
         enumerator :: TabularStorage        !% junction main storage is cauculated from a user provided table
-        enumerator :: storage               !% storage element
+        !enumerator :: storage               !% storage element NOT USED AS OF 20220626
         enumerator :: manhole               !% manhole elemen (HACK: not sure if we need this)
         enumerator :: dummy                 !% dummy element type
         !% SWMM5+ CC geometry types
@@ -173,6 +173,9 @@
         enumerator :: T00                   !% type of momentum source
         enumerator :: T10                   !% type of momentum source
         enumerator :: T20                   !% type of momentum source
+        enumerator :: T10s2                 !% type of momentum source
+        enumerator :: TA1                   !% type of momentum source
+        enumerator :: TA2                   !% type of momentum source
         !% type of face interpolation for downstream JB
         enumerator :: static
         enumerator :: dynamic
@@ -187,7 +190,7 @@
         enumerator :: Random
         enumerator :: BLink
         enumerator :: StaticSlot
-        enumerator :: VariableSlot
+        enumerator :: DynamicSlot
         !% keys for report time processing
         enumerator :: InSeconds
         enumerator :: InMinutes
@@ -221,6 +224,12 @@
         enumerator :: DepthValue
         enumerator :: VolumeValue
         enumerator :: AreaValue
+        !% keys for initial depth distribution
+        enumerator :: LinearlyVaryingDepth
+        enumerator :: UniformDepth
+        enumerator :: ExponentialDepth
+        enumerator :: FixedHead
+        !% last items for bookkeeping
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone
     end enum
@@ -302,7 +311,7 @@
         reverseKey(nStorage) = 'nStorage'
         reverseKey(nBCdn) = 'nBCdn'
         reverseKey(nBCup) = 'nBCup'
-        reverseKey(nBClat) = 'nBClat'
+        !reverseKey(nBClat) = 'nBClat'
         reverseKey(CC) = 'CC'
         reverseKey(weir) = 'weir'
         reverseKey(orifice) = 'orifice'
@@ -313,7 +322,7 @@
         reverseKey(ImpliedStorage) = 'ImpliedStorage'
         reverseKey(FunctionalStorage) = 'FunctionalStorage'
         reverseKey(TabularStorage) = 'TabularStorage'
-        reverseKey(storage) = 'storage'
+        !reverseKey(storage) = 'storage'
         reverseKey(manhole) = 'manhole'
         reverseKey(dummy) = 'dummy'
         reverseKey(rectangular) = 'rectangular'
@@ -380,6 +389,9 @@
         reverseKey(T00) = 'T00'
         reverseKey(T10) = 'T10'
         reverseKey(T20) = 'T20'
+        reverseKey(T10s2) = 'T10s2'
+        reverseKey(TA1) = 'TA1'
+        reverseKey(TA2) = 'TA2'
         reverseKey(static) = 'static'
         reverseKey(dynamic) = 'dynamic'
         reverseKey(doesnotexist) = 'doesnotexist'
@@ -391,7 +403,7 @@
         reverseKey(Random) = 'Random'
         reverseKey(BLink) = 'BLink'
         reverseKey(StaticSlot) = 'StaticSlot'
-        reverseKey(VariableSlot) = 'VariableSlot'
+        reverseKey(DynamicSlot) = 'DynamicSlot'
         reverseKey(InSeconds) = 'InSeconds'
         reverseKey(InMinutes) = 'InMinutes'
         reverseKey(InHours) = 'InHours'
@@ -419,7 +431,11 @@
         reverseKey(DepthValue)  = 'DepthValue'
         reverseKey(VolumeValue) = 'VolumeValue'
         reverseKey(AreaValue)   = 'AreaValue'
-        reverseKey(undefinedKey)= 'undefinedKey'
+        reverseKey(LinearlyVaryingDepth)   = 'LinearlyVaryingDepth'
+        reverseKey(UniformDepth)           = 'UniformDepth'
+        reverseKey(ExponentialDepth)       = 'ExponentialDepth'
+        reverseKey(FixedHead)              = 'FixedHead'
+        reverseKey(undefinedKey)     = 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 
         !%------------------------------------------------------------------
@@ -572,7 +588,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(MaximumValue)) , MaximumValue
         write(*,'(A," = ",i4)') trim(reverseKey(mod_basket)) , mod_basket
         write(*,'(A," = ",i4)') trim(reverseKey(nBCdn)) , nBCdn
-        write(*,'(A," = ",i4)') trim(reverseKey(nBClat)) , nBClat
+       !write(*,'(A," = ",i4)') trim(reverseKey(nBClat)) , nBClat
         write(*,'(A," = ",i4)') trim(reverseKey(nBCup)) , nBCup
         write(*,'(A," = ",i4)') trim(reverseKey(nJ1)) , nJ1
         write(*,'(A," = ",i4)') trim(reverseKey(nJ2)) , nJ2
@@ -606,12 +622,15 @@
         write(*,'(A," = ",i4)') trim(reverseKey(SingleValue)) , SingleValue
         write(*,'(A," = ",i4)') trim(reverseKey(static)) , static
         write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
-        write(*,'(A," = ",i4)') trim(reverseKey(storage)) , storage
+        !write(*,'(A," = ",i4)') trim(reverseKey(storage)) , storage
         write(*,'(A," = ",i4)') trim(reverseKey(StorageCurve)) , StorageCurve
         write(*,'(A," = ",i4)') trim(reverseKey(SumElements)) , SumElements
         write(*,'(A," = ",i4)') trim(reverseKey(T00)) , T00
         write(*,'(A," = ",i4)') trim(reverseKey(T10)) , T10
         write(*,'(A," = ",i4)') trim(reverseKey(T20)) , T20
+        write(*,'(A," = ",i4)') trim(reverseKey(T10s2)) , T10s2
+        write(*,'(A," = ",i4)') trim(reverseKey(TA1)) , TA1
+        write(*,'(A," = ",i4)') trim(reverseKey(TA2)) , TA2
         write(*,'(A," = ",i4)') trim(reverseKey(tabl_depth_outlet)) , tabl_depth_outlet
         write(*,'(A," = ",i4)') trim(reverseKey(tabl_head_outlet)) , tabl_head_outlet
         write(*,'(A," = ",i4)') trim(reverseKey(TabularStorage)) , TabularStorage
@@ -626,7 +645,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(type3_Pump)) , type3_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(type4_Pump)) , type4_Pump
         write(*,'(A," = ",i4)') trim(reverseKey(undefinedKey)) , undefinedKey
-        write(*,'(A," = ",i4)') trim(reverseKey(VariableSlot)) , VariableSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(DynamicSlot)) , DynamicSlot
         write(*,'(A," = ",i4)') trim(reverseKey(vert_ellipse)) , vert_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
         write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue

@@ -8,6 +8,7 @@ module update
     use adjust
     use utility_profiler
     use utility_crash
+    use utility, only: util_CLprint, util_syncwrite
 
     implicit none
 
@@ -38,20 +39,32 @@ module update
             character(64) :: subroutine_name = 'update_auxiliary_variables'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%update) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%------------------------------------------------------------------
-        !% reset the overflow counter
-            elemR(:,er_VolumeOverFlow) = zeroR
         !%
+            ! outstring = '    update 000 '
+            ! call util_syncwrite()
+            ! print *, this_image(),'    update 000 before geom TL',setting%Time%Step
+            ! call util_CLprint ()
+        
         !% update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
+
+            ! outstring = '    update 001 ',setting%Time%Step
+            ! call util_syncwrite()
+
+            !print *, this_image(),'    update 001 after geom TL',setting%Time%Step
+            ! call util_CLprint ()
 
         !% adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
         call util_crashstop(21987)
+
+        ! print *, this_image(),'    update 002 after adjust limit velocity',this_image()
+        ! call util_CLprint ()
 
         !% set packed column for updated elements
         select case (whichTM)
@@ -67,7 +80,7 @@ module update
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 7489
+                call util_crashpoint(45834)
         end select
 
         !% Compute the flowrate on CC.
@@ -75,16 +88,31 @@ module update
         !% The JB flowrate is not updated until after face interpolation
         call update_CC_element_flowrate (thisCol_all)
 
+        ! print *, 'update 003 after element flowrate',this_image()
+        ! call util_CLprint ()
+
         !% compute element Froude numbers for CC, JM
         call update_Froude_number_element (thisCol_all)
+
+         !print *, 'update 004 after Froude Number',this_image()
+        !  call util_CLprint ('before interpweights in update')
 
         !% compute element face interpolation weights on CC, JM
         call update_CCtm_interpweights(thisCol_all, whichTM)
 
+        ! print *, 'update 005 after CC interpweights',this_image()
+        ! call util_CLprint ()
+
         call update_JB_interpweights (thisCol_JM)
+
+        ! print *, 'update 006 after JB interpweights',this_image()
+        ! call util_CLprint ()
 
         !% --- compute element Froude number for JB
         call update_Froude_number_junction_branch (thisCol_JM) 
+
+        ! print *, 'update 007 at end after update Froud number JB',this_image()
+        ! call util_CLprint ()
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -108,7 +136,7 @@ module update
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
         area     => elemR(:,er_Area)
@@ -133,7 +161,7 @@ module update
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: Froude(:), velocity(:), depth(:), grav
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
@@ -163,7 +191,7 @@ module update
         real(8), pointer :: Froude(:), velocity(:), depth(:), grav
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
@@ -206,11 +234,11 @@ module update
         integer, pointer :: Npack, Npack2, thisCol_AC,  thisCol_ClosedElems, thisP(:), thisP2(:)
         real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:), QLateral(:)
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
-        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
+        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), w_uP(:), w_dP(:), Area(:)
         real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
         integer :: ii
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -225,13 +253,18 @@ module update
         w_dG      => elemR(:,er_InterpWeight_dG)
         w_uH      => elemR(:,er_InterpWeight_uH)
         w_dH      => elemR(:,er_InterpWeight_dH)
+        w_uP      => elemR(:,er_InterpWeight_uP)
+        w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_TotalSlotVolume)
+        SlotVolume => elemR(:,er_SlotVolume)
         SlotWidth  => elemR(:,er_SlotWidth)
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
+
+
+        Area => faceR(:,er_Area)
         !%-----------------------------------------------------------------------------
         !% 2nd cases needed for handling surcharged AC elements and using the celerity
         !% multiplier of the AC method for the wavespeed
@@ -255,7 +288,11 @@ module update
 
         !% wavespeed at modified hydraulic depth (ell)
         wavespeed(thisP) = sqrt(grav * depth(thisP))
-        PCelerity(thisP) = zeroR !% initialize to zero
+        ! PCelerity(thisP) = zeroR !% initialize to zero
+
+        ! if (setting%Time%Now/3600.0 > 388.0) then
+        !     print *, 'in ',trim(subroutine_name), wavespeed(ietU1(2))
+        ! end if
     
         !% modify wavespeed for surcharged AC cells
         if (whichTM .ne. ETM) then
@@ -264,18 +301,22 @@ module update
                 thisP2 => elemP(1:Npack2,thisCol_AC)
                 wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
             end if
-        else if (whichTM .eq. ETM) then
-            Npack2 => npack_elemP(thisCol_ClosedElems)
-            if (Npack2 > 0) then
-                thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
-                !% initialize preissmann slot celerity
-                PCelerity(thisP2) = zeroR
-                where (SlotVolume(thisP2) .gt. zeroR) 
-                    PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
-                end where
-            end if
+        ! else if (whichTM .eq. ETM) then
+        !     Npack2 => npack_elemP(thisCol_ClosedElems)
+        !     if (Npack2 > 0) then
+        !         thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
+        !         !% initialize preissmann slot celerity
+        !         PCelerity(thisP2) = zeroR
+        !         where (SlotVolume(thisP2) .gt. zeroR) 
+        !             PCelerity(thisP2) = sqrt(grav * FullArea(thisP2)/SlotWidth(thisP2)) 
+        !             ! PCelerity(thisP2) = sqrt(grav * Area(thisP2)/SlotWidth(thisP2))        
+        !         end where
+        !     end if
         end if
 
+        ! print *, 'in update_CCtm_interpweights'
+        ! print *, '*** AAA vel - wave ',Velocity(iet) - wavespeed(iet)
+        ! print *, '*** AAA vel + wave ',Velocity(iet) + wavespeed(iet)
 
         !% timescale interpolation weights for flowrate
         !% Modified from original approach by Froude number weighting
@@ -294,9 +335,12 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (PCelerity(thisP) .gt. zeroR)
-            w_uQ(thisP) = - onehalfR * length(thisP)  / ( - PCelerity(thisP)) !bugfix SAZ 23022022 
-            w_dQ(thisP) = + onehalfR * length(thisP)  / ( + PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_uQ(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_dQ(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
+
+        ! print *, '*** BBB  w_uQ    ',w_uQ(iet)
+        ! print *, '*** CCC  w_dQ    ',w_dQ(iet)
 
         !% apply limiters to timescales
         where (w_uQ(thisP) < zeroR)
@@ -309,6 +353,9 @@ module update
             w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
+        ! print *, '*** DDD  w_uQ    ',w_uQ(iet)
+        ! print *, '*** EEE  w_dQ    ',w_dQ(iet)
+
         where (w_dQ(thisP) < zeroR)
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
         endwhere
@@ -319,10 +366,38 @@ module update
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
         endwhere
 
+        ! print *, '*** FFF  w_uQ    ',w_uQ(iet)
+        ! print *, '*** GGG  w_dQ    ',w_dQ(iet)
+
         !% timescale interpolation for geometry are identical to flowrate
         !% but may be modified elsewhere
         w_uG(thisP) = w_uQ(thisP)
         w_dG(thisP) = w_dQ(thisP)
+
+        !% timescale interpolation for the preissmann number only depends on the preissmann celerity
+        w_uP(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) 
+        w_dP(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) 
+
+        !% apply limiters to timescales
+        where (w_uP(thisP) < zeroR)
+            w_uP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
+        where (w_uP(thisP) < setting%Limiter%InterpWeight%Minimum)
+            w_uP(thisP) = setting%Limiter%InterpWeight%Minimum
+        endwhere
+        where (w_uP(thisP) > setting%Limiter%InterpWeight%Maximum)
+            w_uP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
+
+        where (w_dP(thisP) < zeroR)
+            w_dP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
+        where (w_dP(thisP) < setting%Limiter%InterpWeight%Minimum)
+            w_dP(thisP) = setting%Limiter%InterpWeight%Minimum
+        endwhere
+        where (w_dP(thisP) > setting%Limiter%InterpWeight%Maximum)
+            w_dP(thisP) = setting%Limiter%InterpWeight%Maximum
+        endwhere
 
         !% head uses length scale interpolation
         !% This shouldn't need limiters.
@@ -338,12 +413,18 @@ module update
             !w_uH(thisP) = setting%Limiter%InterpWeight%Minimum !do not use!
         endwhere
 
+        ! print *, '*** HHH  w_uQ    ',w_uQ(iet)
+        ! print *, '*** III  w_dQ    ',w_dQ(iet)
+
         ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
         where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
             w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
             !w_dH(thisP) = setting%Limiter%InterpWeight%Minimum ! do not use!
         endwhere
+
+        ! print *, '*** JJJ  w_uQ    ',w_uQ(iet)
+        ! print *, '*** KKK  w_dQ    ',w_dQ(iet)
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -386,6 +467,12 @@ module update
             w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
             w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
             
+
+            ! if (setting%Time%Now/3600.0 > 388.0) then
+            !     write(*,"(A,10f16.9)") 'interp before', w_dQ(ietU1(1)), w_uQ(ietU1(2))
+            !     print *, 'depth, wavespeed JB ',depth(ietU1(2)),wavespeed(ietU1(2))
+            ! end if
+
             !% apply limiters to timescales
             where (w_uQ(thisP+ii) < zeroR)
                 w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
@@ -406,6 +493,10 @@ module update
             where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
                 w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
             endwhere
+
+            ! if (setting%Time%Now/3600.0 > 388.0) then
+            !     write(*,"(A,10f16.9)") 'interp after ', w_dQ(ietU1(1)), w_uQ(ietU1(2))
+            ! end if
 
             !% set the geometry interp the same as flow interp
             w_uG(thisP+ii) = w_uQ(thisP+ii)
@@ -433,7 +524,7 @@ module update
     !     integer, pointer :: Npack1, Npack2,  thisP1(:), thisP2(:)
     !     real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
     !     !%-----------------------------------------------------------------------------
-    !     if (crashYN) return
+    !     !if (crashYN) return
     !     if (setting%Debug%File%update)  &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     w_uQ      => elemR(:,er_InterpWeight_uQ)

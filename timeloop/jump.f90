@@ -4,6 +4,7 @@ module jump
     use define_indexes
     use define_keys
     use define_settings, only: setting
+    use utility_crash
 
     implicit none
 
@@ -34,7 +35,7 @@ module jump
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'jump_compute'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%jump) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
         !%-----------------------------------------------------------------------------
@@ -92,7 +93,7 @@ module jump
         real(8), pointer :: feps, Fr(:)
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         !% pointing to the number of faces in this image
         image  = this_image()
         Nfaces => N_face(image)
@@ -207,7 +208,6 @@ module jump
         integer :: fsetUp(2), fsetDn(2), eset(2)
         !%----------------------------------------------------------------------------- 
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
         thisP => faceP(1:Npack,facePackCol)     
         eUp => faceI(:,fi_Melem_uL)
         eDn => faceI(:,fi_Melem_dL)
@@ -234,7 +234,7 @@ module jump
         case default
             print *, 'CODE ERROR geometry type unknown for # ', jump_from
             print *, 'which has key ',trim(reverseKey(jump_from))
-            stop 587834
+            call util_crashpoint(33782)
         end select
         
     end subroutine jump_enforce

@@ -19,16 +19,27 @@ module define_globals
     !% reverseKeys is an array to find the string name of a key number in define_keys
     !% used for debugging
     character(len=32), allocatable :: reverseKey(:)
+    
 
+    ! integer :: iet(10) = (/45,46,48,47,49,115,116,  113, 114,50/)
+    ! integer :: ift(3) = (/47,48,            49/)
+      
+    !integer :: iet(2) = (/193,1 /)
+    !integer :: ift(3) = (/205,1, 2/)
 
-   ! integer :: iet(3) = (/80, 34, 35/)
-   ! integer :: ift(2) = (/32, 33/)
+   !  integer :: iet(2) = (/192,216/)
+   !  integer :: ift(3) = (/203,204,217/)
 
-    integer :: iet(3) = (/25, 65, 67/)
-    integer :: ift(2) = (/23, 60/)
+   !integer :: iet(10) = (/45, 46, 47, 48, 49, 50, 113, 114, 115, 116/)
+   ! integer :: ift(3) = (/205,1,2/)
 
+    ! integer :: iet(4) = (/48, 50, 47, 49/)
+    ! integer :: ift(3) = (/47, 49, 48/)
 
     integer(kind=8) :: irecCount = 0
+
+    character (len=256) ::  outstring[*]
+
 
 !% ===================================================================================
 !% VARIABLES
@@ -38,8 +49,11 @@ module define_globals
 !% referred to with a short name
 
 
-    logical :: crashYN = .false. !% error condition
+    !logical :: crashYN = .false. !% error condition
     integer :: crashI = 0 
+
+    !% set to true if present time step is a spin-up time step
+    logical :: inSpinUpYN
 
 !% ===================================================================================
 !% ARRAYS
@@ -47,13 +61,6 @@ module define_globals
 
 
     !% Number of maximum branches for a junction
-
-    !% ADDBRANCH
-    !% always MUST be the same number up and down
-    !integer, parameter :: max_up_branch_per_node = 3
-    !integer, parameter :: max_dn_branch_per_node = 3 
-    !integer, parameter :: max_branch_per_node = 6
-
     !% note that these must always be matched with the same
     !% number of up and down nodes. 
     integer, parameter :: max_up_branch_per_node = 5   !% ADDBRANCH
@@ -68,6 +75,12 @@ module define_globals
 
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
+
+    integer, allocatable, target :: transectI(:,:)
+    real(8), allocatable, target :: transectR(:,:)
+    real(8), allocatable, target :: transectTableDepthR(:,:,:) ! transect table by depth
+    real(8), allocatable, target :: transectTableAreaR(:,:,:)  ! transect table by area
+    character(len=64), allocatable, target :: transectID(:)
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -88,8 +101,8 @@ module define_globals
     integer, allocatable, target :: col_elemSI(:)[:]                               !% columns of elemSI array
     integer, allocatable, target :: col_elemSR(:)[:]                               !% columns of elemSR array
     integer, allocatable, target :: col_elemSGR(:)[:]                              !% columns of elemSGR array
-    integer, allocatable, target :: col_elemWDI(:)[:]                              !% columns of elemWDI array
-    integer, allocatable, target :: col_elemWDR(:)[:]                              !% columns of elemWDR array
+    !integer, allocatable, target :: col_elemWDI(:)[:]                              !% columns of elemWDI array
+    !integer, allocatable, target :: col_elemWDR(:)[:]                              !% columns of elemWDR array
     integer, allocatable, target :: col_elemYN(:)[:]                               !% columns of elemYN array
     integer, allocatable, target :: col_faceI(:)[:]                                !% columns of faceI array
     integer, allocatable, target :: col_faceM(:)[:]                                !% columns of faceM array
@@ -97,6 +110,9 @@ module define_globals
     integer, allocatable, target :: col_facePS(:)[:],      npack_facePS(:)[:]      !% columns and number of packs for facePS array
     integer, allocatable, target :: col_faceR(:)[:]                                !% columns of faceR array
     integer, allocatable, target :: col_faceYN(:)[:]                               !% columns of faceYN array
+    ! integer, allocatable, target :: col_conmonI(:)[:]                              !% columns of conmomI array
+    ! integer, allocatable, target :: col_conmonR(:)[:]                              !% columns of conmonR array
+    ! integer, allocatable, target :: col_conmonYN(:)[:]                             !% columns of conmonYN array
 
     !%  number of dummy row in elem arrays (do not change)
     integer, parameter :: N_dummy_elem = 1
@@ -109,6 +125,12 @@ module define_globals
     integer, allocatable, target :: N_OutElem(:)[:]
     !% output nodes on each image
     integer, allocatable, target :: N_OutFace(:)[:]
+    !% number of control action and monitoring points in system (identical on each image)
+    integer,  target :: N_ActionPoint
+    integer,  target :: N_MonitorPoint
+
+    !% --- packed array of columns from elemR used in conmonR
+    integer, allocatable, target :: cmR_eR_col(:)
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]       !% coarray for elements
@@ -124,6 +146,20 @@ module define_globals
     real(8), allocatable, target :: elemSR(:,:)[:]      !% coarray for special elemen Real
     real(8), allocatable, target :: elemSGR(:,:)[:]     !% coarray for special element geometry Real
     real(8), allocatable, target :: elemGR(:,:)         !% array to copy required ghost element data (not a coarray)
+
+    ! integer, allocatable, target :: conmonI(:,:)        !% element data for control/monitoring points (not a coarray)
+    ! real(8), allocatable, target :: conmonR(:,:)        !% real data for control/monitoring points (not a coarray)
+    ! logical, allocatable, target :: conmonYN(:,:)       !% logical data for control/monitoring points (not a coarray)
+
+    integer, allocatable, target :: actionI(:,:)        !% action data for EPA-SWMM controls
+    real(8), allocatable, target :: actionR(:,:)        !% actionR MIGHT NOT BE NEEDED
+    !logical, allocatable, target :: actionYN(:,:)
+
+    integer, allocatable, target :: monitorI(:,:)       !% monitor data for EPA-SWMM controls
+    real(8), allocatable, target :: monitorR(:,:)
+    !logical, allocatable, target :: monitorYN(:,:)   
+
+    real(8), allocatable, target :: monitorPassR(:)[:]  !% monitor data to be passed between coarrays
 
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]       !% coarray for faces real data
@@ -207,6 +243,13 @@ module define_globals
     integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+
+    !% Temporary arrays that don't fit in any of the standard array structures
+    !% brh 20220401
+    integer, allocatable, target :: temp_BCupI(:,:)  !% number of BCup faces.
+    real(8), allocatable, target :: temp_BCupR(:,:)
+    integer :: N_tempBCupI = 1
+    integer :: N_tempBCupR = 4
     
     !% Profiling Timer
     type(wall_clk) :: timer
@@ -216,12 +259,15 @@ module define_globals
     character (len=64), allocatable :: profiler_procedure_name(:)
     integer, allocatable :: profiler_procedure_level(:)
 
+    !% counter for transects
+    integer :: lastTransectIdx = 0
+
 !% ===================================================================================
 !% CONSTANTS
 !% ===================================================================================
 
     !% note that nullvalueI < 0 is required
-    integer, parameter :: nullvalueI = 998877
+    integer, parameter :: nullvalueI = 998877        !% note this places limit on largest network!
     real(8), parameter :: nullvalueR = 9.98877e16
     logical, parameter :: nullvalueL = .false.
     real(8), parameter :: negoneR = -1.0
@@ -241,6 +287,8 @@ module define_globals
     real(8), parameter :: onethousandR = 1000.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
+    real(8), parameter :: oneOneThounsandthR = oneR / onethousandR
+    real(8), parameter :: oneOneHundredthR = oneR / onehundredR
     real(8), parameter :: onetenthR = oneR / tenR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
@@ -267,12 +315,17 @@ module define_globals
     integer, parameter :: sixI = 6
 
     !% Number of objects
-    integer :: SWMM_N_subcatch
-    integer :: SWMM_N_link
-    integer :: SWMM_N_node
-    integer :: SWMM_N_pollutant
-    integer :: SWMM_N_control
-    integer :: SWMM_N_divider
+    !integer :: SWMM_N_subcatch
+    !integer :: SWMM_N_link
+    !integer :: SWMM_N_node
+    !integer :: SWMM_N_pollutant
+    !integer :: SWMM_N_control
+    !integer :: SWMM_N_divider
+    !integer :: setting%SWMMinput%N_link_transect  ! # of irregular cross-section transects defined for links
+    !integer :: SWMM_N_transect_depth_items
+    integer :: N_transect            ! # of irregular cross-section transects for elements
+    integer :: N_transect_depth_items
+    integer :: N_transect_area_items
     integer :: N_link
     integer :: N_node
     integer :: N_headBC
@@ -289,23 +342,24 @@ module define_globals
     integer :: N_etm
     integer :: N_link_output
     integer :: N_node_output
-    integer :: SWMM_N_Curve
+    integer :: N_monitor_types = 7 !% # of data types transferred from monitorR in monitorPassR
+    !integer :: SWMM_N_curve
     integer :: N_Curve
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 
-    !% Number of API parameters
+    !% Number of API parameters  ! REVISED APPROACH 20220422brh
     !% brh20211207s
     !rm integer, parameter :: N_api_node_attributes = api_node_overflow
-    integer, parameter :: N_api_nodef_attributes = api_nodef_rptFlag
+    !integer, parameter :: N_api_nodef_attributes = api_nodef_totalEnd
     !rm integer, parameter :: N_api_link_attributes = api_linkf_conduit_length
-    integer, parameter :: N_api_linkf_attributes = api_linkf_rptFlag
+    !integer, parameter :: N_api_linkf_attributes = api_linkf_commonBreak-1
     !% brh20211207e
-    integer, parameter :: N_api_linkf_type_attributes = api_linkf_sub_type - N_api_linkf_attributes
-    integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_xsect_yFull - N_api_linkf_type_attributes
-    integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
-                                                        + N_api_linkf_xsect_attributes
-    integer, parameter :: N_api_total_table_attributes = api_table_refers_to
+    !integer, parameter :: N_api_linkf_type_attributes  = api_linkf_typeBreak  - api_nodef_totalEnd -1
+    !integer, parameter :: N_api_linkf_xsect_attributes = api_linkf_totalEnd   - api_linkf_typeBreak -1
+    !integer, parameter :: N_api_total_linkf_attributes = N_api_linkf_attributes + N_api_linkf_type_attributes &
+    !                                                   + N_api_linkf_xsect_attributes
+    !integer, parameter :: N_api_total_table_attributes = api_table_refers_to
 
     !% Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray
@@ -346,13 +400,18 @@ module define_globals
     integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
     integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
 
-    ! defaults from initial depth type in links
-    integer, parameter :: Uniform           = 1
-    integer, parameter :: LinearlyVarying   = 2
-    integer, parameter :: ExponentialDecay  = 3
+    ! ! defaults from initial depth type in links
+    ! integer, parameter :: Uniform           = 1
+    ! integer, parameter :: LinearlyVarying   = 2
+    ! integer, parameter :: ExponentialDecay  = 3
 
     ! default for number of functional storage
     integer :: N_FunctionalStorage = 0
+
+    !% maximum cfl across the network. Used for reporting 
+    real(8) :: cfl_max
+    real(8) :: cfl_max_CC
+    real(8) :: cfl_max_JBJM
 
     !% datetime related variables
     integer, parameter :: datedelta = 693594

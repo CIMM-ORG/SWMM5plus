@@ -20,6 +20,9 @@ module adjust
 
     private
 
+    public :: adjust_face_for_zero_setting
+    public :: adjust_face_for_zero_setting_singular
+
     public :: adjust_zero_and_small_depth_elem
     public :: adjust_zero_and_small_depth_face
     public :: adjust_Vfilter
@@ -45,6 +48,56 @@ module adjust
 !% PUBLIC
 !%==========================================================================
 !%
+    subroutine adjust_face_for_zero_setting_singular (iFidx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Input is a single face that is "closed" by a control action
+        !% where the upstream element elemR(:,er_Setting) = 0.0
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: iFidx  !% index of the face
+        !%------------------------------------------------------------------
+        faceR(iFidx, fr_Flowrate)              = zeroR
+        faceR(iFidx, fr_Flowrate_Conservative) = zeroR
+        faceR(iFidx, fr_Velocity_d)            = zeroR
+        faceR(iFidx, fr_Velocity_u)            = zeroR
+
+    end subroutine adjust_face_for_zero_setting_singular
+!%
+!%==========================================================================
+!%==========================================================================  
+!%
+    subroutine adjust_face_for_zero_setting ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets all zero fluxes on downstream faces of "closed" CC elements
+        !% i.e. where elemR(:,er_Setting) = 0.0
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: ptype, npack, thisP(:), dFace(:)
+        !%------------------------------------------------------------------
+        !% Aliases:    
+            ptype => col_elemP(ep_CC_isclosed)
+            npack => npack_elemP(ptype)
+            dFace => elemI(:,ei_Mface_dL)
+        !%------------------------------------------------------------------    
+        !% Preliminaries    
+            if (npack < 1) return
+        !%------------------------------------------------------------------ 
+        !% --- elements that are closed (er_Setting = 0.0)        
+        thisP => elemP(1:npack,ep_CC_isclosed)
+
+        !% --- force flows and velocities to zero
+        faceR(dface(thisP), fr_Flowrate)              = zeroR
+        faceR(dface(thisP), fr_Flowrate_Conservative) = zeroR
+        faceR(dface(thisP), fr_Velocity_d)            = zeroR
+        faceR(dface(thisP), fr_Velocity_u)            = zeroR
+
+    end subroutine adjust_face_for_zero_setting
+!%
+!%==========================================================================
+!%==========================================================================  
+!%
     subroutine adjust_zero_and_small_depth_elem (whichTM, isreset)
         !%------------------------------------------------------------------
         !% Description:
@@ -59,25 +112,31 @@ module adjust
         !%------------------------------------------------------------------
         !% Aliases:   
         !%------------------------------------------------------------------
-    
+     
         if (isreset) then
-            !print *, '--------aaa ',elemR(iet(2),er_Flowrate)
             call adjust_zerodepth_identify_all ()
-            !print *, '--------bbb ',elemR(iet(2),er_Flowrate)
+           
             call adjust_smalldepth_identify_all ()
-            !print *, '--------ccc ',elemR(iet(2),er_Flowrate)
+            
             call pack_small_and_zero_depth_elements (whichTM)
+            
         end if
 
-        !print *, '--------ddd ',elemR(iet(2),er_Flowrate)
         call adjust_zerodepth_element_values (whichTM, CC) 
-        !print *, '--------eee ',elemR(iet(2),er_Flowrate)
+
+            !call util_CLprint('-------------AAAA')
+        
         call adjust_zerodepth_element_values (whichTM, JM) 
-        !print *, '--------fff ',elemR(iet(2),er_Flowrate)
+
+            !call util_CLprint('-------------BBBB')
+        
         call adjust_smalldepth_element_fluxes (whichTM)
-        !print *, '--------ggg ',elemR(iet(2),er_Flowrate)
+
+            !call util_CLprint('-------------CCCC')
+        
         call adjust_limit_velocity_max (whichTM) 
-        !print *, '--------hhh ',elemR(iet(2),er_Flowrate)
+
+            !call util_CLprint('-------------DDDD')
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -123,7 +182,7 @@ module adjust
             integer, intent(in) :: whichTM  !% indicates which Time marching method
             character(64) :: subroutine_name = 'adjust_Vfilter'
         !%------------------------------------------------------------------
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------   
@@ -139,7 +198,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
                 !stop 
                 call util_crashpoint( 4973)
-                return
+                !return
             end select
         end if
         
@@ -153,7 +212,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
                 !stop 
                 call util_crashpoint( 9073)
-                return
+                !return
             end select
         end if
         
@@ -164,7 +223,7 @@ module adjust
 !%========================================================================== 
 !%==========================================================================  
 !%        
-    subroutine adjust_limit_by_zerovalues (geocol, geozero, thisCol)
+    subroutine adjust_limit_by_zerovalues (geocol, geozero, thisCol, isVolume)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% This applies a zero value limiter for a packed array that is not
@@ -173,26 +232,37 @@ module adjust
         !logical, intent(in) :: isreset
         integer, intent(in) :: geocol, thisCol
         real(8), intent(in) :: geozero
+        logical, intent(in) :: isVolume
         integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: geovalue(:)    
+        real(8), pointer :: geovalue(:), overflow(:)    
         !logical, pointer :: NearZeroDepth(:),   isSmallDepth(:)   
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !if (crashYN) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         Npack        => npack_elemP(thisCol)  
         geovalue     => elemR(:,geocol)
+        overflow     => elemR(:,er_VolumeOverFlow)
         !isZeroDepth  => elemYN(:,eYN_isZeroDepth)
         !isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
-            where (geovalue(thisP) < geozero)
+            if (isVolume) then
+                !% --- we are gaining volume by resetting to the geozero (minimum),so
+                !%    count this as a negative overflow
+                where (geovalue(thisP) < geozero)
+                    overflow(thisP) = overflow(thisP) - (geozero - geovalue(thisP)) 
                     geovalue(thisP) = geozero
-            endwhere
+                end where
+            else
+                where (geovalue(thisP) < geozero)
+                    geovalue(thisP) = geozero
+                endwhere
+            end if
             ! if (isreset) then
             !     NearZeroDepth(thisP) = .false.
             !     where (geovalue(thisP) <= geozero)
@@ -209,7 +279,7 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%    
-    subroutine adjust_limit_by_zerovalues_singular (eIdx, geocol, geozero)
+    subroutine adjust_limit_by_zerovalues_singular (eIdx, geocol, geozero, isVolume)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Applies either the ZeroValue limiter (geozero) or zeroR as a lower limit to the
@@ -217,16 +287,23 @@ module adjust
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: geocol, eIdx
         real(8), intent(in) :: geozero
-        real(8), pointer :: geovalue(:)        
+        logical, intent(in) :: isVolume
+        real(8), pointer :: geovalue(:), overflow(:)        
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues_singular'
-        if (crashYN) return
+        !if (crashYN) return
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         geovalue => elemR(:,geocol)
+        overflow => elemR(:,er_VolumeOverFlow)
         !%-----------------------------------------------------------------------------
         if (geovalue(eIdx) < geozero) then
+            if (isVolume) then
+                !% --- we are gaining volume by resetting to the geozero (minimum),so
+                !%    count this as a negative overflow
+                overflow(eIdx) = overflow(eIdx) - (geozero - geovalue(eIdx))
+            end if
             geovalue(eIdx) = geozero
         end if
 
@@ -250,7 +327,7 @@ module adjust
         !%-------------------------------------------------------------------
         !% Preliminaries
             if (.not. setting%Limiter%Velocity%UseLimitMaxYN) return
-            if (crashYN) return
+            !if (crashYN) return
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% small velocity adjustment should only be done for CC elements
@@ -267,7 +344,7 @@ module adjust
                     print *, 'which has key ',trim(reverseKey(whichTM))
                     !stop 
                     call util_crashpoint( 8368)
-                    return
+                    !return
             end select
         !%-------------------------------------------------------------------
         !% Aliases
@@ -279,7 +356,7 @@ module adjust
         !%------------------------------------------------------------------ 
         !% apply ad-hoc velocity limiter
         where (abs(velocity(thisP)) > vMax)
-            velocity(thisP) = sign( 0.99 * vMax, velocity(thisP) )
+            velocity(thisP) = sign( 0.99d0 * vMax, velocity(thisP) )
         endwhere 
         !%------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
@@ -445,7 +522,7 @@ module adjust
                     print *, 'CODE ERROR -- unexpected case default'
                     !stop 
                     call util_crashpoint( 94733)
-                    return
+                    !return
                 end select
             case (ETM)
                 select case (whichType)
@@ -457,7 +534,7 @@ module adjust
                     print *, 'CODE ERROR -- unexpected case default'
                     !stop 
                     call util_crashpoint( 93287)
-                    return
+                    !return
                 end select
             case (AC)
                 select case (whichType)
@@ -469,14 +546,14 @@ module adjust
                     print *, 'CODE ERROR -- unexpected case default'
                     !stop 
                     call util_crashpoint( 22733)
-                    return
+                    !return
                 end select
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 55873)
-                return
+                !return
             end select
         !% -----------------------------------------------------------------
         !% Aliases
@@ -503,14 +580,12 @@ module adjust
         elemR(thisP,er_WaveSpeed)    = zeroR
         elemR(thisP,er_Head)    = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
         !elemR(thisP,er_HeadAvg) = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
-        
 
         !% only reset volume when it gets too small
         where (elemR(thisP,er_Volume) < setting%ZeroValue%Volume)
             elemR(thisP,er_Volume) = (oneR + onetenthR) * setting%ZeroValue%Volume 
         end where
-        
-        
+    
     end subroutine adjust_zerodepth_element_values 
 !%  
 !%==========================================================================   
@@ -548,7 +623,7 @@ module adjust
                    print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 557345)
-                return
+                !return
             end select
         !% -----------------------------------------------------------------    
         !% Aliases    
@@ -577,10 +652,21 @@ module adjust
         !% --- define the small volume ratio, 
         !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
         svRatio(thisP) = min(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
+
+        !print *, 'svRatio ', svRatio(iet(1:2))
     
         !% use the larger of available roughness values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
         ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))   
+
+        !print *, 'mannings n', ManningsN(iet(1:2))
+
+        !print *, 'head diff ',fHead_d(fup(iet(1:2))) - fHead_u(fdn(iet(1:2)))
+        !print *, 'hydradius ',HydRadius(iet(1:2))
+        ! print *, 'face Up',fup(iet(1:2))
+        ! print *, 'face Dn',fdn(iet(1:2))
+        ! print *, 'head Upstream ',fhead_d(fup(iet(1:2)))
+        ! print *, 'head Dnstream ',fhead_u(fdn(iet(1:2)))
 
         !% chezy-manning velocity based on head slop
         CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
@@ -588,12 +674,18 @@ module adjust
             * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) )           &
             / ManningsN(thisP)
                 
+        !print *, 'CMvelocity ', CMvelocity(iet(1:2))
+
         !% blend the computed velocity with CM velocity
         VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
                             + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
+       ! print *, 'Velblend ', VelocityBlend(iet(1:2))
+
         !% new flowrate
         Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
+
+       ! print *, 'Flowrate ',Flowrate(iet(1:2))
 
         !% reset the temporary storage
         VelocityBlend(thisP) = nullvalueR
@@ -630,7 +722,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 22487)
-                return
+                !return
             end select
             npack   => npack_elemP(thisCol)
             if (npack < 1) return
@@ -642,11 +734,16 @@ module adjust
             fQ      => faceR(:,fr_Flowrate)
             fQCons  => faceR(:,fr_Flowrate_Conservative)
         !% -----------------------------------------------------------------
-        !% choose either zero or an inflow
+        !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
         fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
-        !% reset the conservative fluxes
+        !% --- Set inflow from adjacent cell based on head gradient
+        call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+
+            !call util_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
+
+        !% --- reset the conservative fluxes
         if (ifixQCons) then
             fQCons(fup(thisP)) = fQ(fup(thisP))
             fQCons(fdn(thisP)) = fQ(fdn(thisP))
@@ -685,7 +782,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 224238)
-                return
+                !return
             end select
             npack => npack_elemp(thisCol)
             if (npack < 1) return
@@ -700,9 +797,9 @@ module adjust
         !%------------------------------------------------------------------
         do ii=1,max_branch_per_node,2
             fQ(fup(thisP+ii  )) = max(fQ(fup(thisP+ii  )),zeroR) * real(isbranch(thisP+ii  ),8)
-            fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)
-            
+            fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)    
         end do
+        
         if (ifixQCons) then
             do ii=1,max_branch_per_node,2
                 fQCons(fup(thisP+ii  )) = fQ(fup(thisP+ii  ))
@@ -738,7 +835,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 398703)
-                return
+                !return
             end select
             npack => npack_elemP(thisCol)
             if (npack < 1) return
@@ -782,7 +879,10 @@ module adjust
             integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
             integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
-            real(8), pointer :: dt, elemVol(:) !% 20220122brh
+            real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
+            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: elemH(:), elemL(:), elemVol(:)
+            real(8), pointer :: dt, grav
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -801,16 +901,26 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 447833)
-                return
+                !return
             end select
         !%------------------------------------------------------------------
         !% Aliases:
             faceQ     => faceR(:,fr_Flowrate)
+            faceHu    => faceR(:,fr_Head_u)
+            faceHd    => faceR(:,fr_Head_d)
+            faceAu    => faceR(:,fr_Area_u)
+            faceAd    => faceR(:,fr_Area_d)
+            faceDu    => faceR(:,fr_HydDepth_u)
+            faceDd    => faceR(:,fr_HydDepth_d)
             fQCons    => faceR(:,fr_Flowrate_Conservative)
             elemQ     => elemR(:,er_Flowrate)
+            elemH     => elemR(:,er_Head)
+            elemL     => elemR(:,er_Length)
+            
             elemVol   => elemR(:,er_Volume_N0)
             isbranch  => elemSI(:,esi_JunctionBranch_Exists)
             dt        => setting%Time%Hydraulics%Dt
+            grav      => setting%constant%gravity
             fdn       => elemI(:,ei_Mface_dL)
             fup       => elemI(:,ei_Mface_uL)
         !%------------------------------------------------------------------
@@ -824,7 +934,7 @@ module adjust
                 faceQ(fdn(thisP)) = min(elemQ(thisP)     , faceQ(fdn(thisP)) )      
                 !%     upstream face value is either the inflow from face or zero
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), zeroR)
-                 !% --- downstream outflow is limited to 1/3 the element volume 
+                !% --- downstream outflow is limited to 1/3 the element volume 
                 faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), elemVol(thisP) / (threeR * dt) )   !% 20220122brh
             elsewhere
                 !% --- flow in upstream direction
@@ -836,6 +946,11 @@ module adjust
                 !% --- upstream out flow is limited to 1/3 the element volume !% 20220122brh
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
             endwhere
+
+            !% 20220531brh
+            !% --- provide inflow rate from large head differences with small volume cells
+            !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
+            call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
 
             if (ifixQCons) then
                 !% update the conservative face Q
@@ -901,7 +1016,7 @@ module adjust
             integer, intent(in) :: whichTM
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
-            real(8), pointer :: coef, vMax, Qlateral(:)
+            real(8), pointer :: coef, vMax, Qlateral(:), Vcoef(:)
             real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:)
             real(8), pointer ::  w_uQ(:), w_dQ(:), elemArea(:), Vvalue(:)
             real(8), pointer :: elemDepth(:), multiplier, smallDepth
@@ -910,7 +1025,7 @@ module adjust
         !%------------------------------------------------------------------
         !% Preliminaries    
             if (setting%Adjust%Flowrate%Coef .le. zeroR) return
-            if (crashYN) return       
+            !if (crashYN) return       
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
@@ -927,7 +1042,7 @@ module adjust
                 print *, 'which has key ',trim(reverseKey(whichTM))
                 !stop 
                 call util_crashpoint( 9239)
-                return
+                !return
             end select
 
             coef => setting%Adjust%Flowrate%Coef
@@ -947,6 +1062,7 @@ module adjust
             w_uQ     => elemR(:,er_InterpWeight_uQ)
             w_dQ     => elemR(:,er_InterpWeight_dQ)
             Vvalue   => elemR(:,er_Temp01)
+            Vcoef    => elemR(:,er_Temp02)
             Qlateral => elemR(:,er_FlowrateLateral)
             !isSmallDepth   => elemYN(:,eYN_isSmallDepth)
             !isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
@@ -955,17 +1071,28 @@ module adjust
             smallDepth => setting%SmallDepth%DepthCutoff
             vMax       => setting%Limiter%Velocity%Maximum
         !%-----------------------------------------------------------------
-        !% coef is the blending adjustment (between 0.0 and 1.0)
+        !% setting%coef is the blending adjustment (between 0.0 and 1.0)
         !% if coef == 1 then the V-shape element flowrate is replaced by 
         !% average of its faces. If coef < 1 then average value is blended
         !% with the present value of Q.
 
-        !% find the cells that are deep enough to use the 
+        !% Vcoef is the coefficient adjusted for local conditions
+        Vcoef(thisP) = coef    
+
+        !% find the cells that are deep enough to use the V filter
         Vvalue(thisP) = elemDepth(thisP) / (multiplier * smallDepth)
         where (Vvalue(thisP) > oneR)
             Vvalue(thisP) = oneR
         elsewhere
             Vvalue(thisP) = zeroR
+            Vcoef(thisP)  = zeroR
+        endwhere
+
+        !% --- Reducing V-filter when Qlateral is large  20220524brh
+        !%     HACK the fraction below should be replaced with a coefficient
+        where (Qlateral(thisP) > onefourthR * elemFlow(thisP))
+            Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * elemFlow(thisP) / Qlateral(thisP))**2
+            Vvalue(thisP) = zeroR     
         endwhere
 
         !% the Vvalue returns...
@@ -975,19 +1102,30 @@ module adjust
         !%  0.0 if the depth is too shallow
         Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
                         *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))      &
-                        * Vvalue(thisP)   
+                        * Vvalue(thisP)     
 
-        where (Vvalue(thisP) > zeroR)
-            !% simple linear interpolation
-            elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
-                + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
-            !% reset the velocity      
-            elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        where (Vvalue(thisP) .le. zeroR)
+            Vcoef(thisP) = zeroR
         endwhere
+
+        !% blend the element and face-average flow rates
+        elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
+                + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
+
+        !% reset the velocity      
+        elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+
+        ! where (Vvalue(thisP) > zeroR)
+        !     !% simple linear interpolation
+        !     elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
+        !         + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
+        !     !% reset the velocity      
+        !     elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        ! endwhere
                 
         !% reset for high velocity (typically due to small area)
         where (abs(elemVel(thisP)) > vMax)
-            elemVel(thisP)  = sign( 0.99 * vMax, elemVel(thisP) )
+            elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
             elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
         endwhere 
         
@@ -1012,13 +1150,12 @@ module adjust
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, multiplier, smallDepth
-            real(8), pointer :: elemCrown(:), Vvalue(:), elemFullD(:)
+            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (crashYN) return              
+        !% Preliminaries           
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1027,7 +1164,7 @@ module adjust
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm_surcharged)
             case (ETM)
-                thisCol => col_elemP(ep_CC_ETM_surcharged)
+                thisCol => col_elemP(ep_Closed_Elements)
             case (AC)
                 thisCol => col_elemP(ep_CC_AC_surcharged)
             case default
@@ -1054,7 +1191,7 @@ module adjust
             faceHeadDn => faceR(:,fr_Head_d)          
             elemHead   => elemR(:,er_Head)    
             elemCrown  => elemR(:,er_Zcrown)
-            elemFullD  => elemR(:,er_FullDepth)
+            elemEllMax => elemR(:,er_ell_max)
             w_uH       => elemR(:,er_InterpWeight_uH)
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
@@ -1064,11 +1201,11 @@ module adjust
         !%-------------------------------------------------------------------
         !% find the cells that are deep enough to use the V filter
         !% The surcharge head must be larger than some multiple of the conduit full depth
-        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemFullD(thisP))
+        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemEllMax(thisP))
         where (Vvalue(thisP) > oneR)
             Vvalue(thisP) = oneR
         elsewhere
-            Vvalue(thisP) = zeroR
+            Vvalue(thisP) = zeroR !% HACK: to apply v shape head correction for all cases
         endwhere
 
         !% identify the V-shape locations
@@ -1093,8 +1230,82 @@ module adjust
 
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
-    end subroutine
-        !%    
+    end subroutine adjust_Vshaped_head_surcharged
+!%    
+!%==========================================================================  
+!%==========================================================================  
+!%
+    subroutine adjust_faceflux_for_headgradient (thisP, thisDepthCutoff)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Adjusts the face flux for a head gradient when the depth of the
+        !% face is more than twice the input thisDepthCutoff
+        !% Should only be applied to faces of zero depth or small depth cells  
+        !% thisP should be a packed set of element indexes that are either
+        !% small depth or zero depth elements 
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer,  intent(in) :: thisP(:)
+            real(8),  intent(in) :: thisDepthCutoff
+            !logical, intent(in) ::  ifixQCons
+            !integer, intent(in) :: whichTM
+            integer, pointer :: fdn(:), fup(:)
+            !integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
+            real(8), pointer :: faceQ(:), elemQ(:) !, fQCons(:)
+            real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
+            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: elemH(:), elemL(:) !, elemVol(:)
+            real(8), pointer :: dt, grav
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Aliases:
+            faceQ     => faceR(:,fr_Flowrate)
+            faceHu    => faceR(:,fr_Head_u)
+            faceHd    => faceR(:,fr_Head_d)
+            faceAu    => faceR(:,fr_Area_u)
+            faceAd    => faceR(:,fr_Area_d)
+            faceDu    => faceR(:,fr_HydDepth_u)
+            faceDd    => faceR(:,fr_HydDepth_d)
+            !fQCons    => faceR(:,fr_Flowrate_Conservative)
+            !elemQ     => elemR(:,er_Flowrate)
+            elemH     => elemR(:,er_Head)
+            elemL     => elemR(:,er_Length)
+            
+            !elemVol   => elemR(:,er_Volume_N0)
+            !isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            dt        => setting%Time%Hydraulics%Dt
+            grav      => setting%constant%gravity
+            fdn       => elemI(:,ei_Mface_dL)
+            fup       => elemI(:,ei_Mface_uL)
+        !%------------------------------------------------------------------
+        !% --- For the downstream face, dH/dx < 0 leads to a negative Q
+        !%     Only applies where head gradient implies flow into the small volume and the
+        !%     depth at the face is twice the small depth cutoff
+        where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
+                .and. &
+                (faceDu(fdn(thisP)) > twoR * thisDepthCutoff) )
+            faceQ(fdn(thisP)) = min(                                                 &
+                faceQ(fdn(thisP)),                                                   &
+                dt * grav * faceAu(fdn(thisP)) * (elemH(thisP) - faceHu(fdn(thisP))) &
+                / (onehalfR * (elemL(thisP)))                                        &
+                )
+        end where
+
+        !% --- for the upstream face dH/dx > 0 leads to a positive Q
+        !%     Only applies where head gradient implies flow into the small volume and the
+        !%     depth on the face is twice the small depth cutoff
+        where ( (elemH(thisP) < faceHd(fup(thisP)) ) &
+                .and. &
+                (faceDd(fup(thisP)) > twoR * thisDepthCutoff) )
+            faceQ(fup(thisP)) = max(                                                 &
+                faceQ(fdn(thisP)),                                                   &
+                dt * grav * faceAd(fup(thisP)) * (faceHd(fup(thisP)) - elemH(thisP)) &
+                / (onehalfR * (elemL(thisP)))                                        &
+                )
+        end where
+
+    end subroutine adjust_faceflux_for_headgradient
+!%
 !%==========================================================================
 !%==========================================================================
 !%
@@ -1109,7 +1320,7 @@ module adjust
     !         character(64) :: subroutine_name = 'adjust_smallvolumes_reset_old'
     !     !%-----------------------------------------------------------------------------
     !         if (Npack .le. 0) return
-    !         if (crashYN) return              
+    !         !if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-----------------------------------------------------------------------------
@@ -1142,7 +1353,7 @@ module adjust
     !     !%-----------------------------------------------------------------
     !     !% Preliminaries
     !         if (Npack .le. 0) return
-    !         if (crashYN) return              
+    !         !if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%----------------------------------------------------------------- 
@@ -1188,7 +1399,7 @@ module adjust
     !         character(64) :: subroutine_name = 'adjust_smallvolumes_pack'
     !     !%------------------------------------------------------------------
     !         if (Npack .le. 0) return
-    !         if (crashYN) return              
+    !         !if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%------------------------------------------------------------------
@@ -1241,7 +1452,7 @@ module adjust
     !     !%------------------------------------------------------------------
     !     !% Preliminaries
     !         if (Npack .le. 0) return
-    !         if (crashYN) return              
+    !         !if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%------------------------------------------------------------------
@@ -1315,7 +1526,7 @@ module adjust
     !         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
     !     !%----------------------------------------------------------------------
     !         if (Npack .le. 0) return
-    !         if (crashYN) return              
+    !         !if (crashYN) return              
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%--------------------------------------------------------------------

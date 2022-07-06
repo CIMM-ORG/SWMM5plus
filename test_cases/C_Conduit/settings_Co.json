@@ -102,9 +102,8 @@
         "ReferenceHead"     : 0.0
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "VariableSlot", 
-        "PreissmannNumber" : 8.0,
-        "PreissmannCelerity" : 80.0
+        "PreissmannSlotMethod" : "DynamicSlot", 
+        "TargetPreissmannCelerity" : 80.0
     },
     "VariableDT" : {
         "ApplyYN" : true,

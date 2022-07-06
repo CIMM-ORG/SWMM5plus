@@ -6,6 +6,7 @@ module circular_conduit
     use define_keys
     use define_xsect_tables
     use xsect_tables
+    use utility, only: util_CLprint
 
     implicit none
 
@@ -50,6 +51,7 @@ module circular_conduit
 
         integer, allocatable, target :: thisP_analytical(:), thisP_lookup(:)
         integer, target              :: Npack_analytical, Npack_lookup
+        integer :: ii
         !%-----------------------------------------------------------------------------
         thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
@@ -60,9 +62,11 @@ module circular_conduit
         AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !call util_CLprint('    circular AAA ')
+
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
 
+        !call util_CLprint('    circular BBB ')
         !% when AoverAfull <= 4%, SWMM5 uses a special function to get the
         !% normalized depth using the central angle, theta
 
@@ -71,24 +75,42 @@ module circular_conduit
         Npack_analytical = count(AoverAfull(thisP) <= 0.04)
         thisP_analytical = pack(thisP,AoverAfull(thisP) <= 0.04)
 
+        !call util_CLprint('    circular CCC ')
+
         !% pack the rest of the circular elements having AoverAfull > 0.04 which will use
         !% lookup table for interpolation.
         Npack_lookup = count(AoverAfull(thisP) > 0.04)
         thisP_lookup = pack(thisP,AoverAfull(thisP) > 0.04)
+
+        !call util_CLprint('    circular DDD ')
 
         if (Npack_analytical > zeroI) then
             call circular_get_normalized_depth_from_area_analytical &
                 (YoverYfull, AoverAfull, Npack_analytical, thisP_analytical)
         end if 
     
+        ! call util_CLprint('    circular EEE ')
+        ! if ((this_image() == 7) .and. (setting%Time%Step > 39418)) then
+        !     print *, 'Npack_lookup ', Npack_lookup
+        !     do ii=1,Npack_lookup
+        !         print *, ii
+        !         print *, '  lookup # ', thisP_lookup(ii) 
+        !         print *, '  AoverA   ', AoverAfull(thisP_lookup(ii))
+        !     end do
+        ! end if
+
         if (Npack_lookup > zeroI) then        
             !% retrive the normalized Y/Yfull from the lookup table
             call xsect_table_lookup &
-                (YoverYfull, AoverAfull, YCirc, NYCirc, thisP_lookup)
+                (YoverYfull, AoverAfull, YCirc, thisP_lookup)  !% 20220506brh
+                !(YoverYfull, AoverAfull, YCirc, NYCirc, thisP_lookup)
         end if
 
+        ! call util_CLprint('    circular FFF ')
         !% finally get the depth by multiplying the normalized depth with full depth
         depth(thisP) = YoverYfull(thisP) * fulldepth(thisP)
+
+        !call util_CLprint('    circular GGG ')
 
     end subroutine circular_depth_from_volume
 !%
@@ -112,7 +134,7 @@ module circular_conduit
     !     AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
     !     YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
     !     !%-----------------------------------------------------------------------------
-    !     if (crashYN) return
+    !     !if (crashYN) return
     !     AoverAfull(indx) = volume(indx) / (length(indx) * fullArea(indx))
 
     !     !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the
@@ -134,18 +156,18 @@ module circular_conduit
 !%==========================================================================      
 !%==========================================================================
 !%
-    real(8) function circular_area_from_depth_singular (indx) result (outvalue)
+    real(8) function circular_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for circular cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: depth(:), AoverAfull(:), YoverYfull(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
         real(8), pointer    :: fullArea(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
-        depth      => elemR(:,er_Depth)
+        !!if (crashYN) return
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
         AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
@@ -153,10 +175,10 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
-        YoverYfull(indx) = depth(indx) / fulldepth(indx)
+        YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ACirc, NACirc)
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ACirc) !% 20220506brh removed NACirc
 
         !% finally get the area by multiplying the normalized area with full area
         outvalue = AoverAfull(indx) * fullArea(indx)
@@ -176,7 +198,7 @@ module circular_conduit
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), topwidth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
@@ -190,7 +212,8 @@ module circular_conduit
         !% retrive the normalized T/Tmax from the lookup table
         !% T/Tmax value is temporarily saved in the topwidth column
         call xsect_table_lookup &
-            (topwidth, YoverYfull, TCirc, NTCirc, thisP)
+            (topwidth, YoverYfull, TCirc, thisP)  !% 20220506brh
+            !(topwidth, YoverYfull, TCirc, NTCirc, thisP)
 
         !% finally get the topwidth by multiplying the T/Tmax with full depth
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
@@ -200,26 +223,25 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_topwidth_from_depth_singular (indx) result (outvalue)
+    real(8) function circular_topwidth_from_depth_singular (indx,depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a circular cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
-        depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
-        YoverYfull(indx) = depth(indx) / fulldepth(indx)
+        YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Tmax (fullDepth for circular cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TCirc, NTCirc)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TCirc) !% 20220506brh removed NTCirc
 
         !% if topwidth <= zero, set it to zerovalue
         outvalue = max(outvalue, setting%ZeroValue%Topwidth)
@@ -240,7 +262,7 @@ module circular_conduit
         real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
         real(8), pointer :: fulldepth(:), perimeter(:), area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         area       => elemR(:,er_Area)
@@ -257,7 +279,8 @@ module circular_conduit
         !% retrive the normalized R/Rmax from the lookup table
         !% R/Rmax value is temporarily saved in the hydRadius column
         call xsect_table_lookup &
-            (hydRadius, YoverYfull, RCirc, NRCirc, thisP)
+            (hydRadius, YoverYfull, RCirc,  thisP)  !% 20220506 brh
+            !hydRadius, YoverYfull, RCirc, NRCirc, thisP)
 
         hydRadius(thisP) = onefourthR * fulldepth(thisP) * hydRadius(thisP)
 
@@ -270,7 +293,7 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_perimeter_from_hydradius_singular (indx) result (outvalue)
+    real(8) function circular_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -279,16 +302,17 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: hydRadius(:), area(:), fullperimeter(:)
+        real(8), intent(in) :: hydradius
+        real(8), pointer ::  area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
-        hydRadius     => elemR(:,er_HydRadius)
         area          => elemR(:,er_Area)
         fullperimeter => elemR(:,er_FullPerimeter)
         !%-----------------------------------------------------------------------------
 
-        outvalue = min(area(indx) / hydRadius(indx), fullperimeter(indx))
-        !% HACK: perimeter correction is needed when the pipe is empt
+        outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
+
+        !% HACK: perimeter correction is needed when the pipe is empty
+
     end function circular_perimeter_from_hydradius_singular
 !%
 !%==========================================================================
@@ -306,7 +330,7 @@ module circular_conduit
         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
         real(8), pointer    :: depth(:), hyddepth(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
         thisP        => elemPGx(1:Npack,thisCol)
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
@@ -334,7 +358,7 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_hyddepth_from_topwidth_singular (indx) result (outvalue)
+    real(8) function circular_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -342,12 +366,10 @@ module circular_conduit
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), depth(:)
+        real(8), intent(in) :: topwidth, depth
+        real(8), pointer    :: area(:), fullHydDepth(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
-        depth        => elemR(:,er_Depth)
         area         => elemR(:,er_Area)
-        topwidth     => elemR(:,er_Topwidth)
         fullHydDepth => elemR(:,er_FullHydDepth)
         !%--------------------------------------------------
 
@@ -356,11 +378,11 @@ module circular_conduit
         !% full and empty condition.
 
         !% when conduit is empty
-        if (depth(indx) <= setting%ZeroValue%Depth) then
+        if (depth <= setting%ZeroValue%Depth) then
             outvalue = setting%ZeroValue%Depth
         else
             !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth(indx), fullHydDepth(indx))
+            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
         endif
 
     end function circular_hyddepth_from_topwidth_singular
@@ -368,7 +390,7 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function circular_hydradius_from_depth_singular (indx) result (outvalue)
+    real(8) function circular_hydradius_from_depth_singular (indx,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -376,21 +398,20 @@ module circular_conduit
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
-        depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
-        YoverYfull(indx) = depth(indx) / fulldepth(indx)
+        YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Rmax (fullDepth/4)
         outvalue = onefourthR * fulldepth(indx) * &
-                xsect_table_lookup_singular (YoverYfull(indx), RCirc, NRCirc)
+                xsect_table_lookup_singular (YoverYfull(indx), RCirc) !% 20220506brh removed NRCirc
 
     end function circular_hydradius_from_depth_singular
 !%
@@ -417,7 +438,7 @@ module circular_conduit
         integer, pointer :: eIdx
         real(8)          :: alpha, theta, theta1, dTheta
         !%-----------------------------------------------------------------------------
-        if (crashYN) return
+        !!if (crashYN) return
 
         do ii = 1,Npack
             eIdx   => thisP(ii)

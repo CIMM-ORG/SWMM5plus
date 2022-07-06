@@ -4,7 +4,7 @@ module hydrology
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use interface
+    use interface_
     !use utility
 
     implicit none
@@ -41,7 +41,7 @@ module hydrology
     !         character(64) :: subroutine_name = 'hydrology_runoff'
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
-    !         if (icrash) return
+    !         
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------
@@ -53,7 +53,7 @@ module hydrology
     !     !% Multiple subcatchments can drain to a single element, but each
     !     !% subcatchment connects to only one element, so we cannot array
     !     !% process between subcatchR and elemR
-    !     do ii =1,SWMM_N_subcatch
+    !     do ii =1,setting%SWMMinput%N_subcatch
     !         thisE => subcatchI(ii,si_runoff_elemIdx) 
     !         latFlowRate(thisE) = latFlowRate(thisE) + subcatchFlowRate(ii)
     !     end do
@@ -76,7 +76,7 @@ module hydrology
     !         character(64) :: subroutine_name = 'hydro_'
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
-    !         if (icrash) return
+    !        
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------
@@ -103,7 +103,7 @@ module hydrology
     !         character(64) :: subroutine_name = 'hydro_'
     !     !%-------------------------------------------------------------------
     !     !% Preliminaries
-    !         if (icrash) return
+    !         
     !         if (setting%Debug%File%adjust) &
     !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !     !%-------------------------------------------------------------------

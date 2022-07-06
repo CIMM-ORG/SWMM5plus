@@ -407,11 +407,14 @@ contains
         !%------------------------------------------------------------------
         !% Description
         !% Deletes the duplicate input files in the tmp directory
-        !% each image will delete its own temporary input file
+        !% Each image will delete its own temporary input file
+        !% Only applies if there is more than one image
         !%------------------------------------------------------------------
 
         if (setting%File%duplicate_input_file) then 
-            call execute_command_line (('rm '//setting%File%inp_file))
+            if (num_images() > 1) then
+                call execute_command_line (('rm '//setting%File%inp_file))
+            end if
         end if
 
     end subroutine util_file_delete_duplicate_input
@@ -795,7 +798,7 @@ contains
             else
                 print *, 'CODE ERROR: need to create the tmp file before getting filenames'
                 call util_crashpoint(449872)
-                return
+                !return
             end if
         end if
 
@@ -879,7 +882,7 @@ contains
             print *, 'format size used for setting up input files. '
             print *, 'The quick fix is to limit the number of images to ',99999
             call util_crashpoint(31937)
-            return
+            !return
         else
             write(newfilename,"(A,A,i5.5,A,A)") trim(kernel),'_',timage,trim(divider),trim(extension)
         end if

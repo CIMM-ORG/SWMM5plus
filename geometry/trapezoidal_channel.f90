@@ -82,21 +82,21 @@ module trapezoidal_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function trapezoidal_area_from_depth_singular (indx) result (outvalue)
+    real(8) function trapezoidal_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for trapezoidal cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer :: breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------
-        outvalue = (breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * depth(indx)) * depth(indx)
+        outvalue = (breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * depth) * depth
 
     end function trapezoidal_area_from_depth_singular
 !%
@@ -129,20 +129,20 @@ module trapezoidal_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function trapezoidal_topwidth_from_depth_singular (indx) result (outvalue)
+    real(8) function trapezoidal_topwidth_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a trapezoidal cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx 
-        real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------
-        outvalue = breadth(indx) + depth(indx) * (lslope(indx) + rslope(indx))
+        outvalue = breadth(indx) + depth * (lslope(indx) + rslope(indx))
 
     end function trapezoidal_topwidth_from_depth_singular
 !%
@@ -176,7 +176,7 @@ module trapezoidal_channel
 !%==========================================================================    
 !%==========================================================================
 !%
-    real(8) function trapezoidal_perimeter_from_depth_singular (indx) result (outvalue)
+    real(8) function trapezoidal_perimeter_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -185,15 +185,15 @@ module trapezoidal_channel
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer :: breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%----------------------------------------------------------------------------- 
         
-        outvalue =  breadth(indx) + depth(indx) * (sqrt(oneR + lslope(indx)**twoR) + &
+        outvalue =  breadth(indx) + depth * (sqrt(oneR + lslope(indx)**twoR) + &
                     sqrt(oneR + rslope(indx)**twoR))
 
     end function trapezoidal_perimeter_from_depth_singular
@@ -229,7 +229,7 @@ module trapezoidal_channel
 !%==========================================================================  
 !%==========================================================================
 !%
-    real(8) function trapezoidal_hyddepth_from_depth_singular (indx) result (outvalue)
+    real(8) function trapezoidal_hyddepth_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -237,24 +237,26 @@ module trapezoidal_channel
         !% a single element
         !%-----------------------------------------------------------------------------   
         integer, intent(in) :: indx 
-        real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------     
 
-        outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * &
-                    depth(indx)) * depth(indx)) / (breadth(indx) + depth(indx) * &
-                    (lslope(indx) + rslope(indx)))
+        outvalue = ( (breadth(indx)                                             &    
+                        + onehalfR * (lslope(indx) + rslope(indx)) * depth      &
+                     ) * depth                                                  &
+                     / (breadth(indx) + depth * (lslope(indx) + rslope(indx)) ) &
+                    )
 
     end function trapezoidal_hyddepth_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function trapezoidal_hydradius_from_depth_singular (indx) result (outvalue)
+    real(8) function trapezoidal_hydradius_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -262,17 +264,21 @@ module trapezoidal_channel
         !% a single element 
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
-        depth   => elemR(:,er_Depth)
         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%----------------------------------------------------------------------------- 
         
-        outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) *  &
-                    depth(indx)) * depth(indx)) / (breadth(indx) + depth(indx) * &
-                    (sqrt(oneR + lslope(indx)**twoR) + sqrt(oneR + rslope(indx)**twoR)))
+        outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) &
+                     *  depth) * depth                                        &
+                   )                                                          &
+                   / ( breadth(indx)                                          &
+                       + depth * (  sqrt(oneR + lslope(indx)**twoR)           &
+                                  + sqrt(oneR + rslope(indx)**twoR))          &
+                     )
 
     end function trapezoidal_hydradius_from_depth_singular
 !%    
@@ -309,12 +315,12 @@ module trapezoidal_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    !%  
-        !%-----------------------------------------------------------------------------
+        !%  
+        !%------------------------------------------------------------------
         !% Description:
         !% 
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !%  
 end module trapezoidal_channel

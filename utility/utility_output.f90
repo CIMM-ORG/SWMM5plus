@@ -5,7 +5,7 @@ module utility_output
     use define_globals
     use define_settings
     use define_types
-    use interface
+    use interface_
     use utility_datetime
     !use output
     !use, intrinsic :: iso_fortran_env, only: *
@@ -112,8 +112,7 @@ contains
         !     "lr_TopWidth,lr_ElementLength,lr_Slope,lr_LeftSlope,lr_RightSlope,"         // &
         !     "lr_Roughness,lr_InitialFlowrate,lr_InitialDepth,lr_InitialUpstreamDepth,"  // &
         !     "lr_InitialDnstreamDepth,lr_ParabolaValue,lr_SideSlope,lr_DischargeCoeff1," // &
-        !     "lr_DischargeCoeff2,lr_FullDepth,lr_Flowrate,lr_Depth,"  // &
-        !     "lr_DepthUp,lr_DepthDn,lr_Volume,lr_Velocity,lr_Capacity"
+        !     "lr_DischargeCoeff2,lr_FullDepth"  
 
         ! write(setting%File%UnitNumber%debug_setup_linkI_file, '(A)')                            &
         !     "li_idx,li_link_type,li_weir_type,li_orif_type,li_pump_type,li_geometry,"    //&
