@@ -287,6 +287,9 @@ contains
         call util_crashstop(4429873)
         !call sleep(1)
 
+        ! call util_CLprint ('in initialization')
+        ! stop 598734
+
         !% --- SET CRASH (BLOWUP) LIMITS
         call util_crash_initialize
 
@@ -894,6 +897,14 @@ contains
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+
+        ! do ii=1,N_node
+        !     print *, node%R(ii,nr_InitialDepth), node%R(ii,nr_Zbottom), trim(node%Names(ii)%str)
+        ! end do
+        ! do ii=1,N_link
+        !     print *, link%R(ii,lr_Z)
+        ! stop 2098734    
 
     end subroutine init_linknode_arrays
 !%

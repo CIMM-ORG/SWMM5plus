@@ -84,6 +84,10 @@ module storage_geometry
             integer :: ii
         !%-----------------------------------------------------------------------------
 
+        print *, ' '
+        print *, 'in storage tabular depth from volume'
+        print *, ' '
+        
         !% HACK: Find out a way to code this without do loop
         do ii = 1, Npack
             thisP   => elemPGx(ii,thisCol) 

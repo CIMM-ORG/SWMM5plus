@@ -14,7 +14,7 @@
         "TimeSlotsStored" : 1000
     },
     "Discretization" : {
-        "NominalElemLength" : 1000.00
+        "NominalElemLength" : 500.00
     },
     "Output" : {
         "StoredLevels" : 100,
@@ -46,5 +46,16 @@
     "SmallDepth" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.1
-    }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.2,
+        "increaseFactor" : 2.0,
+        "NstepsForCheck" : 5,
+        "InitialDt"      : 1.0
+    },
 }

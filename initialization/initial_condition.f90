@@ -109,7 +109,6 @@ contains
         !call sleep(1)
         call init_IC_from_nodedata ()
 
-
         !% --- set up the transect arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
         !call util_CLprint('before init_IC_elem_transect')
@@ -209,6 +208,8 @@ contains
         call bc_update()
         if (crashI==1) return
 
+        call util_CLprint ('after bc')
+
         !% --- storing dummy values for branches that are invalid
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
         !call util_CLprint('before init_IC_branch_dummy_values')
@@ -264,7 +265,6 @@ contains
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
         
-
         !% ---populate er_ones columns with ones
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         !call util_CLprint('before init_IC_oneVectors')
@@ -517,7 +517,7 @@ contains
         !% --- pack the elements for this link
         pElem = pack(elemI(:,ei_Lidx), (elemI(:,ei_link_Gidx_BIPquick) == thisLink))
 
-        ! print *, 'pElem ', pElem
+        !print *, 'pElem ', pElem
 
         !% --- error checking, the upstream should be the first element in the pack
         firstidx = findloc(elemI(pElem,ei_link_Pos),1)
@@ -532,7 +532,7 @@ contains
         !% --- total depth delta
         dDelta = DepthUp - DepthDn
 
-        ! print *, 'dDelta ',dDelta
+        !print *, 'dDelta ',dDelta
 
         !% --- total length of all elements in link
         linkLength = sum(eLength(pElem))
@@ -666,7 +666,7 @@ contains
                 !return
         end select
 
-        ! print *, 'at end ',eDepth(pElem)
+        !print *, 'at end ',eDepth(pElem)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

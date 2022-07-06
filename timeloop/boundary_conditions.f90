@@ -254,6 +254,11 @@ contains
                     else
                         !% --- get the current upper bound of time interval
                         ttime => BC%headTimeseries(ii,TS_upper_idx, brts_time)
+
+                        print *, 'times in bc_step'
+                        print *, ttime, BC%headTimeseries(ii,TS_upper_idx-1, brts_time), ttime- BC%headTimeseries(ii,TS_upper_idx-1, brts_time)
+                        print *, ' '
+
                         !% --- check to see if we need to move to the next level of the BC data
                         if (tnow > ttime) then 
                             if (TS_upper_idx == TimeSlotsStored) then
@@ -279,7 +284,7 @@ contains
                                 end do
                                 !% --- check if we had to go more than a single interval and print warning
                                 if ((interval_counter > 0) .and. setting%Output%Warning) then
-                                    call util_print_warning("Warning (bc_setp): The head boundary condition for node " &
+                                    call util_print_warning("Warning (bc_step): The head boundary condition for node " &
                                     // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
                                 end if
                             end if

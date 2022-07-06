@@ -47,23 +47,23 @@ module orifice_elements
         ! print *, 'calling orifice_set_setting'
         ! call orifice_set_setting (eIdx) !% ss20220701 -- orifice setting is already being set in control_update_setting subroutine
 
-        print *, 'calling common_head_and_flowdirection'
+        !print *, 'calling common_head_and_flowdirection'
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
 
-        print *, 'calling orifice_effective_head_delta'
+        !print *, 'calling orifice_effective_head_delta'
         !% find effective head on orifice element
          call orifice_effective_head_delta (eIdx)
 
-         print *, 'calling orifice_flow'
+        ! print *, 'calling orifice_flow'
         !% find flow on orifice element
         call orifice_flow (eIdx)
 
-        print *, 'calling orifice_geometry_update'
+        !print *, 'calling orifice_geometry_update'
         !% update orifice geometry from head
         call orifice_geometry_update (eIdx)
 
-        print *, 'calling common_velocity_from_flowrate_singular'
+        !print *, 'calling common_velocity_from_flowrate_singular'
          !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
@@ -323,7 +323,7 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        print *, 'in ',trim(subroutine_name), ' with ',eIdx
+        !print *, 'in ',trim(subroutine_name), ' with ',eIdx
 
         !% pointers
         GeometryType       => elemSI(eIdx,esi_Orifice_GeometryType)
@@ -352,7 +352,7 @@ module orifice_elements
             Depth = Zcrown - Zcrest
         end if
 
-        print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
+        !print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
 
         !% set geometry
 
@@ -376,8 +376,8 @@ module orifice_elements
                 HydRadius = Area / Perimeter
 
             case (circular)
-                print *, 'Depth              ',Depth
-                print *, 'EffectiveFullDepth ',EffectiveFullDepth
+                !print *, 'Depth              ',Depth
+                !print *, 'EffectiveFullDepth ',EffectiveFullDepth
                 YoverYfull  = Depth / EffectiveFullDepth
                 Area        = EffectiveFullArea * &
                         xsect_table_lookup_singular (YoverYfull, ACirc)

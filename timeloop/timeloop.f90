@@ -502,6 +502,7 @@ contains
                 end if
     
                     write(6,*) ' ... beginning time loop ===============',setting%Time%Now/3600.d0
+                    write(6,*) '     dt = ',setting%Time%Hydraulics%Dt
                     call util_CLprint ('at start of time loop')
     
                 !% --- push the old values down the stack 
@@ -521,7 +522,7 @@ contains
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
     
-                    print *, 'about to update BC in timeloop'
+                    !print *, 'about to update BC in timeloop'
 
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
@@ -530,7 +531,7 @@ contains
                         call tl_smallestBC_timeInterval ()
                     end if
 
-                    print *, 'about to perform control rules '
+                    !print *, 'about to perform control rules '
 
                     !% --- perform control rules
                     if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
@@ -544,7 +545,7 @@ contains
                         end if
                     end if
 
-                    print *, 'about to call tl_subcatchment_lateral_inflow'
+                    !print *, 'about to call tl_subcatchment_lateral_inflow'
     
                     !% --- add subcatchment inflows
                     !%     note, this has "useHydrology" and not "doHydrologyStepYN" because the
@@ -1106,14 +1107,15 @@ contains
             !thisCFL = tl_get_max_cfl(ep_CC_NOTsmalldepth,oldDT)
             thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
 
-                ! print *, 'thisCFL 06 ',thisCFL, minCFL, stepNow
+                print *, 'thisCFL 06 ',thisCFL, minCFL, stepNow
 
             if (thisCFL > maxCFL) then
                 !% --- decrease the time step to the target CFL and reset the checkStep counter
                 newDT = oldDT * targetCFL / thisCFL
                 lastCheckStep = stepNow
 
-                !    print *, 'newDT 07    ',newDT
+                    print *, 'newDT 07    ',newDT
+
             elseif (thisCFL .le. minCFL) then
                 !% --- for really small CFL, the new DT could be unreasonably large (or infinite)
                 !%     so use a value based on inflows to fill to small volume
@@ -1121,16 +1123,21 @@ contains
                     ! print *, 'small CFL ',thisCFL, minCFL
                 call tl_dt_vanishingCFL(newDT)
 
-                    !  print *, 'newDT 07.5', newDT 
+                    print *, 'newDT 07.5', newDT 
             else
+                print *, ' '
+                print *, ' in this else dt compute '
+                print *, ' '
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
                 if (stepNow > lastCheckStep + checkStepInterval) then
+                    print *, 'CHECKING HERE '
                     !% --- check for low CFL only on prescribed intervals and increase time step
                     if (thisCFL < maxCFLlow) then
                         !% --- increase the time step and reset the checkStep Counter
                         !%newDT = oldDT * increaseFactor
-                        newDT = OldDT * targetCFL / thisCFL  ! 20220214brh
+                        newDT = OldDT * targetCFL / thisCFL
                         lastCheckStep = stepNow
+
                     end if
 
                     !    print *, 'thisCFL 08 ',thisCFL
@@ -1139,7 +1146,11 @@ contains
             end if
         end if
 
-            ! print *, 'newDT 09',newDT
+        !% --- prevent large increases in the time step
+        newDT = min(newDT,OldDT * increaseFactor)
+            print *, ' '
+            print *, 'newDT, oldDT : ',newDT, OldDT
+            print *, ' '
 
         !% 20220328brh time step limiter for inflows into small or zero volumes
             ! print *, 'dt before limit ', newDT
@@ -1154,7 +1165,7 @@ contains
 
         !% --- limit by inflow/head external boundary conditions time intervals
         if (setting%VariableDT%limitByBC_YN) then
-            !print *, 'here limiting ',newDT, setting%BC%smallestTimeInterval
+            print *, 'here limiting DT by BC ',newDT, setting%BC%smallestTimeInterval
             newDT = min(setting%BC%smallestTimeInterval,newDT)
         end if
 

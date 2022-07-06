@@ -33,8 +33,9 @@ module define_globals
    !integer :: iet(10) = (/45, 46, 47, 48, 49, 50, 113, 114, 115, 116/)
    ! integer :: ift(3) = (/205,1,2/)
 
-    ! integer :: iet(4) = (/48, 50, 47, 49/)
-    ! integer :: ift(3) = (/47, 49, 48/)
+    integer :: ift(4) = (/13,1,2,11/)
+
+    integer :: iet(7) = (/13,15,24,2,1,3,12 /)
 
     integer(kind=8) :: irecCount = 0
 
