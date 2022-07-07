@@ -151,7 +151,7 @@ module storage_geometry
                 integrated_volume(ii) = onehalfR * depth(ii) * area(ii)
                 
             else
-                integrated_volume(ii) = onehalfR * (depth(ii) - depth(ii-1)) * &
+                integrated_volume(ii) = integrated_volume(ii-oneI) + onehalfR * (depth(ii) - depth(ii-1)) * &
                     (area(ii) + area(ii-1))
             end if
         end do 
