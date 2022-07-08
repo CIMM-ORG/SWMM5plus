@@ -20,7 +20,10 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
 set(FETCHCONTENT_QUIET "OFF")
 
 set(BUILD_COARRAY_NUM_IMAGES 1 CACHE STRING "Set up the number of processors to use for parallel SWMM5+.")
-set(BUILD_HDF5 $ENV{HDF5_DIR})
+set(BUILD_HDF5 "/hdf5/hdf5-1.12.1/hdf5")
+if (DEFINED ENV{HDF5_DIR})
+    set(BUILD_HDF5 $ENV{HDF5_DIR})
+endif()
 
 
 
@@ -63,12 +66,6 @@ if (EXISTS ${BUILD_HDF5}/lib
     INSTALL_COMMAND "")
     set(HDF5_LIB_DIR ${BUILD_HDF5}/lib)
     set(HDF5_INCLUDE_DIR ${BUILD_HDF5}/include)
-    set(HDF5_LIBRARIES
-        libhdf5hl_fortran.a
-        libhdf5_hl.a
-        libhdf5_fortran.a
-        libhdf5.a    
-    )
     set(HDF5_FOUND ON)
 endif()
 
@@ -88,14 +85,7 @@ $ export HDF5_DIR=path/to/hdf5/")
 
     set(HDF5_LIB_DIR ${hdf5_BINARY_DIR}/hdf5/lib/)
     set(HDF5_INCLUDE_DIR ${hdf5_BINARY_DIR}/hdf5/include/)
-    
-    
-    set(HDF5_LIBRARIES
-        libhdf5hl_fortran.a
-        libhdf5_hl.a
-        libhdf5_fortran.a
-        libhdf5.a    
-    )
+
     set(BUILD_HDF5 ${hdf5_BINARY_DIR})
     set(HDF5_FOUND ON)
 endif()
@@ -154,9 +144,6 @@ target_include_directories(SWMM PUBLIC
 )
 target_link_directories(SWMM PUBLIC
     ${HDF5_LIB_DIR}
-)
-target_link_libraries(SWMM
-    ${HDF5_LIBRARIES}
 )
 add_dependencies(SWMM hdf5)
 
