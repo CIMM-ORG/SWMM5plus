@@ -15,6 +15,7 @@ module rectangular_triangular_channel
     private
 
     public :: rectangular_triangular_depth_from_volume
+    public :: rectangular_triangular_area_from_depth
     public :: rectangular_triangular_area_from_depth_singular
     public :: rectangular_triangular_topwidth_from_depth
     public :: rectangular_triangular_topwidth_from_depth_singular 
@@ -45,19 +46,18 @@ module rectangular_triangular_channel
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol) 
         depth       => elemR(:,er_Depth)
-        bottomdepth => elemR(:,er_BottomDepth)
-        bottomarea  => elemR(:,er_BottomArea)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
+        bottomarea  => elemSGR(:,esgr_Rectangular_Triangular_BottomArea)
+        breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
+        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
         volume      => elemR(:,er_Volume)
         length      => elemR(:,er_Length)
-        breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
-        sideslope   => elemR(:,er_BottomSlope)
         !%-----------------------------------------------------------------------------  
 
         where(volume(thisP) <= bottomarea(thisP)*length(thisP))
             depth(thisP) = sqrt((volume(thisP)/length(thisP)) / sideslope(thisP))
-        endwhere
 
-        where(volume(thisP) > bottomarea(thisP)*length(thisP))
+        else where(volume(thisP) > bottomarea(thisP)*length(thisP))
             depth(thisP) = bottomdepth(thisP) + ((volume(thisP)/length(thisP)) - bottomarea(thisP)) / breadth(thisP)
         endwhere
 
@@ -66,6 +66,28 @@ module rectangular_triangular_channel
                 
 
     end subroutine rectangular_triangular_depth_from_volume
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    elemental real(8) function rectangular_triangular_area_from_depth (indx) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for rectangular cross section
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx  ! may be a packed array of indexes
+        !%-----------------------------------------------------------------------------
+        
+        if (elemR(indx,er_Depth) <= elemSGR(indx,esgr_Rectangular_Triangular_BottomDepth)) then
+            outvalue = elemR(indx,er_Depth) * elemR(indx,er_Depth) * elemSGR(indx,esgr_Rectangular_Triangular_BottomSlope)
+        else
+            outvalue = (elemSGR(indx,esgr_Rectangular_Triangular_BottomDepth) * elemSGR(indx,esgr_Rectangular_Triangular_BottomDepth) * &
+                        elemSGR(indx,esgr_Rectangular_Triangular_BottomSlope)) &  !triangular section
+                        + ((elemR(indx,er_Depth)  - elemSGR(indx,esgr_Rectangular_Triangular_BottomDepth)) * &
+                        elemSGR(indx,esgr_rectangular_Triangular_TopBreadth))       !rectangular section
+        endif
+
+    end function rectangular_triangular_area_from_depth
 !%
 !%==========================================================================
 !%==========================================================================
@@ -80,8 +102,8 @@ module rectangular_triangular_channel
         real(8), intent(in) :: depth
         real(8), pointer :: bottomdepth(:), breadth(:), sideslope(:)
         !%-----------------------------------------------------------------------------
-        bottomdepth => elemR(:,er_BottomDepth)
-        sideslope   => elemR(:,er_BottomSlope)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
+        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
         
@@ -89,7 +111,7 @@ module rectangular_triangular_channel
             outvalue = depth * depth * sideslope(indx)
         else
             outvalue = (bottomdepth(indx) * bottomdepth(indx) * sideslope(indx)) &  !triangular section
-                        + ((depth- bottomdepth(indx)) * breadth(indx))       !rectangular section
+                        + ((depth- bottomdepth(indx)) * breadth(indx))              !rectangular section
         endif
 
         if (setting%Debug%File%geometry) &
@@ -113,17 +135,16 @@ module rectangular_triangular_channel
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol) 
         topwidth    => elemR(:,er_Topwidth)
-        sideslope   => elemR(:,er_BottomSlope)
+        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
         depth       => elemR(:,er_Depth)
-        bottomdepth => elemR(:,er_BottomDepth)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
 
         where(depth(thisP) <= bottomdepth(thisP))
             topwidth(thisP) = twoR * sideslope(thisP) * depth(thisP)
-        endwhere
 
-        where(depth(thisP) > bottomdepth(thisP))
+        else where(depth(thisP) > bottomdepth(thisP))
             topwidth(thisP) = breadth(thisP)
         endwhere
 
@@ -145,8 +166,8 @@ module rectangular_triangular_channel
         real(8), intent(in) :: depth
         real(8), pointer :: bottomdepth(:), sideslope(:), breadth(:)
         !%-----------------------------------------------------------------------------
-        sideslope   => elemR(:,er_BottomSlope)
-        bottomdepth => elemR(:,er_BottomDepth)
+        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
          
@@ -177,15 +198,14 @@ module rectangular_triangular_channel
         thisP       => elemPGx(1:Npack,thisCol) 
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         depth       => elemR(:,er_Depth)
-        bottomdepth => elemR(:,er_BottomDepth)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         perimeter   => elemR(:,er_Perimeter)
         !%-----------------------------------------------------------------------------
 
         where(depth(thisP) <= bottomdepth(thisP))
             perimeter(thisP) = twoR * sqrt(((breadth(thisP) ** twoR) / fourR) + (depth(thisP) ** twoR))
-        endwhere
 
-        where(depth(thisP) > bottomdepth(thisP))
+        else where(depth(thisP) > bottomdepth(thisP))
             perimeter(thisP) = (twoR * sqrt(((breadth(thisP) ** twoR) / fourR) + (bottomdepth(thisP) ** twoR))) & !triangular section
                                 + (twoR * ((depth(thisP) - bottomdepth(thisP)) + breadth(thisP)))           !rectangular section
         endwhere
@@ -211,7 +231,7 @@ module rectangular_triangular_channel
         real(8), pointer :: bottomdepth(:), breadth(:)
         !%-----------------------------------------------------------------------------
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
-        bottomdepth => elemR(:,er_BottomDepth)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         !%-----------------------------------------------------------------------------
         
         if(depth <= bottomdepth(indx)) then
@@ -244,14 +264,13 @@ module rectangular_triangular_channel
         thisP       => elemPGx(1:Npack,thisCol) 
         depth       => elemR(:,er_Depth)
         hyddepth    => elemR(:,er_HydDepth)
-        bottomdepth => elemR(:,er_BottomDepth)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         !%-----------------------------------------------------------------------------
 
         where(depth(thisP) <= bottomdepth(thisP))
             hyddepth(thisP) = depth(thisP) / twoR
-        endwhere
 
-        where(depth(thisP) > bottomdepth(thisP))
+        else where(depth(thisP) > bottomdepth(thisP))
             hyddepth(thisP) = (bottomdepth(thisP) / twoR) &         !triangular section
                             + (depth(thisP) - bottomdepth(thisP))   !rectangular Section
         endwhere
@@ -275,7 +294,7 @@ module rectangular_triangular_channel
         real(8), intent(in) :: depth
         real(8), pointer :: bottomdepth(:)
         !%-----------------------------------------------------------------------------
-        bottomdepth => elemR(:,er_BottomDepth)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         !%-----------------------------------------------------------------------------  
 
         if(depth <= bottomdepth(indx)) then
@@ -304,9 +323,9 @@ module rectangular_triangular_channel
         real(8), intent(in) :: depth
         real(8), pointer :: bottomdepth(:), breadth(:), sideslope(:)
         !%-----------------------------------------------------------------------------
-        sideslope   => elemR(:,er_BottomSlope)
+        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
-        bottomdepth => elemR(:,er_BottomDepth)
+        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         !%-----------------------------------------------------------------------------
         
         if(depth <= bottomdepth(indx)) then

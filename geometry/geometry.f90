@@ -5,6 +5,7 @@ module geometry
     use define_keys
     use define_settings, only: setting
     use rectangular_channel
+    use rectangular_conduit
     use trapezoidal_channel
     use triangular_channel
     use rectangular_triangular_channel
@@ -420,7 +421,7 @@ module geometry
                             else
                                 !% not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
-                                case (rectangular,rectangular_closed)
+                                case (rectangular)
                                     area(tB)     = rectangular_area_from_depth_singular      (tB, depth(tB))
                                     topwidth(tB) = rectangular_topwidth_from_depth_singular  (tB, depth(tB))
                                     hydDepth(tB) = rectangular_hyddepth_from_depth_singular  (tB, depth(tB))
@@ -428,6 +429,15 @@ module geometry
                                     hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB, depth(tB))
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (rectangular_closed)
+                                    area(tB)     = rectangular_closed_area_from_depth_singular      (tB, depth(tB))
+                                    topwidth(tB) = rectangular_closed_topwidth_from_depth_singular  (tB, depth(tB))
+                                    hydDepth(tB) = rectangular_closed_hyddepth_from_depth_singular  (tB, depth(tB))
+                                    perimeter(tB)= rectangular_closed_perimeter_from_depth_singular (tB, depth(tB))
+                                    hydRadius(tB)= rectangular_closed_hydradius_from_depth_singular (tB, depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
+                                    dHdA(tB)     = oneR / topwidth(tB) 
 
                                 case (triangular)
                                     area(tB)     = triangular_area_from_depth_singular      (tB,depth(tB))
@@ -594,6 +604,13 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- RECTANGULAR CLOSED
+        thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !call util_CLprint('after rectangular') 
@@ -844,9 +861,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (rectangular_closed)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = rectangular_closed_area_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
             print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -928,6 +943,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- RECTANGULAR CLOSED
+        Npack => npack_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+            call rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- TRAPEZOIDAL
@@ -1019,9 +1041,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rectangular_closed)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
         case (horiz_ellipse)
             print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1106,6 +1126,13 @@ module geometry
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- RECTANGULAR CLOSED
+        Npack => npack_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+            call rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
@@ -1177,6 +1204,13 @@ module geometry
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- RECTANGULAR CLOSED
+        Npack => npack_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+            call rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- TRAPEZOIDAL
         Npack => npack_elemPGx(epg_CC_trapezoidal_nonsurcharged)
         if (Npack > 0) then
@@ -1230,7 +1264,7 @@ module geometry
             real(8), intent(in)  :: indepth
             integer, intent(in)  :: idx
             real(8)              :: temp1, temp2
-            character(64) :: subroutine_name = 'geo_topwidth_from_depth_singular'
+            character(64) :: subroutine_name = 'geo_hyddepth_from_depth_singular'
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         select case (elemI(idx,ei_geometryType))
@@ -1273,9 +1307,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rectangular_closed)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
             print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)

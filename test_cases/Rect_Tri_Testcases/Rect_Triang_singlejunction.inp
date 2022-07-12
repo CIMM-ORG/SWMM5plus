@@ -3,7 +3,7 @@
 
 [OPTIONS]
 ;;Option             Value
-FLOW_UNITS           CFS
+FLOW_UNITS           CMS
 INFILTRATION         HORTON
 FLOW_ROUTING         KINWAVE
 LINK_OFFSETS         DEPTH
@@ -48,12 +48,12 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                5          0          0          0          0         
+1                1          10          1          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-3                0          FREE                        NO                       
+3                0          FIXED      1.0                   NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -68,7 +68,7 @@ DRY_ONLY         NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      300     
+1                FLOW             ""               FLOW     1.0      1.0      10     
 
 [REPORT]
 ;;Reporting Options

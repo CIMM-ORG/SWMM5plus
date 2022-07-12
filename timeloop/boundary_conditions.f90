@@ -8,6 +8,7 @@ module boundary_conditions
     use utility_interpolate
     use define_settings, only: setting
     use face, only: face_interpolate_bc
+    use rectangular_triangular_channel, only: rectangular_triangular_area_from_depth_singular, rectangular_triangular_topwidth_from_depth_singular
     use define_xsect_tables
     use xsect_tables
     use utility_crash
@@ -892,8 +893,22 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                                 (fiveR * (tc0**6) + oneR       ) &
                               / ( sixR * (tc0**5) - epsilon_c  ) &
                             )**3
+
+            case (parabolic)
+                print *, 'in ',trim(subroutine_name)
+                print *, 'CODE ERROR: ciritcal depth calculation for ',elemGeometry 
+                print *, 'which has key ',trim(reverseKey(elemGeometry)), 'has not yet been implemented'
+                !stop 
+                call util_crashpoint( 389753)
+            
+            case (power_function)
+                print *, 'in ',trim(subroutine_name)
+                print *, 'CODE ERROR: ciritcal depth calculation for ',elemGeometry 
+                print *, 'which has key ',trim(reverseKey(elemGeometry)), 'has not yet been implemented'
+                !stop 
+                call util_crashpoint( 389753)
     
-            case (circular)  
+            case default  
                 !% first estimate Critical Depth for an equivalent circular conduit
                 critDepthEstimate = min(1.01*(Q2g/FullDepth)**onefourthR, FullDepth)
 
@@ -906,13 +921,13 @@ function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
                     criticalDepth = bc_critDepth_ridder (elemIdx, Flowrate, critDepthEstimate)
                 end if
 
-            case default
-                print *, 'in ',trim(subroutine_name)
-                print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
-                print *, 'which has key ',trim(reverseKey(elemGeometry))
-                !stop 
-                call util_crashpoint( 389753)
-                !return
+            ! case default
+            !     print *, 'in ',trim(subroutine_name)
+            !     print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
+            !     print *, 'which has key ',trim(reverseKey(elemGeometry))
+            !     !stop 
+            !     call util_crashpoint( 389753)
+            !     !return
             end select
         end if
 
@@ -1131,6 +1146,11 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
                     setting%ZeroValue%Topwidth)
 
         Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
+    
+    case (rect_triang)
+        Area     = rectangular_triangular_area_from_depth_singular (elemIdx, Depth)
+        Topwidth = rectangular_triangular_topwidth_from_depth_singular (elemIdx, Depth)
+        Flow     = Area * sqrt(grav*Area/Topwidth) - Flow_0
 
     case default
         print *, 'in ',trim(subroutine_name)

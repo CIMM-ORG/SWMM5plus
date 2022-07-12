@@ -47,25 +47,27 @@ if(NOT json_fortran_POPULATED)
   FetchContent_Populate(json_fortran)
 endif()
 
-if (EXISTS ${BUILD_HDF5}/hdf5/lib 
-    AND EXISTS ${BUILD_HDF5}/hdf5/include
-    AND EXISTS ${BUILD_HDF5}/hdf5/lib/libhdf5hl_fortran.a
-    AND EXISTS ${BUILD_HDF5}/hdf5/lib/libhdf5_hl.a
-    AND EXISTS ${BUILD_HDF5}/hdf5/lib/libhdf5_fortran.a
-    AND EXISTS ${BUILD_HDF5}/hdf5/lib/libhdf5.a
+if (EXISTS ${BUILD_HDF5}/lib 
+    AND EXISTS ${BUILD_HDF5}/include
+    AND EXISTS ${BUILD_HDF5}/lib/libhdf5hl_fortran.a
+    AND EXISTS ${BUILD_HDF5}/lib/libhdf5_hl.a
+    AND EXISTS ${BUILD_HDF5}/lib/libhdf5_fortran.a
+    AND EXISTS ${BUILD_HDF5}/lib/libhdf5.a
 )
+
     ExternalProject_Add(hdf5
     SOURCE_DIR ${BUILD_HDF5}
     CONFIGURE_COMMAND ""
     BINARY_DIR ${BUILD_HDF5}
-    BUILD_COMMAND "")
-    set(HDF5_LIB_DIR ${BUILD_HDF5}/hdf5/lib)
-    set(HDF5_INCLUDE_DIR ${BUILD_HDF5}/hdf5/include)
-    set(HDF5_A_SOURCES
-        ${BUILD_HDF5}/hdf5/lib/libhdf5hl_fortran.a
-        ${BUILD_HDF5}/hdf5/lib/libhdf5_hl.a
-        ${BUILD_HDF5}/hdf5/lib/libhdf5_fortran.a
-        ${BUILD_HDF5}/hdf5/lib/libhdf5.a
+    BUILD_COMMAND ""
+    INSTALL_COMMAND "")
+    set(HDF5_LIB_DIR ${BUILD_HDF5}/lib)
+    set(HDF5_INCLUDE_DIR ${BUILD_HDF5}/include)
+    set(HDF5_LIBRARIES
+        libhdf5hl_fortran.a
+        libhdf5_hl.a
+        libhdf5_fortran.a
+        libhdf5.a    
     )
     set(HDF5_FOUND ON)
 endif()
@@ -73,7 +75,7 @@ endif()
 if (HDF5_FOUND)
     message(WARNING "HDF5 found in ${BUILD_HDF5}")
 else ()
-    message(WARNING "HDF5 not found, will download and install locally.\n If HDF5 is already installed run:\n
+    message(WARNING "HDF5 not found, will download and build with required options.\n If HDF5 is already installed point to root directory by running:\n
 $ export HDF5_DIR=path/to/hdf5/")
     FetchContent_Populate(hdf5)
     ExternalProject_Add(hdf5
@@ -82,14 +84,17 @@ $ export HDF5_DIR=path/to/hdf5/")
     BINARY_DIR ${hdf5_BINARY_DIR}
     BUILD_COMMAND ${MAKE}
     COMMAND make install)
+    
 
     set(HDF5_LIB_DIR ${hdf5_BINARY_DIR}/hdf5/lib/)
     set(HDF5_INCLUDE_DIR ${hdf5_BINARY_DIR}/hdf5/include/)
-    set(HDF5_A_SOURCES
-        ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5hl_fortran.a
-        ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_hl.a
-        ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_fortran.a
-        ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5.a
+    
+    
+    set(HDF5_LIBRARIES
+        libhdf5hl_fortran.a
+        libhdf5_hl.a
+        libhdf5_fortran.a
+        libhdf5.a    
     )
     set(BUILD_HDF5 ${hdf5_BINARY_DIR})
     set(HDF5_FOUND ON)
@@ -131,9 +136,6 @@ file(GLOB
         ${CMAKE_SOURCE_DIR}/output/*.f90
         ${CMAKE_SOURCE_DIR}/finalization/*.f90
         ${CMAKE_SOURCE_DIR}/main/*.f90
-
-        
-        ${HDF5_A_SOURCES}
 )
 
 #Targets
@@ -152,6 +154,9 @@ target_include_directories(SWMM PUBLIC
 )
 target_link_directories(SWMM PUBLIC
     ${HDF5_LIB_DIR}
+)
+target_link_libraries(SWMM
+    ${HDF5_LIBRARIES}
 )
 add_dependencies(SWMM hdf5)
 

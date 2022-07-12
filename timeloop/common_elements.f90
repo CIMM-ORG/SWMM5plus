@@ -82,7 +82,7 @@ module common_elements
         DownstreamFaceHead => faceR(idnf,fr_Head_u)
         !%-----------------------------------------------------------------------------        
         !% head on a diagnostic element as the maximum of upstream, downstream, or crest height.
-        Head = max(UpstreamFaceHead , DownstreamFaceHead , Zcrest)
+        Head = max(UpstreamFaceHead , DownstreamFaceHead)
         
         !% flow direction on a diagnostic element assigned based up upstream and downstream heads
         FlowDirection = int(sign(oneR, (UpstreamFaceHead - DownstreamFaceHead)) )

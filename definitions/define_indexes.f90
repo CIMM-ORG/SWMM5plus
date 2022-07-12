@@ -310,8 +310,6 @@ module define_indexes
         enumerator :: er_Area_N0                    !% cross-sectional flow area (time N)
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
-        enumerator :: er_BottomArea
-        enumerator :: er_BottomDepth
         enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
@@ -505,6 +503,7 @@ module define_indexes
 
     enum, bind(c)
         enumerator :: epg_CC_rectangular_nonsurcharged = 1          !% CC rectangular channels that are not surcharged
+        enumerator :: epg_CC_rectangular_colsed_nonsurcharged       !% CC rectangular conduits that are not surcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged              !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_triangular_nonsurcharged               !% CC triangular channels that are not surcharged
         enumerator :: epg_CC_rectangular_triangular_nonsurcharged
@@ -715,8 +714,11 @@ module define_indexes
 
     !% Define the column indexes for elemGSR(:,:) for triangular channel
     enum, bind(c)
-         enumerator ::  esgr_Rectangular_Triangular_Slope = 1    !% side-slope for triangular geometry
+         enumerator ::  esgr_Rectangular_Triangular_Slope = 1   !% side-slope for triangular geometry
          enumerator ::  esgr_Rectangular_Triangular_TopBreadth  !% top breadth of triangular geometry
+         enumerator ::  esgr_Rectangular_Triangular_BottomDepth !% depth of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_BottomArea  !% area of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_BottomSlope !% slope of the triangular section
          enumerator ::  esgr_Rectangular_Triangular_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSGR_Rectangular_Triangular =  esgr_Rectangular_Triangular_lastplusone-1
