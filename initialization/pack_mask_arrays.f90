@@ -2520,6 +2520,9 @@ contains
                 (.not. elemYN(:,eYN_isSmallDepth)) &
                 .and. &
                 (.not. elemYN(:,eYN_isZeroDepth))     )
+        ! print *, ' '
+        ! print *, ' in pack_mask_arrays checking CCJBJM_NOTsmalldepth'
+        ! print *, 'npack ',npack        
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (      &

@@ -493,6 +493,7 @@ contains
                 !call util_crashstop  (44804)
                 !sync all
 
+
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
                     !% --- skip BC update during spin-up after first step
@@ -500,7 +501,10 @@ contains
                 else
                     BCupdateYN = .true.
                 end if
-    
+                    print *, ' '
+                    print *, ' '
+                    print *, '*******************************************************************************'
+                    print *, '*******************************************************************************'
                     write(6,*) ' ... beginning time loop ===============',setting%Time%Now/3600.d0
                     write(6,*) '     dt = ',setting%Time%Hydraulics%Dt
                     call util_CLprint ('at start of time loop')
@@ -543,6 +547,8 @@ contains
                             !% --- set the next time the controls will be evaluated
                             setting%Time%ControlRule%NextTime = setting%Time%Now + real(setting%SWMMinput%RuleStep,8)
                         end if
+                        print *, 'CONTROL----------------------------'
+                        print *, 'orifice setting ',elemR(24,er_Setting)
                     end if
 
                     !print *, 'about to call tl_subcatchment_lateral_inflow'
@@ -1014,26 +1020,19 @@ contains
 
         !% --- set the minimum CFL, used to detect near zero flow conditions
         if (setting%Limiter%Dt%UseLimitMaxYN) then
-            minCFL= oldDT * targetCFL / setting%Limiter%Dt%Maximum
-        else
-            minCFL = setting%Eps%Velocity
+            minCFL = setting%Eps%Velocity * oldDT / setting%Discretization%NominalElemLength
         end if
-        
-            !  print *, '=============================================='
-            !  print *, 'oldDT ',oldDT
-            !  print *, 'newDT ',newDT
 
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
             !%     step to match the next hydrology time
             timeLeft = nextHydrologyTime - lastHydraulicsTime
             if (timeLeft .le. dtTol) timeLeft = oldDT
+            !% --- get the CFL if a single step is taken
             thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,timeleft)  
 
-             !print *, 'this CFL 01 ',thisCFL
-
             !% --- check to see if a single time step to match the hydrology time is possible
-            if (thisCFL < maxCFL) then
+            if (thisCFL .le. maxCFL) then
                 neededSteps = 1 !% only 1 hydraulic step to match hydrology step
                 !% --- check to be sure there is significant time left
                 if (timeLeft > dtTol) then
@@ -1045,33 +1044,29 @@ contains
                         !% --- increase the oldDT by the maximum allowed
                         newDT = increaseFactor * oldDT
                     end if
-
-                    ! print *, 'newDT 02   ', newDT
                 else
-                    !% --- small time left, don't bother with it, go back to the old dt
+                    !% --- negligible time left, don't bother with it, go back to the old dt
                     newDT = oldDT
                     !% --- check that resetting to oldDT didn't cause a problem
                     thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
                     if (thisCFL > maxCFL) then 
-                        !% --- if CFL to large, set the time step based on the target CFL
+                        !% --- if CFL too large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
                     end if
 
-                    !  print *, 'this CFL 03 ',thisCFL
-                    !  print *, 'newDT 03    ',newDT
                 end if
             else
                 !% --- if more than one time step is needed, compute the needed steps 
                 !%     to break up the large CFL and time step size.
-                !%     First check to see if the implied time step is too small for the integer size
                 if (thisCFL/targetCFL .ge. huge(neededSteps)) then
-                    write(*,*) 'warning -- really high CFL, setting dt to minimum to prevent overflow'
+                    !% --- check to see if the implied time step is too small for the integer size
+                    !%     this is likely a blow-up condition
+                    write(*,*) 'warning -- really high velocity, setting dt to minimum to prevent overflow'
                     newDT = setting%Limiter%Dt%Minimum + setting%Time%DtTol
                     neededSteps = 1000
-
-                      print *, 'newDT 04    ',newDT
                 else
-                    if (thisCFL > zeroR) then
+                    !% ---  for a moderate case where multiple hydraulic steps are needed for a hydrology step
+                    if (thisCFL > minCFL) then
                         !% --- note that neededSteps will be 2 or larger else thisCFL < maxCFL
                         neededSteps = ceiling( thisCFL / targetCFL )
                         !% --- the provisional time step that would get exactly to the hydrology time (if CFL didn't change)
@@ -1089,79 +1084,73 @@ contains
                             newDT = newDT * targetCFL / thisCFL
                         end if
                     else
-                        !% --- Zero CFL is typically due to small volumes in the start-up condition
+                        !% --- Miniscule CFL is typically due to small volumes in the start-up condition
                         !%    we can use a larger time step based on volumes to fill
                         call tl_dt_vanishingCFL(newDT)
                     end if
 
-                       print *, 'this CFL 05 ',thisCFL
-                       print *, 'newDT 05    ',newDT
                 end if
             end if
         else
             !% --- for hydraulics without hydrology or if we are not matching the hydrology step
-
             neededSteps = 3 !% forces rounding check
 
             !% --- allowing hydrology and hydraulics to occur at different times
             !thisCFL = tl_get_max_cfl(ep_CC_NOTsmalldepth,oldDT)
             thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
 
-                print *, 'thisCFL 06 ',thisCFL, minCFL, stepNow
+                print *, 'baseline CFL, minCFL, this step: '
+                print *, thisCFL, minCFL, stepNow
 
-            if (thisCFL > maxCFL) then
-                !% --- decrease the time step to the target CFL and reset the checkStep counter
+            if (thisCFL .ge. maxCFL) then
+                !% --- always decrease DT for exceeding the max CFL
+                !%     new value is based on the target CFL
                 newDT = oldDT * targetCFL / thisCFL
                 lastCheckStep = stepNow
 
-                    print *, 'newDT 07    ',newDT
+                print *, 'Adjust DT for high CFL    ',newDT   
 
-            elseif (thisCFL .le. minCFL) then
-                !% --- for really small CFL, the new DT could be unreasonably large (or infinite)
-                !%     so use a value based on inflows to fill to small volume
-
-                    ! print *, 'small CFL ',thisCFL, minCFL
-                call tl_dt_vanishingCFL(newDT)
-
-                    print *, 'newDT 07.5', newDT 
-            else
-                print *, ' '
-                print *, ' in this else dt compute '
-                print *, ' '
+            else 
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
-                if (stepNow > lastCheckStep + checkStepInterval) then
-                    print *, 'CHECKING HERE '
+                if (stepNow >= lastCheckStep + checkStepInterval) then
+                    print *, '------------------------------------------------------------------------------'
+                    print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
+
                     !% --- check for low CFL only on prescribed intervals and increase time step
-                    if (thisCFL < maxCFLlow) then
+                    if (thisCFL .le. minCFL) then
+                        !% --- for really small CFL, the new DT could be unreasonably large (or infinite)
+                        !%     so use a value based on inflows to fill to small volume
+                        print *, 'vanishing CFL'
+                        call tl_dt_vanishingCFL(newDT)
+
+                    elseif ((minCFL < thisCFL) .and. (thisCFL .le. maxCFLlow)) then
                         !% --- increase the time step and reset the checkStep Counter
-                        !%newDT = oldDT * increaseFactor
-                        newDT = OldDT * targetCFL / thisCFL
-                        lastCheckStep = stepNow
-
+                        print *, 'lowCFL'
+                        newDT = OldDT * targetCFL / thisCFL 
+                    else
+                        !% -- for maxCFLlow < thisCFL < maxCFL do nothing
                     end if
+                    lastCheckStep = stepNow
 
-                    !    print *, 'thisCFL 08 ',thisCFL
-                    !    print *, 'newDT   08 ',newDT
                 end if
             end if
         end if
 
         !% --- prevent large increases in the time step
         newDT = min(newDT,OldDT * increaseFactor)
-            print *, ' '
-            print *, 'newDT, oldDT : ',newDT, OldDT
-            print *, ' '
+            print *, 'before adjust newDT, oldDT : ',newDT, OldDT
+            ! print *, ' '
 
         !% 20220328brh time step limiter for inflows into small or zero volumes
             ! print *, 'dt before limit ', newDT
         call tl_limit_BCinflow_dt (newDT)
-            ! print *, 'dt BC flow limit     ',newDT
+            print *, 'dt BC flow limit     ',newDT
 
         call tl_limit_BChead_inflow_dt (newDT)
-            ! print *, 'dt BC head limit     ',newDT
+            print *, 'dt BC head limit     ',newDT
 
         call tl_limit_LatInflow_dt (newDT)
-            ! print *, 'dt Qlat limit   ',newDt
+            print *, 'dt Qlat limit   ',newDt
 
         !% --- limit by inflow/head external boundary conditions time intervals
         if (setting%VariableDT%limitByBC_YN) then
@@ -1177,39 +1166,27 @@ contains
                 !% --- round larger dt to counting numbers
                 newDT = real(floor(newDT),8)
 
-                    ! print *, 'newDT 10    ',newDT
+                    print *, 'rounding large    ',newDT
             elseif (newDT > oneR) then
                 !% --- round smaller dt to two decimal places
                 newDT = real(floor(newDT * onehundredR),8) / onehundredR
 
-                    ! print *, 'newDT 11    ',newDT   
+                    print *, 'rounding small    ',newDT   
             else
                 !%  HACK -- should round to 3 places for smaller numbers
             end if
         end if
 
-
-        ! print *, 'newDT 10',newDT
-        ! print *, ' '
-
-        ! if (newDT == zeroR) stop 29873
-
-        ! if (.not. inSpinUpYN) then
-        !     if (setting%Time%Now > 188.d0 * 3600.d0) then
-        !         newDT = 1.d0
-        !     end if
-        ! end if
+         print *, 'final DT: ',newDT
+        !  print *, ' '
 
         !% increment the hydraulics time clock
         nextHydraulicsTime = lastHydraulicsTime + newDT
         
         !% find the cfl for reporting
         cfl_max = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
-        ! cfl_max_CC = tl_get_max_cfl(ep_CC_NOTsmalldepth,newDT)
-        ! cfl_max_JBJM = tl_get_max_cfl(ep_JBJM_NOTsmalldepth,newDT)
         call co_max(cfl_max)
-        ! call co_max(cfl_max_CC)
-        ! call co_max(cfl_max_JBJM)
+
 
         !stop 29873
 
@@ -1520,6 +1497,21 @@ contains
             thisDT => dt
         end if
 
+        ! print *, ' '
+        ! print *, 'in tl_get_max_cfl, Npack = ', Npack
+        ! write(*,"(A,10f12.5)") 'Vcfl ' , velocity(iet) * thisDT / length(iet)
+        ! write(*,"(A,10f12.5)") 'Hcfl ' , wavespeed(iet) * thisDT / length(iet)
+        ! write(*,"(A,10f12.5)") 'Ccfl ' , PCelerity(iet) * thisDT / length(iet)
+        ! print * ,' '
+        ! print *, 'thisP '
+        print *, thisP
+        write(*,"(A,10f12.5)") 'Vcfl ' , velocity(thisP) * thisDT / length(thisP)
+        write(*,"(A,10f12.5)") 'Hcfl ' , wavespeed(thisP) * thisDT / length(thisP)
+        print *, thisDT
+        print *, length(thisP)
+        print *, wavespeed(thisP)
+        !write(*,"(A,10f12.5)") 'Ccfl ' , PCelerity(thisP) * thisDT / length(thisP)
+
         if (Npack > 0) then 
             outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
                             maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
@@ -1527,6 +1519,8 @@ contains
         else
             outvalue = zeroR
         end if
+        ! print *, 'outvalue CFL in tl_get_max_cfl',outvalue
+        ! print *, ' '
 
     end function tl_get_max_cfl    
 !%

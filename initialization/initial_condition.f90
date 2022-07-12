@@ -30,6 +30,7 @@ module initial_condition
     use utility_profiler
     use utility_allocate
     use utility_deallocate
+    use utility_key_default
     use utility_crash, only: util_crashpoint
     use utility, only: util_CLprint
 
@@ -208,7 +209,7 @@ contains
         call bc_update()
         if (crashI==1) return
 
-        call util_CLprint ('after bc')
+        !call util_CLprint ('after bc')
 
         !% --- storing dummy values for branches that are invalid
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
@@ -270,6 +271,8 @@ contains
         !call util_CLprint('before init_IC_oneVectors')
         !call sleep(1)
         call init_IC_oneVectors ()
+
+
 
         ! !% TEMPORARY TEST
         ! print *, '**************************************************************************'
@@ -1276,15 +1279,14 @@ contains
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
-                    !%     assumes channel is rectangular and  twice the breadth of weir and
-                    !%     used weir crown as the maximum overflow
+                    !%     assumes channel is rectangular 
                     elemI(:,ei_geometryType)            = rectangular
                     elemSGR(:,esgr_Rectangular_Breadth) = twoR * (  elemSR(:,esr_Weir_TrapezoidalBreadth) &
                                                                +    elemSR(:,esr_Weir_EffectiveFullDepth) &
                                                                 *(  elemSR(:,esr_Weir_TrapezoidalLeftSlope) &
                                                                   + elemSR(:,esr_Weir_TrapezoidalRightSlope)) )
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)  
+                    elemR(:,er_FullDepth)               = max(elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom), elemSR(:,esr_Weir_FullDepth))  
                 endwhere
 
             case (lSideFlowWeir)
@@ -1293,7 +1295,7 @@ contains
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = side_flow
                     elemSI(:,esi_Weir_GeometryType)          = rectangular
-                    elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
+                    elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContractions)
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
@@ -1304,12 +1306,11 @@ contains
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
-                    !%     assumes channel is rectangular and twice the breadth of weir and
-                    !%     used weir crown as the maximum overflow
+                    !%     assumes channel is rectangular and uses weir data
                     elemI(:,ei_geometryType)            = rectangular
-                    elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Weir_RectangularBreadth) 
-                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)
+                    elemSGR(:,esgr_Rectangular_Breadth) = elemSR(:,esr_Weir_RectangularBreadth) 
+                    elemR(:,er_BreadthMax)              = elemSR(:,esr_Weir_RectangularBreadth)                                     
+                    elemR(:,er_FullDepth)               = max(elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom),elemR(:,er_FullDepth))
                 endwhere
 
             case (lRoadWayWeir)
@@ -1344,7 +1345,7 @@ contains
                     elemSGR(:,esgr_Rectangular_Breadth) = fourR * elemSR(:,esr_Weir_EffectiveFullDepth) &
                                                                 * elemSR(:,esr_Weir_TriangularSideSlope)
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                       
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)
+                    elemR(:,er_FullDepth)               = max(elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom),elemSR(:,esr_Weir_FullDepth)) 
                 endwhere
 
             case (lTransverseWeir)
@@ -1353,7 +1354,7 @@ contains
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = transverse_weir
                     elemSI(:,esi_Weir_GeometryType)          = rectangular
-                    elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
+                    elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContractions)
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
@@ -1364,12 +1365,11 @@ contains
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
-                    !%     assumes channel is rectangular and twice the breadth of weir and
-                    !%     used weir crown as the maximum overflow
+                    !%     assumes channel is rectangular and uses weir data for channel
                     elemI(:,ei_geometryType)            = rectangular
-                    elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Weir_RectangularBreadth) 
-                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)                                     
-                    elemR(:,er_FullDepth)               = elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom)
+                    elemSGR(:,esgr_Rectangular_Breadth) = elemSR(:,esr_Weir_RectangularBreadth) 
+                    elemR(:,er_BreadthMax)              = elemSR(:,esr_Weir_RectangularBreadth)                                     
+                    elemR(:,er_FullDepth)               = max(elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom), elemSR(:,esr_Weir_FullDepth))
                 endwhere
 
             case default
@@ -1444,6 +1444,10 @@ contains
         !% pointer to specific orifice geometry
         OrificeGeometryType => link%I(thisLink,li_geometry)
 
+        ! print *, 'here in init_IC_orifice_geometry'
+        ! print *, trim(reverseKey(OrificeGeometryType))
+        ! stop 558723
+
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
         case (lRectangular_closed)  !% brh20211219 added Rect_closed
@@ -1466,7 +1470,7 @@ contains
                 !%     assumes channel is rectangular and twice the breadth of orifice and
                 !%     used orifice crown as the maximum overflow
                 elemI(:,ei_geometryType)            = rectangular
-                elemR(:,esgr_Rectangular_Breadth)   = twoR * elemSR(:,esr_Orifice_RectangularBreadth)
+                elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Orifice_RectangularBreadth)
                 elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)
                 elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)  
             end where
@@ -1487,13 +1491,25 @@ contains
                 elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                 !% --- default channel geometry (overwritten later by adjacent CC shape)
-                !%     assumes channel is rectangular and twice the breadth of weir and
-                !%     used weir crown and add the weir effective depth as the maximum overflow
+                !%     assumes channel is rectangular and twice the breadth of orifice full depth and
+                !%     and full depth is greater of orifice crown to bottom or OrificeFullDepth
                 elemI(:,ei_geometryType)            = rectangular
-                elemR(:,esgr_Rectangular_Breadth)   = twoR * elemSR(:,esr_Orifice_FullDepth)
+                elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Orifice_FullDepth)
                 elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth) 
-                elemR(:,er_FullDepth)               = elemSR(:,esr_Orifice_Zcrown) - elemR(:,er_Zbottom)
+                elemR(:,er_FullDepth)               = max(elemSR(:,esr_Orifice_Zcrown) - elemR(:,er_Zbottom),elemSR(:,esr_Orifice_FullDepth))
             end where
+
+            ! print *, 'here in init_IC_orifice_geometry'
+            ! ! do ii=1,size(elemSI,1)
+            ! !     print *, ii, elemSI(ii,esi_Orifice_GeometryType)
+            ! ! end do
+            ! print *, trim(reverseKey(elemI(iet(4),ei_geometryType)))
+            ! print *, elemR(iet(3),er_BreadthMax)
+            ! print *, elemSGR(iet(3),esgr_Rectangular_Breadth)
+            ! print *, elemSR(iet(3),esr_Orifice_RectangularBreadth)
+            ! print *, elemSR(iet(3),esr_Orifice_FullDepth)
+
+            ! stop 4908723
 
         case default
             print *, 'In ', subroutine_name
@@ -1515,6 +1531,7 @@ contains
 
         !% --- initialize a default rectangular channel as the background of the weir
         call init_IC_diagnostic_default_geometry (thisLink)
+
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1668,8 +1685,8 @@ contains
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
             elemR(:,er_FullHydDepth)            = elemR(:,er_FullDepth)
             elemR(:,er_FullPerimeter)           = elemR(:,er_BreadthMax) + twoR * elemR(:,er_FullDepth)
-            elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth)
-            elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+            elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)  !% 20220707 brh
+            elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom)   + elemR(:,er_FullDepth)
             elemR(:,er_FullArea)                = elemR(:,er_FullDepth) * elemR(:,er_BreadthMax)
             elemR(:,er_FullVolume)              = elemR(:,er_FullArea)  * elemR(:,er_Length)
             elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
@@ -1960,6 +1977,8 @@ contains
             call init_IC_get_junction_data (thisJunctionNode)
         end do
 
+        stop 598724
+
         !% deallocate the temporary array
         deallocate(packed_nJm_idx)
 
@@ -1981,6 +2000,7 @@ contains
         integer, pointer     :: Fidx, F2idx
         integer              :: nbranches
         real(8), allocatable :: integrated_volume(:)
+        real(8)              :: LupMax, LdnMax
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
         !--------------------------------------------------------------------------
@@ -2060,7 +2080,7 @@ contains
             !% find the element id of junction branches
             JBidx = JMidx + ii
 
-            !print *, 'JBidx ',JBidx
+            print *, 'JBidx ',JBidx
 
             !% set the adjacent element id where elemI and elemR data can be extracted
             !% note that elemSGR etc are not yet assigned
@@ -2140,8 +2160,8 @@ contains
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
             elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
 
-            !print *, 'JBidx',JBidx, elemI(JBidx,ei_geometryType)
-            !print *, 'Aidx ',Aidx, elemI(Aidx,ei_geometryType)
+            print *, 'JBidx',JBidx, elemI(JBidx,ei_geometryType), trim(reverseKey(elemI(JBidx,ei_geometryType)))
+            print *, 'Aidx ',Aidx,  elemI(Aidx,ei_geometryType),  trim(reverseKey(elemI(Aidx,ei_geometryType)))
 
             select case  (elemI(JBidx,ei_geometryType))
 
@@ -2159,12 +2179,19 @@ contains
                 elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
                 elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
                 elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
-                elemR(JBidx,er_ZbreadthMax)         = elemR(Aidx,er_ZbreadthMax)[Ci]
-                elemR(JBidx,er_Zcrown)              = elemR(Aidx,er_Zcrown)[Ci]         
+                !% --- reference the Zbreadth max to the local bottom
+                elemR(JBidx,er_ZbreadthMax)         = (elemR(Aidx,er_ZbreadthMax)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)
+                !% --- reference the Zcrown to the local bottom
+                elemR(JBidx,er_Zcrown)              = (elemR(Aidx,er_Zcrown)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)         
                 elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)[Ci]
                 elemI(JBidx,ei_link_transect_idx)   = elemI(Aidx,ei_link_transect_idx)[Ci]
                 !% copy the entire row of the elemSGR array
                 elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
+
+                print *, ' here in init_IC_get_junction_data'
+                print *, JBidx, Aidx, elemR(JBidx,er_FullDepth)
+                print *, JBidx, Aidx, elemR(JBidx,er_ZbreadthMax)
+                if (JBidx == 3) stop 39874
 
             case (undefinedKey)
                 print *, 'in ',trim(subroutine_name)
@@ -2197,7 +2224,26 @@ contains
             elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
 
+            print *, 'in JB IC'
+            print *, JBidx, Aidx, elemR(JBidx,er_BreadthMax)
+            
+
         end do
+
+     
+
+        !% --- set a JM length based on longest branches (20220711 brh)
+        LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
+        do ii=2,max_up_branch_per_node
+            JBidx = 2*ii-1
+            LupMax = max(elemR(JBidx,er_Length) * real(elemSI(JBidx,esi_JunctionBranch_Exists),8), LupMax)
+        end do    
+        LdnMax = elemR(JMidx+2,er_Length) * real(elemSI(JMidx+2,esi_JunctionBranch_Exists),8)  
+        do ii=2,max_dn_branch_per_node
+            JBidx = 2*ii
+            LdnMax = max(elemR(JBidx,er_Length) * real(elemSI(JBidx,esi_JunctionBranch_Exists),8), LdnMax)    
+        end do
+        elemR(JMidx,er_Length) = LupMax + LdnMax   
         
         !% get junction main geometry based on type
         JmType => elemSI(JMidx,esi_JunctionMain_Type)
@@ -2206,10 +2252,12 @@ contains
 
         case (ImpliedStorage)
             !% the JM characteristic length is the sum of the two longest branches
-            elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
-                                            elemR(JMidx+5,er_Length)) + &
-                                        max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
-                                            elemR(JMidx+6,er_Length))
+            ! elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
+            !                                 elemR(JMidx+5,er_Length)) + &
+            !                             max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
+            !                                 elemR(JMidx+6,er_Length))
+
+                          
 
             !% --- Plane area is the sum of the branch plane area 
             !%     This uses simplified geometry approximations as the junction main is only
@@ -2303,6 +2351,7 @@ contains
             elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
             elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
             elemR(JMidx,er_FullVolume) = Curve(CurveID)%ValueArray(NumRows,curve_storage_volume)
+
         case default
             !% IMPORTANT -- if any other new type is defined, make sure that
             !% subroutine geo_depth_from_volume is updated
@@ -3094,6 +3143,9 @@ contains
 
         call pack_nodes()
         call util_allocate_bc()
+
+        !% --- set the key values to undefinedKey
+        call util_key_default_bc()
 
         ! do ii=1,size(BC%flowI,DIM=1)
         !     write(*,"(10i8)"), BC%flowI(ii,bi_idx), BC%flowI(ii,bi_node_idx), BC%flowI(ii,bi_face_idx), &

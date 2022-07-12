@@ -221,6 +221,10 @@ contains
                     !% --- get the size of the time interval
                     BC%flowR(ii, br_timeInterval) =   BC%flowTimeseries(ii, TS_upper_idx,   brts_time) &
                                                     - BC%flowTimeseries(ii, TS_upper_idx-1, brts_time)
+
+                    ! print *, ' '
+                    ! print *, 'BC flowR time interval ', ii, BC%flowR(ii, br_timeInterval)      
+                    ! print *, ' '                             
                 else
                     !% --- HACK-future expansions should include getting BC from a data structure
                     !%     or external code through API
@@ -255,9 +259,9 @@ contains
                         !% --- get the current upper bound of time interval
                         ttime => BC%headTimeseries(ii,TS_upper_idx, brts_time)
 
-                        print *, 'times in bc_step'
-                        print *, ttime, BC%headTimeseries(ii,TS_upper_idx-1, brts_time), ttime- BC%headTimeseries(ii,TS_upper_idx-1, brts_time)
-                        print *, ' '
+                        ! print *, 'times in bc_step'
+                        ! print *, ttime, BC%headTimeseries(ii,TS_upper_idx-1, brts_time), ttime- BC%headTimeseries(ii,TS_upper_idx-1, brts_time)
+                        ! print *, ' '
 
                         !% --- check to see if we need to move to the next level of the BC data
                         if (tnow > ttime) then 
@@ -294,6 +298,13 @@ contains
                     !% --- get the size of the time interval
                     BC%headR(ii, br_timeInterval) =   BC%headTimeseries(ii, TS_upper_idx,   brts_time) &
                                                     - BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+
+                    ! print *, ' '
+                    ! print *, 'BC HeadR time interval ', ii, BC%headR(ii, br_timeInterval)      
+                    ! print *, TS_upper_idx, TS_upper_idx-1
+                    ! print *, BC%headTimeseries(ii, TS_upper_idx,   brts_time)
+                    ! print *, BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+                    ! print *, ' '                         
                     !stop 29873
 
                     ! print *, 'Time Series for Head'

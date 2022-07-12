@@ -16,6 +16,7 @@ module initialization
     use utility_output
     use utility_profiler
     use utility_files
+    use utility_key_default
     use output
     use pack_mask_arrays
     use utility_crash
@@ -287,6 +288,9 @@ contains
         call util_crashstop(4429873)
         !call sleep(1)
 
+
+    
+
         ! call util_CLprint ('in initialization')
         ! stop 598734
 
@@ -394,7 +398,8 @@ contains
     
         !call util_CLprint('At end of initialization')
         !stop 445782
-    
+
+
         !%------------------------------------------------------------------- 
         !% Closing
             call init_check_setup_conditions()
@@ -580,6 +585,11 @@ contains
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        !% Set default for all link and node keys
+        call util_key_default_linknode()
+
+        !% set defaults for all KEY types in link%I
+
         !link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
@@ -659,7 +669,7 @@ contains
 
     
             !% --- special element attributes
-            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -1363,6 +1373,8 @@ contains
 
         !% allocate elem and face coarrays
         call util_allocate_elemX_faceX()
+        call util_key_default_elemX()
+        call util_key_default_face()
 
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()

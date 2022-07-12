@@ -20,7 +20,7 @@ module update
     private
 
     public :: update_auxiliary_variables
-    public :: update_Froude_number_junction_branch
+    !public :: update_Froude_number_junction_branch
 
     contains
 !%==========================================================================
@@ -35,7 +35,7 @@ module update
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
-            integer, pointer :: thisCol_all, thisCol_JM
+            integer, pointer :: thisCol_CC, thisCol_JM
             character(64) :: subroutine_name = 'update_auxiliary_variables'
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -45,37 +45,32 @@ module update
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%------------------------------------------------------------------
         !%
-            ! outstring = '    update 000 '
-            ! call util_syncwrite()
             ! print *, this_image(),'    update 000 before geom TL',setting%Time%Step
-            ! call util_CLprint ()
+            ! call util_CLprint ('in update before geometry toplevel')
         
-        !% update the head (non-surcharged) and geometry
+        !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
-            ! outstring = '    update 001 ',setting%Time%Step
-            ! call util_syncwrite()
-
             !print *, this_image(),'    update 001 after geom TL',setting%Time%Step
-            ! call util_CLprint ()
+            ! call util_CLprint ('in update before adjust_limit_velocity_max')
 
-        !% adjust velocity with limiters
+        !% --- adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
         call util_crashstop(21987)
 
-        ! print *, this_image(),'    update 002 after adjust limit velocity',this_image()
-        ! call util_CLprint ()
+            ! print *, this_image(),'    update 002 after adjust limit velocity',this_image()
+            ! call util_CLprint ('in update before update_CC_element_flowrate')
 
-        !% set packed column for updated elements
+        !% --- set packed column for updated elements
         select case (whichTM)
             case (ALLtm)
-                thisCol_all => col_elemP(ep_CC_ALLtm)
+                thisCol_CC  => col_elemP(ep_CC_ALLtm)
                 thisCol_JM  => col_elemP(ep_JM_ALLtm)
             case (ETM)
-                thisCol_all => col_elemP(ep_CC_ETM)
+                thisCol_CC  => col_elemP(ep_CC_ETM)
                 thisCol_JM  => col_elemP(ep_JM_ETM)
             case (AC)
-                thisCol_all => col_elemP(ep_CC_AC)
+                thisCol_CC  => col_elemP(ep_CC_AC)
                 thisCol_JM  => col_elemP(ep_JM_AC)
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
@@ -83,36 +78,41 @@ module update
                 call util_crashpoint(45834)
         end select
 
-        !% Compute the flowrate on CC.
-        !% Note that JM should have 0 flowrate and JB has lagged flowrate at this point.
-        !% The JB flowrate is not updated until after face interpolation
-        call update_CC_element_flowrate (thisCol_all)
+        !% --- Compute the flowrate on CC.
+        !%     Note that JM should have 0 flowrate and JB has lagged flowrate at this point.
+        !%     The JB flowrate is not updated until after face interpolation
+        call update_CC_element_flowrate (thisCol_CC)
 
-        ! print *, 'update 003 after element flowrate',this_image()
-        ! call util_CLprint ()
+            ! print *, 'update 003 after element flowrate',this_image()
+            ! call util_CLprint ('in update before update_Froude_number_element')
 
-        !% compute element Froude numbers for CC, JM
-        call update_Froude_number_element (thisCol_all)
+        !% --- compute element Froude numbers for CC
+        call update_Froude_number_element (thisCol_CC)
 
-         !print *, 'update 004 after Froude Number',this_image()
-        !  call util_CLprint ('before interpweights in update')
+            !print *, 'update 004 after Froude Number',this_image()
+            !  call util_CLprint ('in update before CC interpweights in update')
 
-        !% compute element face interpolation weights on CC, JM
-        call update_CCtm_interpweights(thisCol_all, whichTM)
+        !% --- compute the wave speeds
+        call update_wavespeed_element(thisCol_CC)
+        call update_wavespeed_element(thisCol_JM)
 
-        ! print *, 'update 005 after CC interpweights',this_image()
-        ! call util_CLprint ()
+        !% --- compute element-face interpolation weights on CC
+        call update_interpweights_CC(thisCol_CC, whichTM)
 
-        call update_JB_interpweights (thisCol_JM)
+            ! print *, 'update 005 after CC interpweights',this_image()
+            ! call util_CLprint ('in update before JB interpweights')
 
-        ! print *, 'update 006 after JB interpweights',this_image()
-        ! call util_CLprint ()
+        !% --- compute element-face interpolation weights on JB
+        call update_interpweights_JB (thisCol_JM)
+
+            ! print *, 'update 006 after JB interpweights',this_image()
+            ! call util_CLprint ('in update before update Froude Number Junction Branch')
 
         !% --- compute element Froude number for JB
-        call update_Froude_number_junction_branch (thisCol_JM) 
+        call update_Froude_number_JB (thisCol_JM) 
 
-        ! print *, 'update 007 at end after update Froud number JB',this_image()
-        ! call util_CLprint ()
+            ! print *, 'update 007 at end after update Froud number JB',this_image()
+            ! call util_CLprint ('in update at end')
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -179,13 +179,13 @@ module update
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine update_Froude_number_junction_branch (thisCol_JM)
+    subroutine update_Froude_number_JB (thisCol_JM)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% computes Froude number on each junction branch element
         !% BRHbugfix 20210812
         !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'update_Froude_number_junction_branch'
+        character(64) :: subroutine_name = 'update_Froude_number_JB'
         integer, intent(in) :: thisCol_JM
         integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
         real(8), pointer :: Froude(:), velocity(:), depth(:), grav
@@ -218,18 +218,45 @@ module update
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine update_Froude_number_junction_branch
+    end subroutine update_Froude_number_JB
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine update_CCtm_interpweights (thisCol, whichTM)
+    subroutine update_wavespeed_element(thisCol)
+        !%------------------------------------------------------------------
+        !% Description
+        !% computes the wavespeed on a CC or JM element
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisCol
+            integer, pointer :: Npack, thisP(:)
+            real(8), pointer :: wavespeed(:), ell(:), grav
+        !%------------------------------------------------------------------
+        !% Aliases:
+            Npack     => npack_elemP(thisCol)
+            if (Npack < 1) return
+            thisP     => elemP(1:Npack,thisCol)
+            wavespeed => elemR(:,er_WaveSpeed)
+            ell       => elemR(:,er_ell)
+            grav      => setting%constant%gravity
+        !%------------------------------------------------------------------
+
+        !% wavespeed at modified hydraulic depth (ell) 
+        wavespeed(thisP) = sqrt(grav * ell(thisP))
+
+    end subroutine update_wavespeed_element    
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine update_interpweights_CC (thisCol, whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% computes the interpolation weights on each element for CC
         !% tim-marching elements
         !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'update_interpolation_weights_element'
+        character(64) :: subroutine_name = 'update_interpweights_CC'
         integer, intent(in) :: thisCol, whichTM
         integer, pointer :: Npack, Npack2, thisCol_AC,  thisCol_ClosedElems, thisP(:), thisP2(:)
         real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:), QLateral(:)
@@ -286,9 +313,9 @@ module update
 
         thisP => elemP(1:Npack,thisCol)
 
-        !% wavespeed at modified hydraulic depth (ell)
-        wavespeed(thisP) = sqrt(grav * depth(thisP))
-        ! PCelerity(thisP) = zeroR !% initialize to zero
+        ! !% wavespeed at modified hydraulic depth (ell) ! moved to update_wavespeed_element()
+        ! wavespeed(thisP) = sqrt(grav * depth(thisP))
+        ! ! PCelerity(thisP) = zeroR !% initialize to zero
 
         ! if (setting%Time%Now/3600.0 > 388.0) then
         !     print *, 'in ',trim(subroutine_name), wavespeed(ietU1(2))
@@ -314,7 +341,7 @@ module update
         !     end if
         end if
 
-        ! print *, 'in update_CCtm_interpweights'
+        ! print *, 'in update_interpweights_CC'
         ! print *, '*** AAA vel - wave ',Velocity(iet) - wavespeed(iet)
         ! print *, '*** AAA vel + wave ',Velocity(iet) + wavespeed(iet)
 
@@ -428,12 +455,12 @@ module update
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine update_CCtm_interpweights
+    end subroutine update_interpweights_CC
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine update_JB_interpweights (thisCol)
+    subroutine update_interpweights_JB (thisCol)
         !%------------------------------------------------------------------
         !% Description:
         !% compute the interpolation weights for junction branches
@@ -507,7 +534,12 @@ module update
             w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
         end do
 
-    end subroutine update_JB_interpweights
+        ! print *, ' '
+        ! print *, 'in update_JB_Interpweight'
+        ! write(*,"(A,10f12.5)") 'wavespeed ',wavespeed(iet)
+        ! write(*,"(A,10f12.5)") 'ell       ',depth(iet)
+
+    end subroutine update_interpweights_JB
 !%
 !%==========================================================================
 !%==========================================================================

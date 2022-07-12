@@ -82,7 +82,16 @@ module utility
         !     print *, ' '
         ! end do
 
+        print *, ' '
         print *, trim(inputstring)
+        print *, 'this step = ',setting%Time%Hydraulics%Step
+        print *, ' '
+      !  print *, 'jb(2) volume ', elemR(iet(2),er_Volume)
+        print *, 'small depth ',elemYN(iet,eYN_isSmallDepth)
+        print *, 'zero depth ',elemYN(iet,eYN_isZeroDepth)
+        print *, 'SURCHARGED ',elemYN(iet,eYN_isSurcharged)
+
+
 
     
         ! print *, ' '
@@ -92,7 +101,52 @@ module utility
         ! print *, iet(7), elemSI(iet(7),esi_JunctionBranch_Exists)
         ! print *, ' '
 
-        write(*,*) '              tank         JB         Orifice       JB        Junction       JB  CC'
+        ! print *, 'element Type: ... '
+        ! print *,    trim(reverseKey(elemI(iet(1),ei_elementType))), ' ' ,&
+        !             trim(reverseKey(elemI(iet(2),ei_elementType))), ' ' ,&
+        !             trim(reverseKey(elemI(iet(3),ei_elementType))), ' ' ,&
+        !             trim(reverseKey(elemI(iet(4),ei_elementType))), ' ' ,&
+        !             trim(reverseKey(elemI(iet(5),ei_elementType))), ' ' ,&
+        !             trim(reverseKey(elemI(iet(6),ei_elementType))), ' ' ,&
+        !             trim(reverseKey(elemI(iet(7),ei_elementType)))
+
+        print *, 'geometry Type: ...'
+        print *,    trim(reverseKey(elemI(iet(1),ei_geometryType))), ' ' ,&
+                    trim(reverseKey(elemI(iet(2),ei_geometryType))), ' ' ,&
+                    trim(reverseKey(elemI(iet(3),ei_geometryType))), ' ' ,&
+                    trim(reverseKey(elemI(iet(4),ei_geometryType))), ' ' ,&
+                    trim(reverseKey(elemI(iet(5),ei_geometryType))), ' ' ,&
+                    trim(reverseKey(elemI(iet(6),ei_geometryType))), ' ' ,&
+                    trim(reverseKey(elemI(iet(7),ei_geometryType)))   
+                  
+        ! print *, 'orifice Specific Type: ...'            
+        ! print *,    trim(reverseKey(elemSI(iet(1),esi_Orifice_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(2),esi_Orifice_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(3),esi_Orifice_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(4),esi_Orifice_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(5),esi_Orifice_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(6),esi_Orifice_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(7),esi_Orifice_SpecificType)))                  
+                    
+                    
+        ! print *, 'weir Specific Type: ...'  
+        ! print *,    trim(reverseKey(elemSI(iet(1),esi_Weir_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(2),esi_Weir_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(3),esi_Weir_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(4),esi_Weir_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(5),esi_Weir_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(6),esi_Weir_SpecificType))), ' ' ,&
+        !             trim(reverseKey(elemSI(iet(7),esi_Weir_SpecificType)))   
+
+        write(*,*) '              tank         JB        [feature]    JB        Junction/JB/CC'
+
+        ! write(*,"(A,10f12.5)") 'Ws        ',elemR(iet(1),er_WaveSpeed), &
+        !                                     elemR(iet(2),er_WaveSpeed), &
+        !                                     elemR(iet(3),er_WaveSpeed), &
+        !                                     elemR(iet(4),er_WaveSpeed), &
+        !                                     elemR(iet(5),er_WaveSpeed), &
+        !                                     elemR(iet(6),er_WaveSpeed), &
+        !                                     elemR(iet(7),er_WaveSpeed)
      
         write(*,"(A,10f12.5)") 'Q elem    ',elemR(iet(1),er_Flowrate), &
                                             elemR(iet(2),er_Flowrate), &
@@ -103,13 +157,13 @@ module utility
                                             elemR(iet(7),er_Flowrate)
 
 
-        write(*,"(A,10f12.5)") 'Q lat     ',elemR(iet(1),er_FlowrateLateral), &
-                                            elemR(iet(2),er_FlowrateLateral), &
-                                            elemR(iet(3),er_FlowrateLateral), &
-                                            elemR(iet(4),er_FlowrateLateral), &
-                                            elemR(iet(5),er_FlowrateLateral), &
-                                            elemR(iet(6),er_FlowrateLateral), &
-                                            elemR(iet(7),er_FlowrateLateral)
+        ! write(*,"(A,10f12.5)") 'Q lat     ',elemR(iet(1),er_FlowrateLateral), &
+        !                                     elemR(iet(2),er_FlowrateLateral), &
+        !                                     elemR(iet(3),er_FlowrateLateral), &
+        !                                     elemR(iet(4),er_FlowrateLateral), &
+        !                                     elemR(iet(5),er_FlowrateLateral), &
+        !                                     elemR(iet(6),er_FlowrateLateral), &
+        !                                     elemR(iet(7),er_FlowrateLateral)
 
         ! write(*,"(A,10f12.5)") 'Qf ',   0.d0,&
         !                                 0.d0,&
@@ -120,13 +174,13 @@ module utility
         !                                 faceR(ift(3),fr_Flowrate), &
         !                                 faceR(ift(4),fr_Flowrate)
     
-        write(*,"(A,10f12.5)") 'V elem    ',elemR(iet(1),er_Volume), &
-                                            elemR(iet(2),er_Volume), &
-                                            elemR(iet(3),er_Volume), &
-                                            elemR(iet(4),er_Volume), &
-                                            elemR(iet(5),er_Volume), &
-                                            elemR(iet(6),er_Volume), &
-                                            elemR(iet(7),er_Volume)  
+        ! write(*,"(A,10f12.5)") 'V elem    ',elemR(iet(1),er_Volume), &
+        !                                     elemR(iet(2),er_Volume), &
+        !                                     elemR(iet(3),er_Volume), &
+        !                                     elemR(iet(4),er_Volume), &
+        !                                     elemR(iet(5),er_Volume), &
+        !                                     elemR(iet(6),er_Volume), &
+        !                                     elemR(iet(7),er_Volume)  
 
         write(*,"(A,10f12.5)") 'D elem    ',elemR(iet(1),er_Depth), &
                                         elemR(iet(2),er_Depth), &
@@ -134,9 +188,56 @@ module utility
                                         elemR(iet(4),er_Depth), &
                                         elemR(iet(5),er_Depth), &
                                         elemR(iet(6),er_Depth), &
-                                        elemR(iet(7),er_Depth)       
-                                        
-                                        
+                                        elemR(iet(7),er_Depth)    
+
+        write(*,"(A,10f12.5)") 'HydD elem ',elemR(iet(1),er_HydDepth), &
+                                        elemR(iet(2),er_HydDepth), &
+                                        elemR(iet(3),er_HydDepth), &
+                                        elemR(iet(4),er_HydDepth), &
+                                        elemR(iet(5),er_HydDepth), &
+                                        elemR(iet(6),er_HydDepth), &
+                                        elemR(iet(7),er_HydDepth)  
+                                            
+        write(*,"(A,10f12.5)") 'Ell elem  ',elemR(iet(1),er_ell), &
+                                        elemR(iet(2),er_ell), &
+                                        elemR(iet(3),er_ell), &
+                                        elemR(iet(4),er_ell), &
+                                        elemR(iet(5),er_ell), &
+                                        elemR(iet(6),er_ell), &
+                                        elemR(iet(7),er_ell)  
+                                    
+                                     
+        ! write(*,"(A,10f12.5)") 'fullD elem',elemR(iet(1),er_fullDepth), &
+        !                                 elemR(iet(2),er_fullDepth), &
+        !                                 elemR(iet(3),er_fullDepth), &
+        !                                 elemR(iet(4),er_fullDepth), &
+        !                                 elemR(iet(5),er_fullDepth), &
+        !                                 elemR(iet(6),er_fullDepth), &
+        !                                 elemR(iet(7),er_fullDepth)  
+
+        ! write(*,"(A,10f12.5)") 'L elem    ',elemR(iet(1),er_Length), &
+        !                                 elemR(iet(2),er_Length), &
+        !                                 elemR(iet(3),er_Length), &
+        !                                 elemR(iet(4),er_Length), &
+        !                                 elemR(iet(5),er_Length), &
+        !                                 elemR(iet(6),er_Length), &
+        !                                 elemR(iet(7),er_Length)                                  
+                                            
+        ! write(*,"(A,10f12.5)") 'R breadth ',elemSGR(iet(1),esgr_Rectangular_Breadth), &
+        !                                 elemSGR(iet(2),esgr_Rectangular_Breadth), &
+        !                                 elemSGR(iet(3),esgr_Rectangular_Breadth), &
+        !                                 elemSGR(iet(4),esgr_Rectangular_Breadth), &
+        !                                 elemSGR(iet(5),esgr_Rectangular_Breadth), &
+        !                                 elemSGR(iet(6),esgr_Circular_Diameter), &
+        !                                 elemSGR(iet(7),esgr_Circular_Diameter)    
+                                          
+        ! write(*,"(A,10f12.5)") 'B max     ',elemR(iet(1),er_BreadthMax), &
+        !                                 elemR(iet(2),er_BreadthMax), &
+        !                                 elemR(iet(3),er_BreadthMax), &
+        !                                 elemR(iet(4),er_BreadthMax), &
+        !                                 elemR(iet(5),er_BreadthMax), &
+        !                                 elemR(iet(6),er_BreadthMax), &
+        !                                 elemR(iet(7),er_BreadthMax)                                  
         write(*,"(A,10f12.5)") 'H elem    ',elemR(iet(1),er_Head), &
                                         elemR(iet(2),er_Head), &
                                         elemR(iet(3),er_Head), &
@@ -145,18 +246,36 @@ module utility
                                         elemR(iet(6),er_Head), &
                                         elemR(iet(7),er_Head)   
 
-        write(*,"(A,10f12.5)") 'Hf ',   0.d0,&
-                                        0.d0,&
-                                        faceR(ift(1),fr_Head_u), &
-                                        faceR(ift(2),fr_Head_d), &
-                                        0.d0,&
-                                        0.d0,&
-                                        faceR(ift(3),fr_Head_u), &
-                                        faceR(ift(4),fr_Head_u)                                
+        write(*,"(A,10f12.5)") 'Z btm     ',elemR(iet(1),er_Zbottom), &
+                                        elemR(iet(2),er_Zbottom), &
+                                        elemR(iet(3),er_Zbottom), &
+                                        elemR(iet(4),er_Zbottom), &
+                                        elemR(iet(5),er_Zbottom), &
+                                        elemR(iet(6),er_Zbottom), &
+                                        elemR(iet(7),er_Zbottom)            
+                                        
+        ! write(*,"(A,10f12.5)") 'Z bmax    ',elemR(iet(1),er_ZbreadthMax), &
+        !                                 elemR(iet(2),er_ZbreadthMax), &
+        !                                 elemR(iet(3),er_ZbreadthMax), &
+        !                                 elemR(iet(4),er_ZbreadthMax), &
+        !                                 elemR(iet(5),er_ZbreadthMax), &
+        !                                 elemR(iet(6),er_ZbreadthMax), &
+        !                                 elemR(iet(7),er_ZbreadthMax)                                       
+
+        ! write(*,"(A,10f12.5)") 'Hf ',   0.d0,&
+        !                                 0.d0,&
+        !                                 faceR(ift(1),fr_Head_u), &
+        !                                 faceR(ift(2),fr_Head_d), &
+        !                                 0.d0,&
+        !                                 0.d0,&
+        !                                 faceR(ift(3),fr_Head_u), &
+        !                                 faceR(ift(4),fr_Head_u)                                
         ! print *, 'fup ',fup(iet)
         ! print *, 'fdn ',fdn(iet) 
 
-            
+        ! if (elemR(iet(2),er_Volume) > tenR) then
+        !     stop 2098734
+        ! end if
        
 
         ! print *, 'eup ',eup(ift)
