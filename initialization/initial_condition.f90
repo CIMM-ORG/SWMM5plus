@@ -2783,7 +2783,7 @@ contains
         tPack = zeroI
         npack = count(geoType == rectangular_closed)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == rectangular)
+            tPack(1:npack) = pack(eIdx,geoType == rectangular_closed)
             smallvolume(tPack(1:npack)) = rectangular_closed_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
         end if
       
