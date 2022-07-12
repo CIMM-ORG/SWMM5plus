@@ -9,7 +9,7 @@
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "RawElemLength",
-        "NominalElemLength" : 100.00
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "BC" : {
@@ -26,7 +26,7 @@
         },
         "Velocity" : {
             "UseLimitMaxYN" : true,
-            "Maximum" : 200.0
+            "Maximum" : 10.0
         },
         "ArraySize" : {
             "TemporalInflows" : 10,
@@ -123,7 +123,7 @@
             "SmallDepthMultiplier" : 3.0
         },
         "Head" : {
-            "ApplyYN" : true,
+            "ApplyYN" : false,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0
         }
@@ -183,5 +183,14 @@
         },
         "SetupYN"  : true,
         "OutputYN" : true
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0
     }
 }

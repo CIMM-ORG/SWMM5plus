@@ -522,7 +522,7 @@ module face
             endwhere
 
             faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_u)
-            faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Velocity_d)/faceR(idx_fBC,fr_Area_d)  
+            faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)  
 
             !%  limit high velocities
             if (setting%Limiter%Velocity%UseLimitMaxYN) then
@@ -538,7 +538,17 @@ module face
         else
             !% continue
         end if
-      
+        ! print*
+        ! print*, 'Dn bc face'
+        ! print*, faceR(idx_fBC, fr_Head_u), 'faceR(idx_fBC, fr_Head_u)'
+        ! print*, faceR(idx_fBC, fr_Head_d), 'faceR(idx_fBC, fr_Head_d)'
+        ! print*, faceR(idx_fBC,fr_Topwidth_d), 'faceR(idx_fBC,fr_Topwidth_d)'
+        ! print*, faceR(idx_fBC,fr_Area_d) , 'faceR(idx_fBC,fr_Area_d) '
+        ! print*, faceR(idx_fBC,fr_HydDepth_d), 'faceR(idx_fBC,fr_HydDepth_d)'
+        ! print*, faceR(idx_fBC, fr_Flowrate) , 'faceR(idx_fBC, fr_Flowrate) '
+        ! print*, faceR(idx_fBC,fr_Velocity_u) , 'faceR(idx_fBC,fr_Velocity_u) '
+        ! print*, faceR(idx_fBC,fr_Velocity_d), 'faceR(idx_fBC,fr_Velocity_d)'
+        ! print*
         !%--------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%boundary_conditions) &

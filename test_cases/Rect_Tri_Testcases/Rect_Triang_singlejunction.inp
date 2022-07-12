@@ -48,7 +48,7 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                1          10          1          0          0         
+1                0.5          10          1         0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
@@ -58,7 +58,7 @@ DRY_ONLY         NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                1                3                1000       0.01       0          0          3          0         
+1                1                3                1000       0.01       0          0          1          0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -68,7 +68,7 @@ DRY_ONLY         NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      10     
+1                FLOW             ""               FLOW     1.0      1.0      1     
 
 [REPORT]
 ;;Reporting Options

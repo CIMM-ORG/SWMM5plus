@@ -62,9 +62,8 @@ module rectangular_triangular_channel
         endwhere
 
         if (setting%Debug%File%geometry) &
-                print *, 'depth =   ' , depth(thisP), 'volume = ', volume(thisP)
+                print *, 'depth =   ' , depth(thisP)
                 
-
     end subroutine rectangular_triangular_depth_from_volume
 !%
 !%==========================================================================
@@ -135,8 +134,8 @@ module rectangular_triangular_channel
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol) 
         topwidth    => elemR(:,er_Topwidth)
-        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
         depth       => elemR(:,er_Depth)
+        sideslope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
         bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
         breadth     => elemSGR(:,esgr_rectangular_Triangular_TopBreadth)
         !%-----------------------------------------------------------------------------
@@ -150,7 +149,6 @@ module rectangular_triangular_channel
 
         if (setting%Debug%File%geometry) &
             print *, 'topwidth = ' , topwidth(thisP)
-
 
     end subroutine rectangular_triangular_topwidth_from_depth
 !%    

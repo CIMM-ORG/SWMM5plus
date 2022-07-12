@@ -1022,15 +1022,15 @@ contains
                     elemI(:,ei_geometryType)                            = rect_triang
                     elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
                     elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
-                    elemSGR(:,esgr_Rectangular_Triangular_Slope)        = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+                    elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
                     elemSGR(:,esgr_Rectangular_Triangular_BottomArea)   = elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)  * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) * &
-                                                                            elemSGR(:,esgr_Rectangular_Triangular_Slope) 
-                    elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(:,esgr_Rectangular_Triangular_Slope) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) )
+                                                                            elemSGR(:,esgr_Rectangular_Triangular_BottomSlope) 
+                    
                     elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_ones)         = oneR
                     elemR(:,er_Temp01)       = zeroR
                     elemR(:,er_Area)         = max(elemR(:,er_Temp01), sign(elemR(:,er_ones),(elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) - elemR(:,er_depth)))) * elemR(:,er_depth) * &
-                                                elemR(:,er_depth) * elemSGR(:,esgr_Rectangular_Triangular_Slope) + max(elemR(:,er_Temp01), sign(elemR(:,er_ones),(elemR(:,er_depth) - &
+                                                elemR(:,er_depth) * elemSGR(:,esgr_Rectangular_Triangular_BottomSlope) + max(elemR(:,er_Temp01), sign(elemR(:,er_ones),(elemR(:,er_depth) - &
                                                 elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)))) *(elemSGR(:,esgr_Rectangular_Triangular_BottomArea) + (elemR(:,er_depth) - &
                                                 elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)) * elemSGR(:,esgr_Rectangular_Triangular_TopBreadth))
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
@@ -2812,10 +2812,18 @@ contains
         tPack = zeroI
         npack = count(geoType == rectangular_closed)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == rectangular)
+            tPack(1:npack) = pack(eIdx,geoType == rectangular_closed)
             smallvolume(tPack(1:npack)) = rectangular_closed_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
         end if
-      
+
+        !% --- rectangular_triangular channel
+        tPack = zeroI
+        npack = count(geoType == rect_triang)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == rect_triang)
+            smallvolume(tPack(1:npack)) = rectangular_triangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if
+
         !% --- trapezoidal conduit  
         tPack = zeroI
         npack = count(geoType == trapezoidal)
@@ -2837,8 +2845,6 @@ contains
         end if 
 
         !% ---  circular conduit
-
-
         tPack = zeroI
         npack = count(geoType == circular)
         if (npack > 0) then

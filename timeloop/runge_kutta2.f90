@@ -524,7 +524,6 @@ module runge_kutta2
 
             !% velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
-            !print *, '... vel     :',elemR(1:3,er_Velocity)
 
         end if
 
