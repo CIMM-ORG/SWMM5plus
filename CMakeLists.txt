@@ -133,7 +133,8 @@ file(GLOB
 add_library(swmm5 SHARED 
     ${SWMM_SOURCES}
 )
-set_target_properties(swmm5 PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(swmm5 PROPERTIES LINKER_LANGUAGE C
+CXX_STANDARD 14)
 
 
 add_executable(SWMM
