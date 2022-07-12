@@ -380,28 +380,34 @@ module orifice_elements
                 HydRadius = Area / Perimeter
 
             case (circular)
-                print *, 'Depth              ',Depth
-                print *, 'EffectiveFullDepth ',EffectiveFullDepth
+                !print *, 'Depth              ',Depth
+                !print *, 'EffectiveFullDepth ',EffectiveFullDepth
                 YoverYfull  = Depth / EffectiveFullDepth
                 Area        = EffectiveFullArea * &
                         xsect_table_lookup_singular (YoverYfull, ACirc)
                 Volume      = Area * Length
                 Topwidth    = EffectiveFullDepth * &
                         xsect_table_lookup_singular (YoverYfull, TCirc)
-                HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                if (Topwidth > zeroR) then
+                    HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                else
+                    if (YoverYfull .ge. oneR) then
+                        HydDepth = EffectiveFullDepth
+                    else
+                        HydDepth = setting%ZeroValue%Depth
+                    end if
+                end if
                 hydRadius   = onefourthR * EffectiveFullDepth * &
                         xsect_table_lookup_singular (YoverYfull, RCirc)
-                Perimeter   = min(Area / hydRadius, &
+                if (hydRadius > zeroR) then
+                    Perimeter   = min(Area / hydRadius, &
                         EffectiveFullArea / (onefourthR * EffectiveFullDepth))
+                else
+                    Perimeter = setting%ZeroValue%Depth
+                end if
 
                 ell = geo_ell_singular(eIdx)
-
-                print *, 'in orifice geometry update'
-                print *, 'HydDepth       ',HydDepth
-                print *, 'Area/Topwidth  ' ,Area / TopWidth
-                print *, 'Area           ', Area
-                print *, 'topwidth       ', Topwidth
-                print *, 'Eff full depth ',EffectiveFullDepth        
+   
             case default
                 print *, 'CODE ERROR geometry type unknown for # ', GeometryType
                 print *, 'which has key ',trim(reverseKey(GeometryType))

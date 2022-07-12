@@ -508,14 +508,21 @@ module lowlevel_rk2
                     ) &
                 + eKsource(thisP)
 
-        !print *, '  source ',elemR(780,outCol)
-        !print *, 'in ll_momentum_source_CC'
-        !print *, fQ(iup(1)), fUdn(iup(1))
-        !print *, fQ(idn(1)), fUup(idn(1))
-        !print *,  fQ(iup(1)) * fUdn(iup(1)) - fQ(idn(1)) * fUup(idn(1))
-        !print *,  (fAdn(iup(1)) * fHdn(iup(1))  - fAup(idn(1)) * fHup(idn(1)) ) * grav
-        !print *,   eKsource(1)
-        !print *,  elemR(1,outCol)
+        print *, ' '
+        print *, 'in ll_momentum_source_cc'
+        ! print *, 'fQ  * fU up',fQ(iup(iet(7))) * fUdn(iup(iet(7)))
+        ! print *, 'fQ  * fU dn',fQ(idn(iet(7))) * fUup(idn(iet(7)))
+        ! print *, 'fAdn * Hdn ',fAdn(iup(iet(7))) * fHdn(iup(iet(7)))
+        ! print *, 'fAup * Hup ',fAup(idn(iet(7))) * fHup(idn(iet(7)))
+        ! print *, 'eksource ',eKsource(iet(7))
+        ! print *, 'out       ',elemR(iet(7),outCol)
+        print *, 'FQ term', fQ(iup(iet(7))) * fUdn(iup(iet(7))) - fQ(idn(iet(7))) * fUup(idn(iet(7)))
+        print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(7))) * fHdn(iup(iet(7))) - fAup(idn(iet(7))) * fHup(idn(iet(7))))
+        print *, 'fAdn , Hdn ',fAdn(iup(iet(7))) , fHdn(iup(iet(7)))
+        print *, 'fAup , Hup ',fAup(idn(iet(7))) , fHup(idn(iet(7)))
+        print *, 'eksource   ',eKsource(iet(7))
+        print *, 'out        ',elemR(iet(7),outCol)
+        print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -629,8 +636,13 @@ module lowlevel_rk2
         Msource => elemR(:,er_SourceMomentum)
         GammaM  => elemR(:,er_GammaM)
 
-        !print *, ' Msource ', elemR(780,er_SourceMomentum)
-        !print *, ' Gamma   ', elemR(780,er_GammaM)
+        ! print *, ' '
+        ! print *, 'in ll_momentum_solve_CC'
+        ! print *, ' Msource ', Msource(iet(7))
+        ! print *, ' Gamma   ', GammaM(iet(7))
+        ! print *, ' Vprod   ',volumeLast(iet(7)) * velocityLast(iet(7))
+        ! print *, 'crk,delt ', crk(istep),delt
+        ! print *, ' '
 
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &

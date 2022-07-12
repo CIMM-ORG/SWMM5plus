@@ -522,7 +522,8 @@ contains
                     interpV(ii), BC%flowTimeSeries, tnow, ii, lower_idx, upper_idx(ii) )
 
             !% HACK: do not let BC value to get smaller than zero
-            interpV(ii) = max(interpV(ii),zeroR)
+            !%       the absolute value is needed because of how max() handles very small differences.
+            interpV(ii) = abs(max(interpV(ii),zeroR))
             
             !% --- error checking
             ! if (lower_idx <= 0) then 
