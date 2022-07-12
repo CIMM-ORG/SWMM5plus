@@ -21,6 +21,7 @@ module initial_condition
     use geometry !BRHbugfix 20210813
     use circular_conduit
     use rectangular_channel, only: rectangular_area_from_depth
+    use rectangular_conduit, only: rectangular_closed_area_from_depth
     use trapezoidal_channel, only: trapezoidal_area_from_depth
     use triangular_channel, only: triangular_area_from_depth
     use storage_geometry
@@ -2767,7 +2768,7 @@ contains
         tempDepth = Depth
         depth = depthCutoff
                 
-        !% --- rectangular conduit
+        !% --- rectangular channel
         tPack = zeroI
         npack = count(geoType == rectangular)
         if (npack > 0) then
@@ -2777,6 +2778,14 @@ contains
         !where (geoType == rectangular)
         !    !smallVolume = depthCutoff * length * rectB
         !end where
+
+        !% --- rectangular conduit
+        tPack = zeroI
+        npack = count(geoType == rectangular_closed)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == rectangular)
+            smallvolume(tPack(1:npack)) = rectangular_closed_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if
       
         !% --- trapezoidal conduit  
         tPack = zeroI
