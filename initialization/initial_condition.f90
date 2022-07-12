@@ -1592,7 +1592,7 @@ contains
                         elemSI(ii,esi_Pump_SpecificType) = type4_Pump
                     else
                         print *, 'In ', subroutine_name
-                        print *, 'CODE ERROR: unknown orifice type, ', specificPumpType,'  in network'
+                        print *, 'CODE ERROR: unknown pump type, ', specificPumpType,'  in network'
                         print *, 'which has key ',trim(reverseKey(specificPumpType))
                         !stop 
                         call util_crashpoint(8863411)
@@ -1783,67 +1783,69 @@ contains
             end if
 
             !% --- the element type upstream
-            select case (elemI(Aidx,ei_elementType)[Ci])
-                case (CC)
-                    !% --- if an upstream element is a channel/conduit, use this for the background channel
-                    !%     geometry of the diagnostic element in which the weir/orifice/pump/outlet is embeded
+            if (elemI(Aidx,ei_elementType)[Ci] == CC) then
+                !% --- if an upstream element is a channel/conduit, use this for the background channel
+                !%     geometry of the diagnostic element in which the weir/orifice/pump/outlet is embeded
+                elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
+                elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
+                !% --- copy special geometry
+                call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
+                
+            else
+                !% --- if the upstream element is not CC, use the downstream element CC geometry
+                if (elemI(thisP,ei_elementType) == outlet) then
+                    !% --- outlets are required to have upstream CC
+                    print *, 'USER SYSTEM CONFIGURATION ERROR'
+                    print *, 'An outlet requires at least one upstream link that is a'
+                    print *, 'conduit or channel. This condition violated for'
+                    print *, 'outlet with name ',trim(link%Names(linkIdx)%str)
+                    call util_crashpoint(92873)
+                end if
+
+                !% --- the downstream face
+                Fidx => elemI(thisP,ei_Mface_dL)
+                !% --- the downstream element
+                !%     which may be on a different image
+                if (elemYN(thisP,eYN_isBoundary_dn)) then
+                    Ci   =  faceI(Fidx,fi_Connected_image)
+                    Aidx => faceI(Fidx,fi_GhostElem_dL)
+                else
+                    Ci   =  this_image()
+                    Aidx => faceI(Fidx,fi_Melem_dL)
+                end if
+
+                !% --- the element type downstream
+                if (elemI(Aidx,ei_elementType)[Ci] == CC) then
+                    !% --- if a downstream element is a channel/conduit, use this for the
+                    !%     geometry of the element in which the weir/orifice/pump is embeded
                     elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
                     elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
-                    !% --- copy special geometry
-                    call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
-                
-                case default
-                    !% --- if the upstream element is not CC, then use the downstream element geometry
-                    !%     (assuming it is CC)
-                    !% --- the downstream face
-                    Fidx => elemI(thisP,ei_Mface_dL)
-                    !% --- the downstream element
-                    !%     which may be on a different image
-                    if (elemYN(thisP,eYN_isBoundary_dn)) then
-                        Ci   =  faceI(Fidx,fi_Connected_image)
-                        Aidx => faceI(Fidx,fi_GhostElem_dL)
-                    else
-                        Ci   =  this_image()
-                        Aidx => faceI(Fidx,fi_Melem_dL)
-                    end if
-
-                    !% --- the element type downstream
-                    select case (elemI(Aidx,ei_elementType)[Ci])
-                        case (CC)
-                            !% --- if a downstream element is a channel/conduit, use this for the
-                            !%     geometry of the element in which the weir/orifice/pump is embeded
-                            elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
-                            elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
-                            !% --- copy over special geometry
-                            call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
-                        
+                    !% --- copy over special geometry
+                    call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)  
+                else
+                    !% --- if the downstream element is NOT channel/conduit, then accept
+                    !%     the default geometry or fail
+                    select case (elemI(thisP,ei_elementType))
+                        case (weir)
+                            !% --- default set in init_IC_diagnostic_default_geometry
+                        case (orifice)
+                            !% --- default set in init_IC_diagnostic_default_geometry
+                        case (pump)
+                            !% --- pumps do not have default channel geometry, so they must
+                            !%     have a CC element upstream or downstream.
+                            print *, 'USER SYSTEM CONFIGURATION ERROR'
+                            print *, 'A pump requires at least one upstream or downstream link that is a'
+                            print *, 'conduit or channel. This condition violated for'
+                            print *, 'pump with name ',trim(link%Names(linkIdx)%str)
+                            call util_crashpoint(23987)
+                        case (outlet)
+                            !% --- Outlet already failed for not having CC upstream
                         case default
-                            !% --- if the downstream element is NOT channel/conduit, then accept
-                            !%     the default geometry or fail
-                            select case (elemI(thisP,ei_elementType))
-                                case (weir)
-                                    !% --- weirs are OK with default channel geometry, so no action
-                                case (orifice)
-                                    !% --- orifices are OK with default channel geometry, so no action
-                                case (pump)
-                                    !% --- pumps do not have default channel geometry, so they must
-                                    !%     have a CC element upstream or downstream.
-                                    print *, 'USER SYSTEM CONFIGURATION ERROR'
-                                    print *, 'A pump requires at least one upstream or downstream link that is a'
-                                    print *, 'conduit or channel. This condition violated for'
-                                    print *, 'pump with name ',trim(link%Names(linkIdx)%str)
-                                    call util_crashpoint(23987)
-                                case (outlet)
-                                    !% --- outlets do not have default channel geometry, so they must
-                                    !%     have a CC element upstream or downstream.
-                                    print *, 'USER SYSTEM CONFIGURATION ERROR'
-                                    print *, 'An outelt requires at least one upstream or downstream link that is a'
-                                    print *, 'conduit or channel. This condition violated for'
-                                    print *, 'outlet with name ',trim(link%Names(linkIdx)%str)
-                                    call util_crashpoint(92873)
-                            end select
+                            print *, 'CODE ERROR: unexpected case default'
+                            call util_crashpoint(5529873)
                     end select
-            end select
+                end if
+            end if
         end do
 
         !%-----------------------------------------------------------------
@@ -2077,13 +2079,13 @@ contains
 
             !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
 
-            !% find the element id of junction branches
+            !% --- find the element id of junction branches
             JBidx = JMidx + ii
 
             print *, 'JBidx ',JBidx
 
-            !% set the adjacent element id where elemI and elemR data can be extracted
-            !% note that elemSGR etc are not yet assigned
+            !% --- set the adjacent element id where elemI and elemR data can be extracted
+            !%     note that elemSGR etc are not yet assigned
             if (mod(ii,2) == zeroI) then
                 Fidx => elemI(JBidx,ei_MFace_dL)
                 !% even are downstream branches
@@ -2094,7 +2096,7 @@ contains
                     Ci   = this_image()
                     Aidx = faceI(Fidx,fi_Melem_dL)
                 end if
-            !% odd are upstream branches
+            !% --- odd are upstream branches
             else
                 Fidx => elemI(JBidx,ei_MFace_uL)
                 if (elemYN(JBidx,eYN_isBoundary_up)) then
@@ -2106,11 +2108,11 @@ contains
                 end if
             end if
 
-            !% set the junction branch element type
+            !% --- set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
 
-            !% set the geometry for existing branches
-            !% Note that elemSI(,...Exists) is set in init_network_handle_nJm
+            !% --- set the geometry for existing branches
+            !%     Note that elemSI(,...Exists) is set in init_network_handle_nJm
             if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
 
             BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
@@ -2118,24 +2120,26 @@ contains
 
             !print *, 'linkgeo', link%I(BranchIdx,li_geometry), reverseKey(link%I(BranchIdx,li_geometry))
 
-            !% set the JB to time_march for use with splitting between AC
-            !% and ETM in rk2_extrapolate_to_fullstep_ETM, rk2_restore_to_midstep_ETM
-            !% rk2_interpolate_to_halfstep_AC, k2_restore_to_fullstep_AC
+            !% --- set the JB to time_march for use with splitting between AC
+            !%     and ETM in rk2_extrapolate_to_fullstep_ETM, rk2_restore_to_midstep_ETM
+            !%     rk2_interpolate_to_halfstep_AC, k2_restore_to_fullstep_AC
             elemI(JBidx,ei_HeqType) = time_march
             elemI(JBidx,ei_QeqType) = time_march
 
-            !% Junction branch k-factor
-            !% If the user does not input the K-factor for junction branches entrance/exit loses then
-            !% use default from setting
+            !% ---Junction branch k-factor
+            !%    If the user does not input the K-factor for junction branches entrance/exit loses then
+            !%    use default from setting
             if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
                 elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
             else
                 elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
             end if
 
-            !% set the initial head to the same as the junction main
+            !% --- set the initial head and to the same as the junction main
             elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
+            !% --- set the depth consistent with JB bottom
             elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom)
+            !% --- check for dry
             if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
                 elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
                 elemR(JBidx,er_Depth) = zeroR
@@ -2144,19 +2148,42 @@ contains
             elemR(JBidx,er_VolumeOverFlow) = zeroR
             elemR(JBidx,er_VolumeOverFlowTotal) = zeroR
 
-            !% JB elements initialized for momentum
+
+            !% --- JB elements initialized for momentum
             elemR(JBidx,er_Flowrate)     = elemR(Aidx,er_Flowrate)[Ci] !% flowrate of adjacent element
             elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
             elemR(JBidx,er_FroudeNumber) = zeroR
 
-            !% Set the face flowrates such that it does not blowup the initial interpolation
+            !% --- Set the face flowrates such that it does not blowup the initial interpolation
             if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
                 faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
             else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
                 faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
             end if
 
-            !% Set the geometry from the adjacent elements
+            !% 20220712 brh
+            !% --- handle special elements adjacent to JB
+            select case (elemI(Aidx,ei_elementType))
+            case (orifice)
+                !% --- force geometry shape
+                elemI(JBidx,ei_geometryType) = rectangular_closed
+                elemYN(JBidx,eYN_canSurcharge) = .true.
+            case (weir)
+                !% --- force geometry shape
+                elemI(JBidx,ei_geometryType) = rectangular_closed
+                elemYN(JBidx,eYN_canSurcharge) = .true.
+            case (outlet)
+                !% ---- not allowed, must have CC
+                print *, 'SETUP ERROR'
+                print *, 'Outlet is adjacent to a junction. There must be at least one intervening channel or conduit'
+                call util_crashpoint(6698273)
+            case (pump)
+                elemI(JBidx,ei_geometryType) = rectangular_closed
+                elemYN(JBidx,eYN_canSurcharge) = .true.
+            case default
+            end select
+
+            !% --- Set the geometry from the adjacent elements
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
             elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
 
