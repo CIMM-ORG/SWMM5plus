@@ -63,8 +63,8 @@
         "InitialDt"      : 1.0
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 3.00,
+        "PreissmannSlotMethod" : "StaticSlot",
+        "TargetPreissmannCelerity" : 15.00,
         "PreissmannAlpha"          : 2.00 
     }
 }
