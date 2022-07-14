@@ -522,7 +522,7 @@ module face
             endwhere
 
             faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_u)
-            faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Velocity_d)/faceR(idx_fBC,fr_Area_d)  
+            faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)  
 
             !%  limit high velocities
             if (setting%Limiter%Velocity%UseLimitMaxYN) then
