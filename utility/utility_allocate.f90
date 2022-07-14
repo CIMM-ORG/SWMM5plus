@@ -4,7 +4,6 @@ module utility_allocate
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use define_globals
     use interface_
     use utility
 
@@ -2147,7 +2146,6 @@ contains
     end subroutine util_allocate_check
 !%    
 !%==========================================================================
-
 !% END OF MODULE
 !%==========================================================================
 !%

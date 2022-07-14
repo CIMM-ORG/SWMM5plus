@@ -23,6 +23,7 @@ module storage_geometry
     public :: storage_integrate_area_vs_depth_curve
     public :: storage_interpolate_volume_from_depth_singular
     public :: storage_create_curve
+    !public :: storage_implied_length
 
     contains
 !%
@@ -84,6 +85,10 @@ module storage_geometry
             integer :: ii
         !%-----------------------------------------------------------------------------
 
+        ! print *, ' '
+        ! print *, 'in storage tabular depth from volume'
+        ! print *, ' '
+        
         !% HACK: Find out a way to code this without do loop
         do ii = 1, Npack
             thisP   => elemPGx(ii,thisCol) 
@@ -225,7 +230,32 @@ module storage_geometry
     end subroutine storage_create_curve
 !%  
 !%==========================================================================
-
+!%==========================================================================
+!%
+    ! subroutine storage_implied_length (elemPGx, Npack, thisCol)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes an implied length scale of the storage element
+    !     !% for tabular or functional storage elements
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+    !         integer, pointer :: thisP(:)
+    !         real(8), pointer :: depth(:), volume(:), length(:)
+    !     !%-----------------------------------------------------------------------------
+    !     !% Aliases
+    !         if (Npack < 1) return
+    !         thisP   => elemPGx(1:Npack,thisCol) 
+    !         depth   => elemR(:,er_Depth)
+    !         volume  => elemR(:,er_Volume)
+    !         length  => elemR(:,er_Length)
+    !     !%------------------------------------------------------------------
+        
+    !     length(thisP) = sqrt(volume(thisP) / depth(thisP))    
+        
+    ! end subroutine storage_implied_length
+!%  
+!%==========================================================================
 !%==========================================================================
 !%
 !%

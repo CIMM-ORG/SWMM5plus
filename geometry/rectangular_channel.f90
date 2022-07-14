@@ -84,6 +84,8 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
         breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
+       ! print *, 'in rectangular_area_from_depth_singular'
+       ! print *, indx, breadth(indx), depth
         outvalue = depth * breadth(indx)
 
     end function rectangular_area_from_depth_singular

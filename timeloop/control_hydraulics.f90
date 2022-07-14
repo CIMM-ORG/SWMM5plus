@@ -48,35 +48,35 @@ contains
             character(64) :: subroutine_name = 'control_update'
         !%------------------------------------------------------------------
 
-        print *, 'calling control_update_monitor_across_images'
+        !print *, 'calling control_update_monitor_across_images'
 
         !% --- store monitoring element data across all images
         call control_update_monitor_across_images()
 
-        print *, 'calling control_update_EPASWMM_monitor_data'
+        !print *, 'calling control_update_EPASWMM_monitor_data'
 
         !% --- transfer monitoring data to EPA-SWMM to all images
         call control_update_EPASWMM_monitor_data()
 
-        print *, 'calling interface_controls_execute'
+        !print *, 'calling interface_controls_execute'
 
         !% --- execute control algorithm in EPA-SWMM on all images
         call interface_controls_execute ()
 
-        print *, 'calling  control_update_actions'
+        !print *, 'calling  control_update_actions'
 
         !% --- retrieve action changes elemR(:,er_TargetSettings) and
         !%     elemR(:,er_TimeLastSet)
         call control_update_actions ()
 
-        print *, 'calling control_update_setting'
+        !print *, 'calling control_update_setting'
     
         !% --- adjust settings
         !%     here we need to change the elemR(:,er_settings) for orifices, 
         !%     weirs, pumps, outlets and conduits.
         call control_update_setting ()
 
-        print *, 'calling control_update_element_values'
+        !print *, 'calling control_update_element_values'
 
         !% --- adjust the values in the elemR array for new elemR(:,er_Setting)
         call control_update_element_values ()
@@ -469,8 +469,8 @@ contains
         !%------------------------------------------------------------------
         !% --- cycle through the action points    
         do ii = 1,N_ActionPoint
-            print *, ii ,' in ',trim(subroutine_name)
-            print *, 'actionI(ii,ai_image) ',actionI(ii,ai_image)
+            !print *, ii ,' in ',trim(subroutine_name)
+            !print *, 'actionI(ii,ai_image) ',actionI(ii,ai_image)
 
             !% --- only conduct actions updates on the appropriate images
             if (actionI(ii,ai_image) .ne. this_image()) cycle
@@ -481,10 +481,10 @@ contains
             elemType        => elemI(Eidx,ei_elementType)
             thisSetting     => elemR(Eidx,er_Setting)
 
-            print *, 'Eidx ',Eidx
-            print *, 'hasChanged ',hasChanged
-            print *, 'elemType   ',trim(reverseKey(elemType))
-            print *, 'thisSetting',thisSetting
+            ! print *, 'Eidx ',Eidx
+            ! print *, 'hasChanged ',hasChanged
+            ! print *, 'elemType   ',trim(reverseKey(elemType))
+            ! print *, 'thisSetting',thisSetting
             
             select case (elemType)
 
@@ -512,13 +512,13 @@ contains
                 end if
 
             case (orifice)
-                print *, 'in here 98273'
+                !print *, 'in here 98273'
                 if (hasChanged == oneI) then 
                     call orifice_toplevel(Eidx)
                 else
                     !% no change 
                 end if
-                print *, 'done here 559873'
+                !print *, 'done here 559873'
 
             case (outlet)
                 if (hasChanged == oneI) then 
@@ -542,11 +542,11 @@ contains
 
             end select
 
-            print *, 'end do 49872'
+            !print *, 'end do 49872'
 
         end do
 
-        print *, 'leaving ',trim(subroutine_name)
+        !print *, 'leaving ',trim(subroutine_name)
         
     end subroutine control_update_element_values
 !%    

@@ -40,8 +40,8 @@ module lowlevel_rk2
     public :: ll_restore_from_temporary
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
-    public :: ll_junction_branch_flowrate_and_velocity
-    public :: ll_momentum_solve_JB
+    public :: ll_flowrate_and_velocity_JB
+    !public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
 
     contains
@@ -508,14 +508,21 @@ module lowlevel_rk2
                     ) &
                 + eKsource(thisP)
 
-        !print *, '  source ',elemR(780,outCol)
-        !print *, 'in ll_momentum_source_CC'
-        !print *, fQ(iup(1)), fUdn(iup(1))
-        !print *, fQ(idn(1)), fUup(idn(1))
-        !print *,  fQ(iup(1)) * fUdn(iup(1)) - fQ(idn(1)) * fUup(idn(1))
-        !print *,  (fAdn(iup(1)) * fHdn(iup(1))  - fAup(idn(1)) * fHup(idn(1)) ) * grav
-        !print *,   eKsource(1)
-        !print *,  elemR(1,outCol)
+        ! print *, ' '
+        ! print *, 'in ll_momentum_source_cc'
+        ! ! print *, 'fQ  * fU up',fQ(iup(iet(7))) * fUdn(iup(iet(7)))
+        ! ! print *, 'fQ  * fU dn',fQ(idn(iet(7))) * fUup(idn(iet(7)))
+        ! ! print *, 'fAdn * Hdn ',fAdn(iup(iet(7))) * fHdn(iup(iet(7)))
+        ! ! print *, 'fAup * Hup ',fAup(idn(iet(7))) * fHup(idn(iet(7)))
+        ! ! print *, 'eksource ',eKsource(iet(7))
+        ! ! print *, 'out       ',elemR(iet(7),outCol)
+        ! print *, 'FQ term', fQ(iup(iet(7))) * fUdn(iup(iet(7))) - fQ(idn(iet(7))) * fUup(idn(iet(7)))
+        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(7))) * fHdn(iup(iet(7))) - fAup(idn(iet(7))) * fHup(idn(iet(7))))
+        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(7))) , fHdn(iup(iet(7)))
+        ! print *, 'fAup , Hup ',fAup(idn(iet(7))) , fHup(idn(iet(7)))
+        ! print *, 'eksource   ',eKsource(iet(7))
+        ! print *, 'out        ',elemR(iet(7),outCol)
+        ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -629,8 +636,13 @@ module lowlevel_rk2
         Msource => elemR(:,er_SourceMomentum)
         GammaM  => elemR(:,er_GammaM)
 
-        !print *, ' Msource ', elemR(780,er_SourceMomentum)
-        !print *, ' Gamma   ', elemR(780,er_GammaM)
+        ! print *, ' '
+        ! print *, 'in ll_momentum_solve_CC'
+        ! print *, ' Msource ', Msource(iet(7))
+        ! print *, ' Gamma   ', GammaM(iet(7))
+        ! print *, ' Vprod   ',volumeLast(iet(7)) * velocityLast(iet(7))
+        ! print *, 'crk,delt ', crk(istep),delt
+        ! print *, ' '
 
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
@@ -843,7 +855,7 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_junction_branch_flowrate_and_velocity (whichTM, istep)
+    subroutine ll_flowrate_and_velocity_JB (whichTM, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Updates the flowrate and velocity on junction branches from face values
@@ -985,7 +997,7 @@ module lowlevel_rk2
             end do
         end if
 
-    end subroutine ll_junction_branch_flowrate_and_velocity
+    end subroutine ll_flowrate_and_velocity_JB
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1296,68 +1308,69 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_momentum_solve_JB (whichTM)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the velocity and flowrate on junction branches to finish the dynamic
-        !% RK2 approach. Note that this assumes the JB volume and area have been updated
-        !% from the JM water surface elevation in update_auxiliary_variables.
-        !% THE DYNAMIC APPROACH HAS BUGS 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM
+    ! subroutine ll_momentum_solve_JB (whichTM)
+    !     !%-----------------------------------------------------------------------------
+    !% OBSOLETE 20220711bfh
+    !     !% Description:
+    !     !% Computes the velocity and flowrate on junction branches to finish the dynamic
+    !     !% RK2 approach. Note that this assumes the JB volume and area have been updated
+    !     !% from the JM water surface elevation in update_auxiliary_variables.
+    !     !% THE DYNAMIC APPROACH HAS BUGS 
+    !     !%-----------------------------------------------------------------------------
+    !     integer, intent(in) :: whichTM
 
-        integer, pointer :: thisColP_JM, Npack, tM, thisP(:), BranchExists(:)
+    !     integer, pointer :: thisColP_JM, Npack, tM, thisP(:), BranchExists(:)
 
-        real(8), pointer :: eVolume(:), eVelocity(:), eArea(:), Msource(:), eFlow(:)
-        real(8), pointer :: vMax
+    !     real(8), pointer :: eVolume(:), eVelocity(:), eArea(:), Msource(:), eFlow(:)
+    !     real(8), pointer :: vMax
 
-        integer :: ii, kk, tB
-        !%-----------------------------------------------------------------------------
-        !%
-        select case (whichTM)
-        case (ALLtm)
-            thisColP_JM            => col_elemP(ep_JM_ALLtm)
-         case (ETM)
-            thisColP_JM            => col_elemP(ep_JM_ETM)
-        case (AC)
-            thisColP_JM            => col_elemP(ep_JM_AC)
-        case default
-            print *, 'CODE ERROR: time march type unknown for # ', whichTM
-            print *, 'which has key ',trim(reverseKey(whichTM))
-            stop 7659
-        end select
+    !     integer :: ii, kk, tB
+    !     !%-----------------------------------------------------------------------------
+    !     !%
+    !     select case (whichTM)
+    !     case (ALLtm)
+    !         thisColP_JM            => col_elemP(ep_JM_ALLtm)
+    !      case (ETM)
+    !         thisColP_JM            => col_elemP(ep_JM_ETM)
+    !     case (AC)
+    !         thisColP_JM            => col_elemP(ep_JM_AC)
+    !     case default
+    !         print *, 'CODE ERROR: time march type unknown for # ', whichTM
+    !         print *, 'which has key ',trim(reverseKey(whichTM))
+    !         stop 7659
+    !     end select
 
-        vMax            => setting%Limiter%Velocity%Maximum
-        BranchExists    => elemSI(:,esi_JunctionBranch_Exists)
-        eVolume         => elemR(:,er_Volume)
-        eVelocity       => elemR(:,er_Velocity)
-        eArea           => elemR(:,er_Area)
-        eFlow           => elemR(:,er_Flowrate)
-        Msource         => elemR(:,er_SourceMomentum)
+    !     vMax            => setting%Limiter%Velocity%Maximum
+    !     BranchExists    => elemSI(:,esi_JunctionBranch_Exists)
+    !     eVolume         => elemR(:,er_Volume)
+    !     eVelocity       => elemR(:,er_Velocity)
+    !     eArea           => elemR(:,er_Area)
+    !     eFlow           => elemR(:,er_Flowrate)
+    !     Msource         => elemR(:,er_SourceMomentum)
 
-        Npack => npack_elemP(thisColP_JM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_JM)
-            do ii=1,Npack
-                tM => thisP(ii)
-                do kk=1,max_branch_per_node
-                    tB = tM + kk
-                    if (BranchExists(tB)==1) then
-                        if (eVolume(tB) <= setting%ZeroValue%Volume) then
-                            eVelocity(tB) = zeroR
-                        else
-                            eVelocity(tB) = Msource(tB) / eVolume(tB)
-                        end if
-                        if (abs(eVelocity(tB)) > vMax) then
-                            eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
-                        end if
-                        eFlow(tB) = eVelocity(tB) * eArea(tB)
-                    end if
-                end do
-            end do
-        end if
+    !     Npack => npack_elemP(thisColP_JM)
+    !     if (Npack > 0) then
+    !         thisP => elemP(1:Npack,thisColP_JM)
+    !         do ii=1,Npack
+    !             tM => thisP(ii)
+    !             do kk=1,max_branch_per_node
+    !                 tB = tM + kk
+    !                 if (BranchExists(tB)==1) then
+    !                     if (eVolume(tB) <= setting%ZeroValue%Volume) then
+    !                         eVelocity(tB) = zeroR
+    !                     else
+    !                         eVelocity(tB) = Msource(tB) / eVolume(tB)
+    !                     end if
+    !                     if (abs(eVelocity(tB)) > vMax) then
+    !                         eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
+    !                     end if
+    !                     eFlow(tB) = eVelocity(tB) * eArea(tB)
+    !                 end if
+    !             end do
+    !         end do
+    !     end if
 
-    end subroutine ll_momentum_solve_JB
+    ! end subroutine ll_momentum_solve_JB
 !%
 !%==========================================================================
 !%==========================================================================

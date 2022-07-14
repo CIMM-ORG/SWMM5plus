@@ -685,7 +685,13 @@ module adjust
         !% new flowrate
         Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
 
-       ! print *, 'Flowrate ',Flowrate(iet(1:2))
+        !% new velocity  % 20220712brh
+        elemR(thisP,er_Velocity) = VelocityBlend(thisP)
+
+        ! print *, ' '
+        ! print *, 'in adjust small depth element fluxes'
+        ! print *, 'Flowrate ',Flowrate(iet(7))
+        ! print *, ' '
 
         !% reset the temporary storage
         VelocityBlend(thisP) = nullvalueR

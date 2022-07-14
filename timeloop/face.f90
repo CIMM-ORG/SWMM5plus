@@ -438,7 +438,9 @@ module face
             integer :: ii
             integer, pointer :: idx_fBC(:), eup(:), idx_P(:)
             integer, pointer :: elemUpstream
-            real(8), pointer :: depthBC(:), headBC(:), eHead(:)
+            real(8), pointer :: depthBC(:), headBC(:), eHead(:), grav
+            !real(8), pointer :: eArea(:), eHydDepth(:), eTopWidth(:)
+            real(8) :: Vtemp, headdif
             character(64) :: subroutine_name = 'face_interpolation_dnBC'
         !%--------------------------------------------------------------------
         !% Preliminaries
@@ -452,6 +454,10 @@ module face
             depthBC   => BC%headR(:,br_Temp01)
             headBC    => BC%headR(:,br_value)
             eHead     => elemR(:,er_Head)
+            grav      => setting%Constant%gravity
+            ! eArea     => elemR(:,er_Area)
+            ! eHydDepth => elemR(:,er_HydDepth)
+            ! eTopWidth => elemR(:,er_TopWidth)
         !%--------------------------------------------------------------------   
         !% For fixed, tidal, and timeseries BC
         !% The BC is imagined as enforced on a ghost cell outside the boundary
@@ -484,21 +490,65 @@ module face
                 faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
                 faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
                 faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular    (elemUpstream,depthBC(idx_P(ii)))
+                ! !% TEST 20220712--- apply simple linear interpolation to prevent large downstream area from causing numerical problems
+                ! !% 20220712brh
+                ! faceR(idx_fBC(ii),fr_Area_u)     =  (faceR(idx_fBC(ii),fr_Area_u)     + eArea(elemUpstream)    ) * onehalfR
+                ! faceR(idx_fBC(ii),fr_HydDepth_u) =  (faceR(idx_fBC(ii),fr_HydDepth_u) + eHydDepth(elemUpstream)) * onehalfR
+                ! faceR(idx_fBC(ii),fr_Topwidth_u) =  (faceR(idx_fBC(ii),fr_Topwidth_u) + eTopWidth(elemUpstream)) * onehalfR
             end do
             !% --- store downstream side of face
             faceR(idx_fBC,fr_Topwidth_d) = faceR(idx_fBC,fr_Topwidth_u) 
             faceR(idx_fBC,fr_Area_d)     = faceR(idx_fBC,fr_Area_u) 
             faceR(idx_fBC,fr_HydDepth_d) = facer(idx_fBC,fr_HydDepth_u)
 
+            ! print *, ' '
+            ! print *, 'in face_interpolation_dnBC'
+            ! print *, 'depthBC ',depthBC(idx_P(1))
+            ! print *, 'area    ',faceR(idx_fBC(1),fr_Area_u)
+            ! print *, ' '
             !stop 2987355
 
-            !% 20220609brh removed this approach
-            ! fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-            ! fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-            ! eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
-
             !% --- set the flowrate to the upstream element value
-            faceR(idx_fBC, fr_Flowrate)          = elemR(eup(idx_fBC), er_Flowrate)
+            !%     if not a zero depth  20220713brh
+            do ii = 1,size(idx_fBC)
+                elemUpstream => eup(idx_fBC(ii))
+                if (.not. elemYN(elemUpstream,eYN_isZeroDepth)) then
+                    !% --- for small depth and regular depth elements
+                    !% --- where adverse head difference (from downstream to upstream)
+                    !%     combined with downstream flow on element
+                    headdif = faceR(idx_fBC(ii), fr_Head_u) - eHead(eup(idx_fBC(ii)))
+                    if ((headdif > zeroR) .and. (elemR(elemUpstream,er_Velocity) > zeroR)) then
+                        !% --- potential for inflow from downstream boundary despite downstream
+                        !%     flow on element.
+                        !%     Piezometric head difference minus upstream velocity
+                        !%     head provides the velocity head of inflow
+                        !%     If positive, then this is the upstream velocity at face
+                        !%     If negative, then the downstream flow in element is
+                        !%     able to overcome the adverse piezometric head gradient,
+                        !%     so the difference provides a reduced outflow at face
+                        Vtemp = twoR * grav * headdif - (elemR(elemUpstream,er_Velocity)**twoI)
+                        !% --- The +Vtemp is flow in the upstream (negative) direction
+                        Vtemp = -sign(sqrt(abs(Vtemp)),Vtemp)
+                        !% --- take the smaller of the Q implied by Vtemp and the downstream Q of the element
+                        !%     Note Vtemp < 0 is upstream flow and will automatically be selected as the upstream
+                        !%     elem flowrate is guaranteed to be positive. This simply
+                        !%     ensures that the head balance approach for Vtemp > 0 does not exceed the flow
+                        !%     computed in the RK2
+                        faceR(idx_fBC(ii), fr_Flowrate) = min(Vtemp * faceR(idx_fBC(ii),fr_Area_u),elemR(elemUpstream,er_Flowrate) )
+                    else
+                        !% --- no adverse head gradient
+                        !% --- in/outflow rate is upstream element flowrate                        
+                        faceR(idx_fBC(ii), fr_Flowrate) = elemR(elemUpstream, er_Flowrate)
+                    end if
+                else
+                    !% --- for zero depth elements set outflow to zero, but retain if inflow
+                    if (faceR(idx_fBC(ii), fr_Flowrate) > zeroR) then
+                        faceR(idx_fBC(ii), fr_Flowrate) = zeroR
+                    else
+                        !% -- do nothing = keep the negative flowrate
+                    end if
+                end if
+            end do
 
             !% --- set the Preissmann number to the upstream element value
             faceR(idx_fBC, fr_Preissmann_Number) = elemR(eup(idx_fBC), er_Preissmann_Number) 
