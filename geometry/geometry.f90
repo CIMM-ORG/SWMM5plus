@@ -242,7 +242,6 @@ module geometry
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
 
-
             ! print *,  this_image(),  '    geomTL uuu',this_image()
             ! call util_CLprint ('in geometry at end') 
 
@@ -398,7 +397,7 @@ module geometry
                                 depth(tB)     = setting%ZeroValue%Depth
                                 area(tB)      = setting%ZeroValue%Area
                                 topwidth(tB)  = setting%ZeroValue%Topwidth
-                                hyddepth(tB)  = setting%ZeroValue%Depth !% setting%ZeroValue%Area / topwidth(tB) 20220712 brh
+                                hyddepth(tB)  = setting%ZeroValue%Depth !% setting%ZeroValue%Area / topwidth(tB) 20220712brh
                                 perimeter(tB) = topwidth(tB) + setting%ZeroValue%Depth
                                 hydRadius(tB) = setting%ZeroValue%Area / perimeter(tB)
                                 dHdA(tB)      = oneR / topwidth(tB)

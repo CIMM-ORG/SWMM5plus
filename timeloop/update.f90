@@ -112,6 +112,12 @@ module update
         call update_Froude_number_JB (thisCol_JM) 
 
             ! print *, 'update 007 at end after update Froud number JB',this_image()
+            ! call util_CLprint ('in update before update BCoutlet_flowrate')
+
+        !% --- flow values on an BC outlet face 20220714brh
+        !%     required so that an inflow to a zero or small depth will not be lost
+        call update_BCoutlet_flowrate ()
+
             ! call util_CLprint ('in update at end')
 
         !%------------------------------------------------------------------
@@ -540,6 +546,28 @@ module update
         ! write(*,"(A,10f12.5)") 'ell       ',depth(iet)
 
     end subroutine update_interpweights_JB
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine update_BCoutlet_flowrate ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% sets the outlet (face) flowrate equal to the interior element
+        !% flowrate
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, pointer :: eup(:), idx_fBC(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            if (npack_faceP(fp_BCdn) < 1) return
+            eup       => faceI(:,fi_Melem_uL)
+            idx_fBC   => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+        !%------------------------------------------------------------------    
+        !%    
+        faceR(idx_fBC,fr_Flowrate) = elemR(eup(idx_fBC),er_Flowrate)
+
+    end subroutine update_BCoutlet_flowrate    
 !%
 !%==========================================================================
 !%==========================================================================

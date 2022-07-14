@@ -508,21 +508,21 @@ module lowlevel_rk2
                     ) &
                 + eKsource(thisP)
 
-        print *, ' '
-        print *, 'in ll_momentum_source_cc'
-        ! print *, 'fQ  * fU up',fQ(iup(iet(7))) * fUdn(iup(iet(7)))
-        ! print *, 'fQ  * fU dn',fQ(idn(iet(7))) * fUup(idn(iet(7)))
-        ! print *, 'fAdn * Hdn ',fAdn(iup(iet(7))) * fHdn(iup(iet(7)))
-        ! print *, 'fAup * Hup ',fAup(idn(iet(7))) * fHup(idn(iet(7)))
-        ! print *, 'eksource ',eKsource(iet(7))
-        ! print *, 'out       ',elemR(iet(7),outCol)
-        print *, 'FQ term', fQ(iup(iet(7))) * fUdn(iup(iet(7))) - fQ(idn(iet(7))) * fUup(idn(iet(7)))
-        print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(7))) * fHdn(iup(iet(7))) - fAup(idn(iet(7))) * fHup(idn(iet(7))))
-        print *, 'fAdn , Hdn ',fAdn(iup(iet(7))) , fHdn(iup(iet(7)))
-        print *, 'fAup , Hup ',fAup(idn(iet(7))) , fHup(idn(iet(7)))
-        print *, 'eksource   ',eKsource(iet(7))
-        print *, 'out        ',elemR(iet(7),outCol)
-        print *, ' '
+        ! print *, ' '
+        ! print *, 'in ll_momentum_source_cc'
+        ! ! print *, 'fQ  * fU up',fQ(iup(iet(7))) * fUdn(iup(iet(7)))
+        ! ! print *, 'fQ  * fU dn',fQ(idn(iet(7))) * fUup(idn(iet(7)))
+        ! ! print *, 'fAdn * Hdn ',fAdn(iup(iet(7))) * fHdn(iup(iet(7)))
+        ! ! print *, 'fAup * Hup ',fAup(idn(iet(7))) * fHup(idn(iet(7)))
+        ! ! print *, 'eksource ',eKsource(iet(7))
+        ! ! print *, 'out       ',elemR(iet(7),outCol)
+        ! print *, 'FQ term', fQ(iup(iet(7))) * fUdn(iup(iet(7))) - fQ(idn(iet(7))) * fUup(idn(iet(7)))
+        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(7))) * fHdn(iup(iet(7))) - fAup(idn(iet(7))) * fHup(idn(iet(7))))
+        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(7))) , fHdn(iup(iet(7)))
+        ! print *, 'fAup , Hup ',fAup(idn(iet(7))) , fHup(idn(iet(7)))
+        ! print *, 'eksource   ',eKsource(iet(7))
+        ! print *, 'out        ',elemR(iet(7),outCol)
+        ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1310,7 +1310,7 @@ module lowlevel_rk2
 !%
     ! subroutine ll_momentum_solve_JB (whichTM)
     !     !%-----------------------------------------------------------------------------
-    !% OBSOLETE 20220711
+    !% OBSOLETE 20220711bfh
     !     !% Description:
     !     !% Computes the velocity and flowrate on junction branches to finish the dynamic
     !     !% RK2 approach. Note that this assumes the JB volume and area have been updated
