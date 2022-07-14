@@ -1375,17 +1375,18 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_slot_computation_ETM (thisCol, Npack)
-        !%-----------------------------------------------------------------------------
+subroutine ll_slot_computation_ETM (thisCol, Npack)
+    !%-----------------------------------------------------------------------------
         !% Description:
         !% Compute preissmann slot for conduits in ETM methods
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol, Npack
         integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
         real(8), pointer    :: AreaN0(:), BreadthMax(:), ellMax(:), fullarea(:)
-        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
+        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:), SlotHydRad(:) 
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:)  
         real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
+        logical, pointer    :: isSlot(:)
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
@@ -1402,10 +1403,13 @@ module lowlevel_rk2
         PCelerity  => elemR(:,er_Preissmann_Celerity)
         SlotWidth  => elemR(:,er_SlotWidth)
         SlotVolume => elemR(:,er_SlotVolume)
+        SlotHydRad => elemR(:,er_SlotHydRadius)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         volume     => elemR(:,er_Volume)
         velocity   => elemR(:,er_velocity)
+        !% pointer to elemYN column
+        isSlot     => elemYN(:,eYN_isSlot)
         !% pointers to elemI columns
         fUp        => elemI(:,ei_Mface_uL)
         fDn        => elemI(:,ei_Mface_dL)
@@ -1418,38 +1422,43 @@ module lowlevel_rk2
         cfl                 => setting%VariableDT%CFL_target
         grav                => setting%Constant%gravity
 
+        !% initialize slot
+        SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+        SlotArea(thisP)   = max(SlotVolume(thisP) / length(thisP), zeroR)
+        SlotDepth(thisP)  = zeroR
+        SlotWidth(thisP)  = zeroR
+        PCelerity(thisP)  = zeroR
+        isSlot(thisP)     = .false.
+
         select case (SlotMethod)
-
         case (StaticSlot)
-            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            !% SWMM5 uses 1% of width max as slot width
-            ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-            !% HACK: modeling for acoustic wavespeed
-            SlotWidth(thisP) = (grav * fullArea(thisP)) / (TargetPCelerity**2.0)
-            !% HACK: old code based on a target CFL
-            ! SlotWidth(thisP)  = (grav*fullArea(thisP)*tDelta**twoR)/&
-                ! (cfl*length(thisP))**twoR
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-        
-        case (DynamicSlot)
-            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            SlotArea(thisP)   = max(SlotVolume(thisP) / length(thisP), zeroR)
-            SlotDepth(thisP)  = zeroR
-            SlotWidth(thisP)  = zeroR
-            PCelerity(thisP)  = zeroR
-
             !% find incipient surcharge  and non-surcharged elements reset the preissmann number
+            where (SlotArea(thisP) .le. zeroR)
+                PNumber(thisP) =  oneR
+            end where
+
+            !% Preissmann calculations specific to static slot
+            where (SlotArea(thisP) .gt. zeroR)
+                !% set the slot boolean as true
+                isSlot(thisP)  = .true.
+                !% update the preissmann celerity here
+                PCelerity(thisP) = TargetPCelerity / PNumber(thisP)
+                !% find the water height at the slot
+                SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
+                !% find the width of the slot
+                SlotWidth(thisP)  = SlotArea(thisP) / SlotDepth(thisP) 
+            end where
+    
+        case (DynamicSlot)
+            !% find incipient surcharge  and non-surcharged elements reset the preissmann number and celerity for dynamic slot
             where ((SlotArea(thisP) .le. zeroR) .or. (AreaN0(thisP) .le. fullArea(thisP)))
                 PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
             end where
 
-            ! if (this_image() == 3) then
-            !     print *, fPNumber(fUp(426)), fPNumber(fDn(426)), TargetPCelerity
-            ! end if
-
-            !% Slot calculations
+            !% Preissmann calculations specific to dynamic slot
             where (SlotArea(thisP) .gt. zeroR)
+                !% set the slot boolean as true
+                isSlot(thisP)  = .true.
                 !% use the preissmann number from the faces
                 PNumber(thisP) =  onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP)))
                 !% update the preissmann celerity here
@@ -1462,24 +1471,17 @@ module lowlevel_rk2
                 PNumber(thisP) = (PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP)
             end where
 
-           
-
+        ! if (this_image() == 3) then
+        !     print *, fPNumber(fUp(426)), fPNumber(fDn(426)), TargetPCelerity
+        ! end if
         case default
             !% should not reach this stage
             print*, 'In ', subroutine_name
             print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
             print *, 'which has key ',trim(reverseKey(SlotMethod))
-            call util_crashpoint(39872)
-
+            stop 38756
         end select
-        ! if (util_output_must_report()) then
-        !     print*, ellMax(thisP), 'ellMax(thisP)'
-        !     print*
-        !     print*, SlotArea(thisP), 'SlotArea(thisP)'
-        !     print*
-        !     print*, SlotDepth(thisP) , 'SlotDepth(thisP) '
-        !     print*
-        ! end if
+
     end subroutine ll_slot_computation_ETM
 !%
 !%==========================================================================

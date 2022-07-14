@@ -269,6 +269,7 @@ module update
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), w_uP(:), w_dP(:), Area(:)
         real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
+        logical, pointer :: isSlot(:)
         integer :: ii
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
@@ -289,6 +290,7 @@ module update
         w_uP      => elemR(:,er_InterpWeight_uP)
         w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
+        isSlot    => elemYN(:,eYN_isSlot)
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
         SlotVolume => elemR(:,er_SlotVolume)
@@ -358,18 +360,13 @@ module update
         ! w_uQ(thisP) = - onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) - wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
         ! w_dQ(thisP) = + onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) + wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
 
-        ! w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP) &
-        !         - PCelerity(thisP)) !bugfix SAZ 09212021 
-        ! w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP) &
-        !         + PCelerity(thisP)) !bugfix SAZ 09212021 
-
         !% brh 20220104 -- for now, leave the structure of the froude number weighting, but make irrelevant with 0 power
-        where (PCelerity(thisP) .le. zeroR)
+        where (.not. isSlot(thisP))
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
-        elsewhere (PCelerity(thisP) .gt. zeroR)
-            w_uQ(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) !bugfix SAZ 23022022 
-            w_dQ(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) !bugfix SAZ 23022022 
+        elsewhere (isSlot(thisP))
+            w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 23022022 
+            w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
 
         ! print *, '*** BBB  w_uQ    ',w_uQ(iet)
@@ -408,29 +405,8 @@ module update
         w_dG(thisP) = w_dQ(thisP)
 
         !% timescale interpolation for the preissmann number only depends on the preissmann celerity
-        w_uP(thisP) = - onehalfR * length(thisP)  / (- PCelerity(thisP)) 
-        w_dP(thisP) = + onehalfR * length(thisP)  / (+ PCelerity(thisP)) 
-
-        !% apply limiters to timescales
-        where (w_uP(thisP) < zeroR)
-            w_uP(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
-        where (w_uP(thisP) < setting%Limiter%InterpWeight%Minimum)
-            w_uP(thisP) = setting%Limiter%InterpWeight%Minimum
-        endwhere
-        where (w_uP(thisP) > setting%Limiter%InterpWeight%Maximum)
-            w_uP(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
-
-        where (w_dP(thisP) < zeroR)
-            w_dP(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
-        where (w_dP(thisP) < setting%Limiter%InterpWeight%Minimum)
-            w_dP(thisP) = setting%Limiter%InterpWeight%Minimum
-        endwhere
-        where (w_dP(thisP) > setting%Limiter%InterpWeight%Maximum)
-            w_dP(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
+        w_uP(thisP) = w_uQ(thisP) 
+        w_dP(thisP) = w_dQ(thisP) 
 
         !% head uses length scale interpolation
         !% This shouldn't need limiters.
