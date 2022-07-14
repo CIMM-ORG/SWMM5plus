@@ -1178,6 +1178,7 @@ contains
                 elemR(:,er_FullPerimeter)         = twoR * elemR(:,er_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth)
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
+                
                 !% 20220714brh  HACK -- needs review
                 where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
                     elemR(:,er_Area)      = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)   
@@ -1186,7 +1187,9 @@ contains
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                    elemYN(:,eYN_isSlot)  = .true.
                 endwhere  
+
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
                 elemR(:,er_Area_N1)               = elemR(:,er_Area)
                 elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
@@ -1195,7 +1198,6 @@ contains
             endwhere
             
         case (lCircular)
-
         
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
@@ -1218,11 +1220,12 @@ contains
                     elemR(:,er_Area)                  = (elemSGR(:,esgr_Circular_Radius) **2) * &
                                 (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))) - &
                                 sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )    
-                    elemR(:,er_SlotDepth) = zeroR                    
+                    elemR(:,er_SlotDepth) = zeroR              
                 elsewhere   
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                    elemYN(:,eYN_isSlot)  = .true.
                 endwhere            
                 
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -1248,11 +1251,6 @@ contains
             !return
         end select
 
-        !% initialize preissmann slot for conduit elements in ETM time march
-        if (setting%Solver%SolverSelect == ETM) then
-            call init_IC_initialize_preissmann_slot (thisLink)
-        end if
-
         ! if (thisLink == 191) then
         !     print *, 'at end of init_IC_get_conduit_geometry'
         !     print *, 'geometry Type',geometryType,' ', trim(reverseKey(geometryType))
@@ -1262,79 +1260,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_conduit_geometry
-!
-!==========================================================================
-!==========================================================================
-!
-    subroutine init_IC_initialize_preissmann_slot (thisLink)
-        !%-----------------------------------------------------------------
-        !% get the geometry data for conduit links
-        !% and calculate element volumes
-        !%-----------------------------------------------------------------
-            integer :: ii
-            integer, intent(in) :: thisLink
-            integer, pointer    :: SlotMethod
-            real(8), pointer    :: TargetPCelerity, grav, PreissmannAlpha
-            character(64) :: subroutine_name = 'init_IC_initialize_preissmann_slot'
-        !%-----------------------------------------------------------------
-            if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        !% pointer to geometry type
-        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
-        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
-        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
-        grav                => setting%Constant%gravity
-
-        !% initialize slot
-        where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-            elemR(:,er_SlotVolume)           = zeroR
-            elemR(:,er_SlotArea)             = zeroR
-            elemR(:,er_SlotWidth)            = zeroR
-            elemR(:,er_Preissmann_Celerity)  = zeroR
-            elemYN(:,eYN_isSlot)             = .false.
-        end where
-
-        select case (SlotMethod)
-
-        case (StaticSlot)
-
-            where ((elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-                    elemR(:,er_SlotDepth) > zeroR)
-                
-                elemYN(:,eYN_isSlot)            = .true.
-                elemR(:,er_Preissmann_Number)   = oneR
-                elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
-                elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Number)**2.0)
-                elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
-                elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
-            end where
-
-        case (DynamicSlot)
-
-            where ((elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-                    elemR(:,er_SlotDepth) > zeroR)
-
-                elemYN(:,eYN_isSlot)            = .true.
-                elemR(:,er_Preissmann_Number)   = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(:,er_ell_max)))
-                elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
-                elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Number)**2.0)
-                elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)
-                elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
-            end where
-
-        case default
-            !% should not reach this stage
-            print*, 'In ', subroutine_name
-            print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-            print *, 'which has key ',trim(reverseKey(SlotMethod))
-            stop 38756
-
-        end select
-
-        if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_IC_initialize_preissmann_slot
 !
 !==========================================================================
 !==========================================================================
@@ -3071,50 +2996,77 @@ contains
         elemR(:,er_ones) = oneR
 
     end subroutine init_IC_oneVectors
-!
-!==========================================================================
-!==========================================================================
-!
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_IC_slot ()
         !%-----------------------------------------------------------------
-        !% set all the slot values to zero before start of a simulation
+        !% get the geometry data for conduit links
+        !% and calculate element volumes
         !%-----------------------------------------------------------------
-            character(64)       :: subroutine_name = 'init_IC_slot'
-        !------------------------------------------------------------------
-            !if (crashYN) return
+            integer :: ii
+            integer, pointer    :: SlotMethod
+            real(8), pointer    :: TargetPCelerity, grav, PreissmannAlpha
+            character(64) :: subroutine_name = 'init_IC_slot'
+        !%-----------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !------------------------------------------------------------------
-        elemR(1:size(elemR,1)-1,er_SlotVolume)       = zeroR
-        ! elemR(1:20,er_SlotVolume)                    = 0.01 
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        !% pointer to geometry type
+        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
+        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
+        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
+        grav                => setting%Constant%gravity
+
+        !% initialize slots
+        elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
-        ! elemR(1:20,er_SlotArea)                           = elemR(1:20,er_SlotVolume) / elemR(1:20,er_length)
-
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        ! elemR(1:20,er_SlotWidth)                          = (setting%Constant%gravity * elemR(1:20,er_FullArea) )/(100.0**2.0)
-
-        elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
-        ! elemR(1:20,er_SlotDepth)                          = elemR(1:20,er_SlotArea)/elemR(1:20,er_SlotWidth) 
-        ! elemR(1:20,er_SlotDepth)                          = 1.0 / (elemR(1:20,er_area)/(10.0 * elemR(1:20,er_SlotArea))-1.0)
-        
-        ! elemR(1:20,er_SlotWidth)                          = elemR(1:20,er_SlotArea) / elemR(1:20,er_SlotDepth) 
-        
-        elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
-        elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = setting%PreissmannSlot%TargetPreissmannCelerity / &
-                                                            (setting%PreissmannSlot%PreissmannAlpha * sqrt(setting%Constant%gravity * &
-                                                            elemR(1:size(elemR,1)-1,er_ell_max)))
-        ! elemR(1:20,er_Preissmann_Celerity)                = sqrt(9.81 * elemR(1:20,er_area)/elemR(1:20,er_SlotWidth) )
-        ! faceR(1:20,fr_Area_d) = elemR(1:20,er_SlotWidth) * elemR(1:20,er_Length) * elemR(1:20,er_SlotDepth)  
-        !------------------------------------------------------------------
-            if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% HACK: set a preissmann number based on CpT and alpha regardless of the slot type
+        elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
+
+        !% only calculate slots for ETM time-march
+        if (setting%Solver%SolverSelect == ETM) then
+            select case (SlotMethod)
+
+            case (StaticSlot)
+
+                where (elemYN(:,eYN_isSlot))
+                    elemR(:,er_Preissmann_Number)   = oneR
+                    elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
+                    elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Number)**2.0)
+                    elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
+                    elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
+                end where
+
+            case (DynamicSlot)
+
+                where (elemYN(:,eYN_isSlot))
+                    elemR(:,er_Preissmann_Number)   = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(:,er_ell_max)))
+                    elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
+                    elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Number)**2.0)
+                    elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)
+                    elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
+                end where
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                stop 38756
+            end select
+        end if
+
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_slot
-!%
-!%==========================================================================
-!%==========================================================================
-!%
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_reference_head ()
         !%------------------------------------------------------------------
         !% Description:

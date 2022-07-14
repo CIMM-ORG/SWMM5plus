@@ -361,7 +361,7 @@ contains
         end if
 
         !% --- rectangular conduits 
-        ptype => col_elemPGalltm(epg_CC_rectangular_colsed_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_rectangular_closed_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -675,7 +675,7 @@ contains
         end if
 
         !% rectangular conduits 
-        ptype => col_elemPGac(epg_CC_rectangular_colsed_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_rectangular_closed_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -939,7 +939,7 @@ contains
 
 
         !% --- rectangular conduits nonsurcharged
-        ptype => col_elemPGetm(epg_CC_rectangular_colsed_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_rectangular_closed_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &

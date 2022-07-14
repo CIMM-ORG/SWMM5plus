@@ -62,4 +62,9 @@
         "NstepsForCheck" : 5,
         "InitialDt"      : 1.0
     },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "DynamicSlot",
+        "TargetPreissmannCelerity" : 3.00,
+        "PreissmannAlpha"          : 2.00 
+    }
 }

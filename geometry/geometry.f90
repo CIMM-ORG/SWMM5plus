@@ -617,7 +617,7 @@ module geometry
         end if
 
         !% --- RECTANGULAR CLOSED
-        thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        thisCol => col_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
@@ -956,9 +956,9 @@ module geometry
         end if
 
         !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
             call rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
@@ -1132,9 +1132,9 @@ module geometry
         end if
 
         !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
             call rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
@@ -1203,9 +1203,9 @@ module geometry
         end if
 
         !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_colsed_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_rectangular_closed_nonsurcharged)
             call rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 

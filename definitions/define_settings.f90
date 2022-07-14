@@ -524,8 +524,8 @@ module define_settings
     !% setting%PreissmannSlot
     type PreissmannSlotType
         integer :: PreissmannSlotMethod = DynamicSlot
-        real(8) :: TargetPreissmannCelerity = 0.01d0
-        real(8) :: PreissmannAlpha = 3.0d0
+        real(8) :: TargetPreissmannCelerity = 3.0d0
+        real(8) :: PreissmannAlpha = 2.0d0
     end type PreissmannSlotType
 
     !% setting%Profile
