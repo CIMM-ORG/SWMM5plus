@@ -548,7 +548,7 @@ contains
                             setting%Time%ControlRule%NextTime = setting%Time%Now + real(setting%SWMMinput%RuleStep,8)
                         end if
                         print *, 'CONTROL----------------------------'
-                        print *, 'orifice setting ',elemR(24,er_Setting)
+                        print *, 'orifice setting ',elemR(iet(3),er_Setting)
                     end if
 
                     !print *, 'about to call tl_subcatchment_lateral_inflow'

@@ -48,35 +48,23 @@ contains
             character(64) :: subroutine_name = 'control_update'
         !%------------------------------------------------------------------
 
-        !print *, 'calling control_update_monitor_across_images'
-
         !% --- store monitoring element data across all images
         call control_update_monitor_across_images()
-
-        !print *, 'calling control_update_EPASWMM_monitor_data'
 
         !% --- transfer monitoring data to EPA-SWMM to all images
         call control_update_EPASWMM_monitor_data()
 
-        !print *, 'calling interface_controls_execute'
-
         !% --- execute control algorithm in EPA-SWMM on all images
         call interface_controls_execute ()
-
-        !print *, 'calling  control_update_actions'
 
         !% --- retrieve action changes elemR(:,er_TargetSettings) and
         !%     elemR(:,er_TimeLastSet)
         call control_update_actions ()
 
-        !print *, 'calling control_update_setting'
-    
         !% --- adjust settings
         !%     here we need to change the elemR(:,er_settings) for orifices, 
         !%     weirs, pumps, outlets and conduits.
         call control_update_setting ()
-
-        !print *, 'calling control_update_element_values'
 
         !% --- adjust the values in the elemR array for new elemR(:,er_Setting)
         call control_update_element_values ()
@@ -217,8 +205,8 @@ contains
                 !% continue
             end if
 
-            !print *, 'monitorPassR'
-            !print *, monitorPassR
+            ! print *, 'monitorPassR'
+            ! print *, monitorPassR
 
             !% --- pause all the images and wait for the image corresponding
             !%     to this monitoring point to finish its broadcast
@@ -234,6 +222,7 @@ contains
             monitorR(ii,mr_TimeLastSet) = monitorPassR(7)
         end do
 
+     
         !% --- at this point, the monitorR array on every image has exactly the same data
         !%     so a control action can be conducted on any image.                
         
@@ -261,6 +250,12 @@ contains
             integer, pointer :: LinkNodeNum, isLink
             character(64) :: subroutine_name = 'control_update_EPASWMM_monitor_data'
         !%------------------------------------------------------------------
+
+        !% DEBUGGING OUTPUT ================================================
+            ! print *, ' '
+            ! print *, 'in ',trim(subroutine_name), ': MONITOR DATA SENT TO EPA SWMM'    
+        !% DEBUGGING OUTPUT ================================================
+
         do ii=1,N_MonitorPoint
             !% --- get the monitoring data     
             tDepth       => monitorR(ii,mr_Depth)
@@ -278,6 +273,21 @@ contains
             call interface_controls_transfer_monitor_data &
                 (tDepth, tHead, tVolume, tInflow, tFlow, tSetting, &
                  tTimeLastSet, LinkNodeNum, isLink)
+
+            !% DEBUGGING OUTPUT ================================================
+                ! print *, 'monitor ii  ',ii
+                ! print *, 'Depth       ',tDepth
+                ! print *, 'Head        ',tHead
+                ! print *, 'Volume      ',tVolume
+                ! print *, 'Inflow      ',tInflow
+                ! print *, 'Flow        ',tFlow
+                ! print *, 'Setting     ',tSetting
+                ! print *, 'timeLastSet ',tTimeLastSet
+                ! print *, 'linkNodeNum ',LinkNodeNum
+                ! print *, 'isLink      ',isLink
+            !% DEBUGGING OUTPUT ================================================
+
+
         end do
 
     end subroutine control_update_EPASWMM_monitor_data
@@ -301,10 +311,13 @@ contains
             targetsetting => elemR(:,er_TargetSetting)
             timelastset   => elemR(:,er_TimeLastSet)
         !%------------------------------------------------------------------
+            !% DEBUGGING OUTPUT ================================================
+                ! print *, ii, 'in ',trim(subroutine_name)
+            !% DEBUGGING OUTPUT ================================================
 
         !% --- cycle through the action points
         do ii=1,N_ActionPoint
-            !print *, ii, 'in control_update_actions'
+            
             !% --- only modify elemR data for the image associated with the action point
             if (actionI(ii,ai_image) == this_image()) then
                 !% --- set the element and link indexes
@@ -314,7 +327,16 @@ contains
                 !% --- get the new target setting and time last set
                 call interface_controls_get_action_results &
                     (targetsetting(Eidx),timelastset(Eidx),Lidx)
-            end if
+
+                !% DEBUGGING OUTPUT ================================================
+                    ! print *, 'Action Point idx ',Eidx
+                    ! print *, 'Link idx         ',Lidx
+                    ! print *, 'targetSetting    ',targetsetting(Eidx)
+                    ! print *, 'timelastset      ',timelastset(Eidx)
+                !% DEBUGGING OUTPUT ================================================
+
+            end if  
+
         end do
 
     end subroutine control_update_actions
@@ -335,6 +357,12 @@ contains
             logical, pointer :: isClosedConduit
             character(64) :: subroutine_name = 'control_update_setting'
         !%------------------------------------------------------------------
+
+            !% DEBUGGING OUTPUT ================================================
+            print *, ' '
+            print *, 'in ',trim(subroutine_name)
+            !% DEBUGGING OUTPUT ================================================
+
         !% --- cycle through the action points (few)
         do ii = 1,N_ActionPoint
 
@@ -349,6 +377,17 @@ contains
             timeLastSet     => elemR( Eidx,er_TimeLastSet)
             elemType        => elemI( Eidx,ei_elementType)
             isClosedConduit => elemYN(Eidx,eYN_canSurcharge)
+
+            !% DEBUGGING OUTPUT ================================================
+            print *, 'ACTION POINTS before action'
+            print *, 'Eidx           ',Eidx
+            print *, 'hasChanged      ', hasChanged
+            print *, 'thisSetting     ',thisSetting
+            print *, 'targetSetting   ',targetSetting
+            print *, 'timeLastSet     ',timeLastSet
+            print *, 'elemType        ',trim(reverseKey(elemType))
+            print *, 'isClosedConduit ',isClosedConduit
+            !% DEBUGGING OUTPUT ================================================
 
             !% --- error checking
             if ((targetSetting < zeroR) .or. (targetSetting > oneR)) then
@@ -443,6 +482,18 @@ contains
                 call util_crashpoint(343723)
 
             end select
+
+
+            !% DEBUGGING OUTPUT ================================================
+            print *, 'ACTION POINTS after action'
+            print *, 'Eidx           ',Eidx
+            print *, 'hasChanged      ', hasChanged
+            print *, 'thisSetting     ',thisSetting
+            print *, 'targetSetting   ',targetSetting
+            print *, 'timeLastSet     ',timeLastSet
+            print *, 'elemType        ',trim(reverseKey(elemType))
+            print *, 'isClosedConduit ',isClosedConduit
+            !% DEBUGGING OUTPUT ================================================           
        
         end do
 
@@ -467,6 +518,12 @@ contains
             logical, pointer :: isClosedConduit
             character(64) :: subroutine_name = 'control_update_element_values'
         !%------------------------------------------------------------------
+
+            !% DEBUGGING OUTPUT ================================================
+                ! print *, ' '
+                ! print *, 'in ',trim(subroutine_name)
+            !% DEBUGGING OUTPUT ================================================
+
         !% --- cycle through the action points    
         do ii = 1,N_ActionPoint
             !print *, ii ,' in ',trim(subroutine_name)
@@ -542,7 +599,11 @@ contains
 
             end select
 
-            !print *, 'end do 49872'
+            !% DEBUGGING OUTPUT ================================================
+                ! print *, ' Eidx, haschanged ',Eidx, hasChanged, trim(reverseKey(elemType))
+                ! print *, ' thissetting ',thissetting
+                ! print *, 'elem setting ',elemR(Eidx,er_setting)
+            !% DEBUGGING OUTPUT ================================================
 
         end do
 
@@ -568,6 +629,7 @@ contains
             integer :: npoint
             integer, allocatable :: location(:), islink(:), attribute(:)
             integer, allocatable :: irank(:)
+            character(512) :: thisName
             character(64) :: subroutine_name = 'control_init_monitor_points'
         !%------------------------------------------------------------------
         !% --- each premise may add two monitoring points (LHS and RHS)
@@ -635,17 +697,19 @@ contains
             end do
         end do
 
-        ! print *, 'monitoring points'
+        ! print *, ' '
+        ! print *, 'CONTROL monitoring points'
         ! do ii=1,size(location)
         !     print *, location(ii), islink(ii), attribute(ii)
         ! end do
+
 
         !% --- find unique locations for premises, 
         !      note the max number is nullvalueI
         call util_unique_rank(location,irank,numUnique)
 
-        !% --- testing: printout the monitoring points
-        ! print *, 'Unique monitoring points'
+        ! !% --- testing: printout the monitoring points
+        ! print *, 'CONTROL Unique monitoring points'
         ! do ii=1,numUnique
         !     print *, location(irank(ii)), islink(irank(ii)), attribute(irank(ii))
         ! end do
@@ -660,6 +724,8 @@ contains
         !     print *, ii, node%I(ii,ni_idx), trim(reverseKey(node%I(ii,ni_node_type))), ' , ', trim(node%Names(ii)%str)
         ! end do
 
+
+
         !% --- set the number of monitoring points (removing the nullvalueI)
         !%     check for nullvalue in the unique location
         if (location(irank(numUnique)) == nullValueI) then
@@ -668,10 +734,18 @@ contains
             N_MonitorPoint = numUnique
         end if
         
-        ! print *, 'Monitoring points'
-        ! do ii=1,N_monitorPoint
-        !     print *, location(irank(ii)), islink(irank(ii)), attribute(irank(ii))
-        ! end do
+        !% DEBUGGING OUTPUT ============================================
+            ! print *, ' '
+            ! print *, 'in control_init_monitor_points: MONITOR POINTS'
+            ! do ii=1,N_monitorPoint
+            !     if (islink(irank(ii))) then
+            !         thisName = trim(link%Names(location(irank(ii)))%str)
+            !     else
+            !         thisname = trim(node%Names(location(irank(ii)))%str)
+            !     end if
+            !     write(*,"(A,i6,A,4i6)"),' LinkNode #, linkNode Name, isLink, attr: ',location(irank(ii)),trim(thisName),  islink(irank(ii)), attribute(irank(ii))
+            ! end do
+        !% END DEBUGGING ================================================
 
         !% --- error checking
         if (N_MonitorPoint < 1) then
@@ -825,10 +899,15 @@ contains
         actionI(:,ai_link_idx) = location(irank(1:N_ActionPoint))
         actionI(1:N_ActionPoint,ai_idx) = (/ 1:N_ActionPoint /)
 
-        ! print *, 'all action points'
-        ! do ii = 1,N_ActionPoint
-        !     print *, ii, actionI(ii,ai_idx), actionI(ii,ai_link_idx)
-        ! end do
+        !% DEBUGGING OUTPUT ================================================
+            ! print *, ' '
+            ! print *, 'in control_init_action_points: ACTION POINTS'
+            ! print *, 'all action points'
+            ! do ii = 1,N_ActionPoint
+            !     write(*,"(A,3i6)") ' actionID, idx ',ii, actionI(ii,ai_idx)
+            !     print *, 'Link #, link Name ', actionI(ii,ai_link_idx), trim(link%Names(actionI(ii,ai_link_idx))%str)
+            ! end do
+        !% END DEBUGGING ===================================================o
 
         !% --- error checking
         !      print *, 'checking that link location is in index set'
@@ -887,13 +966,10 @@ contains
             nodeImage    => node%I(:,ni_P_image)
         !%------------------------------------------------------------------
 
-        !print *, 'in ',trim(subroutine_name)
-
         !% --- cycle through the monitoring points    
         do ii=1,N_MonitorPoint
             monitorI(ii,mi_idx) = ii
-            !print *, 'ii=    ',ii
-            !print *, 'islink ',isLink(ii)
+
             !% --- each point is either associated with a link or node
             select case (isLink(ii))
             case (1) !% is link
@@ -952,6 +1028,21 @@ contains
                 print *, 'CODE ERROR: Unexpected case default, monitor(:,mi_islink) unsupported value of ',isLink(ii)
                 call util_crashpoint(58723)
             end select
+
+            !% DEBUGGING OUTPUT ================================================
+                ! print *, ' '
+                ! print *, 'in ',trim(subroutine_name), ': MONITOR ELEMENTS'
+                ! print *, 'monitor ii=  ',ii
+                ! print *, 'islink       ',isLink(ii)
+                ! print *, 'element #    ',eIdx(ii)
+                ! print *, 'element Type ',trim(reverseKey(elemI(eIdx(ii),ei_elementType)))
+                ! if (isLink(ii)) then
+                !     print *, 'link #, type ',LNidx(ii), trim(link%Names(LnIdx(ii))%str)
+                ! else
+                !     print *, 'node #, type ',LNidx(ii), trim(node%Names(LnIdx(ii))%str)
+                ! end if
+            !% END DEBUGGING ===================================================
+
         end do
 
     end subroutine control_init_monitor_elements
@@ -988,8 +1079,12 @@ contains
             elemEnd      => link%I(:,li_last_elem_idx)
             linkImage    => link%I(:,li_P_image)
         !%------------------------------------------------------------------
+
+        !% DEBUGGING OUTPUT ================================================
+            ! print *, 'in ',trim(subroutine_name), ': ACTION ELEMENTS'
+        !% DEBUGGING OUTPUT ================================================
+
         !% --- cycle through the action points
-        !print *, 'in ',trim(subroutine_name)
         do ii=1,N_ActionPoint
             !print *, ii, actionI(ii,ai_link_idx)
 
@@ -1011,6 +1106,13 @@ contains
                 !% --- choose central element
                 eIdx(ii) = (elemStart(Lidx) + elemEnd(Lidx)) / twoI
             end if
+
+            !% DEBUGGING OUTPUT ================================================
+                ! print *, 'action ii      ',ii
+                ! print *, 'action Link     ',Lidx
+                ! print *, 'element #, type ',eIdx(ii),trim(reverseKey(elemI(eIdx(ii),ei_elementType)))
+            !% END DEBUGGING ===================================================
+
         end do
 
     end subroutine control_init_action_elements

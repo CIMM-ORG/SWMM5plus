@@ -108,38 +108,38 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
-            ! call util_CLprint ('in geometry at top')    
+            call util_CLprint ('in geometry at top')    
 
         !% --- assign all geometry for surcharged elements CC, JM and JB
         !%     Note: not used in Preissmann Slot
         call geo_surcharged (thisColP_surcharged)
 
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% --- reset all zero or near-zero volumes in non-surcharged CC, JM, and JB
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
 
             ! print *, this_image(),  '    geomTL ccc',this_image(),setting%Time%Step
-            ! call util_CLprint ('in geometry before geo_depth_from_volume') 
+            call util_CLprint ('in geometry before geo_depth_from_volume') 
 
         !% --- compute the depth on all non-surcharged elements of CC, JM and JB
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! print *, this_image(),  '    geomTL  ddd',this_image(),setting%Time%Step
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
+            call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM and JB
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
 
             !print *,this_image(),  '     geomTL  eee',this_image(),setting%Time%Step
-            ! call util_CLprint ('in geometry before geo_head_from_depth') 
+            call util_CLprint ('in geometry before geo_head_from_depth') 
 
         !% --- compute the head on all non-surcharged elements of CC and JM and JB
         !%     This sets head consistent with depth
         call geo_head_from_depth (thisColP_NonSurcharged)
 
             !print *, this_image(),  '    geomTL  fff',this_image(),setting%Time%Step
-            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
+            call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
 
         !% --- limit volume for incipient surcharge. This is done after depth is computed
         !%     so that the "depth" algorithm can include depths greater than fulldepth
@@ -147,7 +147,7 @@ module geometry
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
             !print *, this_image(),  '    geomTL  ggg',this_image(),setting%Time%Step
-            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
+            call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
 
         ! print *, 'in ',trim(subroutine_name),elemR(48,er_VolumeOverFlow)
 
@@ -158,7 +158,7 @@ module geometry
         call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) !% 20220124brh
 
             !print *, this_image(),  '    geomTL  hhh',setting%Time%Step
-            !  call util_CLprint ('in geometry before geo_assign_JB') 
+             call util_CLprint ('in geometry before geo_assign_JB') 
 
         !% STATUS: at this point we know depths and heads in all CC, JM elements
         !% (surcharged and nonsurcharged) with limiters for conduit depth and zero depth
@@ -167,7 +167,7 @@ module geometry
         call geo_assign_JB (whichTM, thisColP_JM)
 
             !print *, this_image(),  '    geomTL  iii',setting%Time%Step
-            !  call util_CLprint ('in geometry before geo_area_from_volume')  
+             call util_CLprint ('in geometry before geo_area_from_volume')  
 
         !% STATUS at this point we know geometry on all JB and all surcharged, with
         !% depth, head, volume on all non-surcharged or incipient surcharge.
@@ -176,52 +176,52 @@ module geometry
         call geo_area_from_volume (thisColP_NonSurcharged)
 
             ! print *, this_image(),  '    geomTL  jjj',this_image()
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% reset all zero or near-zero areas in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged, .false.)
 
             ! print *, this_image(),  '    geomTL kkk',this_image()
-            ! call util_CLprint ('in geometry before topwidth_from_depth')   
+            call util_CLprint ('in geometry before topwidth_from_depth')   
 
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! print *, this_image(),  '    geomTL  lll', this_image()
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
         call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged, .false.)
 
             ! print *, this_image(),  '    geomTL  mmm',this_image()
-            ! call util_CLprint ('in geometry before perimeter_from_depth') 
+            call util_CLprint ('in geometry before perimeter_from_depth') 
 
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! print *, this_image(),  '    geomTL  nnn',this_image()
-            ! call util_CLprint ('in geometry before hyddepth_from_depth') 
+            call util_CLprint ('in geometry before hyddepth_from_depth') 
 
         !% compute hyddepth
         call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! print *, this_image(),  '    geomTL  ooo',this_image()
-            ! call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
+            call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
 
         !% compute hydradius  (applies to all nonsurcharged)
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
 
             ! print *, this_image(),  '    geomTL  qqq',this_image()
-            ! call util_CLprint ('in geometry before ell_from_head') 
+            call util_CLprint ('in geometry before ell_from_head') 
 
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell_from_head (thisColP_all)
 
             ! print *,  this_image(),  '    geomTL  rrr',this_image()
-            ! call util_CLprint ('in geometry before slot_adjustments') 
+            call util_CLprint ('in geometry before slot_adjustments') 
 
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
@@ -229,13 +229,13 @@ module geometry
         end if
 
             ! print *,  this_image(),  '    geomTL  sss',this_image()
-            ! call util_CLprint ('in geometry before JM_values') 
+            call util_CLprint ('in geometry before JM_values') 
 
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
 
             ! print *, this_image(),  '    geomTL ttt',this_image()
-            ! call util_CLprint ('in geometry before dHdA') 
+            call util_CLprint ('in geometry before dHdA') 
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
@@ -243,7 +243,7 @@ module geometry
         end if
 
             ! print *,  this_image(),  '    geomTL uuu',this_image()
-            ! call util_CLprint ('in geometry at end') 
+            call util_CLprint ('in geometry at end') 
 
         call util_crashstop(322983)
 

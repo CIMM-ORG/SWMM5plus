@@ -70,7 +70,13 @@ module utility
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
 
+            print *, ' '
             print *, trim(inputstring)
+
+            ! print *, elemI(iet,ei_MFace_dL)
+            ! !print *, elemI(iet,ei_MFace_uL)
+
+            ! stop 29873
 
 
             ! print *, '-----depth elements of pipe'
@@ -206,23 +212,25 @@ module utility
     !     !                                 faceR(ift(3),fr_Flowrate), &
     !     !                                 faceR(ift(4),fr_Flowrate)
     
-    !     ! write(*,"(A,10f12.5)") 'fullV elem ',elemR(iet(1),er_FullVolume), &
-    !     !                                     elemR(iet(2),er_FullVolume), &
-    !     !                                     elemR(iet(3),er_FullVolume), &
-    !     !                                     elemR(iet(4),er_FullVolume), &
-    !     !                                     elemR(iet(5),er_FullVolume), &
-    !     !                                     elemR(iet(6),er_FullVolume), &
-    !     !                                     elemR(iet(7),er_FullVolume) 
+        write(*,"(A,10f12.5)") 'fullV elem ',elemR(iet(1),er_FullVolume), &
+                                            elemR(iet(2),er_FullVolume), &
+                                            elemR(iet(3),er_FullVolume), &
+                                            elemR(iet(4),er_FullVolume), &
+                                            elemR(iet(5),er_FullVolume), &
+                                            elemR(iet(6),er_FullVolume), &
+                                            elemR(iet(7),er_FullVolume), &
+                                            elemR(iet(8),er_FullVolume), &
+                                            elemR(iet(9),er_FullVolume) 
                                                                                    
-    !     write(*,"(A,10f12.5)") 'Vol e      ',elemR(iet(1),er_Volume), &
-    !                                         elemR(iet(2),er_Volume), &
-    !                                         elemR(iet(3),er_Volume), &
-    !                                         elemR(iet(4),er_Volume), &
-    !                                         elemR(iet(5),er_Volume), &
-    !                                         elemR(iet(6),er_Volume), &
-    !                                         elemR(iet(7),er_Volume), &
-    !                                         elemR(iet(8),er_Volume), &                                            
-    !                                         elemR(iet(9),er_Volume)  
+        write(*,"(A,10f12.5)") 'Vol e      ',elemR(iet(1),er_Volume), &
+                                            elemR(iet(2),er_Volume), &
+                                            elemR(iet(3),er_Volume), &
+                                            elemR(iet(4),er_Volume), &
+                                            elemR(iet(5),er_Volume), &
+                                            elemR(iet(6),er_Volume), &
+                                            elemR(iet(7),er_Volume), &
+                                            elemR(iet(8),er_Volume), &                                            
+                                            elemR(iet(9),er_Volume)  
 
     !     ! write(*,"(A,10f12.5)") 'fullD elem',elemR(iet(1),er_fullDepth), &
     !     !                                 elemR(iet(2),er_fullDepth), &
@@ -319,7 +327,7 @@ module utility
                                         elemR(iet(9),er_Head)   
 
 
-    !     print *, 'Z outfall', BC%headR(:,br_value)
+        print *, 'Z outfall', BC%headR(:,br_value)
                                         
         ! write(*,"(A,10f12.5)") 'Z bmax    ',elemR(iet(1),er_ZbreadthMax), &
         !                                 elemR(iet(2),er_ZbreadthMax), &
@@ -347,23 +355,27 @@ module utility
         !                                 faceR(ift(3),fr_Area_d), &
         !                                 faceR(ift(4),fr_Area_u)              
 
-        ! write(*,"(A,10f12.5)") 'Qf ',   0.d0,&
-        !                                 0.d0,&
-        !                                 faceR(ift(1),fr_Flowrate), &
-        !                                 faceR(ift(2),fr_Flowrate), &
-        !                                 0.d0,&
-        !                                 0.d0,&
-        !                                 faceR(ift(3),fr_Flowrate), &
-        !                                 faceR(ift(4),fr_Flowrate)    ! print *, 'fup ',fup(iet)
+        write(*,"(A,10f12.5)") 'Qf ',   0.d0,&
+                                        0.d0,&
+                                        faceR(ift(1),fr_Flowrate), &
+                                        faceR(ift(2),fr_Flowrate), &
+                                        0.d0,&
+                                        0.d0,&
+                                        faceR(ift(3),fr_Flowrate), &
+                                        faceR(ift(4),fr_Flowrate), &
+                                        faceR(ift(5),fr_Flowrate), &   
+                                        faceR(ift(6),fr_Flowrate)
 
-        ! write(*,"(A,10f12.5)") 'Vf ',   0.d0,&
-        !                                 0.d0,&
-        !                                 faceR(ift(1),fr_Velocity_d), &
-        !                                 faceR(ift(2),fr_Velocity_u), &
-        !                                 0.d0,&
-        !                                 0.d0,&
-        !                                 faceR(ift(3),fr_Velocity_d), &
-        !                                 faceR(ift(4),fr_Velocity_u)                                          
+        write(*,"(A,10f12.5)") 'Vf ',   0.d0,&
+                                        0.d0,&
+                                        faceR(ift(1),fr_Velocity_d), &
+                                        faceR(ift(2),fr_Velocity_u), &
+                                        0.d0,&
+                                        0.d0,&
+                                        faceR(ift(3),fr_Velocity_d), &
+                                        faceR(ift(4),fr_Velocity_u), &
+                                        faceR(ift(5),fr_Velocity_u), &   
+                                        faceR(ift(6),fr_Velocity_u)                                          
         ! ! print *, 'fdn ',fdn(iet) 
 
         ! if (elemR(iet(2),er_Volume) > tenR) then

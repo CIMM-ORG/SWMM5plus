@@ -828,7 +828,7 @@ contains
                 !% get geometry data for conduits
                 call init_IC_get_conduit_geometry (thisLink)
 
-                print *, thisLink,'bb ',elemR(12:14,er_Volume)
+                !print *, thisLink,'bb ',elemR(12:14,er_Volume)
 
             case (lweir)
                 !% get geometry data for weirs

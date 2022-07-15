@@ -46,20 +46,20 @@ module update
         !%------------------------------------------------------------------
         !%
             ! print *, this_image(),'    update 000 before geom TL',setting%Time%Step
-            ! call util_CLprint ('in update before geometry toplevel')
+            call util_CLprint ('in update before geometry toplevel')
         
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
             !print *, this_image(),'    update 001 after geom TL',setting%Time%Step
-            ! call util_CLprint ('in update before adjust_limit_velocity_max')
+            call util_CLprint ('in update before adjust_limit_velocity_max')
 
         !% --- adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
         call util_crashstop(21987)
 
             ! print *, this_image(),'    update 002 after adjust limit velocity',this_image()
-            ! call util_CLprint ('in update before update_CC_element_flowrate')
+            call util_CLprint ('in update before update_CC_element_flowrate')
 
         !% --- set packed column for updated elements
         select case (whichTM)
@@ -84,13 +84,13 @@ module update
         call update_CC_element_flowrate (thisCol_CC)
 
             ! print *, 'update 003 after element flowrate',this_image()
-            ! call util_CLprint ('in update before update_Froude_number_element')
+            call util_CLprint ('in update before update_Froude_number_element')
 
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
             !print *, 'update 004 after Froude Number',this_image()
-            !  call util_CLprint ('in update before CC interpweights in update')
+             call util_CLprint ('in update before CC interpweights in update')
 
         !% --- compute the wave speeds
         call update_wavespeed_element(thisCol_CC)
@@ -100,25 +100,25 @@ module update
         call update_interpweights_CC(thisCol_CC, whichTM)
 
             ! print *, 'update 005 after CC interpweights',this_image()
-            ! call util_CLprint ('in update before JB interpweights')
+            call util_CLprint ('in update before JB interpweights')
 
         !% --- compute element-face interpolation weights on JB
         call update_interpweights_JB (thisCol_JM)
 
             ! print *, 'update 006 after JB interpweights',this_image()
-            ! call util_CLprint ('in update before update Froude Number Junction Branch')
+            call util_CLprint ('in update before update Froude Number Junction Branch')
 
         !% --- compute element Froude number for JB
         call update_Froude_number_JB (thisCol_JM) 
 
             ! print *, 'update 007 at end after update Froud number JB',this_image()
-            ! call util_CLprint ('in update before update BCoutlet_flowrate')
+            call util_CLprint ('in update before update BCoutlet_flowrate')
 
         !% --- flow values on an BC outlet face 20220714brh
         !%     required so that an inflow to a zero or small depth will not be lost
         call update_BCoutlet_flowrate ()
 
-            ! call util_CLprint ('in update at end')
+            call util_CLprint ('in update at end')
 
         !%------------------------------------------------------------------
         !% Closing:

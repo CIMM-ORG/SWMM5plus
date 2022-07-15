@@ -33,7 +33,9 @@ module define_globals
    !integer :: iet(10) = (/45, 46, 47, 48, 49, 50, 113, 114, 115, 116/)
    ! integer :: ift(3) = (/205,1,2/)
 
-    integer :: ift(4) = (/13,1,2,11/)
+    !integer :: ift(4) = (/13,1,2,11/)
+
+    integer :: ift(6) = (/15,1,2,11,12,13/)
 
     !integer :: iet(7) = (/13,15,24,2,1,3,12 /) !% orifice
     !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
