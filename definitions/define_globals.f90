@@ -214,6 +214,9 @@ module define_globals
 
     !% output times
     real(8), allocatable :: output_times(:)
+
+    !% Profile_Outputs
+    integer, allocatable, target :: output_profile_ids(:,:)
     ! filenames for output binaries
     character(len=256), allocatable, target :: output_binary_filenames(:)
     character(len=256), allocatable, target :: output_binary_filenames_all(:)
@@ -364,6 +367,9 @@ module define_globals
     !% Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray
     integer :: max_caf_face_N    ! size of all face array in coarray
+
+    integer :: max_links_profile_N  ! size of the max amount of links in a profile
+    integer :: max_profiles_N ! size of how how many profiles there are
 
     !% assign status parameters for nodes
     integer, parameter :: nUnassigned = 998877

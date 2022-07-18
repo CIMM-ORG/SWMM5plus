@@ -545,7 +545,7 @@ module define_settings
         logical :: stopAfterInitializationYN = .false.
         logical :: useHydrology = .true.
         logical :: useHydraulics = .true.
-        logical :: useSpinUp     = .true.
+        logical :: useSpinUp     = .false.
         logical :: stopAfterSpinUp = .false.
         real(8) :: SpinUpDays    = 10.d0
     end type SimulationType

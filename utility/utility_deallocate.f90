@@ -190,6 +190,9 @@ contains
         deallocate(node%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node%Names')
 
+        deallocate(output_profile_ids, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg, 'output_profile_ids')
+
         ! deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
         ! call util_deallocate_check(deallocation_status, emsg, 'link%Names')
 

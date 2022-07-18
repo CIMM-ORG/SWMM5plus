@@ -2938,7 +2938,7 @@ contains
 
         logical, intent(in)             :: isFV      !% true for a FV file
 
-        integer :: mm
+        integer :: mm, ii  
         character(64) :: subroutine_name = 'outputML_csv_header'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
@@ -3081,6 +3081,19 @@ contains
             end do
             write(funitIn,fmt='(a)') trim(output_type_units(nType+1))
         end if
+
+        !% --- ROW 15 --- 4th HEADER ROW -- Profiler Data
+        do ii = 1, max_profiles_N
+            do mm = 1, max_links_profile_N
+                if(mod(mm,2) > 0 .and. output_profile_ids(ii,mm) .neqv. nullValueI) then 
+                    write(funitIn,fmt='(2a)',advance='no') node%names(output_profile_ids(1,mm))%str,','
+                
+                else if (mod(mm,2) == 0 .and. output_profile_ids(ii,mm) .neqv. nullValueI) then
+                    write(funitIn,fmt='(2a)',advance='no') link%names(output_profile_ids(1,mm))%str,','
+
+                end if
+            end do
+        end do 
 
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4432,8 +4445,9 @@ contains
 
         logical, intent(in)             :: isFV      !% true for a FV file
 
-        CHARACTER(LEN=10), PARAMETER ::  aname = "model_data"   ! Attribute name
-        CHARACTER(LEN=12), PARAMETER :: Header_name = "header_data" !
+        CHARACTER(LEN=10), PARAMETER :: aname = "model_data"   ! Attribute name
+        CHARACTER(LEN=12), PARAMETER :: Header_name = "header_data" ! Header name
+        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiler
 
         character(LEN=500) :: temp_str
 
@@ -4445,10 +4459,12 @@ contains
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
         CHARACTER(LEN=256), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
         CHARACTER(LEN=256), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
+        !CHARACTER(LEN=256), DIMENSION(:,:), allocatable  ::  profiles_data !Stores the 
         INTEGER(SIZE_T) :: attrlen !length of attributes to be written 
         INTEGER(HSIZE_T), DIMENSION(1) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: header_dims       !dimensions of the header created
+        INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims      !dimensions of the profiles created
         
         INTEGER     ::   rank = 2 !% only have 2D arrays so rank is always 2                    
         INTEGER     ::   HD_error !% For HDF5 errors
@@ -4463,6 +4479,8 @@ contains
         
         !% header data will always be stored in array of this shape 
         allocate(header_data(Ntype+1,3))
+        !allocate(profiles_data(max_links_profile_N,max_profiles_N))
+        
         
         !% length of the attributes to be stored
         attrlen = 256
@@ -4608,9 +4626,12 @@ contains
         
         end if
 
+        !% Header Profile - Data Units
+
         !stores the size of the link up so we can create a dataspace in the file with the correct size
         updated_size_data(1:2) = (/nType+1,nTotalTimeLevels/)
         header_dims(1:2) = (/Ntype+1,3/)
+        profile_dims(1:2)     = (/max_links_profile_N,max_profiles_N/)
         
 
 
@@ -4635,6 +4656,17 @@ contains
         CALL h5sclose_f(aspace_id, HD_error)
         !CALL h5dclose_f(dset_id, HD_error)
         !--------------------------------------------
+        !Storing the profile data 
+        CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
+        CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
+        CALL h5tset_size_f(atype_id, attrlen, HD_error)
+        CALL h5acreate_f(dset_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
+        data_dims(1) = max_links_profile_N
+        data_dims(2) = max_profiles_N
+        CALL h5awrite_f(attr_id, atype_id, output_profile_ids, data_dims, HD_error)
+        CALL h5aclose_f(attr_id, HD_error)
+        CALL h5tclose_f(atype_id, HD_error)
+        CALL h5sclose_f(aspace_id, HD_error)
         !--------------------------------------------
         !Creating and writing the attribute data for the header data
         CALL h5screate_simple_f(rank, header_dims, aspace_id, HD_error)
