@@ -2618,6 +2618,36 @@ contains
                 (.not. elemYN(:,eYN_isZeroDepth))     ) 
         end if
 
+        !print *, 'CCJM_NOTsmalldepth'
+        !% ep_CCJM_NOTsmalldepth  ====================================
+        !% Flow solution that are NOT small volume or zero depth
+        !% -- alternate needed to limit where CFL is computed
+        ptype => col_elemP(ep_CCJM_NOTsmalldepth)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (      &
+                      ( elemI(:,ei_elementType) == CC) &
+                 .or. ( elemI(:,ei_elementType) == JM) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
+        ! print *, ' '
+        ! print *, ' in pack_mask_arrays checking CCJM_NOTsmalldepth'
+        ! print *, 'npack ',npack        
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (      &
+                      ( elemI(:,ei_elementType) == CC) &
+                 .or. ( elemI(:,ei_elementType) == JM) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     ) 
+        end if
+
 
     end subroutine pack_small_and_zero_depth_elements
 !%

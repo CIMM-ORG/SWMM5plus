@@ -110,28 +110,28 @@ module geometry
 
             !call util_CLprint ('in geometry at top')    
 
-        !% --- assign all geometry for surcharged elements CC, JM and JB
+        !% --- assign all geometry for surcharged elements CC, JM
         !%     Note: not used in Preissmann Slot
         call geo_surcharged (thisColP_surcharged)
 
             !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
-        !% --- reset all zero or near-zero volumes in non-surcharged CC, JM, and JB
+        !% --- reset all zero or near-zero volumes in non-surcharged CC, JM
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
 
             !call util_CLprint ('in geometry before geo_depth_from_volume') 
 
-        !% --- compute the depth on all non-surcharged elements of CC, JM and JB
+        !% --- compute the depth on all non-surcharged elements of CC, JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
             !call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
 
-        !% reset all zero or near-zero depths in non-surcharged CC and JM and JB
+        !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
 
             !call util_CLprint ('in geometry before geo_head_from_depth') 
 
-        !% --- compute the head on all non-surcharged elements of CC and JM and JB
+        !% --- compute the head on all non-surcharged elements of CC and JM
         !%     This sets head consistent with depth
         call geo_head_from_depth (thisColP_NonSurcharged)
 

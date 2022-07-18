@@ -1030,7 +1030,8 @@ contains
             timeLeft = nextHydrologyTime - lastHydraulicsTime
             if (timeLeft .le. dtTol) timeLeft = oldDT
             !% --- get the CFL if a single step is taken
-            thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,timeleft)  
+            !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,timeleft)  
+            thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,timeleft)  
 
             !% --- check to see if a single time step to match the hydrology time is possible
             if (thisCFL .le. maxCFL) then
@@ -1049,7 +1050,8 @@ contains
                     !% --- negligible time left, don't bother with it, go back to the old dt
                     newDT = oldDT
                     !% --- check that resetting to oldDT didn't cause a problem
-                    thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+                    !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+                    thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,newDT)
                     if (thisCFL > maxCFL) then 
                         !% --- if CFL too large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
@@ -1079,7 +1081,8 @@ contains
                             !% --- accept the provisional newDT
                         end if
                         !% --- check that the newDT didn't cause a CFL violation
-                        thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+                        !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+                        thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,newDT)
                         if (thisCFL > maxCFL) then 
                             !% --- if CFL to large, set the time step based on the target CFL
                             newDT = newDT * targetCFL / thisCFL
@@ -1098,7 +1101,8 @@ contains
 
             !% --- allowing hydrology and hydraulics to occur at different times
             !thisCFL = tl_get_max_cfl(ep_CC_NOTsmalldepth,oldDT)
-            thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
+            !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
+            thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,oldDT)
 
                 !print *, 'baseline CFL, minCFL, this step: '
                 !print *, thisCFL, minCFL, stepNow
@@ -1185,7 +1189,8 @@ contains
         nextHydraulicsTime = lastHydraulicsTime + newDT
         
         !% find the cfl for reporting
-        cfl_max = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+       ! cfl_max = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
+        cfl_max = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,newDT)
         call co_max(cfl_max)
 
 
