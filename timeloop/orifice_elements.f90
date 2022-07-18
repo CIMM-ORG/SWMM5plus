@@ -6,6 +6,7 @@ module orifice_elements
     use define_settings, only: setting
     use common_elements
     use adjust
+    use geometry, only: geo_ell_singular
     use define_xsect_tables
     use utility, only: util_sign_with_ones
     use xsect_tables
@@ -44,26 +45,26 @@ module orifice_elements
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
         !% find the opening of the orifice due to control intervention
-        print *, 'calling orifice_set_setting'
-        call orifice_set_setting (eIdx)
+        ! print *, 'calling orifice_set_setting'
+        ! call orifice_set_setting (eIdx) !% ss20220701 -- orifice setting is already being set in control_update_setting subroutine
 
-        print *, 'calling common_head_and_flowdirection'
+        !print *, 'calling common_head_and_flowdirection'
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
 
-        print *, 'calling orifice_effective_head_delta'
+        !print *, 'calling orifice_effective_head_delta'
         !% find effective head on orifice element
          call orifice_effective_head_delta (eIdx)
 
-         print *, 'calling orifice_flow'
+        ! print *, 'calling orifice_flow'
         !% find flow on orifice element
         call orifice_flow (eIdx)
 
-        print *, 'calling orifice_geometry_update'
+        !print *, 'calling orifice_geometry_update'
         !% update orifice geometry from head
         call orifice_geometry_update (eIdx)
 
-        print *, 'calling common_velocity_from_flowrate_singular'
+        !print *, 'calling common_velocity_from_flowrate_singular'
          !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
@@ -107,7 +108,6 @@ module orifice_elements
             if (step + oneOneThounsandthR >= abs(delta)) then
                 CurrentSetting = TargetSetting
             else
-                !CurrentSetting = CurrentSetting + util_sign_with_ones(delta) * step
                 CurrentSetting = CurrentSetting + sign(step,delta)
             end if
         end if
@@ -312,7 +312,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         real(8), pointer :: Head, Length, Zbottom,  Zcrown
-        real(8), pointer :: Depth, Area, Volume, Topwidth
+        real(8), pointer :: Depth, Area, Volume, Topwidth, ell
         real(8), pointer :: Perimeter, HydDepth, HydRadius,  Zcrest, EffectiveFullArea
         real(8), pointer :: RectangularBreadth, EffectiveFullDepth
         integer, pointer :: GeometryType
@@ -324,7 +324,7 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        print *, 'in ',trim(subroutine_name), ' with ',eIdx
+        !print *, 'in ',trim(subroutine_name), ' with ',eIdx
 
         !% pointers
         GeometryType       => elemSI(eIdx,esi_Orifice_GeometryType)
@@ -333,6 +333,7 @@ module orifice_elements
         Head               => elemR(eIdx,er_Head)
         HydDepth           => elemR(eIdx,er_HydDepth)
         HydRadius          => elemR(eIdx,er_HydRadius)
+        ell                => elemR(eIdx,er_ell)
         Length             => elemR(eIdx,er_Length)
         Perimeter          => elemR(eIdx,er_Perimeter)
         Topwidth           => elemR(eIdx,er_Topwidth)
@@ -353,38 +354,66 @@ module orifice_elements
             Depth = Zcrown - Zcrest
         end if
 
-        print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
+        !print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
 
         !% set geometry
-        select case (GeometryType)
+
+        !% if the orifice is closed or depth is below crest, set all the geometry to zero
+        if ((EffectiveFullDepth <= zeroR) .or. (depth == zeroR)) then
+            Area      = zeroR
+            Volume    = zeroR
+            Topwidth  = zeroR
+            HydDepth  = zeroR
+            Perimeter = zeroR
+            HydRadius = zeroR
+            ell       = zeroR
+        else
+            select case (GeometryType)
 
             case (rectangular_closed)
-                Area      =  RectangularBreadth * Depth
+                Area      = RectangularBreadth * Depth
                 Volume    = Area * Length !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
                 HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
+                ell       = Depth
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
 
             case (circular)
-                print *, 'Depth              ',Depth
-                print *, 'EffectiveFullDepth ',EffectiveFullDepth
+                !print *, 'Depth              ',Depth
+                !print *, 'EffectiveFullDepth ',EffectiveFullDepth
                 YoverYfull  = Depth / EffectiveFullDepth
                 Area        = EffectiveFullArea * &
-                        xsect_table_lookup_singular (YoverYfull, ACirc)  !% 20220506brh removed NACirc
+                        xsect_table_lookup_singular (YoverYfull, ACirc)
                 Volume      = Area * Length
                 Topwidth    = EffectiveFullDepth * &
-                        xsect_table_lookup_singular (YoverYfull, TCirc) !% 20220506brh removed NTCirc
-                HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                        xsect_table_lookup_singular (YoverYfull, TCirc)
+                if (Topwidth > zeroR) then
+                    HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                else
+                    if (YoverYfull .ge. oneR) then
+                        HydDepth = EffectiveFullDepth
+                    else
+                        HydDepth = setting%ZeroValue%Depth
+                    end if
+                end if
                 hydRadius   = onefourthR * EffectiveFullDepth * &
-                        xsect_table_lookup_singular (YoverYfull, RCirc)  !% 20220506brh removed NRCirc
-                Perimeter   = min(Area / hydRadius, &
+                        xsect_table_lookup_singular (YoverYfull, RCirc)
+                if (hydRadius > zeroR) then
+                    Perimeter   = min(Area / hydRadius, &
                         EffectiveFullArea / (onefourthR * EffectiveFullDepth))
+                else
+                    Perimeter = setting%ZeroValue%Depth
+                end if
+
+                ell = geo_ell_singular(eIdx)
+   
             case default
                 print *, 'CODE ERROR geometry type unknown for # ', GeometryType
                 print *, 'which has key ',trim(reverseKey(GeometryType))
                 stop 9478
-        end select
+            end select
+        end if
 
         !% apply geometry limiters
         call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area,     .false.)

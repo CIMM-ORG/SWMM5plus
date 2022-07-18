@@ -43,7 +43,7 @@ module weir_elements
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
 
         !% --- set the Setting for the fractional open
-        call weir_set_setting (eIdx)  
+        ! call weir_set_setting (eIdx)  !% ss20220701 -- weir setting is already being set in control_update_setting subroutine
 
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
@@ -83,17 +83,29 @@ module weir_elements
         !% patterned after EPA-SWMM link.c/weir_setSetting
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: eIdx
+        integer, intent(in) :: eIdx
+
+        real(8), pointer :: FullDepth, EffectiveFullDepth
+        real(8), pointer :: CurrentSetting, TargetSetting
         !%------------------------------------------------------------------
+
+        FullDepth          => elemSR(eIdx,esr_Weir_FullDepth)
+        EffectiveFullDepth => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
+        CurrentSetting     => elemR(eIdx,er_Setting)
+        TargetSetting      => elemR(eIdx,er_TargetSetting)
+
         !% --- instantaneous adjustment
-        elemR(eIdx,er_Setting) = elemR(eIdx,er_TargetSetting)
+        CurrentSetting = TargetSetting 
 
         !% --- error check
         !%     EPA-SWMM allows the weir setting to be between 0.0 and 1.0
-        if (.not. ((elemR(eIdx,er_Setting) .ge. 0.0) .and. (elemR(eIdx,er_Setting) .le. 1.0))) then
+        if (.not. ((CurrentSetting .ge. 0.0) .and. (CurrentSetting .le. 1.0))) then
             print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
             call util_crashpoint(668723)
         end if
+
+        !% find effective weir opening
+        EffectiveFullDepth = FullDepth * CurrentSetting
 
     end subroutine weir_set_setting
 !% 
@@ -108,7 +120,7 @@ module weir_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
         real(8), pointer :: EffectiveHeadDelta, Head, Zcrown, Zcrest
-        real(8), pointer :: NominalDownstreamHead
+        real(8), pointer :: NominalDownstreamHead, CurrentSetting, EffectiveFullDepth
         logical, pointer :: CanSurcharge, IsSurcharged
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
@@ -117,18 +129,20 @@ module weir_elements
         Head   => elemR(eIdx,er_Head)
         !% output
         EffectiveHeadDelta    => elemSR(eIdx,esr_Weir_EffectiveHeadDelta)
+        EffectiveFullDepth    => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
         Zcrown                => elemSR(eIdx,esr_Weir_Zcrown)
         Zcrest                => elemSR(eIdx,esr_Weir_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
         CanSurcharge          => elemYN(eIdx,eYN_canSurcharge)
         IsSurcharged          => elemYN(eIdx,eYN_isSurcharged)
+        CurrentSetting        => elemR(eIdx,er_Setting)
         
         !% setting default surcharge condition as false
         IsSurcharged = .false.
         !%-----------------------------------------------------------------------------
 
-        !print *, 'in weir stuff 298374'
-        !print *, Head, Zcrest
+        !% adjust weir crest height for partially open weir
+        Zcrest = Zcrest + (oneR - CurrentSetting) * EffectiveFullDepth
 
         if (Head <= Zcrest) then
             EffectiveHeadDelta = zeroR
@@ -136,14 +150,20 @@ module weir_elements
             EffectiveHeadDelta = Head - Zcrest
         endif
             
-        if ((Head > Zcrown) .and. (CanSurcharge)) then
-            IsSurcharged = .true.
-            Zmidpt = (Zcrest + Zcrown) / twoR
-            if (NominalDownstreamHead < Zmidpt) then
-                EffectiveHeadDelta = Head - Zmidpt       
+        if (Head > Zcrown) then
+            !% use equivalent orifice head calculation if the weir can surcharge
+            if (CanSurcharge) then
+                IsSurcharged = .true.
+                Zmidpt = (Zcrest + Zcrown) / twoR
+                if (NominalDownstreamHead < Zmidpt) then
+                    EffectiveHeadDelta = Head - Zmidpt       
+                else
+                    EffectiveHeadDelta = Head - NominalDownstreamHead    
+                endif  
+            !% if the weir cannot surcharge, limit the head to height of weir opening
             else
-                EffectiveHeadDelta = Head - NominalDownstreamHead    
-            endif     
+                EffectiveHeadDelta =  Zcrown - Zcrest
+            end if      
         endif
 
     end subroutine weir_effective_head_delta

@@ -722,11 +722,13 @@ contains
         !% in EPA-SWMM
         !%---------------------------------------------------------------------
         !% Declarations
-            integer :: success
+            integer :: number_of_actions
             real(8) :: currentTimeEpoch, ElapsedDays, dtDays
         !%---------------------------------------------------------------------
         !% -- convert elapsed seconds to SWMM time
         currentTimeEpoch = util_datetime_secs_to_epoch(setting%Time%Now)
+
+        
 
         !% --- compute elapsed days since start of simulation
         ElapsedDays = setting%Time%Now / seconds_per_day
@@ -734,11 +736,19 @@ contains
         !% --- compute time step in days
         dtDays = setting%Time%Hydraulics%Dt / seconds_per_day
 
+        ! print *, ' '
+        ! print *, 'in interface_controls_execute'
+        ! print *, 'currentTimeEpoch ',currentTimeEpoch
+        ! print *, 'ElapsedDays      ',ElapsedDays
+        ! print *, 'dtDays           ',dtDays
+
         !% --- load the procedure
         call load_api_procedure("api_controls_execute")
 
         !% --- execute controls
-        success = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
+        number_of_actions = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
+
+        ! print *, 'number of actions taken ',number_of_actions
 
     end subroutine interface_controls_execute
 !%    

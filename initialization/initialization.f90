@@ -17,6 +17,7 @@ module initialization
     use utility_output
     use utility_profiler
     use utility_files
+    use utility_key_default
     use output
     use pack_mask_arrays
     use utility_crash
@@ -292,6 +293,12 @@ contains
         call util_crashstop(4429873)
         !call sleep(1)
 
+
+    
+
+        ! call util_CLprint ('in initialization')
+        ! stop 598734
+
         !% --- SET CRASH (BLOWUP) LIMITS
         call util_crash_initialize
 
@@ -396,7 +403,8 @@ contains
     
         !call util_CLprint('At end of initialization')
         !stop 445782
-    
+
+
         !%------------------------------------------------------------------- 
         !% Closing
             call init_check_setup_conditions()
@@ -582,6 +590,11 @@ contains
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        !% Set default for all link and node keys
+        call util_key_default_linknode()
+
+        !% set defaults for all KEY types in link%I
+
         !link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
@@ -661,7 +674,7 @@ contains
 
     
             !% --- special element attributes
-            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -866,8 +879,8 @@ contains
         end do
 
         !% Check for small links if automatic resizing is not used.
-        if (.not. setting%Discretization%AdjustLinkLengthYN) then
-            do ii = 1, setting%SWMMinput%N_link
+        if (setting%Discretization%MinElemLengthMethod /= ElemLengthAdjust) then
+            do ii = 1, N_link
                 if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
                     if (link%R(ii,lr_Length) < 1.5 * setting%Discretization%NominalElemLength) then
                         print *, 'SWMM input file links are smaller than 1.5 * NominalElemLength'
@@ -899,6 +912,14 @@ contains
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+
+        ! do ii=1,N_node
+        !     print *, node%R(ii,nr_InitialDepth), node%R(ii,nr_Zbottom), trim(node%Names(ii)%str)
+        ! end do
+        ! do ii=1,N_link
+        !     print *, link%R(ii,lr_Z)
+        ! stop 2098734    
 
     end subroutine init_linknode_arrays
 !%
@@ -1525,6 +1546,8 @@ contains
 
         !% allocate elem and face coarrays
         call util_allocate_elemX_faceX()
+        call util_key_default_elemX()
+        call util_key_default_face()
 
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()

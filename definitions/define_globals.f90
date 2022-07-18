@@ -33,8 +33,16 @@ module define_globals
    !integer :: iet(10) = (/45, 46, 47, 48, 49, 50, 113, 114, 115, 116/)
    ! integer :: ift(3) = (/205,1,2/)
 
-    ! integer :: iet(4) = (/48, 50, 47, 49/)
-    ! integer :: ift(3) = (/47, 49, 48/)
+    !integer :: ift(4) = (/13,1,2,11/)
+
+    integer :: ift(6) = (/15,1,2,11,12,13/)
+
+    !integer :: iet(7) = (/13,15,24,2,1,3,12 /) !% orifice
+    !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
+
+
+    integer :: iet(9) = (/15,17,26,2,1,3,12,13,14 /) !% orifice
+    !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
 
     integer(kind=8) :: irecCount = 0
 
@@ -271,23 +279,23 @@ module define_globals
 
     !% note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877        !% note this places limit on largest network!
-    real(8), parameter :: nullvalueR = 9.98877e16
+    real(8), parameter :: nullvalueR = 9.98877d16
     logical, parameter :: nullvalueL = .false.
     real(8), parameter :: negoneR = -1.0
-    real(8), parameter :: zeroR = 0.0
-    real(8), parameter :: oneR = 1.0
-    real(8), parameter :: twoR = 2.0
-    real(8), parameter :: threeR = 3.0
-    real(8), parameter :: fourR = 4.0
-    real(8), parameter :: fiveR = 5.0
-    real(8), parameter :: sixR = 6.0
-    real(8), parameter :: eightR = 8.0
-    real(8), parameter :: tenR = 10.0
-    real(8), parameter :: twentyR = 20.0
-    real(8), parameter :: twentyfourR = 24.0
-    real(8), parameter :: sixtyR = 60.0
-    real(8), parameter :: onehundredR = 100.0
-    real(8), parameter :: onethousandR = 1000.0
+    real(8), parameter :: zeroR = 0.d0
+    real(8), parameter :: oneR = 1.d0
+    real(8), parameter :: twoR = 2.d0
+    real(8), parameter :: threeR = 3.d0
+    real(8), parameter :: fourR = 4.d0
+    real(8), parameter :: fiveR = 5.d0
+    real(8), parameter :: sixR = 6.d0
+    real(8), parameter :: eightR = 8.d0
+    real(8), parameter :: tenR = 10.d0
+    real(8), parameter :: twentyR = 20.d0
+    real(8), parameter :: twentyfourR = 24.d0
+    real(8), parameter :: sixtyR = 60.d0
+    real(8), parameter :: onehundredR = 100.d0
+    real(8), parameter :: onethousandR = 1000.d0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneOneThounsandthR = oneR / onethousandR
@@ -304,9 +312,9 @@ module define_globals
     real(8), parameter :: threehalfR = threeR / twoR
     real(8), parameter :: fourthirdsR = fourR / threeR
 
-    real(8), parameter :: seconds_per_minute = 60.0
-    real(8), parameter :: seconds_per_hour = 3600.0
-    real(8), parameter :: seconds_per_day  = 86400.0
+    real(8), parameter :: seconds_per_minute = 60.d0
+    real(8), parameter :: seconds_per_hour = 3600.d0
+    real(8), parameter :: seconds_per_day  = 86400.d0
 
     integer            :: dummyI
     integer, parameter :: zeroI = 0
@@ -416,6 +424,8 @@ module define_globals
 
     !% maximum cfl across the network. Used for reporting 
     real(8) :: cfl_max
+    real(8) :: cfl_max_CC
+    real(8) :: cfl_max_JBJM
 
     !% datetime related variables
     integer, parameter :: datedelta = 693594

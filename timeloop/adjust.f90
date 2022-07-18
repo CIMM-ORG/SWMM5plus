@@ -124,19 +124,19 @@ module adjust
 
         call adjust_zerodepth_element_values (whichTM, CC) 
 
-            !call util_CLprint('-------------AAAA')
+            ! call util_CLprint('-------------AAAA')
         
         call adjust_zerodepth_element_values (whichTM, JM) 
 
-            !call util_CLprint('-------------BBBB')
+            ! call util_CLprint('-------------BBBB')
         
         call adjust_smalldepth_element_fluxes (whichTM)
 
-            !call util_CLprint('-------------CCCC')
+            ! call util_CLprint('-------------CCCC')
         
         call adjust_limit_velocity_max (whichTM) 
 
-            !call util_CLprint('-------------DDDD')
+            ! call util_CLprint('-------------DDDD')
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -601,9 +601,10 @@ module adjust
             integer, intent(in) :: whichTM
             integer, pointer :: thisCol
             integer, pointer :: npack, thisP(:), fdn(:), fup(:)
-            real(8), pointer :: Area(:), CMvelocity(:)
+            real(8), pointer :: Area(:), CMvelocity(:), CMvelocity2(:)
             real(8), pointer :: Flowrate(:), HydRadius(:), ManningsN(:)
-            real(8), pointer :: Velocity(:), VelocityBlend(:), svRatio(:)
+            real(8), pointer :: VelocityN0(:), Velocity(:), VelocityBlend(:), svRatio(:)
+            real(8), pointer :: Head(:)
             real(8), pointer :: SmallVolume(:), Volume(:), faceFlow(:), faceFlowCons(:)
             real(8), pointer :: fHead_u(:), fHead_d(:), Length(:), oneArray(:)
             integer, target  :: pset(2)
@@ -630,15 +631,18 @@ module adjust
             Area          => elemR(:,er_Area)
             CMvelocity    => elemR(:,er_SmallVolume_CMvelocity) 
             Flowrate      => elemR(:,er_Flowrate)
+            Head          => elemR(:,er_Head)
             HydRadius     => elemR(:,er_HydRadius)
             Length        => elemR(:,er_Length)
             ManningsN     => elemR(:,er_SmallVolume_ManningsN)  
             oneArray      => elemR(:,er_ones) 
             SmallVolume   => elemR(:,er_SmallVolume)  
             svRatio       => elemR(:,er_SmallVolumeRatio)
-            !% use old velocity to prevent RK2 mid-step from affecting mid-step adjustment
-            Velocity      => elemR(:,er_Velocity_N0) 
+            !% use old velocity to prevent unreasonably large RK2 mid-step from affecting adjustment
+            VelocityN0    => elemR(:,er_Velocity_N0) 
+            Velocity      => elemR(:,er_Velocity)
             VelocityBlend => elemR(:,er_Temp01)
+            CMvelocity2   => elemR(:,er_Temp02)
             Volume        => elemR(:,er_Volume)
             fHead_d       => faceR(:,fr_Head_d)
             fHead_u       => faceR(:,fr_Head_u)
@@ -668,24 +672,68 @@ module adjust
         ! print *, 'head Upstream ',fhead_d(fup(iet(1:2)))
         ! print *, 'head Dnstream ',fhead_u(fdn(iet(1:2)))
 
-        !% chezy-manning velocity based on head slop
-        CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
+        !% chezy-manning velocity based on head slope
+        ! CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) &
+        !     * ( HydRadius(thisP)**(twothirdR) )                                              &
+        !     * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) )           &
+        !     / ManningsN(thisP)
+
+        
+
+        !% Trial 20220716brh -- using two CM velocities
+        !% chezy-manning velocity in upper part of element using head slope
+        CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - Head(thisP)) &
             * ( HydRadius(thisP)**(twothirdR) )                                              &
-            * sqrt(abs(fHead_d(fup(thisP)) - fHead_u(fdn(thisP))) / Length(thisP) )           &
+            * sqrt(abs(fHead_d(fup(thisP)) - head(thisP)) / (onehalfR * Length(thisP)) )           &
             / ManningsN(thisP)
+
+        CMvelocity2(thisP) = sign( oneArray(thisP), Head(thisP) - fHead_u(fdn(thisP))) &
+                * ( HydRadius(thisP)**(twothirdR) )                                              &
+                * sqrt(abs(Head(thisP) - fHead_u(fdn(thisP))) / (onehalfR * Length(thisP)) )           &
+                / ManningsN(thisP)    
+
+        !% if opposite signs use the sum, otherwise take the smaller magnitude
+        where (CMvelocity(thisP) * CMvelocity(thisP) < zeroR)
+            CMvelocity(thisP) = CMvelocity(thisP) + CMvelocity2(thisP)
+        elsewhere
+            CMvelocity(thisP) = sign(min(abs(CMVelocity(thisP)), abs(CMVelocity2(thisP))),CMvelocity(thisP))
+        endwhere
                 
-        !print *, 'CMvelocity ', CMvelocity(iet(1:2))
+                
+        ! print *, 'head dif  ',fHead_d(fup(iet(8))) - fHead_u(fdn(iet(8)))    
+        ! print *, 'hydRadius ',HydRadius(iet(8))
+        ! print *, 'CMvelocity', CMvelocity(iet(8))
+        ! print *, 'velocity  ', Velocity(iet(8)), VelocityN0(iet(8))
+        ! print *, 'SVratio   ',svRatio(iet(8))
 
         !% blend the computed velocity with CM velocity
-        VelocityBlend(thisP) = svRatio(thisP) * velocity(thisP) &
+        VelocityBlend(thisP) = svRatio(thisP) * VelocityN0(thisP) &
                             + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
-       ! print *, 'Velblend ', VelocityBlend(iet(1:2))
+        !% 20220716brh
+        !% --- use original RK2 velocity when its magnitude is smaller than blended CM                          
+        !% --- use the smaller magnitude of RK2 velocity or blend if both are positive)
+        where ((VelocityBlend(thisP) .ge. zeroR) .and. (Velocity(thisP) .ge. zeroR ))
+            VelocityBlend(thisP) = min(VelocityBlend(thisP),Velocity(thisP))      
+        endwhere       
+        
+        !% use the smaller magnitude whene both are negative
+        where ((VelocityBlend(thisP) < zeroR) .and. (Velocity(thisP) < zeroR ))
+            VelocityBlend(thisP) = max(VelocityBlend(thisP),Velocity(thisP))      
+        endwhere   
+
+        ! print *, 'Velblend ', VelocityBlend(iet(8))
 
         !% new flowrate
         Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
 
-       ! print *, 'Flowrate ',Flowrate(iet(1:2))
+        !% new velocity  % 20220712brh
+        elemR(thisP,er_Velocity) = VelocityBlend(thisP)
+
+        ! print *, ' '
+        ! print *, 'in adjust small depth element fluxes'
+        ! print *, 'Flowrate ',Flowrate(iet(7))
+        ! print *, ' '
 
         !% reset the temporary storage
         VelocityBlend(thisP) = nullvalueR
@@ -707,7 +755,8 @@ module adjust
             integer, intent(in)  :: whichTM
             logical, intent(in)  :: ifixQCons
             integer, pointer :: npack, thisCol, thisP(:), fdn(:), fup(:)
-            real(8), pointer :: fQ(:), fQCons(:)
+            real(8), pointer :: fQ(:), fQCons(:), fVel_u(:), fVel_d(:)
+            real(8), pointer :: fArea_u(:), fArea_d(:)
         !% -----------------------------------------------------------------
         !% Preliminaries:
             select case (whichTM)
@@ -733,6 +782,10 @@ module adjust
             fup     => elemI(:,ei_Mface_uL)
             fQ      => faceR(:,fr_Flowrate)
             fQCons  => faceR(:,fr_Flowrate_Conservative)
+            fVel_u  => faceR(:,fr_Velocity_u)
+            fVel_d  => faceR(:,fr_Velocity_d)
+            fArea_u => faceR(:,fr_Area_u)
+            fArea_d => faceR(:,fr_Area_d)
         !% -----------------------------------------------------------------
         !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
@@ -748,6 +801,15 @@ module adjust
             fQCons(fup(thisP)) = fQ(fup(thisP))
             fQCons(fdn(thisP)) = fQ(fdn(thisP))
         end if
+
+        !% --- reset velocities
+        fVel_d(fup(thisP)) = fQ(fup(thisP)) /  fArea_d(fup(thisP))
+        fVel_u(fup(thisP)) = fQ(fup(thisP)) /  fArea_u(fup(thisP))
+
+        fVel_d(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_d(fdn(thisP))
+        fVel_u(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_u(fdn(thisP))
+
+
 
         !% -----------------------------------------------------------------
     end subroutine adjust_zerodepth_face_fluxes_CC        
@@ -879,6 +941,7 @@ module adjust
             integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
             integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
+            real(8), pointer :: fVel_u(:), fVel_d(:)
             real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
             real(8), pointer :: faceDu(:), faceDd(:)
             real(8), pointer :: elemH(:), elemL(:), elemVol(:)
@@ -916,6 +979,9 @@ module adjust
             elemQ     => elemR(:,er_Flowrate)
             elemH     => elemR(:,er_Head)
             elemL     => elemR(:,er_Length)
+            fVel_u    => faceR(:,fr_Velocity_u)
+            fVel_d    => faceR(:,fr_Velocity_d)
+
             
             elemVol   => elemR(:,er_Volume_N0)
             isbranch  => elemSI(:,esi_JunctionBranch_Exists)
@@ -940,7 +1006,7 @@ module adjust
                 !% --- flow in upstream direction
                 !%     downstream face value is inflow (negative face flow) or zero
                 faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), zeroR )
-                !%     upstream face value is the inflow (faceQ > 0) or the larger (closer
+                !%     upstream face value is the inflow (faceQ > 0) or the larger (smaller magnitude, closer
                 !%     to zero) of the negative flowrate at face or element
                 faceQ(fup(thisP)) = max(elemQ(thisP)     , faceQ(fup(thisP)) ) 
                 !% --- upstream out flow is limited to 1/3 the element volume !% 20220122brh
@@ -957,6 +1023,14 @@ module adjust
                 fQCons(fdn(thisP)) = faceQ(fdn(thisP))
                 fQCons(fup(thisP)) = faceQ(fup(thisP))
             end if
+
+            !% --- reset velocities
+            fVel_d(fup(thisP)) = faceQ(fup(thisP)) /  faceAd(fup(thisP))
+            fVel_u(fup(thisP)) = faceQ(fup(thisP)) /  faceAu(fup(thisP))
+
+            fVel_d(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAd(fdn(thisP))
+            fVel_u(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAu(fdn(thisP))
+
         
         else
             !% no CC elements
@@ -995,6 +1069,14 @@ module adjust
                     fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
                     fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
                 end if
+
+                !% --- reset velocities
+                fVel_d(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAd(fup(thisJM+ii  ))  
+                fVel_u(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAu(fup(thisJM+ii  ))
+
+                fVel_d(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAd(fdn(thisJM+1+ii))
+                fVel_u(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAu(fdn(thisJM+1+ii))
+
             end do
         end if
         

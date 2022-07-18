@@ -64,21 +64,24 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
         !call util_CLprint('    circular AAA ')
 
+        !% --- compute the relative volume
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
 
         !call util_CLprint('    circular BBB ')
         !% when AoverAfull <= 4%, SWMM5 uses a special function to get the
         !% normalized depth using the central angle, theta
 
-        !% pack the circular elements with AoverAfull <= 4% which will use analytical solution
-        !% from French, 1985 by using the central angle theta.
+        !% --- pack the circular elements with AoverAfull <= 4% which will use analytical solution
+        !%     from French, 1985 by using the central angle theta.
+        !% HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
         Npack_analytical = count(AoverAfull(thisP) <= 0.04)
         thisP_analytical = pack(thisP,AoverAfull(thisP) <= 0.04)
 
         !call util_CLprint('    circular CCC ')
 
-        !% pack the rest of the circular elements having AoverAfull > 0.04 which will use
-        !% lookup table for interpolation.
+        !% --- pack the rest of the circular elements having AoverAfull > 0.04 which will use
+        !%     lookup table for interpolation.
+        !% HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
         Npack_lookup = count(AoverAfull(thisP) > 0.04)
         thisP_lookup = pack(thisP,AoverAfull(thisP) > 0.04)
 

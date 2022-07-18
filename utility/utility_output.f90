@@ -118,7 +118,7 @@ contains
         !     "li_idx,li_link_type,li_weir_type,li_orif_type,li_pump_type,li_geometry,"    //&
         !     "li_roughness_type,li_N_element,li_Mnode_u,li_Mnode_d,li_assigned,"         // &
         !     "li_InitialDepthType,li_length_adjusted,li_P_image,li_parent_link,"     //&
-        !     "li_weir_EndContrations,li_first_elem_idx,li_last_elem_idx"
+        !     "li_weir_EndContractions,li_first_elem_idx,li_last_elem_idx"
 
         ! do ii = 1, size(link%R, 1)
         !     write(setting%File%UnitNumber%debug_setup_linkR_file,'(*(G0.6,:,","))') link%R(ii,:)

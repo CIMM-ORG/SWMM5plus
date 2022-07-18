@@ -13,6 +13,8 @@
 ! Ben R. Hodges
 ! 20200411
 !
+! Note that indexes marked with KEY must have values in the range 1...undefinedKey
+! as enuerated in the define_keys module
 
 module define_indexes
 
@@ -31,21 +33,21 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: li_idx = 1
-        enumerator :: li_link_type           ! type of links (i.e. conduit, orifice, weir, etc.)   
-        enumerator :: li_link_sub_type       ! link subtype (i.e. vnotch weir, side orifice, etc.)
+        enumerator :: li_link_type           ! KEY type of links (i.e. conduit, orifice, weir, etc.)   
+        enumerator :: li_link_sub_type       ! KEY link subtype (i.e. vnotch weir, side orifice, etc.)
         enumerator :: li_link_direction      ! link direction
-        enumerator :: li_geometry
-        enumerator :: li_roughness_type
+        enumerator :: li_geometry            ! KEY link geometry type
+        !enumerator :: li_roughness_type obsolete 20220708brh
         enumerator :: li_N_element           ! Number of elements in this link
         enumerator :: li_Mnode_u             ! map to upstream node connecting to link
         enumerator :: li_Mnode_d             ! map to downstram node connecting to link
         enumerator :: li_assigned            ! given 1 when link is assigned
-        enumerator :: li_InitialDepthType    ! UniformDepth, LinearlyVaryingDepth, ExponentialDepth, FixedHead
+        enumerator :: li_InitialDepthType    ! KEY UniformDepth, LinearlyVaryingDepth, ExponentialDepth, FixedHead
         enumerator :: li_length_adjusted     ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
         enumerator :: li_P_image             ! image number assigned from BIPquick
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         !enumerator :: li_num_phantom_links   ! Number of phantom links associated 
-        enumerator :: li_weir_EndContrations
+        enumerator :: li_weir_EndContractions ! (0,1) to indicate contraction
         enumerator :: li_curve_id            ! curve id if the link is associated with any curve
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
@@ -54,7 +56,7 @@ module define_indexes
     end enum
     integer, target :: Ncol_linkI = li_lastplusone-1
 
-       !%-------------------------------------------------------------------------
+    !%-------------------------------------------------------------------------
     !% Define the column indexes for link%R(:,:) arrays
     !% These are the for the full arrays of real data
     !%-------------------------------------------------------------------------
@@ -123,7 +125,7 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: ni_idx = 1
-        enumerator :: ni_node_type
+        enumerator :: ni_node_type     ! KEY
         enumerator :: ni_N_link_u      ! number of upstream links at this node
         enumerator :: ni_N_link_d      ! number of downstram links at this node
         enumerator :: ni_curve_ID      ! ID for nodal storage surface area curve
@@ -229,8 +231,8 @@ module define_indexes
         enumerator :: bi_node_idx
         enumerator :: bi_face_idx    ! Index of face nBCup/dn nodes
         enumerator :: bi_elem_idx    ! Index of element associated with either nJ2 or nJm node with lateral inflow
-        enumerator :: bi_category
-        enumerator :: bi_subcategory
+        enumerator :: bi_category    ! KEY
+        enumerator :: bi_subcategory ! KEY
         enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
         enumerator :: bi_TS_upper_idx  !% index of the current level in the timeseries storage
         enumerator :: bi_lastplusone !% must be last enum item
@@ -275,9 +277,9 @@ module define_indexes
     enum, bind(c)
          enumerator :: ei_Lidx = 1                  !% local element index (static)
          enumerator :: ei_Gidx                      !% global element index  (static)
-         enumerator :: ei_elementType               !% general element type  (static)
-         enumerator :: ei_geometryType              !% cross-sectional geometry type  (static)
-         enumerator :: ei_HeqType                   !% type of head equation (static)
+         enumerator :: ei_elementType               !% KEY general element type  (static)
+         enumerator :: ei_geometryType              !% KEY cross-sectional geometry type  (static)
+         enumerator :: ei_HeqType                   !% KEY type of head equation (static)
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)
          enumerator :: ei_link_pos                  !% position (elem from upstream = 1 to downstream = n) in link
@@ -285,14 +287,14 @@ module define_indexes
          enumerator :: ei_Mface_dL                  !% map to downstream face local index  (static)
          enumerator :: ei_node_Gidx_SWMM            !% node index from global SWMM network  (static)
          enumerator :: ei_node_Gidx_BIPquick        !% node index from global BIPquick network  (static)
-         enumerator :: ei_QeqType                   !% type of flow equation (static)
+         enumerator :: ei_QeqType                   !% KEY type of flow equation (static)
          ! enumerator :: ei_specificType              !% specific element type (static) NOT USED AS OF 20220626
          !% brh20211210s
          !enumerator :: ei_Subcatch_TableIdx         !% index in subcatchment table for linking to subcatchments to this element 
          !enumerator :: ei_Nsubcatch                 !% number of subcatchments feeding an element
          !% brh20211210e         
          enumerator :: ei_Temp01                    !% temporary array
-         enumerator :: ei_tmType                    !% time march type (dynamic)
+         enumerator :: ei_tmType                    !% KEY time march type (dynamic)
          enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
          enumerator :: ei_link_transect_idx         !% index of the link transect in link array
          enumerator :: ei_transect_idx              !% index of transect in transect array
@@ -409,6 +411,7 @@ module define_indexes
         !% ss20220125
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
+        enumerator :: eYN_isSlot                        !% TRUE if a preissmann slot is present
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemYN = eYN_lastplusone-1
@@ -481,7 +484,8 @@ module define_indexes
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements    
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
-        enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth 
+        enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
+        enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
         enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_lastplusone !% must be last enum item
@@ -500,20 +504,21 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CC_rectangular_nonsurcharged = 1 !% CC rectangular channels that are not surcharged
-        enumerator :: epg_CC_trapezoidal_nonsurcharged     !% CC trapezoidal channels that are not surcharged
-        enumerator :: epg_CC_triangular_nonsurcharged      !% CC triangular channels that are not surcharged
-        enumerator :: epg_CC_irregular_nonsurcharged        !% CC irregular channels that are not surcharged
-        enumerator :: epg_CC_circular_nonsurcharged        !% CC circular conduits that are not surcharged
-        enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
-        enumerator :: epg_JM_impliedStorage_nonsurcharged        !% JM with artificial storage
-        enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
-        enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
-        enumerator :: epg_JB_triangular                      !% all triangular junction branches
-        enumerator :: epg_JB_circular                        !% all circular junction branches
+        enumerator :: epg_CC_rectangular_nonsurcharged = 1      !% CC rectangular channels that are not surcharged
+        enumerator :: epg_CC_rectangular_closed_nonsurcharged   !% CC rectangular conduits that are not surcharged
+        enumerator :: epg_CC_trapezoidal_nonsurcharged          !% CC trapezoidal channels that are not surcharged
+        enumerator :: epg_CC_triangular_nonsurcharged           !% CC triangular channels that are not surcharged
+        enumerator :: epg_CC_irregular_nonsurcharged            !% CC irregular channels that are not surcharged
+        enumerator :: epg_CC_circular_nonsurcharged             !% CC circular conduits that are not surcharged
+        enumerator :: epg_JM_functionalStorage_nonsurcharged    !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabularStorage_nonsurcharged       !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_impliedStorage_nonsurcharged       !% JM with artificial storage
+        enumerator :: epg_JB_rectangular                        !% all rectangular junction branches
+        enumerator :: epg_JB_trapezoidal                        !% all trapezoidal junction branches
+        enumerator :: epg_JB_triangular                         !% all triangular junction branches
+        enumerator :: epg_JB_circular                           !% all circular junction branches
         enumerator :: epg_lastplusone !% must be last enum item
-        end enum
+    end enum
     integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
     integer, target :: Ncol_elemPGetm   =  epg_lastplusone-1
     integer, target :: Ncol_elemPGac    =  epg_lastplusone-1
@@ -530,7 +535,7 @@ module define_indexes
 
     enum, bind(c)
         !% define the column indexes for elemSI(:,:) junction branch elements
-        enumerator ::  esi_JunctionMain_Type       = 1             !% junction main type
+        enumerator ::  esi_JunctionMain_Type       = 1             !% KEY junction main type
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
@@ -542,9 +547,9 @@ module define_indexes
     enum, bind(c)
         !% define the column indexes for elemSi(:,:) weir elements
         enumerator :: esi_Weir_EndContractions = 1      !% number of endcontractions of the weir
-        enumerator :: esi_Weir_FlowDirection            !% weir flow direction
-        enumerator :: esi_Weir_SpecificType             !% specific weir type
-        enumerator :: esi_Weir_GeometryType             !% specific weir geometry type
+        enumerator :: esi_Weir_FlowDirection            !% weir flow direction (-1, +1)
+        enumerator :: esi_Weir_SpecificType             !% KEY specific weir type
+        enumerator :: esi_Weir_GeometryType             !% KEY specific weir geometry type
         enumerator :: esi_Weir_lastplusone !% must be last enum item
     end enum
 
@@ -552,17 +557,17 @@ module define_indexes
 
     enum, bind(c)
         !% define the column indexes for elemSi(:,:) orifice elements
-        enumerator :: esi_Orifice_FlowDirection = 1     !% orifice flow direction
-        enumerator :: esi_Orifice_SpecificType          !% specifc orifice type
-        enumerator :: esi_Orifice_GeometryType          !% specifc orifice geometry type
+        enumerator :: esi_Orifice_FlowDirection = 1     !% orifice flow direction (-1, +1)
+        enumerator :: esi_Orifice_SpecificType          !% KEY specific orifice type
+        enumerator :: esi_Orifice_GeometryType          !% KEY specific orifice geometry type
         enumerator :: esi_Orifice_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSI_orifice = esi_Orifice_lastplusone-1
 
     enum, bind(c)
         !% define the column indexes for elemSi(:,:) outlet elements
-        enumerator :: esi_Outlet_FlowDirection = 1     !% outlet flow direction
-        enumerator :: esi_Outlet_SpecificType          !% specifc outlet type
+        enumerator :: esi_Outlet_FlowDirection = 1     !% outlet flow direction (-1, +1)
+        enumerator :: esi_Outlet_SpecificType          !% KEY specific outlet type
         enumerator :: esi_Outlet_CurveID               !% outlet curve id
         enumerator :: esi_Outlet_hasFlapGate           !% 1 if true, 0 if false
         enumerator :: esi_Outlet_lastplusone !% must be last enum item
@@ -571,8 +576,8 @@ module define_indexes
 
     enum, bind(c)
         !% define the column indexes for elemSi(:,:) outlet elements
-        enumerator :: esi_Pump_FlowDirection = 1     !% pump flow direction
-        enumerator :: esi_Pump_SpecificType          !% specifc pump type
+        enumerator :: esi_Pump_FlowDirection = 1     !% pump flow direction (-1, +1)
+        enumerator :: esi_Pump_SpecificType          !% KEY specific pump type
         enumerator :: esi_Pump_CurveID               !% pump curve id
         !enumerator :: esi_Pump_Status                !% 1 = on, 0 =off !% 20220625brh removed -- use er_Setting
         enumerator :: esi_Pump_lastplusone !% must be last enum item
@@ -926,8 +931,8 @@ module define_indexes
     enum, bind(c)
         enumerator ::  fi_Lidx = 1                  !% local array index (row)
         enumerator ::  fi_Gidx                      !% global (unique) index
-        enumerator ::  fi_BCtype                    !% type of BC on face
-        enumerator ::  fi_jump_type                 !% Type of hydraulic jump
+        enumerator ::  fi_BCtype                    !% KEY type of BC on face
+        enumerator ::  fi_jump_type                 !% KEY Type of hydraulic jump
         enumerator ::  fi_Melem_uL                  !% map to element upstream (local index)
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)
         enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element

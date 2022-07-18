@@ -221,6 +221,10 @@ contains
                     !% --- get the size of the time interval
                     BC%flowR(ii, br_timeInterval) =   BC%flowTimeseries(ii, TS_upper_idx,   brts_time) &
                                                     - BC%flowTimeseries(ii, TS_upper_idx-1, brts_time)
+
+                    ! print *, ' '
+                    ! print *, 'BC flowR time interval ', ii, BC%flowR(ii, br_timeInterval)      
+                    ! print *, ' '                             
                 else
                     !% --- HACK-future expansions should include getting BC from a data structure
                     !%     or external code through API
@@ -254,6 +258,11 @@ contains
                     else
                         !% --- get the current upper bound of time interval
                         ttime => BC%headTimeseries(ii,TS_upper_idx, brts_time)
+
+                        ! print *, 'times in bc_step'
+                        ! print *, ttime, BC%headTimeseries(ii,TS_upper_idx-1, brts_time), ttime- BC%headTimeseries(ii,TS_upper_idx-1, brts_time)
+                        ! print *, ' '
+
                         !% --- check to see if we need to move to the next level of the BC data
                         if (tnow > ttime) then 
                             if (TS_upper_idx == TimeSlotsStored) then
@@ -279,7 +288,7 @@ contains
                                 end do
                                 !% --- check if we had to go more than a single interval and print warning
                                 if ((interval_counter > 0) .and. setting%Output%Warning) then
-                                    call util_print_warning("Warning (bc_setp): The head boundary condition for node " &
+                                    call util_print_warning("Warning (bc_step): The head boundary condition for node " &
                                     // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
                                 end if
                             end if
@@ -289,6 +298,13 @@ contains
                     !% --- get the size of the time interval
                     BC%headR(ii, br_timeInterval) =   BC%headTimeseries(ii, TS_upper_idx,   brts_time) &
                                                     - BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+
+                    ! print *, ' '
+                    ! print *, 'BC HeadR time interval ', ii, BC%headR(ii, br_timeInterval)      
+                    ! print *, TS_upper_idx, TS_upper_idx-1
+                    ! print *, BC%headTimeseries(ii, TS_upper_idx,   brts_time)
+                    ! print *, BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+                    ! print *, ' '                         
                     !stop 29873
 
                     ! print *, 'Time Series for Head'
@@ -505,6 +521,10 @@ contains
             call bc_interpolate_timeseries ( &
                     interpV(ii), BC%flowTimeSeries, tnow, ii, lower_idx, upper_idx(ii) )
 
+            !% HACK: do not let BC value to get smaller than zero
+            !%       the absolute value is needed because of how max() handles very small differences.
+            interpV(ii) = abs(max(interpV(ii),zeroR))
+            
             !% --- error checking
             ! if (lower_idx <= 0) then 
             !     !% lower_idx <= 0 is an error condition

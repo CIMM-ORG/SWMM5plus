@@ -84,6 +84,8 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
         breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
+       ! print *, 'in rectangular_area_from_depth_singular'
+       ! print *, indx, breadth(indx), depth
         outvalue = depth * breadth(indx)
 
     end function rectangular_area_from_depth_singular
@@ -111,13 +113,6 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
 
         topwidth(thisP) = breadth(thisP)
-
-        !% HACK code: testing if rectangular open and closed can be
-        !% incorporated in a single piece of code
-        where ((GeomType(thisP) == rectangular_closed) .and. &
-               (depth(thisP) >= fullDepth(thisP)))
-               topwidth(thisP) = setting%ZeroValue%Topwidth
-        end where
 
     end subroutine rectangular_topwidth_from_depth
 !%    
@@ -222,7 +217,7 @@ module rectangular_channel
 
         outvalue = depth
 
-    end function rectangular_hyddepth_from_depth_singular 
+    end function rectangular_hyddepth_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
