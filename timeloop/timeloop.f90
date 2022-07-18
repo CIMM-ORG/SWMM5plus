@@ -501,13 +501,14 @@ contains
                 else
                     BCupdateYN = .true.
                 end if
-                    print *, ' '
-                    print *, ' '
-                    print *, '*******************************************************************************'
-                    print *, '*******************************************************************************'
-                    write(6,*) ' ... beginning time loop ===============',setting%Time%Now/3600.d0
-                    write(6,*) '     dt = ',setting%Time%Hydraulics%Dt
-                    call util_CLprint ('at start of time loop')
+                    ! print *, ' '
+                    ! print *, ' '
+                    ! print *, '*******************************************************************************'
+                    !print *, '*******************************************************************************'
+                    !write(6,"(A,f12.5,A,f12.5)") ' ... beginning time loop ======== time (h):',&
+                    !    setting%Time%Now/3600.d0, ';  DT (s) =',setting%Time%Hydraulics%Dt
+                    ! write(6,*) '     dt = ',setting%Time%Hydraulics%Dt
+                    ! call util_CLprint ('at start of time loop')
     
                 !% --- push the old values down the stack 
                 call tl_save_previous_values()
@@ -547,8 +548,8 @@ contains
                             !% --- set the next time the controls will be evaluated
                             setting%Time%ControlRule%NextTime = setting%Time%Now + real(setting%SWMMinput%RuleStep,8)
                         end if
-                        print *, 'CONTROL----------------------------'
-                        print *, 'orifice setting ',elemR(iet(3),er_Setting)
+                        ! print *, 'CONTROL----------------------------'
+                        ! print *, 'orifice setting ',elemR(iet(3),er_Setting)
                     end if
 
                     !print *, 'about to call tl_subcatchment_lateral_inflow'

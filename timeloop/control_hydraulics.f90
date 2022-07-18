@@ -359,8 +359,8 @@ contains
         !%------------------------------------------------------------------
 
             !% DEBUGGING OUTPUT ================================================
-            print *, ' '
-            print *, 'in ',trim(subroutine_name)
+                ! print *, ' '
+                ! print *, 'in ',trim(subroutine_name)
             !% DEBUGGING OUTPUT ================================================
 
         !% --- cycle through the action points (few)
@@ -379,14 +379,14 @@ contains
             isClosedConduit => elemYN(Eidx,eYN_canSurcharge)
 
             !% DEBUGGING OUTPUT ================================================
-            print *, 'ACTION POINTS before action'
-            print *, 'Eidx           ',Eidx
-            print *, 'hasChanged      ', hasChanged
-            print *, 'thisSetting     ',thisSetting
-            print *, 'targetSetting   ',targetSetting
-            print *, 'timeLastSet     ',timeLastSet
-            print *, 'elemType        ',trim(reverseKey(elemType))
-            print *, 'isClosedConduit ',isClosedConduit
+                ! print *, 'ACTION POINTS before action'
+                ! print *, 'Eidx           ',Eidx
+                ! print *, 'hasChanged      ', hasChanged
+                ! print *, 'thisSetting     ',thisSetting
+                ! print *, 'targetSetting   ',targetSetting
+                ! print *, 'timeLastSet     ',timeLastSet
+                ! print *, 'elemType        ',trim(reverseKey(elemType))
+                ! print *, 'isClosedConduit ',isClosedConduit
             !% DEBUGGING OUTPUT ================================================
 
             !% --- error checking
@@ -485,14 +485,14 @@ contains
 
 
             !% DEBUGGING OUTPUT ================================================
-            print *, 'ACTION POINTS after action'
-            print *, 'Eidx           ',Eidx
-            print *, 'hasChanged      ', hasChanged
-            print *, 'thisSetting     ',thisSetting
-            print *, 'targetSetting   ',targetSetting
-            print *, 'timeLastSet     ',timeLastSet
-            print *, 'elemType        ',trim(reverseKey(elemType))
-            print *, 'isClosedConduit ',isClosedConduit
+                ! print *, 'ACTION POINTS after action'
+                ! print *, 'Eidx           ',Eidx
+                ! print *, 'hasChanged      ', hasChanged
+                ! print *, 'thisSetting     ',thisSetting
+                ! print *, 'targetSetting   ',targetSetting
+                ! print *, 'timeLastSet     ',timeLastSet
+                ! print *, 'elemType        ',trim(reverseKey(elemType))
+                ! print *, 'isClosedConduit ',isClosedConduit
             !% DEBUGGING OUTPUT ================================================           
        
         end do

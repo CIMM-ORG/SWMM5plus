@@ -71,7 +71,7 @@ module utility
         !%------------------------------------------------------------------
 
             print *, ' '
-            print *, trim(inputstring)
+            print *, trim(inputstring), ',  dt = ',setting%Time%Hydraulics%Dt
 
             ! print *, elemI(iet,ei_MFace_dL)
             ! !print *, elemI(iet,ei_MFace_uL)
@@ -104,8 +104,8 @@ module utility
     !     print *, 'this step = ',setting%Time%Hydraulics%Step
     !     print *, ' '
     !   !  print *, 'jb(2) volume ', elemR(iet(2),er_Volume)
-    !     print *, 'small depth ',elemYN(iet,eYN_isSmallDepth)
-    !     print *, 'zero depth ',elemYN(iet,eYN_isZeroDepth)
+        print *, 'small depth ',elemYN(iet,eYN_isSmallDepth)
+        print *, 'zero depth ',elemYN(iet,eYN_isZeroDepth)
     !     ! print *, 'SURCHARGED ',elemYN(iet,eYN_isSurcharged)
 
 

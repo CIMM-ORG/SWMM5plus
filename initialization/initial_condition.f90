@@ -3060,11 +3060,11 @@ contains
             end select
         end if
 
-        print*, reverseKey(elemI(:,ei_elementType))
-        print*, elemR(:,er_SlotVolume) , 'elemR(:,er_SlotVolume)'
-        print*, elemR(:,er_SlotDepth), 'elemR(:,er_SlotDepth)'
-        print*, elemR(:,er_SlotWidth), 'elemR(:,er_SlotWidth)'
-        print*, elemR(:,er_Preissmann_Celerity), 'elemR(:,er_Preissmann_Celerity)'
+        ! print*, reverseKey(elemI(:,ei_elementType))
+        ! print*, elemR(:,er_SlotVolume) , 'elemR(:,er_SlotVolume)'
+        ! print*, elemR(:,er_SlotDepth), 'elemR(:,er_SlotDepth)'
+        ! print*, elemR(:,er_SlotWidth), 'elemR(:,er_SlotWidth)'
+        ! print*, elemR(:,er_Preissmann_Celerity), 'elemR(:,er_Preissmann_Celerity)'
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

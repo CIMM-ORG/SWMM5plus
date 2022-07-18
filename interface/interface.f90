@@ -736,11 +736,11 @@ contains
         !% --- compute time step in days
         dtDays = setting%Time%Hydraulics%Dt / seconds_per_day
 
-        print *, ' '
-        print *, 'in interface_controls_execute'
-        print *, 'currentTimeEpoch ',currentTimeEpoch
-        print *, 'ElapsedDays      ',ElapsedDays
-        print *, 'dtDays           ',dtDays
+        ! print *, ' '
+        ! print *, 'in interface_controls_execute'
+        ! print *, 'currentTimeEpoch ',currentTimeEpoch
+        ! print *, 'ElapsedDays      ',ElapsedDays
+        ! print *, 'dtDays           ',dtDays
 
         !% --- load the procedure
         call load_api_procedure("api_controls_execute")
@@ -748,7 +748,7 @@ contains
         !% --- execute controls
         number_of_actions = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
 
-        print *, 'number of actions taken ',number_of_actions
+        ! print *, 'number of actions taken ',number_of_actions
 
     end subroutine interface_controls_execute
 !%    
