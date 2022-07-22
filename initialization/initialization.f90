@@ -236,8 +236,8 @@ contains
                 call init_subcatchment()
             else 
                 if (this_image() == 1) then
-                    write(*,'(A)') 'setting.Simulation.useHydrology requested, but no subcatchments found.'
-                    write(*,'(A)') '...skipping hydrology in this simulation.'
+                    write(*,'(A)') ' ...setting.Simulation.useHydrology requested, but no subcatchments found.'
+                    write(*,'(A)') ' ...skipping hydrology in this simulation.'
                 end if
                 setting%Simulation%useHydrology = .false.
             end if
@@ -599,6 +599,8 @@ contains
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
+            !print *, 'in ',trim(subroutine_name), ii
+
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
@@ -677,6 +679,12 @@ contains
             link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
             link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
             link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
+            if (interface_get_linkf_attribute(ii, api_linkf_hasFlapGate,.true.) == 1) then
+                link%YN(ii,lYN_hasFlapGate)   = .true.
+            else
+                link%YN(ii,lYN_hasFlapGate)   = .false.
+            end if
+
 
             !% --- SWMM5 does not distinguish between channel and conduit
             !%     however we need that distinction to set up the init condition
@@ -701,12 +709,6 @@ contains
 
             !% --- set output links
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag,.true.) == 1)
-
-            ! !% --- Check if type1 pump and add control and monitor point for later array allocation
-            ! if (link%I(ii,li_link_sub_type) == lType1Pump) then
-            !     N_ControlPoint = N_ControlPoint + 1
-            !     N_MonitorPoint = N_MonitorPoint + 1
-            ! end if
 
         end do
 
@@ -1556,9 +1558,9 @@ contains
             setting%Output%Report%StartTime    = util_datetime_epoch_to_secs(setting%SWMMinput%ReportStartTimeEpoch)
             setting%Output%Report%TimeInterval = setting%SWMMinput%ReportTimeInterval
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
-                write(*,*) ' '
+                !write(*,*) ' '
                 write(*,"(A)") ' ... using report start time and time interval from SWMM input file (*.inp)'
-                write(*,*) ' '
+                !write(*,*) ' '
             end if
         else 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then

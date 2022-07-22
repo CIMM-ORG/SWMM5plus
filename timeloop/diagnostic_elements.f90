@@ -33,11 +33,12 @@ module diagnostic_elements
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine diagnostic_toplevel
+    subroutine diagnostic_toplevel (isRKfirstStep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Performs a single hydrology step
         !%-----------------------------------------------------------------------------
+        logical, intent(in) :: isRKfirstStep
         integer, pointer :: thisCol, Npack, facePackCol
         
         character(64) :: subroutine_name = 'diagnostic_toplevel'
@@ -53,7 +54,8 @@ module diagnostic_elements
         Npack   => npack_elemP(thisCol)
 
         if (Npack > 0) then
-            call diagnostic_by_type (thisCol, Npack)
+            !print *, 'calling diagnostic by type'
+            call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
 
             !% reset any face values affected
             call face_interpolation (fp_Diag, dummy)
@@ -73,7 +75,7 @@ module diagnostic_elements
 !% PRIVATE
 !%==========================================================================
 !%
-    subroutine diagnostic_by_type (thisCol, Npack)
+    subroutine diagnostic_by_type (thisCol, Npack, isRKfirstStep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Solves for flow/head on all the diagnostic elements.
@@ -84,18 +86,28 @@ module diagnostic_elements
         !% the number of diagnostic elements is small and it simply isn't worth the
         !% difficulty in storing them in vector groupings.
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: Npack, thisCol
-        integer, pointer :: thisType, thisP(:)
-        integer :: ii
+        !% Declarations
+            logical, intent(in) :: isRKfirstStep
+            integer, intent(in) :: Npack, thisCol
+            integer, pointer    :: thisType, thisP(:)
+            real(8), pointer    :: FlowRate(:)
+            real(8)             :: FlowRateOld
+            integer :: ii
         !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        thisP => elemP(1:Npack,thisCol)
+        !% Aliases
+            FlowRate => elemR(:,er_Flowrate)    
+            thisP    => elemP(1:Npack,thisCol)
+        !%-----------------------------------------------------------------------------
+
 
         !% this cycles through the individual elements, but each
         !% cycle is entirely independent
         do ii=1,Npack
             !% replace with do concurrent if every procedure called in this loop can be PURE
             thisType => elemI(thisP(ii),ei_elementType)
+
+            !% -- store the old flowrate for use in first step of an RK2
+            FlowRateOld = FlowRate(thisP(ii))
 
             select case (thisType)
                 
@@ -107,9 +119,9 @@ module diagnostic_elements
 
             case (pump)
                 call pump_toplevel (thisP(ii))
-                print *, 'CODE ERROR: Pump has not yet been developed'
-                print *, 'which has key ',trim(reverseKey(thisType))
-                call util_crashpoint(564321)
+                !print *, 'CODE ERROR: Pump has not yet been developed'
+                !print *, 'which has key ',trim(reverseKey(thisType))
+                !call util_crashpoint(564321)
                 !return
 
             case (outlet)
@@ -121,6 +133,13 @@ module diagnostic_elements
                 call util_crashpoint( 9472)
                 !return
             end select
+
+            !% --- prevent an RK2 first step from setting the flowrate to zero
+            !%     Otherwise the conservative flux is identically zero for the
+            !%     entire time step
+            if ((isRKfirstStep) .and. (FlowRate(thisP(ii)) .eq. zeroR)) then
+                FlowRate(thisP(ii)) = onehalfR * (FlowRate(thisP(ii)) + FlowRateOld)
+            end if
         end do
 
     end subroutine diagnostic_by_type

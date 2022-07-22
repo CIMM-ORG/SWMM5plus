@@ -36,6 +36,7 @@ module lowlevel_rk2
     public :: ll_momentum_velocity_CC
     public :: ll_momentum_add_gamma_CC_AC
     public :: ll_momentum_add_source_CC_AC
+    public :: ll_enforce_flapgate_CC
     public :: ll_store_in_temporary
     public :: ll_restore_from_temporary
     public :: ll_extrapolate_values
@@ -398,13 +399,27 @@ module lowlevel_rk2
                                   -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP) &
                                  )
         case (TA1)
+            print *, 'experimental code with Momentum SourceMethod = TA1 should not be used'
+            !% note this generally gives a negative source if fAup < fAdn, which is a problem
+            stop 59087342
             elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
                                 * (                                              &
                                 -   onefourthR  * fHdn(iup(thisP))                 &
                                 +   threehalfR  * eHead(thisP)                     &
                                 -   onefourthR  * fHup(idn(thisP))                 &
                                 )
+
+        
+            ! print *, 'fA ', fAup(idn(iet(4))) - fAdn(iup(iet(4)))
+            ! print *, 'H  ', -onefourthR * fHdn(iup(iet(4))), threehalfR*eHead(iet(4)), -onefourthR*fHup(idn(iet(4)))
+            ! print *, thisP
+            ! print *, iet(3)
+            ! print *, onefourthR, threehalfR
+            ! print *, elemR(iet(4),outcol)
+            !stop 98734
         case (TA2)
+            print *, 'experimental code with Momentum SourceMethod = TA2 should not be used'
+            stop 5908734
             !% EXPERIMENTAL, DO NOT USE
             ! elemR(thisP,outCol) = grav   &
             !                     * (                                                 &
@@ -442,9 +457,9 @@ module lowlevel_rk2
             stop 2382
         end select
 
-        !print *, ' Ksource ',elemR(780,outCol)
-        !print *, 'in ll_momentum_Ksource_CC'
-        !print *, elemR(1,outCol), fAup(idn(1))* eHead(1) * grav, fAdn(iup(1)) * eHead(1) * grav
+        ! !print *, ' Ksource ',elemR(780,outCol)
+        !  print *, 'in ll_momentum_Ksource_CC'
+        !  print *, elemR(iet(4),outCol)
 
     end subroutine ll_momentum_Ksource_CC
 !%
@@ -510,18 +525,18 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! ! print *, 'fQ  * fU up',fQ(iup(iet(7))) * fUdn(iup(iet(7)))
-        ! ! print *, 'fQ  * fU dn',fQ(idn(iet(7))) * fUup(idn(iet(7)))
-        ! ! print *, 'fAdn * Hdn ',fAdn(iup(iet(7))) * fHdn(iup(iet(7)))
-        ! ! print *, 'fAup * Hup ',fAup(idn(iet(7))) * fHup(idn(iet(7)))
-        ! ! print *, 'eksource ',eKsource(iet(7))
-        ! ! print *, 'out       ',elemR(iet(7),outCol)
-        ! print *, 'FQ term', fQ(iup(iet(7))) * fUdn(iup(iet(7))) - fQ(idn(iet(7))) * fUup(idn(iet(7)))
-        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(7))) * fHdn(iup(iet(7))) - fAup(idn(iet(7))) * fHup(idn(iet(7))))
-        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(7))) , fHdn(iup(iet(7)))
-        ! print *, 'fAup , Hup ',fAup(idn(iet(7))) , fHup(idn(iet(7)))
-        ! print *, 'eksource   ',eKsource(iet(7))
-        ! print *, 'out        ',elemR(iet(7),outCol)
+        ! print *, 'fQ  * fU up',fQ(iup(iet(4))) * fUdn(iup(iet(4)))
+        ! print *, 'fQ  * fU dn',fQ(idn(iet(4))) * fUup(idn(iet(4)))
+        ! print *, 'fAdn * Hdn ',fAdn(iup(iet(4))) * fHdn(iup(iet(4)))
+        ! print *, 'fAup * Hup ',fAup(idn(iet(4))) * fHup(idn(iet(4)))
+        ! ! ! print *, 'eksource ',eKsource(iet(7))
+        ! ! ! print *, 'out       ',elemR(iet(7),outCol)
+        ! print *, 'FQ term', fQ(iup(iet(4))) * fUdn(iup(iet(4))) - fQ(idn(iet(4))) * fUup(idn(iet(4)))
+        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(4))) * fHdn(iup(iet(4))) - fAup(idn(iet(4))) * fHup(idn(iet(4))))
+        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(4))) , fHdn(iup(iet(4)))
+        ! print *, 'fAup , Hup ',fAup(idn(iet(4))) , fHup(idn(iet(4)))
+        ! print *, 'eksource   ',eKsource(iet(4))
+        ! print *, 'out        ',elemR(iet(4),outCol)
         ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
@@ -597,7 +612,8 @@ module lowlevel_rk2
                 / &
                 ( rh(thisP)**fourthirdsR )
 
-       ! print *, ' gamma ',elemR(780,outCol)        
+    !    print *, 'in ll_momentum_gamma_CC'
+    !    print *, elemR(iet(4),outCol)      
 
     end subroutine ll_momentum_gamma_CC
 !%
@@ -648,10 +664,15 @@ module lowlevel_rk2
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
-        !print *, ' M       ',elemR(780,outCol)
-        !print *, 'in ll_momentum_solve_CC'
-        !print *, elemR(1,outCol)
-        !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)        
+        ! !print *, ' M       ',elemR(780,outCol)
+        ! print *, 'in ll_momentum_solve_CC'
+        ! !print *, elemR(1,outCol)
+        ! !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)      
+        ! print *, iet(4)
+        ! print *, volumeLast(iet(4)), velocityLast(iet(4)), Msource(iet(4))
+        ! print *, crk(istep), delt, GammaM(iet(4))  
+
+        !stop 2098734
 
     end subroutine ll_momentum_solve_CC
 !%
@@ -659,30 +680,55 @@ module lowlevel_rk2
 !%==========================================================================
 !%
     subroutine ll_momentum_velocity_CC (inoutCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% velocity for ETM time march
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, intent (in) :: inoutCol,  thisCol, Npack
         integer, pointer :: thisP(:)
         real(8), pointer :: momentum(:), volume(:)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         thisP    => elemP(1:Npack,thisCol)
         !% the input integrated momentum is overwritten by the output velocity.
         momentum => elemR(:,inoutCol) !% overwritten
         volume   => elemR(:,er_Volume)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% compute velocity
 
         !print *, ' flowrate ', momentum(780) / elemR(780,er_Length)
 
         elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
 
+
         !print *, ' velocity ',elemR(780,inoutCol)
         ! print*
         ! print*, 'in ll_momentum_velocity_CC'
         ! print*, elemR(thisP,inoutCol), 'new velocity'
     end subroutine ll_momentum_velocity_CC
+!%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_enforce_flapgate_CC (inoutCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% enforce zero back flow on flapgate elements
+        !%------------------------------------------------------------------
+        integer, intent (in) :: inoutCol,  thisCol, Npack
+        integer, pointer :: thisP(:)
+        real(8), pointer :: flow(:)
+        !%------------------------------------------------------------------
+        thisP    => elemP(1:Npack,thisCol)
+        !% the inout column is either velocity, momentum, or flowrate
+        flow => elemR(:,inoutCol) !% overwritten
+        !%------------------------------------------------------------------
+
+        where ((elemYN(thisP,eYN_hasFlapGate)) .and. (elemR(thisP,inoutCol) < zeroR))
+            elemR(thisP,inoutCol) = zeroR
+        endwhere
+
+    end subroutine ll_enforce_flapgate_CC
 !%
 !%==========================================================================
 !%==========================================================================

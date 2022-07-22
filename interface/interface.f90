@@ -787,7 +787,7 @@ contains
 !%=============================================================================
 !%  Simulation subroutines/functions
 !%=============================================================================
-
+!%
     subroutine interface_init()
         !%---------------------------------------------------------------------
         !% Description:
@@ -845,7 +845,8 @@ contains
             print *, '* allowed, or something as simple as a missing [ around a keyword, *'
             print *, '* e.g., JUNCTIONS] instead of [JUNCTIONS]. This also occurs when   *'
             print *, '* the wrong words are used, e.g., if TRUE is used instead of YES   *'
-            print *, '*  for ALLOW_PONDING.                                              *'
+            print *, '* for ALLOW_PONDING. Check the *.rpt file created by EPA-SWMM      *'
+            print *, '* which should be in the user output folder'
             print *, '*                                                                  *'
             print *, '* Suggest you use the SWMM GUI to adjust and edit the *.inp file.  *'
             print *, '*                                                                  *'
@@ -1134,7 +1135,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_linkf_attribute(link_idx, attr, isInt) result(link_value)
-        !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
         !% Description:
         !%    Retrieves link attributes from EPA-SWMM. API link attributes are
         !%    defined in define_api_keys.f08.
@@ -1142,7 +1143,8 @@ contains
         !%    Fortran indexes are translated to C indexes and viceversa when
         !%    necessary. Fortran indexes always start from 1, whereas C indexes
         !%    start from 0.
-        !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+        !% Decclarations
             integer :: link_idx, attr, error, ilink_value
 
             logical :: isInt !% true output integer is expected, false for real
@@ -1150,26 +1152,26 @@ contains
             real(c_double), target :: link_value
             character(64) :: thisposition
             character(64) :: subroutine_name = 'interface_get_linkf_attribute'
-        !%-----------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
+        !% Preliminaries
+            !% --- error checking
+            !print *, 'calling linkf_attribute'
+            if (setting%Debug%File%interface) &
+                write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
+                "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
+                !print *, 'API_CONDUIT', API_CONDUIT,',link_value',link_value
+        
+            if ((link_idx > setting%SWMMinput%N_link) .or. (link_idx < 1)) then
+                print *, "error: unexpected link index value", link_idx
+                print *, trim(reverseKey_api(attr))
+                call util_crashpoint(9987355)
+                !return
+            end if
+        !%----------------------------------------------------------------------
 
-        !print *, 'calling linkf_attribute'
-        if (setting%Debug%File%interface) &
-            write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
-            "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
-            !print *, 'API_CONDUIT', API_CONDUIT,',link_value',link_value
-    
-        if ((link_idx > setting%SWMMinput%N_link) .or. (link_idx < 1)) then
-            print *, "error: unexpected link index value", link_idx
-            print *, trim(reverseKey_api(attr))
-            call util_crashpoint(9987355)
-            !return
-        end if
-
-        !if (attr == 30) then
-           !print *, 'link idx, attr', link_idx, attr, trim(reverseKey_api(attr))
-        !end if
-
+        !% --- parse the link section
         if     (  attr .le. api_linkf_start) then    
+            !% --- link attr number too small
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint( 498705)
@@ -1178,28 +1180,28 @@ contains
         elseif     ( (attr  >   api_linkf_start) .and. (  attr <  api_linkf_commonbreak)) then
             !% --- for link attributes 1 to < api_linkf_commonBreak
             !%      we simply read in the link value and exit this routine
-            !print *, 'call AAA '
             call load_api_procedure("api_get_linkf_attribute")
-            ! link index-1 because Fortran index starts in 1, whereas in C starts in 0
+
+            ! ---  NOTE: use link index-1 because Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_linkf_attribute(link_idx-1, attr, link_value)
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
 
         elseif (  attr == api_linkf_commonBreak) then
-            !% this should never be called
+            !% --- this should never be called -- usually indicates mismatch between api.h
+            !%     and define_api_keys
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(20987341)
             !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
-
             !% --- for link attributes in the range for for special elements   
             !%     the link value (integer) tells us other stuff to read in
             !%
             !% --- The "attr" input is one of the special element attributes, e.g., type, sub_type
             !%     First we read in the type so that we can properly categorize the sub_type to read         
-            !print *, 'call BBB'
+    
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
             thisposition = trim(subroutine_name)//'_B02'
@@ -1207,7 +1209,6 @@ contains
 
             ilink_value = int(link_value) !% the linkf_type is always an integer
 
-            !% 20220420brh
             !% --- handle the different linkf_type
             select case (ilink_value)
 
@@ -1398,164 +1399,13 @@ contains
                     end select
 
                 case default
-                    print *, 'CODE ERROR? case default that should not be reached 20220420brh'
+                    print *, 'in ',trim(subroutine_name)
+                    print *, 'CODE ERROR: this case default that should not be reached'
+                    print *, 'CASE of link type',ilink_value
+                    print *, 'A possible cause is the EPA-SWMM executable needs to be recompiled'
+                    call util_crashpoint(6698733)
             end select
-            !% 20220420brh
-            
-                ! if (link_value == API_CONDUIT) then
-                !     if (attr == api_linkf_type) then
-                !         link_value = lPipe
-                !     else if (attr == api_linkf_sub_type) then
-                !         !% conduits doesnot have a sub type
-                !         link_value = undefinedKey
-                !     else
-                !         link_value = nullvalueI
-                !         write(*,*)
-                !         write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 45782987'
-                !         write(*,*) '   attr = ',attr
-                !         write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
-                !         write(*,*) '   skipping error condition!'
-                !         write(*,*) '******'
-                !     end if
-                ! else if (ilink_value == API_PUMP) then
-                !     if (attr == api_linkf_type) then
-                !         link_value = lPump
-                !     else if (attr == api_linkf_sub_type) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
-                !         thisposition = trim(subroutine_name)//'_C04'
-                !         if (link_value == API_TYPE1_PUMP) then
-                !             link_value = lType1Pump
-                !         else if (link_value == API_TYPE2_PUMP) then
-                !             link_value = lType2Pump
-                !         else if (link_value == API_TYPE3_PUMP) then
-                !             link_value = lType3Pump
-                !         else if (link_value == API_TYPE4_PUMP) then
-                !             link_value = lType4Pump
-                !         else if (link_value == API_IDEAL_PUMP) then
-                !             link_value = lTypeIdealPump   
-                !         else
-                !             link_value = nullvalueI
-                !             write(*,*)
-                !             write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  442789'
-                !             write(*,*) '   link_value = ',link_value
-                !             write(*,*) '   allowable are ',API_TYPE1_PUMP, API_TYPE2_PUMP, API_TYPE3_PUMP, API_TYPE4_PUMP, API_IDEAL_PUMP
-                !             write(*,*) '   skipping error condition!'
-                !             write(*,*) '******'                     
-                !         endif   
-                !     else
-                !         link_value = nullvalueI
-                !         write(*,*)
-                !         write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  8836785'
-                !         write(*,*) '   attr = ',attr
-                !         write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
-                !         write(*,*) '   skipping error condition!'
-                !         write(*,*) '******'          
-                !     end if
-
-                ! else if (link_value == API_ORIFICE) then
-                !     if (attr == api_linkf_type) then
-                !         link_value = lOrifice
-                !     else if (attr == api_linkf_sub_type) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
-                !         thisposition = trim(subroutine_name)//'_D05'
-                !         if (link_value == API_SIDE_ORIFICE) then
-                !             link_value = lSideOrifice
-                !         else if (link_value == API_BOTTOM_ORIFICE) then
-                !             link_value = lBottomOrifice  
-                !         else
-                !             link_value = nullvalueI
-                !             write(*,*)
-                !             write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  442789'
-                !             write(*,*) '   link_value = ',link_value
-                !             write(*,*) '   allowable are ',API_SIDE_ORIFICE, API_BOTTOM_ORIFICE
-                !             write(*,*) '   skipping error condition!'
-                !             write(*,*) '******'     
-                !         endif
-                !     else
-                !         link_value = nullvalueI
-                !         write(*,*)
-                !         write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
-                !         write(*,*) '   attr = ',attr
-                !         write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
-                !         write(*,*) '   skipping error condition!'
-                !         write(*,*) '******'              
-                !     end if
-
-                ! else if (link_value == API_WEIR) then
-                !     if (attr == api_linkf_type) then
-                !         link_value = lWeir
-                !     else if (attr == api_linkf_sub_type) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
-                !         thisposition = trim(subroutine_name)//'_E06'
-                !         call print_api_error(error, thisposition)
-                !         if (link_value == API_TRANSVERSE_WEIR) then
-                !             link_value = lTransverseWeir
-                !         else if (link_value == API_SIDEFLOW_WEIR) then
-                !             link_value = lSideFlowWeir
-                !         else if (link_value == API_VNOTCH_WEIR) then
-                !             link_value = lVnotchWeir
-                !         else if (link_value == API_TRAPEZOIDAL_WEIR) then
-                !             link_value = lTrapezoidalWeir
-                !         else if (link_value == API_ROADWAY_WEIR) then
-                !             link_value = lRoadWayWeir  
-                !         else
-                !             link_value = nullvalueI
-                !             write(*,*)
-                !             write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 620873'
-                !             write(*,*) '   link_value = ',link_value
-                !             write(*,*) '   allowable are ',API_TRANSVERSE_WEIR, API_SIDEFLOW_WEIR, API_VNOTCH_WEIR, API_TRAPEZOIDAL_WEIR, API_ROADWAY_WEIR
-                !             write(*,*) '   skipping error condition!'
-                !             write(*,*) '******'  
-                !         endif    
-                !     else
-                !         link_value = nullvalueI
-                !         write(*,*)
-                !         write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
-                !         write(*,*) '   attr = ',attr
-                !         write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
-                !         write(*,*) '   skipping error condition!'
-                !         write(*,*) '******'   
-                !     end if
-
-                ! else if (link_value == API_OUTLET) then
-                !     if (attr == api_linkf_type) then
-                !         link_value = lOutlet
-                !     else if (attr == api_linkf_sub_type) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_sub_type, link_value)
-                !         thisposition = trim(subroutine_name)//'_F06'
-                !         call print_api_error(error, thisposition)
-                !         if (link_value == API_NODE_DEPTH) then
-                !             link_value = lNodeDepth
-                !         else if (link_value == API_NODE_HEAD) then
-                !             link_value = lNodeHead 
-                !         else
-                !             link_value = nullvalueI
-                !             write(*,*)
-                !             write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 220455'
-                !             write(*,*) '   link_value = ',link_value
-                !             write(*,*) '   allowable are ',API_NODE_DEPTH, API_NODE_HEAD
-                !             write(*,*) '   skipping error condition!'
-                !             write(*,*) '******'                       
-                !         endif
-                !     else
-                !         link_value = nullvalueI
-                !         write(*,*)
-                !         write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  11947'
-                !         write(*,*) '   attr = ',attr
-                !         write(*,*) '   allowable are ',api_linkf_type, api_linkf_sub_type
-                !         write(*,*) '   skipping error condition!'
-                !         write(*,*) '******'     
-                !     end if                
-
-                ! endif
-            !% 20220422brh
-
-           
-
+      
         elseif (  attr == api_linkf_typeBreak  ) then
             !% this should never be called
             print *, "error: unexpected link attribute value", attr
@@ -1922,131 +1772,13 @@ contains
                         case default
                     end select
                 case default
-                    print *, 'in else ',link_value
+                    !print *, 'in else ',link_value
                         !% some links like pumps or outlets does not have any geometric features
                         !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
                         link_value = nullvalueR
-                        print *, 'after ',link_value
+                       ! print *, 'after ',link_value
             end select
-            !% 20220420brh
-
-                ! if (link_value == API_RECT_CLOSED) then
-                !     if (attr == api_linkf_geometry) then
-                !         link_value = lRectangular_closed
-                !     else if (attr == api_linkf_xsect_wMax) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                !         thisposition = trim(subroutine_name)//'_F06'
-                !         call print_api_error(error, thisposition)
-                !     else if (attr == api_linkf_xsect_yFull) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                !         thisposition = trim(subroutine_name)//'_G07'
-                !         call print_api_error(error, thisposition)
-                !     else
-                !         !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
-                !         !% thus, set that link%R column to nullvalueR
-                !         link_value = nullvalueR
-                !     end if
-                ! else if (link_value == API_RECT_OPEN) then
-                !     if (attr == api_linkf_geometry) then
-                !         link_value = lRectangular
-                !     else if (attr == api_linkf_xsect_wMax) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                !         thisposition = trim(subroutine_name)//'_H08'
-                !         call print_api_error(error, thisposition)
-                !     else if (attr == api_linkf_xsect_yFull) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                !         thisposition = trim(subroutine_name)//'_I09'
-                !         call print_api_error(error, thisposition)
-                !     else
-                !         !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
-                !         !% thus, set that link%R column to nullvalueR
-                !         link_value = nullvalueR
-                !     end if
-                ! else if (link_value == API_TRAPEZOIDAL) then
-                !     if (attr == api_linkf_geometry) then
-                !         link_value = lTrapezoidal
-                !     else if (attr == api_linkf_xsect_wMax) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
-                !         thisposition = trim(subroutine_name)//'_J10'
-                !         call print_api_error(error, thisposition)
-                !     else if (attr == api_linkf_xsect_yFull) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                !         thisposition = trim(subroutine_name)//'_K11'
-                !         call print_api_error(error, thisposition)
-                !     else
-                !         !% trapezoidal geometry does not have certain geometric features (i.e. top-width) 
-                !         !% thus, set that link%R column to nullvalueR
-                !         link_value = nullvalueR
-                !     end if
-                ! else if (link_value == API_TRIANGULAR) then
-                !     if (attr == api_linkf_geometry) then
-                !         link_value = lTriangular
-                !     else if (attr == api_linkf_xsect_wMax) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                !         thisposition = trim(subroutine_name)//'_M12'
-                !         call print_api_error(error, thisposition)
-                !     else if (attr == api_linkf_xsect_yFull) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                !         thisposition = trim(subroutine_name)//'_N13'
-                !         call print_api_error(error, thisposition)
-                !     else
-                !         !% triangular geometry does not have certain geometric features (i.e. bottom width) 
-                !         !% thus, set that link%R column to nullvalueR
-                !         link_value = nullvalueR
-                !     end if
-                ! else if (link_value == API_PARABOLIC) then
-                !     if (attr == api_linkf_geometry) then
-                !         link_value = lParabolic
-                !     else if (attr == api_linkf_xsect_wMax) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                !         thisposition = trim(subroutine_name)//'_O14'
-                !         call print_api_error(error, thisposition)
-                !     else if (attr == api_linkf_xsect_yFull) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                !         thisposition = trim(subroutine_name)//'_P15'
-                !         call print_api_error(error, thisposition)
-                !     else
-                !         !% parabolic geometry does not have certain geometric features (i.e. bottom width) 
-                !         !% thus, set that link%R column to nullvalueR
-                !         link_value = nullvalueR
-                !     end if
-                ! else if (link_value == API_CIRCULAR) then
-                !     if (attr == api_linkf_geometry) then
-                !         link_value = lCircular
-                !     else if (attr == api_linkf_xsect_wMax) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                !         thisposition = trim(subroutine_name)//'_Q16'
-                !         call print_api_error(error, thisposition)
-                !     else if (attr == api_linkf_xsect_yFull) then
-                !         call load_api_procedure("api_get_linkf_attribute")
-                !         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                !         thisposition = trim(subroutine_name)//'_R17'
-                !         call print_api_error(error, thisposition)
-                !     else
-                !         !% circular geometry does not have certain geometric features (i.e. bottom width) 
-                !         !% thus, set that link%R column to nullvalueR
-                !         link_value = nullvalueR
-                !     end if
-                ! else
-                !     print *, 'in else ',link_value
-                !     !% some links like pumps or outlets does not have any geometric features
-                !     !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
-                !     link_value = nullvalueR
-                !     print *, 'after ',link_value
-                ! end if
-            !% 20220421brh
-
+          
         else
             !% this should never be reached
             print *, "error: unexpected link attribute value", attr

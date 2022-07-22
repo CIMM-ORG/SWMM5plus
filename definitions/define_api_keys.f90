@@ -559,37 +559,38 @@ module define_api_keys
         enumerator :: api_linkf_conduit_roughness        ! 63
         enumerator :: api_linkf_conduit_length           ! 64
         enumerator :: api_linkf_rptFlag                  ! 65
-        enumerator :: api_linkf_commonBreak              ! 66  ! must be end of common  ...linkf... types
+        enumerator :: api_linkf_hasFlapGate              ! 66
+        enumerator :: api_linkf_commonBreak              ! 67  ! must be end of common  ...linkf... types
 
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 67  ! must match linkf_type in api.h
-        enumerator :: api_linkf_sub_type     ! 68
-        enumerator :: api_linkf_typeBreak    ! 69  ! must be end of ...linkf... special types
+        enumerator :: api_linkf_type         ! 68  ! must match linkf_type in api.h
+        enumerator :: api_linkf_sub_type     ! 69
+        enumerator :: api_linkf_typeBreak    ! 70  ! must be end of ...linkf... special types
         ! --- xsect attributes for linkf
-        enumerator :: api_linkf_xsect_type   ! 70
-        enumerator :: api_linkf_geometry     ! 71
-        enumerator :: api_linkf_xsect_wMax   ! 72
-        enumerator :: api_linkf_xsect_yBot   ! 73
-        enumerator :: api_linkf_xsect_yFull  ! 74
-        enumerator :: api_linkf_transectidx  ! 75
-        enumerator :: api_linkf_end          ! 76  ! must be end of the ...linkf... xsect attributes
+        enumerator :: api_linkf_xsect_type   ! 71
+        enumerator :: api_linkf_geometry     ! 72
+        enumerator :: api_linkf_xsect_wMax   ! 73
+        enumerator :: api_linkf_xsect_yBot   ! 74
+        enumerator :: api_linkf_xsect_yFull  ! 75
+        enumerator :: api_linkf_transectidx  ! 76
+        enumerator :: api_linkf_end          ! 77  ! must be end of the ...linkf... xsect attributes
         !% --- transect data
-        enumerator :: api_transectf_start   ! 77
-        enumerator :: api_transectf_ID      ! 78
-        enumerator :: api_transectf_yFull   ! 79
-        enumerator :: api_transectf_aFull   ! 80
-        enumerator :: api_transectf_rFull   ! 81
-        enumerator :: api_transectf_wMax    ! 82
-        enumerator :: api_transectf_ywMax   ! 83
-        enumerator :: api_transectf_sMax    ! 84
-        enumerator :: api_transectf_aMax    ! 85
-        enumerator :: api_transectf_lengthFactor    ! 86
-        enumerator :: api_transectf_roughness       ! 87
-        enumerator :: api_transectf_end             ! 88
+        enumerator :: api_transectf_start   ! 78
+        enumerator :: api_transectf_ID      ! 79
+        enumerator :: api_transectf_yFull   ! 80
+        enumerator :: api_transectf_aFull   ! 81
+        enumerator :: api_transectf_rFull   ! 82
+        enumerator :: api_transectf_wMax    ! 83
+        enumerator :: api_transectf_ywMax   ! 84
+        enumerator :: api_transectf_sMax    ! 85
+        enumerator :: api_transectf_aMax    ! 86
+        enumerator :: api_transectf_lengthFactor    ! 87
+        enumerator :: api_transectf_roughness       ! 88
+        enumerator :: api_transectf_end             ! 89
 
 
 
-        enumerator :: api_keyslastplusone  ! 87
+        enumerator :: api_keyslastplusone  ! 90
     end enum
 
     ! !% API link attributes

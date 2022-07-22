@@ -7,7 +7,6 @@ module runge_kutta2
     use update
     use face
     use lowlevel_rk2
-    !use control_hydraulics, only: control_update
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use adjust
     use diagnostic_elements
@@ -82,12 +81,8 @@ module runge_kutta2
 
             ! call util_CLprint ('FFF  after zero/small face step 1-----------------')
 
-        ! !% --- update the control/monitoring data
-        ! call control_update()
-        ! call util_crashstop(558293)
-
         !% --- RK2 solution step  -- update diagnostic elements and faces
-        call diagnostic_toplevel()
+        call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
 
             ! call util_CLprint ('GGG  after diagnostic step 1')
@@ -134,13 +129,9 @@ module runge_kutta2
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
             ! call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
-        
-        ! !% --- update the control/monitoring data
-        ! call control_update()
-        ! call util_crashstop(558293)
 
         !% --- RK2 solution step -- update diagnostic elements and faces
-        call diagnostic_toplevel()
+        call diagnostic_toplevel (.false.)
         call util_crashstop(662398)
 
             ! call util_CLprint ('OOO  after diagnostic step 2')
@@ -233,7 +224,7 @@ module runge_kutta2
         
 
         !% step 5 -- update diagnostic elements and faces
-        call diagnostic_toplevel ()
+        call diagnostic_toplevel (.true.)
         call util_crashstop(66234)
 
         !% step X -- make ad hoc adjustments
@@ -262,7 +253,7 @@ module runge_kutta2
         end if
 
         !% step 7 -- update diagnostic elements and faces
-        call diagnostic_toplevel()
+        call diagnostic_toplevel(.false.)
         call util_crashstop(12293)
 
 
@@ -285,7 +276,7 @@ module runge_kutta2
         end if
 
         !% step 9 -- update diagnostic elements and faces
-        call diagnostic_toplevel ()
+        call diagnostic_toplevel (.false.)
         call util_crashstop(23422)
 
         !% step X -- make ad hoc adjustments
@@ -313,19 +304,19 @@ module runge_kutta2
         call rk2_continuity_step_ETM(istep)
 
             ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
-            !call util_CLprint ('after rk2 continuity step etm')
+            ! call util_CLprint ('after rk2 continuity step etm')
 
         !% only adjust extremely small element volumes that have been introduced
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume/twentyR, col_elemP(ep_CCJM_H_ETM), .true.)
 
             ! print *, this_image(),'    bbbb  after rk2 call to adjust limit by zero',this_image()
-            !call util_CLprint ('after rk2 call to adjust limit by zero')
+            ! call util_CLprint ('after rk2 call to adjust limit by zero')
 
         !% perform the momentum step of the rk2 for ETM
         call rk2_momentum_step_ETM(istep)
 
             ! print *, this_image(),'    cccc  after rk2 call to rk2_momentum_step_ETM',this_image()
-              !call util_CLprint (' after rk2 call to rk2_momentum_step_ETM')
+            !   call util_CLprint (' after rk2 call to rk2_momentum_step_ETM')
 
     end subroutine rk2_step_ETM
 !%
@@ -478,18 +469,17 @@ module runge_kutta2
         Npack       => npack_elemP(thisPackCol)
         !%-----------------------------------------------------------------------------
         !%
-        !if (crashYN) return
         if (Npack > 0) then
 
             !% momentum K source terms for different methods for ETM
             call ll_momentum_Ksource_CC (er_Ksource, thisPackCol, Npack)
                 !print *, '... Ksource :',elemR(1:3,er_Ksource)
-                 !call util_CLprint (' after rk2 call ll_momentum_Ksource_CC')
+                !  call util_CLprint (' after rk2 call ll_momentum_Ksource_CC')
 
             !% Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
                 !print *, '... sM      :',elemR(1:3,er_SourceMomentum)
-                 !call util_CLprint (' after rk2 call ll_momentum_source_CC')
+                !  call util_CLprint (' after rk2 call ll_momentum_source_CC')
 
             !% EXPERIMENT 20220524 adding lateral inflow source
             !call ll_momentum_lateral_source_CC (er_SourceMomentum, thisPackCol, Npack)
@@ -497,24 +487,28 @@ module runge_kutta2
             !% Common Gamma for momentum on channels and conduits for  ETM
             call ll_momentum_gamma_CC (er_GammaM, thisPackCol, Npack)
                 !print *, '... gamma   :',elemR(1:3,er_GammaM)
-                 !call util_CLprint (' after rk2 call ll_momentum_gamma_CC')
+                !  call util_CLprint (' after rk2 call ll_momentum_gamma_CC')
 
             !% Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
                 !print *, '... vel     :',elemR(1:3,er_Velocity)
-                 !call util_CLprint (' after rk2 call ll_momentum_solve_CC')
+                !  call util_CLprint (' after rk2 call ll_momentum_solve_CC')
 
             !% velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
                 !print *, '... vel     :',elemR(1:3,er_Velocity)
-                 !call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
+                !  call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
+
+            !% prevent backflow through flapgates
+            call ll_enforce_flapgate_CC (er_Velocity, thisPackCol, Npack)
+                !  call util_CLprint (' after rk2 call ll_enformce_flapgate_CC')
 
         end if
 
         call ll_flowrate_and_velocity_JB(ETM,istep)
 
             ! print *, '   in rk2momentum 555'
-            !call util_CLprint (' after ll_flowrate_and_velocity_JB')
+            ! call util_CLprint (' after ll_flowrate_and_velocity_JB')
 
     end subroutine rk2_momentum_step_ETM
 !%

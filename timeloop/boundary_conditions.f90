@@ -683,6 +683,7 @@ contains
                     end if
                 end if
             case (BCH_free)
+                
                 !% HACK -- this all needs testing and debugging
                 !% for free dnBC, if the connecting link has an offset,
                 !% the depth in the node is zero
@@ -700,6 +701,13 @@ contains
                         interpV(ii) =  faceR(faceIdx,fr_Zbottom)
                     end if
                 end if
+
+                ! print *, ' '
+                ! print *, 'in ',trim(subroutine_name), ' for BCH_free'
+                ! print *, 'norm depth ',normDepth
+                ! print *, 'crit depth ',critDepth
+                ! print *, 'head       ',interpV(ii)
+                ! print *, ' '
 
             case default
                 call util_print_warning("CODE ERROR (bc_interpolate): Unknown downstream boundary condition type at " &

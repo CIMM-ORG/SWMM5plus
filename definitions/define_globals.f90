@@ -35,14 +35,20 @@ module define_globals
 
     !integer :: ift(4) = (/13,1,2,11/)
 
-    integer :: ift(6) = (/15,1,2,11,12,13/)
+    !integer :: ift(6) = (/15,1,2,11,12,13/)
 
     !integer :: iet(7) = (/13,15,24,2,1,3,12 /) !% orifice
     !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
 
 
-    integer :: iet(9) = (/15,17,26,2,1,3,12,13,14 /) !% orifice
+   ! integer :: iet(9) = (/15,17,26,2,1,3,12,13,14 /) !% orifice
     !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
+
+    ! integer :: iet(7) = (/ 5, 7, 16, 1, 2, 3, 4/)
+    ! integer :: ift(6) = (/ 7, 1, 2, 3, 4, 5/)
+
+    ! integer :: iet(7) = (/ 2, 4, 13, 1, 1, 1, 1/)
+    ! integer :: ift(6) = (/ 4, 1, 2, 2, 2, 2/)
 
     integer(kind=8) :: irecCount = 0
 

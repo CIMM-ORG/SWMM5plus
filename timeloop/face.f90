@@ -527,6 +527,7 @@ module face
                 !% --- check for closed flap gate
                 if (hasFlapGateBC(idx_P(ii))) then
                     if (faceR(idx_fBC(ii), fr_Head_u) < headBC(idx_P(ii))) then
+                        !% --- set BC flow to zero for closed flap gate
                         faceR(idx_fBC(ii), fr_Flowrate) = zeroR
                     else
                         !% --- set BC flow to the flow at the upstream element center
@@ -1358,9 +1359,9 @@ module face
         !% transfers local data from elemR to elemB%R
         !%-------------------------------------------------------------------
         !% Declarations
-            integer             :: ii, eColumns(14) 
+            integer             :: ii, eColumns(Ncol_elemBGR) 
             integer, intent(in) :: facePackCol, Npack
-            integer, pointer    :: thisP, eUp, eDn
+            integer, pointer    :: thisP, eUp, eDn, JMidx
             logical, pointer    :: isGhostUp, isGhostDn
             character(64)       :: subroutine_name = 'local_data_transfer_to_boundary_array'
         !%--------------------------------------------------------------------
@@ -1368,9 +1369,9 @@ module face
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
-            !% HACK: this eset has to be exactly the same to work
-            eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate, er_Preissmann_Number,  &
-                        er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH, er_InterpWeight_uH, &
+            !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
+            eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate, er_Preissmann_Number, er_Volume, &
+                        er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH,   er_InterpWeight_uH, &
                         er_InterpWeight_dQ, er_InterpWeight_uQ, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
@@ -1399,7 +1400,13 @@ module face
                 !stop 
                 call util_crashpoint( 487874)
                 !return
-            end if       
+            end if     
+            !% --- handle special case for volume used by Pump Type 1 when
+            !%     the upstream element is a JB
+            if ((isGhostUp) .and. (elemI(eUp,ei_elementType) == JB)) then
+                JMidx => elemI(eup,ei_main_idx_for_branch)
+                elemB%R(ii,ebgr_Volume) = elemR(JMidx,er_Volume)
+            end if
         end do
 
         if (setting%Debug%File%face) &

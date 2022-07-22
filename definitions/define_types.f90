@@ -113,9 +113,6 @@ module define_types
         real(8),     allocatable :: headR(:,:)
         logical,     allocatable :: headYN(:,:)             !% logical data for head BCs
         real(8),     allocatable :: headTimeseries(:,:,:) !% time series data for elevation BC
-       ! integer,     allocatable :: headI_idx(:)              !% indexes of current entry in headR_timeseries
-        !real(8),     allocatable :: headR_value(:)               !% values of interpolated heads at current time
-        !logical,     allocatable :: hasFlapGateYN(:)        !% logical for whether BC has a flap gate -- HACK (move to flowYN array)
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
 

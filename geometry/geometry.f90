@@ -108,41 +108,41 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
-            !call util_CLprint ('in geometry at top')    
+            ! call util_CLprint ('in geometry at top')    
 
         !% --- assign all geometry for surcharged elements CC, JM
         !%     Note: not used in Preissmann Slot
         call geo_surcharged (thisColP_surcharged)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% --- reset all zero or near-zero volumes in non-surcharged CC, JM
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
 
-            !call util_CLprint ('in geometry before geo_depth_from_volume') 
+            ! call util_CLprint ('in geometry before geo_depth_from_volume') 
 
         !% --- compute the depth on all non-surcharged elements of CC, JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
 
-            !call util_CLprint ('in geometry before geo_head_from_depth') 
+            ! call util_CLprint ('in geometry before geo_head_from_depth') 
 
         !% --- compute the head on all non-surcharged elements of CC and JM
         !%     This sets head consistent with depth
         call geo_head_from_depth (thisColP_NonSurcharged)
 
-            !call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
+            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
 
         !% --- limit volume for incipient surcharge. This is done after depth is computed
         !%     so that the "depth" algorithm can include depths greater than fulldepth
         !%     as a way to handle head for incipient surcharge.
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
-            !call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
+            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
 
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
@@ -166,63 +166,63 @@ module geometry
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% reset all zero or near-zero areas in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged, .false.)
 
-            !call util_CLprint ('in geometry before topwidth_from_depth')   
+            ! call util_CLprint ('in geometry before topwidth_from_depth')   
 
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
         call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged, .false.)
 
-            !call util_CLprint ('in geometry before perimeter_from_depth') 
+            ! call util_CLprint ('in geometry before perimeter_from_depth') 
 
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before hyddepth_from_depth') 
+            ! call util_CLprint ('in geometry before hyddepth_from_depth') 
 
         !% compute hyddepth
         call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
+            ! call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
 
         !% compute hydradius  (applies to all nonsurcharged)
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
-            !call util_CLprint ('in geometry before ell_from_head') 
+            ! call util_CLprint ('in geometry before ell_from_head') 
 
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell_from_head (thisColP_all)
 
-            !call util_CLprint ('in geometry before slot_adjustments') 
+            ! call util_CLprint ('in geometry before slot_adjustments') 
 
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
 
-            !call util_CLprint ('in geometry before JM_values') 
+            ! call util_CLprint ('in geometry before JM_values') 
 
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
 
-            !call util_CLprint ('in geometry before dHdA') 
+            ! call util_CLprint ('in geometry before dHdA') 
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
 
-            !call util_CLprint ('in geometry at end') 
+            ! call util_CLprint ('in geometry at end') 
 
         call util_crashstop(322983)
 
@@ -369,7 +369,7 @@ module geometry
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                                 ell(tB)       = geo_ell_singular(tB)
 
-                                !write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ! write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
                                 !% negligible depth is treated with ZeroValues
@@ -382,7 +382,7 @@ module geometry
                                 dHdA(tB)      = oneR / topwidth(tB)
                                 ell(tB)       = setting%ZeroValue%Depth !%hydDepth(tB)  20220712 brh
 
-                                !write(*,"(A,i5,10f12.5)"), 'BBB ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ! write(*,"(A,i5,10f12.5)"), 'BBB ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
                                 !% negative depth without zero value treatment (not recommended!) is treated as exactly zero
@@ -395,7 +395,7 @@ module geometry
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                                 ell(tB)       = zeroR
 
-                                !write(*,"(A,i5,10f12.5)") 'CCC ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ! write(*,"(A,i5,10f12.5)") 'CCC ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             else
                                 !% not surcharged and non-negligible depth
@@ -421,7 +421,7 @@ module geometry
                                     ! print *, 'in geo_assign_JB  for rect element'
                                     ! print *, 'area ',area(tB), depth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'DDD ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'DDD ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (triangular)
                                     area(tB)     = triangular_area_from_depth_singular      (tB,depth(tB))
@@ -432,7 +432,7 @@ module geometry
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
                                     
                                 case (trapezoidal)                                    
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
@@ -443,7 +443,7 @@ module geometry
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'FFF ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'FFF ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (circular)
                                     area(tB)     = circular_area_from_depth_singular          (tB,depth(tB))
@@ -454,7 +454,7 @@ module geometry
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
 
-                                    !write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                    ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (irregular)
                                     area(tB)    = irregular_geometry_from_depth_singular ( &
@@ -473,7 +473,7 @@ module geometry
                                     ell(tB)       = hydDepth(tB)  !% HACK -- assumes irregular is continuously-increasing in width
                                     dHdA(tB)      = oneR / topwidth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'HHH ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'HHH ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                     ! !% get the transect by depth table 
                                     ! thisTable => transectTableDepthR(elemI(tB,ei_transect_idx),:,:)
@@ -505,8 +505,8 @@ module geometry
 
                             ! print *, 'in geo_assign_JB at bottom'
                             ! write(*,"(A,i5,10f12.5)") 'III ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
-                            !write(*,"(A,10f12.5)") 'hyd depth', hydDepth(tB)
-                            !print *, area(tB), length(tB)
+                            ! write(*,"(A,10f12.5)") 'hyd depth', hydDepth(tB)
+                            ! print *, area(tB), length(tB)
 
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
@@ -586,7 +586,7 @@ module geometry
         !%-------------------------------------------------------------------    
         !% cycle through different geometries
 
-        !call util_CLprint('start of geo depth from volume')        
+        ! call util_CLprint('start of geo depth from volume')        
 
         !% --- RECTANGULAR CC
         thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
@@ -602,7 +602,7 @@ module geometry
             call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after rectangular') 
+        ! call util_CLprint('after rectangular') 
 
         !% --- TRAPEZOIDAL CC
         thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
@@ -611,7 +611,7 @@ module geometry
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after trapezoidal') 
+        ! call util_CLprint('after trapezoidal') 
 
         !% --- TRIANGULAR CC
         thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
@@ -620,7 +620,7 @@ module geometry
             call triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after triangular') 
+        ! call util_CLprint('after triangular') 
 
         !% --- CIRCULAR CC
         thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
@@ -629,7 +629,7 @@ module geometry
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after circular') 
+        ! call util_CLprint('after circular') 
  
         !% --- IRREGULAR CC
         thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -638,7 +638,7 @@ module geometry
             call irregular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after irregular') 
+        ! call util_CLprint('after irregular') 
         !% HACK Needs additional geometries
 
         !% JM with functional geometry
@@ -649,7 +649,7 @@ module geometry
             !call storage_implied_length(elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after functional storage') 
+        ! call util_CLprint('after functional storage') 
 
         !% JM with tabular geomtery
         thisCol => col_elemPGx(epg_JM_tabularStorage_nonsurcharged)

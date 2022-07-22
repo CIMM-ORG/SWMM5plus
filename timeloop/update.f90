@@ -111,7 +111,7 @@ module update
         !%     required so that an inflow to a zero or small depth will not be lost
        ! call update_BCoutlet_flowrate ()
 
-            ! call util_CLprint ('in update at end')
+        !   call util_CLprint ('in update at end')
 
         !%------------------------------------------------------------------
         !% Closing:

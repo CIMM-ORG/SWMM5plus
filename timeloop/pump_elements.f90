@@ -16,9 +16,7 @@ module pump_elements
     !% Description:
     !% Computes diagnostic flow through orifice elements
     !%
-    !% METHOD:
-    !% 
-    !%
+
 
     private
 
@@ -32,22 +30,49 @@ module pump_elements
 !%==========================================================================
 !%
     subroutine pump_toplevel (eIdx)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% We need a subroutine to get the new full depth (esr_EffectiveFullDepth)
         !% crown (esr_Zcrown) and crest (esr_Zcrest) elevation from control setting.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer, intent(in) :: eIdx  !% must be a single element ID
+            integer, pointer :: PumpType
+            real(8), pointer :: FlowRate,  PSetting
             character(64) :: subroutine_name = 'pump_toplevel'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%pump_elements) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------    
+        !%------------------------------------------------------------------  
+        !% Aliases
+            PumpType => elemSI(eIdx,esi_Pump_SpecificType)
+            FlowRate => elemR(eIdx,er_Flowrate)
+            PSetting => elemR(eIdx,er_Setting)
+        !%-------------------------------------------------------------------
+        select case (PumpType)
 
-        !% --- set pump setting
+            case (type1_Pump)
+                call pump_type1(eIdx)
 
-        call pump_flow (eIdx)
+            case (type2_Pump)
+                call pump_type2(eIdx)
+            
+            case (type3_Pump)
+                call pump_type3(eIdx)
+
+            case (type4_Pump)
+                call pump_type4(eIdx)
+                    
+            case (type_IdealPump)  
+                call pump_ideal(eIdx)
+
+        end select
+    
+        !% --- linearly reduce flow by the setting value
+        FlowRate = FlowRate * PSetting
+
+        !% --- prohibit reverse flow through pump
+        if (FlowRate < zeroR) FlowRate = zeroR 
 
         !%-----------------------------------------------------------------------------
         !% Closing:
@@ -80,88 +105,66 @@ module pump_elements
 
     end subroutine pump_set_setting
 !%
-!%========================================================================== 
+!%==========================================================================    
 !% PRIVATE
 !%==========================================================================    
 !%  
-    subroutine pump_flow (eIdx)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: eIdx !% must be single element ID
-        integer, pointer :: PumpType, iupf, idnf, CurveID
-        real(8), pointer :: Head, FlowRate, UpFaceHead, DnFaceHead, PSetting
-        real(8), pointer :: Depth, DnFaceZbottom
-        !%-----------------------------------------------------------------------------
-        ! if (crashYN) return
-        PumpType => elemSI(eIdx,esi_Pump_SpecificType)
-        CurveID  => elemSI(eIdx,esi_Pump_CurveID)
-        Head     => elemR(eIdx,er_Head)
-        Depth    => elemR(eIdx,er_Depth)
-        FlowRate => elemR(eIdx,er_Flowrate)
-        PSetting => elemR(eIdx,er_Setting)
-        !% face locations
-        iupf     => elemI(eIdx,ei_Mface_uL)
-        idnf     => elemI(eIdx,ei_Mface_dL)
-        !% face data used
-        UpFaceHead => faceR(iupf,fr_Head_d)
-        DnFaceHead => faceR(idnf,fr_Head_u)
-        DnFaceZbottom => faceR(idnf,fr_Zbottom)
-
-        !%-----------------------------------------------------------------------------
-        select case (PumpType)
-        case (type1_Pump)
-
-                print *, 'CODE ERROR: ',trim(reverseKey(PumpType)), ' has not yet been developed'
-                call util_crashpoint(561893)
-                return
-
-        case (type2_Pump)
-
-                print *, 'CODE ERROR: ',trim(reverseKey(PumpType)), ' has not yet been developed'
-                call util_crashpoint(23489)
-                return
-
-        case (type3_Pump)
-
-
-
-        case (type4_Pump)
-            call pump_type4(eIdx)
-               
-
-        case (type_IdealPump)  
-            call pump_ideal(eIdx)
-
-        end select
-
-        !% reverse flow through pump are not allowed
-        FlowRate = FlowRate * PSetting
-        if (FlowRate < zeroR) FlowRate = zeroR 
-  
-    end subroutine pump_flow
-!%
-!%========================================================================== 
-!% PRIVATE
-!%==========================================================================    
-!%  
-    subroutine pump_type1 (idx)
+    subroutine pump_type1 (eIdx)
         !%------------------------------------------------------------------
         !% Description:
-        !% EPA-SWMM type 1 pump that has constant flow rates for volume
-        !% intervals
+        !% EPA-SWMM type 1 pump whos flow is determined by volume up
+        !% upstream element. This volume must be copied to the volume
+        !% storage for the pump element
         !%------------------------------------------------------------------
         !% Declarations:
-        integer, intent(in) :: idx  !% pump index
+            integer, intent(in) :: eIdx  !% pump index
+            integer, pointer :: iupf, eup, CurveID, JMidx
+            real(8), pointer :: FlowRate, Volume
+            real(8), pointer :: Head, UpFaceHead
+            logical, pointer :: isGhostUp
         !%------------------------------------------------------------------
         !% Aliases:
-        !%------------------------------------------------------------------
-        !% Preliminaries:
+            CurveID  => elemSI(eIdx,esi_Pump_CurveID)
+            FlowRate => elemR(eIdx,er_Flowrate)
+            Head     => elemR(eIdx,er_Head)
+            Volume   => elemR(eIdx,er_Volume)
+            !% face locations
+            iupf     => elemI(eIdx,ei_Mface_uL)
+            !% face data used
+            UpFaceHead    => faceR(iupf,fr_Head_d)
+            eup           => faceI(iupf,fi_Melem_uL)
+            isGhostUp     => faceYN(iupf,fYN_isUpGhost)
         !%------------------------------------------------------------------
 
-        !%------------------------------------------------------------------
-        !% Closing:
+        !% --- store volume of upstream element at pump
+        !%     this volume isn't considered in volume conservation
+        if (isGhostUp) then
+            !% --- handle condition where upstream is on another image
+            Volume = elemGR(eup,er_Volume)
+        else
+            !% --- check for a junction branch element upstream
+            if (elemI(eUp,ei_elementType) == JB) then
+                !% --- if JB, use the associated JM volume
+                JMidx => elemI(eup,ei_main_idx_for_branch)
+                Volume = elemR(JMidx,er_Volume)
+            else
+                !% --- for any element other than JB
+                Volume = elemR(eup,er_Volume)
+            end if
+        end if
+
+        if (Volume .le. setting%ZeroValue%Volume) then
+            !% --- no flow for effectively zero volume
+            Flowrate = zeroR
+        else
+            !% --- use the curve without interpolation
+            call util_curve_lookup_singular( &
+                CurveID, er_Volume, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,0)
+        end if
+
+        !% --- set the head of the pump to the upstream face head
+        Head = UpFaceHead
+
     end subroutine pump_type1
 !%
 !%==========================================================================   
@@ -170,31 +173,41 @@ module pump_elements
     subroutine pump_type2 (eIdx)
         !%------------------------------------------------------------------
         !% Description:
-        !% 
+        !% Computes flowrate for pump where flow is set by depth at upstream
+        !% face
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: eIdx  !% pump index
-            integer, pointer :: PumpType, iupf, idnf, CurveID
+            integer, pointer :: iupf, CurveID
             real(8), pointer :: FlowRate, UpFaceHead
-            real(8), pointer :: Depth, DnFaceZbottom
+            real(8), pointer :: Depth, Head, UpFaceZbottom
         !%------------------------------------------------------------------
         !% Aliases:
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             Depth    => elemR(eIdx,er_Depth)
             FlowRate => elemR(eIdx,er_Flowrate)
+            Head     => elemR(eIdx,er_Head)
             !% face locations
             iupf     => elemI(eIdx,ei_Mface_uL)
-            idnf     => elemI(eIdx,ei_Mface_dL)
             !% face data used
-            UpFaceHead => faceR(iupf,fr_Head_d)
-            DnFaceZbottom => faceR(idnf,fr_Zbottom)  
+            UpFaceHead    => faceR(iupf,fr_Head_d)
+            UpFaceZbottom => faceR(iupf,fr_Zbottom)  
         !%------------------------------------------------------------------
         !% --- set the depth upstream that is the Type2 pump control point    
-        Depth = UpFaceHead - DnFaceZbottom
+        Depth = UpFaceHead - UpFaceZbottom
 
-        !% --- use the curve without interpolation
-        call util_curve_lookup_singular( &
-            CurveID, er_Depth, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,0)
+        if (Depth .le. setting%ZeroValue%Depth) then
+            !% --- no flow for effectively zero depth
+            Flowrate = zeroR
+        else
+            !% --- use the curve without interpolation
+            call util_curve_lookup_singular( &
+                CurveID, er_Depth, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,0)
+        end if
+
+        !% --- set the head of the pump to the upstream face head
+        Head = UpFaceHead
+
 
     end subroutine pump_type2
 !%
@@ -207,13 +220,15 @@ module pump_elements
         !% 
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, pointer :: PumpType, iupf, idnf, CurveID
-            real(8), pointer :: Head, FlowRate, UpFaceHead, DnFaceHead
+            integer, pointer :: iupf, idnf, CurveID
+            real(8), pointer :: Head, Depth, FlowRate, UpFaceHead, DnFaceHead
+            real(8), pointer :: UpFaceZbottom
             integer, intent(in) :: eIdx  !% pump index
         !%------------------------------------------------------------------
         !% Aliases:
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             Head     => elemR(eIdx,er_Head)
+            Depth    => elemR(eIdx,er_Depth)
             FlowRate => elemR(eIdx,er_Flowrate)
             !% face locations
             iupf     => elemI(eIdx,ei_Mface_uL)
@@ -221,15 +236,24 @@ module pump_elements
             !% face data used
             UpFaceHead => faceR(iupf,fr_Head_d)
             DnFaceHead => faceR(idnf,fr_Head_u)
+            UpFaceZbottom => faceR(iupf,fr_Zbottom)
         !%------------------------------------------------------------------
 
         !% --- temporarily set the head to the head difference across the 
         !%     pump that controls a Type 3 (centrifugal) pump   
         Head = max((DnFaceHead - UpFaceHead), zeroR)
 
-        !% --- use the curve for this pump and the head difference
-        call util_curve_lookup_singular( &
-            CurveID, er_Head, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
+        !% --- get the depth upstream
+        Depth = UpFaceHead - UpFaceZbottom
+
+        if ((Depth .le. setting%ZeroValue%Depth) .or. (Head .le. zeroR)) then
+            !% --- no flow for effectively zero depth or no head difference
+            Flowrate = zeroR
+        else
+            !% --- use the curve for this pump and the head difference
+            call util_curve_lookup_singular( &
+                CurveID, er_Head, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
+        end if
 
         !% --- reset the pump element head to the upstream face value
         Head = UpFaceHead   
@@ -246,29 +270,39 @@ module pump_elements
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: eIdx  !% pump index
-            integer, pointer :: PumpType, iupf, idnf, CurveID
+            integer, pointer :: iupf,  CurveID
             real(8), pointer :: FlowRate, UpFaceHead
-            real(8), pointer :: Depth, DnFaceZbottom
+            real(8), pointer :: Depth, Head, UpFaceZbottom
         !%------------------------------------------------------------------
         !% Aliases:
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             Depth    => elemR(eIdx,er_Depth)
-            FlowRate => elemR(eIdx,er_Flowrate)
+            Flowrate => elemR(eIdx,er_Flowrate)
+            Head     => elemR(eIdx,er_Head)
             !% face locations
             iupf     => elemI(eIdx,ei_Mface_uL)
-            idnf     => elemI(eIdx,ei_Mface_dL)
             !% face data used
-            UpFaceHead => faceR(iupf,fr_Head_d)
-            DnFaceZbottom => faceR(idnf,fr_Zbottom)  
+            UpFaceHead    => faceR(iupf,fr_Head_d)
+            UpFaceZbottom => faceR(iupf,fr_Zbottom)     
         !%------------------------------------------------------------------
-
         !% --- set the depth upstream that is the Type4 pump control point    
-        Depth = UpFaceHead - DnFaceZbottom
+        Depth = UpFaceHead - UpFaceZbottom
 
-        !% --- use the curve for this pump to set the flowrate for this pump
-        !%     based on the depth
-        call util_curve_lookup_singular ( &
-            CurveID, er_Depth, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
+        if (Depth .le. setting%ZeroValue%Depth) then
+            !% --- no flow for effectively zero depth
+            Flowrate = zeroR
+        else
+            !% --- use the curve for this pump to set the flowrate for this pump
+            !%     based on the inlet depth
+            !%     Note that CurveID stores the element index for the pump, and
+            !%     the lookup table stores the result in elemR(idx,er_Flowrate)
+            !%     for the idx of the pump.
+            call util_curve_lookup_singular ( &
+                CurveID, er_Depth, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
+        end if
+
+         !% --- set the head of the pump to the upstream face head
+        Head = UpFaceHead
 
         !%------------------------------------------------------------------
     end subroutine pump_type4
@@ -288,17 +322,21 @@ module pump_elements
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: idx  !% pump index
-            integer, pointer    :: fup
-            real(8), pointer    :: flowrate, face_flowrate(:)
+            integer, pointer    :: iupf
+            real(8), pointer    :: Flowrate, Head, UpFaceHead, UpFaceFlowrate
         !%------------------------------------------------------------------
         !% Aliases:
-            fup           => elemI(idx,ei_Mface_uL)
-            flowrate      => elemR(idx,er_Flowrate)
-            face_flowrate => faceR(:  ,fr_Flowrate)
+            Flowrate       => elemR(idx,er_Flowrate)
+            Head           => elemR(idx,er_Head)
+            iupf           => elemI(idx,ei_Mface_uL)
+            !% face data used
+            UpFaceHead     => faceR(iupf,fr_Head_d)
+            UpFaceFlowrate => faceR(iupf,fr_Flowrate)
         !%------------------------------------------------------------------
-        !% Preliminaries:
-        !%------------------------------------------------------------------
-            flowrate = face_flowrate(fup)
+        !%--- use the upstream face flowrate and head
+        Flowrate = UpFaceFlowrate
+        Head = UpFaceHead
+
         !%------------------------------------------------------------------
         !% Closing:
     end subroutine pump_ideal
