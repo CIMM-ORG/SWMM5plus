@@ -145,7 +145,8 @@ module pump_elements
             !% --- check for a junction branch element upstream
             if (elemI(eUp,ei_elementType) == JB) then
                 !% --- if JB, use the associated JM volume
-                JMidx => elemI(eup,ei_main_idx_for_branch)
+                !JMidx => elemI(eup,ei_main_idx_for_branch)
+                JMidx => elemSI(eup,esi_JunctionBranch_Main_Index)
                 Volume = elemR(JMidx,er_Volume)
             else
                 !% --- for any element other than JB

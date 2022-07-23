@@ -278,7 +278,7 @@ module define_indexes
     enum, bind(c)
          enumerator :: ei_Lidx = 1                  !% local element index (static)
          enumerator :: ei_Gidx                      !% global element index  (static)
-         enumerator :: ei_main_idx_for_branch       !% idx of JM for a JB branch
+         !enumerator :: ei_main_idx_for_branch       !% idx of JM for a JB branch
          enumerator :: ei_elementType               !% KEY general element type  (static)
          enumerator :: ei_geometryType              !% KEY cross-sectional geometry type  (static)
          enumerator :: ei_HeqType                   !% KEY type of head equation (static)
@@ -540,7 +540,7 @@ module define_indexes
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
-        enumerator ::  esi_JunctionBranch_Main_Index               !% 
+        enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
         enumerator ::  esi_JunctionBranch_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is

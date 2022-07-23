@@ -288,9 +288,6 @@ contains
         call util_crashstop(4429873)
         !call sleep(1)
 
-
-    
-
         ! call util_CLprint ('in initialization')
         ! stop 598734
 
@@ -342,7 +339,6 @@ contains
         end if
         call util_crashstop(103897)
 
-
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
@@ -351,6 +347,7 @@ contains
         !      !% --- temporary testing
         ! print *, 'CALLING INTERFACE_TESTSTUFF'
         ! call interface_teststuff ()
+
 
         !% --- wait for all processors before exiting to the time loop
         sync all
@@ -420,7 +417,7 @@ contains
                 call util_crashpoint(333578)
             end if
             call util_crashstop(440987)
-
+    
             if (setting%Debug%File%initialization)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel

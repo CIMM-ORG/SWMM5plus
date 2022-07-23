@@ -2130,7 +2130,8 @@ contains
         end if
 
         !% --- self index
-        elemI(JMidx,ei_main_idx_for_branch) = JMidx
+        !elemI(JMidx,ei_main_idx_for_branch) = JMidx
+        elemSI(JMidx,esi_JunctionBranch_Main_Index ) = JMidx
 
         !%................................................................
         !% Junction Branches
@@ -2147,7 +2148,8 @@ contains
             JBidx = JMidx + ii
             
             !% --- main index associated with branch
-            elemI(JBidx,ei_main_idx_for_branch) = JMidx
+            !elemI(JBidx,ei_main_idx_for_branch) = JMidx
+            elemSI(JBidx,esi_JunctionBranch_Main_Index) = JMidx
 
             !print *, 'JBidx ',JBidx
 

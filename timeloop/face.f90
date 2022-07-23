@@ -1404,7 +1404,8 @@ module face
             !% --- handle special case for volume used by Pump Type 1 when
             !%     the upstream element is a JB
             if ((isGhostUp) .and. (elemI(eUp,ei_elementType) == JB)) then
-                JMidx => elemI(eup,ei_main_idx_for_branch)
+                !JMidx => elemI(eup,ei_main_idx_for_branch)
+                JMidx => elemSI(eup,esi_JunctionBranch_Main_Index)
                 elemB%R(ii,ebgr_Volume) = elemR(JMidx,er_Volume)
             end if
         end do

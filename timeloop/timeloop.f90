@@ -234,6 +234,7 @@ contains
         !%-------------------------------------------------------------------
         !% --- initialize the time step counter
         thisStep = 1
+
         do while (setting%Time%Now <= setting%Time%End - dtTol)
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
