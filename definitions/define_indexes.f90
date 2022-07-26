@@ -736,6 +736,14 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Circular =  esgr_Circular_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
+    enum, bind(c)
+         enumerator ::  esgr_Parabolic_Breadth = 1    !% diameter for circular geometry
+         enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Circular_lastplusone-1
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
@@ -744,7 +752,9 @@ module define_indexes
     integer, target :: Ncol_elemSGR = max(&
                             Ncol_elemSGR_Rectangular, &
                             Ncol_elemSGR_Trapezoidal, &
-                            Ncol_elemSGR_Circular)
+                            Ncol_elemSGR_Circular,    &
+                            Ncol_elemSGR_Trapezoidal, &
+                            Ncol_elemSGR_Parabolic)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or

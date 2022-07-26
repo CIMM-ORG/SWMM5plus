@@ -691,6 +691,7 @@ contains
                  (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
                  (link%I(ii,li_geometry) == lTriangular)     .or. &
                  (link%I(ii,li_geometry) == lPower_function) .or. &
+                 (link%I(ii,li_geometry) == lParabolic)      .or. &
                  (link%I(ii,li_geometry) == lRect_triang)    .or. &
                  (link%I(ii,li_geometry) == lRect_round)     .or. &
                  (link%I(ii,li_geometry) == lMod_basket)     .or. &
