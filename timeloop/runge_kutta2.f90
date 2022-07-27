@@ -387,7 +387,7 @@ module runge_kutta2
         !% compute slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
             !% all the closed conduit elements
-            thisPackCol => col_elemP(ep_Closed_Elements)
+            thisPackCol => col_elemP(ep_Closed_Elements_CC)
             Npack => npack_elemP(thisPackCol)
             if (Npack > 0) then
                 call ll_slot_computation_ETM (thisPackCol, Npack)

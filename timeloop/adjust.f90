@@ -1232,12 +1232,13 @@ module adjust
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, multiplier, smallDepth
-            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:)
+            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:), Zbottom(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
+            logical, pointer :: fSlot(:)
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
-        !% Preliminaries           
+        !% Preliminaries      
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1246,7 +1247,7 @@ module adjust
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm_surcharged)
             case (ETM)
-                thisCol => col_elemP(ep_Closed_Elements)
+                thisCol => col_elemP(ep_Closed_Elements_CC)
             case (AC)
                 thisCol => col_elemP(ep_CC_AC_surcharged)
             case default
@@ -1277,38 +1278,31 @@ module adjust
             w_uH       => elemR(:,er_InterpWeight_uH)
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
+            Zbottom    => elemR(:,er_Zbottom)
+            fSlot      => faceYN(:,fYN_isSlot)
 
             multiplier => setting%Adjust%Head%FullDepthMultiplier
 
         !%-------------------------------------------------------------------
-        !% find the cells that are deep enough to use the V filter
-        !% The surcharge head must be larger than some multiple of the conduit full depth
-        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemEllMax(thisP))
-        where (Vvalue(thisP) > oneR)
-            Vvalue(thisP) = oneR
-        elsewhere
-            Vvalue(thisP) = zeroR !% HACK: to apply v shape head correction for all cases
-        endwhere
+        !% find the cells that are surcharged
 
-        !% identify the V-shape locations
-        Vvalue(thisP) =  (util_sign_with_ones(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
-                        *(util_sign_with_ones(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
-                        * Vvalue(thisP)   
-                
-        !% adjust where needed
-        where (Vvalue(thisP) > zeroR)   
-            !% averaging based on interpolation weights
-            ! elemHead(thisP) =  (oneR - coef) * elemHead(thisP)  &
-            !     + coef *                                        &
-            !     (  w_uH(thisP) * faceHeadUp(mapDn(thisP))       &
-            !      + w_dH(thisP) * faceHeadDn(mapUp(thisP))       &
-            !      )                                              &
-            !     / ( w_uH(thisP) + w_dH(thisP) )   
-                
-            !% simple linear interpolation
-            elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
-                + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
-        endwhere                     
+            where (fSlot(mapUP(thisP)) .and. fSlot(mapDn(thisP)))
+                Vvalue(thisP) = oneR
+            elsewhere
+                Vvalue(thisP) = zeroR 
+            endwhere
+
+            !% identify the V-shape locations
+            Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
+                            *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+                            * Vvalue(thisP)   
+                    
+            !% adjust where needed
+            where (Vvalue(thisP) > zeroR)    
+                !% simple linear interpolation
+                elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
+                    + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+            endwhere                     
 
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 

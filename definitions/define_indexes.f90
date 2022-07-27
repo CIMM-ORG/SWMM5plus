@@ -482,7 +482,8 @@ module define_indexes
         enumerator :: ep_BClat                      !% all elements with lateral BC
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
-        enumerator :: ep_Closed_Elements            !% all closed elements    
+        enumerator :: ep_Closed_Elements_CC         !% all closed CC elements 
+        enumerator :: ep_Closed_Elements_JB         !% all closed JB elements   
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
         enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
@@ -1001,6 +1002,7 @@ module define_indexes
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
+        enumerator :: fYN_isSlot
         enumerator :: fYN_isDownstreamJbFace
         enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed

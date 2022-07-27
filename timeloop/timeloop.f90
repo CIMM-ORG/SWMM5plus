@@ -381,7 +381,7 @@ contains
                 
     
                 !% --- check for blowup conditions
-                call util_crashcheck (773623)
+                ! call util_crashcheck (773623)
                 if (crashI == 1) exit 
     
             end do  !% end of time loop
