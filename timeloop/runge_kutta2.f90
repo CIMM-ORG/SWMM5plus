@@ -49,7 +49,7 @@ module runge_kutta2
         !% --- reset the overflow counter
         elemR(:,er_VolumeOverFlow) = zeroR
 
-            ! call util_CLprint ('AAA  start of RK2 ==================================')
+           ! call util_CLprint ('AAA  start of RK2 ==============================')
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1

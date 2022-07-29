@@ -65,8 +65,8 @@
         "energy_correction_factor" : 1.0
     },
     "Discretization" : {
-        "AdjustLinkLengthYN" : true,
-        "LinkShortingFactor" : 0.33,
+        "AdjustLinkLengthYN" : false,
+        "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 10.00
@@ -90,18 +90,7 @@
         "kFactor"  : 0.0
     },
     "Limiter" : {
-        "BC" : {
-            "UseInflowLimiterYN" : true,
-            "Approach" : "FroudeNumber",
-            "FroudeInflowMaximum" : 1.5
-        },
-        "Channel" : {
-            "LargeDepthFactor" : 10.0
-        },
-        "Flowrate" : {
-            "FaceVolumeTransport" : 0.5,
-            "UseFaceVolumeTransportYN" : true
-        },
+        "NormalDepthInfinite" : 1000.0,
         "InterpWeight" : {
             "Maximum" : 1e6,
             "Minimum" : 1e-6
@@ -187,7 +176,7 @@
     "Solver" : {
         "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
+        "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
@@ -251,6 +240,7 @@
         "UseZeroValues" : true,
         "Area" : 1e-6,
         "Depth" : 1e-4,
+        "Slope" : 1e-6,
         "Topwidth" : 1e-4,
         "Volume" : 1e-6
     },

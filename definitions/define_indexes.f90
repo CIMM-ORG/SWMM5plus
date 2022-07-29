@@ -72,7 +72,8 @@ module define_indexes
         enumerator :: lr_LeftSlope
         enumerator :: lr_RightSlope
         enumerator :: lr_Roughness
-        enumerator :: lr_InitialFlowrate
+        enumerator :: lr_FlowrateInitial
+        enumerator :: lr_FlowrateLimit           ! user.inp file Qmax (0 is does not apply)
         !enumerator :: lr_InitialDepth
         enumerator :: lr_InitialUpstreamDepth
         enumerator :: lr_InitialDnstreamDepth
@@ -135,8 +136,9 @@ module define_indexes
         enumerator :: ni_P_is_boundary ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
         ! if node is BCup or BCdn, ni_elemface_idx is the index of its associated BC face
         ! if node is nJm or nJ2, ni_elemface_idx is the index of the associated element
-        enumerator :: ni_elemface_idx
-        enumerator :: ni_face_idx      !% for nJ2, this is the face associated with the node
+        !enumerator :: ni_elemface_idx  ! OBSOLETE
+        enumerator :: ni_elem_idx      !% this is the element of an nJM node, upstream element of BCdn, downstream element of BCup
+        enumerator :: ni_face_idx      !% for nJ2, BCup, BCdn, nJ1, this is the face associated with the node, not defined for nJM
         enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
         enumerator :: ni_lastplusone !% must be last enum item
     end enum
@@ -222,6 +224,9 @@ module define_indexes
     enum, bind(c)
         enumerator :: br_value = 1    !% interpolated value for BC at this time step
         enumerator :: br_timeInterval !% time interval for latest forcing data
+        !enumerator :: br_SectionFactor!% present value of A * Rh^2/3 used to compute normal depth 
+        !enumerator :: br_BottomSlope  !% Bottom slope of element upstream of an outfall or downstream of inflow
+        !enumerator :: br_Roughness    !% Roughness of element upstream of outfall or downstream of inflow
         enumerator :: br_Temp01       !% temporary array
         enumerator :: br_lastplusone  !% must be last enum item
     end enum
@@ -236,6 +241,7 @@ module define_indexes
         enumerator :: bi_subcategory ! KEY
         enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
         enumerator :: bi_TS_upper_idx  !% index of the current level in the timeseries storage
+        enumerator :: bi_UTidx       !% index in uniform table array associated with this BC.
         enumerator :: bi_lastplusone !% must be last enum item
     end enum
 
@@ -313,6 +319,7 @@ module define_indexes
         enumerator :: er_Area_N0                    !% cross-sectional flow area (time N)
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
+        enumerator :: er_Beta                       !% bottom slope / roughness, so that Q/beta = section factor
         enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
@@ -320,6 +327,7 @@ module define_indexes
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
         enumerator :: er_ell_max                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
+        enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
         enumerator :: er_Flowrate_N1                !% flowrate (time N-1)
         enumerator :: er_FlowrateLateral            !% lateral inflow BC
@@ -355,6 +363,8 @@ module define_indexes
         enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
         enumerator :: er_Setting                    !% percent open setting for a link element
+        !enumerator :: er_SectionFactor              !% present value of Qn/S0 section factor
+        !enumerator :: er_SectionFactor_Max          !% maximum value of section factor (for S0 = 0)
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
@@ -1218,7 +1228,40 @@ module define_indexes
     end enum
     
     integer, parameter :: Ncol_transectTable = tt_lastplusone-1
+
+    !% uniformTableI column indexes
+    enum, bind(c)
+        enumerator :: uti_idx = 1           ! counter of uniformTableI
+        enumerator :: uti_BChead_idx        ! index in the BChead array where uti is associated with a BC
+        enumerator :: uti_elem_idx          ! element index
+        enumerator :: uti_lastplusone
+    end enum
+
+    integer, parameter :: Ncol_uniformTableI = uti_lastplusone - 1
+
+    !% uniformTableR column indexes
+    enum, bind(c)
+        enumerator :: utr_SFmax =1             !% maximum section factor, i.e max (A R_h^(2/3)
+        enumerator :: utr_QcritMax             !% maximum flowrate for critical depth, i.e., max(A sqrt(gD))
+        enumerator :: utr_DepthMax             !% max depth at cross-section
+        enumerator :: utr_AreaMax              !% max area at cross-sectoin
+        enumerator :: utr_lastplusone
+    end enum
+
+    integer, parameter :: Ncol_uniformTableR = utr_lastplusone - 1
+
+    !% uniformTablDataR integer array indexes
+    enum, bind(c)
+        enumerator :: utd_SF_uniform = 1            ! uniform distribution of section factor
+        enumerator :: utd_SF_depth_nonuniform       ! depth column corresponding to section factor value
+        enumerator :: utd_SF_area_nonuniform        ! area column corresponding to section factor value  
+        enumerator :: utd_Qcrit_uniform             ! uniform distribution of critical flow
+        enumerator :: utd_Qcrit_depth_nonuniform    ! depth column corresponding to Qcritical value
+        enumerator :: utd_Qcrit_area_nonuniform     ! area column corresponding to Qcritical value
+        enumerator :: utd_lastplusone
+    end enum
   
+    integer, parameter :: Ncol_uniformTableDataR = utd_lastplusone - 1
 !%
 !%==========================================================================
 !% END OF MODULE

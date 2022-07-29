@@ -28,11 +28,16 @@ module geometry
     private
 
     public :: geometry_toplevel
+    public :: geo_sectionfactor_from_depth_singular
+    public :: geo_Qcritical_from_depth_singular
+    public :: geo_criticaldepth_singular
+    public :: geo_normaldepth_singular
     public :: geo_assign_JB  !BRHbugfix 20210813
     public :: geo_topwidth_from_depth
     public :: geo_hyddepth_from_depth_singular
     public :: geo_topwidth_from_depth_singular
     public :: geo_area_from_depth_singular
+    public :: geo_perimeter_from_depth_singular
     public :: geo_ell_singular
 
     contains
@@ -229,7 +234,131 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geometry_toplevel
+!%
+!%==========================================================================
+!%
+    real(8) function geo_sectionfactor_from_depth_singular &
+         (eIdx,inDepth) result (outvalue)  
+        !%------------------------------------------------------------------
+        !% Description
+        !% computes the section factor for element with index eIdx for
+        !% the depth "inDepth"
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)  :: eIdx
+            real(8), intent(in)  :: inDepth
+            real(8) :: thisPerimeter, thisArea
+        !%------------------------------------------------------------------  
+        thisArea      = geo_area_from_depth_singular      (eIdx,inDepth)
+        thisPerimeter = geo_perimeter_from_depth_singular (eIdx,inDepth)
 
+        outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
+
+    end function geo_sectionfactor_from_depth_singular
+!%
+!%==========================================================================    
+!%==========================================================================   
+!%
+    real(8) function geo_Qcritical_from_depth_singular &
+         (eIdx,inDepth) result (outvalue)
+        !%------------------------------------------------------------------
+        !% computes the critical flow for element eIdx with depth "inDepth"
+        !%------------------------------------------------------------------
+         !% Declarations
+         integer, intent(in)  :: eIdx
+         real(8), intent(in)  :: inDepth
+         real(8), pointer     :: grav
+         real(8)              :: thisArea
+        !%------------------------------------------------------------------
+            grav => setting%Constant%gravity
+        !%------------------------------------------------------------------     
+        thisArea      = geo_area_from_depth_singular (eIdx, inDepth)
+        outvalue      = thisArea * sqrt(inDepth * grav)
+
+    end function geo_Qcritical_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_criticaldepth_singular (UT_idx) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes the critical depth for the uniformtable(UT_idx)
+        !% using the flowrate in the associated element eIdx
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: UT_idx
+            integer, pointer    :: eIdx
+            real(8), pointer    :: gravity, thistable(:)
+            real(8)             :: normFlowrate
+        !%------------------------------------------------------------------
+        !% Aliases
+            eIdx      => uniformTableI(UT_idx,uti_elem_idx)
+            thisTable => uniformTableDataR(UT_idx,:,utd_Qcrit_depth_nonuniform)
+        !%------------------------------------------------------------------
+        !% --- normalize the critical flowrate
+        normFlowrate = abs(elemR(eIdx,er_Flowrate) / uniformTableR(UT_idx,utr_QcritMax))
+
+        !% --- lookup the normalized critical depth for this critical flow
+        outvalue = xsect_table_lookup_singular (normFlowrate, thistable)
+
+        !% --- return depth to physical value
+        outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
+
+    end function geo_criticaldepth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_normaldepth_singular &
+        (UT_idx) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes the normal depth for the location UT_idx in the
+        !% uniform table array
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: UT_idx        ! index of element in the sectionfactonI/R arrays
+            integer, pointer    :: eIdx
+            real(8), pointer    :: thisTable(:)
+            real(8)             :: sectionFactor, normSF
+
+            character(64)       :: subroutine_name = 'geo_normaldepth_singular'
+        !%------------------------------------------------------------------
+        !% Aliases
+            eIdx      => uniformTableI(UT_idx,uti_elem_idx)
+            thisTable => uniformTableDataR(UT_idx,:,utd_SF_depth_nonuniform)  !% element index
+        !%------------------------------------------------------------------
+        !% --- section factor for the associated element
+        sectionFactor = elemR(eIdx,er_Flowrate) * elemR(eIdx,er_Roughness) / elemR(eIdx,er_BottomSlope)
+
+        print *, 'sectionFactor ',sectionFactor
+
+        !% --- if flow is negative on a positive slope, or flow is positive on a negative slope,
+        !%     then the section factor is negative, which implies an infinite normal depth
+        if (sectionFactor .le. zeroR) then
+            outvalue = setting%Limiter%NormalDepthInfinite
+            return
+        end if
+
+        !% --- normalize the section factor
+        normSF   = sectionFactor / uniformTableR(UT_idx,utr_SFmax)
+
+        print *, 'normSF ',normSF
+
+        !% --- lookup the normalized normal depth
+        outvalue = xsect_table_lookup_singular(normSF,thisTable)
+
+
+        print *, 'outvalue 1 ',outvalue
+
+        !% --- return normal depth to physical value
+        outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
+
+        print *, 'outvalue 2 ',outvalue
+    
+    end function geo_normaldepth_singular
+!%
 !%==========================================================================
 !%==========================================================================
 !%
@@ -822,23 +951,23 @@ module geometry
         case (triangular)
             outvalue = triangular_area_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (power_function)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (rect_triang)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (rect_round )
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (mod_basket)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (irregular)
@@ -846,61 +975,61 @@ module geometry
         case (circular )
             outvalue = circular_area_from_depth_singular (idx, indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (rectangular_closed)
             outvalue = rectangular_closed_area_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (vert_ellipse)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (arch)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (eggshaped)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (horseshoe)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (gothic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (catenary)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (semi_elliptical)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (basket_handle)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (semi_circular)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (custom)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (force_main)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)   
             call util_crashpoint(33234)
         case default
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         end select
@@ -997,23 +1126,23 @@ module geometry
         case (triangular)
             outvalue = triangular_topwidth_from_depth_singular  (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (power_function)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rect_triang)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rect_round )
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (mod_basket)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (irregular)
@@ -1021,61 +1150,61 @@ module geometry
         case (circular )
             outvalue = circular_topwidth_from_depth_singular  (idx, indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rectangular_closed)
             outvalue = rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (vert_ellipse)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (arch)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (eggshaped)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (horseshoe)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (gothic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (catenary)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (semi_elliptical)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (basket_handle)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (semi_circular)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (custom)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (force_main)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)   
             call util_crashpoint(4498734)
         case default
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         end select
@@ -1151,6 +1280,130 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_perimeter_from_depth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_perimeter_from_depth_singular &
+        (idx, indepth) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the perimeter for a given depth of a single element
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in)  :: indepth
+            integer, intent(in)  :: idx
+            character(64) :: subroutine_name = 'geo_perimeter_from_depth_singular'
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        select case (elemI(idx,ei_geometryType))
+            
+        case (rectangular)
+            !outvalue = rectangular_perimeter_from_depth_singular (idx, indepth)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (trapezoidal)
+            !outvalue = trapezoidal_perimeter_from_depth_singular (idx, indepth)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (triangular)
+            !outvalue = triangular_perimeter_from_depth_singular (idx, indepth)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (parabolic)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (power_function)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (rect_triang)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (rect_round )
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (mod_basket)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (irregular)
+            !outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (circular )
+            outvalue = circular_perimeter_from_depth_singular (idx, indepth)
+        case (filled_circular)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (rectangular_closed)
+            !outvalue = rectangular_closed_perimeter_from_depth_singular (idx, indepth)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (horiz_ellipse)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (vert_ellipse)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (arch)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (eggshaped)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (horseshoe)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (gothic)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (catenary)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (semi_elliptical)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (basket_handle)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (semi_circular)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (custom)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(338234)
+        case (force_main)
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)   
+            call util_crashpoint(338234)
+        case default
+            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'has not been implemented in ',trim(subroutine_name)
+            call util_crashpoint(33234)
+        end select
+
+    end function geo_perimeter_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1246,25 +1499,25 @@ module geometry
         case (triangular)
             outvalue = triangular_hyddepth_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (power_function)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (rect_triang)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (rect_round )
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (mod_basket)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (irregular)
             !% --- get the area and topwidth, then compute the hydraulic depth
             temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)
@@ -1275,63 +1528,63 @@ module geometry
             temp1    = circular_topwidth_from_depth_singular    (idx, indepth)
             outvalue = circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (rectangular_closed)
             outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (vert_ellipse)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (arch)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (eggshaped)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (horseshoe)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (gothic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (catenary)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (semi_elliptical)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (basket_handle)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (semi_circular)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (custom)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case (force_main)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)   
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         case default
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            call util_crashpoint(449734)
         end select
            
     end function geo_hyddepth_from_depth_singular

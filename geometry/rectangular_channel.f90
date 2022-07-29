@@ -15,6 +15,7 @@ module rectangular_channel
     private
 
     public :: rectangular_depth_from_volume
+    !public :: rectangular_normaldepth_from_depth_singular
     public :: rectangular_area_from_depth
     public :: rectangular_area_from_depth_singular
     public :: rectangular_topwidth_from_depth
@@ -29,6 +30,27 @@ module rectangular_channel
 
 !%==========================================================================
 !% PUBLIC
+
+!%==========================================================================
+!%
+    ! real(8) function rectangular_depth_from_sectionfactor_singular &
+    !     (sectionFactor, sectionFactorMax) result (outvalue)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes the depth for a given section factor for a
+    !     !% rectangular channel
+    !     !%------------------------------------------------------------------
+    !     real(8), intent(in) :: sectionFactor, sectionFactorMax
+    !     !%-------------------------------------------------------------------
+    !     !%-------------------------------------------------------------------
+
+    !     sfNorm = sectionFactor / sectionFactorMax
+        
+        
+
+    ! end function rectangular_normaldepth_from_depth_singular
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine rectangular_depth_from_volume (elemPGx, Npack, thisCol)

@@ -19,6 +19,7 @@ module utility_datetime
     public :: util_datetime_decodedate
     public :: util_datetime_decodetime
     public :: util_datetime_display_time
+    public :: util_datetime_seconds_precision
 
 
     contains
@@ -202,6 +203,23 @@ module utility_datetime
         end if
 
     end subroutine util_datetime_display_time   
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function util_datetime_seconds_precision (secondstime) result(outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% rounds extraneous sub-millisecond time values that occur because
+        !% of precision in conversion from Epoch days
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(in)  :: secondstime
+            real(8), parameter   :: secondsPrecision = 1.d-4
+        !%------------------------------------------------------------------
+        outvalue = (dnint(secondsTime / secondsPrecision)) * secondsPrecision
+
+    end function util_datetime_seconds_precision    
 !%
 !%==========================================================================
 !% PRIVATE

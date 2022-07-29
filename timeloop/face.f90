@@ -479,8 +479,16 @@ module face
         !% --- upstream face head is the BC
         !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
         faceR(idx_fBC, fr_Head_u) = headBC(idx_P)
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'faceR value ', faceR(idx_fBC, fr_Head_u)
+        ! print *, 'BC head ',headBC(idx_P)
+        ! print *, 'BC depth',headBC(idx_P) - faceR(idx_fBC,fr_Zbottom)
+
         !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
         faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
+
+        ! print *, eHead(eup(idx_fBC)), headBC(idx_P)
         
         !% --- for a flap gate on a BC with higher head downstream
         where ( hasFlapGateBC(idx_P) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
@@ -488,6 +496,8 @@ module face
             faceR(idx_fBC, fr_Head_u) = eHead(eup(idx_fBC))
             faceR(idx_fBC, fr_Head_d) = headBC(idx_P)
         endwhere
+
+        ! print *, 'faceR value ',faceR(idx_fBC, fr_Head_u)
         
         !% --- get geometry for face from upstream element shape
         if (.not. isBConly) then
@@ -623,7 +633,7 @@ module face
                     faceR(idx_fBC(ii), fr_Flowrate) = eFlow(elemUpstream)
                 end if
 
-                !print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
+            !print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
             end do
 
 
@@ -662,6 +672,12 @@ module face
             !% continue
         end if
       
+        ! print *, 'at end of ',trim(subroutine_name)
+        ! print *, 'faceR head ',faceR(idx_fBC, fr_Head_u)
+        ! print *, 'faceR area ',faceR(idx_fBC, fr_Area_u)
+        ! print *, 'faceR flow ',faceR(idx_fBC, fr_Flowrate)
+        ! print *, 'faceR vel  ',faceR(idx_fBC, fr_Velocity_u)
+        
         !%--------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%boundary_conditions) &

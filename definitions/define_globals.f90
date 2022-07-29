@@ -50,6 +50,9 @@ module define_globals
     ! integer :: iet(7) = (/ 2, 4, 13, 1, 1, 1, 1/)
     ! integer :: ift(6) = (/ 4, 1, 2, 2, 2, 2/)
 
+    integer :: iet(7) = (/ 6,  7,  8,  9,  10,  11, 12/)
+    integer :: ift(7) = (/   7,  8,  9, 10,   11, 12,  13/)
+    
     integer(kind=8) :: irecCount = 0
 
     character (len=256) ::  outstring[*]
@@ -90,11 +93,17 @@ module define_globals
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
 
+    !% --- transect data (irregular cross-sections)
     integer, allocatable, target :: transectI(:,:)
     real(8), allocatable, target :: transectR(:,:)
     real(8), allocatable, target :: transectTableDepthR(:,:,:) ! transect table by depth
     real(8), allocatable, target :: transectTableAreaR(:,:,:)  ! transect table by area
     character(len=64), allocatable, target :: transectID(:)
+
+    !% --- section factor lookup data (for limited number of elements)
+    integer, allocatable, target :: uniformTableI(:,:)
+    real(8), allocatable, target :: uniformTableR(:,:)
+    real(8), allocatable, target :: uniformTableDataR(:,:,:) 
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -276,6 +285,10 @@ module define_globals
     !% counter for transects
     integer :: lastTransectIdx = 0
 
+    !% dummy index for elements/faces that do not exist
+    !% value set in init_network_set_dummy_elem()
+    integer :: dummyIdx
+
 !% ===================================================================================
 !% CONSTANTS
 !% ===================================================================================
@@ -319,7 +332,7 @@ module define_globals
     real(8), parameter :: seconds_per_hour = 3600.d0
     real(8), parameter :: seconds_per_day  = 86400.d0
 
-    integer            :: dummyI
+    integer, parameter :: dummyI = 1  !% used when dummy argument isneeded
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2
@@ -340,6 +353,8 @@ module define_globals
     integer :: N_transect            ! # of irregular cross-section transects for elements
     integer :: N_transect_depth_items
     integer :: N_transect_area_items
+    integer :: N_uniformTableData_items = 51  !% 51 is consistent with tables of EPA-SWMM
+    integer :: N_uniformTable_locations
     integer :: N_link
     integer :: N_node
     integer :: N_headBC

@@ -1013,11 +1013,13 @@ contains
                     end if
 
                 case (nJM,nStorage)
-                    if (node%I(Nidx,ni_elemface_idx) == nullvalueI) then
+                    !if (node%I(Nidx,ni_elemface_idx) == nullvalueI) then
+                    if (node%I(Nidx,ni_elem_idx) == nullvalueI) then
                         print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for node index'
                         call util_crashpoint(429933)
                     else
-                        eIdx(ii) =  node%I(Nidx,ni_elemface_idx)
+                        !eIdx(ii) =  node%I(Nidx,ni_elemface_idx)
+                        eIdx(ii) =  node%I(Nidx,ni_elem_idx)
                     end if
 
                 case default

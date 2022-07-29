@@ -78,24 +78,22 @@ contains
     !==========================================================================
     !
     subroutine init_discretization_adjustlinklength()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   This subroutine loans some of the length of a link to an adjacent nJm node.
-    !   The purpose is to allow the nJm branch elements to have some volume.
-    !
-    ! HACK:
-    !   this is a subroutine for adjusting the length of links.
-    !   Put it here for now but can be moved to somewhere else
-    !
-    !-----------------------------------------------------------------------------
-        integer          :: ii, Adjustment_flag
-        real(8)          :: temp_length
-        logical, pointer :: isAdjustLinkLength
-        real(8)          :: elem_nominal_length, elem_shorten_cof
-        character(64)    :: subroutine_name = 'init_discretization_adjustlinklength'
-    !-----------------------------------------------------------------------------
-        !if (crashYN) return
+        !%-------------------------------------------------------------------------
+        !% Description:
+        !%   This subroutine computes the "Adusted_Length" that is a section of the
+        !%   a channel/conduit that is used for a junction branch, which is completed
+        !%   in init_network_nJm_branch_length()
+        !% 
+        !%   If "isAdjustLinkLength = .true., then this value is subtracted
+        !%   from the channel/conduit length herein 
+        !%-------------------------------------------------------------------------
+        !% Declarations
+            integer          :: ii, Adjustment_flag
+            real(8)          :: temp_length
+            logical, pointer :: isAdjustLinkLength
+            real(8)          :: elem_nominal_length, elem_shorten_cof
+            character(64)    :: subroutine_name = 'init_discretization_adjustlinklength'
+        !%-------------------------------------------------------------------------
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -104,7 +102,7 @@ contains
         do ii =1, N_link
             !% --- default shorting coefficient (reset for each link)
             elem_nominal_length = link%R(ii,lr_Length) / link%I(ii,li_N_element)
-            elem_shorten_cof    = setting%Discretization%LinkShortingFactor
+            elem_shorten_cof    = setting%Discretization%JunctionBranchLengthFactor
 
             temp_length = link%R(ii,lr_Length) ! length of link ii
             Adjustment_flag = oneI

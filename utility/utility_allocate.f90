@@ -31,6 +31,7 @@ module utility_allocate
     public :: util_allocate_action_points
     public :: util_allocate_link_transect
     public :: util_allocate_element_transect
+    public :: util_allocate_uniformtable_array
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -349,6 +350,45 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine util_allocate_uniformtable_array ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Allocates space for the lookup table for geometry = f(sectionfactor), etc.
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% --- only headBC locations at this time 20220726brh
+        !%     HACK -- to be expanded later to include transects and other geometry tables
+        N_uniformTable_locations = N_headBC
+
+        !% --- storage for integer data
+        allocate(uniformTableI &
+                (N_uniformTable_locations,Ncol_uniformTableI), &
+                stat=allocation_status,errmsg=emsg)
+
+        call util_allocate_check(allocation_status, emsg, 'uniformTableI')
+        uniformTableI(:,:) = nullvalueI
+
+        !% --- storage real data
+        allocate(uniformTableR &
+                (N_uniformTable_locations,Ncol_uniformTableR), &
+                stat=allocation_status,errmsg=emsg)
+                
+        call util_allocate_check(allocation_status, emsg, 'uniformTableR')
+        uniformTableR(:,:) = nullvalueR
+
+        !% ---3D table indexed by uniformly-divided section factor
+        allocate(uniformTableDataR &
+                 (N_uniformTable_locations, N_uniformTableData_items, Ncol_uniformTableDataR), &
+                  stat=allocation_status,errmsg=emsg)
+
+        call util_allocate_check(allocation_status, emsg, 'uniformTableDataR')
+        uniformTableDataR(:,:,:) = nullvalueR
+
+    end subroutine util_allocate_uniformtable_array
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_allocate_subcatch()
         !%------------------------------------------------------------------
         !% Description:
@@ -595,7 +635,6 @@ contains
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
-        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 

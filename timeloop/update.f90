@@ -78,12 +78,15 @@ module update
         !% --- Compute the flowrate on CC.
         !%     Note that JM should have 0 flowrate and JB has lagged flowrate at this point.
         !%     The JB flowrate is not updated until after face interpolation
-        call update_CC_element_flowrate (thisCol_CC)
+        call update_element_flowrate (thisCol_CC)
 
             ! call util_CLprint ('in update before update_Froude_number_element')
 
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
+
+        !% --- compute the element section factor for CC
+        call update_SectionFactor_element (thisCol_CC)
 
             !  call util_CLprint ('in update before CC interpweights in update')
 
@@ -125,7 +128,7 @@ module update
 !% PRIVATE
 !%==========================================================================
 !%
-    subroutine update_CC_element_flowrate (thisCol)
+    subroutine update_element_flowrate (thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
         !%
@@ -133,20 +136,27 @@ module update
         integer, intent(in) :: thisCol
         !%-----------------------------------------------------------------------------
         integer, pointer ::  Npack, thisP(:)
-        real(8), pointer :: flowrate(:), velocity(:), area(:)
+        real(8), pointer :: flowrate(:), velocity(:), area(:), Qmax(:)
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
         area     => elemR(:,er_Area)
+        Qmax     => elemR(:,er_FlowrateLimit)
         !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
+
+            !% --- limit flowrate by the full value (if it exists)
+            where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
+                flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
+            end where
+
         end if
         ! print*, flowrate(thisP), 'flowrate(thisP)'
-    end subroutine update_CC_element_flowrate
+    end subroutine update_element_flowrate
 !%
 !%==========================================================================
 !%==========================================================================
@@ -218,6 +228,40 @@ module update
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine update_Froude_number_JB
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine update_SectionFactor_element (thisCol)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes the SectionFactor = Qn/S0 that is used for normal
+        !% depth computations
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisCol
+        !     integer, pointer    :: Npack, thisP(:)
+        !     real(8), pointer    :: SectionFactor(:), SectionFactorMax(:)
+        !     real(8), pointer    :: Flowrate(:), Roughness(:), BottomSlope(:)
+        ! !%------------------------------------------------------------------
+        ! !% Aliases   
+        !     Npack => npack_elemP(thisCol)
+        !     !SectionFactor    => elemR(:,er_SectionFactor)
+        !     Flowrate         => elemR(:,er_Flowrate)
+        !     Roughness        => elemR(:,er_Roughness)
+        !     BottomSlope      => elemR(:,er_BottomSlope)
+        !     SectionFactorMax => elemR(:,er_SectionFactor_Max)
+        !%------------------------------------------------------------------     
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack,thisCol)
+        !     where (BottomSlope(thisP) > zeroR)
+        !         SectionFactor(thisP) = abs(Flowrate(thisP) * Roughness(thisP) / BottomSlope(thisP))
+        !     elsewhere
+        !         SectionFactor(thisP) = SectionFactorMax(thisP)
+        !     end where
+        ! end if
+
+    end subroutine update_SectionFactor_element
 !%
 !%==========================================================================
 !%==========================================================================

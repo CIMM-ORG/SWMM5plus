@@ -6,7 +6,7 @@
         "Short" : "Colorado_subset_2_wo_IC"
     },
     "Discretization" : {
-        "LinkShortingFactor" : 0.33,
+        "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 200.00

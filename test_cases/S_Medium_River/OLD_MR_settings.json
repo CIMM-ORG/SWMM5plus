@@ -68,7 +68,7 @@
         "NominalElemLength" : 150.00,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "LinkShortingFactor" : 0.33
+        "JunctionBranchLengthFactor" : 0.33
     },
     "Eps" : {
         "FroudeJump" : 0.1

@@ -42,7 +42,7 @@ module utility
 !%
 !%==========================================================================
 !% PUBLIC
-    !%==========================================================================
+!%==========================================================================
 !%
     subroutine util_CLprint (inputstring)
         !%------------------------------------------------------------------
@@ -70,9 +70,10 @@ module utility
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
 
-        ! print *, ' '
-        ! print *, trim(inputstring), ',  dt = ',setting%Time%Hydraulics%Dt
-        ! print *, 'this step = ',setting%Time%Hydraulics%Step
+        print *, ' '
+        write(*,"(A)") trim(inputstring)
+        write(*,"(A,f12.0,A, f12.5)") 'step = ',setting%Time%Hydraulics%Step,'; dt = ',setting%Time%Hydraulics%Dt
+        print *, ' '
 
         ! !!% STUFF FOR LOOKING AT NETWORK LAYOUT
         ! do ii=1,N_elem(this_image())
@@ -165,15 +166,24 @@ module utility
         !                                     elemR(iet(4),er_Depth), &
         !                                     elemR(iet(5),er_Depth), &
         !                                     elemR(iet(6),er_Depth), &                                      
-        !                                     elemR(iet(7),er_Depth)                                        
+        !                                     elemR(iet(7),er_Depth)     
+        
+        write(*,"(A,10f12.5)") 'Q elem    ',elemR(iet(1),er_Flowrate), &
+                                            elemR(iet(2),er_Flowrate), &
+                                            elemR(iet(3),er_Flowrate), &
+                                            elemR(iet(4),er_Flowrate), &
+                                            elemR(iet(5),er_Flowrate), &
+                                            elemR(iet(6),er_Flowrate), &   
+                                            elemR(iet(7),er_Flowrate)                                     
+         
 
-        ! write(*,"(A,10f12.5)") 'H elem    ',elemR(iet(1),er_Head), &
-        !                                     elemR(iet(2),er_Head), &
-        !                                     elemR(iet(3),er_Head), &
-        !                                     elemR(iet(4),er_Head), &
-        !                                     elemR(iet(5),er_Head), &
-        !                                     elemR(iet(6),er_Head), &                                      
-        !                                     elemR(iet(7),er_Head)                                                    
+        write(*,"(A,10f12.5)") 'H elem    ',elemR(iet(1),er_Head), &
+                                            elemR(iet(2),er_Head), &
+                                            elemR(iet(3),er_Head), &
+                                            elemR(iet(4),er_Head), &
+                                            elemR(iet(5),er_Head), &
+                                            elemR(iet(6),er_Head), &                                      
+                                            elemR(iet(7),er_Head)                                                    
 
         ! ! write(*,"(A,10f12.5)") 'Setting   ',elemR(iet(1),er_Setting), &
         ! !                                     elemR(iet(2),er_Setting), &
@@ -182,14 +192,6 @@ module utility
         ! !                                     elemR(iet(5),er_Setting), &
         ! !                                     elemR(iet(6),er_Setting), &                                      
         ! !                                     elemR(iet(7),er_Setting)     
-
-        ! write(*,"(A,10f12.5)") 'Q elem    ',elemR(iet(1),er_Flowrate), &
-        !                                     elemR(iet(2),er_Flowrate), &
-        !                                     elemR(iet(3),er_Flowrate), &
-        !                                     elemR(iet(4),er_Flowrate), &
-        !                                     elemR(iet(5),er_Flowrate), &
-        !                                     elemR(iet(6),er_Flowrate), &                                       
-        !                                     elemR(iet(7),er_Flowrate)
 
 
         ! write(*,"(A,10f12.5)") 'Qface                       ',  &
@@ -222,10 +224,15 @@ module utility
         !                                 faceR(ift(1),fr_Head_d), &
         !                                 faceR(ift(2),fr_Head_d), &
         !                                 faceR(ift(3),fr_Head_d)
-        ! write(*,"(A,10f12.5)") 'Hface                       ',  &
-        !                                 faceR(ift(1),fr_Head_u), &
-        !                                 faceR(ift(2),fr_Head_u), &
-        !                                 faceR(ift(3),fr_Head_u)
+
+        write(*,"(A,10f12.5)") 'Hface           ',  &
+                                        faceR(ift(1),fr_Head_u), &
+                                        faceR(ift(2),fr_Head_u), &
+                                        faceR(ift(3),fr_Head_u), &
+                                        faceR(ift(4),fr_Head_u), &
+                                        faceR(ift(5),fr_Head_u), &
+                                        faceR(ift(6),fr_Head_u), &
+                                        faceR(ift(7),fr_Head_u)
 
 
         ! write(*,"(A,10f12.5)") 'Qface Conservative          ',  &

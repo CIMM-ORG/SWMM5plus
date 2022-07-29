@@ -237,7 +237,7 @@ module interface_
             min_slope, &
             head_tol, &
             sys_flow_tol, &
-            lat_flow_tol ) &
+            lat_flow_tol) &
             BIND(C, name="api_get_SWMM_setup")
             use, intrinsic :: iso_c_binding
             implicit none
@@ -839,14 +839,15 @@ contains
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
             print *, '*                        FATAL ERROR                               *'
-            print *, '* The SWMM code has detected a parse error for the *.inp file.     *'
+            print *, '* The EPA SWMM code has detected a parse error for the *.inp file. *'
             print *, '* Something appears to be misalligned or missing. This might be    *'
             print *, '* connections between nodes and links that are missing or not      *'
             print *, '* allowed, or something as simple as a missing [ around a keyword, *'
             print *, '* e.g., JUNCTIONS] instead of [JUNCTIONS]. This also occurs when   *'
-            print *, '* the wrong words are used, e.g., if TRUE is used instead of YES   *'
-            print *, '* for ALLOW_PONDING. Check the *.rpt file created by EPA-SWMM      *'
-            print *, '* which should be in the user output folder'
+            print *, '* a keyword is mispelled or the wrong words are used, e.g., if     *'
+            print *, '* TRUE is used instead of YES for ALLOW_PONDING. Check the *.rpt   *'
+            print *, '* file created by EPA-SWMM, which should be in the user output     *'
+            print *, '* folder                                                           *'
             print *, '*                                                                  *'
             print *, '* Suggest you use the SWMM GUI to adjust and edit the *.inp file.  *'
             print *, '*                                                                  *'
@@ -1087,7 +1088,8 @@ contains
             character(64) :: subroutine_name = 'interface_get_nodef_attribute'
         !%-----------------------------------------------------------------------------
 
-        !write(*,*) '--- interface_get_nodef_attribute', attr
+        ! write(*,*) '--- in interface_get_nodef_attribute, attr # =', attr
+        ! if (attr < (api_keyslastplusone-1)) print *, 'attribute name=',reverseKey_api(attr)
 
         if (setting%Debug%File%interface)  &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
@@ -1179,7 +1181,7 @@ contains
 
         elseif     ( (attr  >   api_linkf_start) .and. (  attr <  api_linkf_commonbreak)) then
             !% --- for link attributes 1 to < api_linkf_commonBreak
-            !%      we simply read in the link value and exit this routine
+            !%      we simply read in the link value for the attribute and exit this routine
             call load_api_procedure("api_get_linkf_attribute")
 
             ! ---  NOTE: use link index-1 because Fortran index starts in 1, whereas in C starts in 0
@@ -1196,11 +1198,12 @@ contains
             !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
-            !% --- for link attributes in the range for for special elements   
+            !% --- for input link attributes in the range for for special elements   
             !%     the link value (integer) tells us other stuff to read in
             !%
             !% --- The "attr" input is one of the special element attributes, e.g., type, sub_type
-            !%     First we read in the type so that we can properly categorize the sub_type to read         
+            !%     First we use the api_linkf_type to get the overarching link type for this
+            !%     link. This allows us to properly categorize the sub_type values to read         
     
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
@@ -1360,6 +1363,8 @@ contains
                     end select
 
                 case (API_OUTLET)
+                    print *, 'READING IN AN OUTLET LINK, WHICH HAS NOT BEEN TESTED'
+                    call util_crashpoint(55098723)
                     select case (attr)
                         case (api_linkf_type)
                             link_value = lOutlet
@@ -1401,8 +1406,12 @@ contains
                 case default
                     print *, 'in ',trim(subroutine_name)
                     print *, 'CODE ERROR: this case default that should not be reached'
-                    print *, 'CASE of link type',ilink_value
+                    print *, 'Link index of ',link_idx
+                    print *, 'input attr of ',attr, reverseKey_api(attr)
+                    print *, 'unknown link value',ilink_value
+                    print *, 'problem in call to ptr_api_get_linkf_attribute with api_linkf_type'
                     print *, 'A possible cause is the EPA-SWMM executable needs to be recompiled'
+                    print *, 'This usually requires a cmake .. followed by a make'
                     call util_crashpoint(6698733)
             end select
       
@@ -2193,12 +2202,20 @@ contains
                 !write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
                 if (p0 == api_hourly_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow hourly patterns not tested'
+                    call util_crashpoint(2240871)
                     resolution = api_hourly
                 else if (p0 == api_weekend_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow weekend patterns not tested'
+                    call util_crashpoint(2240872)
                     resolution = api_weekend
                 else if (p0 == api_daily_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow daily patterns not tested'
+                    call util_crashpoint(2240873)
                     resolution = api_daily
                 else if (p0 == api_monthly_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow monthly patterns not tested'
+                    call util_crashpoint(2240874)
                     !write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
                     baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
@@ -2234,12 +2251,20 @@ contains
                 write(*,*) '   p4 = ',p4
 
                 if (p1 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow hourly patterns not tested'
+                    call util_crashpoint(18820871)
                     resolution = max(api_hourly, resolution)
                 else if (p2 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow weekend patterns not tested'
+                    call util_crashpoint(18820872)
                     resolution = max(api_weekend, resolution)
                 else if (p3 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow daily patterns not tested'
+                    call util_crashpoint(18820873)
                     resolution = max(api_daily, resolution)
                 else if (p4 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow monthly patterns not tested'
+                    call util_crashpoint(18820874)
                     resolution = max(api_monthly, resolution)
                 else
                     write(*,*) '***** unexpected else in ',trim(subroutine_name), 'at 3987044'
@@ -2436,6 +2461,8 @@ contains
         select case (BC%headI(bc_idx, bi_subcategory))  
         case (BCH_fixed, BCH_normal, BCH_free) 
             !% --- these cases should not be here!
+            print *, 'CODE ERROR: unexpected boundary condition case'
+            call util_crashpoint(609874)
             return
         case (BCH_tseries)
             !% --- get the timeseries index

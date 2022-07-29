@@ -560,9 +560,21 @@ int DLLEXPORT api_get_headBC(
             return 0;
 
         case TIMESERIES_OUTFALL:  
-            // --- timeseries outfall is given as a stage series (not depth) 
+            // --- timeseries outfall is given as a stage (elevation) series 
+            //     note that SWMM does NOT seem to automatically convert the data from its input 
+            //     form into CFS; thus, we have to choose whether or not to convert based on 
+            //     the FlowUnits, which stores the FLOW_UNITS in the *.inp file. 
+            //     CFS, GPM and MGD have FlowUnits of 0,1,2;  CMS, LPS, MLD have FlowUnits of 3,4,5
+
             kidx = Outfall[ii].stageSeries;
-            *headBC     = FTTOM(table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE)); 
+            if (FlowUnits < MGD)
+            {
+                *headBC     = FTTOM(table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE)); 
+            }
+            else
+            {
+                *headBC     = table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE); 
+            }
             return 0;
         
         default:
@@ -654,6 +666,7 @@ int DLLEXPORT api_get_SWMM_setup(
     //printf(" courant factor %f \n", CourantFactor);
     //printf("\n testing variable %s \n",TempDir);
 
+    //printf(" \n %s \n ",Title[0]);
 
     return 0;
 }
@@ -1422,6 +1435,10 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_q0 :
             *value = CFTOCM(Link[link_idx].q0);
             break;    
+
+        case linkf_qlimit :
+            *value = CFTOCM(Link[link_idx].qLimit);
+            break;        
 
         case linkf_flow :
             *value = CFTOCM(Link[link_idx].newFlow);
@@ -2474,7 +2491,7 @@ int DLLEXPORT api_export_linknode_properties(
     float lr_Length[Nobjects[LINK]];
     float lr_Slope[Nobjects[LINK]];
     float lr_Roughness[Nobjects[LINK]];
-    float lr_InitialFlowrate[Nobjects[LINK]];
+    float lr_FlowrateInitial[Nobjects[LINK]];
     float lr_InitialUpstreamDepth[Nobjects[LINK]];
     float lr_InitialDnstreamDepth[Nobjects[LINK]];
     int li_InitialDepthType[Nobjects[LINK]]; //
@@ -2588,7 +2605,7 @@ int DLLEXPORT api_export_linknode_properties(
             lr_Slope[i] = 0;
         }
 
-        lr_InitialFlowrate[i] = Link[i].q0 * flow_units;
+        lr_FlowrateInitial[i] = Link[i].q0 * flow_units;
         lr_InitialUpstreamDepth[i] = Node[li_Mnode_u[i]].initDepth * length_units;
         lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units; 
 
@@ -2637,7 +2654,7 @@ int DLLEXPORT api_export_linknode_properties(
     fclose(f_nodes);
 
     fprintf(f_links,
-        "l_left,link_id,li_idx,li_link_type,li_geometry,li_Mnode_u,li_Mnode_d,lr_Length,lr_Slope,lr_Roughness,lr_InitialFlowrate,lr_InitialUpstreamDepth,lr_InitialDnstreamDepth\n");
+        "l_left,link_id,li_idx,li_link_type,li_geometry,li_Mnode_u,li_Mnode_d,lr_Length,lr_Slope,lr_Roughness,lr_FlowrateInitial,lr_InitialUpstreamDepth,lr_InitialDnstreamDepth\n");
     for (i=0; i<NLinks; i++) {
         fprintf(f_links, "%d,%s,%d,%d,%d,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
             NLinks-i,
@@ -2650,7 +2667,7 @@ int DLLEXPORT api_export_linknode_properties(
             lr_Length[i],
             lr_Slope[i],
             lr_Roughness[i],
-            lr_InitialFlowrate[i],
+            lr_FlowrateInitial[i],
             lr_InitialUpstreamDepth[i],
             lr_InitialDnstreamDepth[i]);
     }
