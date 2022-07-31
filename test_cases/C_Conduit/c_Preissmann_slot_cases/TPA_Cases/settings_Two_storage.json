@@ -68,7 +68,7 @@
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 0.01,
+            "TimeInterval" : 0.1,
             "TimeUnits" : "Seconds"
         }
     },
@@ -101,14 +101,14 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 30.00,
+        "TargetPreissmannCelerity" : 10.00,
         "PreissmannAlpha" : 2.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.4,
-        "CFL_lo_max" : 0.3,
+        "CFL_hi_max" : 0.2,
+        "CFL_target" : 0.1,
+        "CFL_lo_max" : 0.05,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     },
