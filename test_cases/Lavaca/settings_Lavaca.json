@@ -6,6 +6,7 @@
         "Short" : "Lavaca"
     },
     "Discretization" : {
+        "AdjustLinkLengthYN" : false,
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -74,11 +75,24 @@
         "PartitioningMethod" : "bquick"
     },
     "Profile" : {
-        "useYN" : true
+        "useYN" : false
     },
     "Simulation" : {
-        "useHydrology" : false,
-        "useHydraulics" : true
+        "stopAfterInitializationYN" : false,
+        "useHydrology"              : true,
+        "useHydraulics"             : true,
+        "useSpinUp"                 : false,
+        "stopAfterSpinUp"           : false,
+        "SpinUpDays"                : 10.0
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
@@ -119,7 +133,7 @@
             "orifice_elements" : false,
 	        "OutputYN" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,

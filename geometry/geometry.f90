@@ -52,7 +52,7 @@ module geometry
             integer, intent(in) :: whichTM
             integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
-            integer, pointer :: thisColP_JM, thisColP_JB, thisColP_ClosedElems
+            integer, pointer :: thisColP_JM, thisColP_JB, thisColP_Closed_CC, thisColP_Closed_JB
             logical :: isreset
             integer, allocatable :: tempP(:) !% debugging
             character(64) :: subroutine_name = 'geometry_toplevel'
@@ -75,7 +75,8 @@ module geometry
                     thisColP_surcharged    => col_elemP(ep_Surcharged_ALLtm)
                     thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ALLtm)
                     thisColP_all           => col_elemP(ep_ALLtm)
-                    thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
+                    thisColP_Closed_CC     => col_elemP(ep_Closed_Elements_CC)
+                    thisColP_Closed_JB     => col_elemP(ep_Closed_Elements_JB)
                 case (ETM)
                     elemPGx                => elemPGetm(:,:)
                     npack_elemPGx          => npack_elemPGetm(:)
@@ -85,7 +86,8 @@ module geometry
                     thisColP_surcharged    => col_elemP(ep_Surcharged_ETM)
                     thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ETM)
                     thisColP_all           => col_elemP(ep_ETM)
-                    thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
+                    thisColP_Closed_CC     => col_elemP(ep_Closed_Elements_CC)
+                    thisColP_Closed_JB     => col_elemP(ep_Closed_Elements_JB)
                 case (AC)
                     elemPGx                => elemPGac(:,:)
                     npack_elemPGx          => npack_elemPGac(:)
@@ -95,7 +97,8 @@ module geometry
                     thisColP_surcharged    => col_elemP(ep_Surcharged_AC)
                     thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_AC)
                     thisColP_all           => col_elemP(ep_AC)
-                    thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
+                    thisColP_Closed_CC     => col_elemP(ep_Closed_Elements_CC)
+                    thisColP_Closed_JB     => col_elemP(ep_Closed_Elements_JB)
                 case default
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
@@ -108,41 +111,41 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM,
         !% elements and head on all surcharged CC, JM elements
 
-            !call util_CLprint ('in geometry at top')    
+            ! call util_CLprint ('in geometry at top')    
 
-        !% --- assign all geometry for surcharged elements CC, JM and JB
+        !% --- assign all geometry for surcharged elements CC, JM
         !%     Note: not used in Preissmann Slot
         call geo_surcharged (thisColP_surcharged)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
-        !% --- reset all zero or near-zero volumes in non-surcharged CC, JM, and JB
+        !% --- reset all zero or near-zero volumes in non-surcharged CC, JM
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
 
-            !call util_CLprint ('in geometry before geo_depth_from_volume') 
+            ! call util_CLprint ('in geometry before geo_depth_from_volume') 
 
-        !% --- compute the depth on all non-surcharged elements of CC, JM and JB
+        !% --- compute the depth on all non-surcharged elements of CC, JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
 
-        !% reset all zero or near-zero depths in non-surcharged CC and JM and JB
+        !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
 
-            !call util_CLprint ('in geometry before geo_head_from_depth') 
+            ! call util_CLprint ('in geometry before geo_head_from_depth') 
 
-        !% --- compute the head on all non-surcharged elements of CC and JM and JB
+        !% --- compute the head on all non-surcharged elements of CC and JM
         !%     This sets head consistent with depth
         call geo_head_from_depth (thisColP_NonSurcharged)
 
-            !call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
+            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
 
         !% --- limit volume for incipient surcharge. This is done after depth is computed
         !%     so that the "depth" algorithm can include depths greater than fulldepth
         !%     as a way to handle head for incipient surcharge.
         call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
 
-            !call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
+            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
 
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to
@@ -166,63 +169,64 @@ module geometry
         !% compute area from volume for CC, JM nonsurcharged
         call geo_area_from_volume (thisColP_NonSurcharged)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% reset all zero or near-zero areas in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Area, setting%ZeroValue%Area, thisColP_NonSurcharged, .false.)
 
-            !call util_CLprint ('in geometry before topwidth_from_depth')   
+            ! call util_CLprint ('in geometry before topwidth_from_depth')   
 
         !% compute topwidth from depth for all CC, JM nonsurcharged
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
 
         !% reset all zero or near-zero topwidth in non-surcharged CC and JM
         !% but do not change the eYN(:,eYN_isZeroDepth) mask
         call adjust_limit_by_zerovalues (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_NonSurcharged, .false.)
 
-            !call util_CLprint ('in geometry before perimeter_from_depth') 
+            ! call util_CLprint ('in geometry before perimeter_from_depth') 
 
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before hyddepth_from_depth') 
+            ! call util_CLprint ('in geometry before hyddepth_from_depth') 
 
         !% compute hyddepth
         call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            !call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
+            ! call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
 
         !% compute hydradius  (applies to all nonsurcharged)
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
-            !call util_CLprint ('in geometry before ell_from_head') 
+            ! call util_CLprint ('in geometry before ell_from_head') 
 
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell_from_head (thisColP_all)
 
-            !call util_CLprint ('in geometry before slot_adjustments') 
+            ! call util_CLprint ('in geometry before slot_adjustments') 
 
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
-            call geo_slot_adjustments (thisColP_ClosedElems)
-        end if
+            call geo_CC_slot_adjustments (thisColP_Closed_CC)
 
-            !call util_CLprint ('in geometry before JM_values') 
+            call geo_JB_slot_computation_ETM(thisColP_JM)
+        end if
+            ! call util_CLprint ('in geometry before JM_values') 
 
         !% Set JM values that are not otherwise defined
         call geo_JM_values ()
 
-            !call util_CLprint ('in geometry before dHdA') 
+            ! call util_CLprint ('in geometry before dHdA') 
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         end if
 
-            !call util_CLprint ('in geometry at end') 
+            ! call util_CLprint ('in geometry at end') 
 
         call util_crashstop(322983)
 
@@ -369,7 +373,7 @@ module geometry
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                                 ell(tB)       = geo_ell_singular(tB)
 
-                                !write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ! write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then
                                 !% negligible depth is treated with ZeroValues
@@ -382,7 +386,7 @@ module geometry
                                 dHdA(tB)      = oneR / topwidth(tB)
                                 ell(tB)       = setting%ZeroValue%Depth !%hydDepth(tB)  20220712 brh
 
-                                !write(*,"(A,i5,10f12.5)"), 'BBB ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ! write(*,"(A,i5,10f12.5)"), 'BBB ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
                                 !% negative depth without zero value treatment (not recommended!) is treated as exactly zero
@@ -395,7 +399,7 @@ module geometry
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                                 ell(tB)       = zeroR
 
-                                !write(*,"(A,i5,10f12.5)") 'CCC ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ! write(*,"(A,i5,10f12.5)") 'CCC ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             else
                                 !% not surcharged and non-negligible depth
@@ -421,7 +425,7 @@ module geometry
                                     ! print *, 'in geo_assign_JB  for rect element'
                                     ! print *, 'area ',area(tB), depth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'DDD ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'DDD ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (triangular)
                                     area(tB)     = triangular_area_from_depth_singular      (tB,depth(tB))
@@ -432,7 +436,7 @@ module geometry
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
                                     
                                 case (trapezoidal)                                    
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
@@ -443,7 +447,7 @@ module geometry
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'FFF ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'FFF ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (circular)
                                     area(tB)     = circular_area_from_depth_singular          (tB,depth(tB))
@@ -454,7 +458,7 @@ module geometry
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
 
-                                    !write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                    ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (irregular)
                                     area(tB)    = irregular_geometry_from_depth_singular ( &
@@ -473,7 +477,7 @@ module geometry
                                     ell(tB)       = hydDepth(tB)  !% HACK -- assumes irregular is continuously-increasing in width
                                     dHdA(tB)      = oneR / topwidth(tB)
 
-                                   ! write(*,"(A,i5,10f12.5)") 'HHH ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !    write(*,"(A,i5,10f12.5)") 'HHH ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                     ! !% get the transect by depth table 
                                     ! thisTable => transectTableDepthR(elemI(tB,ei_transect_idx),:,:)
@@ -505,8 +509,8 @@ module geometry
 
                             ! print *, 'in geo_assign_JB at bottom'
                             ! write(*,"(A,i5,10f12.5)") 'III ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
-                            !write(*,"(A,10f12.5)") 'hyd depth', hydDepth(tB)
-                            !print *, area(tB), length(tB)
+                            ! write(*,"(A,10f12.5)") 'hyd depth', hydDepth(tB)
+                            ! print *, area(tB), length(tB)
 
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
@@ -586,7 +590,7 @@ module geometry
         !%-------------------------------------------------------------------    
         !% cycle through different geometries
 
-        !call util_CLprint('start of geo depth from volume')        
+        ! call util_CLprint('start of geo depth from volume')        
 
         !% --- RECTANGULAR CC
         thisCol => col_elemPGx(epg_CC_rectangular_nonsurcharged)
@@ -602,7 +606,7 @@ module geometry
             call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after rectangular') 
+        ! call util_CLprint('after rectangular') 
 
         !% --- TRAPEZOIDAL CC
         thisCol => col_elemPGx(epg_CC_trapezoidal_nonsurcharged)
@@ -611,7 +615,7 @@ module geometry
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after trapezoidal') 
+        ! call util_CLprint('after trapezoidal') 
 
         !% --- TRIANGULAR CC
         thisCol => col_elemPGx(epg_CC_triangular_nonsurcharged)
@@ -620,7 +624,7 @@ module geometry
             call triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after triangular') 
+        ! call util_CLprint('after triangular') 
 
         !% --- CIRCULAR CC
         thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
@@ -629,7 +633,7 @@ module geometry
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after circular') 
+        ! call util_CLprint('after circular') 
  
         !% --- IRREGULAR CC
         thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -638,7 +642,7 @@ module geometry
             call irregular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after irregular') 
+        ! call util_CLprint('after irregular') 
         !% HACK Needs additional geometries
 
         !% JM with functional geometry
@@ -649,7 +653,7 @@ module geometry
             !call storage_implied_length(elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after functional storage') 
+        ! call util_CLprint('after functional storage') 
 
         !% JM with tabular geomtery
         thisCol => col_elemPGx(epg_JM_tabularStorage_nonsurcharged)
@@ -1503,62 +1507,60 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_slot_adjustments (thisColP)
+    subroutine geo_CC_slot_adjustments (thisColP_closed_CC)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: thisColP
+        integer, intent(in) :: thisColP_closed_CC
         integer, pointer    :: thisP(:), Npack
-        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), volumeN0(:), depth(:), area(:)
-        real(8), pointer    :: head(:), headN0(:), fullVolume(:), fullArea(:), fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:)
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:)
+        real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:)
+        real(8), pointer    :: head(:), fullVolume(:), fullArea(:), fullDepth(:)
+        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:), SlotHydRad(:)
+        logical, pointer    :: isSlot(:)
 
-        character(64) :: subroutine_name = 'geo_slot_adjustments'
+        character(64) :: subroutine_name = 'geo_CC_slot_adjustments'
         !%-----------------------------------------------------------------------------
-        !if (crashYN) return
+
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        Npack      => npack_elemP(thisColP)
+        Npack      => npack_elemP(thisColP_closed_CC)
         area       => elemR(:,er_Area)
-        volume     => elemR(:,er_Volume)
-        volumeN0   => elemR(:,er_Volume_N0)
-        Overflow   => elemR(:,er_VolumeOverFlow)
         depth      => elemR(:,er_Depth)
+        ell        => elemR(:,er_ell)
         ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
         fullvolume => elemR(:,er_FullVolume)
         fullArea   => elemR(:,er_FullArea)
         head       => elemR(:,er_Head)
-        headN0     => elemR(:,er_Head_N0)
-        zbottom    => elemR(:,er_Zbottom)
+        Overflow   => elemR(:,er_VolumeOverFlow)
         SlotWidth  => elemR(:,er_SlotWidth)
         SlotVolume => elemR(:,er_SlotVolume)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
-
+        SlotHydRad => elemR(:,er_SlotHydRadius)
+        volume     => elemR(:,er_Volume)
+        zbottom    => elemR(:,er_Zbottom)
+        isSlot     => elemYN(:,eYN_isSlot)
         !%-----------------------------------------------------------------------------
 
-        
+        !% CC slot adjustment
         if (Npack > 0) then
-            thisP    => elemP(1:Npack,thisColP)
-
-            !print *, 'in geo_slot',this_image(), thisP
-
-            where (SlotVolume(thisP) .gt. zeroR) 
+            thisP    => elemP(1:Npack,thisColP_closed_CC)
+            where (isSlot(thisP)) 
                 volume(thisP) = volume(thisP)  + SlotVolume(thisP)
                 area(thisP)   = area(thisP)    + SlotArea(thisP)
                 depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                head(thisP)   = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
+                head(thisP)   = head(thisP)    + SlotDepth(thisP)
                 Overflow(thisP) = zeroR
             end where 
         end if
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_slot_adjustments
+    end subroutine geo_CC_slot_adjustments
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1600,6 +1602,134 @@ module geometry
         !%------------------------------------------------------------------
         !% Closing
     end subroutine geo_JM_values
+    !%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_JB_slot_computation_ETM (thisColP_JM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !%      Slot computation for Junction Branches
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisColP_JM
+            integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
+            real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:)
+            real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:)
+            real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), ellMax(:)
+            real(8), pointer :: overflow(:), grav, TargetPCelerity, PreissmannAlpha
+            logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:)
+            integer, pointer :: SlotMethod, fUp(:), fDn(:)
+            integer :: tB, ii, kk
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+        !%------------------------------------------------------------------
+        !% Aliases
+            Npack         => npack_elemP(thisColP_JM)
+            area          => elemR(:,er_Area)
+            depth         => elemR(:,er_Depth)
+            head          => elemR(:,er_Head)
+            length        => elemR(:,er_Length)
+            fullArea      => elemR(:,er_FullArea)
+            fullDepth     => elemR(:,er_FullDepth)
+            overflow      => elemR(:,er_VolumeOverFlow)
+            volume        => elemR(:,er_Volume)
+            zCrown        => elemR(:,er_Zcrown)
+            ellMax        => elemR(:,er_ell_max)
+            fUp           => elemI(:,ei_Mface_uL)
+            fDn           => elemI(:,ei_Mface_dL)
+            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            grav          => setting%Constant%gravity
+        !% Slot Aliases
+            PNumber    => elemR(:,er_Preissmann_Number)
+            PCelerity  => elemR(:,er_Preissmann_Celerity)
+            SlotWidth  => elemR(:,er_SlotWidth)
+            SlotVolume => elemR(:,er_SlotVolume)
+            SlotDepth  => elemR(:,er_SlotDepth)
+            SlotArea   => elemR(:,er_SlotArea)
+            fPNumber   => faceR(:,fr_Preissmann_Number)
+            isSlot     => elemYN(:,eYN_isSlot)
+            isDnJB     => elemYN(:,eYN_isDownstreamJB)
+            fSlot      => faceYN(:,fYN_isSlot)
+            SlotMethod      => setting%PreissmannSlot%PreissmannSlotMethod
+            TargetPCelerity => setting%PreissmannSlot%TargetPreissmannCelerity
+            PreissmannAlpha => setting%PreissmannSlot%PreissmannAlpha
+        !%------------------------------------------------------------------
+
+        !% JB slot adjustment
+        if (Npack > 0) then
+            thisP  => elemP(1:Npack,thisColP_JM)
+            !% cycle through the all the main junctions and each of its branches
+            do ii=1,Npack
+                tM => thisP(ii) !% junction main ID
+                ! handle the upstream branches
+                do kk=1,max_branch_per_node,2
+                    tB = tM + kk  !% JB branch ID
+                    if (BranchExists(tB)==1) then
+                        !% initialize slot
+                        isSlot(tB)     = .false.
+                        SlotDepth(tB)  = zeroR
+                        SlotArea(tB)   = zeroR
+                        SlotWidth(tB)  = zeroR
+                        SlotVolume(tB) = zeroR
+                        PCelerity(tB)  = zeroR
+
+                        !% assuming a slot if the head is above the crown
+                        !% or the upstream CC is in a slot
+                        if (head(tB) .gt. zcrown(tB) .or. fSlot(fUp(tB))) then
+                            isSlot(tB)     = .true.
+                            fSlot(fUp(tB)) = .true.
+                            PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
+                            SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)   
+                            SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
+                                                fullArea(tB)) / (TargetPCelerity ** twoR)
+                            SlotVolume(tB) = SlotArea(tB) * length(tB)
+                            
+                            !% add the slot geometry back to previously solved geometry
+                            volume(tB) = volume(tB)  + SlotVolume(tB)
+                            area(tB)   = area(tB)    + SlotArea(tB)
+                            depth(tB)  = depth(tB)   + SlotDepth(tB)
+                            Overflow(tB) = zeroR
+                        end if  
+                    end if
+                end do
+                !% handle the downstream branches
+                do kk=2,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        !% initialize slot
+                        isSlot(tB)     = .false.
+                        SlotDepth(tB)  = zeroR
+                        SlotArea(tB)   = zeroR
+                        SlotWidth(tB)  = zeroR
+                        SlotVolume(tB) = zeroR
+                        PCelerity(tB)  = zeroR
+
+                        !% assuming a slot if the head is above the crown
+                        !% or the downstream CC is in a slot
+                        if (head(tB) .gt. zcrown(tB) .or. fSlot(fDn(tB))) then
+                            isSlot(tB)     = .true.
+                            fSlot(fDn(tB)) = .true.
+                            PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
+                            SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)    
+                            SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
+                                                fullArea(tB)) / (TargetPCelerity ** twoR)
+                            SlotVolume(tB) = SlotArea(tB) * length(tB)
+
+                            !% add the slot geometry back to previously solved geometry
+                            volume(tB) = volume(tB)  + SlotVolume(tB)
+                            area(tB)   = area(tB)    + SlotArea(tB)
+                            depth(tB)  = depth(tB)   + SlotDepth(tB)
+                            Overflow(tB) = zeroR
+                        end if
+                    end if
+                end do
+            end do
+        end if
+                  
+        !%------------------------------------------------------------------
+        !% Closing
+    end subroutine geo_JB_slot_computation_ETM
 !%
 !%==========================================================================
 !% END OF MODULE

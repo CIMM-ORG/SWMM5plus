@@ -436,7 +436,7 @@ module define_settings
         logical              :: duplicate_input_file = .true.
         !% standard files and folders
         character(len=256)   :: base_folder = ""
-        character(len=256)   :: library_folder = ""
+        character(len=256)   :: library_folder = "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
@@ -563,7 +563,7 @@ module define_settings
     type SolverType
         logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
-        integer :: MomentumSourceMethod = TA1
+        integer :: MomentumSourceMethod = T10
         integer :: SolverSelect = ETM
         real(8) :: SwitchFractionDn = 0.8d0
         real(8) :: SwitchFractionUp = 0.9d0

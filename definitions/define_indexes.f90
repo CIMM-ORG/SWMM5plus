@@ -109,6 +109,7 @@ module define_indexes
         enumerator :: lYN_CanSurcharge = 1
         enumerator :: lYN_isOutput
         enumerator :: lYN_isPhantomLink
+        enumerator :: lYN_hasFlapGate
         enumerator :: lYN_temp1
         enumerator :: lYN_lastplusone !% must be last enum item
     end enum
@@ -277,6 +278,7 @@ module define_indexes
     enum, bind(c)
          enumerator :: ei_Lidx = 1                  !% local element index (static)
          enumerator :: ei_Gidx                      !% global element index  (static)
+         !enumerator :: ei_main_idx_for_branch       !% idx of JM for a JB branch
          enumerator :: ei_elementType               !% KEY general element type  (static)
          enumerator :: ei_geometryType              !% KEY cross-sectional geometry type  (static)
          enumerator :: ei_HeqType                   !% KEY type of head equation (static)
@@ -404,14 +406,12 @@ module define_indexes
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
-        !% brh20211210s
         enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
-        !% brh20211210e
         enumerator :: eYN_isDummy
-        !% ss20220125
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
         enumerator :: eYN_isSlot                        !% TRUE if a preissmann slot is present
+        enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemYN = eYN_lastplusone-1
@@ -482,11 +482,13 @@ module define_indexes
         enumerator :: ep_BClat                      !% all elements with lateral BC
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
-        enumerator :: ep_Closed_Elements            !% all closed elements    
+        enumerator :: ep_Closed_Elements_CC         !% all closed CC elements 
+        enumerator :: ep_Closed_Elements_JB         !% all closed JB elements   
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
         enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
         enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
+        enumerator :: ep_CCJM_NOTsmalldepth         !% alternate elements for CFL computation 
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
@@ -539,6 +541,7 @@ module define_indexes
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
+        enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
         enumerator ::  esi_JunctionBranch_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
@@ -904,6 +907,7 @@ module define_indexes
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
         enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
+        enumerator ::  ebgr_Volume                    !% volume at boundary/ghost element
         enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
@@ -998,6 +1002,7 @@ module define_indexes
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
+        enumerator :: fYN_isSlot
         enumerator :: fYN_isDownstreamJbFace
         enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed

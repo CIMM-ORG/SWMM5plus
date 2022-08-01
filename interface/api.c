@@ -573,7 +573,6 @@ int DLLEXPORT api_get_headBC(
             return api_err_not_developed;
     }
 }
-
 //===============================================================================
 int DLLEXPORT api_get_SWMM_setup(
     int*  flow_units,
@@ -1386,7 +1385,8 @@ int DLLEXPORT api_get_linkf_attribute(
     error = check_api_is_initialized("api_get_linkf_attribute");
     if (error) return error;
 
-    //printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+    // printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+    // printf(" ****** in api_get_linkf_attribute  %d \n ",linkf_type);
 
 // the following are in the order of the enumeration in define_api_keys.f90 and api.h
     switch (attr) {
@@ -1594,6 +1594,13 @@ int DLLEXPORT api_get_linkf_attribute(
             else
                 *value = 0; 
             break;  
+
+        case linkf_hasFlapGate :
+            if (Link[link_idx].hasFlapGate)    
+                *value = 1;
+            else
+                *value = 0;
+            break;
 
         case linkf_commonBreak :
             // placeholder with no action
