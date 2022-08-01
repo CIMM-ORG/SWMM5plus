@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    11/15/2021
 REPORT_START_TIME    00:00:00
 END_DATE             11/15/2021
-END_TIME             00:00:45
+END_TIME             00:02:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -53,7 +53,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-3                0          FREE                        YES                       
+3                0.5        FREE                        YES                       
 
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
@@ -64,18 +64,15 @@ DRY_ONLY         NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                1                2                14.33       0.012       0          0          0          0                 
+1                1                2                14.33       0.012       0          0          0          0  
+2                1                3                 1.43       0.012      0.5         0          0          0
 
-[WEIRS]
-;;Name           From Node        To Node          Type         CrestHt    Qcoeff     Gated    EndCon   EndCoeff   Surcharge  RoadWidth  RoadSurf   Coeff. Curve
-;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- -------- ---------- ---------- ---------- ---------- ----------------
-2                1                3                TRANSVERSE   0.9        1.0        NO       0        0          YES       
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
 1                CIRCULAR     0.5            0          0          0          1                                        
-2                RECT_OPEN    1.00           1.00       0          0         
+2                CIRCULAR     0.5            0          0          0          1  
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
@@ -91,7 +88,7 @@ DRY_ONLY         NO
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
 vasconcelos_timeseries 11/15/2021 0        0.0031               
-vasconcelos_timeseries            0.4      0.0031         
+vasconcelos_timeseries            1.0      0.0031         
 
 [REPORT]
 ;;Reporting Options
