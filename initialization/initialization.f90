@@ -185,7 +185,9 @@ contains
         call util_crashstop(53454)
 
         !% --- read in profiles from .inp file and create 
-        call init_profiles()
+        if (this_image() .eq. 1) then 
+            call init_profiles()
+        end if
 
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
@@ -1337,8 +1339,8 @@ contains
         delimitator_loc = 2
         offset = 1
         max_links_profile_N = 0
-        inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
-        print *, "end of file(bytes):", end_of_file
+        !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
+        !print *, "end of file(bytes):", end_of_file
 
 
 
@@ -1393,6 +1395,10 @@ contains
 
         max_links_profile_N = max_links_profile_N + max_links_profile_N + 1 
         
+        if(max_links_profile_N .eq. 1) then
+            print *, "no profiles found"
+            return
+        end if
 
         call util_allocate_output_profiles()
         print *, "size of profiles", size(output_profile_ids)
@@ -1476,7 +1482,7 @@ contains
         print *, "------------output_profile_ids---------"
         print *, output_profile_ids(1,:)
         print *, output_profile_ids(2,:)
-        print *, output_profile_ids
+        !print *, output_profile_ids
         close (10)
         !% ALLOCATE THE ARRAYS AND THEN fill them with the correct indexs
 

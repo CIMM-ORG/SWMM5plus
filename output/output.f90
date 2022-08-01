@@ -10,7 +10,7 @@ module output
     use utility_allocate
     use utility_deallocate
     use utility_crash, only: util_crashpoint
-    use hdf5
+    use HDF5
     USE ISO_C_BINDING
 
 
@@ -2336,15 +2336,7 @@ contains
                                 !     output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
                                 !     dummyarrayI,    &
                                 !     tlinkname, setting%Time%DateTimeStamp, time_units_str, .false.)
-                                if(setting%Output%Report%useHD5F) then
-                                    call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
-                                        nTypeElem, nTotalTimeLevels, dummyI, &
-                                        OutLink_pSWMMidx(kk), &
-                                        startdate, setting%Time%StartEpoch, &
-                                        output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
-                                        dummyarrayI,    &
-                                        tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
-                                end if
+                                
                                 !% --- open formatted csv link file
 
                                 if(setting%Output%Report%useCSV) then
@@ -2359,6 +2351,17 @@ contains
                                         dummyarrayI,    &
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
                                 end if
+
+                                if(setting%Output%Report%useHD5F) then
+                                    call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
+                                        nTypeElem, nTotalTimeLevels, dummyI, &
+                                        OutLink_pSWMMidx(kk), &
+                                        startdate, setting%Time%StartEpoch, &
+                                        output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
+                                        dummyarrayI,    &
+                                        tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
+                                end if
+
                                 !% --- finished with the headers
                             else !% --- for ii > 2, link csv and unf files exists so we just need to open
                                 ! open(newunit=fU_link_unf, file=trim(fn_link_unf), form='unformatted', &
@@ -3021,6 +3024,26 @@ contains
         !% --- ROW 11 --- EXPECTED NUMBER OF DATA COLUMNS
         write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',nType +1 !%(including time column))
 
+        !% --- ROW 12 --- 4th HEADER ROW -- Profiles Data
+        !% Profiles are always written with node IDs being on odd indexs while links being on Evens
+        !% This goes through and writes the profiles, if they are being used. 
+        if(allocated(output_profile_ids)) then
+
+            do ii = 1, max_profiles_N
+                do mm = 1, max_links_profile_N
+                    if(mod(mm,2) > 0 .and. output_profile_ids(ii,mm) .ne. nullValueI) then
+                        write(funitIn,fmt='(2a)',advance='no') node%names(output_profile_ids(ii,mm))%str,','
+                    
+                    else if (mod(mm,2) == 0 .and. output_profile_ids(ii,mm) .ne. nullValueI) then
+                        write(funitIn,fmt='(2a)',advance='no') link%names(output_profile_ids(ii,mm))%str,','
+
+                    end if
+                end do
+                write(funitIn,fmt='(a)')
+            end do 
+
+        end if  
+
         !% --- ROW 12 --- BEGIN STATEMENT
         write(funitIn,fmt='(a)') 'BEGIN_HEADERS_AND_DATA'
 
@@ -3082,18 +3105,7 @@ contains
             write(funitIn,fmt='(a)') trim(output_type_units(nType+1))
         end if
 
-        !% --- ROW 15 --- 4th HEADER ROW -- Profiler Data
-        do ii = 1, max_profiles_N
-            do mm = 1, max_links_profile_N
-                if(mod(mm,2) > 0 .and. output_profile_ids(ii,mm) .neqv. nullValueI) then 
-                    write(funitIn,fmt='(2a)',advance='no') node%names(output_profile_ids(1,mm))%str,','
-                
-                else if (mod(mm,2) == 0 .and. output_profile_ids(ii,mm) .neqv. nullValueI) then
-                    write(funitIn,fmt='(2a)',advance='no') link%names(output_profile_ids(1,mm))%str,','
 
-                end if
-            end do
-        end do 
 
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4391,7 +4403,7 @@ contains
 
         !% Open HDF5 API
         CALL h5open_f(HD_error)
-        !h5_file_name = "output.h5"
+        !setting the file name of the .h5 file
         h5_file_name = trim(setting%File%output_timestamp_subfolder)//"/output.h5"
 
         !% Open the .h5 file
@@ -4447,7 +4459,7 @@ contains
 
         CHARACTER(LEN=10), PARAMETER :: aname = "model_data"   ! Attribute name
         CHARACTER(LEN=12), PARAMETER :: Header_name = "header_data" ! Header name
-        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiler
+        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiles name
 
         character(LEN=500) :: temp_str
 
@@ -4457,18 +4469,18 @@ contains
         INTEGER(HID_T) :: aspace_id     ! Attribute Dataspace identifier
         INTEGER(HID_T) :: atype_id      ! Attribute Dataspace identifier
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
-        CHARACTER(LEN=256), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
-        CHARACTER(LEN=256), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
-        !CHARACTER(LEN=256), DIMENSION(:,:), allocatable  ::  profiles_data !Stores the 
+        CHARACTER(LEN=150), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
+        CHARACTER(LEN=50), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
+        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the 
         INTEGER(SIZE_T) :: attrlen !length of attributes to be written 
-        INTEGER(HSIZE_T), DIMENSION(1) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
+        INTEGER(HSIZE_T), DIMENSION(2) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: header_dims       !dimensions of the header created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims      !dimensions of the profiles created
         
         INTEGER     ::   rank = 2 !% only have 2D arrays so rank is always 2                    
         INTEGER     ::   HD_error !% For HDF5 errors
-        INTEGER     ::   ii
+        INTEGER     ::   ii, jj 
         
 
         character(len=99)   :: emsg
@@ -4477,13 +4489,25 @@ contains
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
-        !% header data will always be stored in array of this shape 
-        allocate(header_data(Ntype+1,3))
-        !allocate(profiles_data(max_links_profile_N,max_profiles_N))
+        !% Header data is stored in two different shapes depending on if finite volume elem mode or not
+        !% For a FV we store the first 2 array columns of the header info as well as the number of elems in the link or node
+        if(isFV) then
+            allocate(header_data(3,3)) 
+        
+        else 
+            allocate(header_data(Ntype+1,3))
+        end if
+        !allocating 
+        if( allocated(output_profile_ids)) then
+            allocate(profile_data(max_links_profile_N,max_profiles_N))
+        end if
+
+
+        
         
         
         !% length of the attributes to be stored
-        attrlen = 256
+        attrlen = 150
 
         !filling out the model data array 
         attr_model_data(1,1) = "SWMM_ID"
@@ -4580,10 +4604,10 @@ contains
         !%Element Index 
         if (isFV) then
             header_data(1,1) = "0"
-            do ii = 1, nType
-                write (temp_str, *) elementsInLink(ii)
-                header_data(ii+1,1) = temp_str
-            end do
+            write (temp_str, *) elementsInLink(1)
+            header_data(2,1) = temp_str
+            header_data(3,1) = "num_elems"
+
         
         else
             select case (FeatureType)
@@ -4595,7 +4619,6 @@ contains
                 header_data(2:Ntype+1,1) = temp_str
 
             case default
-                !header_data(1,1) =CODE ERROR: Unknown FeatureType of
                 print *, 'CODE ERROR: Unknown FeatureType of which has key ',trim(reverseKey(FeatureType))
                 call util_crashpoint( 93473)
 
@@ -4606,9 +4629,10 @@ contains
         !% Header 2nd Row - Data Type
         if (isFV) then
             header_data(1,2) =trim(output_type_names(1))
-            do ii = 1, Ntype
-                header_data(ii+1,2) =trim(output_type_names(thisType))
-            end do
+            header_data(2,2) =trim(output_type_names(thisType))
+            write (temp_str, *) nType
+            header_data(3,2) = temp_str
+            
         else
             do ii = 1, Ntype+1
                 header_data(ii,2) = trim(output_type_names(ii))
@@ -4619,23 +4643,45 @@ contains
         !% Header 3rd Row - Data Units
         if(isFV) then
             header_data(1,3) = output_type_units(1)
-            header_data(2:Ntype+1,3)=(output_type_units(thistype))
+            header_data(1,3) = output_type_units(thistype)
+            header_data(3,3) = "excluding left most time column"
 
         else
             header_data(1:Ntype+1,3)=(output_type_units(1:Ntype+1))
         
         end if
 
-        !% Header Profile - Data Units
-
-        !stores the size of the link up so we can create a dataspace in the file with the correct size
-        updated_size_data(1:2) = (/nType+1,nTotalTimeLevels/)
-        header_dims(1:2) = (/Ntype+1,3/)
-        profile_dims(1:2)     = (/max_links_profile_N,max_profiles_N/)
         
 
+        !% Profile - Data Units
 
-        !create and then close the dataspace that will store the link data
+        !%stores the size of the data that is going to be written
+        updated_size_data(1:2) = (/nType+1,nTotalTimeLevels/)
+        if(isFV) then
+            header_dims(1:2) = (/3,3/)
+        else
+            header_dims(1:2) = (/Ntype+1,3/)
+        end if
+
+        profile_dims(1:2) = (/max_links_profile_N,max_profiles_N/)
+ 
+        !% Converting the profile IDs back to the Link and Node names.
+        !% Nodes are always on odd IDs and links are always on even IDS
+        if( allocated(output_profile_ids)) then
+            do ii = 1, max_profiles_N
+                do jj = 1, max_links_profile_N
+                    if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
+                        profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
+                    else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
+                        profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
+                    else 
+                        profile_data(jj,ii) = "NULL"
+                    end if
+                end do
+            end do 
+        end if
+
+        !%create and then close the dataspace that will store the link data
         CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error)
 
         CALL h5dcreate_f(file_id, trim(h5_dset_name), H5T_NATIVE_REAL, dspace_id, &
@@ -4643,49 +4689,64 @@ contains
 
         CALL h5sclose_f(dspace_id, HD_error)
 
-        !--------------------------------------------
-        !Creating and writing the attribute data for the Model data
+        !%--------------------------------------------
+        !%Creating and writing the attribute data for the Model data
         CALL h5screate_simple_f(rank, attr_dims_model, aspace_id, HD_error)
         CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
         CALL h5tset_size_f(atype_id, attrlen, HD_error)
         CALL h5acreate_f(dset_id, aname, atype_id, aspace_id, attr_id, HD_error)
         data_dims(1) = 11
-        CALL h5awrite_f(attr_id, atype_id, attr_model_data, data_dims, HD_error)
+        data_dims(2) = 2
+        CALL h5awrite_f(attr_id, atype_id, attr_model_data,data_dims, HD_error)
         CALL h5aclose_f(attr_id, HD_error)
         CALL h5tclose_f(atype_id, HD_error)
         CALL h5sclose_f(aspace_id, HD_error)
-        !CALL h5dclose_f(dset_id, HD_error)
-        !--------------------------------------------
-        !Storing the profile data 
-        CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
-        CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
-        CALL h5tset_size_f(atype_id, attrlen, HD_error)
-        CALL h5acreate_f(dset_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
-        data_dims(1) = max_links_profile_N
-        data_dims(2) = max_profiles_N
-        CALL h5awrite_f(attr_id, atype_id, output_profile_ids, data_dims, HD_error)
-        CALL h5aclose_f(attr_id, HD_error)
-        CALL h5tclose_f(atype_id, HD_error)
-        CALL h5sclose_f(aspace_id, HD_error)
-        !--------------------------------------------
-        !Creating and writing the attribute data for the header data
+        !%CALL h5dclose_f(dset_id, HD_error)
+        !%--------------------------------------------
+
+        !%Storing the profile data 
+        if( allocated(output_profile_ids)) then
+            !attrlen = 100
+            CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
+            CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
+            CALL h5tset_size_f(atype_id, attrlen, HD_error)
+            CALL h5acreate_f(dset_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
+            data_dims(1) = max_links_profile_N
+            data_dims(2) = max_profiles_N
+            CALL h5awrite_f(attr_id, atype_id, profile_data,data_dims, HD_error)
+            CALL h5aclose_f(attr_id, HD_error)
+            CALL h5tclose_f(atype_id, HD_error)
+            CALL h5sclose_f(aspace_id, HD_error)
+            !print *, "after writing to hdf5 file"  
+        end if
+
+        !%--------------------------------------------
+        !%Creating and writing the attribute data for the header data
+        
+        attrlen = 50
         CALL h5screate_simple_f(rank, header_dims, aspace_id, HD_error)
         CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
         CALL h5tset_size_f(atype_id, attrlen, HD_error)
         CALL h5acreate_f(dset_id, Header_name, atype_id, aspace_id, attr_id, HD_error)
-        data_dims(1) = Ntype+1
-        data_dims(2) = 3
-        CALL h5awrite_f(attr_id, atype_id, header_data, data_dims, HD_error)
+        if(isFV) then
+            data_dims(1) = 3
+            data_dims(2) = 3
+        else
+            data_dims(1) = Ntype+1
+            data_dims(2) = 3
+        end if
+        CALL h5awrite_f(attr_id, atype_id, header_data,data_dims, HD_error)
         CALL h5aclose_f(attr_id, HD_error)
         CALL h5tclose_f(atype_id, HD_error)
         CALL h5sclose_f(aspace_id, HD_error)
         CALL h5dclose_f(dset_id, HD_error)
-        !--------------------------------------------
-
-
+        
         !% deallocating the header data after use
         deallocate(header_data)
-    
+        if( allocated(output_profile_ids)) then
+            deallocate(profile_data)
+        end if
+
     end subroutine outputML_HD5F_create_dset
 
 
