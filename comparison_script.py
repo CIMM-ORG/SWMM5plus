@@ -128,9 +128,9 @@ for x in all_dset_names:
         swmm_c_l1 = np.linalg.norm(swmm_c_flowrates,1)
         swmm_c_l2 = np.linalg.norm(swmm_c_flowrates)
         swmm_c_linf = np.linalg.norm(swmm_c_flowrates,inf)
-        print((swmm_c_l1))
-        print(swmm_c_l2)
-        print(swmm_c_linf)
+        #print((swmm_c_l1))
+        #print(swmm_c_l2)
+        #print(swmm_c_linf)
         
         #extract the flowrates from the swmm5_plus .h5 file
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
@@ -140,9 +140,9 @@ for x in all_dset_names:
         swmm_plus_l1 = np.linalg.norm(swmm_plus_flowrates,1)
         swmm_plus_l2 = np.linalg.norm(swmm_plus_flowrates)
         swmm_plus_linf = np.linalg.norm(swmm_plus_flowrates,inf)
-        print((swmm_plus_l1))
-        print(swmm_plus_l2)
-        print(swmm_plus_linf)
+        #print((swmm_plus_l1))
+        #print(swmm_plus_l2)
+        #print(swmm_plus_linf)
 
         #check if the L1, L2, Linf norms are within a given range and if not append to list of errors
         if(abs(swmm_c_l1 - swmm_plus_l1) > .01):
@@ -173,17 +173,17 @@ for x in all_dset_names:
         swmm_c_l1 = np.linalg.norm(swmm_c_depths,1)
         swmm_c_l2 = np.linalg.norm(swmm_c_depths)
         swmm_c_linf = np.linalg.norm(swmm_c_depths,inf)
-        print((swmm_c_l1))
-        print(swmm_c_l2)
-        print(swmm_c_linf)
+        #print((swmm_c_l1))
+        #print(swmm_c_l2)
+        #print(swmm_c_linf)
 
         #calculate L1,L2,Linf norms for the swmm_plus output
         swmm_plus_l1 = np.linalg.norm(swmm_plus_depths,1)
         swmm_plus_l2 = np.linalg.norm(swmm_plus_depths)
         swmm_plus_linf = np.linalg.norm(swmm_plus_depths,inf)
-        print((swmm_plus_l1))
-        print(swmm_plus_l2)
-        print(swmm_plus_linf)
+        #print((swmm_plus_l1))
+        #print(swmm_plus_l2)
+        #print(swmm_plus_linf)
 
          #check if the L1, L2, Linf norms are within a given range and if not append to list of errors
         if(abs(swmm_c_l1 - swmm_plus_l1) > .001):

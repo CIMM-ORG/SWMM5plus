@@ -1416,7 +1416,6 @@ contains
             if (read_status /= 0 ) then
                 exit
             end if
-            print *, "-----------------------"
             delimitator_loc = 2
             name = line 
             index_of_start = index(name,"""",.true.)
@@ -1433,9 +1432,6 @@ contains
                 jj = jj + 1
                 choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
                 link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
-                print *, "choosen_name:", choosen_name
-                print *, "ii:", ii 
-                print *, "jj:", jj
                 do kk = 1 , N_Link
                     if(link%names(kk)%str == choosen_name) then
 
@@ -1447,16 +1443,14 @@ contains
                             if(link%I(kk,li_Mnode_u) .neqv. link%I(output_profile_ids(ii,jj-1),li_Mnode_d)) then
                                 print *, "Error with provides profiles not being continous"
                                 print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
+                                stop
                             end if
 
                         end if
 
-
-                        print *, "test1"                    
+                   
                         output_profile_ids(ii,(jj*2)+1) = link%I(kk,li_Mnode_d)
-                        print *, "test2"
                         output_profile_ids(ii,jj*2) = kk 
-                        print *, "test3"
 
                         if(jj .eq. 1) then
                             output_profile_ids(ii,1) = link%I(kk,li_Mnode_u)
@@ -1466,6 +1460,7 @@ contains
                     end if
                     if (kk .eq. N_LINK ) then
                         print *, "Error with provided profiles: unknown link:,",trim(choosen_name), " added"   
+                        stop
                         exit
                     end if
 
