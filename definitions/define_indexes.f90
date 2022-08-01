@@ -411,7 +411,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
-        enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow
+        enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE if non-surcharged 
         enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
@@ -420,7 +420,7 @@ module define_indexes
         enumerator :: eYN_isDummy
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
-        enumerator :: eYN_isSlot                        !% TRUE if a preissmann slot is present
+        enumerator :: eYN_isSlot                        !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
@@ -492,7 +492,8 @@ module define_indexes
         enumerator :: ep_BClat                      !% all elements with lateral BC
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
-        enumerator :: ep_Closed_Elements            !% all closed elements    
+        enumerator :: ep_CC_Closed_Elements         !% all closed CC elements 
+        enumerator :: ep_Closed_Elements_JB         !% all closed JB elements   
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
         enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
@@ -821,7 +822,7 @@ module define_indexes
         enumerator :: mi_idx = 1       !% unique ID for this monitoring element
         enumerator :: mi_image         !% image where the M element resides
         enumerator :: mi_elem_idx      !% element index on the image of the M point
-        enumerator :: mi_islink        !% = 1 if link, 0 if node
+        enumerator :: mi_linknodesimType  !% = 1 if link, 0 if node, -1 if simulation
         enumerator :: mi_linknode_idx  !% EPA SWMM link or node index for monitoring point 
         enumerator :: mi_lastplusone   !% must be last enum item
     end enum  
@@ -1011,6 +1012,7 @@ module define_indexes
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
+        enumerator :: fYN_isSlot
         enumerator :: fYN_isDownstreamJbFace
         enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed

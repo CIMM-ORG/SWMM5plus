@@ -49,7 +49,7 @@
         "Head" : {
             "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0
+            "Coef" : 0.5
         }
     },
     "BC" : {

@@ -644,6 +644,10 @@ contains
             !% --- Error check: fail if offset present
             if (link%R(node%I(nIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
                 print *, 'CODE ERROR: OUTFALL WITH OFFSET NEEDS ALGORITHM DESIGN'
+                print *, 'offset', link%R(node%I(nIdx,ni_Mlink_u1),lr_OutletOffset)
+                print *, 'this Node idx = ',nIdx, '; name =', trim(node%Names(nIdx)%str)
+                print *, 'Link upstream idx =',node%I(nIdx,ni_Mlink_u1),'; name = ', trim(link%Names(node%I(nIdx,ni_Mlink_u1))%str)
+                print *, 'Previously this error was seen when upstream of outfall was a weir or orifice'
                 call util_crashpoint(6098734)
             end if
             

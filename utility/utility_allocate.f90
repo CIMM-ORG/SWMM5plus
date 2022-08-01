@@ -6,6 +6,7 @@ module utility_allocate
     use define_settings, only: setting
     use interface_
     use utility
+    use utility_crash, only: util_crashpoint
 
     ! use utility, only: utility_check_allocation
 
@@ -1092,6 +1093,14 @@ contains
                 write(*,"(I8)") N_OutElem(:)
                 stop 387053
             end if
+
+            if (nMaxElem * nTypeElem * nLevel > 29000000) then
+                print *, 'CONFIGURATION ERROR: the output stored is probably too large.'
+                print *, 'The number of time levels stored before writing is ',nLevel
+                print *, 'Suggest reducing below ',29000000 / (nMaxElem * nTypeElem)
+                call util_crashpoint(5598723)
+            end if
+
 
             !% --- allocate the local  multi-level element storage for each image
             !%    note that EVERY image allocates this array based on the maximum 

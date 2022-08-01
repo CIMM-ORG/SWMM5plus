@@ -93,14 +93,14 @@ module interface_
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_controls_get_premise_data( &
                 locationL,        locationR,                   &
-                islinkL,          islinkR,                     &
+                linknodesimTypeL, linknodesimTypeR,            &
                 attributeL,       attributeR,                  & 
                 thisPremiseLevel, rIdx)                        &
             BIND(C, name="api_controls_get_premise_data")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), intent(inout) :: locationL,  locationR
-            integer(c_int), intent(inout) :: islinkL,    islinkR
+            integer(c_int), intent(inout) :: linknodesimTypeL, linknodesimTypeR
             integer(c_int), intent(inout) :: attributeL, attributeR
             integer(c_int), intent(inout) :: thisPremiseLevel
             integer(c_int), value, intent(in)    :: rIdx
@@ -117,13 +117,13 @@ module interface_
        !% -------------------------------------------------------------------------------
         integer(c_int) function api_controls_transfer_monitor_data ( &
                 Depth, Head, Volume, Inflow, Flow, StatusSetting,    &
-                TimeLastSet, LinkNodeIdx, isLink)                    &
+                TimeLastSet, LinkNodeIdx, linknodesimType)                    &
             BIND(C, name="api_controls_transfer_monitor_data")
             use, intrinsic :: iso_c_binding
             implicit none
             real(c_double), value, intent(in) :: Depth, Head, Volume, Inflow, Flow
             real(c_double), value, intent(in) :: StatusSetting, TimeLastSet
-            integer(c_int), value, intent(in) :: LinkNodeIdx, isLink
+            integer(c_int), value, intent(in) :: LinkNodeIdx, linknodesimType
         end function api_controls_transfer_monitor_data
         !% -------------------------------------------------------------------------------
         integer (c_int) function api_controls_execute( &
@@ -593,7 +593,7 @@ contains
 !%    
     subroutine interface_controls_get_premise_data (     &
             locationL,        locationR,                 &
-            islinkL,          islinkR,                   &
+            linknodesimTypeL, linknodesimTypeR,          &
             attributeL,       attributeR,                &
             thisPremiseLevel, rIdx, success)
         !%---------------------------------------------------------------------
@@ -601,7 +601,7 @@ contains
         !% Gets the monitoring locations for control premises 
         !%---------------------------------------------------------------------
             integer, intent(inout) :: locationL, locationR
-            integer, intent(inout) :: islinkL, islinkR
+            integer, intent(inout) :: linknodesimTypeL, linknodesimTypeR
             integer, intent(inout) :: attributeL, attributeR
             integer, intent(inout) :: thisPremiseLevel, success
             integer, intent(in)    :: rIdx
@@ -615,23 +615,24 @@ contains
 
         !print *, 'api load called  thisPremiseLevel = ',thisPremiseLevel
 
-        success = ptr_api_controls_get_premise_data( &
-                    locationL,        locationR,     &
-                    islinkL,          islinkR,       &
-                    attributeL,       attributeR,    & 
+        success = ptr_api_controls_get_premise_data(    &
+                    locationL,        locationR,        &
+                    linknodesimTypeL, linknodesimTypeR, &
+                    attributeL,       attributeR,       & 
                     thisPremiseLevel, rIdx)
 
-        !% output data of -1 is not valid, so return nullvalue
+        !% --- output data of -1 is not valid for location or attribute, 
+        !%     so return nullvalue. Note that -1 for linknodesimType indicates
+        !%     a simulation variable (e.g., time) rather than a monitor location
         if (locationL  == -1 ) locationL  = nullValueI  
         if (locationR  == -1 ) locationR  = nullValueI  
-        if (islinkL    == -1 ) islinkL    = nullValueI
-        if (islinkR    == -1 ) islinkR    = nullValueI
         if (attributeL == -1 ) attributeL = nullValueI 
         if (attributeR == -1 ) attributeR = nullValueI    
 
         !% --- increment the location by 1 since EPA-SWMM starts at 0 with indexes
         if (locationL .ne. nullvalueI) locationL = locationL + 1
         if (locationR .ne. nullvalueI) locationR = locationR + 1
+
 
         !print *, 'after api thisPremiseLevel = ',thisPremiseLevel
 
@@ -684,7 +685,7 @@ contains
 !%    
     subroutine interface_controls_transfer_monitor_data &
         (Depth, Head, Volume, Inflow, Flow, StatusSetting, TimeLastSet, &
-         LinkNodeNum, isLink)
+         LinkNodeNum, linknodesimType)
         !%---------------------------------------------------------------------
         !% Description:
         !% transfers the monitoring data from SWMM5+ into EPA-SWMM so that it
@@ -692,7 +693,7 @@ contains
         !%---------------------------------------------------------------------
         !% Declarations
             integer :: success
-            integer, intent(in) :: LinkNodeNum, isLink
+            integer, intent(in) :: LinkNodeNum, linknodesimType
             real(8), intent(in) :: Depth, Head, Volume, Inflow, Flow
             real(8), intent(in) :: StatusSetting, TimeLastSet
             real(8) :: TimeLastSetEpoch
@@ -709,7 +710,7 @@ contains
         !%     SWMM indexes starting a 0
         success = ptr_api_controls_transfer_monitor_data(             &
                     Depth, Head, Volume, Inflow, Flow, StatusSetting,  &
-                    TimeLastSetEpoch, LinkNodeNum-1, isLink)
+                    TimeLastSetEpoch, LinkNodeNum-1, linknodesimType)
 
     end subroutine interface_controls_transfer_monitor_data
 !%    
@@ -727,8 +728,6 @@ contains
         !%---------------------------------------------------------------------
         !% -- convert elapsed seconds to SWMM time
         currentTimeEpoch = util_datetime_secs_to_epoch(setting%Time%Now)
-
-        
 
         !% --- compute elapsed days since start of simulation
         ElapsedDays = setting%Time%Now / seconds_per_day
@@ -748,7 +747,7 @@ contains
         !% --- execute controls
         number_of_actions = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
 
-        ! print *, 'number of actions taken ',number_of_actions
+       ! print *, 'number of actions taken ',number_of_actions
 
     end subroutine interface_controls_execute
 !%    

@@ -381,7 +381,7 @@ contains
                 
     
                 !% --- check for blowup conditions
-                call util_crashcheck (773623)
+                ! call util_crashcheck (773623)
                 if (crashI == 1) exit 
     
             end do  !% end of time loop
@@ -482,8 +482,10 @@ contains
             !% dual-method, ETM for open channel, AC for surcharge
             call rk2_toplevel_ETMAC() 
         case (ETM)
-        !    print *, ' '
-        !    print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+            ! print *, ' '
+            ! print *, ' '
+            ! print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+            ! print *, ' '
         !    call util_CLprint ()
 
                 !outstring = '    tl_hydraulics 111 '
@@ -860,19 +862,19 @@ contains
             else 
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
                 if (stepNow >= lastCheckStep + checkStepInterval) then
-                   print *, '------------------------------------------------------------------------------'
-                   print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
+                  ! print *, '------------------------------------------------------------------------------'
+                  ! print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
 
                     !% --- check for low CFL only on prescribed intervals and increase time step
                     if (thisCFL .le. minCFL) then
                         !% --- for really small CFL, the new DT could be unreasonably large (or infinite)
                         !%     so use a value based on inflows to fill to small volume
-                        print *, 'vanishing CFL'
+                       !print *, 'vanishing CFL'
                         call tl_dt_vanishingCFL(newDT)
 
                     elseif ((minCFL < thisCFL) .and. (thisCFL .le. maxCFLlow)) then
                         !% --- increase the time step and reset the checkStep Counter
-                       print *, 'lowCFL'
+                       !print *, 'lowCFL'
                         newDT = OldDT * targetCFL / thisCFL 
                     else
                         !% -- for maxCFLlow < thisCFL < maxCFL do nothing
@@ -1189,10 +1191,16 @@ contains
 
                     ! write a time counter
                     if (.not. inSpinUpYN) then
-                        write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
-                            'time step = ',step,'; model time = ',thistime, &
-                            ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
-                        !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
+                        if (dt > oneR) then
+                            write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                                'time step = ',step,'; model time = ',thistime, &
+                                ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
+                            !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
+                        else
+                            write(*,"(A12,i8,a17,F9.4,a1,a8,a6,f9.8,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                                'time step = ',step,'; model time = ',thistime, &
+                                ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
+                        end if
                     else
                         write(*,"(A15,i8,a17,f9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
                             'spin-up step = ',step,'; model time = ',thistime, &

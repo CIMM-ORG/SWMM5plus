@@ -223,7 +223,7 @@ int DLLEXPORT api_controls_count(int* nRules, int* nPremise, int* nThenAction, i
 
 int DLLEXPORT api_controls_get_premise_data(
     int* locationL,        int* locationR,
-    int* islinkL,          int* islinkR,
+    int* linknodesimTypeL, int* linknodesimTypeR,
     int* attributeL,       int* attributeR, 
     int* thisPremiseLevel, int rIdx);
 
@@ -234,7 +234,7 @@ int DLLEXPORT api_controls_get_action_data(
  
 int DLLEXPORT api_controls_transfer_monitor_data(     
     double Depth, double Volume, double Inflow, double Flow, 
-    double StatusSetting, double TimeLastSet, int LinkNodeIdx, int isLink);
+    double StatusSetting, double TimeLastSet, int LinkNodeIdx, int linknodesimType);
 
 int DLLEXPORT api_controls_execute(
     double currentTimeEpoch, double ElapsedDays, double dtDays);

@@ -1424,6 +1424,8 @@ contains
             integer :: dummyarrayI(1) = 1
             integer :: dummyI = 1
 
+            integer :: ii2,jj2,kk2,mm2
+
             real(8) :: time_secs, time_epoch, time_scale_for_output
             integer :: startdate(6) !% yr, month, day, hr, min, sec
             character(64)      :: subroutine_name = 'outputML_convert_elements_to_linknode_and_write'
@@ -1541,6 +1543,7 @@ contains
                     !return
                 end if
 
+                !print *, 'AAA '
                 !% -------------------------------
                 !% --- read and store the time levels
                 read(thisUnit) nLevel
@@ -1557,6 +1560,8 @@ contains
                     call util_crashpoint(87364)
                     !return
                 end if
+                
+                !print *, 'BBB'
 
                 !% -------------------------------------------
                 !% --- BELOW HERE FOR ELEMENTS
@@ -1633,6 +1638,8 @@ contains
                     nTypeElemWtime = nTypeElem + 1
                     read(thisUnit) OutElemDataR(1:nTotalElem,1:nTypeElem,1:nLevel)
                 end if !% NtotalOutputElements > 0
+
+                !print *, 'CCC'
 
                 !% -------------------------------------------
                 !% --- BELOW HERE FOR FACES
@@ -1711,6 +1718,8 @@ contains
                 !% -- done reading this file
                 close(thisUnit)
 
+                !print *, 'DDD'
+
             !% -----------------------------------
             !% --- PART 2a --- COUNT THE NUMBER OF ELEMENTS PER LINK AND ELEMENTS PER NODE
             !% -----------------------------------
@@ -1763,6 +1772,8 @@ contains
                     end if !% ii=1
                 end if !% NtotalOutputElements > 0
 
+                ! print *, 'EEE'
+
             !print *, 'EEE FacesExist_byImage',setting%Output%FacesExist_byImage
             !% -----------------------------------
             !% --- PART 2b --- COUNT THE NUMBER OF FACES PER NODE
@@ -1796,6 +1807,8 @@ contains
                         end do
                     end if !% ii=1
                 end if !% NtotalOutputFaces > 0
+
+                ! print *, 'FFF'
 
             !print *, 'FFF ElementsExist_byImage', setting%Output%ElementsExist_byImage
             !% -----------------------------------
@@ -1873,6 +1886,7 @@ contains
                     end if ! ii=1
                 end if !% NtotalOutputElements > 0
 
+                ! print *, 'GGG'
             !print *, 'GGG ElementsExist_byImage', setting%Output%ElementsExist_byImage
             !% -----------------------------------
             !% --- PART 3b --- STORAGE FOR ELEM->NODE CONVERSION
@@ -1936,6 +1950,7 @@ contains
                     end if !% ii=1
                 end if !% NtotalOutputElements > 0
 
+                ! print *, 'HHH'
                 !print *, 'HHH %FacesExist_byImage', setting%Output%FacesExist_byImage
             !% -----------------------------------
             !% --- PART 3c --- STORAGE FOR NODE->FACE CONVERSION
@@ -2002,7 +2017,8 @@ contains
                     end if ! ii=1
                 end if !% NtotalOutputFaces > 0
 
-                !print *, 'III nOutLink ElementsExist_byImage ',setting%Output%ElementsExist_byImage
+                ! print *, 'III'
+                ! print *, 'III nOutLink ElementsExist_byImage ',nOutLink, setting%Output%ElementsExist_byImage
             !% -----------------------------------
             !% --- PART 4a --- PERFORM ELEM->LINK CONVERSION
             !% -----------------------------------
@@ -2012,35 +2028,83 @@ contains
 
                 if ( NtotalOutputElements > 0) then
                     do kk=1,nOutLink
+                        ! print *, 'kkkk',kk
+                        ! print *, 'Outlink_pSWMMIdx',OutLink_pSWMMidx(kk)
+                        ! print *, 'SWMMlink', SWMMlink
+                        ! print *, 'nTotalElem',nTotalElem
+                        ! print *, 'npackElem',npackElem
+                        ! print *, 'nLevel',nLevel
+                        ! print *, 'nTypeElemWtime',nTypeElemWtime
                         !% --- Each link must be handled separately because they each
                         !% --- have different numbers of elements.
 
                         !% --- get the global swmm link index for this kk
                         SWMMlink => OutLink_pSWMMidx(kk)
 
+                        ! print *, 'SWMMlink',SWMMlink
+
                         !% --- get the element indexes that match this link
                         npackElem = count(pOutElem_Link_SWMM_idx == SWMMlink)
+
+                        ! print *, 'npackElem',npackElem
 
                         !% pack the OutElem Indexes for the elements in a link
                         OutLink_pOutElemIdx(kk,1:npackElem) &
                             = pack((/ (mm, mm=1,nTotalElem) /), pOutElem_Link_SWMM_idx == SWMMlink)
 
+                        ! print *, 'Outlink_pOutElemIdx',OutLink_pOutElemIdx(kk,1:npackElem)
+
                         !% --- select the current portion of the pack for use in storage
                         pElem => Outlink_pOutElemIdx(kk,1:npackElem)
+
+                        ! print *, 'pElem',pElem
+
+                        ! print *, 'kk ',kk
+                        ! print *, 'npackElem',npackElem
+                        ! print *, 'nTypeElem',nTypeElem
+                        ! print *, 'nLevel ',nLevel
+                        ! print *, size(OutElemDataR,1), size( OutElemDataR,2), size( OutElemDataR,3)
+                        ! print *, size(OutLink_ElemDataR,1),size(OutLink_ElemDataR,2),size(OutLink_ElemDataR,3),size(OutLink_ElemDataR,4)
+
+                        
+                        ! do ii2 = 1,npackElem
+                        !     print *, 'ii2 = ',ii2
+                        !     print *, 'pElem(ii2)',pElem(ii2)
+                        !     do jj2 = 1,nLevel
+                        !         print *, 'jj2 = ',jj2
+                        !         print *, OutElemDataR(pElem(ii2)         ,1:nTypeElem  ,jj2)
+                        !         print *, 'END jj2 = ',jj2
+                        !     end do
+                        !     print *, 'END ii2 = ',ii2
+                        ! end do
+                        ! print *,' END DO DONE'
+                        ! print *, OutElemDataR(pElem         ,1:nTypeElem  ,1:nLevel)
 
                         !% --- store the element data by link (start with nTypeElem=2 to save space for time)
                         OutLink_ElemDataR  (kk,1:npackElem,2:nTypeElem+1,1:nLevel) &
                              = OutElemDataR(pElem         ,1:nTypeElem  ,1:nLevel)
 
+                        ! print *, 'OutLink_ElemDataR  (kk,1:npackElem,2:nTypeElem+1,1:nLevel)',OutLink_ElemDataR  (kk,1:npackElem,2:nTypeElem+1,1:nLevel)     
+
                         !% --- if there is only one element in the link, then store that value for all types
                         if (npackElem == 1) then
                              OutLink_ProcessedDataR(kk,  2:nTypeElemWtime,1:nLevel) &
                                 = OutLink_ElemDataR(kk,1,2:nTypeElemWtime,1:nLevel)
+
+                            ! print *, 'IF  OutLink_ProcessedDataR(kk,  2:nTypeElemWtime,1:nLevel)', OutLink_ProcessedDataR(kk,  2:nTypeElemWtime,1:nLevel)
                         else
+                            ! print *, 'ELSE'
                             !% --- cycle through the data types for different processing (e.g. average, sum, max)
                             !% --- reshape() seems necessary to remove singleton dimensions and sum without seg fault
                             rlimits = (/ npackElem, nLevel/) !% limits for reshaping
+
+                            ! print *, 'rlimits',rlimits
+
                             do pp=2,nTypeElemWtime !% starts at 2 to skip the time column
+
+                                ! print *,'pppp',pp
+                                ! print *, 'output_typeProcessing_elemR(pp-1)',output_typeProcessing_elemR(pp-1)
+
                                 select case (output_typeProcessing_elemR(pp-1)) !% -1 needed for correct index excluding time
                                 case (AverageElements)
                                     !% --- first sum the elements
@@ -2084,6 +2148,8 @@ contains
                         OutLink_ProcessedDataR(kk,1,1:nLevel)   = output_times(1:nLevel) / time_scale_for_output
                     end do !% kk
                 end if !% NtotalOutputElements > 0
+
+                ! print *, 'JJJ'
 
                 !print *, 'JJJ nOutNodeElem ElementsExist_byImage',setting%Output%ElementsExist_byImage
             !% -----------------------------------
@@ -2163,6 +2229,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputElements > 0
 
+                ! print *, 'KKK'
                 !print *, 'KKK FacesExist_byImage (nOutNodeFace)',setting%Output%FacesExist_byImage
             !% -----------------------------------
             !% --- PART 4c --- PERFORM FACE->NODE CONVERSION
@@ -2248,6 +2315,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputFaces > 0
 
+                ! print *, 'LLL'
                 !print *, 'LLL ', nOutLink
             !% -----------------------------------
             !% --- PART 5 --- WRITE TO OUTPUT FILES (open and close each)
@@ -2393,6 +2461,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputElements > 0
 
+                ! print *, 'MMM'
                 !print *, 'MMM ', nOutNodeElem
             !% -----------------------------------
             !% --- PART 5b --- WRITE OUTPUT FOR NODES THAT ARE ELEMENTS
@@ -2523,6 +2592,7 @@ contains
                 end if !% NtotalOutputElements > 0
                 !% --- finished writing all Node output files for NodeElem
 
+                ! print *, 'NNN'
                 !print *, 'NNN ', nOutNodeFace
             !% -----------------------------------
             !% --- PART 5c --- WRITE OUTPUT FOR NODES THAT ARE FACES
@@ -2656,7 +2726,7 @@ contains
                 end if !% NtotalOutputFaces > 0
             !% --- finished writing all Node output files for NodeFace
 
-                !print *, 'OOO '
+                ! print *, 'OOO '
         end do !% ii
         if (verbose) write(*,"(A)") '      finished writing output files'
 

@@ -3385,6 +3385,7 @@ contains
                         BC%flowI(ii, bi_category) = BClat
                         !BC%flowI(ii, bi_elem_idx) = node%I(nidx, ni_elemface_idx) !% elem idx OBSOLETE
                         print *, 'CODE NEEDS TESTING: BClat inflow for nJ2 node has not been tested'
+                        print *, 'BC flow index ',ii
                         call util_crashpoint(7783723)
                     case (nBCup)
                         BC%flowI(ii, bi_category) = BCup
@@ -3677,7 +3678,7 @@ contains
             real(8)  :: testUvalue, testDepth, testArea, testPerimeter
             real(8)  :: oldtestUvalue, oldtestDepth, oldtestArea, oldtestPerimeter
             real(8)  :: thisDepth, thisArea, thisPerimeter
-            real(8), parameter :: uTol = 1.d-4
+            real(8), parameter :: uTol = 1.d-3
             logical :: isIncreasing
             character(64) :: subroutine_name = 'init_uniformtabledata_nonUvalue'
         !%------------------------------------------------------------------ 

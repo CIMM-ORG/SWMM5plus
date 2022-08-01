@@ -636,7 +636,7 @@ module define_settings
         real(8) :: CFL_inflow_max = 0.4d0
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2d0 
-        real(8) :: InitialDt = 1.d0
+        real(8) :: InitialDt = 10.d0
         integer :: NstepsForCheck = 10
         integer(kind=8) :: LastCheckStep = 0
     end type VariableDTType

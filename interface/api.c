@@ -67,7 +67,7 @@ int DLLEXPORT api_controls_count(
 //===============================================================================
 int DLLEXPORT api_controls_get_premise_data(
     int* locationL,        int* locationR,
-    int* islinkL,          int* islinkR,
+    int* linknodesimTypeL, int* linknodesimTypeR,
     int* attributeL,       int* attributeR, 
     int* thisPremiseLevel, int rIdx)
 //===============================================================================
@@ -82,7 +82,7 @@ int DLLEXPORT api_controls_get_premise_data(
 
     success = controls_get_premise_data( 
                 locationL,  locationR, 
-                islinkL,    islinkR, 
+                linknodesimTypeL,linknodesimTypeR, 
                 attributeL, attributeR, 
                 thisPremiseLevel,rIdx);         
 
@@ -115,14 +115,14 @@ int DLLEXPORT api_controls_get_action_data(
 //===============================================================================
 int DLLEXPORT api_controls_transfer_monitor_data(     
     double Depth, double Volume, double Inflow, double Flow, 
-    double StatusSetting, double TimeLastSet, int idx, int isLink)
+    double StatusSetting, double TimeLastSet, int idx, int linknodesimType)
 //===============================================================================
     ///
     /// Input: values from SWMM5+ finite-volume solution applied to 
     /// EPA-SWMM Link or Node with LinkNodeNum index.
     /// Purpose: set up EPA-SWMM link/nodes for control evaluation
 {
-    if (isLink)
+    if (linknodesimType == 1)
     {
         Link[idx].newDepth = MTOFT(Depth);
         // Head is not valid for links
@@ -136,7 +136,7 @@ int DLLEXPORT api_controls_transfer_monitor_data(
         Link[idx].setting  = StatusSetting;
         Link[idx].timeLastSet = TimeLastSet;
     }
-    else
+    else if (linknodesimType == 0)
     {
         Node[idx].newDepth = MTOFT(Depth);
         // Head is not stored for nodes in EPA-SWMM, so r_HEAD in controls
@@ -147,6 +147,10 @@ int DLLEXPORT api_controls_transfer_monitor_data(
         // Status/Setting is not valid for nodes
         // TimeLastSet is not valid for nodes
     }
+    else
+    {
+        // do nothing for simulation type
+    }
     return 0;
 }    
 
@@ -156,10 +160,11 @@ int DLLEXPORT api_controls_execute(
 //===============================================================================
     /// Purpose: calls the controls_evaluate in EPA-SWMM
 {
+    int numactions = 0;
 
-    controls_evaluate(currentTimeEpoch, ElapsedDays, dtDays); 
+    numactions = controls_evaluate(currentTimeEpoch, ElapsedDays, dtDays); 
 
-    return 0; 
+    return numactions; 
 }
 
 //===============================================================================
@@ -168,7 +173,7 @@ int DLLEXPORT api_teststuff()
 {
     int ii, nPremise, nThenAction, nElseAction;
 
-    printf(" \n \n in api_teststuff \n \n ");
+    //printf(" \n \n in api_teststuff \n \n ");
 
     ii = controls_display();
 
@@ -178,7 +183,7 @@ int DLLEXPORT api_teststuff()
 
     //printf("\n %d \n ",nElseAction);
 
-    printf(" \n N premise, then, else locations: %d %d %d \n", nPremise, nThenAction, nElseAction);
+    //printf(" \n N premise, then, else locations: %d %d %d \n", nPremise, nThenAction, nElseAction);
 
     return 0;
 }

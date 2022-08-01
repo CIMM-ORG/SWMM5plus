@@ -1612,6 +1612,9 @@ contains
             !% use values from json file
         end if
 
+        !print *, setting%Time%EndEpoch
+
+
         !% Translate epoc endtime to seconds from a zero start time
         !% use floor() to match approachin SWMM-C
         ! setting%Time%End = real(floor(                            &
@@ -1630,8 +1633,26 @@ contains
         !print *, 'ttime ',ttime
         ttime = util_datetime_seconds_precision (ttime)
         !print *, 'ttime ',ttime  
-        setting%Time%End = real(floor(ttime),8)
-        !print *, 'ttime ',ttime
+        !setting%Time%End = real(floor(ttime),8)
+        setting%Time%End = ttime
+        print *, 'time end ',setting%Time%End
+
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, '********************** HARD CODE END TIME FOR EXPERIMENT'
+        ! !setting%Time%End = 1.255d0
+        ! !setting%Time%End = 1.415d0  !% first problems
+        ! setting%Time%End = 1.45d0
+        ! setting%Time%EndEpoch = setting%Time%StartEpoch + setting%Time%End / real(secsperday,KIND=8)
+        ! print *, '********************** HARD CODE END TIME FOR EXPERIMENT'
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+
+        !stop 2934870
 
         !% null out the wet step if not using hydrology
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR

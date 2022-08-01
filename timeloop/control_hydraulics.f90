@@ -71,34 +71,6 @@ contains
 
         !%------------------------------------------------------------------
 
-        !% OLD STUFF BELOW -- REVIEW FOR PUMP TYPE ?
-        ! !%------------------------------------------------------------------
-        ! !% Description:
-        ! !% Updates the conmonR(:,:) array for control/monitoring operations
-        ! !% HACK -- this could possible be improved by creating a pack
-        ! !%         of all the control points that are extracted from the
-        ! !%         same image, which would reduce the communication. However
-        ! !%         this might not matter because we are unlikely to have
-        ! !%         a lot of control points.
-        ! !%------------------------------------------------------------------
-        ! !% Declarations:
-        !     integer :: ii
-        !     integer, pointer :: ci, eIdx
-        ! !%------------------------------------------------------------------
-        ! !% Aliases
-        ! !%------------------------------------------------------------------
-        ! !% Preliminaries
-        !     if (N_ConMon(this_image()) < 1) return !% exit if no c/m points
-        ! !%------------------------------------------------------------------
-        ! !% --- cycle through the control/monitoring points
-        ! do ii = 1, N_ConMon(this_image())
-        !     !% --- connected image
-        !     ci   => conmonI(ii,cmi_image)
-        !     eIdx => conmonI(ii,cmi_elem_idx)
-        !     !% --- copy all the control-type data from connected image
-        !     conmonR(ii,:) = elemR(eIdx,cmR_eR_col)[ci]
-        ! end do
-
     end subroutine control_update
 !%
 !%==========================================================================
@@ -113,7 +85,7 @@ contains
             integer :: nRules, nPremise, nThenAction, nElseAction, ii, rr
             integer :: iLeft, iRight, thisPremiseLevel, success, numUnique
             integer :: npoint
-            integer, allocatable :: location(:), islink(:), attribute(:)
+            integer, allocatable :: location(:), linknodesimType(:), attribute(:)
             integer, allocatable :: irank(:)
             character(64) :: subroutine_name = 'control_init_monitoring_and_action_from_EPASWMM'
         !%------------------------------------------------------------------
@@ -122,9 +94,9 @@ contains
         !%     involved with control and monitoring
         call interface_controls_count(nRules, nPremise, nThenAction, nElseAction)
 
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, '       nRules, nPremise, nThenAction, nElseAction'
-        ! print *, nRules, nPremise, nThenAction, nElseAction
+            ! print *, 'in ',trim(subroutine_name)
+            ! print *, '       nRules, nPremise, nThenAction, nElseAction'
+            ! print *, nRules, nPremise, nThenAction, nElseAction
 
         !% --- allocate and initialize the monitorI(:,:) array from control premise data
         call control_init_monitor_points(nPremise, nRules)
@@ -176,7 +148,7 @@ contains
         !     print *, monitorI(ii,mi_idx)
         !     print *, monitorI(ii,mi_image)
         !     print *, monitorI(ii,mi_elem_idx)
-        !     print *, monitorI(ii,mi_islink)
+        !     print *, monitorI(ii,mi_linknodesimType)
         !     print *, monitorI(ii,mi_linknode_idx)
         ! end do
 
@@ -247,7 +219,7 @@ contains
             integer :: ii
             real(8), pointer :: tDepth, tHead, tVolume, tInflow, tFlow
             real(8), pointer :: tSetting, tTimeLastSet
-            integer, pointer :: LinkNodeNum, isLink
+            integer, pointer :: LinkNodeNum, linknodesimType
             character(64) :: subroutine_name = 'control_update_EPASWMM_monitor_data'
         !%------------------------------------------------------------------
 
@@ -266,13 +238,13 @@ contains
             tSetting     => monitorR(ii,mr_Setting)
             tTimeLastSet => monitorR(ii,mr_TimeLastSet)
 
-            LinkNodeNum  => monitorI(ii,mi_linknode_idx)
-            isLink       => monitorI(ii,mi_islink)
+            LinkNodeNum     => monitorI(ii,mi_linknode_idx)
+            linknodesimType => monitorI(ii,mi_linknodesimType)
 
             !% --- send monitor data into EPA-SWMM
             call interface_controls_transfer_monitor_data &
                 (tDepth, tHead, tVolume, tInflow, tFlow, tSetting, &
-                 tTimeLastSet, LinkNodeNum, isLink)
+                 tTimeLastSet, LinkNodeNum, linknodesimType)
 
             !% DEBUGGING OUTPUT ================================================
                 ! print *, 'monitor ii  ',ii
@@ -284,9 +256,8 @@ contains
                 ! print *, 'Setting     ',tSetting
                 ! print *, 'timeLastSet ',tTimeLastSet
                 ! print *, 'linkNodeNum ',LinkNodeNum
-                ! print *, 'isLink      ',isLink
+                ! print *, 'linknodesimType      ',linknodesimType
             !% DEBUGGING OUTPUT ================================================
-
 
         end do
 
@@ -311,28 +282,33 @@ contains
             targetsetting => elemR(:,er_TargetSetting)
             timelastset   => elemR(:,er_TimeLastSet)
         !%------------------------------------------------------------------
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, ii, 'in ',trim(subroutine_name)
-            !% DEBUGGING OUTPUT ================================================
+        !% DEBUGGING OUTPUT ================================================
+            ! print *, ' '
+            ! print *, 'in ',trim(subroutine_name)
+        !% DEBUGGING OUTPUT ================================================
 
         !% --- cycle through the action points
         do ii=1,N_ActionPoint
+
+                ! print *, 'action point ',ii
             
             !% --- only modify elemR data for the image associated with the action point
             if (actionI(ii,ai_image) == this_image()) then
                 !% --- set the element and link indexes
                 Eidx => actionI(ii,ai_elem_idx)
                 Lidx => actionI(ii,ai_link_idx)
-                !print *, 'Eidx, Lidx, ',Eidx, Lidx
+                    ! print *, 'Eidx, Lidx, ',Eidx, Lidx
+                    ! print *, 'link name = ', trim(link%Names(Lidx)%str)
                 !% --- get the new target setting and time last set
                 call interface_controls_get_action_results &
                     (targetsetting(Eidx),timelastset(Eidx),Lidx)
 
                 !% DEBUGGING OUTPUT ================================================
                     ! print *, 'Action Point idx ',Eidx
-                    ! print *, 'Link idx         ',Lidx
+                    ! print *, 'Link idx         ',Lidx, '; link name = ', trim(link%Names(Lidx)%str)
                     ! print *, 'targetSetting    ',targetsetting(Eidx)
                     ! print *, 'timelastset      ',timelastset(Eidx)
+                    ! print *, 'elem setting before action taken ',elemR(Eidx,er_Setting)
                 !% DEBUGGING OUTPUT ================================================
 
             end if  
@@ -358,10 +334,10 @@ contains
             character(64) :: subroutine_name = 'control_update_setting'
         !%------------------------------------------------------------------
 
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, ' '
-                ! print *, 'in ',trim(subroutine_name)
-            !% DEBUGGING OUTPUT ================================================
+        !% DEBUGGING OUTPUT ================================================
+            ! print *, ' '
+            ! print *, 'in ',trim(subroutine_name)
+        !% DEBUGGING OUTPUT ================================================
 
         !% --- cycle through the action points (few)
         do ii = 1,N_ActionPoint
@@ -620,15 +596,14 @@ contains
         !% uses premises in the control logic of EPA-SWMM to identify
         !% the unique locations in the link and node arrays that are used
         !% as monitoring points for controls
-        !% DOES NOT INCLUDE PUMPS
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: nRules, nPremise
             integer :: ii, rr
             integer :: iLeft, iRight, thisPremiseLevel, success, numUnique
             integer :: npoint
-            integer, allocatable :: location(:), islink(:), attribute(:)
-            integer, allocatable :: irank(:)
+            integer, allocatable :: location(:), linknodesimType(:), attribute(:)
+            integer, allocatable :: irank(:), simulation(:)
             character(512) :: thisName
             character(64) :: subroutine_name = 'control_init_monitor_points'
         !%------------------------------------------------------------------
@@ -640,13 +615,13 @@ contains
 
         !% --- allocate temporary arrays
         allocate(location(npoint))
-        allocate(islink(npoint))
+        allocate(linknodesimType(npoint))
         allocate(attribute(npoint))
         allocate(irank(npoint))
-        location(:)  = nullvalueI
-        irank(:)     = nullvalueI
-        islink(:)    = nullvalueI
-        attribute(:) = nullvalueI
+        location(:)        = nullvalueI
+        irank(:)           = nullvalueI
+        linknodesimType(:) = nullvalueI
+        attribute(:)       = nullvalueI
 
         !% --- initial indexes for LHS and RHS of premise data
         iLeft   = 1
@@ -655,27 +630,27 @@ contains
         do rr = 0, nRules-1
             !% --- each rule starts at the 0 premise level
             thisPremiseLevel = 0
-            !print *, ' '
-            !print *, 'rr ',rr, thisPremiseLevel
+                ! print *, ' '
+                ! print *, 'rr ',rr, thisPremiseLevel
             success = 1
             do while (success == 1)
-                !print *, ' '
-                !print *, ' calling interface_controls_get_premise_data'
+                    ! print *, ' '
+                    ! print *, ' calling interface_controls_get_premise_data'
                 !% --- get the premise level data, and (if successful) increment thisPremiseLevel
                 call interface_controls_get_premise_data (                    &
-                    location (iLeft),       location (iRight),                &
-                    islink   (iLeft),       islink   (iRight),                &
-                    attribute(iLeft),       attribute(iRight),                &
+                    location       (iLeft), location       (iRight),          &
+                    linknodesimType(iLeft), linknodesimType(iRight),          &
+                    attribute      (iLeft), attribute      (iRight),          &
                     thisPremiseLevel, rr, success)
                 !% --- increment the storage location for the next premise data    
                 !%     if not successful the last location was not used
-                !print *, 'success ',success
+                    !   print *, 'success ',success
                 if (success) then
-                    !print *, 'thisPremiseLevel', thisPremiseLevel
-                    !print *, iLeft, iRight
-                    !print *, location(iLeft), location (iRight)
-                    !print *, islink(iLeft), islink(iRight)
-                    !print *, attribute(iLeft),attribute(iRight)
+                        ! print *, 'thisPremiseLevel', thisPremiseLevel
+                        ! print *, iLeft, iRight
+                        ! print *, location(iLeft), location (iRight)
+                        ! print *, linknodesimType(iLeft), linknodesimType(iRight)
+                        ! print *, attribute(iLeft),attribute(iRight)
                     iLeft  = iLeft  + twoI
                     iRight = iRight + twoI
 
@@ -688,43 +663,40 @@ contains
                     !% --- reset values
                     location(iLeft)  = nullvalueI
                     location(iRight) = nullvalueI
-                    islink(iLeft)    = nullvalueI
-                    islink(iRight)   = nullvalueI
+                    linknodesimType(iLeft)    = nullvalueI
+                    linknodesimType(iRight)   = nullvalueI
                     attribute(iLeft) = nullvalueI
                     attribute(iRight)= nullvalueI
                 end if
-                !print *, 'end of while'
+                    ! print *, 'end of while'
             end do
         end do
 
-        ! print *, ' '
-        ! print *, 'CONTROL monitoring points'
-        ! do ii=1,size(location)
-        !     print *, location(ii), islink(ii), attribute(ii)
-        ! end do
-
+            ! print *, ' '
+            ! print *, 'CONTROL monitoring points'
+            ! do ii=1,size(location)
+            !     print *, location(ii), linknodesimType(ii), attribute(ii)
+            ! end do
 
         !% --- find unique locations for premises, 
         !      note the max number is nullvalueI
         call util_unique_rank(location,irank,numUnique)
 
-        ! !% --- testing: printout the monitoring points
-        ! print *, 'CONTROL Unique monitoring points'
-        ! do ii=1,numUnique
-        !     print *, location(irank(ii)), islink(irank(ii)), attribute(irank(ii))
-        ! end do
+            ! !% --- testing: printout the monitoring points
+            ! print *, 'CONTROL Unique monitoring points'
+            ! do ii=1,numUnique
+            !     print *, location(irank(ii)), linknodesimType(irank(ii)), attribute(irank(ii))
+            ! end do
 
-        ! print *, ' LINKS'
-        ! do ii = 1,N_link
-        !     print *, ii, link%I(ii,li_idx), trim(reverseKey(link%I(ii,li_link_type))), ' , ', trim(link%Names(ii)%str)
-        ! end do
+            ! print *, ' LINKS'
+            ! do ii = 1,N_link
+            !     print *, ii, link%I(ii,li_idx), trim(reverseKey(link%I(ii,li_link_type))), ' , ', trim(link%Names(ii)%str)
+            ! end do
 
-        ! print *, ' NODES'
-        ! do ii = 1,N_node
-        !     print *, ii, node%I(ii,ni_idx), trim(reverseKey(node%I(ii,ni_node_type))), ' , ', trim(node%Names(ii)%str)
-        ! end do
-
-
+            ! print *, ' NODES'
+            ! do ii = 1,N_node
+            !     print *, ii, node%I(ii,ni_idx), trim(reverseKey(node%I(ii,ni_node_type))), ' , ', trim(node%Names(ii)%str)
+            ! end do
 
         !% --- set the number of monitoring points (removing the nullvalueI)
         !%     check for nullvalue in the unique location
@@ -738,54 +710,57 @@ contains
             ! print *, ' '
             ! print *, 'in control_init_monitor_points: MONITOR POINTS'
             ! do ii=1,N_monitorPoint
-            !     if (islink(irank(ii))) then
+            !     if (linknodesimType(irank(ii))) then
             !         thisName = trim(link%Names(location(irank(ii)))%str)
             !     else
             !         thisname = trim(node%Names(location(irank(ii)))%str)
             !     end if
-            !     write(*,"(A,i6,A,4i6)"),' LinkNode #, linkNode Name, isLink, attr: ',location(irank(ii)),trim(thisName),  islink(irank(ii)), attribute(irank(ii))
+            !     write(*,"(A,i6,A,4i6)"),' LinkNode #, linkNode Name, linknodesimType, attr: ',location(irank(ii)),trim(thisName),  linknodesimType(irank(ii)), attribute(irank(ii))
             ! end do
         !% END DEBUGGING ================================================
 
-        !% --- error checking
         if (N_MonitorPoint < 1) then
-            print *, 'CODE OR DATA ERROR: expected at least 1 monitoring point from controls'
-            call util_crashpoint(884723)
+            !% --- this occurs if only SIMULATION premises are found
+            !%     i.e., all the linknodesimTyp = -1
+            !% --- temporary set of # monitor points to 1 to allocate array
+            N_MonitorPoint = 1
+            call util_allocate_monitor_points()
+            N_MonitorPoint = 0
+        else
+            !% --- allocate the monitor point storage
+            call util_allocate_monitor_points()
+
+            !% --- store the unique monitoring points
+            !%     note, attributes are NOT stored because non-unique points have different
+            !%     attributes. If we later need attributes we will need non-unique storage
+            monitorI(:,mi_linknode_idx)    = location(irank(1:N_MonitorPoint))
+            monitorI(:,mi_linknodesimType) = linknodesimType(irank(1:N_MonitorPoint))
+
+            !% --- error checking
+            !      print *, 'checking that link/node location is in index set'
+            do ii=1,N_MonitorPoint
+                !print *, 'monitorI linknodesimType: ',int(monitorI(ii,mi_linknodesimType))
+                select case (monitorI(ii,mi_linknodesimType))
+                case (0)  !node
+                    rr = count(node%I(:,ni_idx) == monitorI(ii,mi_linknode_idx))
+                case (1)  ! link
+                    rr = count(link%I(:,li_idx) == monitorI(ii,mi_linknode_idx))
+                case default
+                    print *, 'CODE ERROR: unexpected default case'
+                    call util_crashpoint(448229)
+                end select
+                if (rr .ne. 1) then
+                    print *, 'CODE OR DATA ERROR: monitor point does not match node or link indexes'
+                    call util_crashpoint(598272)
+                end if
+            end do
         end if
-
-        !% --- allocate the monitor point storage
-        call util_allocate_monitor_points()
-
-        !% --- store the unique monitoring points
-        !%     note, attributes are NOT stored because non-unique points have different
-        !%     attributes. If we later need attributes we will need non-unique storage
-        monitorI(:,mi_linknode_idx) = location(irank(1:N_MonitorPoint))
-        monitorI(:,mi_islink)       = islink(irank(1:N_MonitorPoint))
-
-        !% --- error checking
-        !      print *, 'checking that link/node location is in index set'
-        do ii=1,N_MonitorPoint
-            !print *, 'monitorI islink: ',int(monitorI(ii,mi_islink))
-            select case (monitorI(ii,mi_islink))
-            case (0)  !node
-                rr = count(node%I(:,ni_idx) == monitorI(ii,mi_linknode_idx))
-            case (1)  ! link
-                rr = count(link%I(:,li_idx) == monitorI(ii,mi_linknode_idx))
-            case default
-                print *, 'CODE ERROR: unexpected default case'
-                call util_crashpoint(448229)
-            end select
-            if (rr .ne. 1) then
-                print *, 'CODE OR DATA ERROR: monitor point does not match node or link indexes'
-                call util_crashpoint(598272)
-            end if
-        end do
 
         !%------------------------------------------------------------------
         !% Closing:
             deallocate(irank)
             deallocate(location)
-            deallocate(islink)
+            deallocate(linknodesimType)
             deallocate(attribute)
 
     end subroutine control_init_monitor_points
@@ -802,7 +777,7 @@ contains
             integer, intent(in) :: nThenAction, nElseAction, nRules
             integer :: npoint, rr, ii, kIdx, thisActionLevel, success, numUnique
             integer :: isThen
-            integer, allocatable :: location(:), islink(:), attribute(:)
+            integer, allocatable :: location(:), linknodesimType(:), attribute(:)
             integer, allocatable :: irank(:)
             character(64) :: subroutine_name = 'control_init_action_points'
         !%------------------------------------------------------------------
@@ -815,12 +790,12 @@ contains
 
         !% --- allocate temporary arrays
         allocate(location(npoint))
-        allocate(islink(npoint))
+        allocate(linknodesimType(npoint))
         allocate(attribute(npoint))
         allocate(irank(npoint))
         location(:)  = nullvalueI
         irank(:)     = nullvalueI
-        islink(:)    = nullvalueI
+        linknodesimType(:)    = nullvalueI
         attribute(:) = nullvalueI
 
         kIdx = 1 !% index for the action storage
@@ -830,8 +805,8 @@ contains
             !% --- get the "then" actions
             !% --- each rule starts at the 0 action level
             thisActionLevel = 0
-            !print *, ' '
-            !print *, 'rr ',rr, thisActionLevel
+                ! print *, ' '
+                ! print *, 'rr ',rr, thisActionLevel
             success = 1
             do while (success == 1)
                 isThen = 1
@@ -855,21 +830,21 @@ contains
             end do   
         end do
 
-        ! print *, 'all action points in ',trim(subroutine_name)
-        ! do ii=1,npoint
-        !     print *, ii, location(ii), attribute(ii)
-        ! end do
+            ! print *, 'all action points in ',trim(subroutine_name)
+            ! do ii=1,npoint
+            !     print *, ii, location(ii), attribute(ii)
+            ! end do
 
         !% --- find unique locations for actions, 
         !      note the max number is nullvalueI
         call util_unique_rank(location,irank,numUnique)
 
-        ! !% --- testing: printout the action points
-        ! print *, 'Unique action points'
-        ! do ii=1,numUnique
-        !     print *, ii, location(irank(ii))
-        ! end do
-        ! print *, 'end unique'
+            ! !% --- testing: printout the action points
+            ! print *, 'Unique action points'
+            ! do ii=1,numUnique
+            !     print *, ii, location(irank(ii))
+            ! end do
+            ! print *, 'end unique'
 
         !% --- set the number of action points (removing the nullvalueI)
         !%     check for nullvalue in the unique location
@@ -879,13 +854,13 @@ contains
             N_ActionPoint = numUnique
         end if
 
-        ! print *, 'N_actionPoint ',N_ActionPoint
+            ! print *, 'N_actionPoint ',N_ActionPoint
 
-        ! !% --- testing: printout the action points
-        ! print *, 'Unique action points '
-        ! do ii=1,N_ActionPoint
-        !     print *, location(irank(ii)),  attribute(irank(ii))
-        ! end do
+            ! !% --- testing: printout the action points
+            ! print *, 'Unique action points '
+            ! do ii=1,N_ActionPoint
+            !     print *, location(irank(ii)),  attribute(irank(ii))
+            ! end do
 
         !% --- error checking
         if (N_ActionPoint < 1) then
@@ -905,12 +880,12 @@ contains
             ! print *, 'all action points'
             ! do ii = 1,N_ActionPoint
             !     write(*,"(A,3i6)") ' actionID, idx ',ii, actionI(ii,ai_idx)
-            !     print *, 'Link #, link Name ', actionI(ii,ai_link_idx), trim(link%Names(actionI(ii,ai_link_idx))%str)
+            !     print *, 'Link #, link Name ', actionI(ii,ai_link_idx), '; ', trim(link%Names(actionI(ii,ai_link_idx))%str)
             ! end do
         !% END DEBUGGING ===================================================o
 
         !% --- error checking
-        !      print *, 'checking that link location is in index set'
+            ! print *, 'checking that link location is in index set'
         do ii=1,N_ActionPoint
             rr = count(link%I(:,li_idx) == actionI(ii,ai_link_idx))
             if (rr .ne. 1) then
@@ -923,7 +898,8 @@ contains
         !% Closing
             deallocate(irank)
             deallocate(location)
-            deallocate(islink)
+            deallocate(linknodesimType)
+            deallocate(attribute)
 
     end subroutine control_init_action_points
 !%    
@@ -947,14 +923,14 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer :: ii
-            integer, pointer :: isLink(:), LNidx(:), eIdx(:)
+            integer, pointer :: linknodesimType(:), LNidx(:), eIdx(:)
             integer, pointer :: nodeType(:), numElement(:)
             integer, pointer :: monitorImage(:), linkImage(:), nodeImage(:)
             integer, pointer :: elemStart(:), elemEnd(:), Lidx, Nidx
             character(64) :: subroutine_name = 'control_init_monitor_elements'
         !%------------------------------------------------------------------
         !% Aliases
-            isLink => monitorI(:,mi_islink)
+            linknodesimType => monitorI(:,mi_linknodesimType)
             LNidx  => monitorI(:,mi_linknode_idx)
             eIdx   => monitorI(:,mi_elem_idx)
             monitorImage => monitorI(:,mi_image)
@@ -971,7 +947,7 @@ contains
             monitorI(ii,mi_idx) = ii
 
             !% --- each point is either associated with a link or node
-            select case (isLink(ii))
+            select case (linknodesimType(ii))
             case (1) !% is link
                 Lidx => LNidx(ii) !% --- EPA-SWMM link index
                 monitorImage(ii) = linkImage(Lidx)
@@ -1027,7 +1003,7 @@ contains
                 end select
 
             case default
-                print *, 'CODE ERROR: Unexpected case default, monitor(:,mi_islink) unsupported value of ',isLink(ii)
+                print *, 'CODE ERROR: Unexpected case default, monitor(:,mi_linknodesimType) unsupported value of ',linknodesimType(ii)
                 call util_crashpoint(58723)
             end select
 
@@ -1035,10 +1011,10 @@ contains
                 ! print *, ' '
                 ! print *, 'in ',trim(subroutine_name), ': MONITOR ELEMENTS'
                 ! print *, 'monitor ii=  ',ii
-                ! print *, 'islink       ',isLink(ii)
+                ! print *, 'linknodesimType       ',linknodesimType(ii)
                 ! print *, 'element #    ',eIdx(ii)
                 ! print *, 'element Type ',trim(reverseKey(elemI(eIdx(ii),ei_elementType)))
-                ! if (isLink(ii)) then
+                ! if (linknodesimType(ii)) then
                 !     print *, 'link #, type ',LNidx(ii), trim(link%Names(LnIdx(ii))%str)
                 ! else
                 !     print *, 'node #, type ',LNidx(ii), trim(node%Names(LnIdx(ii))%str)

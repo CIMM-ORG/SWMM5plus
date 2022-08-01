@@ -49,7 +49,7 @@ module runge_kutta2
         !% --- reset the overflow counter
         elemR(:,er_VolumeOverFlow) = zeroR
 
-           ! call util_CLprint ('AAA  start of RK2 ==============================')
+        !    call util_CLprint ('AAA  start of RK2 ==============================')
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
@@ -151,7 +151,7 @@ module runge_kutta2
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
-            ! call util_CLprint ('ZZZ  after accumulate overflow step 2')
+        !   call util_CLprint ('ZZZ  after accumulate overflow step 2')
 
         !%-----------------------------------------------------------------
         !% closing
@@ -304,19 +304,19 @@ module runge_kutta2
         call rk2_continuity_step_ETM(istep)
 
             ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
-            ! call util_CLprint ('after rk2 continuity step etm')
+            !  call util_CLprint ('after rk2 continuity step etm')
 
         !% only adjust extremely small element volumes that have been introduced
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume/twentyR, col_elemP(ep_CCJM_H_ETM), .true.)
 
             ! print *, this_image(),'    bbbb  after rk2 call to adjust limit by zero',this_image()
-            ! call util_CLprint ('after rk2 call to adjust limit by zero')
+            !  call util_CLprint ('after rk2 call to adjust limit by zero')
 
         !% perform the momentum step of the rk2 for ETM
         call rk2_momentum_step_ETM(istep)
 
             ! print *, this_image(),'    cccc  after rk2 call to rk2_momentum_step_ETM',this_image()
-            !   call util_CLprint (' after rk2 call to rk2_momentum_step_ETM')
+            !    call util_CLprint (' after rk2 call to rk2_momentum_step_ETM')
 
     end subroutine rk2_step_ETM
 !%
@@ -387,7 +387,7 @@ module runge_kutta2
         !% compute slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
             !% all the closed conduit elements
-            thisPackCol => col_elemP(ep_Closed_Elements)
+            thisPackCol => col_elemP(ep_CC_Closed_Elements)
             Npack => npack_elemP(thisPackCol)
             if (Npack > 0) then
                 call ll_slot_computation_ETM (thisPackCol, Npack)

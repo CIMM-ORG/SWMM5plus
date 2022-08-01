@@ -50,9 +50,32 @@ module define_globals
     ! integer :: iet(7) = (/ 2, 4, 13, 1, 1, 1, 1/)
     ! integer :: ift(6) = (/ 4, 1, 2, 2, 2, 2/)
 
-    integer :: iet(7) = (/ 6,  7,  8,  9,  10,  11, 12/)
-    integer :: ift(7) = (/   7,  8,  9, 10,   11, 12,  13/)
+    !% for Vasconcelos at 15 m nominal
+    ! integer :: iet(8) = (/    24,  25,  5,  1,  3,  12,  14,  13/)
+    ! integer :: ift(5) = (/ 22,   21,  4,           2,   11 /)
+
+    !% for Vasconcelos at 5 m nominal
+    ! integer :: iet(10) = (/    28,   26,    29,   5,  1,  3,  12,  14,  16, 15   /)
+    ! integer :: ift(7) = (/  26,   24,    23,    4,           2,  11,  13 /)
+
+    !% for Vasconcelows at 1 m nominal
+
+    !% to capture the junction
+!    integer :: iet(12) = (/    50,     43,    37,   51,    5,  1,  3,   12,    18,    25,    27, 26  /)
+!    integer :: ift(9)  = (/ 48,    47,      40,   34,   4,            2,    11,    17,   24  /)
+
+    !% to capture L1 (central) at 1 m nominal
+
+    integer :: iet(7) = (/15,16,17,18,19,20,21/)
+
+    !% for Vasconcelos at 0.1 m nominal
+    ! integer :: iet(12) = (/    308,     225,    166,    309,    5,  1,  3,   12,    82,    154,    156, 155  /)
+    ! integer :: ift(9)  = (/ 306,    223,     165,    163,   4,            2,    11,    80,     153  /)
     
+   ! integer :: iet(7) = (/ 16,17, 18, 19, 20, 21, 22 /)
+
+    !integer :: iet(7) = (/ 68, 69, 70, 71, 72, 73, 74 /)
+
     integer(kind=8) :: irecCount = 0
 
     character (len=256) ::  outstring[*]
@@ -314,7 +337,7 @@ module define_globals
     real(8), parameter :: onethousandR = 1000.d0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
-    real(8), parameter :: oneOneThounsandthR = oneR / onethousandR
+    real(8), parameter :: oneOneThousandthR = oneR / onethousandR
     real(8), parameter :: oneOneHundredthR = oneR / onehundredR
     real(8), parameter :: onetenthR = oneR / tenR
     real(8), parameter :: oneeighthR = oneR / eightR
