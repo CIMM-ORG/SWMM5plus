@@ -49,7 +49,9 @@ def convert_dset_to_csv(file_name,dset_name):
 cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
-
+num_processors = 1
+settings_path  = ""
+#REMOVE COMMENTS TO RUN FULL CODE AGAIN !!!!!!!!!!!!!!!!!!!!
 #removes the SWMM5_C code from last comparison run and rebuilds it
 os.system('rm -rf swmm5_C')
 os.system('cd interface/src \n make -f Makefile_swmm5 ')
@@ -60,12 +62,54 @@ if(len(sys.argv) < 2):
     exit()
 
 #assuming the inp file is in the same directory as script 
-if(str.rfind(sys.argv[1],'/') == -1):
-    inp_name = sys.argv[1][::len(sys.argv[1])-4]
+#triming the input provided to store the input file name
+#if(str.rfind(sys.argv[1],'/') == -1):
+#    inp_name = sys.argv[1][::len(sys.argv[1])-4]
 
-else:    
-    index = str.rfind(sys.argv[1],'/')
-    inp_name = sys.argv[1][index+1:len(sys.argv[1])-4]
+#else:    
+#    index = str.rfind(sys.argv[1],'/')
+#    inp_name = sys.argv[1][index+1:len(sys.argv[1])-4]
+
+if(sys.argv[1] == '-h'):
+    print("--------------USEFUL INFO FOR RUNNING SCRIPT---------------")
+    print("The format for running this script is python comparison_script.py -i *local path to input file* -s *local path to json setting file* -n *num of processors* ")
+    print("If no setting file given it will use the default settings of swmm5_plus ")
+    print("If no processor amount given, default is 1 processor")
+    exit()
+
+if((len(sys.argv)%2) != 0):
+
+    for arg_id in range(1,len(sys.argv),2):
+        
+        #if(len(sys.argv)-1 == arg_id+1):
+        #    print("inside of last arg")
+        #    arg = sys.argv[arg_id+1][:len(sys.argv[arg_id+1])-1]
+        #    print(arg)
+        #else:
+        arg = sys.argv[arg_id+1] 
+
+
+        if(sys.argv[arg_id] == "-s"):
+            settings_path  = arg
+        if(sys.argv[arg_id] == "-n"):
+            num_processors = arg
+        if(sys.argv[arg_id] == "-i"):
+            if(str.rfind(sys.argv[arg_id+1],'/') == -1):
+                inp_name = sys.argv[arg_id+1][::len(sys.argv[1])-4]
+            else:
+                index = str.rfind(sys.argv[arg_id+1],'/')
+                inp_name = sys.argv[arg_id+1][index+1:len(sys.argv[arg_id+1])-4]
+            inp_path = cwd + '/' + arg
+else:
+    print("incorrect amount of arguments given")
+    print("run python comparison_script.py -h for info on using the script")
+    exit()
+
+print(inp_name)
+print(inp_path)
+#print(num_processors)
+#print(settings_path)
+
 
 #setting the output directory
 output_dir = inp_name+"_comparison"
@@ -77,7 +121,7 @@ os.system('cd ' + output_dir)
 os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
 
 #setting the input, output and report paths needed for running SWMM5_C 
-inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
+#inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
 out_path = output_dir_timestamped + inp_name +'.out'
 rpt_path = output_dir_timestamped + inp_name +'.rpt'
 
@@ -86,13 +130,19 @@ rpt_path = output_dir_timestamped + inp_name +'.rpt'
 os.system('./swmm5_C '+inp_path+' '+rpt_path+' '+out_path)
 
 #build and run swmm5_plus
-os.system('cd build \n make')
-os.system('cd build \n ./SWMM -i ' + inp_path + ' -o '+cwd+'/'+output_dir_timestamped)
+os.system("export FOR_COARRAY_NUM_IMAGES="+str(num_processors))
+os.system('cd build \n make \n mv SWMM ..')
+print(output_dir_timestamped)
 
+if(settings_path==""):
+    os.system('./SWMM -i ' + inp_path + ' -o '+cwd+'/'+output_dir_timestamped)
+else:
+    os.system('./SWMM -i ' + inp_path + ' -s ' + settings_path + ' -o '+cwd+'/'+output_dir_timestamped)
 
 #locating the swmm5_plus output directory inside of the timestamped folder
 #We have to loop because when swmm5_plus runs it also names the output with a timestamped folder so we don't know it before runtime
 for x in os.listdir(output_dir_timestamped):
+    print(x)
 
     if(str.rfind(x,'.') == -1):
         swmm5_plus_dir = cwd+'/'+output_dir_timestamped+'' + x
