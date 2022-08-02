@@ -110,7 +110,7 @@ contains
         ! write(setting%File%UnitNumber%debug_setup_linkR_file, '(A)')                            &
         !     "lr_Length,lr_AdjustedLength,lr_InletOffset,lr_OutletOffset,lr_BreadthScale," // &
         !     "lr_TopWidth,lr_ElementLength,lr_Slope,lr_LeftSlope,lr_RightSlope,"         // &
-        !     "lr_Roughness,lr_InitialFlowrate,lr_InitialDepth,lr_InitialUpstreamDepth,"  // &
+        !     "lr_Roughness,lr_FlowrateInitial,lr_InitialDepth,lr_InitialUpstreamDepth,"  // &
         !     "lr_InitialDnstreamDepth,lr_ParabolaValue,lr_SideSlope,lr_DischargeCoeff1," // &
         !     "lr_DischargeCoeff2,lr_FullDepth"  
 

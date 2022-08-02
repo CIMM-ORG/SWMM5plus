@@ -68,7 +68,7 @@
         "NominalElemLength" : 10.00,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "LinkShortingFactor" : 0.33
+        "JunctionBranchLengthFactor" : 0.33
     },
     "Eps" : {
         "FroudeJump" : 0.1
@@ -141,6 +141,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,

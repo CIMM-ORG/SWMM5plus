@@ -44,6 +44,7 @@ module lowlevel_rk2
     public :: ll_flowrate_and_velocity_JB
     !public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
+    public :: ll_get_dynamic_roughness
 
     contains
 !%==========================================================================
@@ -597,10 +598,12 @@ module lowlevel_rk2
         integer, intent(in) :: outCol, thisCol, Npack
         real(8), pointer :: velocity(:), mn(:), rh(:), oneVec(:), grav
         integer, pointer :: thisP(:)
+        character(64) :: subroutine_name = 'll_momentum_gamma_CC'
         !%------------------------------------------------------------------------------
         thisP    => elemP(1:Npack,thisCol)
         velocity => elemR(:,er_velocity)
-        mn       => elemR(:,er_Roughness)
+        !mn       => elemR(:,er_Roughness)
+        mn       => elemR(:,er_Roughness_Dynamic)
         rh       => elemR(:,er_HydRadius)
         oneVec   => elemR(:,er_ones)
         grav => setting%constant%gravity
@@ -614,6 +617,9 @@ module lowlevel_rk2
 
     !    print *, 'in ll_momentum_gamma_CC'
     !    print *, elemR(iet(4),outCol)      
+
+                ! print *, 'in ', trim(subroutine_name)
+                ! print *, mn(thisP)
 
     end subroutine ll_momentum_gamma_CC
 !%
@@ -1527,6 +1533,44 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         end select
 
     end subroutine ll_slot_computation_ETM
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_get_dynamic_roughness (thisP, dpnorm_col) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% called to get the dynamic roughness for a set of points thisP(:)
+        !% the dpnorm_col is the location where the normalized pressured 
+        !% delta is stored.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisP(:), dpnorm_col
+            real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
+            real(8), pointer    :: length(:)
+            real(8), pointer    :: alpha, dt
+            character(64) :: subroutine_name ='ll_get_dynamic_roughness'
+        !%------------------------------------------------------------------  
+        !% Aliases
+            dt           => setting%Time%Hydraulics%Dt
+            alpha        => setting%Solver%Roughness%alpha
+            mn           => elemR(:,er_Roughness)
+            dynamic_mn   => elemR(:,er_Roughness_Dynamic)
+            dp_norm      => elemR(:,dpnorm_col)
+            length       => elemR(:,er_Length)
+        !%------------------------------------------------------------------
+
+        dynamic_mn(thisP) =  mn(thisP) &
+            +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+            
+        !% OTHER VERSIONS EXPERIMENTED WITH 20220802
+             ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR ) 
+
+    end subroutine ll_get_dynamic_roughness
 !%
 !%==========================================================================
 !%==========================================================================

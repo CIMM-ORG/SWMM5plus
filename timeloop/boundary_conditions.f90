@@ -9,8 +9,10 @@ module boundary_conditions
     use define_settings, only: setting
     use face, only: face_interpolate_bc
     use define_xsect_tables
+    use geometry
     use xsect_tables
     use utility_crash
+    use utility_datetime, only: util_datetime_seconds_precision
 
     implicit none
 
@@ -458,13 +460,17 @@ contains
             !% --- get the next head time from the Time Series and advance the Tseries.x1 and Tseries.x2 locations
             !%     This uses the Epoch time as the last possible time (EPA-SWMM indexes of epoch time)
             new_head_time = interface_get_next_head_time(bc_idx, new_head_time,  timeEndEpoch)
+            new_head_time  = util_datetime_seconds_precision (new_head_time)
+            !print *, 'ttime ',ttime
 
-            ! print *, ii, 'new_head_time', new_head_time, timeEndEpoch
+            !print *, ii, 'new_head_time', new_head_time, timeEndEpoch
 
             !new_head_time = min(setting%Time%End, interface_get_next_head_time(bc_idx, setting%Time%Start))
 
             !% --- truncate the time in the table to the minimum of the end time and the next time
             new_head_time = min(timeEnd,new_head_time)
+
+            !print *, ii, 'limited new_head_time ',new_head_time
 
             !% --- set the timeseries to the new head time
             BC%headTimeseries(bc_idx, ii, brts_time)  = new_head_time
@@ -499,8 +505,9 @@ contains
         !%-------------------------------------------------------------------
         !% Declarations:
             real(8) :: normDepth, critDepth
-            real(8), pointer :: tnow, interpV(:)
+            real(8), pointer :: tnow, flowValue(:)
             integer :: ii,  lower_idx , mm
+            integer :: thisBCtype = BCFlow
             integer, pointer :: nodeIdx, faceIdx, elemUpIdx, upper_idx(:)
             character(64) :: subroutine_name = 'bc_interpolate_flow'
         !%-------------------------------------------------------------------
@@ -510,7 +517,7 @@ contains
         !%-------------------------------------------------------------------
         !% Aliases
             tnow      => setting%Time%Now
-            interpV   => BC%flowR(:,br_value)
+            flowValue   => BC%flowR(:,br_value)
             upper_idx => BC%flowI(:,bi_TS_upper_idx)
         !%-------------------------------------------------------------------    
 
@@ -519,11 +526,11 @@ contains
             lower_idx = upper_idx(ii) - 1
 
             call bc_interpolate_timeseries ( &
-                    interpV(ii), BC%flowTimeSeries, tnow, ii, lower_idx, upper_idx(ii) )
+                    flowValue(ii), BC%flowTimeSeries, tnow, ii, lower_idx, upper_idx(ii), thisBCtype )
 
             !% HACK: do not let BC value to get smaller than zero
             !%       the absolute value is needed because of how max() handles very small differences.
-            interpV(ii) = abs(max(interpV(ii),zeroR))
+            flowValue(ii) = abs(max(flowValue(ii),zeroR))
             
             !% --- error checking
             ! if (lower_idx <= 0) then 
@@ -535,30 +542,30 @@ contains
 
             ! !%--- disabled interpolation: take the upper index value
             ! if (setting%BC%disableInterpolationYN) then
-            !     interpV(ii) = BC%flowTimeseries(ii, upper_idx(ii), brts_value)  
+            !     flowValue(ii) = BC%flowTimeseries(ii, upper_idx(ii), brts_value)  
             !     return
             ! end if
 
             ! !% --- constant value in time series, no need to do the interpolation
             ! if (   BC%flowTimeseries(ii, lower_idx    , brts_value)        &
             !     == BC%flowTimeseries(ii, upper_idx(ii), brts_value) ) then 
-            !     interpV(ii) = BC%flowTimeseries(ii, lower_idx, brts_value)
+            !     flowValue(ii) = BC%flowTimeseries(ii, lower_idx, brts_value)
             !     return
             ! end if
 
             ! !% --- handle exact matches to time
             ! if (BC%flowTimeseries(ii, lower_idx, brts_time) == tnow) then                            
             !     !% ---  take the existing lower index BC data, no need to do the interpolation
-            !     interpV(ii) = BC%flowTimeseries(ii, lower_idx, brts_value)
+            !     flowValue(ii) = BC%flowTimeseries(ii, lower_idx, brts_value)
             !     return
             ! elseif (BC%flowTimeseries(ii, upper_idx(ii), brts_time) == tnow) then  
             !     !% --- take the existing upper index BC data, no need to do the interpolation
-            !     interpV(ii) = BC%flowTimeseries(ii, upper_idx(ii), brts_value)
+            !     flowValue(ii) = BC%flowTimeseries(ii, upper_idx(ii), brts_value)
             !     return
             ! end if
              
             ! !% --- standard interpolation
-            ! interpV(ii) = util_interpolate_linear(          &
+            ! flowValue(ii) = util_interpolate_linear(          &
             !     tnow,                                       &
             !     BC%flowTimeseries(ii, lower_idx    , brts_time),  &
             !     BC%flowTimeseries(ii, upper_idx(ii), brts_time),  &
@@ -566,9 +573,9 @@ contains
             !     BC%flowTimeseries(ii, upper_idx(ii), brts_value))                   
           
             !% --- error checking
-            if (interpV(ii) < zeroR) then
+            if (flowValue(ii) < zeroR) then
                 print *, ' '
-                print *, 'BC',ii,interpV(ii)
+                print *, 'BC',ii,flowValue(ii)
                 print *, upper_idx(ii), lower_idx
                 print *, 'a', (BC%flowTimeseries(ii, lower_idx, brts_time) == tnow)
                 print *, 'b', (lower_idx > 0)
@@ -579,7 +586,7 @@ contains
                 print *, BC%flowTimeseries(ii, upper_idx(ii), brts_time)
                 print *, BC%flowTimeseries(ii, lower_idx    , brts_value)
                 print *, BC%flowTimeseries(ii, upper_idx(ii), brts_value)
-                print *, 'result ',interpV(ii)
+                print *, 'result ',flowValue(ii)
                 print *, ' ' 
                 do mm=1,size(BC%flowTimeseries,DIM=2)
                     print *, BC%flowTimeseries(ii, mm,  brts_value)
@@ -589,6 +596,7 @@ contains
             end if
             
         end do
+    
 
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -607,9 +615,11 @@ contains
         !%-------------------------------------------------------------------
         !% Declarations:
             real(8) :: normDepth, critDepth
-            real(8), pointer :: tnow, interpV(:)
+            real(8), pointer :: tnow, headValue(:)
             integer :: ii,  lower_idx , mm
-            integer, pointer :: nodeIdx, faceIdx, elemUpIdx, upper_idx(:)
+            integer :: thisBCtype = BCHead
+            integer, pointer :: nIdx, fIdx, upper_idx(:), eIdx
+            
             character(64) :: subroutine_name = 'bc_interpolate_head'
         !%-------------------------------------------------------------------
         !% Preliminaries:   
@@ -618,177 +628,152 @@ contains
         !%-------------------------------------------------------------------
         !% Aliases
             tnow      => setting%Time%Now
-            interpV   => BC%headR(:,br_value)
+            headValue   => BC%headR(:,br_value)
             upper_idx => BC%headI(:,bi_TS_upper_idx)
         !%-------------------------------------------------------------------    
         !% --- cycle throuhg the head BC
         do ii=1, N_headBC
-            nodeIdx     => BC%headI(ii,bi_node_idx)
-            faceIdx     => BC%headI(ii,bi_face_idx)
-            elemUpIdx   => faceI(faceIdx,fi_Melem_uL)
+            !print *, ii, 'in ',trim(subroutine_name)
+
+            nIdx        => BC%headI(ii,bi_node_idx)
+            fIdx        => BC%headI(ii,bi_face_idx)
+            eIdx        => BC%headI(ii,bi_elem_idx)
+
+            !print *, nIdx, fIdx, eIdx
+
+            !% --- Error check: fail if offset present
+            if (link%R(node%I(nIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
+                print *, 'CODE ERROR: OUTFALL WITH OFFSET NEEDS ALGORITHM DESIGN'
+                print *, 'offset', link%R(node%I(nIdx,ni_Mlink_u1),lr_OutletOffset)
+                print *, 'this Node idx = ',nIdx, '; name =', trim(node%Names(nIdx)%str)
+                print *, 'Link upstream idx =',node%I(nIdx,ni_Mlink_u1),'; name = ', trim(link%Names(node%I(nIdx,ni_Mlink_u1))%str)
+                print *, 'Previously this error was seen when upstream of outfall was a weir or orifice'
+                call util_crashpoint(6098734)
+            end if
             
+            !% --- select outfall type
             select case (BC%headI(ii,bi_subcategory))
 
-            case (BCH_tseries,BCH_tidal)
+            case (BCH_tidal)
+                print *, 'ALGORITHM NEEDED FOR BCH_tidal ',trim(subroutine_name)
+                call util_crashpoint(2098734)
+
+            case (BCH_tseries)
                 !% --- get the index below the current upper index
                 lower_idx   =  upper_idx(ii) - 1
 
+                ! print *, ii
+                ! print *, 'tnow ',tnow
+                ! print *, 'indexes ',lower_idx, upper_idx(ii)
+
                 call bc_interpolate_timeseries ( &
-                    interpV(ii), BC%headTimeSeries, tnow, ii, lower_idx, upper_idx(ii) )
+                    headValue(ii), BC%headTimeSeries, tnow, ii, lower_idx, upper_idx(ii), thisBCtype )
 
-                !% --- HACK assuming that timeseries is stage (not elevation)
-                interpV(ii) = interpV(ii) + faceR(faceIdx,fr_Zbottom) - setting%Solver%ReferenceHead
+                !% --- the time series are elevation (not depth)
+                headValue(ii) = headValue(ii) - setting%Solver%ReferenceHead
 
-                ! !% Find the closest index first, assign it to lower_idx just for now
-                ! if (BC%headTimeseries(ii, lower_idx, brts_time) == tnow) then
-                !     !% exact match -- directly take the existing BC data, no need to do the interpolation, 
-                !     interpV(ii) = BC%headTimeseries(ii, lower_idx, brts_value)
-                ! else if (lower_idx > 0) then
-                !     if ( BC%headTimeseries(ii, lower_idx, brts_value) == BC%headTimeseries(ii, upper_idx(ii), brts_value)) then
-                !         !% constant value, no need to do the interpolation
-                !         interpV(ii) = BC%headTimeseries(ii, lower_idx, brts_value)
-                !     else
-                !         !% do the interpolation -- NOTE the setting..disableInterpolationYN not available here
-                !         interpV(ii) = util_interpolate_linear( &
-                !             tnow, &
-                !             BC%headTimeseries(ii, lower_idx    , brts_time), &
-                !             BC%headTimeseries(ii, upper_idx(ii), brts_time), &
-                !             BC%headTimeseries(ii, lower_idx    , brts_value), &
-                !             BC%headTimeseries(ii, upper_idx(ii), brts_value))
-                !     end if
-                ! else 
-                !     !% lower_idx <= 0
-                !     write(*,*), 'CODE ERROR? unexpected else in BC'
-                !     !stop 
-                !     call util_crashpoint( 786985)    
-                !     !return
-                ! end if
+                !% --- error check
+                if (headValue(ii) .le. faceR(fIdx,fr_Zbottom)) then
+                    print *, ' '
+                    print *, '*** WARNING ***'
+                    print *, '*** time series outfall stage is below the channel bottom at OUTFALL ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    print *, '*** value is reset to smaller of normal or critical depth'
+                    print *, ' '
+                    print *, 'head before fixing ',headValue(ii)
+                    print *, ' '
+                    critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
+                    normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+                    !% --- BC head is the depth + Zbottom - referencehead
+                    headValue(ii) = faceR(fIdx,fr_Zbottom)        &
+                                  + min(critDepth,normDepth)      &
+                                  - setting%Solver%ReferenceHead
+                    !call util_crashpoint(566823)
+                end if
+
+                !print *, '*** head value at outfall ',headValue(ii)
+
             case (BCH_fixed)
-                !% add the fixed stage to the zbottom
-                interpV(ii) = faceR(faceIdx,fr_Zbottom) + interface_get_headBC(ii, setting%Time%Start) &
-                            - setting%Solver%ReferenceHead
-            case (BCH_normal)
-                !% HACK -- this all needs testing and debugging
-                !% for normal dnBC, if the connecting link has an offset,
-                !% the depth in the node is zero
-                if (link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
-                    interpV(ii) = faceR(faceIdx,fr_Zbottom) + setting%ZeroValue%Depth
-                else
-                    if (elemI(elemUpIdx,ei_elementType) == CC) then
-                        interpV(ii) = elemR(elemUpIdx,er_Depth) + faceR(faceIdx,fr_Zbottom)
-                    else
-                        !% for normal dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
-                        !% the depth in the node is zero
-                        interpV(ii) =  faceR(faceIdx,fr_Zbottom) + setting%ZeroValue%Depth
-                    end if
-                end if
-            case (BCH_free)
-                
-                !% HACK -- this all needs testing and debugging
-                !% for free dnBC, if the connecting link has an offset,
-                !% the depth in the node is zero
-                ! print*, link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset), 'outlet offset'
-                if (link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
-                    interpV(ii) = faceR(faceIdx,fr_Zbottom)
-                else
-                    if (elemI(elemUpIdx,ei_elementType) == CC) then
-                        normDepth = elemR(elemUpIdx,er_Depth)
-                        critDepth = bc_get_CC_critical_depth(elemUpIdx)
-                        interpV(ii) = min(critDepth,normDepth) + faceR(faceIdx,fr_Zbottom)
-                    else
-                        !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
-                        !% the depth in the node is zero
-                        interpV(ii) =  faceR(faceIdx,fr_Zbottom)
-                    end if
+                !% 20220729brh debugged (without offset)
+
+                !% --- Note that SWMM.inp for FIXED BC is the elevation (not depth)
+                headValue(ii) = interface_get_headBC(ii, setting%Time%Start) &
+                              - setting%Solver%ReferenceHead
+                   
+                !% --- error check
+                if (headValue(ii) .le. faceR(fIdx,fr_Zbottom)) then
+                    print *, 'CONFIGURATION ERROR: a FIXED OUTFALL must have...'
+                    print *, '... a STAGE elevation greater than the Zbottom of the outfall'
+                    print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    call util_crashpoint(566823)
                 end if
 
-                ! print *, ' '
-                ! print *, 'in ',trim(subroutine_name), ' for BCH_free'
-                ! print *, 'norm depth ',normDepth
-                ! print *, 'crit depth ',critDepth
-                ! print *, 'head       ',interpV(ii)
-                ! print *, ' '
+            case (BCH_normal)
+                !% 20220729brh debugged (without offset)
+
+                !% --- Error check, normal depth is infinite for a reverse flow, so a flap gate is needed
+                if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
+                    print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must have flap gate set to YES'
+                    print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    call util_crashpoint(5668663)
+                end if
+
+                if (elemI(eIdx,ei_elementType) == CC) then
+                    !% --- Error check, normal depth is infinite for adverse slope
+                    !%     Use tiny() so that slope must be greater than precision 
+                    if (elemR(eIdx,er_BottomSlope) .le. onehundredR*tiny(oneR)) then
+                        print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must be connected to an...'
+                        print *, '...conduit/channel element with non-zero, positive bottom slope.'
+                        print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                        print *, 'Connected to element ', eIdx
+                        print *, 'Part of link ',trim(  link%Names(elemI(eIdx,ei_link_Gidx_BIPquick))%str)
+                        print *, 'Bottom slope is ',elemR(eIdx,er_BottomSlope)
+                        call util_crashpoint(728474)
+                    end if
+
+                    !% --- BC head is the normal depth + Zbottom - referencehead
+                    headValue(ii) = faceR(fIdx,fr_Zbottom)                          &
+                                  + geo_normaldepth_singular(BC%HeadI(ii,bi_UTidx)) &
+                                  - setting%Solver%ReferenceHead
+                else
+                    print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
+                    call util_crashpoint(792873)
+                    !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
+                    !% the depth in the node is zero
+                    !headValue(ii) =  faceR(fIdx,fr_Zbottom)
+                end if
+
+            case (BCH_free)
+                !% 20220729brh debugged (without offset)
+                !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
+                !%     the domain determines the outfall height, which can set up an instability
+                if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
+                    print *, 'CONFIGURATION ERROR: a FREE OUTFALL must have flap gate set to YES'
+                    print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    call util_crashpoint(566823)
+                end if
+
+                if (elemI(eIdx,ei_elementType) == CC) then
+                    !% --- free outfall depth is smaller of critical and normal depth
+                    critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
+                    normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+
+                    !% --- BC head is the depth + Zbottom - referencehead
+                    headValue(ii) = faceR(fIdx,fr_Zbottom)        &
+                                  + min(critDepth,normDepth)      &
+                                  - setting%Solver%ReferenceHead
+                else
+                    print *, 'CODE ERROR: NEED ALGORITHM FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
+                    call util_crashpoint(792873)
+                    !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
+                    !% the depth in the node is zero
+                    !headValue(ii) =  faceR(fIdx,fr_Zbottom)
+                end if
 
             case default
                 call util_print_warning("CODE ERROR (bc_interpolate): Unknown downstream boundary condition type at " &
-                    // trim(node%Names(nodeIdx)%str) // " node")
-                call util_crashpoint( 86474)
+                    // trim(node%Names(nIdx)%str) // " node")
+                call util_crashpoint(86474)
             end select
-
-            !% --- prescribed head at outlet
-            ! if ((BC%headI(ii,bi_subcategory) == BCH_fixed)   .or. &
-            !     (BC%headI(ii,bi_subcategory) == BCH_tseries) .or. &
-            !     (BC%headI(ii,bi_subcategory) == BCH_tidal)) then
-
-            !     !% Find the closest index first, assign it to lower_idx just for now
-            !     if (BC%headTimeseries(ii, lower_idx, brts_time) == tnow) then
-            !         !% exact match -- directly take the existing BC data, no need to do the interpolation, 
-            !         interpV(ii) = BC%headTimeseries(ii, lower_idx, brts_value)
-            !     else if (lower_idx > 0) then
-            !         if ( BC%headTimeseries(ii, lower_idx, brts_value) == BC%headTimeseries(ii, upper_idx(ii), brts_value)) then
-            !             !% constant value, no need to do the interpolation
-            !             interpV(ii) = BC%headTimeseries(ii, lower_idx, brts_value)
-            !         else
-            !             !% do the interpolation -- NOTE the setting..disableInterpolationYN not available here
-            !             interpV(ii) = util_interpolate_linear( &
-            !                 tnow, &
-            !                 BC%headTimeseries(ii, lower_idx    , brts_time), &
-            !                 BC%headTimeseries(ii, upper_idx(ii), brts_time), &
-            !                 BC%headTimeseries(ii, lower_idx    , brts_value), &
-            !                 BC%headTimeseries(ii, upper_idx(ii), brts_value))
-            !         end if
-            !     else 
-            !         !% lower_idx <= 0
-            !         write(*,*), 'CODE ERROR? unexpected else in BC'
-            !         !stop 
-            !         call util_crashpoint( 786985)    
-            !         !return
-            !     end if
-
-            !% --- normal flow at outlet   
-            ! else if (BC%headI(ii,bi_subcategory) == BCH_normal) then
-
-            !     !% for normal dnBC, if the connecting link has an offset,
-            !     !% the depth in the node is zero
-            !     if (link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
-            !         interpV(ii) = faceR(faceIdx,fr_Zbottom)
-            !     else
-            !         if (elemI(elemUpIdx,ei_elementType) == CC) then
-            !             interpV(ii) = elemR(elemUpIdx,er_Depth) + faceR(faceIdx,fr_Zbottom)
-            !         else
-            !             !% for normal dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
-            !             !% the depth in the node is zero
-            !             interpV(ii) =  faceR(faceIdx,fr_Zbottom)
-            !         end if
-            !     end if
-
-            ! !% --- free overflow at outlet
-            ! else if (BC%headI(ii,bi_subcategory) == BCH_free) then
-
-            !     !% for free dnBC, if the connecting link has an offset,
-            !     !% the depth in the node is zero
-            !     ! print*, link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset), 'outlet offset'
-            !     if (link%R(node%I(nodeIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
-            !         interpV(ii) = faceR(faceIdx,fr_Zbottom)
-            !     else
-            !         if (elemI(elemUpIdx,ei_elementType) == CC) then
-            !             normDepth = elemR(elemUpIdx,er_Depth)
-            !             critDepth = bc_get_CC_critical_depth(elemUpIdx)
-            !             interpV(ii) = min(critDepth,normDepth) + faceR(faceIdx,fr_Zbottom)
-            !         else
-            !             !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
-            !             !% the depth in the node is zero
-            !             interpV(ii) =  faceR(faceIdx,fr_Zbottom)
-            !         end if
-            !     end if
-            ! !% --- error in specifying outlet    
-            ! else
-            !     call util_print_warning("Error (bc.f08): Unknown downstream boundary condition type at " &
-            !         // node%Names(nodeIdx)%str // " node")
-            !     !stop 
-            !     call util_crashpoint( 86474)
-            !     !return
-            ! end if
         end do
 
         if (setting%Debug%File%boundary_conditions) &
@@ -800,7 +785,7 @@ contains
 !%==========================================================================
 !%
     subroutine bc_interpolate_timeseries &
-        (interpout, TimeSeries, tnow, bc_idx, lower_idx, upper_idx )
+        (interpout, TimeSeries, tnow, bc_idx, lower_idx, upper_idx, thisBCtype )
         !%------------------------------------------------------------------
         !% Description:
         !% Interpolates the timeseries for a single BC of either flow or head
@@ -811,7 +796,7 @@ contains
             real(8), intent(inout) :: interpout
             real(8), intent(in)    :: TimeSeries(:,:,:)
             real(8), intent(in)    :: tnow
-            integer, intent(in)    :: bc_idx, lower_idx, upper_idx
+            integer, intent(in)    :: bc_idx, lower_idx, upper_idx, thisBCtype
             character(64) :: subroutine_name = 'bc_interpolate_timeseries'
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
@@ -824,6 +809,10 @@ contains
             return
         end if
 
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'thisBC type ',trim(reverseKey(thisBCtype))
+        ! print *, 'is disabled ',setting%BC%disableInterpolationYN
+
         !%--- disabled interpolation: take the upper index value
         if (setting%BC%disableInterpolationYN) then
             interpout = Timeseries(bc_idx, upper_idx, brts_value)  
@@ -834,6 +823,8 @@ contains
         if (   Timeseries(bc_idx, lower_idx, brts_value)        &
             == Timeseries(bc_idx, upper_idx, brts_value) ) then 
             interpout = Timeseries(bc_idx, lower_idx, brts_value)
+
+            ! print *, 'is constant value ',interpout
             return
         end if
 
@@ -841,12 +832,21 @@ contains
         if (Timeseries(bc_idx, lower_idx, brts_time) == tnow) then                            
             !% ---  take the existing lower index BC data, no need to do the interpolation
             interpout = Timeseries(bc_idx, lower_idx, brts_value)
+            ! print *, 'is exact  lower time match ',interpout
             return
         elseif (BC%flowTimeseries(bc_idx, upper_idx, brts_time) == tnow) then  
             !% --- take the existing upper index BC data, no need to do the interpolation
             interpout = Timeseries(bc_idx, upper_idx, brts_value)
+            ! print *, 'is exact upper time match ',interpout
             return
         end if
+
+        ! print *, ' '
+        ! print *, Timeseries(bc_idx, lower_idx, brts_time)
+        ! print *, Timeseries(bc_idx, upper_idx, brts_time)
+        ! print *, Timeseries(bc_idx, lower_idx, brts_value)
+        ! print *, Timeseries(bc_idx, upper_idx, brts_value)
+        ! print *, ' '
          
         !% --- standard interpolation
         interpout = util_interpolate_linear(          &
@@ -854,97 +854,101 @@ contains
             Timeseries(bc_idx, lower_idx, brts_time),  &
             Timeseries(bc_idx, upper_idx, brts_time),  &
             Timeseries(bc_idx, lower_idx, brts_value), &
-            Timeseries(bc_idx, upper_idx, brts_value))                   
+            Timeseries(bc_idx, upper_idx, brts_value))    
+            
+        ! print *, 'is standard interp ',interpout    
+        
       
     end subroutine bc_interpolate_timeseries
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% gets the critical depth of a CC element
-    !% this code has been adapted from SWMM5-C code
-    !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: elemIdx
-        real(8)              :: criticalDepth
-        integer, pointer     :: elemGeometry 
-        real(8), pointer     :: Flowrate, FullDepth, BreadthMax, grav, FullArea
-        real(8), pointer     :: alpha, bottomWidth
-        real(8)              :: Q2g, critDepthEstimate, ratio, sideSlope, epsilon_c, tc0
-        character(64) :: subroutine_name = 'bc_get_CC_critical_depth'
-    !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+! function bc_get_CC_critical_depth(elemIdx) result (criticalDepth)
+!     !%-----------------------------------------------------------------------------
+!     !% Description:
+!     !% OBSOLETE 20220726 replaeced with geo_criticaldepth_from_velocity
+!     !% gets the critical depth of a CC element
+!     !% this code has been adapted from SWMM5-C code
+!     !%-----------------------------------------------------------------------------
+!         integer, intent(in)  :: elemIdx
+!         real(8)              :: criticalDepth
+!         integer, pointer     :: elemGeometry 
+!         real(8), pointer     :: Flowrate, FullDepth, BreadthMax, grav, FullArea
+!         real(8), pointer     :: alpha, bottomWidth
+!         real(8)              :: Q2g, critDepthEstimate, ratio, sideSlope, epsilon_c, tc0
+!         character(64) :: subroutine_name = 'bc_get_CC_critical_depth'
+!     !%-----------------------------------------------------------------------------
+!         !if (crashYN) return
+!         if (setting%Debug%File%boundary_conditions)  &
+!             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        elemGeometry => elemI(elemIdx,ei_geometryType)
-        Flowrate     => elemR(elemIdx,er_Flowrate)
-        FullDepth    => elemR(elemIdx,er_FullDepth)
-        FullArea     => elemR(elemIdx,er_FullArea)
-        BreadthMax   => elemR(elemIdx,er_BreadthMax)
-        grav         => setting%constant%gravity
-        alpha        => setting%constant%energy_correction_factor
+!         elemGeometry => elemI(elemIdx,ei_geometryType)
+!         Flowrate     => elemR(elemIdx,er_Flowrate)
+!         FullDepth    => elemR(elemIdx,er_FullDepth)
+!         FullArea     => elemR(elemIdx,er_FullArea)
+!         BreadthMax   => elemR(elemIdx,er_BreadthMax)
+!         grav         => setting%constant%gravity
+!         alpha        => setting%constant%energy_correction_factor
 
-        Q2g = (Flowrate**twoR) / grav
+!         Q2g = (Flowrate**twoR) / grav
 
-        if (Q2g == zeroR) then
-            criticalDepth =  zeroR
-        else
-            select case (elemGeometry)
+!         if (Q2g == zeroR) then
+!             criticalDepth =  zeroR
+!         else
+!             select case (elemGeometry)
 
-            case (rectangular, rectangular_closed)
-                criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
+!             case (rectangular, rectangular_closed)
+!                 criticalDepth = (Q2g/BreadthMax**twoR)**onethirdR
 
-            case (triangular)
-                sideSlope = elemSGR(elemIdx,esgr_Triangular_Slope)
-                criticalDepth = (twoR * Q2g / sideSlope ** twoR) ** onefifthR
+!             case (triangular)
+!                 sideSlope = elemSGR(elemIdx,esgr_Triangular_Slope)
+!                 criticalDepth = (twoR * Q2g / sideSlope ** twoR) ** onefifthR
                 
-            case (trapezoidal)
-                !% use the average side slope
-                sideSlope = onehalfR * (  elemSGR(elemIdx,esgr_Trapezoidal_LeftSlope)   &
-                                        + elemSGR(elemIdx,esgr_Trapezoidal_RightSlope))
-                bottomWidth => elemSGR(elemIdx,esgr_Trapezoidal_Breadth)
-                !% Using approach of Vatakhah (2013)
-                !% non-dimensional discharge (epsilon_c), eq. 14
-                epsilon_c = fourR * sideSlope * ( alpha * (Flowrate**2) / (grav * (bottomWidth**5))  )**(onethirdR)
-                !% non-dimensional critical flow estimat (tc0), eq. 23
-                tc0 = (oneR + 1.161d0 * epsilon_c * (oneR + 0.666d0 * (epsilon_c**(1.041d0)) )**0.374d0 )**0.144d0
-                !% critical depth, eq. 22
-                criticalDepth = -onehalfR + onehalfR             &
-                          * (                                    &                     
-                                (fiveR * (tc0**6) + oneR       ) &
-                              / ( sixR * (tc0**5) - epsilon_c  ) &
-                            )**3
+!             case (trapezoidal)
+!                 !% use the average side slope
+!                 sideSlope = onehalfR * (  elemSGR(elemIdx,esgr_Trapezoidal_LeftSlope)   &
+!                                         + elemSGR(elemIdx,esgr_Trapezoidal_RightSlope))
+!                 bottomWidth => elemSGR(elemIdx,esgr_Trapezoidal_Breadth)
+!                 !% Using approach of Vatakhah (2013)
+!                 !% non-dimensional discharge (epsilon_c), eq. 14
+!                 epsilon_c = fourR * sideSlope * ( alpha * (Flowrate**2) / (grav * (bottomWidth**5))  )**(onethirdR)
+!                 !% non-dimensional critical flow estimat (tc0), eq. 23
+!                 tc0 = (oneR + 1.161d0 * epsilon_c * (oneR + 0.666d0 * (epsilon_c**(1.041d0)) )**0.374d0 )**0.144d0
+!                 !% critical depth, eq. 22
+!                 criticalDepth = -onehalfR + onehalfR             &
+!                           * (                                    &                     
+!                                 (fiveR * (tc0**6) + oneR       ) &
+!                               / ( sixR * (tc0**5) - epsilon_c  ) &
+!                             )**3
     
-            case (circular)  
-                !% first estimate Critical Depth for an equivalent circular conduit
-                critDepthEstimate = min(1.01*(Q2g/FullDepth)**onefourthR, FullDepth)
+!             case (circular)  
+!                 !% first estimate Critical Depth for an equivalent circular conduit
+!                 critDepthEstimate = min(1.01*(Q2g/FullDepth)**onefourthR, FullDepth)
 
-                !% find ratio of conduit area to equiv. circular area
-                ratio = FullArea/(pi/fourR*(FullDepth**twoR))
+!                 !% find ratio of conduit area to equiv. circular area
+!                 ratio = FullArea/(pi/fourR*(FullDepth**twoR))
 
-                if ((ratio >= onehalfR) .and. (ratio <= twoR)) then
-                    criticalDepth = bc_critDepth_enum (elemIdx, Flowrate, critDepthEstimate)
-                else
-                    criticalDepth = bc_critDepth_ridder (elemIdx, Flowrate, critDepthEstimate)
-                end if
+!                 if ((ratio >= onehalfR) .and. (ratio <= twoR)) then
+!                     criticalDepth = bc_critDepth_enum (elemIdx, Flowrate, critDepthEstimate)
+!                 else
+!                     criticalDepth = bc_critDepth_ridder (elemIdx, Flowrate, critDepthEstimate)
+!                 end if
 
-            case default
-                print *, 'in ',trim(subroutine_name)
-                print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
-                print *, 'which has key ',trim(reverseKey(elemGeometry))
-                !stop 
-                call util_crashpoint( 389753)
-                !return
-            end select
-        end if
+!             case default
+!                 print *, 'in ',trim(subroutine_name)
+!                 print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
+!                 print *, 'which has key ',trim(reverseKey(elemGeometry))
+!                 !stop 
+!                 call util_crashpoint( 389753)
+!                 !return
+!             end select
+!         end if
 
-        if (setting%Debug%File%boundary_conditions) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+!         if (setting%Debug%File%boundary_conditions) &
+!             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-end function bc_get_CC_critical_depth
+!end function bc_get_CC_critical_depth
 !%
 !%==========================================================================
 !%==========================================================================

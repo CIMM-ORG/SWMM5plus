@@ -19,20 +19,21 @@
             "interval" : 10
         },
         "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isFluxConsOut"     : true,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : true,
-            "isHydRadiusOut"    : false,
-            "isPerimeterOut"    : false,
-            "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
-            "isTopWidthOut"     : false,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isAreaOut"             : true,
+            "isDepthOut"            : true,
+            "isFlowrateOut"         : true,
+            "isFluxConsOut"         : true,
+            "isFroudeNumberOut"     : false,
+            "isHeadOut"             : true,
+            "isHydRadiusOut"        : false,
+            "isPerimeterOut"        : false,
+            "isRoughnessDynamicOut" : false,
+            "isSlotWidthOut"        : false,
+            "isSlotDepthOut"        : false,
+            "isTopWidthOut"         : false,
+            "isVelocityOut"         : true,
+            "isVolumeOut"           : true,
+            "isWaveSpeedOut"        : false
         }
     },
     "Simulation" :{

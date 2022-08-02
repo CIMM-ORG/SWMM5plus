@@ -78,13 +78,15 @@ module orifice_elements
     subroutine orifice_set_setting (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !%   evaluate the orifice setting based on control update
+        !% evaluate the orifice setting based on control update
+        !% Note that the "orate" the opening/closing rate is entered in the
+        !% EPA-SWMM inp file in hours, but has been converted to seconds.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
 
         real(8), pointer :: FullDepth, EffectiveFullDepth, dt
         real(8), pointer :: Orate, CurrentSetting, TargetSetting
-        real(8) :: delta, step
+        real(8) :: deltaRemaining, changeFraction
 
         character(64) :: subroutine_name = 'orifice_set_settings'
         !%-----------------------------------------------------------------------------
@@ -103,18 +105,20 @@ module orifice_elements
         if ((Orate == zeroR) .or. (dt == zeroR)) then
             CurrentSetting = TargetSetting
         else
-            delta = TargetSetting - CurrentSetting
-            step = dt / Orate
-            if (step + oneOneThounsandthR >= abs(delta)) then
+            deltaRemaining = TargetSetting - CurrentSetting  !% fraction of orifice to open/close
+            changeFraction = dt / Orate                      !% fraction we can complete in this step
+            if (changefraction * (oneR + onefourthR) >= abs(deltaRemaining)) then
+                !% --- if this change fraction is within 25% of opening/closing,
+                !%     then we complete in the step rather than finish in the next step
                 CurrentSetting = TargetSetting
             else
-                CurrentSetting = CurrentSetting + sign(step,delta)
+                CurrentSetting = CurrentSetting + sign(changeFraction,deltaRemaining)
             end if
         end if
 
         !% --- error check
         !%     EPA-SWMM allows the orifice setting to be between 0.0 and 1.0
-        if (.not. ((CurrentSetting .ge. 0.0) .and. (CurrentSetting .le. 1.0))) then
+        if (.not. ((CurrentSetting .ge. zeroR) .and. (CurrentSetting .le. oneR))) then
             print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
             call util_crashpoint(623943)
         end if

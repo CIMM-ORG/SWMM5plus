@@ -156,12 +156,6 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
-        !% --- set up the control/monitoring element arrays associated with type1 pumps and controls
-        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin con/mon from links"
-        ! call init_conmon_from_links()
-        ! call util_crashstop(49223)
-
-
         !% --- setup the irregular transect arrays associated with SWMM-C input links
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
@@ -227,6 +221,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
+
 
         !% --- initialize the time variables
         if (setting%Output%Verbose) print *, "begin initializing time"
@@ -400,8 +395,8 @@ contains
         
         !print *, this_image(), elemR(:,er_Depth)
     
-        !call util_CLprint('At end of initialization')
-        !stop 445782
+        ! call util_CLprint('At end of initialization')
+        ! stop 445782
 
 
         !%------------------------------------------------------------------- 
@@ -650,10 +645,11 @@ contains
             link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
             link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
             link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
-            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
             link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
             link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
             link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+            link%R(ii,lr_FlowrateInitial) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+            link%R(ii,lr_FlowrateLimit)   = interface_get_linkf_attribute(ii, api_linkf_qlimit,            .false.)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -1535,10 +1531,9 @@ contains
         call partitioning_toplevel()
         sync all
 
-        !% adjust the link lengths by cutting off a certain portion for the junction branch
-        !% this subroutine is called here to correctly estimate the number of elements and faces
-        !% to allocate the coarrays.
-        !% HACK: This might be moved someplace more suitable?
+        !% Compute the amount of a conduit length that is added to a connected junction.
+        !% This modifies the conduit length itself if setting%Discretization%AdjustLinkLengthYN
+        !% is true. The junction itself is setup in init_network_nJm_branch_length()
         call init_discretization_adjustlinklength()
 
         !% calculate the largest number of elements and faces to allocate the coarrays
@@ -1615,34 +1610,117 @@ contains
             !% only handle the subcatchment on images with its connected node
             if (this_image() .eq. node%I(nodeIdx(ii), ni_P_image)) then
                 subcatchI(ii,si_runoff_P_image) = this_image()
+
                 select case (nodeType(nodeIdx(ii)))
                 case (nJ2)
+
+                    print *, 'DEBUG NEEDED for SUBCATCHMENT'
+                    print *, 'Check that all indexes perform correctly'
+                    call util_crashpoint(448723)
+
                     !% for a node that is a face, the subcatch connects to the element
-                    !% upstream of the face, which is defined by ni_elemface_idx
-                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    !% upstream of the face if that element is CC.
+                    !elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    !elemIdx(ii) = node%I(nodeIdx(ii), ni_elem_idx)
+                    tface => node%I(nodeIdx(ii),ni_face_idx) 
+                    elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                    select case (elemI(elemIdx(ii),ei_elementType))
+                    case (CC)
+                        !% --- use the elemIdx already computed
+                    case (JB)
+                        !% --- use the upstream JM
+                        elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                    case default
+                        !% --- switch to the downstream element from the face
+                        elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                        select case (elemI(elemIdx(ii),ei_elementType))
+                        case (CC)
+                            !% --- use the elemIdx already computed
+                        case (JB)
+                            !% --- use the downstream JM
+                            elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                        case default
+                            print *, 'CONFIGURATION ERROR: a subcatchment input was defined'
+                            print *, 'to a node without storage, which is an nJ2 face.'
+                            print *, 'The upstream and downstream elements from the face'
+                            print *, 'are diagnostic elements, which cannot take a subcatchment'
+                            print *, 'inflow. Reconfigure so that the subcatchment outflow is into a'
+                            print *, 'storage node or into a node adjacent to a conduit link or' 
+                            print *, 'a junction with storage.'
+                            print *, 'node ID ',nodeIdx(ii)
+                            print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                            call util_crashpoint(4023987)
+                        end select
+                    end select
                 case (nJm)
-                    !% for a node that is a multi-branch junction, subcatch connects to 
-                    !% the element itself, which is defined by ni_elemface_idx
-                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    !% --- for a node that is a multi-branch junction, subcatch connects to 
+                    !%     the element itself
+                    !elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx) OBSOLETE
+                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elem_idx)
                 case (nBCup,nJ1)
-                    !% for a node that is an upstream BC or dead end the subcatch connects 
-                    !% into the first element downstream of the face
-                    !% Here ni_elemface_idx holds the face index
-                    tface => node%I(nodeIdx(ii),ni_elemface_idx) 
+                    !% --- for a node that is an upstream BC or dead end the subcatch connects 
+                    !%     into the first element downstream of the face
+                   ! tface => node%I(nodeIdx(ii),ni_elemface_idx) OBSOLETE 
+                    tface => node%I(nodeIdx(ii),ni_face_idx) 
                     if (tface .ne. nullvalueI) then 
                         elemIdx(ii) = faceI(tface,fi_Melem_dL)
+                        select case (elemI(elemIdx(ii),ei_elementType))
+                        case (CC)
+                            !% --- use the elemIdx already computed
+                        case (JB)
+                            !% --- use the associated JM element
+                            elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                        case default
+                            print *, 'CONFIGURATION ERROR: a subcatchment input was defined'
+                            print *, 'to an upstream (inflow) BC node but the downstream'
+                            print *, 'elements from the node are diagnostic elements, which' 
+                            print *, 'cannot take a subcatchment inflow.'
+                            print *, 'Reconfigure so that the subcatchment outflow is into a'
+                            print *, 'storage node or into a node adjacent to a conduit link or' 
+                            print *, 'a junction with storage.'
+                            print *, 'node ID ',nodeIdx(ii)
+                            print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                            call util_crashpoint(4023987)
+                        end select
                     else
                         elemIdx(ii) = nullvalueI
+                        print *, 'CODE ERROR, unexpected null downstream element for upstream BC'
+                        print *, 'node ID ',nodeIdx(ii)
+                        print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                        call util_crashpoint(1098223)
                     end if
+
                 case (nBCdn)
-                    !% for a node that is an downstreamstream BC, the subcatch connects 
+                    !% --- for a node that is an downstreamstream BC, the subcatch connects 
                     !% first element upstreamstream of the face
-                    !% into the Here ni_elemface_idx holds the face index
-                    tface => node%I(nodeIdx(ii),ni_elemface_idx)
+                   !tface => node%I(nodeIdx(ii),ni_elemface_idx) OBSOLETE
+                    tface => node%I(nodeIdx(ii),ni_face_idx)
                     if (tface .ne. nullvalueI) then 
                         elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                        select case (elemI(elemIdx(ii),ei_elementType))
+                        case (CC)
+                            !% --- use the elemIdx already computed
+                        case (JB)
+                            !% --- use the associated JM element
+                            elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                        case default
+                            print *, 'CONFIGURATION ERROR: a subcatchment input was defined'
+                            print *, 'to an downstream (head) BC node but the upstream'
+                            print *, 'elements from the node are diagnostic elements, which' 
+                            print *, 'cannot take a subcatchment inflow.'
+                            print *, 'Reconfigure so that the subcatchment outflow is into a'
+                            print *, 'storage node or into a node adjacent to a conduit link or' 
+                            print *, 'a junction with storage.'
+                            print *, 'node ID ',nodeIdx(ii)
+                            print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                            call util_crashpoint(4023987)
+                        end select
                     else
                         elemIdx(ii) = nullvalueI
+                        print *, 'CODE ERROR, unexpected null upstream element for downstream BC'
+                        print *, 'node ID ',nodeIdx(ii)
+                        print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                        call util_crashpoint(1098245)
                     end if
                 case default 
                     write(*,*) 'CODE ERROR: unexpected case default in '//trim(subroutine_name)
@@ -1685,14 +1763,16 @@ contains
         !% initializes the time either using the SWMM input file or the
         !% json file data (selected by setting.Time.useSWMMinpYN)
         !%------------------------------------------------------------------
+        !% Declarations
+            real(8)  :: ttime
         !%------------------------------------------------------------------
 
         !% HACK start time is always measured from zero (need to fix for hotstart)
         setting%Time%Start = zeroR 
         setting%Time%Now   = zeroR
-        setting%Time%Step  = zeroI
+        setting%Time%Step  = zeroR
 
-        setting%Time%Hydraulics%Dt = setting.VariableDT.InitialDt
+        setting%Time%Hydraulics%Dt = setting%VariableDT%InitialDt
 
         if (setting%Time%useSWMMinpYN) then 
             !% set the start/stop times and time steps from SWMM *.inp file
@@ -1706,11 +1786,47 @@ contains
             !% use values from json file
         end if
 
+        !print *, setting%Time%EndEpoch
+
+
         !% Translate epoc endtime to seconds from a zero start time
         !% use floor() to match approachin SWMM-C
-        setting%Time%End = real(floor(                            &
-                (setting%Time%EndEpoch - setting%Time%StartEpoch) &
-                 * real(secsperday)),KIND=8)
+        ! setting%Time%End = real(floor(                            &
+        !         (setting%Time%EndEpoch - setting%Time%StartEpoch) &
+        !          * real(secsperday)),KIND=8)
+
+        !% --- SWMM uses epoch, in days, which has a precision of ~1e-4 seconds
+        !%     To prevent precision from having an influence in microseconds, we
+        !%     take the epoch difference, convert to seconds, then multiply by 10^4
+        !%     and then round to the nearest integer.  We then divide by 10^4 to
+        !%     get the number of seconds.  A final application of floor() and conversion
+        !%     back to real ensures we only have whole seconds
+
+        
+        ttime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday,KIND=8)
+        !print *, 'ttime ',ttime
+        ttime = util_datetime_seconds_precision (ttime)
+        !print *, 'ttime ',ttime  
+        !setting%Time%End = real(floor(ttime),8)
+        setting%Time%End = ttime
+        print *, 'time end ',setting%Time%End
+
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, '********************** HARD CODE END TIME FOR EXPERIMENT'
+        ! !setting%Time%End = 1.255d0
+        ! !setting%Time%End = 1.415d0  !% first problems
+        ! setting%Time%End = 1.45d0
+        ! setting%Time%EndEpoch = setting%Time%StartEpoch + setting%Time%End / real(secsperday,KIND=8)
+        ! print *, '********************** HARD CODE END TIME FOR EXPERIMENT'
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+
+        !stop 2934870
 
         !% null out the wet step if not using hydrology
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
@@ -2225,6 +2341,11 @@ contains
         end if
         !%------------------------------------------------------------------
     end subroutine init_check_setup_conditions    
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+
 !%    
 !%==========================================================================
 !% END OF MODULE

@@ -315,7 +315,7 @@ contains
 !%==========================================================================
 !%
     real(8) function xsect_table_lookup_singular &
-        (normalizedInput, table) result (output)
+        (normalizedInput, table) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% interpolatesfrom the lookup table. 
@@ -330,8 +330,7 @@ contains
         integer                   :: nItems
         integer                   :: position
         real(8)                   :: delta
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
+        !%----------------------------------------------------------------------------
 
         nItems = size(table)
 
@@ -346,26 +345,26 @@ contains
 
         !% find the normalized output from the lookup table
         if (position .LT. oneI) then
-            output = zeroR
+            outvalue = zeroR
 
         else if ( (position .GE. oneI   ) .and. &
                   (position .LT. nItems ) ) then
 
             !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
-            output = table(position) &
+            outvalue = table(position) &
                                 + (normalizedInput - real((position - oneI),8) * delta) &
                                  *(table(position+oneI) - table(position)) / delta
 
         else if (position .GE. nItems) then
-            output = table(nItems)
+            outvalue = table(nItems)
         end if
         
-        !print *, 'output 1', output
+        !print *, 'output 1', outvalue
 
         !% quadratic interpolation for low value of normalizedInput
         if (position .LE. twoI) then
-            output = max(zeroR,                                             &
-                    output                                                  &
+            outvalue = max(zeroR,                                             &
+                    outvalue                                                 &
                     + ( (normalizedInput - real((position - oneI),8)*delta) &
                        *(normalizedInput - real((position       ),8)*delta) &
                        / (delta * delta)  )                                 &
@@ -377,7 +376,7 @@ contains
                     ! (table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
         end if
 
-        !print *, 'output 2', output
+        !print *, 'output 2', outvalue
 
     end function xsect_table_lookup_singular
 !%
