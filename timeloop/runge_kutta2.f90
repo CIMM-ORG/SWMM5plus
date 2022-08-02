@@ -49,7 +49,20 @@ module runge_kutta2
         !% --- reset the overflow counter
         elemR(:,er_VolumeOverFlow) = zeroR
 
-        !    call util_CLprint ('AAA  start of RK2 ==============================')
+        !% --- compute the dynamic roughness
+        if (setting%Solver%Roughness%useDynamicRoughness) then
+            call rk2_dynamic_roughness (ETM)
+        else
+            print *, 'CONFIGURATION ERROR'
+            print *, 'User has setting.Solver.Roughness.useDynamicRoughness = false'
+            print *, 'It is strongly recommended that .true. be used. '
+            print *, 'If you must use false, then you will need to comment out'
+            print *, 'this error message and stop command in runge_kutta2.f90'
+            print *, 'and then recompile the code.'
+            call util_crashpoint(409873)
+        end if
+
+        !call util_CLprint ('AAA  start of RK2 ==============================')
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
@@ -58,6 +71,7 @@ module runge_kutta2
             ! call util_CLprint ('BBB after volume/momentum step 1---------------------------')
    
         !% --- RK2 solution step -- update all non-diagnostic aux variables
+        !%     Note, these updates CANNOT depend on face values
         call update_auxiliary_variables (ETM)
 
             ! call util_CLprint ('CCC  after update aux step 1-----------------------')
@@ -85,6 +99,7 @@ module runge_kutta2
         call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
 
+
             ! call util_CLprint ('GGG  after diagnostic step 1')
 
         !% --- RK2 solution step  -- make ad hoc adjustments
@@ -103,12 +118,17 @@ module runge_kutta2
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
+
+        !% --- compute the dynamic roughness  NOT SURE IF WE WANT TO DO THIS AGAIN!
+        !call rk2_dynamic_roughness (ETM)
+
         istep=2
         call rk2_step_ETM (istep)
         
             ! call util_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
 
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
+        !%     Note, these updates CANNOT depend on face values
         call update_auxiliary_variables(ETM)  
 
             ! call util_CLprint ('KKK  after update aux step 2 --------------------------')
@@ -739,6 +759,156 @@ module runge_kutta2
     end subroutine rk2_store_conservative_fluxes
 !%   
 !%==========================================================================
+    !%==========================================================================
+!%
+    subroutine rk2_Dynamic_Roughness (whichTM) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the baseline Manning's n with a dynamic roughness 
+        !% adjustment
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: whichTM
+            integer, pointer    :: npack, thisColCC, thisColJM
+            integer, pointer    :: BranchExists(:)
+            integer, pointer    :: thisP(:), fUp(:), fDn(:), tM
+            integer             :: ii, kk, tB(1), dpnorm_col
+            real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
+            real(8), pointer    :: eHead(:), fHead_d(:), fHead_u(:)
+            real(8), pointer    :: zBottom(:), volume(:), length(:)
+            real(8), pointer    :: alpha, dt
+            character(64) :: subroutine_name ='update_Dynamic_Roughness_CC'
+        !%------------------------------------------------------------------  
+        !% Aliases
+            dpnorm_col = er_Temp01 !% not an alias!
+            dt           => setting%Time%Hydraulics%Dt
+            alpha        => setting%Solver%Roughness%alpha
+            dynamic_mn   => elemR(:,er_Roughness_Dynamic)
+            mn           => elemR(:,er_Roughness)
+            dp_norm      => elemR(:,dpnorm_col)
+            eHead        => elemR(:,er_Head)
+            length       => elemR(:,er_Length)
+            zBottom      => elemR(:,er_Zbottom)
+            volume       => elemR(:,er_Volume)
+            fHead_d      => faceR(:,fr_Head_d)
+            fHead_u      => faceR(:,fr_Head_u)
+            fUp          => elemI(:,ei_Mface_uL)
+            fDn          => elemI(:,ei_Mface_dL)
+            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            select case (whichTM)
+            case (ETM)
+                thisColCC  => col_elemP(ep_CC_ETM)
+                thisColJM  => col_elemP(ep_JM_ETM)
+            case default
+                print *, 'CODE ERROR: time march type not handled for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
+                stop 398705
+            end select    
+        !%------------------------------------------------------------------  
+        !% --- compute roughness for CC elements    
+        npack      => npack_elemP(thisColCC)
+        if (npack .ge.1)  then
+
+            thisP      => elemP(1:npack,thisColCC)   
+            !% --- the normalized pressure gradient scale
+            dp_norm(thisP) = (  abs(fHead_d(fUp(thisP)) - eHead(thisP))   &
+                              + abs(fHead_u(fDn(thisP)) - eHead(thisP)) ) &
+                             / abs(eHead(thisP) - zBottom(thisP))
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )    
+                
+            call ll_get_dynamic_roughness (thisP, dpnorm_col) 
+
+            !dynamic_mn(thisP) =  mn(thisP) &
+            !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )        
+        end if
+
+        !% --- compute roughness for JB elements
+        npack => npack_elemP(thisColJM)
+ 
+        if (Npack > 0) then
+            do ii=1,Npack
+                tM => elemP(ii,thisColJM)  !% JM junction main ID
+                !% --- handle the upstream branches
+                do kk=1,max_branch_per_node,2
+                    tB(1) = tM + kk  !% JB branch ID
+                    if (BranchExists(tB(1))==1) then
+                        !% --- normalized head difference is with upstream face
+                        dp_norm(tB) = (abs(fHead_d(fUp(tB)) - eHead(tB))) &
+                             / abs(eHead(tB) - zBottom(tB))
+                        !% --- add the dynamic roughness    
+                        call ll_get_dynamic_roughness (tB, dpnorm_col)       
+                    else
+                        !% skip if not a valid branch
+                    end if
+                end do
+                do kk=2,max_branch_per_node,2
+                    tB(1) = tM + kk  !% JB branch ID
+                    if (BranchExists(tB(1))==1) then
+                        !% --- normalized head difference is with downstream face
+                        dp_norm(tB) = (abs(fHead_u(fDn(tB)) - eHead(tB))) &
+                             / abs(eHead(tB) - zBottom(tB))
+                        !% --- add the dynamic roughness  
+                        call ll_get_dynamic_roughness (tB, dpnorm_col)    
+                    else
+                        !% skip if not a valid branch
+                    end if
+                end do
+            end do
+        end if
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, ' '
+        ! print *, 'dynamic mn'
+        ! print *, dynamic_mn(thisP)
+        ! print *, ' '
+        ! print *, 'dp norm'
+        ! print *, dp_norm(thisP)
+
+        ! print *, ' '
+        ! print *, abs(fHead_d(fUp(thisP)) - eHead(thisP))
+        ! print *, ' '
+        ! print *, abs(fHead_u(fDn(thisP)) - eHead(thisP)) 
+        ! print *, ' '
+        ! print *, (eHead(thisP) - zBottom(thisP))
+        ! print *, ' '
+        ! print *, ' '
+
+        ! print *, ' '
+        ! print *, fHead_d(fUp(thisP))
+        ! print *, ' '
+        ! print *, eHead(thisP)
+        ! print *, ' '
+        ! print *, fHead_u(fDn(thisP))
+
+        ! print *, ' '
+        ! print *, 'mn '
+        ! print *, mn(thisP)
+        ! print *, ' '
+        ! print *, 'volume '
+        ! print *, volume(thisP)
+        ! print *, ' '
+        ! print *, 'volume**1/9'
+        ! print *,  volume(thisP)**(oneninthR)
+        ! print *, ' '
+        ! print *, '1-e'
+        ! print *, (oneR - exp(dp_norm(thisP)) )
+
+
+        dp_norm(:) = nullvalueR  
+
+       ! stop 398745
+
+    end subroutine rk2_Dynamic_Roughness 
+!%
+!%==========================================================================
+
 !%==========================================================================
 !%
         !%------------------------------------------------------------------

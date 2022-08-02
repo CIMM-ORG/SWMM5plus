@@ -362,6 +362,7 @@ module define_indexes
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
+        enumerator :: er_Roughness_Dynamic          !% total roughness, including dynamic adjustment
         enumerator :: er_Setting                    !% percent open setting for a link element
         !enumerator :: er_SectionFactor              !% present value of Qn/S0 section factor
         !enumerator :: er_SectionFactor_Max          !% maximum value of section factor (for S0 = 0)

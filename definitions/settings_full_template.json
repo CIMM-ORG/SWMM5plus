@@ -127,20 +127,21 @@
             "interval" : 10
         },
         "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isFluxConsOut"     : true,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : true,
-            "isHydRadiusOut"    : false,
-            "isPerimeterOut"    : false,
-            "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
-            "isTopWidthOut"     : false,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isAreaOut"             : true,
+            "isDepthOut"            : true,
+            "isFlowrateOut"         : true,
+            "isFluxConsOut"         : true,
+            "isFroudeNumberOut"     : false,
+            "isHeadOut"             : true,
+            "isHydRadiusOut"        : false,
+            "isPerimeterOut"        : false,
+            "isRoughnessDynamicOut" : false,
+            "isSlotWidthOut"        : false,
+            "isSlotDepthOut"        : false,
+            "isTopWidthOut"         : false,
+            "isVelocityOut"         : true,
+            "isVolumeOut"           : true,
+            "isWaveSpeedOut"        : false
         },
         "Report" : {
             "useSWMMinpYN" : true,
@@ -180,7 +181,12 @@
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
+        "ReferenceHead"     : 0.0,
+        "Roughness" : {
+            "useDynamicRoughness" : true,
+            "alpha"               : 100.0
+        }
+
     },
     "TestCase" : {
         "UseTestCaseYN" : false,

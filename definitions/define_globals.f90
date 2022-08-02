@@ -320,7 +320,7 @@ module define_globals
     integer, parameter :: nullvalueI = 998877        !% note this places limit on largest network!
     real(8), parameter :: nullvalueR = 9.98877d16
     logical, parameter :: nullvalueL = .false.
-    real(8), parameter :: negoneR = -1.0
+    real(8), parameter :: negoneR = -1.d0
     real(8), parameter :: zeroR = 0.d0
     real(8), parameter :: oneR = 1.d0
     real(8), parameter :: twoR = 2.d0
@@ -329,17 +329,20 @@ module define_globals
     real(8), parameter :: fiveR = 5.d0
     real(8), parameter :: sixR = 6.d0
     real(8), parameter :: eightR = 8.d0
+    real(8), parameter :: nineR = 9.d0
     real(8), parameter :: tenR = 10.d0
     real(8), parameter :: twentyR = 20.d0
     real(8), parameter :: twentyfourR = 24.d0
     real(8), parameter :: sixtyR = 60.d0
     real(8), parameter :: onehundredR = 100.d0
+    real(8), parameter :: fivehundredR = 500.d0
     real(8), parameter :: onethousandR = 1000.d0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneOneThousandthR = oneR / onethousandR
     real(8), parameter :: oneOneHundredthR = oneR / onehundredR
     real(8), parameter :: onetenthR = oneR / tenR
+    real(8), parameter :: oneninthR = oneR / nineR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
     real(8), parameter :: onefifthR = oneR / fiveR

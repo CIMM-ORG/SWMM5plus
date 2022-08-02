@@ -142,6 +142,7 @@ module define_settings
         logical :: isHeadOut                = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
+        logical :: isRoughnessDynamicOut    = .false.
         logical :: isSlotWidthOut           = .false.
         logical :: isSlotDepthOut           = .false.
         logical :: isTopWidthOut            = .false.
@@ -210,6 +211,12 @@ module define_settings
         integer :: ThisStep
         integer :: TimeUnits = InHours
     end type ReportType
+
+    !% setting%Solver%Roughness
+    type RoughnessType
+        logical :: useDynamicRoughness = .true.
+        real(8) :: alpha = 100.0d0
+    end type RoughnessType
 
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
@@ -571,6 +578,7 @@ module define_settings
         real(8) :: MaxZbottom = zeroR
         real(8) :: MinZbottom = zeroR
         real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]
+        type(RoughnessType) :: Roughness
     end type SolverType
 
     type TestCaseType
@@ -1440,6 +1448,11 @@ contains
         call json%get('Output.DataOut.isPerimeterOut', logical_value, found)
         if (found) setting%Output%DataOut%isPerimeterOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'
+
+        !%                       Dataout.isRoughnessDynamicOut
+        call json%get('Output.DataOut.isRoughnessDynamicOut', logical_value, found)
+        if (found) setting%Output%DataOut%isRoughnessDynamicOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isRoughnessDynamicOut not found'
         
         !%                       Dataout.isSlotWidthOut
         call json%get('Output.DataOut.isSlotWidthOut', logical_value, found)
@@ -1698,6 +1711,17 @@ contains
 
         !% do not read          Solver.ReferenceHead
 
+    !% Solver.Roughness =====================================================================
+        !%                       Solver.Roughness.useDynamicRoughness
+        call json%get('Solver.Roughness.useDynamicRoughness', logical_value, found)
+        if (found) setting%Solver%Roughness%useDynamicRoughness = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.useDynamicRoughness not found'
+       
+    !%                       Solver.Roughness.alpha
+        call json%get('Solver..Roughness.alpha', real_value, found)
+        if (found)  setting%Solver%Roughness%alpha = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.alpha not found'
+     
     !% TestCase.  =====================================================================
         !%                       TestCase.UseTestCaseYN
         call json%get('TestCase.UseTestCaseYN', logical_value, found)

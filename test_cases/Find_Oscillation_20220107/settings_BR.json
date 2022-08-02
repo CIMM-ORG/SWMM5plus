@@ -54,6 +54,7 @@
             "isHeadOut"         : false,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,

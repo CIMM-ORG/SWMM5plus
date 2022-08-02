@@ -689,6 +689,7 @@ contains
             elemR(:,er_Flowrate_N1)    = link%R(thisLink,lr_FlowrateInitial)
             elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
             elemR(:,er_FlowrateLimit)   = link%R(thisLink,lr_FlowrateLimit)
+            elemR(:,er_Roughness_Dynamic) = elemR(:,er_Roughness)
         endwhere
 
         ! print *, ' '
@@ -2304,6 +2305,7 @@ contains
                 !% --- reference the Zcrown to the local bottom
                 elemR(JBidx,er_Zcrown)              = (elemR(Aidx,er_Zcrown)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)         
                 elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)[Ci]
+                elemR(JBidx,er_Roughness_Dynamic)   = elemR(Aidx,er_Roughness)[Ci]
                 elemI(JBidx,ei_link_transect_idx)   = elemI(Aidx,ei_link_transect_idx)[Ci]
                 !% copy the entire row of the elemSGR array
                 elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]

@@ -86,7 +86,7 @@ module update
         call update_Froude_number_element (thisCol_CC)
 
         !% --- compute the element section factor for CC
-        call update_SectionFactor_element (thisCol_CC)
+      !  call update_SectionFactor_element (thisCol_CC)
 
             !  call util_CLprint ('in update before CC interpweights in update')
 
@@ -113,8 +113,6 @@ module update
         !% --- flow values on an BC outlet face 20220714brh
         !%     required so that an inflow to a zero or small depth will not be lost
        ! call update_BCoutlet_flowrate ()
-
-        !   call util_CLprint ('in update at end')
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -232,14 +230,14 @@ module update
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine update_SectionFactor_element (thisCol)
+  !  subroutine update_SectionFactor_element (thisCol)
         !%------------------------------------------------------------------
         !% Description
         !% Computes the SectionFactor = Qn/S0 that is used for normal
         !% depth computations
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: thisCol
+         !   integer, intent(in) :: thisCol
         !     integer, pointer    :: Npack, thisP(:)
         !     real(8), pointer    :: SectionFactor(:), SectionFactorMax(:)
         !     real(8), pointer    :: Flowrate(:), Roughness(:), BottomSlope(:)
@@ -261,7 +259,7 @@ module update
         !     end where
         ! end if
 
-    end subroutine update_SectionFactor_element
+ !   end subroutine update_SectionFactor_element
 !%
 !%==========================================================================
 !%==========================================================================

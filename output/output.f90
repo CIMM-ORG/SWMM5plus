@@ -461,6 +461,7 @@ contains
         if (setting%Output%DataOut%isHeadOut)                    N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isHydRadiusOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPerimeterOut)               N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isRoughnessDynamicOut)        N_OutTYpeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isSlotWidthOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isSlotDepthOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isTopWidthOut)                N_OutTypeElem =  N_OutTypeElem + 1
@@ -551,6 +552,14 @@ contains
             output_types_elemR(ii) = er_Perimeter
             output_typenames_elemR(ii) = 'WettedPerimeter'
             output_typeUnits_elemR(ii) = 'm'
+            output_typeProcessing_elemR(ii) = AverageElements
+        end if
+        !% --- Dynamic Roughness
+        if (setting%Output%DataOut%isRoughnessDynamicOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Roughness_Dynamic
+            output_typenames_elemR(ii) = 'RoughnessDynamic'
+            output_typeUnits_elemR(ii) = 's/m^(1/3)'
             output_typeProcessing_elemR(ii) = AverageElements
         end if
         !% --- SlotWidth
@@ -704,6 +713,7 @@ contains
         !% HydRadius, Perimeter, SlotWidth, and SlotDepth do not exist at a face
         !if (setting%Output%DataOut%isHydRadiusOut)      N_OutTypeFace =  N_OutTypeFace + 1
         !if (setting%Output%DataOut%isPerimeterOut)      N_OutTypeFace =  N_OutTypeFace + 1
+        !if (setting%Output%DataOut%isRoughnessDynamicOut)      N_OutTypeFace =  N_OutTypeFace + 1
         !if (setting%Output%DataOut%isSlotWidthOut)      N_OutTypeFace =  N_OutTypeFace + 1
         !if (setting%Output%DataOut%isSlotDepthOut)      N_OutTypeFace =  N_OutTypeFace + 1
 
