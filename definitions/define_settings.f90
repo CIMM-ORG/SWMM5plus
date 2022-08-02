@@ -205,6 +205,8 @@ module define_settings
     type ReportType
         logical :: useSWMMinpYN = .true.
         logical :: provideYN = .true.
+        logical :: useHD5F   = .true.
+        logical :: useCSV    = .true.
         logical :: suppress_MultiLevel_Output = .false.
         real(8) :: StartTime = 0.0d0
         real(8) :: TimeInterval = 300.0d0
@@ -551,7 +553,7 @@ module define_settings
         logical :: stopAfterInitializationYN = .false.
         logical :: useHydrology = .true.
         logical :: useHydraulics = .true.
-        logical :: useSpinUp     = .true.
+        logical :: useSpinUp     = .false.
         logical :: stopAfterSpinUp = .false.
         real(8) :: SpinUpDays    = 10.d0
     end type SimulationType
@@ -1504,6 +1506,17 @@ contains
         call json%get('Output.Report.provideYN', logical_value, found)
         if (found) setting%Output%Report%provideYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.provideYN not found'
+
+        !%                       Report.useHD5F
+        call json%get('Output.Report.useHD5F', logical_value, found)
+        if (found) setting%Output%Report%useHD5F = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.useHD5F not found'
+
+        !%                       Report.useCSV
+        call json%get('Output.Report.useCSV', logical_value, found)
+        if (found) setting%Output%Report%useCSV = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.useCSV not found'
+
 
         !%                       Report.suppress_MultiLevel_Output
         call json%get('Output.Report.suppress_MultiLevel_Output', logical_value, found)

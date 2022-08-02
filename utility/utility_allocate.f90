@@ -49,6 +49,8 @@ module utility_allocate
     public :: util_allocate_check
     public :: util_allocate_boundary_ghost_elem_array
     public :: util_allocate_temporary_arrays
+    public :: util_allocate_output_profiles
+    
 
 
 contains
@@ -2158,6 +2160,20 @@ contains
         temp_BCupR(:,:) = nullvalueR
 
     end subroutine util_allocate_temporary_arrays
+
+
+    subroutine util_allocate_output_profiles()
+
+        allocate(output_profile_ids(max_profiles_N,max_links_profile_N),stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_profile_ids')
+
+
+    end subroutine util_allocate_output_profiles
+
+
+
+
+
 !%    
 !%==========================================================================
 !==========================================================================

@@ -1,4 +1,5 @@
 module initialization
+    USE IFPORT
     use boundary_conditions
     use define_keys
     use define_globals
@@ -22,6 +23,7 @@ module initialization
     use utility_crash
     use xsect_tables
     use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
+    
 
     implicit none
 
@@ -175,6 +177,11 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
         call util_crashstop(53454)
+
+        !% --- read in profiles from .inp file and create 
+        if (this_image() .eq. 1) then 
+            call init_profiles()
+        end if
 
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
@@ -1306,6 +1313,173 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_simulation_controls
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+
+    subroutine init_profiles
+        character(50) :: line, name, link_names, num_links
+        character(50) :: choosen_name
+        !type(string)  :: choosen_name  
+        integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
+        integer       :: read_status, debt, line_number = 1
+        integer       :: ii, jj,kk, offset, offset_profile,name_loc
+        integer       :: error
+
+        print *, "inside of init_Profile"
+        
+        !allocate(character(50) :: choosen_name%str)
+        open(10, file = setting%File%inp_file, status = "old", action = "read")
+        delimitator_loc = 2
+        offset = 1
+        max_links_profile_N = 0
+        !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
+        !print *, "end of file(bytes):", end_of_file
+
+
+
+        !read through the file looking for the profiles and then cound the amount of profiles and the max amount of links 
+        do
+            read(10, "(A)", iostat = read_status) line
+            if (read_status /= 0) then 
+                exit
+            endif
+
+            if(line .eq. "[PROFILES]") then
+                
+                print *, 'profiles found'
+                
+                print *, "offset_profile set:", offset_profile
+                read(10, "(A)", iostat = read_status) line
+                read(10, "(A)", iostat = read_status) line
+                offset_profile = FTELL(10)
+                print *, "offset_profile set:", offset_profile
+                max_profiles_N = 0
+
+                do
+                    read(10, "(A)", iostat = read_status) line
+                    if (line .eq. "" .or. read_status /= 0 ) then
+                        exit
+                    end if
+                    delimitator_loc = 2
+                    ii = -1
+                    max_profiles_N = max_profiles_N+1
+                    name = line 
+                    print *, name
+                    index_of_start = index(name,"""",.true.)
+                    link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
+                    do while (delimitator_loc > 1)
+
+                        delimitator_loc = index(link_names," ")
+                        link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+                        ii = ii + 1
+                    end do 
+                    if(max_links_profile_N < ii) then
+                        max_links_profile_N = ii
+                        print *, "new max:", max_links_profile_N
+                    end if
+
+                end do
+            ENDIF
+            
+
+
+            
+        end do
+
+        max_links_profile_N = max_links_profile_N + max_links_profile_N + 1 
+        
+        if(max_links_profile_N .eq. 1) then
+            print *, "no profiles found"
+            return
+        end if
+
+        call util_allocate_output_profiles()
+        print *, "size of profiles", size(output_profile_ids)
+        print *, "offset_profile:", offset_profile
+        rewind(10)
+        error = fseek(10,offset_profile,0)
+        output_profile_ids(:,:) = nullValueI
+        read(10, "(A)", iostat = read_status) line
+
+        !Loop through this time storing the profiles
+        ii = 0  
+        do  
+            read(10, "(A)", iostat = read_status) line
+            
+            
+            if (read_status /= 0 ) then
+                exit
+            end if
+            delimitator_loc = 2
+            name = line 
+            index_of_start = index(name,"""",.true.)
+            link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
+            
+            ii = ii+1
+            jj = 0
+            do 
+
+                delimitator_loc = index(link_names," ")
+                if(delimitator_loc <= 1)then 
+                    exit
+                end if
+                jj = jj + 1
+                choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
+                link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+                do kk = 1 , N_Link
+                    if(link%names(kk)%str == choosen_name) then
+
+
+    
+                        if(jj > 2) then
+                            print *,"link%I(kk,li_Mnode_u):",link%I(kk,li_Mnode_u)
+                            print *,"link%I(output_profile_ids(ii,jj-1),li_Mnode_d):", link%I(output_profile_ids(ii,jj-1),li_Mnode_d)
+                            if(link%I(kk,li_Mnode_u) .neqv. link%I(output_profile_ids(ii,jj-1),li_Mnode_d)) then
+                                print *, "Error with provides profiles not being continous"
+                                print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
+                                stop
+                            end if
+
+                        end if
+
+                   
+                        output_profile_ids(ii,(jj*2)+1) = link%I(kk,li_Mnode_d)
+                        output_profile_ids(ii,jj*2) = kk 
+
+                        if(jj .eq. 1) then
+                            output_profile_ids(ii,1) = link%I(kk,li_Mnode_u)
+                            end if  
+                        exit
+
+                    end if
+                    if (kk .eq. N_LINK ) then
+                        print *, "Error with provided profiles: unknown link:,",trim(choosen_name), " added"   
+                        stop
+                        exit
+                    end if
+
+                end do
+
+                !name_loc = findloc(link%names(:),choosen_name%str)
+                !call the the function that converts link_names to the global index and then store them
+                !this can then be added to the output hdf5 file and or headers of the csv files during the output            
+            
+            end do
+
+        end do
+        print *, "------------output_profile_ids---------"
+        print *, output_profile_ids(1,:)
+        print *, output_profile_ids(2,:)
+        !print *, output_profile_ids
+        close (10)
+        !% ALLOCATE THE ARRAYS AND THEN fill them with the correct indexs
+
+
+    end subroutine init_profiles
+
+
 !%
 !%==========================================================================
 !%==========================================================================

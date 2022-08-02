@@ -66,6 +66,8 @@ if (EXISTS ${BUILD_HDF5}/lib
     INSTALL_COMMAND "")
     set(HDF5_LIB_DIR ${BUILD_HDF5}/lib)
     set(HDF5_INCLUDE_DIR ${BUILD_HDF5}/include)
+    set(HDF5_LIBRARIES ${BUILD_HDF5}/lib/libhdf5hl_fortran.a ${BUILD_HDF5}/lib/libhdf5_hl.a 
+    ${BUILD_HDF5}/lib/libhdf5_fortran.a ${BUILD_HDF5}/lib/libhdf5.a)
     set(HDF5_FOUND ON)
 endif()
 
@@ -85,6 +87,8 @@ $ export HDF5_DIR=path/to/hdf5/")
 
     set(HDF5_LIB_DIR ${hdf5_BINARY_DIR}/hdf5/lib/)
     set(HDF5_INCLUDE_DIR ${hdf5_BINARY_DIR}/hdf5/include/)
+    set(HDF5_LIBRARIES ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5hl_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_hl.a 
+    ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5.a)
 
     set(BUILD_HDF5 ${hdf5_BINARY_DIR})
     set(HDF5_FOUND ON)
@@ -145,6 +149,9 @@ target_include_directories(SWMM PUBLIC
 )
 target_link_directories(SWMM PUBLIC
     ${HDF5_LIB_DIR}
+)
+target_link_libraries(SWMM PUBLIC
+    ${HDF5_LIBRARIES}
 )
 add_dependencies(SWMM hdf5)
 
