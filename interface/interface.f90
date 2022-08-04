@@ -93,14 +93,14 @@ module interface_
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_controls_get_premise_data( &
                 locationL,        locationR,                   &
-                islinkL,          islinkR,                     &
+                linknodesimTypeL, linknodesimTypeR,            &
                 attributeL,       attributeR,                  & 
                 thisPremiseLevel, rIdx)                        &
             BIND(C, name="api_controls_get_premise_data")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), intent(inout) :: locationL,  locationR
-            integer(c_int), intent(inout) :: islinkL,    islinkR
+            integer(c_int), intent(inout) :: linknodesimTypeL, linknodesimTypeR
             integer(c_int), intent(inout) :: attributeL, attributeR
             integer(c_int), intent(inout) :: thisPremiseLevel
             integer(c_int), value, intent(in)    :: rIdx
@@ -117,13 +117,13 @@ module interface_
        !% -------------------------------------------------------------------------------
         integer(c_int) function api_controls_transfer_monitor_data ( &
                 Depth, Head, Volume, Inflow, Flow, StatusSetting,    &
-                TimeLastSet, LinkNodeIdx, isLink)                    &
+                TimeLastSet, LinkNodeIdx, linknodesimType)                    &
             BIND(C, name="api_controls_transfer_monitor_data")
             use, intrinsic :: iso_c_binding
             implicit none
             real(c_double), value, intent(in) :: Depth, Head, Volume, Inflow, Flow
             real(c_double), value, intent(in) :: StatusSetting, TimeLastSet
-            integer(c_int), value, intent(in) :: LinkNodeIdx, isLink
+            integer(c_int), value, intent(in) :: LinkNodeIdx, linknodesimType
         end function api_controls_transfer_monitor_data
         !% -------------------------------------------------------------------------------
         integer (c_int) function api_controls_execute( &
@@ -237,7 +237,7 @@ module interface_
             min_slope, &
             head_tol, &
             sys_flow_tol, &
-            lat_flow_tol ) &
+            lat_flow_tol) &
             BIND(C, name="api_get_SWMM_setup")
             use, intrinsic :: iso_c_binding
             implicit none
@@ -593,7 +593,7 @@ contains
 !%    
     subroutine interface_controls_get_premise_data (     &
             locationL,        locationR,                 &
-            islinkL,          islinkR,                   &
+            linknodesimTypeL, linknodesimTypeR,          &
             attributeL,       attributeR,                &
             thisPremiseLevel, rIdx, success)
         !%---------------------------------------------------------------------
@@ -601,7 +601,7 @@ contains
         !% Gets the monitoring locations for control premises 
         !%---------------------------------------------------------------------
             integer, intent(inout) :: locationL, locationR
-            integer, intent(inout) :: islinkL, islinkR
+            integer, intent(inout) :: linknodesimTypeL, linknodesimTypeR
             integer, intent(inout) :: attributeL, attributeR
             integer, intent(inout) :: thisPremiseLevel, success
             integer, intent(in)    :: rIdx
@@ -615,23 +615,24 @@ contains
 
         !print *, 'api load called  thisPremiseLevel = ',thisPremiseLevel
 
-        success = ptr_api_controls_get_premise_data( &
-                    locationL,        locationR,     &
-                    islinkL,          islinkR,       &
-                    attributeL,       attributeR,    & 
+        success = ptr_api_controls_get_premise_data(    &
+                    locationL,        locationR,        &
+                    linknodesimTypeL, linknodesimTypeR, &
+                    attributeL,       attributeR,       & 
                     thisPremiseLevel, rIdx)
 
-        !% output data of -1 is not valid, so return nullvalue
+        !% --- output data of -1 is not valid for location or attribute, 
+        !%     so return nullvalue. Note that -1 for linknodesimType indicates
+        !%     a simulation variable (e.g., time) rather than a monitor location
         if (locationL  == -1 ) locationL  = nullValueI  
         if (locationR  == -1 ) locationR  = nullValueI  
-        if (islinkL    == -1 ) islinkL    = nullValueI
-        if (islinkR    == -1 ) islinkR    = nullValueI
         if (attributeL == -1 ) attributeL = nullValueI 
         if (attributeR == -1 ) attributeR = nullValueI    
 
         !% --- increment the location by 1 since EPA-SWMM starts at 0 with indexes
         if (locationL .ne. nullvalueI) locationL = locationL + 1
         if (locationR .ne. nullvalueI) locationR = locationR + 1
+
 
         !print *, 'after api thisPremiseLevel = ',thisPremiseLevel
 
@@ -684,7 +685,7 @@ contains
 !%    
     subroutine interface_controls_transfer_monitor_data &
         (Depth, Head, Volume, Inflow, Flow, StatusSetting, TimeLastSet, &
-         LinkNodeNum, isLink)
+         LinkNodeNum, linknodesimType)
         !%---------------------------------------------------------------------
         !% Description:
         !% transfers the monitoring data from SWMM5+ into EPA-SWMM so that it
@@ -692,7 +693,7 @@ contains
         !%---------------------------------------------------------------------
         !% Declarations
             integer :: success
-            integer, intent(in) :: LinkNodeNum, isLink
+            integer, intent(in) :: LinkNodeNum, linknodesimType
             real(8), intent(in) :: Depth, Head, Volume, Inflow, Flow
             real(8), intent(in) :: StatusSetting, TimeLastSet
             real(8) :: TimeLastSetEpoch
@@ -709,7 +710,7 @@ contains
         !%     SWMM indexes starting a 0
         success = ptr_api_controls_transfer_monitor_data(             &
                     Depth, Head, Volume, Inflow, Flow, StatusSetting,  &
-                    TimeLastSetEpoch, LinkNodeNum-1, isLink)
+                    TimeLastSetEpoch, LinkNodeNum-1, linknodesimType)
 
     end subroutine interface_controls_transfer_monitor_data
 !%    
@@ -727,8 +728,6 @@ contains
         !%---------------------------------------------------------------------
         !% -- convert elapsed seconds to SWMM time
         currentTimeEpoch = util_datetime_secs_to_epoch(setting%Time%Now)
-
-        
 
         !% --- compute elapsed days since start of simulation
         ElapsedDays = setting%Time%Now / seconds_per_day
@@ -748,7 +747,7 @@ contains
         !% --- execute controls
         number_of_actions = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
 
-        ! print *, 'number of actions taken ',number_of_actions
+       ! print *, 'number of actions taken ',number_of_actions
 
     end subroutine interface_controls_execute
 !%    
@@ -839,14 +838,15 @@ contains
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
             print *, '*                        FATAL ERROR                               *'
-            print *, '* The SWMM code has detected a parse error for the *.inp file.     *'
+            print *, '* The EPA SWMM code has detected a parse error for the *.inp file. *'
             print *, '* Something appears to be misalligned or missing. This might be    *'
             print *, '* connections between nodes and links that are missing or not      *'
             print *, '* allowed, or something as simple as a missing [ around a keyword, *'
             print *, '* e.g., JUNCTIONS] instead of [JUNCTIONS]. This also occurs when   *'
-            print *, '* the wrong words are used, e.g., if TRUE is used instead of YES   *'
-            print *, '* for ALLOW_PONDING. Check the *.rpt file created by EPA-SWMM      *'
-            print *, '* which should be in the user output folder'
+            print *, '* a keyword is mispelled or the wrong words are used, e.g., if     *'
+            print *, '* TRUE is used instead of YES for ALLOW_PONDING. Check the *.rpt   *'
+            print *, '* file created by EPA-SWMM, which should be in the user output     *'
+            print *, '* folder                                                           *'
             print *, '*                                                                  *'
             print *, '* Suggest you use the SWMM GUI to adjust and edit the *.inp file.  *'
             print *, '*                                                                  *'
@@ -1087,7 +1087,8 @@ contains
             character(64) :: subroutine_name = 'interface_get_nodef_attribute'
         !%-----------------------------------------------------------------------------
 
-        !write(*,*) '--- interface_get_nodef_attribute', attr
+        ! write(*,*) '--- in interface_get_nodef_attribute, attr # =', attr
+        ! if (attr < (api_keyslastplusone-1)) print *, 'attribute name=',reverseKey_api(attr)
 
         if (setting%Debug%File%interface)  &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
@@ -1179,7 +1180,7 @@ contains
 
         elseif     ( (attr  >   api_linkf_start) .and. (  attr <  api_linkf_commonbreak)) then
             !% --- for link attributes 1 to < api_linkf_commonBreak
-            !%      we simply read in the link value and exit this routine
+            !%      we simply read in the link value for the attribute and exit this routine
             call load_api_procedure("api_get_linkf_attribute")
 
             ! ---  NOTE: use link index-1 because Fortran index starts in 1, whereas in C starts in 0
@@ -1196,11 +1197,12 @@ contains
             !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
-            !% --- for link attributes in the range for for special elements   
+            !% --- for input link attributes in the range for for special elements   
             !%     the link value (integer) tells us other stuff to read in
             !%
             !% --- The "attr" input is one of the special element attributes, e.g., type, sub_type
-            !%     First we read in the type so that we can properly categorize the sub_type to read         
+            !%     First we use the api_linkf_type to get the overarching link type for this
+            !%     link. This allows us to properly categorize the sub_type values to read         
     
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
@@ -1360,6 +1362,8 @@ contains
                     end select
 
                 case (API_OUTLET)
+                    print *, 'READING IN AN OUTLET LINK, WHICH HAS NOT BEEN TESTED'
+                    call util_crashpoint(55098723)
                     select case (attr)
                         case (api_linkf_type)
                             link_value = lOutlet
@@ -1401,8 +1405,12 @@ contains
                 case default
                     print *, 'in ',trim(subroutine_name)
                     print *, 'CODE ERROR: this case default that should not be reached'
-                    print *, 'CASE of link type',ilink_value
+                    print *, 'Link index of ',link_idx
+                    print *, 'input attr of ',attr, reverseKey_api(attr)
+                    print *, 'unknown link value',ilink_value
+                    print *, 'problem in call to ptr_api_get_linkf_attribute with api_linkf_type'
                     print *, 'A possible cause is the EPA-SWMM executable needs to be recompiled'
+                    print *, 'This usually requires a cmake .. followed by a make'
                     call util_crashpoint(6698733)
             end select
       
@@ -2193,12 +2201,20 @@ contains
                 !write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
                 if (p0 == api_hourly_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow hourly patterns not tested'
+                    call util_crashpoint(2240871)
                     resolution = api_hourly
                 else if (p0 == api_weekend_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow weekend patterns not tested'
+                    call util_crashpoint(2240872)
                     resolution = api_weekend
                 else if (p0 == api_daily_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow daily patterns not tested'
+                    call util_crashpoint(2240873)
                     resolution = api_daily
                 else if (p0 == api_monthly_pattern) then
+                    print *, 'CODE NEEDS TESTING: extInflow monthly patterns not tested'
+                    call util_crashpoint(2240874)
                     !write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
                     baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
@@ -2234,12 +2250,20 @@ contains
                 write(*,*) '   p4 = ',p4
 
                 if (p1 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow hourly patterns not tested'
+                    call util_crashpoint(18820871)
                     resolution = max(api_hourly, resolution)
                 else if (p2 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow weekend patterns not tested'
+                    call util_crashpoint(18820872)
                     resolution = max(api_weekend, resolution)
                 else if (p3 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow daily patterns not tested'
+                    call util_crashpoint(18820873)
                     resolution = max(api_daily, resolution)
                 else if (p4 > 0) then
+                    print *, 'CODE NEEDS TESTING: dwfInflow monthly patterns not tested'
+                    call util_crashpoint(18820874)
                     resolution = max(api_monthly, resolution)
                 else
                     write(*,*) '***** unexpected else in ',trim(subroutine_name), 'at 3987044'
@@ -2436,6 +2460,8 @@ contains
         select case (BC%headI(bc_idx, bi_subcategory))  
         case (BCH_fixed, BCH_normal, BCH_free) 
             !% --- these cases should not be here!
+            print *, 'CODE ERROR: unexpected boundary condition case'
+            call util_crashpoint(609874)
             return
         case (BCH_tseries)
             !% --- get the timeseries index

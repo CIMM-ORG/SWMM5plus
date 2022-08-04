@@ -1378,9 +1378,9 @@ contains
                 ))
         endif
 
-        !% ep_Closed_Elements_CC
+        !% ep_CC_Closed_Elements
         !% - all the closed time-marching elements
-        ptype => col_elemP(ep_Closed_Elements_CC)
+        ptype => col_elemP(ep_CC_Closed_Elements)
         npack => npack_elemP(ptype)
         npack = count( &
                 ( &
@@ -1785,6 +1785,15 @@ contains
                 .and. &
                 (elemYN(:,eYN_isSurcharged)))
         end if
+
+        ! print *, ' '
+        ! print *, 'in ',trim(subroutine_name), ' ',ptype
+        ! print *, 'thisP '
+        ! print *, elemP(1:npack,ptype)
+        ! print *, ' '
+        ! print *, 'is_surcharged'
+        ! print *, elemYN(elemP(1:npack,ptype),eYN_isSurcharged)
+        ! print *, ' '
 
         !print *, 'CCJB_ALLtm_surcharged'
         !% ep_CCJB_ALLtm_surcharged ================================================

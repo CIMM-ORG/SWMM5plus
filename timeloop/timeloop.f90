@@ -482,8 +482,10 @@ contains
             !% dual-method, ETM for open channel, AC for surcharge
             call rk2_toplevel_ETMAC() 
         case (ETM)
-        !    print *, ' '
-        !    print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+            ! print *, ' '
+            ! print *, ' '
+            ! print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+            ! print *, ' '
         !    call util_CLprint ()
 
                 !outstring = '    tl_hydraulics 111 '
@@ -653,7 +655,7 @@ contains
         !%     done on a single processor because they all should have identical nextHydrologyTIme
         nextTime = min(nextHydraulicsTime, nextHydrologyTime)
 
-        !print *, 'next Time CCC ',nextTime
+        ! print *, 'next Time CCC ',nextTime
 
         !% --- note there is no need to broadcast across processors since co_min
         !%     ensures that each processor gets the min value.
@@ -846,8 +848,8 @@ contains
             !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
             thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,oldDT)
 
-                !print *, 'baseline CFL, minCFL, this step: '
-                !print *, thisCFL, minCFL, stepNow
+                ! print *, 'baseline CFL, minCFL, this step: '
+                ! print *, thisCFL, minCFL, stepNow
 
             if (thisCFL .ge. maxCFL) then
                 !% --- always decrease DT for exceeding the max CFL
@@ -855,24 +857,24 @@ contains
                 newDT = oldDT * targetCFL / thisCFL
                 lastCheckStep = stepNow
 
-                !print *, 'Adjust DT for high CFL    ',newDT   
+                ! print *, 'Adjust DT for high CFL    ',newDT   
 
             else 
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
                 if (stepNow >= lastCheckStep + checkStepInterval) then
-                   ! print *, '------------------------------------------------------------------------------'
-                   ! print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
+                  ! print *, '------------------------------------------------------------------------------'
+                  ! print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
 
                     !% --- check for low CFL only on prescribed intervals and increase time step
                     if (thisCFL .le. minCFL) then
                         !% --- for really small CFL, the new DT could be unreasonably large (or infinite)
                         !%     so use a value based on inflows to fill to small volume
-                        !print *, 'vanishing CFL'
+                       !print *, 'vanishing CFL'
                         call tl_dt_vanishingCFL(newDT)
 
                     elseif ((minCFL < thisCFL) .and. (thisCFL .le. maxCFLlow)) then
                         !% --- increase the time step and reset the checkStep Counter
-                       ! print *, 'lowCFL'
+                       !print *, 'lowCFL'
                         newDT = OldDT * targetCFL / thisCFL 
                     else
                         !% -- for maxCFLlow < thisCFL < maxCFL do nothing
@@ -885,19 +887,17 @@ contains
 
         !% --- prevent large increases in the time step
         newDT = min(newDT,OldDT * increaseFactor)
-           ! print *, 'before adjust newDT, oldDT : ',newDT, OldDT
-            ! print *, ' '
+        !    print *, 'before adjust newDT, oldDT : ',newDT, OldDT
 
         !% 20220328brh time step limiter for inflows into small or zero volumes
-            ! print *, 'dt before limit ', newDT
         call tl_limit_BCinflow_dt (newDT)
-            !print *, 'dt BC flow limit     ',newDT
+            ! print *, 'dt BC flow limit     ',newDT
 
         call tl_limit_BChead_inflow_dt (newDT)
-            !print *, 'dt BC head limit     ',newDT
+            ! print *, 'dt BC head limit     ',newDT
 
         call tl_limit_LatInflow_dt (newDT)
-            !print *, 'dt Qlat limit   ',newDt
+            ! print *, 'dt Qlat limit   ',newDt
 
         !% --- limit by inflow/head external boundary conditions time intervals
         if (setting%VariableDT%limitByBC_YN) then
@@ -913,18 +913,18 @@ contains
                 !% --- round larger dt to counting numbers
                 newDT = real(floor(newDT),8)
 
-                    !print *, 'rounding large    ',newDT
+                    ! print *, 'rounding large    ',newDT
             elseif (newDT > oneR) then
                 !% --- round smaller dt to two decimal places
                 newDT = real(floor(newDT * onehundredR),8) / onehundredR
 
-                    !print *, 'rounding small    ',newDT   
+                    ! print *, 'rounding small    ',newDT   
             else
                 !%  HACK -- should round to 3 places for smaller numbers
             end if
         end if
 
-         !print *, 'final DT: ',newDT
+        !  print *, 'final DT: ',newDT
         !  print *, ' '
 
         !% increment the hydraulics time clock
@@ -1191,10 +1191,16 @@ contains
 
                     ! write a time counter
                     if (.not. inSpinUpYN) then
-                        write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
-                            'time step = ',step,'; model time = ',thistime, &
-                            ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
-                        !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
+                        if (dt > oneR) then
+                            write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                                'time step = ',step,'; model time = ',thistime, &
+                                ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
+                            !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
+                        else
+                            write(*,"(A12,i8,a17,F9.4,a1,a8,a6,f9.8,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                                'time step = ',step,'; model time = ',thistime, &
+                                ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
+                        end if
                     else
                         write(*,"(A15,i8,a17,f9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
                             'spin-up step = ',step,'; model time = ',thistime, &
@@ -1247,6 +1253,15 @@ contains
 
         ! print *, ' '
         ! print *, 'in tl_get_max_cfl, Npack = ', Npack
+
+        ! print *, 'thisP ',thisP
+        ! print *, 'Velocity  ', velocity(thisP)
+        ! print *, 'WaveSpeed ', wavespeed(thisP)
+        ! !print *, 'Preiss C  ', PCelerity(thisP)
+        ! print *, ' '
+        ! print *, 'max values'
+        ! print *, maxval(velocity(thisP)), maxval(wavespeed(thisP)) !, maxval(PCelerity(thisP))
+
         ! write(*,"(A,10f12.5)") 'Vcfl ' , velocity(iet) * thisDT / length(iet)
         ! write(*,"(A,10f12.5)") 'Hcfl ' , wavespeed(iet) * thisDT / length(iet)
         ! write(*,"(A,10f12.5)") 'Ccfl ' , PCelerity(iet) * thisDT / length(iet)
@@ -1263,7 +1278,7 @@ contains
         if (Npack > 0) then 
             outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
                             maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
-           ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
+            ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
         else
             outvalue = zeroR
         end if
@@ -1272,8 +1287,8 @@ contains
 
         ! print *, ' '
         ! print *, 'in tl_get_max_cfl'
-        ! print *, length(iet(1))
-        ! print *, abs(wavespeed(iet(1))) * thisDT / length(iet(1))
+        ! !print *, length(thisP)
+        ! !print *, abs(wavespeed(iet(1))) * thisDT / length(iet(1))
         ! print *, outvalue
         ! print *, ' '
 

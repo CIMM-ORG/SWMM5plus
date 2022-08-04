@@ -50,6 +50,32 @@ module define_globals
     ! integer :: iet(7) = (/ 2, 4, 13, 1, 1, 1, 1/)
     ! integer :: ift(6) = (/ 4, 1, 2, 2, 2, 2/)
 
+    !% for Vasconcelos at 15 m nominal
+    ! integer :: iet(8) = (/    24,  25,  5,  1,  3,  12,  14,  13/)
+    ! integer :: ift(5) = (/ 22,   21,  4,           2,   11 /)
+
+    !% for Vasconcelos at 5 m nominal
+    ! integer :: iet(10) = (/    28,   26,    29,   5,  1,  3,  12,  14,  16, 15   /)
+    ! integer :: ift(7) = (/  26,   24,    23,    4,           2,  11,  13 /)
+
+    !% for Vasconcelows at 1 m nominal
+
+    !% to capture the junction
+!    integer :: iet(12) = (/    50,     43,    37,   51,    5,  1,  3,   12,    18,    25,    27, 26  /)
+!    integer :: ift(9)  = (/ 48,    47,      40,   34,   4,            2,    11,    17,   24  /)
+
+    !% to capture L1 (central) at 1 m nominal
+
+    integer :: iet(7) = (/15,16,17,18,19,20,21/)
+
+    !% for Vasconcelos at 0.1 m nominal
+    ! integer :: iet(12) = (/    308,     225,    166,    309,    5,  1,  3,   12,    82,    154,    156, 155  /)
+    ! integer :: ift(9)  = (/ 306,    223,     165,    163,   4,            2,    11,    80,     153  /)
+    
+   ! integer :: iet(7) = (/ 16,17, 18, 19, 20, 21, 22 /)
+
+    !integer :: iet(7) = (/ 68, 69, 70, 71, 72, 73, 74 /)
+
     integer(kind=8) :: irecCount = 0
 
     character (len=256) ::  outstring[*]
@@ -90,11 +116,17 @@ module define_globals
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
 
+    !% --- transect data (irregular cross-sections)
     integer, allocatable, target :: transectI(:,:)
     real(8), allocatable, target :: transectR(:,:)
     real(8), allocatable, target :: transectTableDepthR(:,:,:) ! transect table by depth
     real(8), allocatable, target :: transectTableAreaR(:,:,:)  ! transect table by area
     character(len=64), allocatable, target :: transectID(:)
+
+    !% --- section factor lookup data (for limited number of elements)
+    integer, allocatable, target :: uniformTableI(:,:)
+    real(8), allocatable, target :: uniformTableR(:,:)
+    real(8), allocatable, target :: uniformTableDataR(:,:,:) 
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -279,6 +311,10 @@ module define_globals
     !% counter for transects
     integer :: lastTransectIdx = 0
 
+    !% dummy index for elements/faces that do not exist
+    !% value set in init_network_set_dummy_elem()
+    integer :: dummyIdx
+
 !% ===================================================================================
 !% CONSTANTS
 !% ===================================================================================
@@ -287,7 +323,7 @@ module define_globals
     integer, parameter :: nullvalueI = 998877        !% note this places limit on largest network!
     real(8), parameter :: nullvalueR = 9.98877d16
     logical, parameter :: nullvalueL = .false.
-    real(8), parameter :: negoneR = -1.0
+    real(8), parameter :: negoneR = -1.d0
     real(8), parameter :: zeroR = 0.d0
     real(8), parameter :: oneR = 1.d0
     real(8), parameter :: twoR = 2.d0
@@ -296,17 +332,20 @@ module define_globals
     real(8), parameter :: fiveR = 5.d0
     real(8), parameter :: sixR = 6.d0
     real(8), parameter :: eightR = 8.d0
+    real(8), parameter :: nineR = 9.d0
     real(8), parameter :: tenR = 10.d0
     real(8), parameter :: twentyR = 20.d0
     real(8), parameter :: twentyfourR = 24.d0
     real(8), parameter :: sixtyR = 60.d0
     real(8), parameter :: onehundredR = 100.d0
+    real(8), parameter :: fivehundredR = 500.d0
     real(8), parameter :: onethousandR = 1000.d0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
-    real(8), parameter :: oneOneThounsandthR = oneR / onethousandR
+    real(8), parameter :: oneOneThousandthR = oneR / onethousandR
     real(8), parameter :: oneOneHundredthR = oneR / onehundredR
     real(8), parameter :: onetenthR = oneR / tenR
+    real(8), parameter :: oneninthR = oneR / nineR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
     real(8), parameter :: onefifthR = oneR / fiveR
@@ -322,7 +361,7 @@ module define_globals
     real(8), parameter :: seconds_per_hour = 3600.d0
     real(8), parameter :: seconds_per_day  = 86400.d0
 
-    integer            :: dummyI
+    integer, parameter :: dummyI = 1  !% used when dummy argument isneeded
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2
@@ -343,6 +382,8 @@ module define_globals
     integer :: N_transect            ! # of irregular cross-section transects for elements
     integer :: N_transect_depth_items
     integer :: N_transect_area_items
+    integer :: N_uniformTableData_items = 51  !% 51 is consistent with tables of EPA-SWMM
+    integer :: N_uniformTable_locations
     integer :: N_link
     integer :: N_node
     integer :: N_headBC

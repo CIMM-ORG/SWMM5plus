@@ -6,8 +6,8 @@
         "Short" : "TPA"
     },
     "Discretization" : {
+        "JunctionBranchLengthFactor" : 0.33,
         "AdjustLinkLengthYN" : false,
-        "ElemShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 0.072
@@ -54,6 +54,7 @@
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,
