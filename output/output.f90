@@ -47,6 +47,7 @@ module output
     public :: outputML_HD5F_close_file
     public :: outputML_HD5F_create_dset
     public :: outputML_HD5F_write_file
+    public :: outputML_HD5F_extend_write_file
     
 
     ! public :: outputD_read_csv_link_names
@@ -1527,6 +1528,10 @@ contains
         !% --- HACK to make this independent of globals, this call will have to be changed and files always written/read.
         call outputML_get_all_output_binary_filenames (nWritten)
 
+        if(setting%Output%Report%useHD5F) then 
+                call outputML_HD5F_create_file(H5_file_id)
+        end if
+
         lasttimeread = 0
         lasttimestart = 0
 
@@ -2276,7 +2281,8 @@ contains
             !% -----------------------------------
             !% --- PART 5a --- WRITE OUTPUT FOR LINKS
             !% -----------------------------------
-            call outputML_HD5F_create_file(H5_file_id)
+            
+
                 if (NtotalOutputElements > 0) then
                     do kk=1,nOutLink
                         !% --- Cycle through the links to create the individual link output files
@@ -2350,16 +2356,20 @@ contains
                                         output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
                                         dummyarrayI,    &
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
-                                end if
-
+                                end if 
                                 if(setting%Output%Report%useHD5F) then
                                     call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
-                                        nTypeElem, nTotalTimeLevels, dummyI, &
+                                        nTypeElem, nLevel, dummyI, &
                                         OutLink_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
                                         output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
                                         dummyarrayI,    &
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
+                                
+                                    call outputML_HD5F_write_file(fn_link_h5,H5_file_id, &
+                                        kk, nTypeElemWtime, dummyI, nLevel,  &
+                                        OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
+                                
                                 end if
 
                                 !% --- finished with the headers
@@ -2371,18 +2381,20 @@ contains
                                         action='write', access='append')
                                 end if
 
+                                if(setting%Output%Report%useHD5F) then
+                                    call outputML_HD5F_extend_write_file(fn_link_h5,H5_file_id, &
+                                        kk, nTypeElemWtime, dummyI, nLevel,  &
+                                        OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
+
+                                end if
+
                             end if
 
                             !% --- write link data to the unformatted file
                             ! call outputML_unf_writedata (&
                             !       fU_link_unf, nTypeElemWtime, nTotalTimeLevels, kk, OutLink_ProcessedDataR)
                             !% --- write link data to the csv formatted data for these nLevels
-                            if(setting%Output%Report%useHD5F) then
-                                call outputML_HD5F_write_file(fn_link_h5,H5_file_id, &
-                                    kk, nTypeElemWtime, dummyI, nLevel,  &
-                                    OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
-
-                            end if
+                           
                             if(setting%Output%Report%useCSV) then
                                 call outputML_csv_writedata ( &
                                     fU_link_csv, kk, nTypeElemWtime, dummyI, nLevel,  &
@@ -2430,6 +2442,10 @@ contains
                                         output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
                                         pOutElem_Gidx(OutLink_pOutElemIdx(kk,1:OutLink_N_elem_in_link(kk))), &
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .true. )
+
+                                    call outputML_HD5F_write_file(fn_linkFV_h5,H5_file_id, &
+                                        kk, OutLink_N_elem_in_link(kk), mminc, nLevel,  &
+                                        OutLink_ProcessedDataR, OutLink_ElemDataR, .true.)
                                 end if
                                 
                                 !% --- finished writing headers
@@ -2439,21 +2455,25 @@ contains
                                     open(newunit=fU_linkFV_csv, file=trim(fn_linkFV_csv), form='formatted', &
                                         action='write', position='append')
                                 end if
+
+                                if(setting%Output%Report%useHD5F) then 
+                                    call outputML_HD5F_extend_write_file(fn_linkFV_h5,H5_file_id, &
+                                        kk, OutLink_N_elem_in_link(kk), mminc, nLevel,  &
+                                        OutLink_ProcessedDataR, OutLink_ElemDataR, .true.)
+                                end if
                             end if
                             !% --- write the csv FV output for elements of kk link with mm type and the latest 1:nLevel
                             if(setting%Output%Report%useCSV) then
                                 call outputML_csv_writedata ( &
                                 fU_linkFV_csv, kk, OutLink_N_elem_in_link(kk), mminc, nLevel,  &
                                 OutLink_ProcessedDataR, OutLink_ElemDataR, .true.)
-                            end if
-
-                            if(setting%Output%Report%useHD5F) then
-                                call outputML_HD5F_write_file(fn_linkFV_h5,H5_file_id, &
-                                kk, OutLink_N_elem_in_link(kk), mminc, nLevel,  &
-                                OutLink_ProcessedDataR, OutLink_ElemDataR, .true.)
-                            !% --- close this file so that the unit# can be used for a new file
                                 close(fU_linkFV_csv)
                             end if
+
+                            
+                            !% --- close this file so that the unit# can be used for a new file
+                                
+                            
                         end do !% mm
                         !% --- finished writing all Link files for link ii
                     end do !% kk
@@ -2535,12 +2555,17 @@ contains
 
                                 if(setting%Output%Report%useHD5F) then  
                                     call outputML_HD5F_create_dset(fn_nodeElem_h5,H5_file_id, &
-                                        nTypeElem, nTotalTimeLevels, dummyI, &
+                                        nTypeElem, nLevel, dummyI, &
                                         OutNodeElem_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
                                         output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
                                         pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeElemOut, .false.)
+
+                                    call outputML_HD5F_write_file(fn_nodeElem_h5,H5_file_id, &
+                                        kk, nTypeElemWtime, dummyI, nLevel,  &
+                                        OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .false. )
+
                                 end if 
                                 
                                 !% --- finished with the headers
@@ -2551,6 +2576,13 @@ contains
                                     open(newunit=fU_nodeElem_csv, file=trim(fn_nodeElem_csv), form='formatted',  &
                                         action='write', access='append')
                                 end if
+
+                                if(setting%Output%Report%useHD5F) then 
+                                    call outputML_HD5F_extend_write_file(fn_nodeElem_h5,H5_file_id, &
+                                        kk, nTypeElemWtime, dummyI, nLevel,  &
+                                        OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .false. )
+                                end if
+
                             end if
 
                             !% --- write node data to the unformatted file
@@ -2558,12 +2590,6 @@ contains
                             !     fU_nodeElem_unf, nTypeElemWtime, nTotalTimeLevels, kk, &
                             !     OutNodeElem_ProcessedDataR)
                             !% --- write node data to the csv formatted data for these nLevels
-                            if(setting%Output%Report%useHD5F) then
-                                call outputML_HD5F_write_file(fn_nodeElem_h5,H5_file_id, &
-                                    kk, nTypeElemWtime, dummyI, nLevel,  &
-                                    OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .false. )
-
-                            end if
 
                             if(setting%Output%Report%useCSV) then
                                 call outputML_csv_writedata ( &
@@ -2614,6 +2640,10 @@ contains
                                         output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
                                         pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeElemOut, .true.)
+
+                                    call outputML_HD5F_write_file(fn_nodeElemFV_h5,H5_file_id, &
+                                        kk, OutNodeElem_N_elem_in_node(kk), mminc, nLevel,  &
+                                        OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .true.)
                                 end if
                                 !% --- finished writing headers
                             else !% --- for ii> 2, open the existing FV file for this type and node
@@ -2622,12 +2652,15 @@ contains
                                     open(newunit=fU_nodeElemFV_csv, file=trim(fn_nodeElemFV_csv), form='formatted', &
                                         action='write', position='append')
                                 end if
+
+                                if(setting%Output%Report%useHD5F) then 
+                                    call outputML_HD5F_extend_write_file(fn_nodeElemFV_h5,H5_file_id, &
+                                        kk, OutNodeElem_N_elem_in_node(kk), mminc, nLevel,  &
+                                        OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .true.)
+                                end if
+
                             end if
-                            if(setting%Output%Report%useHD5F) then
-                                call outputML_HD5F_write_file(fn_nodeElemFV_h5,H5_file_id, &
-                                    kk, OutNodeElem_N_elem_in_node(kk), mminc, nLevel,  &
-                                    OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .true.)
-                            end if
+
 
                             if(setting%Output%Report%useCSV) then
                                 call outputML_csv_writedata ( &
@@ -2728,6 +2761,11 @@ contains
                                         output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
                                         pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
+
+                                    call outputML_HD5F_write_file(fn_nodeFace_h5,H5_file_id, &
+                                        kk, nTypeFaceWtime, dummyI, nLevel,  &
+                                        OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
+
                                 end if
                                 !% --- finished with the headers
                             else
@@ -2738,16 +2776,19 @@ contains
                                     open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted',  &
                                         action='write', access='append')
                                 end if
+
+                                if(setting%Output%Report%useHD5F) then 
+                                    call outputML_HD5F_extend_write_file(fn_nodeFace_h5,H5_file_id, &
+                                        kk, nTypeFaceWtime, dummyI, nLevel,  &
+                                        OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
+                                end if
+
                             end if
 
                             !% --- write node data to the unformatted file
                             ! call outputML_unf_writedata ( &
                             !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, kk, OutNodeFace_ProcessedDataR)
-                            if(setting%Output%Report%useHD5F) then
-                                call outputML_HD5F_write_file(fn_nodeFace_h5,H5_file_id, &
-                                    kk, nTypeFaceWtime, dummyI, nLevel,  &
-                                    OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
-                            end if
+                            
 
                             if(setting%Output%Report%useCSV) then
                                 !% --- write node data to the csv formatted data for these nLevels
@@ -2797,7 +2838,11 @@ contains
                                         startdate, setting%Time%StartEpoch, &
                                         output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
                                         pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
-                                        tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .true. )    
+                                        tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .true. )  
+
+                                    call outputML_HD5F_write_file(fn_nodeFaceFV_h5,H5_file_id, &
+                                        kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
+                                        OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)    
                                     !% --- finished writing headers
                                 end if
                             else !% --- for ii> 2, open the existing FV file for this type and node
@@ -2805,12 +2850,13 @@ contains
                                     open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
                                         action='write', position='append')
                                 end if
-                            end if
 
-                            if(setting%Output%Report%useHD5F) then
-                               call outputML_HD5F_write_file(fn_nodeFaceFV_h5,H5_file_id, &
-                                   kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
-                                   OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)    
+                                if(setting%Output%Report%useHD5F) then 
+                                    call outputML_HD5F_extend_write_file(fn_nodeFaceFV_h5,H5_file_id, &
+                                        kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
+                                        OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)
+                                end if
+
                             end if
 
                             if(setting%Output%Report%useCSV) then
@@ -2907,8 +2953,9 @@ contains
         end if
 
         !% Close H5 file and HDF5 API
-        call outputML_HD5F_close_file(H5_file_id)
-
+        if(setting%Output%Report%useHD5F) then 
+            call outputML_HD5F_close_file(H5_file_id)
+        end if
 
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4471,11 +4518,12 @@ contains
 
         character(LEN=500) :: temp_str
 
-        INTEGER(HID_T) :: dspace_id     ! Dataspace identifier
-        INTEGER(HID_T) :: dset_id       ! Dataset identifier
-        INTEGER(HID_T) :: attr_id       ! Attribute identifier
-        INTEGER(HID_T) :: aspace_id     ! Attribute Dataspace identifier
-        INTEGER(HID_T) :: atype_id      ! Attribute Dataspace identifier
+        INTEGER(HID_T) :: dspace_id      ! Dataspace identifier
+        INTEGER(HID_T) :: dset_id        ! Dataset identifier
+        INTEGER(HID_T) :: attr_id        ! Attribute identifier
+        INTEGER(HID_T) :: aspace_id      ! Attribute Dataspace identifier
+        INTEGER(HID_T) :: atype_id       ! Attribute Dataspace identifier
+        INTEGER(HID_T) :: dset_prop_list ! Dataset creation property list, allows us to use chunking for HDF5 datasets
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
         CHARACTER(LEN=150), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
         CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
@@ -4485,7 +4533,9 @@ contains
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: header_dims       !dimensions of the header created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims      !dimensions of the profiles created
-        
+        INTEGER(HSIZE_T), DIMENSION(1:2) :: max_dims
+
+
         INTEGER     ::   rank = 2 !% only have 2D arrays so rank is always 2                    
         INTEGER     ::   HD_error !% For HDF5 errors
         INTEGER     ::   ii, jj 
@@ -4511,7 +4561,9 @@ contains
         end if
 
 
-        
+        !print *,"======================================="
+        !print *,"==============",h5_dset_name,"========================="
+        !print *,"======================================="
         
         
         !% length of the attributes to be stored
@@ -4672,7 +4724,8 @@ contains
         end if
 
         profile_dims(1:2) = (/max_links_profile_N,max_profiles_N/)
- 
+        max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
+
         !% Converting the profile IDs back to the Link and Node names.
         !% Nodes are always on odd IDs and links are always on even IDS
         if( allocated(output_profile_ids)) then
@@ -4689,11 +4742,19 @@ contains
             end do 
         end if
 
+
         !%create and then close the dataspace that will store the link data
-        CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error)
+        CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error ,max_dims)
+
+        !enabling chunking needed for extending datasets
+        CALL h5pcreate_f(H5P_DATASET_CREATE_F, dset_prop_list, HD_error)
+
+        CALL h5pset_chunk_f(dset_prop_list, rank, updated_size_data, HD_error)
 
         CALL h5dcreate_f(file_id, trim(h5_dset_name), H5T_NATIVE_REAL, dspace_id, &
-        dset_id, HD_error) 
+        dset_id, HD_error, dset_prop_list) 
+
+        call h5pclose_f(dset_prop_list, HD_ERROR)
 
         CALL h5sclose_f(dspace_id, HD_error)
 
@@ -4799,7 +4860,7 @@ contains
 
         else 
             allocate(dset_data(nIdx2,nLevel))
-            dset_data(:,:) = Out_ProcessedDataR(idx1,1:nIdx2,1:nLevel)
+            dset_data(:nIdx2,:nLevel) = Out_ProcessedDataR(idx1,1:nIdx2,1:nLevel)
             updated_size_data(1:2) = (/nLevel,nIdx2/)
 
         end if
@@ -4817,6 +4878,97 @@ contains
         deallocate(dset_data)
     
     end subroutine outputML_HD5F_write_file
+
+    subroutine outputML_HD5F_extend_write_file(h5_dset_name, file_id, idx1, nIdx2, idx3, nLevel, Out_ProcessedDataR,Out_ElemDataR,isFV)
+
+        !%Function for writing the output to the correct dataset and dataspace with the 
+        character(len=*), intent(in)    :: h5_dset_name ! name of dset to be written to  
+        integer(HID_T), intent(in)      :: file_id      ! File ID of the .h5 file
+        integer, intent(in) :: nLevel  !% Time levels     
+        integer, intent(in) :: idx1    !% the link being output (kk)
+        integer, intent(in) :: nIdx2   !% N items in columns (nType or SWMMlink_num_elements)
+        integer, intent(in) :: idx3    !% the single data type being processed (FV only)
+        real(8), intent(in) :: Out_ProcessedDataR(:,:,:)
+        real(8), intent(in) :: Out_ElemDataR(:,:,:,:)    !% (link/node,element,type,timelevel)
+        logical, intent(in) :: isFV   !% is finite volume output
+
+        INTEGER(HSIZE_T), DIMENSION(1:2) :: max_dims
+        INTEGER(HSIZE_T), dimension(1:2) :: dims_before_extend
+        INTEGER(HSIZE_T), DIMENSION(1:2) :: total_dims
+        INTEGER :: tmp_int1
+        INTEGER(HID_T) :: dset_id       !% Dataset identifier
+        INTEGER(HID_T) :: data_space_id 
+        INTEGER(HID_T) :: memspace_id
+        INTEGER(HSIZE_T), DIMENSION(1:2)  :: updated_size_data !% Dimensions of the data to be written to the dataset
+        REAL, DIMENSION(:,:), allocatable :: dset_data         !% Array to hold the output of the data to be written to the dataset
+                   
+        INTEGER     ::   HD_error !% For HDF5 errors
+        
+
+        character(len=99)   :: emsg
+        character(64)       :: subroutine_name = 'outputML_HD5F_extend_write_file'
+
+
+        if (setting%Debug%File%output) &
+             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        
+        max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
+
+
+        
+
+        !% Dataset_data is allocated and filled with correct data, updated_size_data is stored 
+        if(isFv) then    
+            allocate(dset_data(nIdx2+1,nLevel))
+            updated_size_data(1:2) =(/nIdx2+1,nLevel/)
+            dset_data(1,1:nLevel) = Out_ElemDataR(idx1,1,1,1:nLevel)
+            dset_data(2:nIdx2+1,1:nLevel) = Out_ElemDataR(idx1,1:nIdx2,idx3,1:nLevel)
+
+        else 
+            allocate(dset_data(nIdx2,nLevel))
+            dset_data(:,:) = Out_ProcessedDataR(idx1,:nIdx2,:nLevel)
+            updated_size_data(1:2) = (/nIdx2,nLevel/)
+
+        end if
+        
+        !% the dataset is opened 
+        CALL h5dopen_f(file_id, trim(h5_dset_name), dset_id, HD_error)
+
+        call h5dget_space_f(dset_id,data_space_id,HD_error)
+
+        call h5sget_simple_extent_dims_f(data_space_id,dims_before_extend,max_dims,HD_error)
+        tmp_int1 = dims_before_extend(2)
+        dims_before_extend(1) = 0
+        if(isFv) then 
+            total_dims(1:2) = (/nIdx2+1,tmp_int1+nLevel /)
+        else 
+            total_dims(1:2) = (/nIdx2,tmp_int1+nLevel /)
+        
+        end if 
+
+        call h5dset_extent_f(dset_id,total_dims,HD_error)
+
+        call h5screate_simple_f(2,updated_size_data,memspace_id,HD_error)
+
+        call h5dget_space_f(dset_id,data_space_id,HD_Error)
+
+        call h5sselect_hyperslab_f(data_space_id,H5S_SELECT_SET_F , dims_before_extend, updated_size_data, HD_ERROR)
+
+        call h5dwrite_f(dset_id, H5T_NATIVE_REAL, dset_data, updated_size_data,HD_error, memspace_id,data_space_id)
+
+        !% the dataset is written to using the stored data 
+        
+
+        !% the dataset is closed
+        CALL h5sclose_f(data_space_id,HD_error)
+        CALL h5dclose_f(dset_id, HD_error)
+
+        !% deallocation of dset_data
+        deallocate(dset_data)
+    
+    end subroutine outputML_HD5F_extend_write_file
+
+
 
 !%
 !%==========================================================================
