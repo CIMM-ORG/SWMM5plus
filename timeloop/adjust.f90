@@ -1172,10 +1172,10 @@ module adjust
 
         !% --- Reducing V-filter when Qlateral is large  20220524brh
         !%     HACK the fraction below should be replaced with a coefficient
-        where (Qlateral(thisP) > onefourthR * elemFlow(thisP))
-            Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * elemFlow(thisP) / Qlateral(thisP))**2
-            Vvalue(thisP) = zeroR     
-        endwhere
+        ! where (Qlateral(thisP) > onefourthR * elemFlow(thisP))
+        !     Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * elemFlow(thisP) / Qlateral(thisP))**2
+        !     Vvalue(thisP) = zeroR     
+        ! endwhere
 
         !% the Vvalue returns...
         !%  -1.0 if the element Q is between the face Q (not v-shaped)

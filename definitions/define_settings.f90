@@ -658,7 +658,7 @@ module define_settings
         real(8) :: Area = 1.d-3 ! m^2 -- set by code
         real(8) :: Depth = 1.d-3 ! m
         real(8) :: Slope = 1.e-6 ! prevents zero values
-        real(8) :: Topwidth = 1.d0 ! m -- set by code
+        real(8) :: Topwidth = 1.d-3 ! m -- set by code
         real(8) :: Volume = 1.d-2 ! m^3 -- set by code
         real(8) :: VolumeResetLevel !m^3 -- set by code
         real(8) :: Velocity = 1.d-3

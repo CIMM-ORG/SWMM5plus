@@ -139,6 +139,9 @@
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
+        "ReferenceHead"     : 0.0,
+        "Roughness" : {
+            "useDynamicRoughness" : false
+        }
     }
 }

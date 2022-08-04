@@ -53,13 +53,13 @@ module runge_kutta2
         if (setting%Solver%Roughness%useDynamicRoughness) then
             call rk2_dynamic_roughness (ETM)
         else
-            print *, 'CONFIGURATION ERROR'
-            print *, 'User has setting.Solver.Roughness.useDynamicRoughness = false'
-            print *, 'It is strongly recommended that .true. be used. '
-            print *, 'If you must use false, then you will need to comment out'
-            print *, 'this error message and stop command in runge_kutta2.f90'
-            print *, 'and then recompile the code.'
-            call util_crashpoint(409873)
+            ! print *, 'CONFIGURATION ERROR'
+            ! print *, 'User has setting.Solver.Roughness.useDynamicRoughness = false'
+            ! print *, 'It is strongly recommended that .true. be used. '
+            ! print *, 'If you must use false, then you will need to comment out'
+            ! print *, 'this error message and stop command in runge_kutta2.f90'
+            ! print *, 'and then recompile the code.'
+            ! call util_crashpoint(409873)
         end if
 
         !call util_CLprint ('AAA  start of RK2 ==============================')
