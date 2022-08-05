@@ -1560,8 +1560,9 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             length       => elemR(:,er_Length)
         !%------------------------------------------------------------------
 
-        dynamic_mn(thisP) =  mn(thisP) &
-            +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+        dynamic_mn(thisP) =  mn(thisP)
+       ! dynamic_mn(thisP) =  mn(thisP) &
+       !     +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
             
         !% OTHER VERSIONS EXPERIMENTED WITH 20220802
              ! dynamic_mn(thisP) =  mn(thisP) &

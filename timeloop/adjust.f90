@@ -1172,8 +1172,8 @@ module adjust
 
         !% --- Reducing V-filter when Qlateral is large  20220524brh
         !%     HACK the fraction below should be replaced with a coefficient
-        where (Qlateral(thisP) > onefourthR * elemFlow(thisP))
-            Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * elemFlow(thisP) / Qlateral(thisP))**2
+        where (Qlateral(thisP) > onefourthR * abs(elemFlow(thisP)))
+            Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * abs(elemFlow(thisP)) / Qlateral(thisP))**2
             Vvalue(thisP) = zeroR     
         endwhere
 
