@@ -2,14 +2,15 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "VasconcelosTPA_noUpStorage",
-        "Short" : "TPA_noUpStorage"
+        "Long"  : "VasconcelosTPA",
+        "Short" : "TPA"
     },
     "Discretization" : {
-        "LinkShortingFactor" : 0.33,
+        "JunctionBranchLengthFactor" : 0.33,
+        "AdjustLinkLengthYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.036
+        "NominalElemLength" : 0.072
     },
     "Limiter" : {
         "BC" : {
@@ -43,30 +44,33 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 2000
         },
         "DataOut" :{
             "isAreaOut"                 : true,
             "isDepthOut"                : true,
             "isFlowrateOut"             : true,
-            "isFroudeNumberOut"         : false,
+            "isFroudeNumberOut"         : true,
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,
             "isVelocityOut"             : true,
             "isVolumeOut"               : true,
             "isWaveSpeedOut"            : true,
-            "isPreissmannCelerityOut"   : true
+            "isPreissmannCelerityOut"   : true,
+            "isPreissmannNumberOut"     : true
         },
         "Report" : {
             "useSWMMinpYN" :false,
             "provideYN" : true,
+            "useHD5F" : false,  
             "suppress_MultiLevel_Output" : false,
-            "StartTime" : 55.0,
-            "TimeInterval" : 0.1,
+            "StartTime" : 0.0,
+            "TimeInterval" : 0.05,
             "TimeUnits" : "Seconds"
         }
     },
@@ -74,8 +78,12 @@
         "useYN" : false
     },
     "Simulation" : {
-        "useHydrology" : false,
-        "useHydraulics" : true
+        "stopAfterInitializationYN" : false,
+        "useHydrology"              : true,
+        "useHydraulics"             : true,
+        "useSpinUp"                 : false,
+        "stopAfterSpinUp"           : false,
+        "SpinUpDays"                : 10.0
     },
 
     "TestCase" : {
@@ -95,12 +103,13 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 2.53
+        "TargetPreissmannCelerity" : 50.00,
+        "PreissmannAlpha" : 5.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.6,
-        "CFL_target" : 0.5,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
         "CFL_lo_max" : 0.3,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
@@ -114,12 +123,25 @@
             "ApplyYN" : true,
             "Approach" : "vshape",
             "Coef" : 1.0,
-            "SmallDepthMultiplier" : 3.0
+            "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : true,
+            "ApplyYN" : false,
             "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0
+            "Coef" : 1.0,
+            "FullDepthMultiplier" : 0.5
+        }
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0,
+        "Roughness" : {
+            "useDynamicRoughness" : false
         }
     }
 }

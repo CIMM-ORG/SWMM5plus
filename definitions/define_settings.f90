@@ -142,6 +142,7 @@ module define_settings
         logical :: isHeadOut                = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
+        logical :: isRoughnessDynamicOut    = .false.
         logical :: isSlotWidthOut           = .false.
         logical :: isSlotDepthOut           = .false.
         logical :: isTopWidthOut            = .false.
@@ -190,8 +191,8 @@ module define_settings
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
-        real(8) :: Maximum = 1.0d6
-        real(8) :: Minimum = 1.0d-6
+        real(8) :: Maximum = 1.0d16
+        real(8) :: Minimum = 1.0d-16
     end type LimiterInterpWeightType
 
     !% setting%Limiter%Velocity
@@ -204,12 +205,20 @@ module define_settings
     type ReportType
         logical :: useSWMMinpYN = .true.
         logical :: provideYN = .true.
+        logical :: useHD5F   = .true.
+        logical :: useCSV    = .true.
         logical :: suppress_MultiLevel_Output = .false.
         real(8) :: StartTime = 0.0d0
         real(8) :: TimeInterval = 300.0d0
         integer :: ThisStep
         integer :: TimeUnits = InHours
     end type ReportType
+
+    !% setting%Solver%Roughness
+    type RoughnessType
+        logical :: useDynamicRoughness = .true.
+        real(8) :: alpha = 100.0d0
+    end type RoughnessType
 
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
@@ -400,8 +409,8 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        logical :: AdjustLinkLengthYN = .true.
-        real(8) :: LinkShortingFactor  = 0.33d0
+        logical :: AdjustLinkLengthYN = .false.          !% if true then JB length is subtracted from link length
+        real(8) :: JunctionBranchLengthFactor  = 0.33d0  !% fraction of NominalElemLength used for JB
         real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
         real(8) :: NominalElemLength   = 10.0d0
@@ -433,7 +442,7 @@ module define_settings
         logical              :: force_folder_creationYN = .true.
         logical              :: duplicate_input_file = .true.
         !% standard files and folders
-        character(len=256)   :: base_folder = ""
+        character(len=256)   :: base_folder = "build"
         character(len=256)   :: library_folder = ""
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
@@ -471,6 +480,7 @@ module define_settings
 
     ! setting%Limiter
     type LimiterType
+        real(8) :: NormalDepthInfinite   = 1000.0     ! value used when normal depth would be infinite.
         !rm 20220207brh type(LimiterBCType)           :: BC  !% not used
         !rm 20220209brh type(LimiterChannelType)      :: Channel
         !rm 20220207brh type(LimiterFlowrateType)     :: Flowrate  !% not used
@@ -524,8 +534,8 @@ module define_settings
     !% setting%PreissmannSlot
     type PreissmannSlotType
         integer :: PreissmannSlotMethod = DynamicSlot
-        real(8) :: TargetPreissmannCelerity = 0.01d0
-        real(8) :: PreissmannAlpha = 3.0d0
+        real(8) :: TargetPreissmannCelerity = 3.0d0
+        real(8) :: PreissmannAlpha = 2.0d0
     end type PreissmannSlotType
 
     !% setting%Profile
@@ -543,7 +553,7 @@ module define_settings
         logical :: stopAfterInitializationYN = .false.
         logical :: useHydrology = .true.
         logical :: useHydraulics = .true.
-        logical :: useSpinUp     = .true.
+        logical :: useSpinUp     = .false.
         logical :: stopAfterSpinUp = .false.
         real(8) :: SpinUpDays    = 10.d0
     end type SimulationType
@@ -561,7 +571,7 @@ module define_settings
     type SolverType
         logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
-        integer :: MomentumSourceMethod = TA1
+        integer :: MomentumSourceMethod = T10
         integer :: SolverSelect = ETM
         real(8) :: SwitchFractionDn = 0.8d0
         real(8) :: SwitchFractionUp = 0.9d0
@@ -570,6 +580,7 @@ module define_settings
         real(8) :: MaxZbottom = zeroR
         real(8) :: MinZbottom = zeroR
         real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]
+        type(RoughnessType) :: Roughness
     end type SolverType
 
     type TestCaseType
@@ -635,7 +646,7 @@ module define_settings
         real(8) :: CFL_inflow_max = 0.4d0
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2d0 
-        real(8) :: InitialDt = 1.d0
+        real(8) :: InitialDt = 10.d0
         integer :: NstepsForCheck = 10
         integer(kind=8) :: LastCheckStep = 0
     end type VariableDTType
@@ -646,7 +657,8 @@ module define_settings
         logical :: UseZeroValues = .true.
         real(8) :: Area = 1.d-3 ! m^2 -- set by code
         real(8) :: Depth = 1.d-3 ! m
-        real(8) :: Topwidth = 1.d0 ! m -- set by code
+        real(8) :: Slope = 1.e-6 ! prevents zero values
+        real(8) :: Topwidth = 1.d-3 ! m -- set by code
         real(8) :: Volume = 1.d-2 ! m^3 -- set by code
         real(8) :: VolumeResetLevel !m^3 -- set by code
         real(8) :: Velocity = 1.d-3
@@ -785,10 +797,11 @@ contains
         else
             write(*,"(A)") "Error - json file - setting " // 'JSON_FoundFileYN not found'
             write(*,"(A)") "...This should be first item in json file."
-            write(*,"(A)") "...There may be a formatting problem in the json file,"
-            write(*,"(A)") "...or this line may be missing. The most common cause "
-            write(*,"(A)") "...is the input JSON filename had a typographical error"
-            write(*,"(A)") "...in its name or path."
+            write(*,"(A)") "...There may be a formatting problem inside the json file,"
+            write(*,"(A)") "...itself (e.g., mismatched braces or missing comma) or"
+            write(*,"(A)") "...this line may be missing from the file. The most common"
+            write(*,"(A)") "...cause is a typographical error in the name of, or path."
+            write(*,"(A)") "...to, the JSON file."
             stop 970984
         end if
 
@@ -1086,10 +1099,10 @@ contains
         if (found) setting%Discretization%AdjustLinkLengthYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdjustLinkLengthYN not found'
 
-        !%                      Discretization.LinkShortingFactor
-        call json%get('Discretization.LinkShortingFactor', real_value, found)
-        if (found) setting%Discretization%LinkShortingFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.LinkShortingFactor not found'
+        !%                      Discretization.JunctionBranchLengthFactor
+        call json%get('Discretization.JunctionBranchLengthFactor', real_value, found)
+        if (found) setting%Discretization%JunctionBranchLengthFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.JunctionBranchLengthFactor not found'
         
         !%                       Discretization.MinElemLengthFactor
         call json%get('Discretization.MinElemLengthFactor', real_value, found)
@@ -1437,6 +1450,11 @@ contains
         call json%get('Output.DataOut.isPerimeterOut', logical_value, found)
         if (found) setting%Output%DataOut%isPerimeterOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'
+
+        !%                       Dataout.isRoughnessDynamicOut
+        call json%get('Output.DataOut.isRoughnessDynamicOut', logical_value, found)
+        if (found) setting%Output%DataOut%isRoughnessDynamicOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isRoughnessDynamicOut not found'
         
         !%                       Dataout.isSlotWidthOut
         call json%get('Output.DataOut.isSlotWidthOut', logical_value, found)
@@ -1488,6 +1506,17 @@ contains
         call json%get('Output.Report.provideYN', logical_value, found)
         if (found) setting%Output%Report%provideYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.provideYN not found'
+
+        !%                       Report.useHD5F
+        call json%get('Output.Report.useHD5F', logical_value, found)
+        if (found) setting%Output%Report%useHD5F = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.useHD5F not found'
+
+        !%                       Report.useCSV
+        call json%get('Output.Report.useCSV', logical_value, found)
+        if (found) setting%Output%Report%useCSV = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.useCSV not found'
+
 
         !%                       Report.suppress_MultiLevel_Output
         call json%get('Output.Report.suppress_MultiLevel_Output', logical_value, found)
@@ -1695,6 +1724,17 @@ contains
 
         !% do not read          Solver.ReferenceHead
 
+    !% Solver.Roughness =====================================================================
+        !%                       Solver.Roughness.useDynamicRoughness
+        call json%get('Solver.Roughness.useDynamicRoughness', logical_value, found)
+        if (found) setting%Solver%Roughness%useDynamicRoughness = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.useDynamicRoughness not found'
+       
+    !%                       Solver.Roughness.alpha
+        call json%get('Solver..Roughness.alpha', real_value, found)
+        if (found)  setting%Solver%Roughness%alpha = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.alpha not found'
+     
     !% TestCase.  =====================================================================
         !%                       TestCase.UseTestCaseYN
         call json%get('TestCase.UseTestCaseYN', logical_value, found)
@@ -1903,6 +1943,11 @@ contains
         call json%get('VariableDT.NstepsForCheck', integer_value, found)
         if (found) setting%VariableDT%NstepsForCheck = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.NstepsForCheck not found'
+
+          !%                       InitialDt
+        call json%get('VariableDT.InitialDt', real_value, found)
+        if (found) setting%VariableDT%InitialDt = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.InitialDt not found'
 
         !% do not read           LastCheckStep
 

@@ -361,7 +361,7 @@ contains
         end if
 
         !% --- rectangular conduits 
-        ptype => col_elemPGalltm(epg_CC_rectangular_colsed_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_rectangular_closed_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -675,7 +675,7 @@ contains
         end if
 
         !% rectangular conduits 
-        ptype => col_elemPGac(epg_CC_rectangular_colsed_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_rectangular_closed_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -939,7 +939,7 @@ contains
 
 
         !% --- rectangular conduits nonsurcharged
-        ptype => col_elemPGetm(epg_CC_rectangular_colsed_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_rectangular_closed_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -1378,15 +1378,13 @@ contains
                 ))
         endif
 
-        !% ep_Closed_Elements
+        !% ep_CC_Closed_Elements
         !% - all the closed time-marching elements
-        ptype => col_elemP(ep_Closed_Elements)
+        ptype => col_elemP(ep_CC_Closed_Elements)
         npack => npack_elemP(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == CC) &
-                    .or. &
-                    (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
                 ( &
@@ -1429,8 +1427,6 @@ contains
             elemP(1:npack, ptype) = pack(eIdx, &
                 ( &
                     (elemI(:,ei_elementType) == CC) &
-                    .or. &
-                    (elemI(:,ei_elementType) == JM) &
                 ) &
                 .and. &
                 ( &
@@ -1469,7 +1465,90 @@ contains
                     (elemI(:,ei_geometryType) == force_main) &
                 ) )
         end if
-        
+
+        !% ep_Closed_Elements_JB
+        !% - all the closed time-marching elements
+        ptype => col_elemP(ep_Closed_Elements_JB)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JB) &
+                ) &
+                .and. &
+                ( &
+                    (elemSI(:,esi_JunctionBranch_Exists) == 1) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == filled_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horiz_ellipse) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == arch) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == eggshaped) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horseshoe) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == gothic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == catenary) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_elliptical) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == basket_handle) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == custom) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == force_main) &
+                ) )
+
+        if (npack > 0) then
+            elemP(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JB) &
+                ) &
+                .and. &
+                ( &
+                    (elemSI(:,esi_JunctionBranch_Exists) == 1) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == filled_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horiz_ellipse) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == arch) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == eggshaped) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horseshoe) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == gothic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == catenary) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_elliptical) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == basket_handle) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == custom) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == force_main) &
+                ) )
+        end if
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_static_elements
@@ -1706,6 +1785,15 @@ contains
                 .and. &
                 (elemYN(:,eYN_isSurcharged)))
         end if
+
+        ! print *, ' '
+        ! print *, 'in ',trim(subroutine_name), ' ',ptype
+        ! print *, 'thisP '
+        ! print *, elemP(1:npack,ptype)
+        ! print *, ' '
+        ! print *, 'is_surcharged'
+        ! print *, elemYN(elemP(1:npack,ptype),eYN_isSurcharged)
+        ! print *, ' '
 
         !print *, 'CCJB_ALLtm_surcharged'
         !% ep_CCJB_ALLtm_surcharged ================================================
@@ -2618,6 +2706,36 @@ contains
                 (.not. elemYN(:,eYN_isZeroDepth))     ) 
         end if
 
+        !print *, 'CCJM_NOTsmalldepth'
+        !% ep_CCJM_NOTsmalldepth  ====================================
+        !% Flow solution that are NOT small volume or zero depth
+        !% -- alternate needed to limit where CFL is computed
+        ptype => col_elemP(ep_CCJM_NOTsmalldepth)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (      &
+                      ( elemI(:,ei_elementType) == CC) &
+                 .or. ( elemI(:,ei_elementType) == JM) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
+        ! print *, ' '
+        ! print *, ' in pack_mask_arrays checking CCJM_NOTsmalldepth'
+        ! print *, 'npack ',npack        
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (      &
+                      ( elemI(:,ei_elementType) == CC) &
+                 .or. ( elemI(:,ei_elementType) == JM) &   
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSmallDepth)) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     ) 
+        end if
+
 
     end subroutine pack_small_and_zero_depth_elements
 !%
@@ -2899,7 +3017,7 @@ contains
                 end if
             end do
         end if
-
+        faceYN(faceP(1:npack, ptype),fYN_isDiag_adjacent) = .true.
         !% stop the shared timer
         sync all
         ! if (this_image()==1) then

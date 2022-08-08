@@ -18,15 +18,17 @@ module circular_conduit
     private
 
     public :: circular_depth_from_volume
-    !public :: circular_depth_from_volume_singular
     public :: circular_area_from_depth_singular
     public :: circular_topwidth_from_depth
     public :: circular_topwidth_from_depth_singular
     public :: circular_perimeter_from_depth
+    public :: circular_perimeter_from_depth_singular
     public :: circular_perimeter_from_hydradius_singular
     public :: circular_hyddepth_from_topwidth
     public :: circular_hyddepth_from_topwidth_singular
     public :: circular_hydradius_from_depth_singular
+    public :: circular_normaldepth_from_sectionfactor_singular
+
 
 
     contains
@@ -296,6 +298,45 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
+    real(8) function circular_perimeter_from_depth_singular &
+        (idx, indepth) result(outvalue)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the circular conduit perimeter for the given depth on
+        !% the element idx
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: idx
+            real(8), intent(in) :: indepth
+            real(8), pointer :: fulldepth, fullarea, fullperimeter
+            real(8) :: hydRadius, YoverYfull, area
+
+        !%------------------------------------------------------------------
+        !% Aliases
+            fulldepth     => elemR(idx,er_FullDepth)
+            fullarea      => elemR(idx,er_FullArea)
+            fullperimeter => elemR(idx,er_FullPerimeter)
+        !%------------------------------------------------------------------
+        YoverYfull = indepth / fulldepth
+
+        !% 000 retrieve normalized A/Amax for this depth from lookup table
+        area = xsect_table_lookup_singular (YoverYfull, ACirc)
+
+        !% --- retrive the normalized R/Rmax for this depth from the lookup table
+        hydradius =  xsect_table_lookup_singular (YoverYfull, RCirc)  !% 20220506 brh
+
+        !% --- unnormalize
+        hydRadius = hydradius * fullArea / fullPerimeter
+        area      = area * fullArea
+
+        !% --- get the perimeter by dividing area by hydRadius
+        outvalue = min(area / hydRadius, fullperimeter)
+
+    end function circular_perimeter_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function circular_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
@@ -423,7 +464,7 @@ module circular_conduit
 !%
     subroutine circular_get_normalized_depth_from_area_analytical &
         (normalizedDepth, normalizedArea, Npack, thisP)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% find the YoverYfull from AoverAfull only when AoverAfull <= 0.04
         !% This subroutine uses the analytical derivation from French, 1985 to
@@ -472,56 +513,47 @@ module circular_conduit
 
     end subroutine circular_get_normalized_depth_from_area_analytical
 !%
-!%
 !%==========================================================================
 !%==========================================================================
 !%
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
+    real(8) function circular_normaldepth_from_sectionfactor_singular &
+         (SFidx, inSF) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes the depth using the input section factor. This result is
+        !% the normal depth of the flow. Note that the element MUST be in 
+        !% the set of elements with tables stored in the uniformTableDataR
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: SFidx ! index in the section factor table
+            real(8), intent(in) :: inSF
+            integer, pointer    :: eIdx  !% element index
+            real(8), pointer    :: thisTable(:)
+            real(8)             :: normInput
+        !%------------------------------------------------------------------
+            thisTable => uniformTableDataR(SFidx,:,utd_SF_depth_nonuniform)
+            eIdx      => uniformTableI(SFidx,uti_elem_idx)
+        !%------------------------------------------------------------------
+        !% --- normalize the input
+        normInput = inSF / uniformTableR(SFidx,utr_SFmax)
+        !% --- lookup the normalized depth
+        outvalue = (xsect_table_lookup_singular(normInput,thisTable))
+        !% --- unnormalize the depth for the output
+        outvalue = outvalue * elemR(eIdx,er_FullDepth)
 
-        !%-----------------------------------------------------------------------------
-        !%
-!%
+    end function circular_normaldepth_from_sectionfactor_singular
 !%
 !%==========================================================================
-!%==========================================================================
-!%
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
-!%
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-!%
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%
-    !%-----------------------------------------------------------------------------
-
-    !%-----------------------------------------------------------------------------
-    !%
-!%
-!%
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================
 !%
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
     !% Description:
     !%
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
 
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
     !%
 
     !    !%==========================================================================

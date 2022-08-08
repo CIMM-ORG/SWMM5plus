@@ -49,7 +49,7 @@
         "Head" : {
             "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0
+            "Coef" : 0.5
         }
     },
     "BC" : {
@@ -65,8 +65,8 @@
         "energy_correction_factor" : 1.0
     },
     "Discretization" : {
-        "AdjustLinkLengthYN" : true,
-        "LinkShortingFactor" : 0.33,
+        "AdjustLinkLengthYN" : false,
+        "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 10.00
@@ -90,18 +90,7 @@
         "kFactor"  : 0.0
     },
     "Limiter" : {
-        "BC" : {
-            "UseInflowLimiterYN" : true,
-            "Approach" : "FroudeNumber",
-            "FroudeInflowMaximum" : 1.5
-        },
-        "Channel" : {
-            "LargeDepthFactor" : 10.0
-        },
-        "Flowrate" : {
-            "FaceVolumeTransport" : 0.5,
-            "UseFaceVolumeTransportYN" : true
-        },
+        "NormalDepthInfinite" : 1000.0,
         "InterpWeight" : {
             "Maximum" : 1e6,
             "Minimum" : 1e-6
@@ -138,24 +127,27 @@
             "interval" : 10
         },
         "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isFluxConsOut"     : true,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : true,
-            "isHydRadiusOut"    : false,
-            "isPerimeterOut"    : false,
-            "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
-            "isTopWidthOut"     : false,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isAreaOut"             : true,
+            "isDepthOut"            : true,
+            "isFlowrateOut"         : true,
+            "isFluxConsOut"         : true,
+            "isFroudeNumberOut"     : false,
+            "isHeadOut"             : true,
+            "isHydRadiusOut"        : false,
+            "isPerimeterOut"        : false,
+            "isRoughnessDynamicOut" : false,
+            "isSlotWidthOut"        : false,
+            "isSlotDepthOut"        : false,
+            "isTopWidthOut"         : false,
+            "isVelocityOut"         : true,
+            "isVolumeOut"           : true,
+            "isWaveSpeedOut"        : false
         },
         "Report" : {
             "useSWMMinpYN" : true,
             "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,
@@ -187,11 +179,16 @@
     "Solver" : {
         "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
+        "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
+        "ReferenceHead"     : 0.0,
+        "Roughness" : {
+            "useDynamicRoughness" : true,
+            "alpha"               : 100.0
+        }
+
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
@@ -251,6 +248,7 @@
         "UseZeroValues" : true,
         "Area" : 1e-6,
         "Depth" : 1e-4,
+        "Slope" : 1e-6,
         "Topwidth" : 1e-4,
         "Volume" : 1e-6
     },

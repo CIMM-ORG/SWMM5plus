@@ -36,6 +36,7 @@ module lowlevel_rk2
     public :: ll_momentum_velocity_CC
     public :: ll_momentum_add_gamma_CC_AC
     public :: ll_momentum_add_source_CC_AC
+    public :: ll_enforce_flapgate_CC
     public :: ll_store_in_temporary
     public :: ll_restore_from_temporary
     public :: ll_extrapolate_values
@@ -43,6 +44,7 @@ module lowlevel_rk2
     public :: ll_flowrate_and_velocity_JB
     !public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
+    public :: ll_get_dynamic_roughness
 
     contains
 !%==========================================================================
@@ -398,13 +400,27 @@ module lowlevel_rk2
                                   -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP) &
                                  )
         case (TA1)
+            print *, 'experimental code with Momentum SourceMethod = TA1 should not be used'
+            !% note this generally gives a negative source if fAup < fAdn, which is a problem
+            stop 59087342
             elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
                                 * (                                              &
                                 -   onefourthR  * fHdn(iup(thisP))                 &
                                 +   threehalfR  * eHead(thisP)                     &
                                 -   onefourthR  * fHup(idn(thisP))                 &
                                 )
+
+        
+            ! print *, 'fA ', fAup(idn(iet(4))) - fAdn(iup(iet(4)))
+            ! print *, 'H  ', -onefourthR * fHdn(iup(iet(4))), threehalfR*eHead(iet(4)), -onefourthR*fHup(idn(iet(4)))
+            ! print *, thisP
+            ! print *, iet(3)
+            ! print *, onefourthR, threehalfR
+            ! print *, elemR(iet(4),outcol)
+            !stop 98734
         case (TA2)
+            print *, 'experimental code with Momentum SourceMethod = TA2 should not be used'
+            stop 5908734
             !% EXPERIMENTAL, DO NOT USE
             ! elemR(thisP,outCol) = grav   &
             !                     * (                                                 &
@@ -442,9 +458,9 @@ module lowlevel_rk2
             stop 2382
         end select
 
-        !print *, ' Ksource ',elemR(780,outCol)
-        !print *, 'in ll_momentum_Ksource_CC'
-        !print *, elemR(1,outCol), fAup(idn(1))* eHead(1) * grav, fAdn(iup(1)) * eHead(1) * grav
+        ! !print *, ' Ksource ',elemR(780,outCol)
+        !  print *, 'in ll_momentum_Ksource_CC'
+        !  print *, elemR(iet(4),outCol)
 
     end subroutine ll_momentum_Ksource_CC
 !%
@@ -510,18 +526,18 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! ! print *, 'fQ  * fU up',fQ(iup(iet(7))) * fUdn(iup(iet(7)))
-        ! ! print *, 'fQ  * fU dn',fQ(idn(iet(7))) * fUup(idn(iet(7)))
-        ! ! print *, 'fAdn * Hdn ',fAdn(iup(iet(7))) * fHdn(iup(iet(7)))
-        ! ! print *, 'fAup * Hup ',fAup(idn(iet(7))) * fHup(idn(iet(7)))
-        ! ! print *, 'eksource ',eKsource(iet(7))
-        ! ! print *, 'out       ',elemR(iet(7),outCol)
-        ! print *, 'FQ term', fQ(iup(iet(7))) * fUdn(iup(iet(7))) - fQ(idn(iet(7))) * fUup(idn(iet(7)))
-        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(7))) * fHdn(iup(iet(7))) - fAup(idn(iet(7))) * fHup(idn(iet(7))))
-        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(7))) , fHdn(iup(iet(7)))
-        ! print *, 'fAup , Hup ',fAup(idn(iet(7))) , fHup(idn(iet(7)))
-        ! print *, 'eksource   ',eKsource(iet(7))
-        ! print *, 'out        ',elemR(iet(7),outCol)
+        ! print *, 'fQ  * fU up',fQ(iup(iet(4))) * fUdn(iup(iet(4)))
+        ! print *, 'fQ  * fU dn',fQ(idn(iet(4))) * fUup(idn(iet(4)))
+        ! print *, 'fAdn * Hdn ',fAdn(iup(iet(4))) * fHdn(iup(iet(4)))
+        ! print *, 'fAup * Hup ',fAup(idn(iet(4))) * fHup(idn(iet(4)))
+        ! ! ! print *, 'eksource ',eKsource(iet(7))
+        ! ! ! print *, 'out       ',elemR(iet(7),outCol)
+        ! print *, 'FQ term', fQ(iup(iet(4))) * fUdn(iup(iet(4))) - fQ(idn(iet(4))) * fUup(idn(iet(4)))
+        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(4))) * fHdn(iup(iet(4))) - fAup(idn(iet(4))) * fHup(idn(iet(4))))
+        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(4))) , fHdn(iup(iet(4)))
+        ! print *, 'fAup , Hup ',fAup(idn(iet(4))) , fHup(idn(iet(4)))
+        ! print *, 'eksource   ',eKsource(iet(4))
+        ! print *, 'out        ',elemR(iet(4),outCol)
         ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
@@ -582,10 +598,12 @@ module lowlevel_rk2
         integer, intent(in) :: outCol, thisCol, Npack
         real(8), pointer :: velocity(:), mn(:), rh(:), oneVec(:), grav
         integer, pointer :: thisP(:)
+        character(64) :: subroutine_name = 'll_momentum_gamma_CC'
         !%------------------------------------------------------------------------------
         thisP    => elemP(1:Npack,thisCol)
         velocity => elemR(:,er_velocity)
-        mn       => elemR(:,er_Roughness)
+        !mn       => elemR(:,er_Roughness)
+        mn       => elemR(:,er_Roughness_Dynamic)
         rh       => elemR(:,er_HydRadius)
         oneVec   => elemR(:,er_ones)
         grav => setting%constant%gravity
@@ -597,7 +615,11 @@ module lowlevel_rk2
                 / &
                 ( rh(thisP)**fourthirdsR )
 
-       ! print *, ' gamma ',elemR(780,outCol)        
+    !    print *, 'in ll_momentum_gamma_CC'
+    !    print *, elemR(iet(4),outCol)      
+
+                ! print *, 'in ', trim(subroutine_name)
+                ! print *, mn(thisP)
 
     end subroutine ll_momentum_gamma_CC
 !%
@@ -648,10 +670,15 @@ module lowlevel_rk2
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
-        !print *, ' M       ',elemR(780,outCol)
-        !print *, 'in ll_momentum_solve_CC'
-        !print *, elemR(1,outCol)
-        !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)        
+        ! !print *, ' M       ',elemR(780,outCol)
+        ! print *, 'in ll_momentum_solve_CC'
+        ! !print *, elemR(1,outCol)
+        ! !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)      
+        ! print *, iet(4)
+        ! print *, volumeLast(iet(4)), velocityLast(iet(4)), Msource(iet(4))
+        ! print *, crk(istep), delt, GammaM(iet(4))  
+
+        !stop 2098734
 
     end subroutine ll_momentum_solve_CC
 !%
@@ -659,30 +686,55 @@ module lowlevel_rk2
 !%==========================================================================
 !%
     subroutine ll_momentum_velocity_CC (inoutCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% velocity for ETM time march
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, intent (in) :: inoutCol,  thisCol, Npack
         integer, pointer :: thisP(:)
         real(8), pointer :: momentum(:), volume(:)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         thisP    => elemP(1:Npack,thisCol)
         !% the input integrated momentum is overwritten by the output velocity.
         momentum => elemR(:,inoutCol) !% overwritten
         volume   => elemR(:,er_Volume)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% compute velocity
 
         !print *, ' flowrate ', momentum(780) / elemR(780,er_Length)
 
         elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
 
+
         !print *, ' velocity ',elemR(780,inoutCol)
         ! print*
         ! print*, 'in ll_momentum_velocity_CC'
         ! print*, elemR(thisP,inoutCol), 'new velocity'
     end subroutine ll_momentum_velocity_CC
+!%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_enforce_flapgate_CC (inoutCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% enforce zero back flow on flapgate elements
+        !%------------------------------------------------------------------
+        integer, intent (in) :: inoutCol,  thisCol, Npack
+        integer, pointer :: thisP(:)
+        real(8), pointer :: flow(:)
+        !%------------------------------------------------------------------
+        thisP    => elemP(1:Npack,thisCol)
+        !% the inout column is either velocity, momentum, or flowrate
+        flow => elemR(:,inoutCol) !% overwritten
+        !%------------------------------------------------------------------
+
+        where ((elemYN(thisP,eYN_hasFlapGate)) .and. (elemR(thisP,inoutCol) < zeroR))
+            elemR(thisP,inoutCol) = zeroR
+        endwhere
+
+    end subroutine ll_enforce_flapgate_CC
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1375,7 +1427,7 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_slot_computation_ETM (thisCol, Npack)
+subroutine ll_slot_computation_ETM (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Compute preissmann slot for conduits in ETM methods
@@ -1383,9 +1435,10 @@ module lowlevel_rk2
         integer, intent(in) :: thisCol, Npack
         integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
         real(8), pointer    :: AreaN0(:), BreadthMax(:), ellMax(:), fullarea(:)
-        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
-        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:)  
+        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:), SlotHydRad(:) 
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:), Vvalue(:) 
         real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
+        logical, pointer    :: isSlot(:), isfSlot(:)
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
@@ -1402,10 +1455,14 @@ module lowlevel_rk2
         PCelerity  => elemR(:,er_Preissmann_Celerity)
         SlotWidth  => elemR(:,er_SlotWidth)
         SlotVolume => elemR(:,er_SlotVolume)
+        SlotHydRad => elemR(:,er_SlotHydRadius)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         volume     => elemR(:,er_Volume)
         velocity   => elemR(:,er_velocity)
+        !% pointer to elemYN column
+        isSlot     => elemYN(:,eYN_isSlot)
+        isfSlot    => faceYN(:,fYN_isSlot)
         !% pointers to elemI columns
         fUp        => elemI(:,ei_Mface_uL)
         fDn        => elemI(:,ei_Mface_dL)
@@ -1417,70 +1474,108 @@ module lowlevel_rk2
         PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
         cfl                 => setting%VariableDT%CFL_target
         grav                => setting%Constant%gravity
+        Vvalue              => elemR(:,er_Temp01)
 
-        select case (SlotMethod)
-
-        case (StaticSlot)
-            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            !% SWMM5 uses 1% of width max as slot width
-            ! SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
-            !% HACK: modeling for acoustic wavespeed
-            SlotWidth(thisP) = (grav * fullArea(thisP)) / (TargetPCelerity**2.0)
-            !% HACK: old code based on a target CFL
-            ! SlotWidth(thisP)  = (grav*fullArea(thisP)*tDelta**twoR)/&
-                ! (cfl*length(thisP))**twoR
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+        !% initialize slot
+        SlotVolume(thisP) = zeroR
+        SlotArea(thisP)   = zeroR
+        SlotDepth(thisP)  = zeroR
+        SlotWidth(thisP)  = zeroR
+        PCelerity(thisP)  = zeroR
+        isSlot(thisP)     = .false.
+        isfSlot(fUp(thisP)) = .false.
+        isfSlot(fDn(thisP)) = .false.
         
-        case (DynamicSlot)
-            SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-            SlotArea(thisP)   = max(SlotVolume(thisP) / length(thisP), zeroR)
-            SlotDepth(thisP)  = zeroR
-            SlotWidth(thisP)  = zeroR
-            PCelerity(thisP)  = zeroR
+        !% find out the slot volume/ area/ and the faces that are surcharged
+        where (volume(thisP) > fullVolume(thisP))
+            !% find the volume of the slot
+            SlotVolume(thisP) = volume(thisP) - fullvolume(thisP)
+            !% find the slot area
+            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+            !% rest the volume to fullvolume which will affect velocity computation
+            ! volume(thisP)     = fullvolume(thisP)
+            !% set the fase slot to true
+            isfSlot(fUp(thisP)) = .true.
+            isfSlot(fDn(thisP)) = .true.
+        end where
 
-            !% find incipient surcharge  and non-surcharged elements reset the preissmann number
-            where ((SlotArea(thisP) .le. zeroR) .or. (AreaN0(thisP) .le. fullArea(thisP)))
-                PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
-            end where
+        !% Calculate the preissmann celerity with the already set preissmann number from
+        !% previous time/rk step. Also, any cell containig two slot faces will also designated
+        !% to have a slot. Which ensures a preissmann celerity in that element.
+        where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
+            !% set isSlot to true
+            isSlot(thisP)    = .true.
+            !% smooth the preissmann number from using simple face interpolation
+            PNumber(thisP) = max(onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP))), oneR)
+            !% Preissmann Celerity
+            PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
+            !% find the water height at the slot
+            SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
+        end where
 
-            ! if (this_image() == 3) then
-            !     print *, fPNumber(fUp(426)), fPNumber(fDn(426)), TargetPCelerity
-            ! end if
+        !% Now adjust the preissmann number for the next RK-step
+        select case (SlotMethod)
+            !% for a static slot, the preissmann number will always be one.
+            case (StaticSlot)
+                PNumber(thisP) = oneR
+            !% for dynamic slot, preissmann number is adjusted
+            case (DynamicSlot)
+                where (isSlot(thisP))
+                    !% get a new decreased preissmann number for the next time step for elements having a slot
+                    PNumber(thisP) = max((PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP), oneR)
+                elsewhere
+                    !% reset the preissmann number for every CC element not having a slot
+                    PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
+                end where
 
-            !% Slot calculations
-            where (SlotArea(thisP) .gt. zeroR)
-                !% use the preissmann number from the faces
-                PNumber(thisP) =  onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP)))
-                !% update the preissmann celerity here
-                PCelerity(thisP) = TargetPCelerity / PNumber(thisP)
-                !% find the water height at the slot
-                SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
-                !% find the width of the slot
-                SlotWidth(thisP)  = SlotArea(thisP) / SlotDepth(thisP) 
-                !% get a new increased preissmann number for the next time step
-                PNumber(thisP) = (PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP)
-            end where
-
-           
-
-        case default
-            !% should not reach this stage
-            print*, 'In ', subroutine_name
-            print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-            print *, 'which has key ',trim(reverseKey(SlotMethod))
-            call util_crashpoint(39872)
-
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                stop 38756
         end select
-        ! if (util_output_must_report()) then
-        !     print*, ellMax(thisP), 'ellMax(thisP)'
-        !     print*
-        !     print*, SlotArea(thisP), 'SlotArea(thisP)'
-        !     print*
-        !     print*, SlotDepth(thisP) , 'SlotDepth(thisP) '
-        !     print*
-        ! end if
+
     end subroutine ll_slot_computation_ETM
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_get_dynamic_roughness (thisP, dpnorm_col) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% called to get the dynamic roughness for a set of points thisP(:)
+        !% the dpnorm_col is the location where the normalized pressured 
+        !% delta is stored.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisP(:), dpnorm_col
+            real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
+            real(8), pointer    :: length(:)
+            real(8), pointer    :: alpha, dt
+            character(64) :: subroutine_name ='ll_get_dynamic_roughness'
+        !%------------------------------------------------------------------  
+        !% Aliases
+            dt           => setting%Time%Hydraulics%Dt
+            alpha        => setting%Solver%Roughness%alpha
+            mn           => elemR(:,er_Roughness)
+            dynamic_mn   => elemR(:,er_Roughness_Dynamic)
+            dp_norm      => elemR(:,dpnorm_col)
+            length       => elemR(:,er_Length)
+        !%------------------------------------------------------------------
+
+        dynamic_mn(thisP) =  mn(thisP)
+        ! dynamic_mn(thisP) =  mn(thisP) &
+        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+            
+        !% OTHER VERSIONS EXPERIMENTED WITH 20220802
+             ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR ) 
+
+    end subroutine ll_get_dynamic_roughness
 !%
 !%==========================================================================
 !%==========================================================================

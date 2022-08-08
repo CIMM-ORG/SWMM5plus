@@ -77,6 +77,9 @@ contains
             c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
             if ( .not. c_associated(c_lib%fileaddrx) ) then
                 errstat = -1
+                print *,  'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
+                //' Check that the file ' // 'exists in the specified location and' &
+                //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
                 write(errmsg, "(A, I2, A)") &
                         'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
                         //' Check that the file ' // 'exists in the specified location and' &

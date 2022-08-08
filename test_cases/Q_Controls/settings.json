@@ -30,6 +30,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -62,4 +63,9 @@
         "NstepsForCheck" : 5,
         "InitialDt"      : 1.0
     },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "StaticSlot",
+        "TargetPreissmannCelerity" : 15.00,
+        "PreissmannAlpha"          : 2.00 
+    }
 }
