@@ -67,9 +67,10 @@
         "Report" : {
             "useSWMMinpYN" :false,
             "provideYN" : true,
+            "useHD5F" : false,  
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 0.01,
+            "TimeInterval" : 0.05,
             "TimeUnits" : "Seconds"
         }
     },
@@ -101,9 +102,9 @@
         }
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 30.00,
-        "PreissmannAlpha" : 2.0
+        "PreissmannSlotMethod" : "DynamicSlot",
+        "TargetPreissmannCelerity" : 50.00,
+        "PreissmannAlpha" : 5.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
@@ -138,6 +139,9 @@
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
+        "ReferenceHead"     : 0.0,
+        "Roughness" : {
+            "useDynamicRoughness" : false
+        }
     }
 }

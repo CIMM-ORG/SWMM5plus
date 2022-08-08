@@ -1789,7 +1789,6 @@ module geometry
             thisP    => elemP(1:Npack,thisColP_closed_CC)
             where (isSlot(thisP)) 
                 volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                area(thisP)   = area(thisP)    + SlotArea(thisP)
                 depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
                 head(thisP)   = head(thisP)    + SlotDepth(thisP)
                 Overflow(thisP) = zeroR
@@ -1852,7 +1851,7 @@ module geometry
         !% Declarations:
             integer, intent(in) :: thisColP_JM
             integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
-            real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:)
+            real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), ellMax(:)
             real(8), pointer :: overflow(:), grav, TargetPCelerity, PreissmannAlpha
@@ -1872,7 +1871,8 @@ module geometry
             fullDepth     => elemR(:,er_FullDepth)
             overflow      => elemR(:,er_VolumeOverFlow)
             volume        => elemR(:,er_Volume)
-            zCrown        => elemR(:,er_Zcrown)
+            zcrown        => elemR(:,er_Zcrown)
+            zbottom       => elemR(:,er_Zbottom)
             ellMax        => elemR(:,er_ell_max)
             fUp           => elemI(:,ei_Mface_uL)
             fDn           => elemI(:,ei_Mface_dL)
@@ -1914,21 +1914,28 @@ module geometry
 
                         !% --- a slot condition exists if the head is above the crown
                         !%     or the upstream CC is in a slot
-                        if (head(tB) .gt. zcrown(tB) .or. fSlot(fUp(tB))) then
+                        if ((head(tB) .gt. zcrown(tB)) .or. fSlot(fUp(tB))) then
+                            !% set the slot T/F to true
                             isSlot(tB)     = .true.
+                            !% upstream face sees a slot
                             fSlot(fUp(tB)) = .true.
+                            !% copy the preissmann number from the adjacent face
+                            PNumber(tB)    = fPNumber(fUp(tB))
+                            !% calculate the preissmann celerity
                             PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-                            SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)   
+                            !% calculater the slot depth
+                            SlotDepth(tB)  = max(head(tB) - fulldepth(tB) - zbottom(tB), zeroR) 
+                            !% calculate the slot area  
                             SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
                                                 fullArea(tB)) / (TargetPCelerity ** twoR)
+                            !% calculate the slot volume
                             SlotVolume(tB) = SlotArea(tB) * length(tB)
                             
                             !% add the slot geometry back to previously solved geometry
                             volume(tB) = volume(tB)  + SlotVolume(tB)
-                            area(tB)   = area(tB)    + SlotArea(tB)
                             depth(tB)  = depth(tB)   + SlotDepth(tB)
                             Overflow(tB) = zeroR
-                        end if  
+                        end if 
                     end if
                 end do
                 !% handle the downstream branches
@@ -1945,18 +1952,25 @@ module geometry
 
                         !% --- a slot condition exists if the head is above the crown
                         !%     or the downstream CC is in a slot
-                        if (head(tB) .gt. zcrown(tB) .or. fSlot(fDn(tB))) then
+                        if ((head(tB) .gt. zcrown(tB)) .or. fSlot(fDn(tB))) then
+                            !% set the slot T/F to true
                             isSlot(tB)     = .true.
+                            !% downstream face sees a slot
                             fSlot(fDn(tB)) = .true.
+                            !% copy the preissmann number from the adjacent face
+                            PNumber(tB)    = fPNumber(fDn(tB))
+                            !% calculate the preissmann celerity
                             PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-                            SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)    
+                            !% calculater the slot depth
+                            SlotDepth(tB)  = max(head(tB) - fulldepth(tB) - zbottom(tB), zeroR) 
+                            !% calculate the slot area  
                             SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
                                                 fullArea(tB)) / (TargetPCelerity ** twoR)
+                            !% calculate the slot volume
                             SlotVolume(tB) = SlotArea(tB) * length(tB)
-
+                            
                             !% add the slot geometry back to previously solved geometry
                             volume(tB) = volume(tB)  + SlotVolume(tB)
-                            area(tB)   = area(tB)    + SlotArea(tB)
                             depth(tB)  = depth(tB)   + SlotDepth(tB)
                             Overflow(tB) = zeroR
                         end if

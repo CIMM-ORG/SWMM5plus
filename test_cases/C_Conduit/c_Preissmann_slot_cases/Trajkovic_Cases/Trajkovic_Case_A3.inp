@@ -58,7 +58,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-7                 0.0       FIXED   0.0             NO                       
+7                 -1.5      FREE                        YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -66,13 +66,13 @@ DRY_ONLY         NO
 1                1                2                1.5        0.008      0          0          0          0         
 3                3                4                8.3        0.008      0          0          0          0         
 5                5                6                1.4        0.008      0          0          0          0         
-6                6                7                5          0.016      0          0          0          0         
+6                6                7                5          0.025      0          0          0          0         
 
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
-2                2                3                SIDE         0          0.86        NO       0.002        
-4                4                5                SIDE         0          0.86        NO       0.002     
+2                2                3                SIDE         0          0.86        NO               
+4                4                5                SIDE         0          0.86        NO            
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   

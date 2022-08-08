@@ -1438,7 +1438,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:), SlotHydRad(:) 
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:), Vvalue(:) 
         real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
-        logical, pointer    :: isSlot(:), fSlot(:)
+        logical, pointer    :: isSlot(:), isfSlot(:)
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
@@ -1462,7 +1462,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         velocity   => elemR(:,er_velocity)
         !% pointer to elemYN column
         isSlot     => elemYN(:,eYN_isSlot)
-        fSlot      => faceYN(:,fYN_isSlot)
+        isfSlot    => faceYN(:,fYN_isSlot)
         !% pointers to elemI columns
         fUp        => elemI(:,ei_Mface_uL)
         fDn        => elemI(:,ei_Mface_dL)
@@ -1483,25 +1483,30 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         SlotWidth(thisP)  = zeroR
         PCelerity(thisP)  = zeroR
         isSlot(thisP)     = .false.
-        fSlot(fUp(thisP)) = .false.
-        fSlot(fDn(thisP)) = .false.
-        
-        !% smooth the preissmann number from using simple face interpolation
-        PNumber(thisP) = max(onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP))), oneR)
+        isfSlot(fUp(thisP)) = .false.
+        isfSlot(fDn(thisP)) = .false.
         
         !% find out the slot volume/ area/ and the faces that are surcharged
         where (volume(thisP) > fullVolume(thisP))
+            !% find the volume of the slot
             SlotVolume(thisP) = volume(thisP) - fullvolume(thisP)
+            !% find the slot area
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            fSlot(fUp(thisP)) = .true.
-            fSlot(fDn(thisP)) = .true.
+            !% rest the volume to fullvolume which will affect velocity computation
+            ! volume(thisP)     = fullvolume(thisP)
+            !% set the fase slot to true
+            isfSlot(fUp(thisP)) = .true.
+            isfSlot(fDn(thisP)) = .true.
         end where
 
         !% Calculate the preissmann celerity with the already set preissmann number from
         !% previous time/rk step. Also, any cell containig two slot faces will also designated
         !% to have a slot. Which ensures a preissmann celerity in that element.
-        where (fSlot(fUp(thisP)) .and. fSlot(fDn(thisP)))
+        where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
+            !% set isSlot to true
             isSlot(thisP)    = .true.
+            !% smooth the preissmann number from using simple face interpolation
+            PNumber(thisP) = max(onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP))), oneR)
             !% Preissmann Celerity
             PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
             !% find the water height at the slot
@@ -1513,7 +1518,6 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             !% for a static slot, the preissmann number will always be one.
             case (StaticSlot)
                 PNumber(thisP) = oneR
-
             !% for dynamic slot, preissmann number is adjusted
             case (DynamicSlot)
                 where (isSlot(thisP))
@@ -1561,8 +1565,8 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         !%------------------------------------------------------------------
 
         dynamic_mn(thisP) =  mn(thisP)
-       ! dynamic_mn(thisP) =  mn(thisP) &
-       !     +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+        ! dynamic_mn(thisP) =  mn(thisP) &
+        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
             
         !% OTHER VERSIONS EXPERIMENTED WITH 20220802
              ! dynamic_mn(thisP) =  mn(thisP) &
