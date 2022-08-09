@@ -1017,7 +1017,7 @@ module define_indexes
         enumerator :: fYN_isDownstreamJbFace
         enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed
-        ! enumerator :: fYN_isDiag_adjacent
+        enumerator :: fYN_isDiag_adjacent
         ! enumerator :: fYN_isETM_adjacent
         ! enumerator :: fYN_isBCface
         enumerator :: fYN_lastplusone !% must be last enum item

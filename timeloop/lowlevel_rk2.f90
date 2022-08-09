@@ -602,8 +602,11 @@ module lowlevel_rk2
         !%------------------------------------------------------------------------------
         thisP    => elemP(1:Npack,thisCol)
         velocity => elemR(:,er_velocity)
-        !mn       => elemR(:,er_Roughness)
-        mn       => elemR(:,er_Roughness_Dynamic)
+        if (.not. setting%Solver%Roughness%useDynamicRoughness) then
+            mn       => elemR(:,er_Roughness)
+        else
+            mn       => elemR(:,er_Roughness_Dynamic)
+        end if
         rh       => elemR(:,er_HydRadius)
         oneVec   => elemR(:,er_ones)
         grav => setting%constant%gravity
@@ -1564,9 +1567,9 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             length       => elemR(:,er_Length)
         !%------------------------------------------------------------------
 
-        dynamic_mn(thisP) =  mn(thisP)
-        ! dynamic_mn(thisP) =  mn(thisP) &
-        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+       ! dynamic_mn(thisP) =  mn(thisP)
+        dynamic_mn(thisP) =  mn(thisP) &
+           +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
             
         !% OTHER VERSIONS EXPERIMENTED WITH 20220802
              ! dynamic_mn(thisP) =  mn(thisP) &

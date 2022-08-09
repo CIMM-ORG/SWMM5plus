@@ -53,13 +53,9 @@ module runge_kutta2
         if (setting%Solver%Roughness%useDynamicRoughness) then
             call rk2_dynamic_roughness (ETM)
         else
-            ! print *, 'CONFIGURATION ERROR'
-            ! print *, 'User has setting.Solver.Roughness.useDynamicRoughness = false'
-            ! print *, 'It is strongly recommended that .true. be used. '
-            ! print *, 'If you must use false, then you will need to comment out'
-            ! print *, 'this error message and stop command in runge_kutta2.f90'
-            ! print *, 'and then recompile the code.'
-            ! call util_crashpoint(409873)
+            !% --- arguably not needed, but here to prevent bugs
+            !%     if dynamic roughness is used in place of standard roughness
+            elemR(:,er_Roughness_Dynamic) = elemR(:,er_Roughness)
         end if
 
         !call util_CLprint ('AAA  start of RK2 ==============================')
@@ -118,9 +114,6 @@ module runge_kutta2
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
-
-        !% --- compute the dynamic roughness  NOT SURE IF WE WANT TO DO THIS AGAIN!
-        !call rk2_dynamic_roughness (ETM)
 
         istep=2
         call rk2_step_ETM (istep)
