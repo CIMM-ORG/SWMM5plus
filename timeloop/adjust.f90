@@ -661,7 +661,10 @@ module adjust
     
         !% use the larger of available roughness values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
-        ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))   
+        ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness))   
+        if (setting%Solver%Roughness%useDynamicRoughness) then
+            ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness_Dynamic))
+        end if
 
         !print *, 'mannings n', ManningsN(iet(1:2))
 
