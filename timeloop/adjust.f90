@@ -1239,7 +1239,7 @@ module adjust
             real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:), Zbottom(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
-            logical, pointer :: isfSlot(:)
+            logical, pointer :: isSlot(:)
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
         !% Preliminaries      
@@ -1287,7 +1287,7 @@ module adjust
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
             Zbottom    => elemR(:,er_Zbottom)
-            isfSlot    => faceYN(:,fYN_isSlot)
+            isSlot     => elemYN(:,eYN_isSlot)
 
             ! print *, ' '
             ! print *, 'in ADJUST ------------', thisCol
@@ -1302,7 +1302,7 @@ module adjust
 
         !%-------------------------------------------------------------------
         !% --- For Preissman Slot, find the cells that are surcharged
-        where (isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)))
+        where (isSlot(thisP))
             Vvalue(thisP) = oneR
         elsewhere
             Vvalue(thisP) = zeroR 

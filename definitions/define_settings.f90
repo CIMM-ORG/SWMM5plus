@@ -191,8 +191,8 @@ module define_settings
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
-        real(8) :: Maximum = 1.0d6
-        real(8) :: Minimum = 1.0d-6
+        real(8) :: Maximum = 1.0d16
+        real(8) :: Minimum = 1.0d-16
     end type LimiterInterpWeightType
 
     !% setting%Limiter%Velocity
@@ -442,8 +442,8 @@ module define_settings
         logical              :: force_folder_creationYN = .true.
         logical              :: duplicate_input_file = .true.
         !% standard files and folders
-        character(len=256)   :: base_folder = ""
-        character(len=256)   :: library_folder = "build"
+        character(len=256)   :: base_folder = "build"
+        character(len=256)   :: library_folder = ""
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
