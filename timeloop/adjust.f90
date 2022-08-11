@@ -1239,7 +1239,7 @@ module adjust
             real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:), Zbottom(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
-            logical, pointer :: isSlot(:)
+            logical, pointer :: isSlot(:)  !% Preissman Slot logical
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
         !% Preliminaries      
@@ -1287,7 +1287,7 @@ module adjust
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
             Zbottom    => elemR(:,er_Zbottom)
-            isSlot     => elemYN(:,eYN_isSlot)
+            isSlot     => elemYN(:,eYN_isSlot)  !% Preissman slot
 
             ! print *, ' '
             ! print *, 'in ADJUST ------------', thisCol

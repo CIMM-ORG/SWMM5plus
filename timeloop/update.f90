@@ -325,15 +325,15 @@ module update
         w_uP      => elemR(:,er_InterpWeight_uP)
         w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
-        isSlot    => elemYN(:,eYN_isSlot)
+        isSlot    => elemYN(:,eYN_isSlot)  !% Preissmann
 
-        fSlot    => faceYN(:,fYN_isSlot)
+        fSlot    => faceYN(:,fYN_isSlot)  !% Preissmann
         fUp      => elemI(:,ei_Mface_uL)
         fDn      => elemI(:,ei_Mface_dL)
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_SlotVolume)
-        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume) !% Preissmann
+        SlotWidth  => elemR(:,er_SlotWidth)  !% Preissmann
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
 
@@ -376,6 +376,7 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (isSlot(thisP))
+            !% --- Preissmann slot
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 23022022 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
@@ -464,7 +465,7 @@ module update
             w_dH      => elemR(:,er_InterpWeight_dH)
             w_uP      => elemR(:,er_InterpWeight_uP)
             w_dP      => elemR(:,er_InterpWeight_dP)
-            isSlot    => elemYN(:,eYN_isSlot)
+            isSlot    => elemYN(:,eYN_isSlot)  !% Preissmann
         !%------------------------------------------------------------------
         !% cycle through the branches to compute weights
         !print *, 'here in JB update '
@@ -475,6 +476,7 @@ module update
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
             elsewhere
+                !% --- Preissmann slot
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
             endwhere

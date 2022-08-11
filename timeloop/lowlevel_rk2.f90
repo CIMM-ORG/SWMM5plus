@@ -1433,7 +1433,7 @@ module lowlevel_rk2
 subroutine ll_slot_computation_ETM (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Compute preissmann slot for conduits in ETM methods
+        !% Compute Preissmann slot for conduits in ETM methods
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol, Npack
         integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
@@ -1442,6 +1442,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:), Vvalue(:) 
         real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
         logical, pointer    :: isSlot(:), isfSlot(:)
+        integer :: ii
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
@@ -1488,6 +1489,13 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         isSlot(thisP)     = .false.
         isfSlot(fUp(thisP)) = .false.
         isfSlot(fDn(thisP)) = .false.
+
+        ! !% HACK 20220809brh TEST
+        ! if (SlotMethod == StaticSlot) then
+        !     PNumber(thisP) = oneR
+        !     fPNumber(fUp(thisP)) = oneR
+        !     fPNumber(fDn(thisP)) = oneR
+        ! end if
         
         !% find out the slot volume/ area/ and the faces that are surcharged
         where (volume(thisP) > fullVolume(thisP))
@@ -1515,6 +1523,16 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             !% find the water height at the slot
             SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
         end where
+
+        ! !% HACK 20220809brh TEST
+        ! if (SlotMethod == StaticSlot) then
+        !     do ii=1,size(thisP)
+        !         if (PNumber(thisP(ii)) .ne. 1.d0) then
+        !             print *, ii, PNumber(thisP(ii))
+        !             stop 49872
+        !         end if
+        !     end do
+        ! end if
 
         !% Now adjust the preissmann number for the next RK-step
         select case (SlotMethod)

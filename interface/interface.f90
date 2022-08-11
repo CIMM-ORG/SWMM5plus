@@ -2859,11 +2859,11 @@ contains
         thisWarning(ii) = .false.
         thisVariable(ii) = 'RULESTEP'
 
-        !% only SLOT is allowed for surcharge method -- handled by JSON file
+        !% only Preissman SLOT is presently allowed for surcharge method -- handled by JSON file
         ii=ii+1
         select case (surcharge_method)
         case (1)
-            !% SLOT is specified
+            !% Preissmann SLOT is specified
             thisWarning(ii) = .false.
         case default
             thisWarning(ii)  = .true.
@@ -3197,6 +3197,7 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_nodef_attribute)
             case ("api_get_linkf_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_linkf_attribute)
+                !stop 298734
             case ("api_get_transectf_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_transectf_attribute)
             case ("api_get_N_TRANSECT_TBL")

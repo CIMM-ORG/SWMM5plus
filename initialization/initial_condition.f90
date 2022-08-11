@@ -172,7 +172,7 @@ contains
 
             ! call util_CLprint ('initial_condition after IC_set_SmallVolumes')
 
-        !% --- initialize slots
+        !% --- initialize Preissmann slots
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
@@ -838,6 +838,10 @@ contains
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
 
+        print *, 'in ',trim(subroutine_name)
+        print *, thisLink, linkType
+        print *, trim(reverseKey(linkType))
+
         select case (linkType)
 
             case (lChannel)
@@ -1172,6 +1176,8 @@ contains
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
 
+        !print *, geometryType
+
         ! if (thisLink == 191) then
         !     print *, 'geometry Type',geometryType,' ', trim(reverseKey(geometryType))
         !     print *, 'depth ', elemR(2227,er_Depth)
@@ -1184,7 +1190,7 @@ contains
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 !% PROBLEM 20220714brh --- this does not create a change to depth, area, volume
-                !% and slot depth for initially surcharged conditions
+                !% and Preissmann slot depth for initially surcharged conditions
 
                 elemI(:,ei_geometryType)    = rectangular_closed
                 !% store geometry specific data
@@ -1245,6 +1251,7 @@ contains
                                 sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )    
                     elemR(:,er_SlotDepth) = zeroR              
                 elsewhere   
+                    !% --- Preissmann Slot
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
@@ -1269,7 +1276,11 @@ contains
 
             print *, 'In, ', trim(subroutine_name)
             print *, 'CODE ERROR geometry type unknown for # ', geometryType
-            print *, 'which has key ',trim(reverseKey(geometryType))
+            if ((geometryType > 0) .and. (geometryType < keys_lastplusone)) then
+                print *, 'which has key ',trim(reverseKey(geometryType))
+            else
+                print *, 'which is not a valid geometry type index'
+            end if
             call util_crashpoint(887344)
             !return
         end select
@@ -3072,9 +3083,11 @@ contains
 !%
     subroutine init_IC_slot ()
         !%-----------------------------------------------------------------
-        !% get the geometry data for conduit links
-        !% and calculate element volumes
+        !% Description:
+        !% initialize Preissmann Slot
+        !% get the geometry data for conduit links and calculate element volumes
         !%-----------------------------------------------------------------
+        !% Declarations:
             integer :: ii
             integer, pointer    :: SlotMethod
             real(8), pointer    :: TargetPCelerity, grav, PreissmannAlpha

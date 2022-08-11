@@ -66,7 +66,7 @@ module define_globals
 
     !% to capture L1 (central) at 1 m nominal
 
-    integer :: iet(7) = (/15,16,17,18,19,20,21/)
+   !integer :: iet(7) = (/15,16,17,18,19,20,21/)
 
     !% for Vasconcelos at 0.1 m nominal
     ! integer :: iet(12) = (/    308,     225,    166,    309,    5,  1,  3,   12,    82,    154,    156, 155  /)
@@ -75,6 +75,14 @@ module define_globals
    ! integer :: iet(7) = (/ 16,17, 18, 19, 20, 21, 22 /)
 
     !integer :: iet(7) = (/ 68, 69, 70, 71, 72, 73, 74 /)
+
+    !%
+    !integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    !integer :: ift(6) = (/91, 92, 93, 94, 95, 96/)
+
+    !% for Vasconcelos_TPA
+    integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    integer :: ift(6) = (/88, 89, 90, 91, 92, 93/)
 
     integer(kind=8) :: irecCount = 0
 

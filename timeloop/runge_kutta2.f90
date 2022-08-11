@@ -58,56 +58,58 @@ module runge_kutta2
             elemR(:,er_Roughness_Dynamic) = elemR(:,er_Roughness)
         end if
 
-        !call util_CLprint ('AAA  start of RK2 ==============================')
+        !print *, ' '
+        call util_CLprint ('======= AAA  start of RK2 ==============================')
+        !print *, ' '
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
         call rk2_step_ETM (istep)
 
-            ! call util_CLprint ('BBB after volume/momentum step 1---------------------------')
+            call util_CLprint ('BBB after volume/momentum step 1---------------------------')
    
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         !%     Note, these updates CANNOT depend on face values
         call update_auxiliary_variables (ETM)
 
-            ! call util_CLprint ('CCC  after update aux step 1-----------------------')
+            call util_CLprint ('CCC  after update aux step 1-----------------------')
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         !%     This does not reset the zero/small depth packing
         call adjust_zero_and_small_depth_elem (ETM, .false.)
         call util_crashstop(340927)
 
-            ! call util_CLprint ('DDD  after adjust zero/small elem-----------------')
+            call util_CLprint ('DDD  after adjust zero/small elem-----------------')
      
         !% --- RK2 solution step  -- all face interpolation
         sync all
         call face_interpolation(fp_all,ETM)
 
-            ! call util_CLprint ('EEE  after face interpolation step 1---------------')
+            call util_CLprint ('EEE  after face interpolation step 1---------------')
 
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .true.)
         call util_crashstop(440223)
 
-            ! call util_CLprint ('FFF  after zero/small face step 1-----------------')
+            call util_CLprint ('FFF  after zero/small face step 1-----------------')
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
 
 
-            ! call util_CLprint ('GGG  after diagnostic step 1')
+            call util_CLprint ('GGG  after diagnostic step 1')
 
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
 
-            ! call util_CLprint ('HHH  after Vfilter step 1 -------------------------')
+            call util_CLprint ('HHH  after Vfilter step 1 -------------------------')
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ETM)
 
-            ! call util_CLprint ('III  after consQ store step 1 ----------------------')
+            call util_CLprint ('III  after consQ store step 1 ----------------------')
 
         !% --- reset the overflow counter (we only save conservation in the 2nd step)
         elemR(:,er_VolumeOverFlow) = zeroR
@@ -118,53 +120,53 @@ module runge_kutta2
         istep=2
         call rk2_step_ETM (istep)
         
-            ! call util_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
+            call util_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
 
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         !%     Note, these updates CANNOT depend on face values
         call update_auxiliary_variables(ETM)  
 
-            ! call util_CLprint ('KKK  after update aux step 2 --------------------------')
+            call util_CLprint ('KKK  after update aux step 2 --------------------------')
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         call adjust_zero_and_small_depth_elem (ETM, .false.)
         call util_crashstop(12973)
 
-            ! call util_CLprint ('LLL  after zero/small elem step 2 -------------------')
+            call util_CLprint ('LLL  after zero/small elem step 2 -------------------')
 
         !% --- RK2 solution step -- update all faces
         sync all
         call face_interpolation(fp_all,ETM)
 
-            ! call util_CLprint ('MMM  after face interp step 2 --------------------------')
+            call util_CLprint ('MMM  after face interp step 2 --------------------------')
 
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
-            ! call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
+            call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
 
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel (.false.)
         call util_crashstop(662398)
 
-            ! call util_CLprint ('OOO  after diagnostic step 2')
+            call util_CLprint ('OOO  after diagnostic step 2')
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_Vfilter (ETM)
         call util_crashstop(449872)
 
-            ! call util_CLprint ('PPP  after Vfilter step 2-----------------------------')
+            call util_CLprint ('PPP  after Vfilter step 2-----------------------------')
 
         !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
         call adjust_zero_and_small_depth_elem (ETM, .true.)
         call util_crashstop(64987)
 
-            ! call util_CLprint ('QQQ  after zero/small elem step 2 (2nd time)')
+            call util_CLprint ('QQQ  after zero/small elem step 2 (2nd time)')
 
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
-        !   call util_CLprint ('ZZZ  after accumulate overflow step 2')
+           call util_CLprint ('ZZZ  after accumulate overflow step 2')
 
         !%-----------------------------------------------------------------
         !% closing
@@ -397,7 +399,7 @@ module runge_kutta2
         ! print *, '------------cccc  '
         ! write(*,"(5f12.7)") elemR(iet(1),er_Volume)
 
-        !% compute slot for conduits only if ETM solver is used
+        !% compute Preissmann slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
             !% all the closed conduit elements
             thisPackCol => col_elemP(ep_CC_Closed_Elements)

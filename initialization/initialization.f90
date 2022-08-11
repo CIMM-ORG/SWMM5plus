@@ -396,7 +396,7 @@ contains
         !print *, this_image(), elemR(:,er_Depth)
     
         ! call util_CLprint('At end of initialization')
-        ! stop 445782
+
 
 
         !%------------------------------------------------------------------- 
@@ -599,6 +599,7 @@ contains
         do ii = 1, setting%SWMMinput%N_link
 
             !print *, 'in ',trim(subroutine_name), ii
+            !print *, api_linkf_geometry
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
@@ -606,6 +607,9 @@ contains
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
+
+            !print *, 'in ',trim(subroutine_name)
+            !print *, ii, link%I(ii,li_geometry)
 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -1786,7 +1790,8 @@ contains
             !% use values from json file
         end if
 
-        !print *, setting%Time%EndEpoch
+        ! print *, setting%Time%EndEpoch
+        ! stop 309874
 
 
         !% Translate epoc endtime to seconds from a zero start time
@@ -1802,14 +1807,17 @@ contains
         !%     get the number of seconds.  A final application of floor() and conversion
         !%     back to real ensures we only have whole seconds
 
-        
+        ! print *, setting%Time%StartEpoch
+        ! print *, setting%Time%EndEpoch       
         ttime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday,KIND=8)
-        !print *, 'ttime ',ttime
+       ! print *, 'ttime ',ttime
         ttime = util_datetime_seconds_precision (ttime)
-        !print *, 'ttime ',ttime  
+       ! print *, 'ttime ',ttime  
         !setting%Time%End = real(floor(ttime),8)
         setting%Time%End = ttime
-        print *, 'time end ',setting%Time%End
+       ! print *, 'time end ',setting%Time%End
+
+       ! stop 2098734
 
         ! print *, ' '
         ! print *, ' '
