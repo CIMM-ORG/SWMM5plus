@@ -42,7 +42,7 @@ elseif(build_configuration STREQUAL "debug")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared -fcommon")
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl -lz")
 
 set(FETCHCONTENT_QUIET "OFF")
 
@@ -147,7 +147,8 @@ endif()
 file(GLOB
     SWMM_SOURCES
         ${CMAKE_SOURCE_DIR}/interface/src/*.c 
-        ${CMAKE_SOURCE_DIR}/*.h
+        ${CMAKE_SOURCE_DIR}/interface/src/*.h
+        # ${CMAKE_SOURCE_DIR}/*.h
 )
 file(GLOB
     SWMM5X_SOURCES
@@ -160,7 +161,9 @@ file(GLOB
 
         ${CMAKE_SOURCE_DIR}/utility/*.f90 
         ${CMAKE_SOURCE_DIR}/definitions/*.f90
-        ${CMAKE_SOURCE_DIR}/interface/*.f90
+        # ${CMAKE_SOURCE_DIR}/interface/*.f90
+        ${CMAKE_SOURCE_DIR}/interface/c_library.f90
+        ${CMAKE_SOURCE_DIR}/interface/interface.f90
         ${CMAKE_SOURCE_DIR}/initialization/*.f90
         ${CMAKE_SOURCE_DIR}/geometry/*.f90
         ${CMAKE_SOURCE_DIR}/timeloop/*.f90
