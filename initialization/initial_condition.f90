@@ -3093,9 +3093,7 @@ contains
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
-        !% HACK: set a preissmann number based on CpT and alpha regardless of the slot type
-        elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
+        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR     
 
         !% only calculate slots for ETM time-march
         if (setting%Solver%SolverSelect == ETM) then
@@ -3103,8 +3101,9 @@ contains
 
             case (StaticSlot)
 
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number) = oneR
+
                 where (elemYN(:,eYN_isSlot))
-                    elemR(:,er_Preissmann_Number)   = oneR
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
@@ -3113,8 +3112,9 @@ contains
 
             case (DynamicSlot)
 
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
+
                 where (elemYN(:,eYN_isSlot))
-                    elemR(:,er_Preissmann_Number)   = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(:,er_ell_max)))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)
@@ -3129,12 +3129,6 @@ contains
                 stop 38756
             end select
         end if
-
-        ! print*, reverseKey(elemI(:,ei_elementType))
-        ! print*, elemR(:,er_SlotVolume) , 'elemR(:,er_SlotVolume)'
-        ! print*, elemR(:,er_SlotDepth), 'elemR(:,er_SlotDepth)'
-        ! print*, elemR(:,er_SlotWidth), 'elemR(:,er_SlotWidth)'
-        ! print*, elemR(:,er_Preissmann_Celerity), 'elemR(:,er_Preissmann_Celerity)'
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
