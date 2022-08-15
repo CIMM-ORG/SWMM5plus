@@ -85,9 +85,6 @@ module update
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
-        !% --- compute the element section factor for CC
-      !  call update_SectionFactor_element (thisCol_CC)
-
             !  call util_CLprint ('in update before CC interpweights in update')
 
         !% --- compute the wave speeds

@@ -333,7 +333,8 @@ module face
                 faceR(idx_fBoth,fGeoSetU(ii)) = faceR(idx_fBoth,fGeoSetD(ii))
             end do
 
-            !% HACK: copy the preissmann number as well
+            !% --- HACK: copy the preissmann number as well
+            !%     Note that for static slot this will always be unity
             faceR(idx_fBoth,fr_Preissmann_Number) = elemR(edn(idx_fBoth),er_Preissmann_Number) 
             
             !% gradient extrapolation for head at infow

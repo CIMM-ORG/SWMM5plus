@@ -390,9 +390,6 @@ module geometry
         !% The following are NOT assigned on JB
         !% FullHydDepth, FullPerimeter, FullVolume, Roughness
         !%
-        !% The following initializations are unknown as of 20211215
-        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
-        !% SmallVolume_xxx,
         !%-------------------------------------------------------------------
             integer, intent(in) :: whichTM, thisColP_JM
 
@@ -1818,9 +1815,6 @@ module geometry
         !% FullVolume, HydRadius, InterpWeight_xx, Length, Perimeter,
         !% Roughness, TopWidth, ZbreadthMax, Zcrown
         !%
-        !% The following initializations are unknown as of 20211215
-        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
-        !% SmallVolume_xxx
         !%------------------------------------------------------------------
         !% Declarations:
             integer, pointer :: thisCol, Npack, thisP(:)

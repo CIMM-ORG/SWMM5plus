@@ -1480,7 +1480,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         grav                => setting%Constant%gravity
         Vvalue              => elemR(:,er_Temp01)
 
-        !% initialize slot
+        !% --- initialize slot
         SlotVolume(thisP) = zeroR
         SlotArea(thisP)   = zeroR
         SlotDepth(thisP)  = zeroR
@@ -1497,30 +1497,33 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         !     fPNumber(fDn(thisP)) = oneR
         ! end if
         
-        !% find out the slot volume/ area/ and the faces that are surcharged
+        !% --- find out the slot volume/ area/ and the faces that are surcharged
         where (volume(thisP) > fullVolume(thisP))
-            !% find the volume of the slot
+            !% --- find the volume of the slot
             SlotVolume(thisP) = volume(thisP) - fullvolume(thisP)
-            !% find the slot area
+            !% --- find the slot area
             SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            !% rest the volume to fullvolume which will affect velocity computation
-            ! volume(thisP)     = fullvolume(thisP)
-            !% set the fase slot to true
+            !% --- reset the volume to fullvolume which will affect velocity computation
+            ! volume(thisP)     = fullvolume(thisP) DO NOT DO THIS HERE  20220811brh
+            !% --- set the face slot to true
             isfSlot(fUp(thisP)) = .true.
             isfSlot(fDn(thisP)) = .true.
         end where
 
-        !% Calculate the preissmann celerity with the already set preissmann number from
-        !% previous time/rk step. Also, any cell containig two slot faces will also designated
-        !% to have a slot. Which ensures a preissmann celerity in that element.
+        !% --- Calculate the Preissmann celerity with the already set Preissmann number from
+        !%     previous time/rk step. Also, any cell containig two slot faces will also designated
+        !%     to have a slot. Which ensures a preissmann celerity in that element.
         where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
-            !% set isSlot to true
+            !% --- set isSlot for element to true
+            !%     note that this includes cells where volume < fullVolume but
+            !%     has slot on adjacent faces
             isSlot(thisP)    = .true.
-            !% smooth the preissmann number from using simple face interpolation
+            !% --- smooth the Preissmann number from using simple face interpolation
+            !%     this is time-lagged face P number
             PNumber(thisP) = max(onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP))), oneR)
-            !% Preissmann Celerity
+            !% --- Preissmann Celerity
             PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-            !% find the water height at the slot
+            !% ---find the water height at the slot
             SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
         end where
 
