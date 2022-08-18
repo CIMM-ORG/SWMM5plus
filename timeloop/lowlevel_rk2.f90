@@ -619,7 +619,10 @@ module lowlevel_rk2
                 ( rh(thisP)**fourthirdsR )
 
     !    print *, 'in ll_momentum_gamma_CC'
-    !    print *, elemR(iet(4),outCol)      
+    !    print *, elemR(139,outCol)      
+    !    print *, rh(139), mn(139),velocity(139)
+    !    print *, elemR(139,er_Roughness), elemR(139,er_Roughness_Dynamic)
+    !    print *, setting%Solver%Roughness%useDynamicRoughness
 
                 ! print *, 'in ', trim(subroutine_name)
                 ! print *, mn(thisP)
@@ -663,9 +666,9 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_solve_CC'
-        ! print *, ' Msource ', Msource(iet(7))
-        ! print *, ' Gamma   ', GammaM(iet(7))
-        ! print *, ' Vprod   ',volumeLast(iet(7)) * velocityLast(iet(7))
+        ! print *, ' Msource ', Msource(139)
+        ! print *, ' Gamma   ', GammaM(139)
+        ! print *, ' Vprod   ',volumeLast(139) * velocityLast(139)
         ! print *, 'crk,delt ', crk(istep),delt
         ! print *, ' '
 
@@ -673,13 +676,10 @@ module lowlevel_rk2
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
-        ! !print *, ' M       ',elemR(780,outCol)
         ! print *, 'in ll_momentum_solve_CC'
-        ! !print *, elemR(1,outCol)
-        ! !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)      
-        ! print *, iet(4)
-        ! print *, volumeLast(iet(4)), velocityLast(iet(4)), Msource(iet(4))
-        ! print *, crk(istep), delt, GammaM(iet(4))  
+        ! print *, elemR(139,outCol) 
+        ! print *, volumeLast(139), velocityLast(139), Msource(139)
+        ! print *, crk(istep), delt, GammaM(139)  
 
         !stop 2098734
 
@@ -1591,6 +1591,18 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
        ! dynamic_mn(thisP) =  mn(thisP)
         dynamic_mn(thisP) =  mn(thisP) &
            +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+
+
+        print *, 'DYNAMIC ROUGHNESS CANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
+        stop 1093874   
+
+
+        print *, 'in ',trim(subroutine_name)
+        print *, mn(139), alpha, dt
+        print *, dp_norm(139)
+        print *, exp(dp_norm(139))
+
+
             
         !% OTHER VERSIONS EXPERIMENTED WITH 20220802
              ! dynamic_mn(thisP) =  mn(thisP) &

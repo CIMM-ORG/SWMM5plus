@@ -109,7 +109,7 @@ module update
         !% --- not needed 20220716brh
         !% --- flow values on an BC outlet face 20220714brh
         !%     required so that an inflow to a zero or small depth will not be lost
-       ! call update_BCoutlet_flowrate ()
+        ! call update_BCoutlet_flowrate ()
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -132,6 +132,7 @@ module update
         !%-----------------------------------------------------------------------------
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:), Qmax(:)
+        character(64) :: subroutine_name = 'update_element_flowrate'
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
@@ -140,6 +141,10 @@ module update
         Qmax     => elemR(:,er_FlowrateLimit)
         !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisCol)
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, flowrate(139), area(139), velocity(139)
+
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
@@ -150,7 +155,10 @@ module update
             end where
 
         end if
+
+        ! print *, flowrate(139), area(139), velocity(139)
         ! print*, flowrate(thisP), 'flowrate(thisP)'
+
     end subroutine update_element_flowrate
 !%
 !%==========================================================================
@@ -414,16 +422,20 @@ module update
         !% adjust upstream interpolation weights for downstream flow in presence of lateral inflows
         !% so that upstream interpolation is used
         !% HACK -- this probably could use an approach with some kind of ad hoc blend -- needs work
-        where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
-            w_uQ(thisP) =  setting%Limiter%InterpWeight%Maximum
-            w_uG(thisP) =  setting%Limiter%InterpWeight%Maximum
-        endwhere
 
-        ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
-        where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
-            w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
-            w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
+        !% 20220817brh REMOVING LATERAL RESET AS IT IS CAUSING OSCILLATIONS IN HIGH INSTREAM FLOW CONDITIONS
+        !% MAY NEED TO PUT IT BACK IN FOR CASES WHERE LATERAL FLOWRATE IS LARGER THAN DOWNSTREAM FLOW
+
+        ! where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
+        !     w_uQ(thisP) =  setting%Limiter%InterpWeight%Maximum
+        !     w_uG(thisP) =  setting%Limiter%InterpWeight%Maximum
+        ! endwhere
+
+        ! ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
+        ! where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
+        !     w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+        !     w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
+        ! endwhere
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

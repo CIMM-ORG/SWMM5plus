@@ -65,7 +65,7 @@
         "energy_correction_factor" : 1.0
     },
     "Discretization" : {
-        "AdjustLinkLengthYN" : false,
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -109,7 +109,9 @@
         }
     },
     "Link" : {
-        "DefaultInitDepthType" : "Linear" 
+        "DefaultInitDepthType"     : "Linear", 
+        "OpenChannelLimitDepthYN"  : true,
+        "OpenChannelFullDepth"     :  20
     },    
     "Orifice" : {
         "SharpCrestedWeirCoefficient" : 0.414,

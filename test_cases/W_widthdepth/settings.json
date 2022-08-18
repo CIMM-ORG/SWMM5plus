@@ -11,7 +11,7 @@
         },
     },    
     "Discretization" : {
-        "AdjustLinkLengthYN" : true,
+        "AdustLinkLengthForJunctionBranchYN" : true,
         "NominalElemLength" : 15.00
     },
     "Output" : {

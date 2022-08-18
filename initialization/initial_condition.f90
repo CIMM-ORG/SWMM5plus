@@ -210,7 +210,7 @@ contains
             ! call util_CLprint ('initial_condition after init_bc')
 
         !% --- setup the sectionfactor arrays needed for normal depth computation on outfall BC
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_arrays"
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
         call init_uniformtable_array()
 
         !% --- update the BC so that face interpolation works in update_aux...
@@ -838,9 +838,9 @@ contains
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
 
-        print *, 'in ',trim(subroutine_name)
-        print *, thisLink, linkType
-        print *, trim(reverseKey(linkType))
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, thisLink, linkType
+        ! print *, trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -918,7 +918,8 @@ contains
         geometryType => link%I(thisLink,li_geometry)
         depthnorm    => elemR(:,er_Temp01)
 
-        !print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))
 
         select case (geometryType)
 
@@ -931,7 +932,7 @@ contains
                     !% --- independent data
                     elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)
-                    elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullDepth)               = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
                     elemR(:,er_FullHydDepth)            = link%R(thisLink,lr_FullDepth) 
 
                     !% --- dependent on full depth
@@ -967,7 +968,7 @@ contains
                     elemSGR(:,esgr_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSGR(:,esgr_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
                     elemSGR(:,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
-                    elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
 
                     !% --- dependent on FullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth)        &
@@ -1017,6 +1018,7 @@ contains
                                
                 endwhere
 
+                !print *, '----- trapezoidal full depth ',link%R(thisLink,lr_FullDepth)
             
             case (lTriangular)
 
@@ -1026,7 +1028,7 @@ contains
                     !% --- independent data
                     elemSGR(:,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_BreadthMax)                 = link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_FullDepth)                  = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
 
                     !% --- dependent on Full Depth
                     elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_TopBreadth) / (twoR * elemR(:,er_FullDepth))
@@ -1098,6 +1100,7 @@ contains
                     
                     !% store fixed data
                     elemR(:,er_BreadthMax)    = link%transectR(link_tidx,tr_widthMax)
+                    !% --- note, do not apply the full depth limiter to transect!
                     elemR(:,er_FullDepth)     = link%transectR(link_tidx,tr_depthFull)
                     elemR(:,er_FullArea)      = link%transectR(link_tidx,tr_areaFull)
                     elemR(:,er_FullHydDepth)  = elemR(:,er_FullArea) / link%transectR(link_tidx,tr_widthFull)
@@ -1152,6 +1155,13 @@ contains
                 !return
 
         end select
+
+        ! do ii=1,N_elem(this_image())
+        !     if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+        !         print *, '----- ',thisLink, elemR(ii,er_FullDepth)
+        !     end if
+        ! end do
+        ! stop 2098734
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -3393,9 +3403,9 @@ contains
                         !% --- face node (no storage) with lateral inflow into adjacent element
                         BC%flowI(ii, bi_category) = BClat
                         !BC%flowI(ii, bi_elem_idx) = node%I(nidx, ni_elemface_idx) !% elem idx OBSOLETE
-                        print *, 'CODE NEEDS TESTING: BClat inflow for nJ2 node has not been tested'
-                        print *, 'BC flow index ',ii
-                        call util_crashpoint(7783723)
+                        ! print *, 'CODE NEEDS TESTING: BClat inflow for nJ2 node has not been tested'
+                        ! print *, 'BC flow index ',ii
+                        ! call util_crashpoint(7783723)
                     case (nBCup)
                         BC%flowI(ii, bi_category) = BCup
                         !BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx OBSOLETE
@@ -3574,6 +3584,8 @@ contains
             integer       :: ii,  lastUT_idx      
             character(64) :: subroutine_name = 'init_uniformtable_array'
         !%------------------------------------------------------------------
+
+       ! print *, 'in ',trim(subroutine_name)
         
         call util_allocate_uniformtable_array()
 
@@ -3588,20 +3600,24 @@ contains
         !% --- fill of values for each location
         do ii = 1,size(uniformTableDataR,1)
 
+           ! print *, uniformTableR(ii,utr_SFmax)
             !% --- uniform values
             call init_uniformtabledata_Uvalue(ii,utr_SFmax,    utd_SF_uniform)
+
+            !print *, uniformTableR(ii,utr_SFmax)
+
             call init_uniformtabledata_Uvalue(ii,utr_QcritMax, utd_Qcrit_uniform)
    
             !% --- nonuniform values mapping from section factors
-                !print *, 'sectionfactors by depth'
+               ! print *, 'sectionfactors by depth ----------------'
             call init_uniformtabledata_nonUvalue (ii, utd_SF_depth_nonuniform, utd_SF_uniform)
-                !print *, 'sectionfactors by area'
+               ! print *, 'sectionfactors by area ----------------'
             call init_uniformtabledata_nonUvalue (ii, utd_SF_area_nonuniform,  utd_SF_uniform)
    
             !% --- nonuniform values mapping from critical flow
-                !print *, 'Qcritical by depth'
+               ! print *, 'Qcritical by depth ------------------'
             call init_uniformtabledata_nonUvalue (ii, utd_Qcrit_depth_nonuniform, utd_Qcrit_uniform)
-                !print *, 'Qcritical by area'
+               ! print *, 'Qcritical by area ------------------'
             call init_uniformtabledata_nonUvalue (ii, utd_Qcrit_area_nonuniform,  utd_Qcrit_uniform)
         end do
 
@@ -3622,9 +3638,10 @@ contains
         !% Declarations
             integer, intent (inout) :: UT_idx
             integer, pointer        :: eIdx
-            integer                 :: ii
+            integer                 :: ii, jj
             real(8), pointer        :: grav
-            real(8)                 :: sf, qcrit, thisDepth, deltaD
+            real(8)                 :: sf, qcrit, thisDepth, deltaD, depthTol
+            character(64)           :: subroutine_name = 'init_BChead_uniformtable'
         !%------------------------------------------------------------------ 
         !% Aliases
             grav         => setting%Constant%gravity
@@ -3632,7 +3649,11 @@ contains
         !% --- return if there are no head BC
         if (N_headBC < 1) return
 
+        !print *, 'in ',trim(subroutine_name)
+
         do ii = 1,N_headBC
+
+           ! print *, '---- ',ii
 
             UT_idx = UT_idx + 1
             !% --- the element index for the element upstream of the BC
@@ -3648,22 +3669,42 @@ contains
             uniformTableR(UT_idx,utr_DepthMax) =  elemR(eIdx,er_FullDepth)
             uniformTableR(UT_idx,utr_AreaMax)  =  elemR(eIdx,er_FullArea)
 
+            ! print *, '----- Full Depth ', uniformTableR(UT_idx,utr_DepthMax) 
+            ! print *, '----- Full Area  ', uniformTableR(UT_idx,utr_AreaMax)
+
             !% --- get other max values by stepping through cross-section
             !%     this allows us to deal with slight non-monotonic behavior in nearly full conduits
             thisDepth = zeroR
             deltaD = uniformTableR(UT_idx,utr_DepthMax) / onethousandR
             uniformTableR(UT_idx,utr_SFmax)    = zeroR
             uniformTableR(UT_idx,utr_QcritMax) = zeroR
-            do while (thisdepth .le. uniformTableR(UT_idx,utr_DepthMax))
+
+            !% --- include a depth tolerance to prevent round-off from
+            !%     creating a step larger than the max depth
+            depthTol = deltaD / tenR
+            !jj=0
+            !% --- cycle through all the depths to find the maximum section factor
+            !%     and maximum Q critical
+            do while (thisdepth .le. (uniformTableR(UT_idx,utr_DepthMax)-depthTol))
+                !jj=jj+1
                 thisDepth = thisDepth + deltaD
+                !print *, '----- thisDepth     ',thisDepth 
+
                 sf = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
+                !print *, '----- sectionfactor ',sf
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
 
                 qcrit = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
+                !print *, '----- qcrit        ',qcrit
                 uniformTableR(UT_idx,utr_QcritMax) = max(uniformTableR(UT_idx,utr_QcritMax),qcrit)
+                !print *, '----- '
+
             end do
 
         end do
+
+        ! print *,uniformTableR(1,utr_SFmax)
+        ! stop 2098734
 
     end subroutine init_BChead_uniformtable
 !%
@@ -3685,6 +3726,7 @@ contains
             real(8), pointer     ::  grav
             real(8)  :: thisUvalue, deltaDepth, deltaUvalue, errorU
             real(8)  :: testUvalue, testDepth, testArea, testPerimeter
+            !real(8)  :: interpUvalue
             real(8)  :: oldtestUvalue, oldtestDepth, oldtestArea, oldtestPerimeter
             real(8)  :: thisDepth, thisArea, thisPerimeter
             real(8), parameter :: uTol = 1.d-3
@@ -3724,6 +3766,14 @@ contains
         !% --- get the uniform data delta
         deltaUvalue = uniformTableR(UT_idx,utr_max) /  real((N_uniformTableData_items-1),8)
 
+        ! print *, 'deltaUvalue ',deltaUvalue
+
+        ! print *,'Umax ',uniformTableR(UT_idx,utr_max)
+        ! print *, 'by depth ',geo_sectionfactor_from_depth_singular (eIdx,20.d0)
+        ! print *, 'UT_idx ',UT_idx
+
+        !stop 2098734
+        
         !% --- Get delta step for stepping through the non-uniform computation
         !%     looking for at least 3 digits of precision in cycling through nonuniform
         !%     values
@@ -3732,6 +3782,8 @@ contains
         if (deltaDepth < onehundredR*tiny(deltaDepth)) then
             print *, 'CONFIGURATION OR CODE ERROR: too small of a depth step in ',trim(subroutine_name)
         end if
+
+        ! print *, 'deltaDepth ',deltaDepth
 
         testUvalue    = zeroR
         testDepth     = zeroR
@@ -3770,10 +3822,15 @@ contains
                     print *, 'CODE ERROR: unexpected case default'
                     call util_crashpoint(608723)
                 end select
+
+                !print *, 'old,new Uvalue ',oldtestUvalue, testUvalue
                 !% --- for monotonic, exit will be when testUvalue >= thisUvalue
                 !% --- as soon as non-monotonic is found, the remainder of the
                 !%     array uses the final depth value
                 if (oldtestUvalue > testUvalue) isIncreasing = .false.
+                ! print *, 'isIncreasing',isIncreasing
+                 !print *, 'test value: ',testUvalue, thisUvalue
+                ! print *, 'test depth: ',testDepth + deltaDepth, elemR(eIdx,er_FullDepth)
             end do
 
             !%--- get the best estimate of the value of the Depth at thisUvalue
@@ -3781,13 +3838,15 @@ contains
                 thisDepth = testDepth
                 thisArea  = testArea
             elseif (testUvalue < thisUvalue) then
-                !% --- exited on depth exceedening max or non-monotonic, so use last values
+                !% --- exited on depth exceeding max or non-monotonic, so use last values
                 thisDepth  =  testDepth
                 thisArea   =  testArea
             else
                 !% --- interpolate across the two available values that bracket thisUvalue
-                thisDepth = oldtestDepth +        deltaDepth         * (thisUvalue - oldtestUvalue) / deltaUvalue
-                thisArea  = oldtestArea  + (testArea  - oldtestArea) * (thisUvalue - oldtestUvalue) / deltaUvalue
+                thisDepth  = oldtestDepth  +        deltaDepth            *  (thisUvalue - oldtestUvalue) / deltaUvalue
+                thisArea   = oldtestArea   + (testArea  - oldtestArea)    *  (thisUvalue - oldtestUvalue) / deltaUvalue
+                ! print *, 'old, this, test Uvalue ',oldtestUvalue, thisUvalue, testUvalue
+                ! print *, 'ratio ',(thisUvalue - oldtestUvalue) / deltaUvalue
             endif
 
             !% --- store the table data (normalized)   
@@ -3813,12 +3872,23 @@ contains
             !% --- relative error
             errorU = abs((thisUvalue - testUvalue) / uniformTableR(UT_idx,utr_max))
 
+            ! print *, ' '
+            ! print *, oldtestDepth, thisDepth, testDepth
+            ! print *, oldtestUvalue, thisUvalue, testUvalue
+            ! print *, 'max value ',uniformTableR(UT_idx,utr_max)
+            ! print *, 'error ',errorU
+            ! print *, ' '
+
             if (errorU > uTol) then
-                print *, 'CODE ERROR in geometry processing for section factor'
+                print *, 'CODE ERROR in geometry processing for uniform table.'
                 print *, 'tolerance setting is ',uTol
                 print *, 'relative error is ',errorU
                 call util_crashpoint(69873)
             end if
+
+            ! if (jj > 50) then
+            !     stop 298734
+            ! end if
         end do
           
 
@@ -3844,13 +3914,20 @@ contains
             real(8), pointer :: uniformMax
             real(8)          :: thisValue, normDelta
             integer          :: jj
+            character(64)    :: subroutine_name = 'init_uniformtabledata_Uvalue'
         !%------------------------------------------------------------------ 
+
+        !print *, 'in ',trim(subroutine_name)
 
         !% --- maximum and mininum values of the uniform data
         uniformMax => uniformTableR(UT_idx,utr_max)
 
+        !print *, '----- uniformMax ',uniformMax
+
         !% --- step sizes in the uniform table
         normDelta = uniformMax / real(N_uniformTableData_items-1,8)
+
+        !print *, '----- normDelta ',normDelta
 
         !% --- store the zero as starting point for normalized table
         uniformTableDataR(UT_idx,1,utd_uniform) = zeroR
@@ -3861,7 +3938,10 @@ contains
               !% --- increment to the next value of the uniform data
             thisValue = thisValue + normDelta
             !% --- store the table data (normalized)    
-            uniformTableDataR(UT_idx,jj,utd_uniform) = thisValue / uniformMax      
+            uniformTableDataR(UT_idx,jj,utd_uniform) = thisValue / uniformMax     
+            
+            ! print *, '----- ',jj, thisValue,  uniformTableDataR(UT_idx,jj,utd_uniform)
+
         end do
         
     end subroutine init_uniformtabledata_Uvalue
@@ -4121,6 +4201,38 @@ contains
         !%------------------------------------------------------------------
         !% Closing
     end subroutine init_IC_ZeroValues_nondepth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function init_IC_limited_fulldepth (thisDepth, thisLink) result(outDepth)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Checks the input full depth and applies limiter (if needed)
+        !% Note this should only be called for open-channel geometries
+        !% This should NOT be applied to transect geometries.
+        !%------------------------------------------------------------------  
+        !% Declarations:
+            integer, intent(in) :: thisLink
+            real(8), intent(in) :: thisDepth
+        !%------------------------------------------------------------------  
+
+        if (setting%Link%OpenChannelLimitDepthYN) then 
+            !% --- limit the output Depth
+            outDepth = min(thisDepth, setting%Link%OpenChannelFullDepth)
+        else
+            if (thisDepth .eq. nullvalueR) then 
+                print *, 'Unexpected initialization error: '
+                print *, 'The maximum depth in link # ',thisLink
+                print *, 'is set to the nullvalueR ',nullvalueR
+                print *, 'Problem in SWMM link name ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6698723)
+            else
+                outDepth = thisDepth
+            end if
+        end if
+
+    end function init_IC_limited_fulldepth
 !%
 !%==========================================================================    
 !% END MODULE

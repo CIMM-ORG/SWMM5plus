@@ -610,6 +610,7 @@ module adjust
             integer, target  :: pset(2)
             real(8)          :: psign(2)
             integer :: ii
+            character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes'
         !% -----------------------------------------------------------------
         !% Preliminaries:   
             select case (whichTM)
@@ -665,6 +666,9 @@ module adjust
         if (setting%Solver%Roughness%useDynamicRoughness) then
             ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness_Dynamic))
         end if
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, ManningsN(139), elemR(139,er_Roughness_Dynamic), elemR(139,er_Roughness)
 
         !print *, 'mannings n', ManningsN(iet(1:2))
 

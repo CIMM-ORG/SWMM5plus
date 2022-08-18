@@ -216,7 +216,7 @@ module define_settings
 
     !% setting%Solver%Roughness
     type RoughnessType
-        logical :: useDynamicRoughness = .true.
+        logical :: useDynamicRoughness = .false.
         real(8) :: alpha = 100.0d0
     end type RoughnessType
 
@@ -241,9 +241,12 @@ module define_settings
 
     !% setting%Time%WallClock
     type WallClockType
+        integer         :: StoreInterval = 1000
+        integer         :: LastStepStored
         integer (kind=8):: Start = 0
         integer (kind=8):: Now  = 0
         integer (kind=8):: End = 0
+        integer (kind=8):: LastTimeStored
         integer (kind=8):: CountRate = 0
         integer (kind=8):: HydraulicsStart= 0
         integer (kind=8):: HydraulicsStop = 0
@@ -409,8 +412,8 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        logical :: AdjustLinkLengthYN = .false.          !% if true then JB length is subtracted from link length
-        real(8) :: JunctionBranchLengthFactor  = 0.33d0  !% fraction of NominalElemLength used for JB
+        logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB length is subtracted from link length
+        real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
         real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
         real(8) :: NominalElemLength   = 10.0d0
@@ -480,7 +483,7 @@ module define_settings
 
     ! setting%Limiter
     type LimiterType
-        real(8) :: NormalDepthInfinite   = 1000.0     ! value used when normal depth would be infinite.
+        real(8) :: NormalDepthInfinite   = 1000.d0     ! value used when normal depth would be infinite.
         !rm 20220207brh type(LimiterBCType)           :: BC  !% not used
         !rm 20220209brh type(LimiterChannelType)      :: Channel
         !rm 20220207brh type(LimiterFlowrateType)     :: Flowrate  !% not used
@@ -492,9 +495,13 @@ module define_settings
 
     type LinkType
         ! UniformDepth, LinearlyVaryingDepth, IncreasingDepth,  FixedHead
-        integer ::        DefaultInitDepthType = LinearlyVaryingDepth 
+        integer :: DefaultInitDepthType = LinearlyVaryingDepth 
+        !% --- if users include an unnecessarily large full depth, this can affect the precision in 
+        !%     look up tables. The following allows global replacement of excessive maximum depths.
+        logical :: OpenChannelLimitDepthYN = .false.  !% Y/N overwrite for the max depth from SWMM.inp file
+        real(8) :: OpenChannelFullDepth = 100.d0      !% overwrite the max depth of open channels in SWMM.inp file
         ! HACK - TODO file for properties of specific links
-    end type LinkType
+    end type
 
     !% setting%Orifice
     type OrificeType
@@ -1094,10 +1101,10 @@ contains
 
     !% Discretization. =====================================================================
         !% -- Nominal element length adjustment
-        !%                      Discretization.AdjustLinkLengthYN
-        call json%get('Discretization.AdjustLinkLengthYN', logical_value, found)
-        if (found) setting%Discretization%AdjustLinkLengthYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdjustLinkLengthYN not found'
+        !%                      Discretization.AdustLinkLengthForJunctionBranchYN
+        call json%get('Discretization.AdustLinkLengthForJunctionBranchYN', logical_value, found)
+        if (found) setting%Discretization%AdustLinkLengthForJunctionBranchYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdustLinkLengthForJunctionBranchYN not found'
 
         !%                      Discretization.JunctionBranchLengthFactor
         call json%get('Discretization.JunctionBranchLengthFactor', real_value, found)
@@ -1350,6 +1357,16 @@ contains
             end if
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Link.DefaultInitDepthType not found'
+
+        !%                      Link.OpenChannelLimitDepthYN
+        call json%get('Link.OpenChannelLimitDepthYN', logical_value, found)
+        if (found)setting%Link%OpenChannelLimitDepthYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Link.OpenChannelLimitDepthYN not found'
+
+        !%                      Link.OpenChannelFullDepth
+        call json%get('Link.OpenChannelFullDepth', real_value, found)
+        if (found) setting%Link%OpenChannelFullDepth = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - setting " // 'Link.OpenChannelFullDepth not found'
 
     !% Orifice. =====================================================================
         !%                       SharpCrestedWeirCoefficeint

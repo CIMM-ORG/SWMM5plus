@@ -80,9 +80,17 @@ module define_globals
     !integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
     !integer :: ift(6) = (/91, 92, 93, 94, 95, 96/)
 
-    !% for Vasconcelos_TPA
-    integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
-    integer :: ift(6) = (/88, 89, 90, 91, 92, 93/)
+    ! !% for Vasconcelos_TPA
+    ! integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    ! integer :: ift(6) = (/88, 89, 90, 91, 92, 93/)
+
+    !% for lavaca
+    !%                      JM    JB     CC   CC    CC
+    !integer :: iet(5) = (/ 8698, 8700, 8710, 3874, 3875 /)
+    !integer :: ift(4) = (/           8824, 4026, 4027, 4028 /)
+
+    integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
+    integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
 
     integer(kind=8) :: irecCount = 0
 

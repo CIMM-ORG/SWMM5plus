@@ -252,11 +252,15 @@ module geometry
             integer, intent(in)  :: eIdx
             real(8), intent(in)  :: inDepth
             real(8) :: thisPerimeter, thisArea
+            character(64) :: subroutine_name = "geo_sectionfactor_from_depth_singular"
         !%------------------------------------------------------------------  
+        !print *, 'in ',trim(subroutine_name)    
         thisArea      = geo_area_from_depth_singular      (eIdx,inDepth)
+        !print *, '----- area     ',thisArea
         thisPerimeter = geo_perimeter_from_depth_singular (eIdx,inDepth)
-
+        !print *, '----- perimeter',thisPerimeter
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
+        !print *, '----- sf       ',outvalue
 
     end function geo_sectionfactor_from_depth_singular
 !%

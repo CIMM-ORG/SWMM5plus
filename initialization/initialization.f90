@@ -888,7 +888,7 @@ contains
                         print *, 'Found link length of ',link%R(ii,lr_Length)
                         print *, 'Link index is ',ii
                         print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
-                        print *, 'Either change setting.Discretization.AdjustLinkLengthYN to true, or'
+                        print *, 'Either change setting.Discretization.AdustLinkLengthForJunctionBranchYN to true, or'
                         print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
                         call util_crashpoint(447298)
                     end if
@@ -1536,7 +1536,7 @@ contains
         sync all
 
         !% Compute the amount of a conduit length that is added to a connected junction.
-        !% This modifies the conduit length itself if setting%Discretization%AdjustLinkLengthYN
+        !% This modifies the conduit length itself if setting%Discretization%AdustLinkLengthForJunctionBranchYN
         !% is true. The junction itself is setup in init_network_nJm_branch_length()
         call init_discretization_adjustlinklength()
 

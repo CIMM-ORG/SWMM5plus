@@ -83,6 +83,8 @@ contains
         if (this_image()==1) then
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%TimeMarchStart = cval
+            setting%Time%WallClock%LastTimeStored = cval
+            setting%Time%WallClock%LastStepStored = setting%Time%Step
         end if 
 
         !% --- initialize the time settings for hydraulics and hydrology steps
@@ -318,6 +320,8 @@ contains
     
                 end if         
     
+                !call util_CLprint ('before reporting')
+
                 !% --- handle output reporting
                 if (setting%Output%Report%provideYN) then 
                     !% --- only provide output for spinup time if stopping after spinup
@@ -999,7 +1003,7 @@ contains
             Volume      => elemR(:,er_Volume)
             SmallVolume => elemR(:,er_SmallVolume)
             Qface       => faceR(:,fr_Flowrate)
-            Qelem       => elemR(:,er_FlowrateLateral)
+            Qelem       => elemR(:,er_Flowrate)
             Qlat        => elemR(:,er_FlowrateLateral)
         !%------------------------------------------------------------------
         !% --- initialize temporary arrays
@@ -1158,7 +1162,8 @@ contains
             real (8) :: thistime
             integer, pointer :: interval
             integer (kind=8), pointer :: step
-            integer (kind=8) :: execution_realtime
+            real(8) :: execution_realtime
+            real(8) execution_realtime_per_step, steps_to_finish
             integer(kind=8) :: cval, crate, cmax
             real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
             character(8) :: timeunit
@@ -1175,12 +1180,30 @@ contains
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%Now = cval
 
-            ! estimate the remaining time
-            execution_realtime = (setting%Time%WallClock%Now - setting%Time%WallClock%TimeMarchStart)
-            seconds_to_completion =  (    (real(execution_realtime,kind=8))                     &
-                                       /  (real(setting%Time%WallClock%CountRate,kind=8))  )    &
-                                   * (    (setting%Time%End - setting%Time%Now)                 &
-                                       /  (setting%Time%Now - setting%Time%Start) )
+            ! --- estimate the remaining time based on total time from start
+            execution_realtime = real((setting%Time%WallClock%Now - setting%Time%WallClock%TimeMarchStart),kind=8) &
+                             /  (real(setting%Time%WallClock%CountRate,kind=8)) 
+            execution_realtime_per_step = execution_realtime / real(1+step,kind=8)
+
+            ! execution_realtime = real((setting%Time%WallClock%Now - setting%Time%WallClock%LastTimeStored),kind=8) &
+            !                   /  (real(setting%Time%WallClock%CountRate,kind=8)) 
+
+            ! seconds_to_completion =  (    (real(execution_realtime,kind=8))                     &
+            !                            /  (real(setting%Time%WallClock%CountRate,kind=8))  )    &
+            !                        * (    (setting%Time%End - setting%Time%Now)                 &
+            !                            /  (setting%Time%Now - setting%Time%Start) )
+            !execution_realtime_per_step = execution_realtime / real(1+step-setting%Time%WallClock%LastStepStored,kind=8)
+            
+
+        
+            steps_to_finish = (setting%Time%End - setting%Time%Now) / dt
+            seconds_to_completion = execution_realtime_per_step * steps_to_finish
+
+            ! print *, ' '
+            ! print *, execution_realtime
+            ! print *, execution_realtime_per_step
+            ! print *, steps_to_finish
+            ! print *, seconds_to_completion
         end if
 
         if (setting%Output%Verbose) then
@@ -1212,6 +1235,7 @@ contains
                         thistime = seconds_to_completion
                         call util_datetime_display_time (thistime, timeunit)
                         write(*,"(A9,F6.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
+                        !write(*,"(A9,F6.2,A1,A3,A)") 'execution time ',thistime,' ',timeunit,' wall clock time thus far'
                     end if    
                     print *
                 endif

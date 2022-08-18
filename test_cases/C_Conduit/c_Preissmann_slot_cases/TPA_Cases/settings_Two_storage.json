@@ -6,7 +6,7 @@
         "Short" : "TwoStorage"
     },
     "Discretization" : {
-        "AdjustLinkLengthYN" : false,
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "ElemShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
