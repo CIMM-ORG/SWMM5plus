@@ -80,7 +80,7 @@
         },
         "Report" : {
             "useSWMMinpYN" : true,
-            "useHD5F"      : false,
+            "useHD5F"      : true,
             "provideYN"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,

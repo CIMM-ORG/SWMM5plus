@@ -2836,7 +2836,7 @@ contains
                         !% -----------------------------------------
                         !% --- NODE-FACE FILES, CSV AND UNF (all types in 1 file)
                         !%
-                        print *, '    isOutNodeFaceWriteFVonly ', isOutNodeFaceWriteFVonly(kk)
+                        !print *, '    isOutNodeFaceWriteFVonly ', isOutNodeFaceWriteFVonly(kk)
                         if (.not. isOutNodeFaceWriteFVonly(kk)) then
                             !% --- set the filenames for output of SWMM links
                             fn_nodeFace_unf = trim(setting%File%outputML_Node_kernel) &
