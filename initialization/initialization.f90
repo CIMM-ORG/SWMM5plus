@@ -397,7 +397,8 @@ contains
     
         ! call util_CLprint('At end of initialization')
 
-
+        ! print *, setting%Output%Report%useHD5F
+        ! stop 4409872
 
         !%------------------------------------------------------------------- 
         !% Closing

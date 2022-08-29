@@ -187,8 +187,9 @@
         "SwitchFractionUp" : 0.9,
         "ReferenceHead"     : 0.0,
         "Roughness" : {
-            "useDynamicRoughness" : true,
-            "alpha"               : 100.0
+            "useDynamicRoughness" : false,
+            "alpha"               : 1.0,
+            "beta"                : 1.0
         }
 
     },

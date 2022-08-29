@@ -61,6 +61,7 @@ module runge_kutta2
             !print *, ' '
             ! call util_CLprint ('======= AAA  start of RK2 ==============================')
             !print *, ' '
+        !print *, elemR(1,er_Roughness_Dynamic)
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
@@ -810,7 +811,7 @@ module runge_kutta2
 
         print *, 'DYNAMIC ROUGHNESS CANNOT BE USED'
         print *, 'change setting%Solver%Roughness%useDynamicRoughness = .false.'    
-        stop 2098734
+        stop 20987344
 
         !% --- compute roughness for CC elements    
         npack      => npack_elemP(thisColCC)
@@ -818,22 +819,22 @@ module runge_kutta2
 
             thisP      => elemP(1:npack,thisColCC)   
             !% --- the normalized pressure gradient scale
-            dp_norm(thisP) = (  abs(fHead_d(fUp(thisP)) - eHead(thisP))   &
-                              + abs(fHead_u(fDn(thisP)) - eHead(thisP)) ) &
-                             / abs(eHead(thisP) - zBottom(thisP))
+            ! dp_norm(thisP) = (  abs(fHead_d(fUp(thisP)) - eHead(thisP))   &
+            !                   + abs(fHead_u(fDn(thisP)) - eHead(thisP)) ) &
+            !                  / abs(eHead(thisP) - zBottom(thisP))
 
-            ! print *, 'in ',trim(subroutine_name)
-            ! print *, dp_norm(139)
+            dp_norm(thisp) = (abs(elemR(thisP,er_Velocity_N0) - elemR(thisP,er_Velocity_N1)) / setting%Time%Hydraulics%Dt)  &
+            / ( &
+            (elemR(thisP,er_Roughness)**2) * (elemR(thisP,er_Velocity_N0)**2) * setting%Constant%gravity &
+            / (elemR(thisP,er_HydRadius)**fourthirdsR) &
+            )
+        
+            !print *, 'in ',trim(subroutine_name)
+            !print *, dp_norm(33)
             ! print *, fHead_d(fUp(139)), eHead(139)
             ! print *, fHead_u(fDn(139)), eHead(139)
             ! print *, eHead(139),zBottom(139)
-
-           ! dynamic_mn(thisP) =  mn(thisP) &
-           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
-
-           ! dynamic_mn(thisP) =  mn(thisP) &
-           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )    
-                
+           
             call ll_get_dynamic_roughness (thisP, dpnorm_col) 
 
             !dynamic_mn(thisP) =  mn(thisP) &
@@ -843,36 +844,36 @@ module runge_kutta2
         !% --- compute roughness for JB elements
         npack => npack_elemP(thisColJM)
  
-        if (Npack > 0) then
-            do ii=1,Npack
-                tM => elemP(ii,thisColJM)  !% JM junction main ID
-                !% --- handle the upstream branches
-                do kk=1,max_branch_per_node,2
-                    tB(1) = tM + kk  !% JB branch ID
-                    if (BranchExists(tB(1))==1) then
-                        !% --- normalized head difference is with upstream face
-                        dp_norm(tB) = (abs(fHead_d(fUp(tB)) - eHead(tB))) &
-                             / abs(eHead(tB) - zBottom(tB))
-                        !% --- add the dynamic roughness    
-                        call ll_get_dynamic_roughness (tB, dpnorm_col)       
-                    else
-                        !% skip if not a valid branch
-                    end if
-                end do
-                do kk=2,max_branch_per_node,2
-                    tB(1) = tM + kk  !% JB branch ID
-                    if (BranchExists(tB(1))==1) then
-                        !% --- normalized head difference is with downstream face
-                        dp_norm(tB) = (abs(fHead_u(fDn(tB)) - eHead(tB))) &
-                             / abs(eHead(tB) - zBottom(tB))
-                        !% --- add the dynamic roughness  
-                        call ll_get_dynamic_roughness (tB, dpnorm_col)    
-                    else
-                        !% skip if not a valid branch
-                    end if
-                end do
-            end do
-        end if
+        ! if (Npack > 0) then
+        !     do ii=1,Npack
+        !         tM => elemP(ii,thisColJM)  !% JM junction main ID
+        !         !% --- handle the upstream branches
+        !         do kk=1,max_branch_per_node,2
+        !             tB(1) = tM + kk  !% JB branch ID
+        !             if (BranchExists(tB(1))==1) then
+        !                 !% --- normalized head difference is with upstream face
+        !                 dp_norm(tB) = (abs(fHead_d(fUp(tB)) - eHead(tB))) &
+        !                      / abs(eHead(tB) - zBottom(tB))
+        !                 !% --- add the dynamic roughness    
+        !                 call ll_get_dynamic_roughness (tB, dpnorm_col)       
+        !             else
+        !                 !% skip if not a valid branch
+        !             end if
+        !         end do
+        !         do kk=2,max_branch_per_node,2
+        !             tB(1) = tM + kk  !% JB branch ID
+        !             if (BranchExists(tB(1))==1) then
+        !                 !% --- normalized head difference is with downstream face
+        !                 dp_norm(tB) = (abs(fHead_u(fDn(tB)) - eHead(tB))) &
+        !                      / abs(eHead(tB) - zBottom(tB))
+        !                 !% --- add the dynamic roughness  
+        !                 call ll_get_dynamic_roughness (tB, dpnorm_col)    
+        !             else
+        !                 !% skip if not a valid branch
+        !             end if
+        !         end do
+        !     end do
+        ! end if
 
         ! print *, 'in ',trim(subroutine_name)
         ! print *, ' '

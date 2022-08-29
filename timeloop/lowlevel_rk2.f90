@@ -1576,33 +1576,55 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             integer, intent(in) :: thisP(:), dpnorm_col
             real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
             real(8), pointer    :: length(:)
-            real(8), pointer    :: alpha, dt
+            real(8), pointer    :: alpha, beta, dt, pi
+            integer :: ii
             character(64) :: subroutine_name ='ll_get_dynamic_roughness'
         !%------------------------------------------------------------------  
         !% Aliases
+            pi           => setting%Constant%pi
             dt           => setting%Time%Hydraulics%Dt
             alpha        => setting%Solver%Roughness%alpha
+            beta         => setting%Solver%Roughness%beta
             mn           => elemR(:,er_Roughness)
             dynamic_mn   => elemR(:,er_Roughness_Dynamic)
             dp_norm      => elemR(:,dpnorm_col)
             length       => elemR(:,er_Length)
+            
         !%------------------------------------------------------------------
-
+            
        ! dynamic_mn(thisP) =  mn(thisP)
-        dynamic_mn(thisP) =  mn(thisP) &
-           +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+        ! dynamic_mn(thisP) =  mn(thisP) &
+        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
 
+
+        dynamic_mn(thisP) = mn(thisP)                                     &
+            * (oneR  + alpha                                              &
+                * sin(                                                    &
+                      max(zeroR, onehalfR * pi                                &
+                             * min( (dp_norm(thisP))/beta, oneR )  &
+                          )                                               &
+                    )                                                     &
+                ) 
+            
 
         print *, 'DYNAMIC ROUGHNESS CANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
         stop 1093874   
 
+        ! do ii=1,size(thisP)
+        !     if (dynamic_mn(thisP(ii)) > mn(thisP(ii))) then 
+        !         print *, thisP(ii), dynamic_mn(thisP(ii)), dp_norm(thisP(ii))
+        !         !stop 3098745
+        !     end if
+        ! end do
 
-        print *, 'in ',trim(subroutine_name)
-        print *, mn(139), alpha, dt
-        print *, dp_norm(139)
-        print *, exp(dp_norm(139))
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, mn(139), alpha, dt
+        ! print *, dp_norm(139)
+        ! print *, exp(dp_norm(139))
 
-
+        ! if (dynamic_mn(50) > 0.05d0) then
+        !     print *, dynamic_mn(50)
+        ! end if
             
         !% OTHER VERSIONS EXPERIMENTED WITH 20220802
              ! dynamic_mn(thisP) =  mn(thisP) &
