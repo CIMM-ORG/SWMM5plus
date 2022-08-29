@@ -519,6 +519,42 @@ contains
                 ))
         end if
 
+        !% --- parabolic channels 
+        ptype => col_elemPGalltm(epg_CC_parabolic_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+
         !% --- junction main with functional geometry relationship
         ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
@@ -769,6 +805,35 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == irregular) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+
+        !% rectangular channels 
+        ptype => col_elemPGac(epg_CC_parabolic_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1066,6 +1131,36 @@ contains
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
+
+        !% --- rectangular channels nonsurcharged
+        ptype => col_elemPGetm(epg_CC_parabolic_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                 (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
 
         !% --- junction main with functional geometry relationship, nonsurcharged
         ptype => col_elemPGetm(epg_JM_functionalStorage_nonsurcharged)

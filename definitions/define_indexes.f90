@@ -511,6 +511,7 @@ module define_indexes
         enumerator :: epg_CC_triangular_nonsurcharged           !% CC triangular channels that are not surcharged
         enumerator :: epg_CC_irregular_nonsurcharged            !% CC irregular channels that are not surcharged
         enumerator :: epg_CC_circular_nonsurcharged             !% CC circular conduits that are not surcharged
+        enumerator :: epg_CC_parabolic_nonsurcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged    !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged       !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JM_impliedStorage_nonsurcharged       !% JM with artificial storage
@@ -738,7 +739,7 @@ module define_indexes
 
     !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
     enum, bind(c)
-         enumerator ::  esgr_Parabolic_Breadth = 1    !% diameter for circular geometry
+         enumerator ::  esgr_Parabolic_Breadth = 1    !% breadth for parabolic geometry
          enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!

@@ -21,6 +21,7 @@ module initial_condition
     use geometry !BRHbugfix 20210813
     use circular_conduit
     use rectangular_channel, only: rectangular_area_from_depth
+    use parabolic_channel, only: parabolic_area_from_depth
     use rectangular_conduit, only: rectangular_closed_area_from_depth
     use trapezoidal_channel, only: trapezoidal_area_from_depth
     use triangular_channel, only: triangular_area_from_depth
@@ -827,6 +828,7 @@ contains
             case (lChannel)
                 !% get geometry data for channels
                 call init_IC_get_channel_geometry (thisLink)
+                print *, thisLink,elemSGR(thisLink,:)
 
             case (lpipe)
                 !% get geometry data for conduits
@@ -1118,7 +1120,50 @@ contains
                 ! !print *, 'working on irregular cross-sections'
                 ! !call util_crashpoint(448792)
                 ! !return
-                
+
+            case (lParabolic)
+
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+
+                    elemI(:,ei_geometryType) = rectangular
+
+                    !% --- independent data
+                    elemSGR(:,esgr_Parabolic_Breadth) = link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Parabolic_Breadth)
+                    elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullHydDepth)            = link%R(thisLink,lr_FullDepth) 
+
+                    !% --- dependent on full depth
+                    elemR(:,er_FullPerimeter)           = onehalfR * (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) * (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) * &
+                                                        (( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * &
+                                                        (sqrt(oneR + ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ))) + &
+                                                        log(( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) + (sqrt(oneR + ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) )))))
+                    
+                    ! rbot = (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) 
+                    ! x = ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) )
+                    ! t = (sqrt(oneR + ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) )))
+
+                    elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)                = twothirdR * elemR(:, er_FullDepth) * elemSGR(:, esgr_Parabolic_Breadth)
+
+                    !% --- dependent on full area
+                    elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
+                    elemR(:,er_ell_max)                 = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
+                                                         * elemR(:,er_BreadthMax)                      &
+                                                         + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+               
+                    !% --- store IC data
+                    elemR(:,er_Area)          = (twoR/threeR) * elemR(:,er_Depth) * elemSGR(:, esgr_Parabolic_Breadth)
+                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                    
+                endwhere
+
             case default
 
                 print *, 'In, ', subroutine_name
@@ -2912,6 +2957,15 @@ contains
             tPack(1:npack) = pack(eIdx,geoType == rectangular)
             smallvolume(tPack(1:npack)) = rectangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
         end if
+
+        !% --- parabolic channel
+        tPack = zeroI
+        npack = count(geoType == parabolic)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == parabolic)
+            smallvolume(tPack(1:npack)) = parabolic_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if
+
         !where (geoType == rectangular)
         !    !smallVolume = depthCutoff * length * rectB
         !end where

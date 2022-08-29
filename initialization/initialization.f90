@@ -640,6 +640,7 @@ contains
 
             link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
             link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
+            print *, ii, 'breadthscale', link%R(ii, lr_BreadthScale)
             link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
             link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
             link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)

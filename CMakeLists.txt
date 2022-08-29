@@ -13,7 +13,17 @@ if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     \nRun cmake again. Exiting.")
 endif()
 
+get_filename_component(build_configuration ${CMAKE_BINARY_DIR} NAME)
 
+if (build_configuration STREQUAL "build")
+    set(default_build_type "Release")
+    message(STATUS "Building inside '${build_configuration}' named folder, setting configuration as '${default_build_type}'")
+elseif(build_configuration STREQUAL "debug")
+    set(default_build_type "Debug")
+    message(STATUS "Building inside '${build_configuration}' named folder, setting configuration as '${default_build_type}'")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g -O0")
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared -fcommon")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")

@@ -10,6 +10,7 @@ module geometry
     use triangular_channel
     use circular_conduit
     use irregular_channel
+    use parabolic_channel
     use storage_geometry
     use xsect_tables
     use adjust
@@ -456,6 +457,15 @@ module geometry
 
                                     ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
+                                case (parabolic)
+                                    area(tB)     = parabolic_area_from_depth_singular      (tB, depth(tB))
+                                    topwidth(tB) = parabolic_topwidth_from_depth_singular  (tB, depth(tB))
+                                    hydDepth(tB) = parabolic_hyddepth_from_depth_singular  (tB, depth(tB))
+                                    perimeter(tB)= parabolic_perimeter_from_depth_singular (tB, depth(tB))
+                                    hydRadius(tB)= parabolic_hydradius_from_depth_singular (tB, depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
+                                    dHdA(tB)     = oneR / topwidth(tB)
+
                                 case (irregular)
                                     area(tB)    = irregular_geometry_from_depth_singular ( &
                                                         tB,tt_area, depth(tB), setting%ZeroValue%Depth)
@@ -630,6 +640,12 @@ module geometry
         end if
 
         ! call util_CLprint('after circular') 
+
+        thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
  
         !% --- IRREGULAR CC
         thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -822,9 +838,10 @@ module geometry
         case (triangular)
             outvalue = triangular_area_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = parabolic_area_from_depth_singular (idx, indepth)
+            ! print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            ! print *, 'has not been implemented in ',trim(subroutine_name)
+            ! call util_crashpoint(33234)
         case (power_function)
             print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -962,6 +979,12 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+            call parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -997,9 +1020,10 @@ module geometry
         case (triangular)
             outvalue = triangular_topwidth_from_depth_singular  (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = parabolic_topwidth_from_depth_singular (idx, indepth)
+            ! print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            ! print *, 'has not been implemented in ',trim(subroutine_name)
+            ! call util_crashpoint(4498734)
         case (power_function)
             print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1138,6 +1162,13 @@ module geometry
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+            call parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         !%     note this requires first using the table lookup for hydraulic radius
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -1209,6 +1240,13 @@ module geometry
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
+            call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1246,9 +1284,10 @@ module geometry
         case (triangular)
             outvalue = triangular_hyddepth_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = parabolic_hyddepth_from_depth_singular (idx, indepth)
+            ! print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            ! print *, 'has not been implemented in ',trim(subroutine_name)
+            ! call util_crashpoint(4498734)
         case (power_function)
             print *, 'CODE ERROR: geometry code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
