@@ -2845,11 +2845,6 @@ contains
                                 // '_face_' //trim(tnodename) //'.csv'
                             fn_nodeFace_h5  = "node_face_"//trim(tnodename)
 
-                            print *, 'fn_nodeFace_unf ', trim(fn_nodeFace_unf)
-                            print *, 'fn_nodeFace_csv ', trim(fn_nodeFace_csv)
-                            print *, 'fn_nodeFace_h5  ', trim(fn_nodeFace_h5)
-
-                            print *, 'ii = ',ii
 
                             if (ii==1) then  !% --- Create new node output files and write headers for first file read
                                 ! !% --- open unformatted node file
@@ -2878,17 +2873,11 @@ contains
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
                                 end if
 
-                                print *, ' setting%Output%Report%useHD5F ',setting%Output%Report%useHD5F
-
+                                
                                 if(setting%Output%Report%useHD5F) then
-                                    print *, 'bbb '
-                                    print *, ' OutNodeFace_pSWMMidx(kk)       ',OutNodeFace_pSWMMidx(kk)
-                                    print *, ' OutNodeFace_N_face_in_node(kk) ',OutNodeFace_N_face_in_node(kk)
-                                    print *, ' OutNodeFace_pOutFaceIdx(kk,OutNodeFace_N_face_in_node(kk)) ',OutNodeFace_pOutFaceIdx(kk,OutNodeFace_N_face_in_node(kk))
-                                    print *, ' pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,OutNodeFace_N_face_in_node(kk))) ',pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,OutNodeFace_N_face_in_node(kk)))
-                                     
+                                    
                                     call outputML_HD5F_create_dset(fn_nodeFace_h5, H5_file_id, &
-                                        nTypeFace, nTotalTimeLevels, dummyI, &
+                                        nTypeFace, nLevel, dummyI, &
                                         OutNodeFace_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
                                         output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
@@ -2896,13 +2885,7 @@ contains
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
 
 
-                                    print *, 'ccc ' 
-                                    print *, ' fn_nodeFace_h5 ',trim(fn_nodeFace_h5)
-                                    print *, ' H5_file_id ',H5_file_id
-                                    print *, ' kk = ',kk
-                                    print *, ' nTypeFaceWtime ',nTypeFaceWtime
-                                    print *, ' dummyI ', dummyI
-                                    print *, ' nLevel ', nLevel
+                                    
                                     !print *, ' OutNodeFace_ProcessedDataR ',OutNodeFace_ProcessedDataR
                                     !print *, ' OutNodeFace_FaceDataR ',OutNodeFace_FaceDataR
 
@@ -2913,17 +2896,16 @@ contains
                                 end if
                                 !% --- finished with the headers
                             else
-                                print *,' in here ii > 1'
                                 ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
                                 !     action='write', access='append', status='old')
 
-                                print *, ' setting%Output%Report%useCSV ', setting%Output%Report%useCSV
+                                
                                 if(setting%Output%Report%useCSV) then
                                     open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted',  &
                                         action='write', access='append')
                                 end if
 
-                                print *, ' setting%Output%Report%useHD5F ',setting%Output%Report%useHD5F
+                                
                                 if(setting%Output%Report%useHD5F) then 
                                     call outputML_HD5F_extend_write_file(fn_nodeFace_h5,H5_file_id, &
                                         kk, nTypeFaceWtime, dummyI, nLevel,  &
@@ -2937,7 +2919,7 @@ contains
                             !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, kk, OutNodeFace_ProcessedDataR)
                             
 
-                            print *, '  down here setting%Output%Report%useCSV ',setting%Output%Report%useCSV
+                            
                             if(setting%Output%Report%useCSV) then
                                 !% --- write node data to the csv formatted data for these nLevels
                                 call outputML_csv_writedata ( &
