@@ -120,52 +120,54 @@ enum api_linkf_attributes {
   linkf_offset1,                // 43 *
   linkf_offset2,                // 44 *
   linkf_q0,                     // 45 *
-  linkf_flow,                   // 46 *
-  linkf_depth,                  // 47 *
-  linkf_volume,                 // 48 *
-  linkf_froude,                 // 49 *
-  linkf_setting,                // 50 
-  linkf_targetsetting,          // 51
-  linkf_timelastset,            // 52 *
-  linkf_left_slope,             // 53 *
-  linkf_right_slope,            // 54 *
-  linkf_weir_end_contractions,  // 55 *
-  linkf_weir_side_slope,        // 56 *
-  linkf_curveid,                // 57 *
-  linkf_discharge_coeff1,       // 58 *
-  linkf_discharge_coeff2,       // 59 *
-  linkf_initSetting,            // 60 *
-  linkf_yOn,                    // 61 *
-  linkf_yOff,                   // 62 *
-  linkf_conduit_roughness,      // 63 *
-  linkf_conduit_length,         // 64 *
-  linkf_rptFlag,                // 65
-  linkf_commonBreak,            // 66
+  linkf_qlimit,                 // 46
+  linkf_flow,                   // 47 *
+  linkf_depth,                  // 48 *
+  linkf_volume,                 // 49 *
+  linkf_froude,                 // 50 *
+  linkf_setting,                // 51 
+  linkf_targetsetting,          // 52
+  linkf_timelastset,            // 53 *
+  linkf_left_slope,             // 54 *
+  linkf_right_slope,            // 55 *
+  linkf_weir_end_contractions,  // 56 *
+  linkf_weir_side_slope,        // 57 *
+  linkf_curveid,                // 58 *
+  linkf_discharge_coeff1,       // 59 *
+  linkf_discharge_coeff2,       // 60 *
+  linkf_initSetting,            // 61 *
+  linkf_yOn,                    // 62 *
+  linkf_yOff,                   // 63 *
+  linkf_conduit_roughness,      // 64 *
+  linkf_conduit_length,         // 65 *
+  linkf_rptFlag,                // 66
+  linkf_hasFlapGate,            // 67
+  linkf_commonBreak,            // 68
   // --- special elements attributes
-  linkf_type,                   // 67 *
-  linkf_sub_type,               // 68 *
-  linkf_typeBreak,              // 69
+  linkf_type,                   // 69 *
+  linkf_sub_type,               // 70 *
+  linkf_typeBreak,              // 71
   // --- xsect attributes
-  linkf_xsect_type,         // 70 *
-  linkf_geometry,           // 71 
-  linkf_xsect_wMax,         // 72 *
-  linkf_xsect_yBot,         // 73 *
-  linkf_xsect_yFull,        // 74 *
-  linkf_transectid          // 75
+  linkf_xsect_type,         // 72 *
+  linkf_geometry,           // 73 
+  linkf_xsect_wMax,         // 74 *
+  linkf_xsect_yBot,         // 75 *
+  linkf_xsect_yFull,        // 76 *
+  linkf_transectid          // 77
 };
-// skip 2 number for index start and end flags
+// skip 2 numbers for index start and end flags
 // these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 78,       // 78
-  transectf_yFull,         // 79
-  transectf_aFull,         // 80
-  transectf_rFull,         // 81
-  transectf_wMax,          // 82
-  transectf_ywMax,         // 83
-  transectf_sMax,          // 84
-  transectf_aMax,          // 85
-  transectf_lengthFactor,  // 86
-  transectf_roughness      // 87
+  transectf_ID = 80,       // 80
+  transectf_yFull,         // 81
+  transectf_aFull,         // 82
+  transectf_rFull,         // 83
+  transectf_wMax,          // 84
+  transectf_ywMax,         // 85
+  transectf_sMax,          // 86
+  transectf_aMax,          // 87
+  transectf_lengthFactor,  // 88
+  transectf_roughness      // 89
 };
 
 // API vars are those necessary for external applications
@@ -221,7 +223,7 @@ int DLLEXPORT api_controls_count(int* nRules, int* nPremise, int* nThenAction, i
 
 int DLLEXPORT api_controls_get_premise_data(
     int* locationL,        int* locationR,
-    int* islinkL,          int* islinkR,
+    int* linknodesimTypeL, int* linknodesimTypeR,
     int* attributeL,       int* attributeR, 
     int* thisPremiseLevel, int rIdx);
 
@@ -232,7 +234,7 @@ int DLLEXPORT api_controls_get_action_data(
  
 int DLLEXPORT api_controls_transfer_monitor_data(     
     double Depth, double Volume, double Inflow, double Flow, 
-    double StatusSetting, double TimeLastSet, int LinkNodeIdx, int isLink);
+    double StatusSetting, double TimeLastSet, int LinkNodeIdx, int linknodesimType);
 
 int DLLEXPORT api_controls_execute(
     double currentTimeEpoch, double ElapsedDays, double dtDays);

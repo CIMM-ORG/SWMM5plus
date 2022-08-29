@@ -33,8 +33,64 @@ module define_globals
    !integer :: iet(10) = (/45, 46, 47, 48, 49, 50, 113, 114, 115, 116/)
    ! integer :: ift(3) = (/205,1,2/)
 
-    ! integer :: iet(4) = (/48, 50, 47, 49/)
-    ! integer :: ift(3) = (/47, 49, 48/)
+    !integer :: ift(4) = (/13,1,2,11/)
+
+    !integer :: ift(6) = (/15,1,2,11,12,13/)
+
+    !integer :: iet(7) = (/13,15,24,2,1,3,12 /) !% orifice
+    !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
+
+
+   ! integer :: iet(9) = (/15,17,26,2,1,3,12,13,14 /) !% orifice
+    !integer :: iet(7) = (/13,17,25,4,1,3,12 /) !% weir
+
+    ! integer :: iet(7) = (/ 5, 7, 16, 1, 2, 3, 4/)
+    ! integer :: ift(6) = (/ 7, 1, 2, 3, 4, 5/)
+
+    ! integer :: iet(7) = (/ 2, 4, 13, 1, 1, 1, 1/)
+    ! integer :: ift(6) = (/ 4, 1, 2, 2, 2, 2/)
+
+    !% for Vasconcelos at 15 m nominal
+    ! integer :: iet(8) = (/    24,  25,  5,  1,  3,  12,  14,  13/)
+    ! integer :: ift(5) = (/ 22,   21,  4,           2,   11 /)
+
+    !% for Vasconcelos at 5 m nominal
+    ! integer :: iet(10) = (/    28,   26,    29,   5,  1,  3,  12,  14,  16, 15   /)
+    ! integer :: ift(7) = (/  26,   24,    23,    4,           2,  11,  13 /)
+
+    !% for Vasconcelows at 1 m nominal
+
+    !% to capture the junction
+!    integer :: iet(12) = (/    50,     43,    37,   51,    5,  1,  3,   12,    18,    25,    27, 26  /)
+!    integer :: ift(9)  = (/ 48,    47,      40,   34,   4,            2,    11,    17,   24  /)
+
+    !% to capture L1 (central) at 1 m nominal
+
+   !integer :: iet(7) = (/15,16,17,18,19,20,21/)
+
+    !% for Vasconcelos at 0.1 m nominal
+    ! integer :: iet(12) = (/    308,     225,    166,    309,    5,  1,  3,   12,    82,    154,    156, 155  /)
+    ! integer :: ift(9)  = (/ 306,    223,     165,    163,   4,            2,    11,    80,     153  /)
+    
+   ! integer :: iet(7) = (/ 16,17, 18, 19, 20, 21, 22 /)
+
+    !integer :: iet(7) = (/ 68, 69, 70, 71, 72, 73, 74 /)
+
+    !%
+    !integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    !integer :: ift(6) = (/91, 92, 93, 94, 95, 96/)
+
+    ! !% for Vasconcelos_TPA
+    ! integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    ! integer :: ift(6) = (/88, 89, 90, 91, 92, 93/)
+
+    !% for lavaca
+    !%                      JM    JB     CC   CC    CC
+    !integer :: iet(5) = (/ 8698, 8700, 8710, 3874, 3875 /)
+    !integer :: ift(4) = (/           8824, 4026, 4027, 4028 /)
+
+    integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
+    integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
 
     integer(kind=8) :: irecCount = 0
 
@@ -76,11 +132,17 @@ module define_globals
     !%  nodes are the building blocks from the SWMM link-node formulation
     type(NodeArray), target :: node
 
+    !% --- transect data (irregular cross-sections)
     integer, allocatable, target :: transectI(:,:)
     real(8), allocatable, target :: transectR(:,:)
     real(8), allocatable, target :: transectTableDepthR(:,:,:) ! transect table by depth
     real(8), allocatable, target :: transectTableAreaR(:,:,:)  ! transect table by area
     character(len=64), allocatable, target :: transectID(:)
+
+    !% --- section factor lookup data (for limited number of elements)
+    integer, allocatable, target :: uniformTableI(:,:)
+    real(8), allocatable, target :: uniformTableR(:,:)
+    real(8), allocatable, target :: uniformTableDataR(:,:,:) 
 
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
@@ -214,6 +276,9 @@ module define_globals
 
     !% output times
     real(8), allocatable :: output_times(:)
+
+    !% Profile_Outputs
+    integer, allocatable, target :: output_profile_ids(:,:)
     ! filenames for output binaries
     character(len=256), allocatable, target :: output_binary_filenames(:)
     character(len=256), allocatable, target :: output_binary_filenames_all(:)
@@ -262,34 +327,41 @@ module define_globals
     !% counter for transects
     integer :: lastTransectIdx = 0
 
+    !% dummy index for elements/faces that do not exist
+    !% value set in init_network_set_dummy_elem()
+    integer :: dummyIdx
+
 !% ===================================================================================
 !% CONSTANTS
 !% ===================================================================================
 
     !% note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877        !% note this places limit on largest network!
-    real(8), parameter :: nullvalueR = 9.98877e16
+    real(8), parameter :: nullvalueR = 9.98877d16
     logical, parameter :: nullvalueL = .false.
-    real(8), parameter :: negoneR = -1.0
-    real(8), parameter :: zeroR = 0.0
-    real(8), parameter :: oneR = 1.0
-    real(8), parameter :: twoR = 2.0
-    real(8), parameter :: threeR = 3.0
-    real(8), parameter :: fourR = 4.0
-    real(8), parameter :: fiveR = 5.0
-    real(8), parameter :: sixR = 6.0
-    real(8), parameter :: eightR = 8.0
-    real(8), parameter :: tenR = 10.0
-    real(8), parameter :: twentyR = 20.0
-    real(8), parameter :: twentyfourR = 24.0
-    real(8), parameter :: sixtyR = 60.0
-    real(8), parameter :: onehundredR = 100.0
-    real(8), parameter :: onethousandR = 1000.0
+    real(8), parameter :: negoneR = -1.d0
+    real(8), parameter :: zeroR = 0.d0
+    real(8), parameter :: oneR = 1.d0
+    real(8), parameter :: twoR = 2.d0
+    real(8), parameter :: threeR = 3.d0
+    real(8), parameter :: fourR = 4.d0
+    real(8), parameter :: fiveR = 5.d0
+    real(8), parameter :: sixR = 6.d0
+    real(8), parameter :: eightR = 8.d0
+    real(8), parameter :: nineR = 9.d0
+    real(8), parameter :: tenR = 10.d0
+    real(8), parameter :: twentyR = 20.d0
+    real(8), parameter :: twentyfourR = 24.d0
+    real(8), parameter :: sixtyR = 60.d0
+    real(8), parameter :: onehundredR = 100.d0
+    real(8), parameter :: fivehundredR = 500.d0
+    real(8), parameter :: onethousandR = 1000.d0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
-    real(8), parameter :: oneOneThounsandthR = oneR / onethousandR
+    real(8), parameter :: oneOneThousandthR = oneR / onethousandR
     real(8), parameter :: oneOneHundredthR = oneR / onehundredR
     real(8), parameter :: onetenthR = oneR / tenR
+    real(8), parameter :: oneninthR = oneR / nineR
     real(8), parameter :: oneeighthR = oneR / eightR
     real(8), parameter :: onesixthR = oneR / sixR
     real(8), parameter :: onefifthR = oneR / fiveR
@@ -301,11 +373,11 @@ module define_globals
     real(8), parameter :: threehalfR = threeR / twoR
     real(8), parameter :: fourthirdsR = fourR / threeR
 
-    real(8), parameter :: seconds_per_minute = 60.0
-    real(8), parameter :: seconds_per_hour = 3600.0
-    real(8), parameter :: seconds_per_day  = 86400.0
+    real(8), parameter :: seconds_per_minute = 60.d0
+    real(8), parameter :: seconds_per_hour = 3600.d0
+    real(8), parameter :: seconds_per_day  = 86400.d0
 
-    integer            :: dummyI
+    integer, parameter :: dummyI = 1  !% used when dummy argument isneeded
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2
@@ -326,6 +398,8 @@ module define_globals
     integer :: N_transect            ! # of irregular cross-section transects for elements
     integer :: N_transect_depth_items
     integer :: N_transect_area_items
+    integer :: N_uniformTableData_items = 51  !% 51 is consistent with tables of EPA-SWMM
+    integer :: N_uniformTable_locations
     integer :: N_link
     integer :: N_node
     integer :: N_headBC
@@ -364,6 +438,9 @@ module define_globals
     !% Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray
     integer :: max_caf_face_N    ! size of all face array in coarray
+
+    integer :: max_links_profile_N  ! size of the max amount of links in a profile
+    integer :: max_profiles_N ! size of how how many profiles there are
 
     !% assign status parameters for nodes
     integer, parameter :: nUnassigned = 998877

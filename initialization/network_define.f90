@@ -332,7 +332,7 @@ contains
     subroutine init_network_update_nj2_elem()
         !%-----------------------------------------------------------------
         !% Description:
-        !% For nj2 nodes, assigns the ni_elemface_idx as the element
+        !% For nj2 nodes, assigns the ni_elem_idx as the element
         !% index that is upstream of the face.
         !% CAUTION: the node%I() is a global (non-coarray) but it is storing
         !% values for ni_elemface_idx that are ONLY correct on the 
@@ -356,13 +356,20 @@ contains
             nJ2_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_node_type) == nJ2) &
                         .and. (node%I(:, ni_P_image) == this_image()))
 
-            node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
+            !node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
+            !% --- assign upstream element to an nJ2 face
+            node%I(nJ2_nodes, ni_elem_idx) = faceI(node%I(nJ2_nodes, ni_face_idx),fi_Melem_uL)
 
         end if
 
         ! print *, 'in ',trim(subroutine_name)
         ! do ii=1,N_node
-        !     print *, ii, node%I(ii,ni_elemface_idx), 'name = ',trim(node%Names(ii)%str)
+        !     print *, ' '
+        !     print *, ii, 'name = ',trim(node%Names(ii)%str)
+        !     print *, 'type ',trim(reverseKey(node%I(ii,ni_node_type)))
+        !     print *, 'face, element ',node%I(ii,ni_face_idx), node%I(ii,ni_elem_idx)
+        !     print *, 'face dn ',elemI(node%I(ii,ni_elem_idx),ei_Mface_dL)
+        !     print *, 'elem up ',faceI(node%I(ii,ni_face_idx),fi_Melem_uL)
         ! end do
 
         ! stop 3987
@@ -562,7 +569,7 @@ contains
         !% elemXX arrays.
         !%-------------------------------------------------------------------
         !% Declarations:
-            integer       :: dummyIdx
+            !integer       :: dummyIdx !% changed to global 20220726
             character(64) :: subroutine_name = 'init_network_set_dummy_elem'
         !%-------------------------------------------------------------------
         !% Preliminaries   
@@ -861,29 +868,33 @@ contains
             
             select case (nodeType)
 
-                !% Handle upstream boundary nodes
+            !% --- Handle upstream boundary nodes
             case(nBCup, nJ1)                                            !% brh20211217
-                !% Check 2: If the node has already been assigned
+                !% --- Check 2: If the node has already been assigned
                 if (nAssignStatus == nUnassigned) then
 
-                    !% Advance the local and global counter for the upstream
-                    !% boundary node
-                    FaceLocalCounter  = FaceLocalCounter + oneI
+                    !% --- Advance the local and global counter for the upstream
+                    !%     boundary node
+                    FaceLocalCounter  = FaceLocalCounter  + oneI
                     FaceGlobalCounter = FaceGlobalCounter + oneI
 
                     !% integer data
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
-                    !% an upstream boundary face does not have any local upstream element
-                    !% thus, it is mapped to the dummy element
+                    !% --- an upstream boundary face does not have any local upstream element
+                    !%     thus, it is mapped to the dummy element
                     faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
+                    !% --- the downstream element is stored
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                     if (nodeType == nBCup) then
                         faceI(FaceLocalCounter,fi_BCtype)   = BCup
                     else 
                         faceI(FaceLocalCounter,fi_BCtype)   = BCnone
                     end if
-                    node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
+                    !node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
+                    !% --- map the elem_idx to the downstream element
+                    node%I(thisNode,ni_elem_idx)        = faceI(FaceLocalCounter,fi_Melem_dL)
+                    !% --- map the fnode face to the new face
                     node%I(thisNode,ni_face_idx)        = FaceLocalCounter
                     !% set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
@@ -897,30 +908,31 @@ contains
                     !FaceLocalCounter,  ' elem_dn = ',FaceI(FaceLocalCounter,fi_Melem_dL)
                 end if
 
-            !% Handle 2 branch junction nodes
+            !% --- Handle 2 branch junction nodes
             case (nJ2)
                 !% Check 2: If the node has already been assigned
                 if (nAssignStatus == nUnassigned) then
 
-                    !% Advance the local and global counter for the upstream
-                    !% nJ2 node
+                    !% --- Advance the local and global counter for the upstream
+                    !%     nJ2 node
                     FaceLocalCounter  = FaceLocalCounter + oneI
                     FaceGlobalCounter = FaceGlobalCounter + oneI
 
-                    !% integer data
+                    !% --- integer data
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                     faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-                    !% set zbottom
+                    !% --- set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
-                    !% set the node the face has been originated from
+                    !% --- set the node the face has been originated from
                     faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
-                    !% First assign the face index to the nJ2 node, then will
-                    !% update with the elem_uL index of the upstream element
-                    node%I(thisNode,ni_elemface_idx)     = FaceLocalCounter
+                    !% --- Assign the face index to the node
                     node%I(thisNode,ni_face_idx)         = FaceLocalCounter
+                    !% --- Assign the upstream element index to the node
+                    node%I(thisNode,ni_elem_idx)         = faceI(FacelocalCounter,fi_Melem_uL)
+
 
                     !% Check 3: If the node is an edge node (meaning this node is the
                     !% connecting node across partitions)
@@ -1234,8 +1246,12 @@ contains
                     faceI(FaceLocalCounter,fi_BCtype)   = BCdn
                     !% set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
-                    node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
+                    !node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
+                    !% --- node face is this face value
                     node%I(thisNode,ni_face_idx)        = FaceLocalCounter
+                    !% --- nBCdn node element is mapped to usptream of face
+                    node%I(thisNode,ni_elem_idx)        = faceI(FacelocalCounter,fi_Melem_uL)
+
 
                     !% set the node the face has been originated from
                     faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
@@ -1246,25 +1262,26 @@ contains
                 end if
 
             case (nJ2)
-                !% Check 2: If the node has already been assigned
+                !% --- Check 2: If the node has already been assigned
                 if (nAssignStatus == nUnassigned) then
 
-                    !% Advance face local and global counters for nJ2 node
+                    !% --- Advance face local and global counters for nJ2 node
                     FaceLocalCounter  = FaceLocalCounter  + oneI
                     FaceGlobalCounter = FaceGlobalCounter + oneI
 
-                    !% integer data
+                    !% --- integer data
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                     faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
                     faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter
-                    !% set zbottom
+                    !% --- set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
-                    !% First assign the face index to the nJ2 node, then will
-                    !% update with the elem_uL index of the upstream element
-                    node%I(thisNode,ni_elemface_idx)   = FaceLocalCounter
+                    !% --- node face value is this face
+                    !node%I(thisNode,ni_elemface_idx)   = FaceLocalCounter
                     node%I(thisNode,ni_face_idx)        = FaceLocalCounter
+                    !% --- node element value is the upstream element
+                    node%I(thisNode,ni_elem_idx)        = faceI(FacelocalCounter,fi_Melem_uL) 
 
                     !% set the node the face has been originated from
                     faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
@@ -1427,7 +1444,9 @@ contains
         !% a JM node will never be a phantom node. Thus, the BQuick and SWMM idx will be the same
         elemI(ElemLocalCounter,ei_node_Gidx_SWMM)       = thisNode
         !% Assign junction main element to node
-        node%I(thisNode,ni_elemface_idx)                = ElemLocalCounter
+        node%I(thisNode,ni_elem_idx)                    = ElemLocalCounter
+        !% --- a JM node is connected to faces through multipol JB branches, so the node face index is null
+        node%I(thisNode,ni_face_idx)                    = nullvalueI
 
         !% real data
         elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
@@ -1902,7 +1921,8 @@ contains
             LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
 
             !% find the downstream face index of that last element
-            fLidx => node%I(thisJNode,ni_elemface_idx)
+            !fLidx => node%I(thisJNode,ni_elemface_idx)
+            fLidx => node%I(thisJNode,ni_face_idx)
 
             !% if the face is a shared face across images,
             !% it will not have any upstream local element
@@ -1930,7 +1950,8 @@ contains
             LinkFirstElem = link%I(dnBranchIdx,li_first_elem_idx)
 
             !% find the downstream face index of that last element
-            fLidx => node%I(thisJNode,ni_elemface_idx)
+            !fLidx => node%I(thisJNode,ni_elemface_idx)
+            fLidx => node%I(thisJNode,ni_face_idx)
 
 
             !stop 
@@ -2026,7 +2047,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elem_nominal_length => setting%Discretization%NominalElemLength
-        elem_shorten_cof    => setting%Discretization%LinkShortingFactor
+        elem_shorten_cof    => setting%Discretization%JunctionBranchLengthFactor
 
         !% find the length of the junction branch
         if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then

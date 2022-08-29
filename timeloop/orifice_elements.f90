@@ -6,6 +6,7 @@ module orifice_elements
     use define_settings, only: setting
     use common_elements
     use adjust
+    use geometry, only: geo_ell_singular
     use define_xsect_tables
     use utility, only: util_sign_with_ones
     use xsect_tables
@@ -47,23 +48,23 @@ module orifice_elements
         ! print *, 'calling orifice_set_setting'
         ! call orifice_set_setting (eIdx) !% ss20220701 -- orifice setting is already being set in control_update_setting subroutine
 
-        print *, 'calling common_head_and_flowdirection'
+        !print *, 'calling common_head_and_flowdirection'
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
 
-        print *, 'calling orifice_effective_head_delta'
+        !print *, 'calling orifice_effective_head_delta'
         !% find effective head on orifice element
          call orifice_effective_head_delta (eIdx)
 
-         print *, 'calling orifice_flow'
+        ! print *, 'calling orifice_flow'
         !% find flow on orifice element
         call orifice_flow (eIdx)
 
-        print *, 'calling orifice_geometry_update'
+        !print *, 'calling orifice_geometry_update'
         !% update orifice geometry from head
         call orifice_geometry_update (eIdx)
 
-        print *, 'calling common_velocity_from_flowrate_singular'
+        !print *, 'calling common_velocity_from_flowrate_singular'
          !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
@@ -77,13 +78,15 @@ module orifice_elements
     subroutine orifice_set_setting (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !%   evaluate the orifice setting based on control update
+        !% evaluate the orifice setting based on control update
+        !% Note that the "orate" the opening/closing rate is entered in the
+        !% EPA-SWMM inp file in hours, but has been converted to seconds.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
 
         real(8), pointer :: FullDepth, EffectiveFullDepth, dt
         real(8), pointer :: Orate, CurrentSetting, TargetSetting
-        real(8) :: delta, step
+        real(8) :: deltaRemaining, changeFraction
 
         character(64) :: subroutine_name = 'orifice_set_settings'
         !%-----------------------------------------------------------------------------
@@ -102,24 +105,31 @@ module orifice_elements
         if ((Orate == zeroR) .or. (dt == zeroR)) then
             CurrentSetting = TargetSetting
         else
-            delta = TargetSetting - CurrentSetting
-            step = dt / Orate
-            if (step + oneOneThounsandthR >= abs(delta)) then
+            deltaRemaining = TargetSetting - CurrentSetting  !% fraction of orifice to open/close
+            changeFraction = dt / Orate                      !% fraction we can complete in this step
+            if (changefraction * (oneR + onefourthR) >= abs(deltaRemaining)) then
+                !% --- if this change fraction is within 25% of opening/closing,
+                !%     then we complete in the step rather than finish in the next step
                 CurrentSetting = TargetSetting
             else
-                CurrentSetting = CurrentSetting + sign(step,delta)
+                CurrentSetting = CurrentSetting + sign(changeFraction,deltaRemaining)
             end if
         end if
 
         !% --- error check
         !%     EPA-SWMM allows the orifice setting to be between 0.0 and 1.0
-        if (.not. ((CurrentSetting .ge. 0.0) .and. (CurrentSetting .le. 1.0))) then
+        if (.not. ((CurrentSetting .ge. zeroR) .and. (CurrentSetting .le. oneR))) then
             print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
             call util_crashpoint(623943)
         end if
 
         !% find effective orifice opening
         EffectiveFullDepth = FullDepth * CurrentSetting
+
+        ! print*, '................................'
+        ! write(*,"(a22,i8)") 'eidx                = ',eIdx
+        ! write(*,"(a22,f9.3)")'Time               = ',setting%Time%Now
+        ! write(*,"(a22,f9.3)")'CurrentSetting     = ',CurrentSetting
 
         if (setting%Debug%File%orifice_elements)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -129,7 +139,7 @@ module orifice_elements
 !% PRIVATE
 !%==========================================================================
 !%
-    subroutine orifice_effective_head_delta (eIdx)
+     subroutine orifice_effective_head_delta (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
         !%
@@ -186,7 +196,14 @@ module orifice_elements
             print *, 'which has key ',trim(reverseKey(SpecificOrificeType))
             stop 862295
         end select
-
+        ! print*
+        ! print*, '----------------------------------------------------------'
+        ! write(*,"(a22,i8)") 'eidx                = ',eIdx
+        ! write(*,"(a22,f9.3)")'Time               = ',setting%Time%Now
+        ! write(*,"(a22,f9.3)")'Zcrown             = ',Zcrown
+        ! write(*,"(a22,f9.3)")'Zcrest             = ',Zcrest
+        ! write(*,"(a22,f9.3)")'Head               = ',Head
+        ! write(*,"(a22,f9.3)")'EffectiveFullDepth = ',EffectiveFullDepth
         if (setting%Debug%File%orifice_elements)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_effective_head_delta
@@ -205,7 +222,7 @@ module orifice_elements
         real(8), pointer :: DischargeCoeff, EffectiveFullDepth, EffectiveFullArea 
         real(8), pointer :: WeirExponent, VillemonteExponent, SharpCrestedWeirCoeff
         real(8) :: CriticalDepth, AoverL, FractionCritDepth, Coef
-        real(8) :: ratio, YoverYfull
+        real(8) :: ratio, YoverYfull, interp
 
         character(64) :: subroutine_name = 'orifice_flow'
         !%-----------------------------------------------------------------------------
@@ -236,8 +253,14 @@ module orifice_elements
         select case (GeometryType)
             case (circular)
                 YoverYfull        = EffectiveFullDepth / FullDepth
-                EffectiveFullArea = FullArea * xsect_table_lookup_singular (YoverYfull, ACirc) 
-                AoverL            = onefourthR * EffectiveFullDepth
+                if (YoverYfull .le. zeroR) then
+                    EffectiveFullArea =  zeroR
+                    AoverL = zeroR
+                else
+                    interp = xsect_table_lookup_singular (YoverYfull, ACirc)
+                    EffectiveFullArea = FullArea * xsect_table_lookup_singular (YoverYfull, ACirc)
+                    AoverL            = onefourthR * EffectiveFullDepth
+                end if
             case (rectangular_closed)
                 EffectiveFullArea = EffectiveFullDepth * RectangularBreadth
                 AoverL            = EffectiveFullArea / (twoR * (EffectiveFullDepth + RectangularBreadth))
@@ -248,6 +271,9 @@ module orifice_elements
                 print *, 'which has key ',trim(reverseKey(GeometryType))
                 stop 5983
         end select
+        ! write(*,"(a22,f9.3)")'YoverYfull         = ',YoverYfull
+        ! write(*,"(a22,f9.3)")'interp             = ',interp
+        ! write(*,"(a22,f9.3)")'EffectiveFullArea  = ',EffectiveHeadDelta
 
         !% find critical depth to determine weir/orifice flow
         select case (SpecificOrificeType)
@@ -260,11 +286,10 @@ module orifice_elements
             CriticalDepth = DischargeCoeff / SharpCrestedWeirCoeff * AoverL
             FractionCritDepth = min(EffectiveHeadDelta / CriticalDepth, oneR)
         case (side_orifice)
-            CriticalDepth = EffectiveFullDepth
             FractionCritDepth = min(((Head - Zcrest) / EffectiveFullDepth), oneR)
             !% another adjustment to critical depth is needed
             !% for weir coeff calculation for side orifice
-            CriticalDepth = onehalfR * CriticalDepth
+            CriticalDepth = onehalfR * EffectiveFullDepth
         case default
             print *, 'In ', subroutine_name
             print *, 'CODE ERROR: unknown orifice type, ', SpecificOrificeType,'  in network'
@@ -294,7 +319,10 @@ module orifice_elements
         else
             !% no correction needed
         end if
-
+        ! print*, '................................'
+        ! write(*,"(a22,i8)") 'eidx                = ',eIdx
+        ! write(*,"(a22,f9.3)")'Time               = ',setting%Time%Now
+        ! write(*,"(a22,f9.6)")'Flowrate           = ',Flowrate
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_flow
@@ -311,7 +339,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         real(8), pointer :: Head, Length, Zbottom,  Zcrown
-        real(8), pointer :: Depth, Area, Volume, Topwidth
+        real(8), pointer :: Depth, Area, Volume, Topwidth, ell
         real(8), pointer :: Perimeter, HydDepth, HydRadius,  Zcrest, EffectiveFullArea
         real(8), pointer :: RectangularBreadth, EffectiveFullDepth
         integer, pointer :: GeometryType
@@ -323,7 +351,7 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        print *, 'in ',trim(subroutine_name), ' with ',eIdx
+        !print *, 'in ',trim(subroutine_name), ' with ',eIdx
 
         !% pointers
         GeometryType       => elemSI(eIdx,esi_Orifice_GeometryType)
@@ -332,6 +360,7 @@ module orifice_elements
         Head               => elemR(eIdx,er_Head)
         HydDepth           => elemR(eIdx,er_HydDepth)
         HydRadius          => elemR(eIdx,er_HydRadius)
+        ell                => elemR(eIdx,er_ell)
         Length             => elemR(eIdx,er_Length)
         Perimeter          => elemR(eIdx,er_Perimeter)
         Topwidth           => elemR(eIdx,er_Topwidth)
@@ -352,18 +381,19 @@ module orifice_elements
             Depth = Zcrown - Zcrest
         end if
 
-        print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
+        !print *, 'in ',trim(subroutine_name), ' with ',trim(reverseKey(GeometryType))
 
         !% set geometry
 
-        !% if the orifice is close, set all the geometry to zero
-        if (EffectiveFullDepth <= zeroR) then
+        !% if the orifice is closed or depth is below crest, set all the geometry to zero
+        if ((EffectiveFullDepth <= zeroR) .or. (depth == zeroR)) then
             Area      = zeroR
             Volume    = zeroR
             Topwidth  = zeroR
             HydDepth  = zeroR
             Perimeter = zeroR
             HydRadius = zeroR
+            ell       = zeroR
         else
             select case (GeometryType)
 
@@ -372,23 +402,39 @@ module orifice_elements
                 Volume    = Area * Length !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
                 HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
+                ell       = Depth
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
 
             case (circular)
-                print *, 'Depth              ',Depth
-                print *, 'EffectiveFullDepth ',EffectiveFullDepth
+                !print *, 'Depth              ',Depth
+                !print *, 'EffectiveFullDepth ',EffectiveFullDepth
                 YoverYfull  = Depth / EffectiveFullDepth
                 Area        = EffectiveFullArea * &
                         xsect_table_lookup_singular (YoverYfull, ACirc)
                 Volume      = Area * Length
                 Topwidth    = EffectiveFullDepth * &
                         xsect_table_lookup_singular (YoverYfull, TCirc)
-                HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                if (Topwidth > zeroR) then
+                    HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                else
+                    if (YoverYfull .ge. oneR) then
+                        HydDepth = EffectiveFullDepth
+                    else
+                        HydDepth = setting%ZeroValue%Depth
+                    end if
+                end if
                 hydRadius   = onefourthR * EffectiveFullDepth * &
                         xsect_table_lookup_singular (YoverYfull, RCirc)
-                Perimeter   = min(Area / hydRadius, &
+                if (hydRadius > zeroR) then
+                    Perimeter   = min(Area / hydRadius, &
                         EffectiveFullArea / (onefourthR * EffectiveFullDepth))
+                else
+                    Perimeter = setting%ZeroValue%Depth
+                end if
+
+                ell = geo_ell_singular(eIdx)
+   
             case default
                 print *, 'CODE ERROR geometry type unknown for # ', GeometryType
                 print *, 'which has key ',trim(reverseKey(GeometryType))

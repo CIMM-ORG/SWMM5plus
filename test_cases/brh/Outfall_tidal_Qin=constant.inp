@@ -1,0 +1,95 @@
+[TITLE]
+;;Project Title/Notes
+Outfall Free Test Case
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+FORCE_MAIN_EQUATION  H-W
+IGNORE_RAINFALL      NO
+IGNORE_SNOWMELT      NO
+IGNORE_GROUNDWATER   NO
+IGNORE_RDII          NO
+IGNORE_ROUTING       NO
+IGNORE_QUALITY       NO
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+SYS_FLOW_TOL         0.0001
+LAT_FLOW_TOL         0.0001
+
+START_DATE           06/14/2021
+START_TIME           00:00:00
+END_DATE             06/14/2021
+END_TIME             24:00:00
+REPORT_START_DATE    06/14/2021
+REPORT_START_TIME    00:00:00
+
+SWEEP_START          01/01
+SWEEP_END            01/01
+DRY_DAYS             0
+REPORT_STEP          00:01:00
+
+WET_STEP             00:00:01
+DRY_STEP             01:00:00
+ROUTING_STEP         00:00:01 
+RULE_STEP            00:00:00
+
+LENGTHENING_STEP     0
+VARIABLE_STEP        1.0
+MINIMUM_STEP         0.0
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  BOTH
+
+MIN_SURFAREA         1.167
+MIN_SLOPE            0
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.0015
+MINIMUM_STEP         0.5
+THREADS              1
+TEMPDIR              "SWMMtempdir"
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------       
+J01                1.75         10.0          0.25       10.5        100         
+J02                1.25         10.0          0.25       10.5        100  
+
+[OUTFALLS]
+;;Name           Elevation  Type        TCurve      Gated              Route To        
+;;-------------- ---------- ---------- --------  ---------------- ----------------
+F03                1        TIDAL        TC1         NO                                    
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+C01                J01              J02             3000       0.03        0          0          0.0         10   
+C02                J02              F03             3000       0.03        0          0          0.0         10               
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert    Curve    Tsect
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- -------- --------  ------
+C01               CIRCULAR     1.2               0         0          0          1                   
+C02               CIRCULAR     1.2               0         0          0          1                        
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+J01                FLOW               ""           FLOW     1.0      1.0       0.25   
+
+[CURVES]
+;;Name    Type     (x is hours, y is elevation in m)
+;;-------  ------   -------- ---------
+TC1      TIDAL    0  0.5    2  0.6    4  0.9   6  1.3    8  1.6   10  1.8 
+TC1     12  1.9   14  1.8   16  1.6  18  1.3   20  0.9   22  0.6   24  0.5

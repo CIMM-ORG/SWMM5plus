@@ -1,4 +1,5 @@
 module initialization
+    USE IFPORT
     use boundary_conditions
     use define_keys
     use define_globals
@@ -16,11 +17,13 @@ module initialization
     use utility_output
     use utility_profiler
     use utility_files
+    use utility_key_default
     use output
     use pack_mask_arrays
     use utility_crash
     use xsect_tables
     use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
+    
 
     implicit none
 
@@ -153,12 +156,6 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
-        !% --- set up the control/monitoring element arrays associated with type1 pumps and controls
-        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin con/mon from links"
-        ! call init_conmon_from_links()
-        ! call util_crashstop(49223)
-
-
         !% --- setup the irregular transect arrays associated with SWMM-C input links
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
@@ -180,6 +177,11 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
         call util_crashstop(53454)
+
+        !% --- read in profiles from .inp file and create 
+        if (this_image() .eq. 1) then 
+            call init_profiles()
+        end if
 
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
@@ -220,6 +222,7 @@ contains
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
 
+
         !% --- initialize the time variables
         if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
@@ -235,8 +238,8 @@ contains
                 call init_subcatchment()
             else 
                 if (this_image() == 1) then
-                    write(*,'(A)') 'setting.Simulation.useHydrology requested, but no subcatchments found.'
-                    write(*,'(A)') '...skipping hydrology in this simulation.'
+                    write(*,'(A)') ' ...setting.Simulation.useHydrology requested, but no subcatchments found.'
+                    write(*,'(A)') ' ...skipping hydrology in this simulation.'
                 end if
                 setting%Simulation%useHydrology = .false.
             end if
@@ -287,6 +290,9 @@ contains
         call util_crashstop(4429873)
         !call sleep(1)
 
+        ! call util_CLprint ('in initialization')
+        ! stop 598734
+
         !% --- SET CRASH (BLOWUP) LIMITS
         call util_crash_initialize
 
@@ -335,7 +341,6 @@ contains
         end if
         call util_crashstop(103897)
 
-
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
@@ -344,6 +349,7 @@ contains
         !      !% --- temporary testing
         ! print *, 'CALLING INTERFACE_TESTSTUFF'
         ! call interface_teststuff ()
+
 
         !% --- wait for all processors before exiting to the time loop
         sync all
@@ -389,9 +395,10 @@ contains
         
         !print *, this_image(), elemR(:,er_Depth)
     
-        !call util_CLprint('At end of initialization')
-        !stop 445782
-    
+        ! call util_CLprint('At end of initialization')
+
+
+
         !%------------------------------------------------------------------- 
         !% Closing
             call init_check_setup_conditions()
@@ -412,7 +419,7 @@ contains
                 call util_crashpoint(333578)
             end if
             call util_crashstop(440987)
-
+    
             if (setting%Debug%File%initialization)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
@@ -577,6 +584,11 @@ contains
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        !% Set default for all link and node keys
+        call util_key_default_linknode()
+
+        !% set defaults for all KEY types in link%I
+
         !link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
@@ -586,12 +598,18 @@ contains
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
+            !print *, 'in ',trim(subroutine_name), ii
+            !print *, api_linkf_geometry
+
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
+
+            !print *, 'in ',trim(subroutine_name)
+            !print *, ii, link%I(ii,li_geometry)
 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -631,11 +649,12 @@ contains
             link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
             link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
             link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
-            link%R(ii,lr_InitialFlowrate) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
             link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
             link%R(ii,lr_BottomDepth)     = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
             link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
             link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+            link%R(ii,lr_FlowrateInitial) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+            link%R(ii,lr_FlowrateLimit)   = interface_get_linkf_attribute(ii, api_linkf_qlimit,            .false.)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -657,7 +676,7 @@ contains
 
     
             !% --- special element attributes
-            link%I(ii,li_weir_EndContrations) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -665,6 +684,12 @@ contains
             link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
             link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
             link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
+            if (interface_get_linkf_attribute(ii, api_linkf_hasFlapGate,.true.) == 1) then
+                link%YN(ii,lYN_hasFlapGate)   = .true.
+            else
+                link%YN(ii,lYN_hasFlapGate)   = .false.
+            end if
+
 
             !% --- SWMM5 does not distinguish between channel and conduit
             !%     however we need that distinction to set up the init condition
@@ -689,12 +714,6 @@ contains
 
             !% --- set output links
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag,.true.) == 1)
-
-            ! !% --- Check if type1 pump and add control and monitor point for later array allocation
-            ! if (link%I(ii,li_link_sub_type) == lType1Pump) then
-            !     N_ControlPoint = N_ControlPoint + 1
-            !     N_MonitorPoint = N_MonitorPoint + 1
-            ! end if
 
         end do
 
@@ -870,7 +889,7 @@ contains
                         print *, 'Found link length of ',link%R(ii,lr_Length)
                         print *, 'Link index is ',ii
                         print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
-                        print *, 'Either change setting.Discretization.AdjustLinkLengthYN to true, or'
+                        print *, 'Either change setting.Discretization.AdustLinkLengthForJunctionBranchYN to true, or'
                         print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
                         call util_crashpoint(447298)
                     end if
@@ -895,6 +914,14 @@ contains
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+
+        ! do ii=1,N_node
+        !     print *, node%R(ii,nr_InitialDepth), node%R(ii,nr_Zbottom), trim(node%Names(ii)%str)
+        ! end do
+        ! do ii=1,N_link
+        !     print *, link%R(ii,lr_Z)
+        ! stop 2098734    
 
     end subroutine init_linknode_arrays
 !%
@@ -1295,6 +1322,173 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+
+    subroutine init_profiles
+        character(50) :: line, name, link_names, num_links
+        character(50) :: choosen_name
+        !type(string)  :: choosen_name  
+        integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
+        integer       :: read_status, debt, line_number = 1
+        integer       :: ii, jj,kk, offset, offset_profile,name_loc
+        integer       :: error
+
+        print *, "inside of init_Profile"
+        
+        !allocate(character(50) :: choosen_name%str)
+        open(10, file = setting%File%inp_file, status = "old", action = "read")
+        delimitator_loc = 2
+        offset = 1
+        max_links_profile_N = 0
+        !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
+        !print *, "end of file(bytes):", end_of_file
+
+
+
+        !read through the file looking for the profiles and then cound the amount of profiles and the max amount of links 
+        do
+            read(10, "(A)", iostat = read_status) line
+            if (read_status /= 0) then 
+                exit
+            endif
+
+            if(line .eq. "[PROFILES]") then
+                
+                print *, 'profiles found'
+                
+                print *, "offset_profile set:", offset_profile
+                read(10, "(A)", iostat = read_status) line
+                read(10, "(A)", iostat = read_status) line
+                offset_profile = FTELL(10)
+                print *, "offset_profile set:", offset_profile
+                max_profiles_N = 0
+
+                do
+                    read(10, "(A)", iostat = read_status) line
+                    if (line .eq. "" .or. read_status /= 0 ) then
+                        exit
+                    end if
+                    delimitator_loc = 2
+                    ii = -1
+                    max_profiles_N = max_profiles_N+1
+                    name = line 
+                    print *, name
+                    index_of_start = index(name,"""",.true.)
+                    link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
+                    do while (delimitator_loc > 1)
+
+                        delimitator_loc = index(link_names," ")
+                        link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+                        ii = ii + 1
+                    end do 
+                    if(max_links_profile_N < ii) then
+                        max_links_profile_N = ii
+                        print *, "new max:", max_links_profile_N
+                    end if
+
+                end do
+            ENDIF
+            
+
+
+            
+        end do
+
+        max_links_profile_N = max_links_profile_N + max_links_profile_N + 1 
+        
+        if(max_links_profile_N .eq. 1) then
+            print *, "no profiles found"
+            return
+        end if
+
+        call util_allocate_output_profiles()
+        print *, "size of profiles", size(output_profile_ids)
+        print *, "offset_profile:", offset_profile
+        rewind(10)
+        error = fseek(10,offset_profile,0)
+        output_profile_ids(:,:) = nullValueI
+        read(10, "(A)", iostat = read_status) line
+
+        !Loop through this time storing the profiles
+        ii = 0  
+        do  
+            read(10, "(A)", iostat = read_status) line
+            
+            
+            if (read_status /= 0 ) then
+                exit
+            end if
+            delimitator_loc = 2
+            name = line 
+            index_of_start = index(name,"""",.true.)
+            link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
+            
+            ii = ii+1
+            jj = 0
+            do 
+
+                delimitator_loc = index(link_names," ")
+                if(delimitator_loc <= 1)then 
+                    exit
+                end if
+                jj = jj + 1
+                choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
+                link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+                do kk = 1 , N_Link
+                    if(link%names(kk)%str == choosen_name) then
+
+
+    
+                        if(jj > 2) then
+                            print *,"link%I(kk,li_Mnode_u):",link%I(kk,li_Mnode_u)
+                            print *,"link%I(output_profile_ids(ii,jj-1),li_Mnode_d):", link%I(output_profile_ids(ii,jj-1),li_Mnode_d)
+                            if(link%I(kk,li_Mnode_u) .neqv. link%I(output_profile_ids(ii,jj-1),li_Mnode_d)) then
+                                print *, "Error with provides profiles not being continous"
+                                print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
+                                stop
+                            end if
+
+                        end if
+
+                   
+                        output_profile_ids(ii,(jj*2)+1) = link%I(kk,li_Mnode_d)
+                        output_profile_ids(ii,jj*2) = kk 
+
+                        if(jj .eq. 1) then
+                            output_profile_ids(ii,1) = link%I(kk,li_Mnode_u)
+                            end if  
+                        exit
+
+                    end if
+                    if (kk .eq. N_LINK ) then
+                        print *, "Error with provided profiles: unknown link:,",trim(choosen_name), " added"   
+                        stop
+                        exit
+                    end if
+
+                end do
+
+                !name_loc = findloc(link%names(:),choosen_name%str)
+                !call the the function that converts link_names to the global index and then store them
+                !this can then be added to the output hdf5 file and or headers of the csv files during the output            
+            
+            end do
+
+        end do
+        print *, "------------output_profile_ids---------"
+        print *, output_profile_ids(1,:)
+        print *, output_profile_ids(2,:)
+        !print *, output_profile_ids
+        close (10)
+        !% ALLOCATE THE ARRAYS AND THEN fill them with the correct indexs
+
+
+    end subroutine init_profiles
+
+
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_partitioning()
         !%-----------------------------------------------------------------------------
         !%
@@ -1342,10 +1536,9 @@ contains
         call partitioning_toplevel()
         sync all
 
-        !% adjust the link lengths by cutting off a certain portion for the junction branch
-        !% this subroutine is called here to correctly estimate the number of elements and faces
-        !% to allocate the coarrays.
-        !% HACK: This might be moved someplace more suitable?
+        !% Compute the amount of a conduit length that is added to a connected junction.
+        !% This modifies the conduit length itself if setting%Discretization%AdustLinkLengthForJunctionBranchYN
+        !% is true. The junction itself is setup in init_network_nJm_branch_length()
         call init_discretization_adjustlinklength()
 
         !% calculate the largest number of elements and faces to allocate the coarrays
@@ -1353,6 +1546,8 @@ contains
 
         !% allocate elem and face coarrays
         call util_allocate_elemX_faceX()
+        call util_key_default_elemX()
+        call util_key_default_face()
 
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
@@ -1420,34 +1615,117 @@ contains
             !% only handle the subcatchment on images with its connected node
             if (this_image() .eq. node%I(nodeIdx(ii), ni_P_image)) then
                 subcatchI(ii,si_runoff_P_image) = this_image()
+
                 select case (nodeType(nodeIdx(ii)))
                 case (nJ2)
+
+                    print *, 'DEBUG NEEDED for SUBCATCHMENT'
+                    print *, 'Check that all indexes perform correctly'
+                    call util_crashpoint(448723)
+
                     !% for a node that is a face, the subcatch connects to the element
-                    !% upstream of the face, which is defined by ni_elemface_idx
-                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    !% upstream of the face if that element is CC.
+                    !elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    !elemIdx(ii) = node%I(nodeIdx(ii), ni_elem_idx)
+                    tface => node%I(nodeIdx(ii),ni_face_idx) 
+                    elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                    select case (elemI(elemIdx(ii),ei_elementType))
+                    case (CC)
+                        !% --- use the elemIdx already computed
+                    case (JB)
+                        !% --- use the upstream JM
+                        elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                    case default
+                        !% --- switch to the downstream element from the face
+                        elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                        select case (elemI(elemIdx(ii),ei_elementType))
+                        case (CC)
+                            !% --- use the elemIdx already computed
+                        case (JB)
+                            !% --- use the downstream JM
+                            elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                        case default
+                            print *, 'CONFIGURATION ERROR: a subcatchment input was defined'
+                            print *, 'to a node without storage, which is an nJ2 face.'
+                            print *, 'The upstream and downstream elements from the face'
+                            print *, 'are diagnostic elements, which cannot take a subcatchment'
+                            print *, 'inflow. Reconfigure so that the subcatchment outflow is into a'
+                            print *, 'storage node or into a node adjacent to a conduit link or' 
+                            print *, 'a junction with storage.'
+                            print *, 'node ID ',nodeIdx(ii)
+                            print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                            call util_crashpoint(4023987)
+                        end select
+                    end select
                 case (nJm)
-                    !% for a node that is a multi-branch junction, subcatch connects to 
-                    !% the element itself, which is defined by ni_elemface_idx
-                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx)
+                    !% --- for a node that is a multi-branch junction, subcatch connects to 
+                    !%     the element itself
+                    !elemIdx(ii) = node%I(nodeIdx(ii), ni_elemface_idx) OBSOLETE
+                    elemIdx(ii) = node%I(nodeIdx(ii), ni_elem_idx)
                 case (nBCup,nJ1)
-                    !% for a node that is an upstream BC or dead end the subcatch connects 
-                    !% into the first element downstream of the face
-                    !% Here ni_elemface_idx holds the face index
-                    tface => node%I(nodeIdx(ii),ni_elemface_idx) 
+                    !% --- for a node that is an upstream BC or dead end the subcatch connects 
+                    !%     into the first element downstream of the face
+                   ! tface => node%I(nodeIdx(ii),ni_elemface_idx) OBSOLETE 
+                    tface => node%I(nodeIdx(ii),ni_face_idx) 
                     if (tface .ne. nullvalueI) then 
                         elemIdx(ii) = faceI(tface,fi_Melem_dL)
+                        select case (elemI(elemIdx(ii),ei_elementType))
+                        case (CC)
+                            !% --- use the elemIdx already computed
+                        case (JB)
+                            !% --- use the associated JM element
+                            elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                        case default
+                            print *, 'CONFIGURATION ERROR: a subcatchment input was defined'
+                            print *, 'to an upstream (inflow) BC node but the downstream'
+                            print *, 'elements from the node are diagnostic elements, which' 
+                            print *, 'cannot take a subcatchment inflow.'
+                            print *, 'Reconfigure so that the subcatchment outflow is into a'
+                            print *, 'storage node or into a node adjacent to a conduit link or' 
+                            print *, 'a junction with storage.'
+                            print *, 'node ID ',nodeIdx(ii)
+                            print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                            call util_crashpoint(4023987)
+                        end select
                     else
                         elemIdx(ii) = nullvalueI
+                        print *, 'CODE ERROR, unexpected null downstream element for upstream BC'
+                        print *, 'node ID ',nodeIdx(ii)
+                        print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                        call util_crashpoint(1098223)
                     end if
+
                 case (nBCdn)
-                    !% for a node that is an downstreamstream BC, the subcatch connects 
+                    !% --- for a node that is an downstreamstream BC, the subcatch connects 
                     !% first element upstreamstream of the face
-                    !% into the Here ni_elemface_idx holds the face index
-                    tface => node%I(nodeIdx(ii),ni_elemface_idx)
+                   !tface => node%I(nodeIdx(ii),ni_elemface_idx) OBSOLETE
+                    tface => node%I(nodeIdx(ii),ni_face_idx)
                     if (tface .ne. nullvalueI) then 
                         elemIdx(ii) = faceI(tface,fi_Melem_uL)
+                        select case (elemI(elemIdx(ii),ei_elementType))
+                        case (CC)
+                            !% --- use the elemIdx already computed
+                        case (JB)
+                            !% --- use the associated JM element
+                            elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                        case default
+                            print *, 'CONFIGURATION ERROR: a subcatchment input was defined'
+                            print *, 'to an downstream (head) BC node but the upstream'
+                            print *, 'elements from the node are diagnostic elements, which' 
+                            print *, 'cannot take a subcatchment inflow.'
+                            print *, 'Reconfigure so that the subcatchment outflow is into a'
+                            print *, 'storage node or into a node adjacent to a conduit link or' 
+                            print *, 'a junction with storage.'
+                            print *, 'node ID ',nodeIdx(ii)
+                            print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                            call util_crashpoint(4023987)
+                        end select
                     else
                         elemIdx(ii) = nullvalueI
+                        print *, 'CODE ERROR, unexpected null upstream element for downstream BC'
+                        print *, 'node ID ',nodeIdx(ii)
+                        print *, 'node name ',trim(node%Names(nodeIdx(ii))%str)
+                        call util_crashpoint(1098245)
                     end if
                 case default 
                     write(*,*) 'CODE ERROR: unexpected case default in '//trim(subroutine_name)
@@ -1490,14 +1768,16 @@ contains
         !% initializes the time either using the SWMM input file or the
         !% json file data (selected by setting.Time.useSWMMinpYN)
         !%------------------------------------------------------------------
+        !% Declarations
+            real(8)  :: ttime
         !%------------------------------------------------------------------
 
         !% HACK start time is always measured from zero (need to fix for hotstart)
         setting%Time%Start = zeroR 
         setting%Time%Now   = zeroR
-        setting%Time%Step  = zeroI
+        setting%Time%Step  = zeroR
 
-        setting%Time%Hydraulics%Dt = setting.VariableDT.InitialDt
+        setting%Time%Hydraulics%Dt = setting%VariableDT%InitialDt
 
         if (setting%Time%useSWMMinpYN) then 
             !% set the start/stop times and time steps from SWMM *.inp file
@@ -1511,11 +1791,51 @@ contains
             !% use values from json file
         end if
 
+        ! print *, setting%Time%EndEpoch
+        ! stop 309874
+
+
         !% Translate epoc endtime to seconds from a zero start time
         !% use floor() to match approachin SWMM-C
-        setting%Time%End = real(floor(                            &
-                (setting%Time%EndEpoch - setting%Time%StartEpoch) &
-                 * real(secsperday)),KIND=8)
+        ! setting%Time%End = real(floor(                            &
+        !         (setting%Time%EndEpoch - setting%Time%StartEpoch) &
+        !          * real(secsperday)),KIND=8)
+
+        !% --- SWMM uses epoch, in days, which has a precision of ~1e-4 seconds
+        !%     To prevent precision from having an influence in microseconds, we
+        !%     take the epoch difference, convert to seconds, then multiply by 10^4
+        !%     and then round to the nearest integer.  We then divide by 10^4 to
+        !%     get the number of seconds.  A final application of floor() and conversion
+        !%     back to real ensures we only have whole seconds
+
+        ! print *, setting%Time%StartEpoch
+        ! print *, setting%Time%EndEpoch       
+        ttime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday,KIND=8)
+       ! print *, 'ttime ',ttime
+        ttime = util_datetime_seconds_precision (ttime)
+       ! print *, 'ttime ',ttime  
+        !setting%Time%End = real(floor(ttime),8)
+        setting%Time%End = ttime
+       ! print *, 'time end ',setting%Time%End
+
+       ! stop 2098734
+
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, '********************** HARD CODE END TIME FOR EXPERIMENT'
+        ! !setting%Time%End = 1.255d0
+        ! !setting%Time%End = 1.415d0  !% first problems
+        ! setting%Time%End = 1.45d0
+        ! setting%Time%EndEpoch = setting%Time%StartEpoch + setting%Time%End / real(secsperday,KIND=8)
+        ! print *, '********************** HARD CODE END TIME FOR EXPERIMENT'
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+        ! print *, ' '
+
+        !stop 2934870
 
         !% null out the wet step if not using hydrology
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
@@ -1534,9 +1854,9 @@ contains
             setting%Output%Report%StartTime    = util_datetime_epoch_to_secs(setting%SWMMinput%ReportStartTimeEpoch)
             setting%Output%Report%TimeInterval = setting%SWMMinput%ReportTimeInterval
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
-                write(*,*) ' '
+                !write(*,*) ' '
                 write(*,"(A)") ' ... using report start time and time interval from SWMM input file (*.inp)'
-                write(*,*) ' '
+                !write(*,*) ' '
             end if
         else 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
@@ -2030,6 +2350,11 @@ contains
         end if
         !%------------------------------------------------------------------
     end subroutine init_check_setup_conditions    
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+
 !%    
 !%==========================================================================
 !% END OF MODULE

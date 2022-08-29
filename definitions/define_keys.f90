@@ -229,11 +229,17 @@
         enumerator :: UniformDepth
         enumerator :: ExponentialDepth
         enumerator :: FixedHead
+        !% Keys for uniformTable data types
+        enumerator :: DepthData
+        enumerator :: AreaData
+        enumerator :: PerimeterData
+        enumerator :: VolumeData
+        enumerator :: SectionFactorData
+        enumerator :: QcriticalData
         !% last items for bookkeeping
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone
     end enum
-
     
 
  contains   
@@ -435,6 +441,12 @@
         reverseKey(UniformDepth)           = 'UniformDepth'
         reverseKey(ExponentialDepth)       = 'ExponentialDepth'
         reverseKey(FixedHead)              = 'FixedHead'
+        reverseKey(DepthData) = 'DepthData'
+        reverseKey(AreaData) = 'AreaData'
+        reverseKey(PerimeterData) = 'PerimeterData'
+        reverseKey(VolumeData) = 'VolumeData'
+        reverseKey(SectionFactorData) = 'SectionFactorData'
+        reverseKey(QcriticalData) = 'QcriticalData'
         reverseKey(undefinedKey)     = 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 

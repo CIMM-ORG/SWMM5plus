@@ -26,6 +26,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_xsect_tables.f90\
               $UTIL_DIR/utility.f90\
               $UTIL_DIR/utility_datetime.f90\
+              $UTIL_DIR/utility_key_default.f90\
               $API_DIR/c_library.f90\
               $API_DIR/interface.f90\
               $UTIL_DIR/utility_allocate.f90\
@@ -47,6 +48,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/jump.f90\
               $GEO_DIR/xsect_tables.f90\
               $GEO_DIR/rectangular_channel.f90\
+              $GEO_DIR/rectangular_conduit.f90\
               $GEO_DIR/trapezoidal_channel.f90\
               $GEO_DIR/triangular_channel.f90\
               $GEO_DIR/rectangular_triangular_channel.f90\
@@ -93,7 +95,9 @@ echo
 
 if [[ $compile_fortran = "true" ]]
 then
-    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o SWMM
+    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -I/usr/local/hdf5/include \
+    -L/usr/local/hdf5/lib /usr/local/hdf5/lib/libhdf5hl_fortran.a /usr/local/hdf5/lib/libhdf5_hl.a \
+    /usr/local/hdf5/lib/libhdf5_fortran.a /usr/local/hdf5/lib/libhdf5.a -lm -Wl,-rpath -Wl,/usr/local/hdf5/lib -ldl -o SWMM
 fi
 
 echo

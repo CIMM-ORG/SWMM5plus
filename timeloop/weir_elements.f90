@@ -113,7 +113,7 @@ module weir_elements
 !% PRIVATE
 !%==========================================================================       
 !%  
-    subroutine weir_effective_head_delta (eIdx)
+     subroutine weir_effective_head_delta (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the effective head difference flowing over the top of a weir
@@ -171,7 +171,7 @@ module weir_elements
 !%========================================================================== 
 !%==========================================================================    
 !%  
-    subroutine weir_surcharge_flow (eIdx)
+     subroutine weir_surcharge_flow (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% 

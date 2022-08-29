@@ -5,8 +5,22 @@
         "Long"  : "Lavaca_Trap_NoIC_EndTime",
         "Short" : "Lavaca"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 0.5
+        }
+    },
     "Discretization" : {
-        "LinkShortingFactor" : 0.33,
+        "AdustLinkLengthForJunctionBranchYN" : false,
+        "JunctionBranchLengthFactor" : 1.0,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 150.00
@@ -16,9 +30,6 @@
             "UseInflowLimiterYN" : true,
             "Approach" : "FroudeNumber",
             "FroudeInflowMaximum" : 1.5
-        },
-        "Channel" : {
-            "LargeDepthFactor" : 10.0
         },
         "Flowrate" : {
             "FaceVolumeTransport" : 0.5,
@@ -36,14 +47,20 @@
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
         }
-    },    
+    }, 
+    "Link" : {
+        "DefaultInitDepthType"     : "Linear", 
+        "OpenChannelLimitDepthYN"  : true,
+        "OpenChannelFullDepth"     :  20
+    },   
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
+        "useHD5F" : false,
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 100
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -54,6 +71,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -74,11 +92,24 @@
         "PartitioningMethod" : "bquick"
     },
     "Profile" : {
-        "useYN" : true
+        "useYN" : false
     },
     "Simulation" : {
-        "useHydrology" : false,
-        "useHydraulics" : true
+        "stopAfterInitializationYN" : false,
+        "useHydrology"              : true,
+        "useHydraulics"             : true,
+        "useSpinUp"                 : false,
+        "stopAfterSpinUp"           : false,
+        "SpinUpDays"                : 10.0
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
@@ -119,7 +150,7 @@
             "orifice_elements" : false,
 	        "OutputYN" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,

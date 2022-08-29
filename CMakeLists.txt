@@ -13,14 +13,44 @@ if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     \nRun cmake again. Exiting.")
 endif()
 
+function(commentout IN_FILE line_num)
+  file (STRINGS ${IN_FILE} LINES)
+  file(WRITE ${IN_FILE} "")
+  set(line_counter 1)
+  foreach(LINE IN LISTS LINES)
+    if (${line_counter} STREQUAL line_num)
+        string(PREPEND LINE "//")
+    endif()
+    MATH(EXPR line_counter "${line_counter}+1")
+    file(APPEND ${IN_FILE} "${LINE}\n")
+  endforeach()
+endfunction()
 
+get_filename_component(build_configuration ${CMAKE_BINARY_DIR} NAME)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared")
+if (build_configuration STREQUAL "build")
+    set(default_build_type "Release")
+    message(STATUS "Building inside '${build_configuration}' named folder, setting configuration as '${default_build_type}'")
+elseif (build_configuration STREQUAL "dwflow")
+    set(default_build_type "Release")
+    message(STATUS "Building inside '${build_configuration}' named folder, setting configuration as '${default_build_type}'")
+    message(WARNING "Lines [249-252] will be commented out from 'interface/src/dwflow.c'")
+elseif(build_configuration STREQUAL "debug")
+    set(default_build_type "Debug")
+    message(STATUS "Building inside '${build_configuration}' named folder, setting configuration as '${default_build_type}'")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g -traceback -debug extended")
+endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared -fcommon")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
+
 set(FETCHCONTENT_QUIET "OFF")
 
 set(BUILD_COARRAY_NUM_IMAGES 1 CACHE STRING "Set up the number of processors to use for parallel SWMM5+.")
-set(BUILD_HDF5 $ENV{HDF5_DIR})
+set(BUILD_HDF5 "/hdf5/hdf5-1.12.1/hdf5")
+if (DEFINED ENV{HDF5_DIR})
+    set(BUILD_HDF5 $ENV{HDF5_DIR})
+endif()
 
 
 
@@ -63,12 +93,8 @@ if (EXISTS ${BUILD_HDF5}/lib
     INSTALL_COMMAND "")
     set(HDF5_LIB_DIR ${BUILD_HDF5}/lib)
     set(HDF5_INCLUDE_DIR ${BUILD_HDF5}/include)
-    set(HDF5_LIBRARIES
-        libhdf5hl_fortran.a
-        libhdf5_hl.a
-        libhdf5_fortran.a
-        libhdf5.a    
-    )
+    set(HDF5_LIBRARIES ${BUILD_HDF5}/lib/libhdf5hl_fortran.a ${BUILD_HDF5}/lib/libhdf5_hl.a 
+    ${BUILD_HDF5}/lib/libhdf5_fortran.a ${BUILD_HDF5}/lib/libhdf5.a)
     set(HDF5_FOUND ON)
 endif()
 
@@ -88,14 +114,9 @@ $ export HDF5_DIR=path/to/hdf5/")
 
     set(HDF5_LIB_DIR ${hdf5_BINARY_DIR}/hdf5/lib/)
     set(HDF5_INCLUDE_DIR ${hdf5_BINARY_DIR}/hdf5/include/)
-    
-    
-    set(HDF5_LIBRARIES
-        libhdf5hl_fortran.a
-        libhdf5_hl.a
-        libhdf5_fortran.a
-        libhdf5.a    
-    )
+    set(HDF5_LIBRARIES ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5hl_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_hl.a 
+    ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5.a)
+
     set(BUILD_HDF5 ${hdf5_BINARY_DIR})
     set(HDF5_FOUND ON)
 endif()
@@ -113,10 +134,21 @@ file(APPEND ${CMAKE_SOURCE_DIR}/interface/src/controls.c "${CONTROLS}")
 file(APPEND ${CMAKE_SOURCE_DIR}/interface/src/funcs.h "${FUNCS}")
 message(STATUS "Appended to controls.c and funcs.h")
 
+if (build_configuration STREQUAL "dwflow")
+    commentout(${CMAKE_SOURCE_DIR}/interface/src/dwflow.c 248)
+    commentout(${CMAKE_SOURCE_DIR}/interface/src/dwflow.c 249)
+    commentout(${CMAKE_SOURCE_DIR}/interface/src/dwflow.c 250)
+    commentout(${CMAKE_SOURCE_DIR}/interface/src/dwflow.c 251)
+    commentout(${CMAKE_SOURCE_DIR}/interface/src/dwflow.c 252)
+    message(STATUS "Commented out lines [248-252] from 'interface/src/dwflow.c'")
+endif()
+
+
 file(GLOB
     SWMM_SOURCES
         ${CMAKE_SOURCE_DIR}/interface/src/*.c 
-        ${CMAKE_SOURCE_DIR}/*.h
+        ${CMAKE_SOURCE_DIR}/interface/src/*.h
+        # ${CMAKE_SOURCE_DIR}/*.h
 )
 file(GLOB
     SWMM5X_SOURCES
@@ -129,7 +161,9 @@ file(GLOB
 
         ${CMAKE_SOURCE_DIR}/utility/*.f90 
         ${CMAKE_SOURCE_DIR}/definitions/*.f90
-        ${CMAKE_SOURCE_DIR}/interface/*.f90
+        # ${CMAKE_SOURCE_DIR}/interface/*.f90
+        ${CMAKE_SOURCE_DIR}/interface/c_library.f90
+        ${CMAKE_SOURCE_DIR}/interface/interface.f90
         ${CMAKE_SOURCE_DIR}/initialization/*.f90
         ${CMAKE_SOURCE_DIR}/geometry/*.f90
         ${CMAKE_SOURCE_DIR}/timeloop/*.f90
@@ -143,7 +177,8 @@ file(GLOB
 add_library(swmm5 SHARED 
     ${SWMM_SOURCES}
 )
-set_target_properties(swmm5 PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(swmm5 PROPERTIES LINKER_LANGUAGE C
+CXX_STANDARD 14)
 
 
 add_executable(SWMM
@@ -155,7 +190,7 @@ target_include_directories(SWMM PUBLIC
 target_link_directories(SWMM PUBLIC
     ${HDF5_LIB_DIR}
 )
-target_link_libraries(SWMM
+target_link_libraries(SWMM PUBLIC
     ${HDF5_LIBRARIES}
 )
 add_dependencies(SWMM hdf5)

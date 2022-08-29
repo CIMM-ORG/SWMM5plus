@@ -7,7 +7,6 @@ module runge_kutta2
     use update
     use face
     use lowlevel_rk2
-    !use control_hydraulics, only: control_update
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use adjust
     use diagnostic_elements
@@ -37,7 +36,7 @@ module runge_kutta2
         !% single RK2 step for explicit time advance of SVE
         !%------------------------------------------------------------------
         !% Declarations:
-            integer :: istep
+            integer :: istep, ii
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -50,137 +49,126 @@ module runge_kutta2
         !% --- reset the overflow counter
         elemR(:,er_VolumeOverFlow) = zeroR
 
-            !print *, this_image(), 'AAA  start of RK2 ==================================',setting%Time%Step
-            !call util_CLprint ('AAA  start of RK2 ==================================')
+        !% --- compute the dynamic roughness (DISABLED AS OF 20220817 brh)
+        if (setting%Solver%Roughness%useDynamicRoughness) then
+            call rk2_dynamic_roughness (ETM)
+        else
+            !% --- arguably not needed, but here to prevent bugs
+            !%     if dynamic roughness is used in place of standard roughness
+            elemR(:,er_Roughness_Dynamic) = elemR(:,er_Roughness)
+        end if
+
+            !print *, ' '
+            ! call util_CLprint ('======= AAA  start of RK2 ==============================')
+            !print *, ' '
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
         call rk2_step_ETM (istep)
 
-            !print *, this_image(),'BBB after volume/momentum step 1---------------------------',setting%Time%Step
-            !call util_CLprint ('BBB after volume/momentum step 1---------------------------')
+            ! call util_CLprint ('BBB after volume/momentum step 1---------------------------')
    
         !% --- RK2 solution step -- update all non-diagnostic aux variables
+        !%     Note, these updates CANNOT depend on face values
         call update_auxiliary_variables (ETM)
 
-            !print *, this_image(),'CCC  after update aux step 1-----------------------',setting%Time%Step
-            !call util_CLprint ('CCC  after update aux step 1-----------------------')
+            ! call util_CLprint ('CCC  after update aux step 1-----------------------')
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         !%     This does not reset the zero/small depth packing
         call adjust_zero_and_small_depth_elem (ETM, .false.)
         call util_crashstop(340927)
 
-            !print *, this_image(), 'DDD  after adjust zero/small elem-----------------',setting%Time%Step
-            !call util_CLprint ('DDD  after adjust zero/small elem-----------------')
+            ! call util_CLprint ('DDD  after adjust zero/small elem-----------------')
      
         !% --- RK2 solution step  -- all face interpolation
         sync all
         call face_interpolation(fp_all,ETM)
 
-            !print *, this_image(), 'EEE  after face interpolation step 1---------------',setting%Time%Step
-            !call util_CLprint ('EEE  after face interpolation step 1---------------')
+            ! call util_CLprint ('EEE  after face interpolation step 1---------------')
 
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .true.)
         call util_crashstop(440223)
 
-            !print *, this_image(),'FFF  after zero/small face step 1-----------------',setting%Time%Step
-            !call util_CLprint ('FFF  after zero/small face step 1-----------------')
-
-        ! !% --- update the control/monitoring data
-        ! call control_update()
-        ! call util_crashstop(558293)
+            ! call util_CLprint ('FFF  after zero/small face step 1-----------------')
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
-        call diagnostic_toplevel()
+        call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
 
-            !print *, this_image(),'GGG  after diagnostic step 1 ----------------------',setting%Time%Step
-            !call util_CLprint ('GGG  after diagnostic step 1')
+            ! call util_CLprint ('GGG  after diagnostic step 1')
 
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (ETM) ! brh20220211 this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
 
-            !print *, this_image(),'HHH  after Vfilter step 1 -------------------------',setting%Time%Step
-            !call util_CLprint ('HHH  after Vfilter step 1 -------------------------')
+            ! call util_CLprint ('HHH  after Vfilter step 1 -------------------------')
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ETM)
 
-            !print *, this_image(),'III  after consQ store step 1 ----------------------',setting%Time%Step
-            !call util_CLprint ('III  after consQ store step 1 ----------------------')
+            ! call util_CLprint ('III  after consQ store step 1 ----------------------')
 
         !% --- reset the overflow counter (we only save conservation in the 2nd step)
         elemR(:,er_VolumeOverFlow) = zeroR
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
+
         istep=2
         call rk2_step_ETM (istep)
         
-            !print *, this_image(),'JJJ  after volume rk2 step 2 -----------------------',setting%Time%Step
-            !call util_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
+            ! call util_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
 
         !% --- RK2 solution step -- update non-diagnostic auxiliary variables
+        !%     Note, these updates CANNOT depend on face values
         call update_auxiliary_variables(ETM)  
 
-            !print *, this_image(),'KKK  after update aux step 2 --------------------------',setting%Time%Step
-            !call util_CLprint ('KKK  after update aux step 2 --------------------------')
+            ! call util_CLprint ('KKK  after update aux step 2 --------------------------')
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         call adjust_zero_and_small_depth_elem (ETM, .false.)
         call util_crashstop(12973)
 
-            !print *,this_image(),'LLL  after zero/small elem step 2 -------------------',setting%Time%Step
-            !call util_CLprint ('LLL  after zero/small elem step 2 -------------------')
+            ! call util_CLprint ('LLL  after zero/small elem step 2 -------------------')
 
         !% --- RK2 solution step -- update all faces
         sync all
         call face_interpolation(fp_all,ETM)
 
-            !print *, this_image(),'MMM  after face interp step 2 --------------------------',setting%Time%Step
-            !call util_CLprint ('MMM  after face interp step 2 --------------------------')
+            ! call util_CLprint ('MMM  after face interp step 2 --------------------------')
 
         !% --- set the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
-            !print *, this_image(),'NNN  after zero/small face step 2 ---------------------',setting%Time%Step
-            !call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
-        
-        ! !% --- update the control/monitoring data
-        ! call control_update()
-        ! call util_crashstop(558293)
+            ! call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
 
         !% --- RK2 solution step -- update diagnostic elements and faces
-        call diagnostic_toplevel()
+        call diagnostic_toplevel (.false.)
         call util_crashstop(662398)
 
-            !print *, this_image(),'OOO  after diagnostic step 2 -------------------------',setting%Time%Step
-            !call util_CLprint ('OOO  after diagnostic step 2')
+            ! call util_CLprint ('OOO  after diagnostic step 2')
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_Vfilter (ETM)
         call util_crashstop(449872)
 
-            !print *, this_image(),'PPP  after Vfilter step 2-----------------------------',setting%Time%Step
-            !call util_CLprint ('PPP  after Vfilter step 2-----------------------------')
+            ! call util_CLprint ('PPP  after Vfilter step 2-----------------------------')
 
         !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
         call adjust_zero_and_small_depth_elem (ETM, .true.)
         call util_crashstop(64987)
 
-            !print *, this_image(),'QQQ  after zero/small elem step 2 (2nd time)',setting%Time%Step
-            !call util_CLprint ('QQQ  after zero/small elem step 2 (2nd time)')
+            ! call util_CLprint ('QQQ  after zero/small elem step 2 (2nd time)')
 
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
-            !print *, this_image(),'ZZZ  after accumulate overflow step 2',setting%Time%Step
-            !call util_CLprint ('ZZZ  after accumulate overflow step 2')
+        
+        ! call util_CLprint ('ZZZ  after accumulate overflow step 2')
 
-            !stop 4098734
+        
 
         !%-----------------------------------------------------------------
         !% closing
@@ -253,7 +241,7 @@ module runge_kutta2
         
 
         !% step 5 -- update diagnostic elements and faces
-        call diagnostic_toplevel ()
+        call diagnostic_toplevel (.true.)
         call util_crashstop(66234)
 
         !% step X -- make ad hoc adjustments
@@ -282,7 +270,7 @@ module runge_kutta2
         end if
 
         !% step 7 -- update diagnostic elements and faces
-        call diagnostic_toplevel()
+        call diagnostic_toplevel(.false.)
         call util_crashstop(12293)
 
 
@@ -305,7 +293,7 @@ module runge_kutta2
         end if
 
         !% step 9 -- update diagnostic elements and faces
-        call diagnostic_toplevel ()
+        call diagnostic_toplevel (.false.)
         call util_crashstop(23422)
 
         !% step X -- make ad hoc adjustments
@@ -328,25 +316,24 @@ module runge_kutta2
         integer, intent(in) :: istep
         integer :: tmType
         !%-----------------------------------------------------------------------------
-        !if (crashYN) return
         !%
         !% perform the continuity step of the rk2 for ETM
         call rk2_continuity_step_ETM(istep)
 
-        ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
-        ! call util_CLprint ()
+            ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
+            !  call util_CLprint ('after rk2 continuity step etm')
 
         !% only adjust extremely small element volumes that have been introduced
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume/twentyR, col_elemP(ep_CCJM_H_ETM), .true.)
 
-        ! print *, this_image(),'    bbbb  after rk2 call to adjust limit by zero',this_image()
-        ! call util_CLprint ()
+            ! print *, this_image(),'    bbbb  after rk2 call to adjust limit by zero',this_image()
+            !  call util_CLprint ('after rk2 call to adjust limit by zero')
 
         !% perform the momentum step of the rk2 for ETM
         call rk2_momentum_step_ETM(istep)
 
-        ! print *, this_image(),'    cccc  after rk2 call to rk2_momentum_step_ETM',this_image()
-        ! call util_CLprint ()
+            ! print *, this_image(),'    cccc  after rk2 call to rk2_momentum_step_ETM',this_image()
+            !    call util_CLprint (' after rk2 call to rk2_momentum_step_ETM')
 
     end subroutine rk2_step_ETM
 !%
@@ -414,10 +401,10 @@ module runge_kutta2
         ! print *, '------------cccc  '
         ! write(*,"(5f12.7)") elemR(iet(1),er_Volume)
 
-        !% compute slot for conduits only if ETM solver is used
+        !% compute Preissmann slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
             !% all the closed conduit elements
-            thisPackCol => col_elemP(ep_Closed_Elements)
+            thisPackCol => col_elemP(ep_CC_Closed_Elements)
             Npack => npack_elemP(thisPackCol)
             if (Npack > 0) then
                 call ll_slot_computation_ETM (thisPackCol, Npack)
@@ -499,38 +486,46 @@ module runge_kutta2
         Npack       => npack_elemP(thisPackCol)
         !%-----------------------------------------------------------------------------
         !%
-        !if (crashYN) return
         if (Npack > 0) then
-            !print *, '... vel    :',elemR(1:2,er_Velocity)
 
             !% momentum K source terms for different methods for ETM
             call ll_momentum_Ksource_CC (er_Ksource, thisPackCol, Npack)
-            !print *, '... Ksource :',elemR(1:3,er_Ksource)
+                !print *, '... Ksource :',elemR(1:3,er_Ksource)
+                !  call util_CLprint (' after rk2 call ll_momentum_Ksource_CC')
 
             !% Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
-            !print *, '... sM      :',elemR(1:3,er_SourceMomentum)
+                !print *, '... sM      :',elemR(1:3,er_SourceMomentum)
+                !  call util_CLprint (' after rk2 call ll_momentum_source_CC')
 
             !% EXPERIMENT 20220524 adding lateral inflow source
             !call ll_momentum_lateral_source_CC (er_SourceMomentum, thisPackCol, Npack)
 
             !% Common Gamma for momentum on channels and conduits for  ETM
             call ll_momentum_gamma_CC (er_GammaM, thisPackCol, Npack)
-            !print *, '... gamma   :',elemR(1:3,er_GammaM)
+                !print *, '... gamma   :',elemR(1:3,er_GammaM)
+                !  call util_CLprint (' after rk2 call ll_momentum_gamma_CC')
 
             !% Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
-            !print *, '... vel     :',elemR(1:3,er_Velocity)
+                !print *, '... vel     :',elemR(1:3,er_Velocity)
+                !  call util_CLprint (' after rk2 call ll_momentum_solve_CC')
 
             !% velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
+                !print *, '... vel     :',elemR(1:3,er_Velocity)
+                !  call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
+
+            !% prevent backflow through flapgates
+            call ll_enforce_flapgate_CC (er_Velocity, thisPackCol, Npack)
+                !  call util_CLprint (' after rk2 call ll_enformce_flapgate_CC')
 
         end if
 
-        call ll_junction_branch_flowrate_and_velocity(ETM,istep)
+        call ll_flowrate_and_velocity_JB(ETM,istep)
 
-        ! print *, '   in rk2momentum 555'
-        ! call util_CLprint()
+            ! print *, '   in rk2momentum 555'
+            ! call util_CLprint (' after ll_flowrate_and_velocity_JB')
 
     end subroutine rk2_momentum_step_ETM
 !%
@@ -761,6 +756,170 @@ module runge_kutta2
     end subroutine rk2_store_conservative_fluxes
 !%   
 !%==========================================================================
+    !%==========================================================================
+!%
+    subroutine rk2_Dynamic_Roughness (whichTM) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the baseline Manning's n with a dynamic roughness 
+        !% adjustment
+        !%
+        !% DISABLED AS OF 20220817 -- HAS PROBLEMS WITH SMALL DEPTHS
+        !%
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: whichTM
+            integer, pointer    :: npack, thisColCC, thisColJM
+            integer, pointer    :: BranchExists(:)
+            integer, pointer    :: thisP(:), fUp(:), fDn(:), tM
+            integer             :: ii, kk, tB(1), dpnorm_col
+            real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
+            real(8), pointer    :: eHead(:), fHead_d(:), fHead_u(:)
+            real(8), pointer    :: zBottom(:), volume(:), length(:)
+            real(8), pointer    :: alpha, dt
+            character(64) :: subroutine_name ='update_Dynamic_Roughness_CC'
+        !%------------------------------------------------------------------  
+        !% Aliases
+            dpnorm_col = er_Temp01 !% not an alias!
+            dt           => setting%Time%Hydraulics%Dt
+            alpha        => setting%Solver%Roughness%alpha
+            dynamic_mn   => elemR(:,er_Roughness_Dynamic)
+            mn           => elemR(:,er_Roughness)
+            dp_norm      => elemR(:,dpnorm_col)
+            eHead        => elemR(:,er_Head)
+            length       => elemR(:,er_Length)
+            zBottom      => elemR(:,er_Zbottom)
+            volume       => elemR(:,er_Volume)
+            fHead_d      => faceR(:,fr_Head_d)
+            fHead_u      => faceR(:,fr_Head_u)
+            fUp          => elemI(:,ei_Mface_uL)
+            fDn          => elemI(:,ei_Mface_dL)
+            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            select case (whichTM)
+            case (ETM)
+                thisColCC  => col_elemP(ep_CC_ETM)
+                thisColJM  => col_elemP(ep_JM_ETM)
+            case default
+                print *, 'CODE ERROR: time march type not handled for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
+                stop 398705
+            end select    
+        !%------------------------------------------------------------------  
+
+        print *, 'DYNAMIC ROUGHNESS CANNOT BE USED'
+        print *, 'change setting%Solver%Roughness%useDynamicRoughness = .false.'    
+        stop 2098734
+
+        !% --- compute roughness for CC elements    
+        npack      => npack_elemP(thisColCC)
+        if (npack .ge.1)  then
+
+            thisP      => elemP(1:npack,thisColCC)   
+            !% --- the normalized pressure gradient scale
+            dp_norm(thisP) = (  abs(fHead_d(fUp(thisP)) - eHead(thisP))   &
+                              + abs(fHead_u(fDn(thisP)) - eHead(thisP)) ) &
+                             / abs(eHead(thisP) - zBottom(thisP))
+
+            ! print *, 'in ',trim(subroutine_name)
+            ! print *, dp_norm(139)
+            ! print *, fHead_d(fUp(139)), eHead(139)
+            ! print *, fHead_u(fDn(139)), eHead(139)
+            ! print *, eHead(139),zBottom(139)
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )    
+                
+            call ll_get_dynamic_roughness (thisP, dpnorm_col) 
+
+            !dynamic_mn(thisP) =  mn(thisP) &
+            !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )        
+        end if
+
+        !% --- compute roughness for JB elements
+        npack => npack_elemP(thisColJM)
+ 
+        if (Npack > 0) then
+            do ii=1,Npack
+                tM => elemP(ii,thisColJM)  !% JM junction main ID
+                !% --- handle the upstream branches
+                do kk=1,max_branch_per_node,2
+                    tB(1) = tM + kk  !% JB branch ID
+                    if (BranchExists(tB(1))==1) then
+                        !% --- normalized head difference is with upstream face
+                        dp_norm(tB) = (abs(fHead_d(fUp(tB)) - eHead(tB))) &
+                             / abs(eHead(tB) - zBottom(tB))
+                        !% --- add the dynamic roughness    
+                        call ll_get_dynamic_roughness (tB, dpnorm_col)       
+                    else
+                        !% skip if not a valid branch
+                    end if
+                end do
+                do kk=2,max_branch_per_node,2
+                    tB(1) = tM + kk  !% JB branch ID
+                    if (BranchExists(tB(1))==1) then
+                        !% --- normalized head difference is with downstream face
+                        dp_norm(tB) = (abs(fHead_u(fDn(tB)) - eHead(tB))) &
+                             / abs(eHead(tB) - zBottom(tB))
+                        !% --- add the dynamic roughness  
+                        call ll_get_dynamic_roughness (tB, dpnorm_col)    
+                    else
+                        !% skip if not a valid branch
+                    end if
+                end do
+            end do
+        end if
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, ' '
+        ! print *, 'dynamic mn'
+        ! print *, dynamic_mn(thisP)
+        ! print *, ' '
+        ! print *, 'dp norm'
+        ! print *, dp_norm(thisP)
+
+        ! print *, ' '
+        ! print *, abs(fHead_d(fUp(thisP)) - eHead(thisP))
+        ! print *, ' '
+        ! print *, abs(fHead_u(fDn(thisP)) - eHead(thisP)) 
+        ! print *, ' '
+        ! print *, (eHead(thisP) - zBottom(thisP))
+        ! print *, ' '
+        ! print *, ' '
+
+        ! print *, ' '
+        ! print *, fHead_d(fUp(thisP))
+        ! print *, ' '
+        ! print *, eHead(thisP)
+        ! print *, ' '
+        ! print *, fHead_u(fDn(thisP))
+
+        ! print *, ' '
+        ! print *, 'mn '
+        ! print *, mn(thisP)
+        ! print *, ' '
+        ! print *, 'volume '
+        ! print *, volume(thisP)
+        ! print *, ' '
+        ! print *, 'volume**1/9'
+        ! print *,  volume(thisP)**(oneninthR)
+        ! print *, ' '
+        ! print *, '1-e'
+        ! print *, (oneR - exp(dp_norm(thisP)) )
+
+
+        dp_norm(:) = nullvalueR  
+
+       ! stop 398745
+
+    end subroutine rk2_Dynamic_Roughness 
+!%
+!%==========================================================================
+
 !%==========================================================================
 !%
         !%------------------------------------------------------------------

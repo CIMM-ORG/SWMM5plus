@@ -32,3 +32,5 @@ tests/*
 .vscode
 swmm5_output
 build/
+debug/
+dwflow/

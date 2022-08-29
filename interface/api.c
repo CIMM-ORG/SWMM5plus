@@ -67,7 +67,7 @@ int DLLEXPORT api_controls_count(
 //===============================================================================
 int DLLEXPORT api_controls_get_premise_data(
     int* locationL,        int* locationR,
-    int* islinkL,          int* islinkR,
+    int* linknodesimTypeL, int* linknodesimTypeR,
     int* attributeL,       int* attributeR, 
     int* thisPremiseLevel, int rIdx)
 //===============================================================================
@@ -82,7 +82,7 @@ int DLLEXPORT api_controls_get_premise_data(
 
     success = controls_get_premise_data( 
                 locationL,  locationR, 
-                islinkL,    islinkR, 
+                linknodesimTypeL,linknodesimTypeR, 
                 attributeL, attributeR, 
                 thisPremiseLevel,rIdx);         
 
@@ -115,14 +115,14 @@ int DLLEXPORT api_controls_get_action_data(
 //===============================================================================
 int DLLEXPORT api_controls_transfer_monitor_data(     
     double Depth, double Volume, double Inflow, double Flow, 
-    double StatusSetting, double TimeLastSet, int idx, int isLink)
+    double StatusSetting, double TimeLastSet, int idx, int linknodesimType)
 //===============================================================================
     ///
     /// Input: values from SWMM5+ finite-volume solution applied to 
     /// EPA-SWMM Link or Node with LinkNodeNum index.
     /// Purpose: set up EPA-SWMM link/nodes for control evaluation
 {
-    if (isLink)
+    if (linknodesimType == 1)
     {
         Link[idx].newDepth = MTOFT(Depth);
         // Head is not valid for links
@@ -136,7 +136,7 @@ int DLLEXPORT api_controls_transfer_monitor_data(
         Link[idx].setting  = StatusSetting;
         Link[idx].timeLastSet = TimeLastSet;
     }
-    else
+    else if (linknodesimType == 0)
     {
         Node[idx].newDepth = MTOFT(Depth);
         // Head is not stored for nodes in EPA-SWMM, so r_HEAD in controls
@@ -147,6 +147,10 @@ int DLLEXPORT api_controls_transfer_monitor_data(
         // Status/Setting is not valid for nodes
         // TimeLastSet is not valid for nodes
     }
+    else
+    {
+        // do nothing for simulation type
+    }
     return 0;
 }    
 
@@ -156,10 +160,11 @@ int DLLEXPORT api_controls_execute(
 //===============================================================================
     /// Purpose: calls the controls_evaluate in EPA-SWMM
 {
+    int numactions = 0;
 
-    controls_evaluate(currentTimeEpoch, ElapsedDays, dtDays); 
+    numactions = controls_evaluate(currentTimeEpoch, ElapsedDays, dtDays); 
 
-    return 0; 
+    return numactions; 
 }
 
 //===============================================================================
@@ -168,7 +173,7 @@ int DLLEXPORT api_teststuff()
 {
     int ii, nPremise, nThenAction, nElseAction;
 
-    printf(" \n \n in api_teststuff \n \n ");
+    //printf(" \n \n in api_teststuff \n \n ");
 
     ii = controls_display();
 
@@ -178,7 +183,7 @@ int DLLEXPORT api_teststuff()
 
     //printf("\n %d \n ",nElseAction);
 
-    printf(" \n N premise, then, else locations: %d %d %d \n", nPremise, nThenAction, nElseAction);
+    //printf(" \n N premise, then, else locations: %d %d %d \n", nPremise, nThenAction, nElseAction);
 
     return 0;
 }
@@ -560,9 +565,21 @@ int DLLEXPORT api_get_headBC(
             return 0;
 
         case TIMESERIES_OUTFALL:  
-            // --- timeseries outfall is given as a stage series (not depth) 
+            // --- timeseries outfall is given as a stage (elevation) series 
+            //     note that SWMM does NOT seem to automatically convert the data from its input 
+            //     form into CFS; thus, we have to choose whether or not to convert based on 
+            //     the FlowUnits, which stores the FLOW_UNITS in the *.inp file. 
+            //     CFS, GPM and MGD have FlowUnits of 0,1,2;  CMS, LPS, MLD have FlowUnits of 3,4,5
+
             kidx = Outfall[ii].stageSeries;
-            *headBC     = FTTOM(table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE)); 
+            if (FlowUnits < MGD)
+            {
+                *headBC     = FTTOM(table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE)); 
+            }
+            else
+            {
+                *headBC     = table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE); 
+            }
             return 0;
         
         default:
@@ -573,7 +590,6 @@ int DLLEXPORT api_get_headBC(
             return api_err_not_developed;
     }
 }
-
 //===============================================================================
 int DLLEXPORT api_get_SWMM_setup(
     int*  flow_units,
@@ -655,6 +671,7 @@ int DLLEXPORT api_get_SWMM_setup(
     //printf(" courant factor %f \n", CourantFactor);
     //printf("\n testing variable %s \n",TempDir);
 
+    //printf(" \n %s \n ",Title[0]);
 
     return 0;
 }
@@ -1386,7 +1403,8 @@ int DLLEXPORT api_get_linkf_attribute(
     error = check_api_is_initialized("api_get_linkf_attribute");
     if (error) return error;
 
-    //printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+    // printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+    // printf(" ****** in api_get_linkf_attribute  %d \n ",linkf_type);
 
 // the following are in the order of the enumeration in define_api_keys.f90 and api.h
     switch (attr) {
@@ -1422,6 +1440,10 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_q0 :
             *value = CFTOCM(Link[link_idx].q0);
             break;    
+
+        case linkf_qlimit :
+            *value = CFTOCM(Link[link_idx].qLimit);
+            break;        
 
         case linkf_flow :
             *value = CFTOCM(Link[link_idx].newFlow);
@@ -1594,6 +1616,13 @@ int DLLEXPORT api_get_linkf_attribute(
             else
                 *value = 0; 
             break;  
+
+        case linkf_hasFlapGate :
+            if (Link[link_idx].hasFlapGate)    
+                *value = 1;
+            else
+                *value = 0;
+            break;
 
         case linkf_commonBreak :
             // placeholder with no action
@@ -2467,7 +2496,7 @@ int DLLEXPORT api_export_linknode_properties(
     float lr_Length[Nobjects[LINK]];
     float lr_Slope[Nobjects[LINK]];
     float lr_Roughness[Nobjects[LINK]];
-    float lr_InitialFlowrate[Nobjects[LINK]];
+    float lr_FlowrateInitial[Nobjects[LINK]];
     float lr_InitialUpstreamDepth[Nobjects[LINK]];
     float lr_InitialDnstreamDepth[Nobjects[LINK]];
     int li_InitialDepthType[Nobjects[LINK]]; //
@@ -2581,7 +2610,7 @@ int DLLEXPORT api_export_linknode_properties(
             lr_Slope[i] = 0;
         }
 
-        lr_InitialFlowrate[i] = Link[i].q0 * flow_units;
+        lr_FlowrateInitial[i] = Link[i].q0 * flow_units;
         lr_InitialUpstreamDepth[i] = Node[li_Mnode_u[i]].initDepth * length_units;
         lr_InitialDnstreamDepth[i] = Node[li_Mnode_d[i]].initDepth * length_units; 
 
@@ -2630,7 +2659,7 @@ int DLLEXPORT api_export_linknode_properties(
     fclose(f_nodes);
 
     fprintf(f_links,
-        "l_left,link_id,li_idx,li_link_type,li_geometry,li_Mnode_u,li_Mnode_d,lr_Length,lr_Slope,lr_Roughness,lr_InitialFlowrate,lr_InitialUpstreamDepth,lr_InitialDnstreamDepth\n");
+        "l_left,link_id,li_idx,li_link_type,li_geometry,li_Mnode_u,li_Mnode_d,lr_Length,lr_Slope,lr_Roughness,lr_FlowrateInitial,lr_InitialUpstreamDepth,lr_InitialDnstreamDepth\n");
     for (i=0; i<NLinks; i++) {
         fprintf(f_links, "%d,%s,%d,%d,%d,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
             NLinks-i,
@@ -2643,7 +2672,7 @@ int DLLEXPORT api_export_linknode_properties(
             lr_Length[i],
             lr_Slope[i],
             lr_Roughness[i],
-            lr_InitialFlowrate[i],
+            lr_FlowrateInitial[i],
             lr_InitialUpstreamDepth[i],
             lr_InitialDnstreamDepth[i]);
     }

@@ -46,7 +46,7 @@ contains
         !% Inputs/Outputs:
         !%      curveID   -- CurveID for this element
         !%      er_inCol  -- column in elemR(:,er_inCol) with curve X data
-        !%      er_outCol -- column in elemR(:,er_outCol) for curve Y data
+        !%      er_outCol -- column in elemR(:,er_outCol) for curve Y data (OUTPUT)
         !%      xVal_col  -- x data column in the curve ValueArray
         !%      yVal_col  -- y data column in the curve Valuearray
         !%      interpFlag = 0 for step wise, 1 for linear interp
