@@ -65,7 +65,7 @@ contains
         !% --- store the start time so that we can reset after spin-up
         startTime   = setting%Time%Start
         endTime     = setting%Time%End
-        reportStart = setting%Output%Report%StartTime
+        reportStart = setting%Output%Report%StartTime 
 
         !% --- set spinup controls and call spinup
         call tl_spinup()
@@ -88,7 +88,7 @@ contains
         end if 
 
         !% --- initialize the time settings for hydraulics and hydrology steps
-        call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN)
+        call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN, .false.)
 
         !-- perform the time-marching loop
         call tl_outerloop (doHydrologyStepYN, doHydraulicsStepYN, .false., .false.)
@@ -135,7 +135,7 @@ contains
         end if
 
         !% --- initialize the time variables
-        call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN)
+        call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN, inSpinUpYN)
         
         !% --- perform the time loop for spin-up
         call tl_outerloop (doHydrologyStepYN, doHydraulicsStepYN, inSpinUpYN, SpinUpOutputYN)
@@ -145,13 +145,15 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%      
-    subroutine tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN)
+    subroutine tl_initialize_loop ( &
+        doHydraulicsStepYN, doHydrologyStepYN, inSpinUpYN)
         !%------------------------------------------------------------------
         !% Description
         !% initialize the times before a time loop
         !%------------------------------------------------------------------
         !% Declarations
             logical, intent(inout) :: doHydrologyStepYN, doHydraulicsStepYN
+            logical, intent(in)    :: inSpinUpYN
             real(8), pointer :: nextHydrologyTime, nextHydraulicsTime, nextControlRuleTime
             real(8), pointer :: lastHydrologyTime, lastHydraulicsTime, lastControlRuleTime, dtTol
         !%------------------------------------------------------------------
@@ -187,7 +189,7 @@ contains
         !% get the initial dt and the next hydraulics time
         if (setting%Simulation%useHydraulics) then
             call tl_smallestBC_timeInterval ()
-            call tl_update_hydraulics_timestep()
+            call tl_update_hydraulics_timestep(inSpinUpYN)
             call util_crashstop(229873)
         else
             !% NOTE -- WORKING WITHOUT SWMM5+ HYDRAULICS IS NOT SUPPORTED 
@@ -357,7 +359,7 @@ contains
         
                 sync all
                 !% ---increment the time step and counters for the next time loop
-                call tl_increment_timestep_and_counters(doHydraulicsStepYN, doHydrologyStepYN)
+                call tl_increment_timestep_and_counters(doHydraulicsStepYN, doHydrologyStepYN, inSpinUpYN)
     
                 !% --- close the hydraulics time tick
                 sync all
@@ -570,13 +572,15 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine tl_increment_timestep_and_counters(doHydraulicsStepYN, doHydrologyStepYN)
+    subroutine tl_increment_timestep_and_counters ( &
+        doHydraulicsStepYN, doHydrologyStepYN, inSpinUpYN)
         !%-------------------------------------------------------------------
         !% Description:
         !% increments the hydrology and hydraulics step counters and
         !%-------------------------------------------------------------------
         !% Declarations
             logical, intent(inout) :: doHydraulicsStepYN, doHydrologyStepYN
+            logical, intent(in)    :: inSpinUpYN
             logical, pointer       :: useHydrology, useHydraulics
             real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
             real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
@@ -613,7 +617,7 @@ contains
 
         !% --- get the timestep and the next time for hydraulics
         if (doHydraulicsStepYN) then
-            call tl_update_hydraulics_timestep()
+            call tl_update_hydraulics_timestep(inSpinUpYN)
             call util_crashstop(449873)
         else
             nextHydraulicsTime = setting%Time%End + tenR*DtTol
@@ -689,7 +693,7 @@ contains
 
         ! print *, 'timeNow  in tl_increment_counters',timeNow
 
-        call tl_command_line_step_output()
+        call tl_command_line_step_output(inSpinUpYN)
 
         if (doHydraulicsStepYN) LastHydraulicsTime = NextHydraulicsTime
         if (doHydrologyStepYN)  LastHydrologyTime  = NextHydrologyTime
@@ -701,13 +705,14 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine tl_update_hydraulics_timestep()
+    subroutine tl_update_hydraulics_timestep(inSpinUpYN)
         !%------------------------------------------------------------------
         !% Description:
         !% updates the timestep (dt) for hydraulics and computes the
         !% setting.Time.Hydraulics.NextTime for the current processor
         !%------------------------------------------------------------------
         !% Declarations
+            logical, intent(in) :: inSpinUpYN
             logical, pointer :: matchHydrologyStep, useHydrology
             real(8)          :: oldDT, maxVelocity
             real(8)          :: timeleft, thisCFL, minCFL
@@ -1140,11 +1145,12 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine tl_command_line_step_output ()
+    subroutine tl_command_line_step_output (inSpinUpYN)
         !%-----------------------------------------------------------------------------
         !% Description:
         !%
         !%-----------------------------------------------------------------------------
+            logical, intent(in) :: inSpinUpYN
             character(64) :: subroutine_name = 'tl_command_line_step_output'
             real (8), pointer :: dt, timeNow, timeEnd
             real (8) :: thistime
@@ -1187,11 +1193,21 @@ contains
             steps_to_finish = (setting%Time%End - setting%Time%Now) / dt
             seconds_to_completion = execution_realtime_per_step * steps_to_finish
 
+
+
+            ! if (.not. inSpinUpYN) then
             ! print *, ' '
+            ! print *, setting%Time%WallClock%Now, setting%Time%WallClock%TimeMarchStart
+            ! print *, setting%Time%WallClock%Now - setting%Time%WallClock%TimeMarchStart
             ! print *, execution_realtime
             ! print *, execution_realtime_per_step
             ! print *, steps_to_finish
             ! print *, seconds_to_completion
+            ! print *, setting%Time%End, setting%Time%Now, dt
+            ! print *, step
+            ! print *, ' '
+            ! stop 4098734
+            ! end if
         end if
 
         if (setting%Output%Verbose) then
@@ -1222,7 +1238,7 @@ contains
                         ! write estimate of time remaining
                         thistime = seconds_to_completion
                         call util_datetime_display_time (thistime, timeunit)
-                        write(*,"(A9,F6.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
+                        write(*,"(A9,F10.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
                         !write(*,"(A9,F6.2,A1,A3,A)") 'execution time ',thistime,' ',timeunit,' wall clock time thus far'
                     end if    
                     print *

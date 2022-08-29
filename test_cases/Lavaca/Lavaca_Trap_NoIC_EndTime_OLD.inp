@@ -8801,7 +8801,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-630036311      0.0      FIXED      3.00      NO
+630036311      0.0      FIXED      3.00      YES
                      
 
 [CONDUITS]

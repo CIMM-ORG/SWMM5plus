@@ -56,7 +56,6 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "useHD5F" : false,
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
@@ -80,8 +79,9 @@
             "isWaveSpeedOut"    : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
-            "provideYN" : true,
+            "useSWMMinpYN" : true,
+            "useHD5F"      : false,
+            "provideYN"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,

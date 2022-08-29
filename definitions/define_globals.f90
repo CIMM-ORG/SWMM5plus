@@ -356,7 +356,7 @@ module define_globals
     real(8), parameter :: onehundredR = 100.d0
     real(8), parameter :: fivehundredR = 500.d0
     real(8), parameter :: onethousandR = 1000.d0
-    real(8), parameter :: pi = 4.d0*datan(1.d0)
+    !real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneOneThousandthR = oneR / onethousandR
     real(8), parameter :: oneOneHundredthR = oneR / onehundredR

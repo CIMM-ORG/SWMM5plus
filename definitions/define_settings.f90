@@ -205,7 +205,7 @@ module define_settings
     type ReportType
         logical :: useSWMMinpYN = .true.
         logical :: provideYN = .true.
-        logical :: useHD5F   = .true.
+        logical :: useHD5F   = .false.
         logical :: useCSV    = .true.
         logical :: suppress_MultiLevel_Output = .false.
         real(8) :: StartTime = 0.0d0
@@ -217,7 +217,8 @@ module define_settings
     !% setting%Solver%Roughness
     type RoughnessType
         logical :: useDynamicRoughness = .false.
-        real(8) :: alpha = 100.0d0
+        real(8) :: alpha = 1.0d0
+        real(8) :: beta  = 1.0d0
     end type RoughnessType
 
     !% setting%Time% ...Hydraulics, Hydrology, Dry
@@ -381,6 +382,7 @@ module define_settings
     type ConstantType
         real(8) :: gravity = 9.81d0 ! m^2/s
         real(8) :: energy_correction_factor = 1.0d0 
+        real(8) :: pi = 4.d0*datan(1.d0)
     end type ConstantType
 
     ! setting%Control
@@ -1748,10 +1750,15 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.useDynamicRoughness not found'
        
     !%                       Solver.Roughness.alpha
-        call json%get('Solver..Roughness.alpha', real_value, found)
+        call json%get('Solver.Roughness.alpha', real_value, found)
         if (found)  setting%Solver%Roughness%alpha = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.alpha not found'
-     
+  
+    !%                       Solver.Roughness.beta
+        call json%get('Solver.Roughness.beta', real_value, found)
+        if (found)  setting%Solver%Roughness%beta = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.beta not found'
+      
     !% TestCase.  =====================================================================
         !%                       TestCase.UseTestCaseYN
         call json%get('TestCase.UseTestCaseYN', logical_value, found)

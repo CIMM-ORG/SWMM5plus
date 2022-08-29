@@ -481,8 +481,9 @@ module circular_conduit
         integer          :: ii, jj 
         integer, pointer :: eIdx
         real(8)          :: alpha, theta, theta1, dTheta
+        real(8), pointer :: pi
         !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
+        pi => setting%Constant%pi
 
         do ii = 1,Npack
             eIdx   => thisP(ii)

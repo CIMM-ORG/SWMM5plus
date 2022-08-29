@@ -1207,13 +1207,15 @@ contains
             integer :: ii
             integer, intent(in) :: thisLink
             integer, pointer    :: geometryType
+            real(8), pointer :: pi
             character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
         !%-----------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"   
+        !%-----------------------------------------------------------------------------
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
+        pi => setting%Constant%pi
 
         !print *, geometryType
 
@@ -1515,13 +1517,14 @@ contains
             integer, pointer     :: specificOrificeType, OrificeGeometryType
             integer, allocatable :: thisPack(:)
             integer :: ii
+            real(8), pointer     :: pi
 
             character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
         !--------------------------------------------------------------------------
-            !if (crashYN) return
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        pi => setting%Constant%pi
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_link_sub_type)
 
