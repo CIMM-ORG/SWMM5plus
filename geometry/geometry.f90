@@ -8,7 +8,7 @@ module geometry
     use rectangular_conduit
     use trapezoidal_channel
     use triangular_channel
-    use rectangular_triangular_channel
+    use rectangular_triangular_conduit
     use circular_conduit
     use irregular_channel
     use storage_geometry
@@ -257,11 +257,11 @@ module geometry
         !%------------------------------------------------------------------  
         !print *, 'in ',trim(subroutine_name)    
         thisArea      = geo_area_from_depth_singular      (eIdx,inDepth)
-        !print *, '----- area     ',thisArea
+        ! print *, '----- area     ',thisArea
         thisPerimeter = geo_perimeter_from_depth_singular (eIdx,inDepth)
-        !print *, '----- perimeter',thisPerimeter
+        ! print *, '----- perimeter',thisPerimeter
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
-        !print *, '----- sf       ',outvalue
+        ! print *, '----- sf       ',outvalue
 
     end function geo_sectionfactor_from_depth_singular
 !%

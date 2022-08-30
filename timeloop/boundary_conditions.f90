@@ -8,7 +8,7 @@ module boundary_conditions
     use utility_interpolate
     use define_settings, only: setting
     use face, only: face_interpolate_bc
-    use rectangular_triangular_channel, only: rectangular_triangular_area_from_depth_singular, rectangular_triangular_topwidth_from_depth_singular
+    use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth_singular, rectangular_triangular_topwidth_from_depth_singular
     use define_xsect_tables
     use geometry
     use xsect_tables

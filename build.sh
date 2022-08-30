@@ -51,7 +51,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $GEO_DIR/rectangular_conduit.f90\
               $GEO_DIR/trapezoidal_channel.f90\
               $GEO_DIR/triangular_channel.f90\
-              $GEO_DIR/rectangular_triangular_channel.f90\
+              $GEO_DIR/rectangular_triangular_conduit.f90\
               $GEO_DIR/circular_conduit.f90\
               $GEO_DIR/irregular_channel.f90\
               $GEO_DIR/storage_geometry.f90

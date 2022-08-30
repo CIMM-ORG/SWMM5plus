@@ -9,7 +9,7 @@
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 500.00
+        "NominalElemLength" : 100.00
     },
     "Limiter" : {
         "BC" : {
@@ -92,60 +92,11 @@
             "Dt" : 600.0
         }
     },
-    "Debug" : {
-        "File" : {
-            "adjust" : false,
-            "BIPquick" : false,
-            "boundary_conditions" : false,
-            "c_library" : false,
-            "define_globals" : false,
-            "define_indexes" : false,
-            "define_keys" : false,
-            "define_settings" : false,
-            "define_types" : false,
-            "diagnostic_elements" : false,
-            "discretization" : false,
-            "face" : false,
-            "finalization" : false,
-            "geometry" : false,
-            "initial_condition" : false,
-            "initialization" : false,
-            "interface" : false,
-            "jump" : false,
-            "lowlevel_rk2" : false,
-            "network_define" : false,
-            "orifice_elements" : false,
-	        "output" : false,
-            "pack_mask_arrays" : false,
-            "partitioning" : false,
-            "pump_elements" : false,
-            "rectangular_channel" : false,
-            "trapezoidal_channel" : false,
-            "runge_kutta2" : false,
-            "timeloop" : false,
-            "update" : false,
-            "utility" : false,
-            "utility_allocate" : false,
-            "utility_deallocate" : false,
-            "utility_array" : false,
-            "utility_datetime" : false,
-            "utility_interpolate" : false,
-            "utility_output" : false,
-            "utility_string" : false,
-            "weir_elements" : false
-        },
-        "FileGroup" : {
-            "all" : false,
-            "definitions" : false,
-            "finalization" : false,
-            "geometry" : false,
-            "initialization" : false,
-            "interface" : false,
-            "output" : false,
-            "timeloop" : false,
-            "utility" : false
-        },
-        "SetupYN"  : true,
-        "OutputYN" : true
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4
     }
 }

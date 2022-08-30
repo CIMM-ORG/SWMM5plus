@@ -2798,7 +2798,6 @@ contains
             !% -----------------------------------
                 if (NtotalOutputFaces > 0) then
                     do kk=1,nOutNodeFace
-                        print *, '  kk = ',kk
                         !% --- Cycle through the nodes to create the individual nodes output files
                         !% get the global SWMM index for this node
                         SWMMnode => OutNodeFace_pSWMMidx(kk)
@@ -2858,7 +2857,6 @@ contains
                                 !     dummyarrayI,    &
                                 !     tnodename, setting%Time%DateTimeStamp, time_units_str, .false.)
 
-                                print *, ' setting%Output%Report%useCSV ', setting%Output%Report%useCSV
                                 if(setting%Output%Report%useCSV) then
                                     !% --- open formatted csv node file
                                     open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted', &
@@ -2937,7 +2935,6 @@ contains
                         !% --- NODE-FACE FINITE-VOLUME FILES CSV (1 type per file)
                         !%
                         do mm=1,nTypeFace
-                            print *, '   mm  = ',mm
                             !% --- cycle through the types
                             mminc = mm+1 !% increment to skip time level
                             !% --- create the filename
