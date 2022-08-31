@@ -269,7 +269,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-9013      152.734      FIXED     3.0     NO
+9013      152.734      FIXED     155.734     YES
 
 
 [CONDUITS]

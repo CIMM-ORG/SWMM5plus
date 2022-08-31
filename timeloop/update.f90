@@ -85,9 +85,6 @@ module update
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
-        !% --- compute the element section factor for CC
-      !  call update_SectionFactor_element (thisCol_CC)
-
             !  call util_CLprint ('in update before CC interpweights in update')
 
         !% --- compute the wave speeds
@@ -112,7 +109,7 @@ module update
         !% --- not needed 20220716brh
         !% --- flow values on an BC outlet face 20220714brh
         !%     required so that an inflow to a zero or small depth will not be lost
-       ! call update_BCoutlet_flowrate ()
+        ! call update_BCoutlet_flowrate ()
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -135,6 +132,7 @@ module update
         !%-----------------------------------------------------------------------------
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:), Qmax(:)
+        character(64) :: subroutine_name = 'update_element_flowrate'
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
@@ -143,6 +141,10 @@ module update
         Qmax     => elemR(:,er_FlowrateLimit)
         !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisCol)
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, flowrate(139), area(139), velocity(139)
+
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
@@ -153,7 +155,10 @@ module update
             end where
 
         end if
+
+        ! print *, flowrate(139), area(139), velocity(139)
         ! print*, flowrate(thisP), 'flowrate(thisP)'
+
     end subroutine update_element_flowrate
 !%
 !%==========================================================================
@@ -325,15 +330,15 @@ module update
         w_uP      => elemR(:,er_InterpWeight_uP)
         w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
-        isSlot    => elemYN(:,eYN_isSlot)
+        isSlot    => elemYN(:,eYN_isSlot)  !% Preissmann
 
-        fSlot    => faceYN(:,fYN_isSlot)
+        fSlot    => faceYN(:,fYN_isSlot)  !% Preissmann
         fUp      => elemI(:,ei_Mface_uL)
         fDn      => elemI(:,ei_Mface_dL)
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_SlotVolume)
-        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume) !% Preissmann
+        SlotWidth  => elemR(:,er_SlotWidth)  !% Preissmann
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
 
@@ -376,6 +381,7 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (isSlot(thisP))
+            !% --- Preissmann slot
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 23022022 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
@@ -416,16 +422,20 @@ module update
         !% adjust upstream interpolation weights for downstream flow in presence of lateral inflows
         !% so that upstream interpolation is used
         !% HACK -- this probably could use an approach with some kind of ad hoc blend -- needs work
-        where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
-            w_uQ(thisP) =  setting%Limiter%InterpWeight%Maximum
-            w_uG(thisP) =  setting%Limiter%InterpWeight%Maximum
-        endwhere
 
-        ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
-        where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
-            w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
-            w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
+        !% 20220817brh REMOVING LATERAL RESET AS IT IS CAUSING OSCILLATIONS IN HIGH INSTREAM FLOW CONDITIONS
+        !% MAY NEED TO PUT IT BACK IN FOR CASES WHERE LATERAL FLOWRATE IS LARGER THAN DOWNSTREAM FLOW
+
+        ! where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
+        !     w_uQ(thisP) =  setting%Limiter%InterpWeight%Maximum
+        !     w_uG(thisP) =  setting%Limiter%InterpWeight%Maximum
+        ! endwhere
+
+        ! ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
+        ! where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
+        !     w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+        !     w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
+        ! endwhere
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -464,7 +474,7 @@ module update
             w_dH      => elemR(:,er_InterpWeight_dH)
             w_uP      => elemR(:,er_InterpWeight_uP)
             w_dP      => elemR(:,er_InterpWeight_dP)
-            isSlot    => elemYN(:,eYN_isSlot)
+            isSlot    => elemYN(:,eYN_isSlot)  !% Preissmann
         !%------------------------------------------------------------------
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
@@ -474,6 +484,7 @@ module update
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
             elsewhere
+                !% --- Preissmann slot
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
             endwhere

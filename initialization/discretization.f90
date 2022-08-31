@@ -97,7 +97,7 @@ contains
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        isAdjustLinkLength => setting%Discretization%AdjustLinkLengthYN
+        isAdjustLinkLength => setting%Discretization%AdustLinkLengthForJunctionBranchYN
         
         do ii =1, N_link
             !% --- default shorting coefficient (reset for each link)

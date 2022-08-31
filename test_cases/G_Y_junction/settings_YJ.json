@@ -2,14 +2,14 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "test",
-        "Short" : "test"
+        "Long"  : "YJ_test",
+        "Short" : "YJ_test"
     },
     "Discretization" : {
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10
+        "NominalElemLength" : 100.00
     },
     "Limiter" : {
         "BC" : {
@@ -91,5 +91,12 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4
     }
 }

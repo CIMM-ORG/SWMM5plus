@@ -36,7 +36,7 @@ module runge_kutta2
         !% single RK2 step for explicit time advance of SVE
         !%------------------------------------------------------------------
         !% Declarations:
-            integer :: istep
+            integer :: istep, ii
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -49,7 +49,7 @@ module runge_kutta2
         !% --- reset the overflow counter
         elemR(:,er_VolumeOverFlow) = zeroR
 
-        !% --- compute the dynamic roughness
+        !% --- compute the dynamic roughness (DISABLED AS OF 20220817 brh)
         if (setting%Solver%Roughness%useDynamicRoughness) then
             call rk2_dynamic_roughness (ETM)
         else
@@ -58,7 +58,10 @@ module runge_kutta2
             elemR(:,er_Roughness_Dynamic) = elemR(:,er_Roughness)
         end if
 
-        !call util_CLprint ('AAA  start of RK2 ==============================')
+            !print *, ' '
+            ! call util_CLprint ('======= AAA  start of RK2 ==============================')
+            !print *, ' '
+        !print *, elemR(1,er_Roughness_Dynamic)
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
@@ -94,7 +97,6 @@ module runge_kutta2
         !% --- RK2 solution step  -- update diagnostic elements and faces
         call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
-
 
             ! call util_CLprint ('GGG  after diagnostic step 1')
 
@@ -164,7 +166,10 @@ module runge_kutta2
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
-        !   call util_CLprint ('ZZZ  after accumulate overflow step 2')
+        
+        ! call util_CLprint ('ZZZ  after accumulate overflow step 2')
+
+        
 
         !%-----------------------------------------------------------------
         !% closing
@@ -397,7 +402,7 @@ module runge_kutta2
         ! print *, '------------cccc  '
         ! write(*,"(5f12.7)") elemR(iet(1),er_Volume)
 
-        !% compute slot for conduits only if ETM solver is used
+        !% compute Preissmann slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
             !% all the closed conduit elements
             thisPackCol => col_elemP(ep_CC_Closed_Elements)
@@ -759,6 +764,9 @@ module runge_kutta2
         !% Description:
         !% Updates the baseline Manning's n with a dynamic roughness 
         !% adjustment
+        !%
+        !% DISABLED AS OF 20220817 -- HAS PROBLEMS WITH SMALL DEPTHS
+        !%
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: whichTM
@@ -800,22 +808,33 @@ module runge_kutta2
                 stop 398705
             end select    
         !%------------------------------------------------------------------  
+
+        print *, 'DYNAMIC ROUGHNESS CANNOT BE USED'
+        print *, 'change setting%Solver%Roughness%useDynamicRoughness = .false.'    
+        stop 20987344
+
         !% --- compute roughness for CC elements    
         npack      => npack_elemP(thisColCC)
         if (npack .ge.1)  then
 
             thisP      => elemP(1:npack,thisColCC)   
             !% --- the normalized pressure gradient scale
-            dp_norm(thisP) = (  abs(fHead_d(fUp(thisP)) - eHead(thisP))   &
-                              + abs(fHead_u(fDn(thisP)) - eHead(thisP)) ) &
-                             / abs(eHead(thisP) - zBottom(thisP))
+            ! dp_norm(thisP) = (  abs(fHead_d(fUp(thisP)) - eHead(thisP))   &
+            !                   + abs(fHead_u(fDn(thisP)) - eHead(thisP)) ) &
+            !                  / abs(eHead(thisP) - zBottom(thisP))
 
-           ! dynamic_mn(thisP) =  mn(thisP) &
-           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
-
-           ! dynamic_mn(thisP) =  mn(thisP) &
-           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )    
-                
+            dp_norm(thisp) = (abs(elemR(thisP,er_Velocity_N0) - elemR(thisP,er_Velocity_N1)) / setting%Time%Hydraulics%Dt)  &
+            / ( &
+            (elemR(thisP,er_Roughness)**2) * (elemR(thisP,er_Velocity_N0)**2) * setting%Constant%gravity &
+            / (elemR(thisP,er_HydRadius)**fourthirdsR) &
+            )
+        
+            !print *, 'in ',trim(subroutine_name)
+            !print *, dp_norm(33)
+            ! print *, fHead_d(fUp(139)), eHead(139)
+            ! print *, fHead_u(fDn(139)), eHead(139)
+            ! print *, eHead(139),zBottom(139)
+           
             call ll_get_dynamic_roughness (thisP, dpnorm_col) 
 
             !dynamic_mn(thisP) =  mn(thisP) &
@@ -825,36 +844,36 @@ module runge_kutta2
         !% --- compute roughness for JB elements
         npack => npack_elemP(thisColJM)
  
-        if (Npack > 0) then
-            do ii=1,Npack
-                tM => elemP(ii,thisColJM)  !% JM junction main ID
-                !% --- handle the upstream branches
-                do kk=1,max_branch_per_node,2
-                    tB(1) = tM + kk  !% JB branch ID
-                    if (BranchExists(tB(1))==1) then
-                        !% --- normalized head difference is with upstream face
-                        dp_norm(tB) = (abs(fHead_d(fUp(tB)) - eHead(tB))) &
-                             / abs(eHead(tB) - zBottom(tB))
-                        !% --- add the dynamic roughness    
-                        call ll_get_dynamic_roughness (tB, dpnorm_col)       
-                    else
-                        !% skip if not a valid branch
-                    end if
-                end do
-                do kk=2,max_branch_per_node,2
-                    tB(1) = tM + kk  !% JB branch ID
-                    if (BranchExists(tB(1))==1) then
-                        !% --- normalized head difference is with downstream face
-                        dp_norm(tB) = (abs(fHead_u(fDn(tB)) - eHead(tB))) &
-                             / abs(eHead(tB) - zBottom(tB))
-                        !% --- add the dynamic roughness  
-                        call ll_get_dynamic_roughness (tB, dpnorm_col)    
-                    else
-                        !% skip if not a valid branch
-                    end if
-                end do
-            end do
-        end if
+        ! if (Npack > 0) then
+        !     do ii=1,Npack
+        !         tM => elemP(ii,thisColJM)  !% JM junction main ID
+        !         !% --- handle the upstream branches
+        !         do kk=1,max_branch_per_node,2
+        !             tB(1) = tM + kk  !% JB branch ID
+        !             if (BranchExists(tB(1))==1) then
+        !                 !% --- normalized head difference is with upstream face
+        !                 dp_norm(tB) = (abs(fHead_d(fUp(tB)) - eHead(tB))) &
+        !                      / abs(eHead(tB) - zBottom(tB))
+        !                 !% --- add the dynamic roughness    
+        !                 call ll_get_dynamic_roughness (tB, dpnorm_col)       
+        !             else
+        !                 !% skip if not a valid branch
+        !             end if
+        !         end do
+        !         do kk=2,max_branch_per_node,2
+        !             tB(1) = tM + kk  !% JB branch ID
+        !             if (BranchExists(tB(1))==1) then
+        !                 !% --- normalized head difference is with downstream face
+        !                 dp_norm(tB) = (abs(fHead_u(fDn(tB)) - eHead(tB))) &
+        !                      / abs(eHead(tB) - zBottom(tB))
+        !                 !% --- add the dynamic roughness  
+        !                 call ll_get_dynamic_roughness (tB, dpnorm_col)    
+        !             else
+        !                 !% skip if not a valid branch
+        !             end if
+        !         end do
+        !     end do
+        ! end if
 
         ! print *, 'in ',trim(subroutine_name)
         ! print *, ' '

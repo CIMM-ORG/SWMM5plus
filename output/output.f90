@@ -876,6 +876,7 @@ contains
         !%-------------------------------------------------------------------
             logical, intent(in) :: isLastStep
             integer, pointer :: thisLevel, Npack, thisP(:), thisType(:)
+            integer :: ii, jj
             character(64)    :: subroutine_name = 'outputML_store_data'
         !%--------------------------------------------------------------------
         !% Preliminaries
@@ -915,6 +916,21 @@ contains
                     + setting%Solver%ReferenceHead
                     end if
                 end if
+
+                ! !% ---- HACK debug print
+                ! if (setting%Time%Now > 373.24d0*60.d0*60.d0) then
+                !     do jj=1,size(output_types_elemR)
+                !         if (output_types_elemR(jj) == er_Flowrate) then
+                !             do ii=1,Npack
+                !                 if (thisP(ii) == 402) then
+                !                     print *, 'in ',trim(subroutine_name), ii, jj
+                !                     print *, elemR(thisP(ii),er_Flowrate), elemOutR(ii,jj,thisLevel)
+                !                 end if
+                !             end do
+                !         end if
+                !     end do
+                ! end if
+
             end if
         end if
 
@@ -1084,6 +1100,21 @@ contains
             else
                 OutElemDataR(Lasti+1:Lasti+npack,1:nTypeElem,1:nLevel) &
                  =  elemOutR(      1:npack      ,1:nTypeElem,1:nLevel)[ii]
+
+                !  print *, 'in ',trim(subroutine_name)
+                !  do pp = 1,nTypeElem
+                !     print *, 'pp ',pp, output_types_elemR(pp),er_Flowrate
+                !     if (output_types_elemR(pp) == er_Flowrate) then
+                !         do mm=1,npack
+                !             print *, mm, thisE(mm)
+                !             if (thisE(mm) == 402) then
+                !                 print *, elemOutR(mm,pp,nLevel)[ii], OutElemDataR(Lasti + 1+ mm,pp,nLevel)
+                !             end if
+                !         end do
+                !         stop 2987322
+                !     end if
+                !  end do
+                !  stop 298743
             end if
             !% increment Lasti for the next image
             Lasti = Lasti + npack
@@ -1573,7 +1604,7 @@ contains
                     !return
                 end if
 
-                !print *, 'AAA '
+                !print *, 'AAA 449704', thisUnit
                 !% -------------------------------
                 !% --- read and store the time levels
                 read(thisUnit) nLevel
@@ -1591,7 +1622,7 @@ contains
                     !return
                 end if
                 
-                !print *, 'BBB'
+                !print *, 'BBB 698734'
 
                 !% -------------------------------------------
                 !% --- BELOW HERE FOR ELEMENTS
@@ -1669,7 +1700,7 @@ contains
                     read(thisUnit) OutElemDataR(1:nTotalElem,1:nTypeElem,1:nLevel)
                 end if !% NtotalOutputElements > 0
 
-                !print *, 'CCC'
+                !print *, 'CCC 59874'
 
                 !% -------------------------------------------
                 !% --- BELOW HERE FOR FACES
@@ -1748,7 +1779,7 @@ contains
                 !% -- done reading this file
                 close(thisUnit)
 
-                !print *, 'DDD'
+                !print *, 'DDD 787344'
 
             !% -----------------------------------
             !% --- PART 2a --- COUNT THE NUMBER OF ELEMENTS PER LINK AND ELEMENTS PER NODE
@@ -1802,7 +1833,7 @@ contains
                     end if !% ii=1
                 end if !% NtotalOutputElements > 0
 
-                ! print *, 'EEE'
+                 !print *, 'EEE 6098734'
 
             !print *, 'EEE FacesExist_byImage',setting%Output%FacesExist_byImage
             !% -----------------------------------
@@ -1838,7 +1869,7 @@ contains
                     end if !% ii=1
                 end if !% NtotalOutputFaces > 0
 
-                ! print *, 'FFF'
+                !print *, 'FFF 6098734'
 
             !print *, 'FFF ElementsExist_byImage', setting%Output%ElementsExist_byImage
             !% -----------------------------------
@@ -1916,7 +1947,7 @@ contains
                     end if ! ii=1
                 end if !% NtotalOutputElements > 0
 
-                ! print *, 'GGG'
+                !print *, 'GGG  3490784'
             !print *, 'GGG ElementsExist_byImage', setting%Output%ElementsExist_byImage
             !% -----------------------------------
             !% --- PART 3b --- STORAGE FOR ELEM->NODE CONVERSION
@@ -1980,7 +2011,7 @@ contains
                     end if !% ii=1
                 end if !% NtotalOutputElements > 0
 
-                ! print *, 'HHH'
+                !print *, 'HHH 698704'
                 !print *, 'HHH %FacesExist_byImage', setting%Output%FacesExist_byImage
             !% -----------------------------------
             !% --- PART 3c --- STORAGE FOR NODE->FACE CONVERSION
@@ -2047,7 +2078,7 @@ contains
                     end if ! ii=1
                 end if !% NtotalOutputFaces > 0
 
-                ! print *, 'III'
+                !print *, 'III 0987354'
                 ! print *, 'III nOutLink ElementsExist_byImage ',nOutLink, setting%Output%ElementsExist_byImage
             !% -----------------------------------
             !% --- PART 4a --- PERFORM ELEM->LINK CONVERSION
@@ -2179,7 +2210,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputElements > 0
 
-                ! print *, 'JJJ'
+                !print *, 'JJJ 509874'
 
                 !print *, 'JJJ nOutNodeElem ElementsExist_byImage',setting%Output%ElementsExist_byImage
             !% -----------------------------------
@@ -2259,7 +2290,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputElements > 0
 
-                ! print *, 'KKK'
+                !print *, 'KKK 690874'
                 !print *, 'KKK FacesExist_byImage (nOutNodeFace)',setting%Output%FacesExist_byImage
             !% -----------------------------------
             !% --- PART 4c --- PERFORM FACE->NODE CONVERSION
@@ -2345,7 +2376,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputFaces > 0
 
-                ! print *, 'LLL'
+                !print *, 'LLL 0957034'
                 !print *, 'LLL ', nOutLink
             !% -----------------------------------
             !% --- PART 5 --- WRITE TO OUTPUT FILES (open and close each)
@@ -2561,7 +2592,7 @@ contains
                     end do !% kk
                 end if !% NtotalOutputElements > 0
 
-                ! print *, 'MMM'
+                !print *, 'MMM 6098734'
                 !print *, 'MMM ', nOutNodeElem
             !% -----------------------------------
             !% --- PART 5b --- WRITE OUTPUT FOR NODES THAT ARE ELEMENTS
@@ -2760,8 +2791,8 @@ contains
                 end if !% NtotalOutputElements > 0
                 !% --- finished writing all Node output files for NodeElem
 
-                ! print *, 'NNN'
-                !print *, 'NNN ', nOutNodeFace
+                !print *, 'NNN 987034'
+                !print *, 'NNN ', nOutNodeFace, NtotalOutputFaces
             !% -----------------------------------
             !% --- PART 5c --- WRITE OUTPUT FOR NODES THAT ARE FACES
             !% -----------------------------------
@@ -2804,6 +2835,7 @@ contains
                         !% -----------------------------------------
                         !% --- NODE-FACE FILES, CSV AND UNF (all types in 1 file)
                         !%
+                        !print *, '    isOutNodeFaceWriteFVonly ', isOutNodeFaceWriteFVonly(kk)
                         if (.not. isOutNodeFaceWriteFVonly(kk)) then
                             !% --- set the filenames for output of SWMM links
                             fn_nodeFace_unf = trim(setting%File%outputML_Node_kernel) &
@@ -2811,6 +2843,7 @@ contains
                             fn_nodeFace_csv = trim(setting%File%outputML_Node_kernel) &
                                 // '_face_' //trim(tnodename) //'.csv'
                             fn_nodeFace_h5  = "node_face_"//trim(tnodename)
+
 
                             if (ii==1) then  !% --- Create new node output files and write headers for first file read
                                 ! !% --- open unformatted node file
@@ -2837,14 +2870,22 @@ contains
                                         pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
                                 end if
+
+                                
                                 if(setting%Output%Report%useHD5F) then
+                                    
                                     call outputML_HD5F_create_dset(fn_nodeFace_h5, H5_file_id, &
-                                        nTypeFace, nTotalTimeLevels, dummyI, &
+                                        nTypeFace, nLevel, dummyI, &
                                         OutNodeFace_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
                                         output_typeNames_withTime_faceR, output_typeUnits_withTime_faceR, &
                                         pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
+
+
+                                    
+                                    !print *, ' OutNodeFace_ProcessedDataR ',OutNodeFace_ProcessedDataR
+                                    !print *, ' OutNodeFace_FaceDataR ',OutNodeFace_FaceDataR
 
                                     call outputML_HD5F_write_file(fn_nodeFace_h5,H5_file_id, &
                                         kk, nTypeFaceWtime, dummyI, nLevel,  &
@@ -2853,14 +2894,16 @@ contains
                                 end if
                                 !% --- finished with the headers
                             else
-                                !print *,' in here'
                                 ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
                                 !     action='write', access='append', status='old')
+
+                                
                                 if(setting%Output%Report%useCSV) then
                                     open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted',  &
                                         action='write', access='append')
                                 end if
 
+                                
                                 if(setting%Output%Report%useHD5F) then 
                                     call outputML_HD5F_extend_write_file(fn_nodeFace_h5,H5_file_id, &
                                         kk, nTypeFaceWtime, dummyI, nLevel,  &
@@ -2874,6 +2917,7 @@ contains
                             !     fU_nodeFace_unf, nTypeFaceWtime, nTotalTimeLevels, kk, OutNodeFace_ProcessedDataR)
                             
 
+                            
                             if(setting%Output%Report%useCSV) then
                                 !% --- write node data to the csv formatted data for these nLevels
                                 call outputML_csv_writedata ( &
@@ -2961,7 +3005,7 @@ contains
                 end if !% NtotalOutputFaces > 0
             !% --- finished writing all Node output files for NodeFace
 
-                ! print *, 'OOO '
+                !print *, 'OOO 6987043'
         end do !% ii
         if (verbose) write(*,"(A)") '      finished writing output files'
 
@@ -2989,6 +3033,8 @@ contains
 
             end if
 
+            !print *, 'PPP 6698734'
+
             if (nOutNodeElem > 0) then
 
                 deallocate(OutNodeElem_pSWMMidx, stat=deallocation_status, errmsg=emsg)
@@ -3011,6 +3057,8 @@ contains
 
             end if
         end if
+
+        !print *, 'QQQ 993874'
 
         if (NtotalOutputFaces > 0) then
             if (nOutNodeFace > 0) then
@@ -3036,10 +3084,13 @@ contains
             end if
         end if
 
+        !print *, 'RRR 5599873'
         !% Close H5 file and HDF5 API
         if(setting%Output%Report%useHD5F) then 
             call outputML_HD5F_close_file(H5_file_id)
         end if
+
+        !print *, 'SSS 6669873'
 
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4628,6 +4679,8 @@ contains
         character(len=99)   :: emsg
         character(64)       :: subroutine_name = 'outputML_HD5F_create_dset'
 
+        print *, 'in ',trim(subroutine_name)
+
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
@@ -4645,9 +4698,9 @@ contains
         end if
 
 
-        !print *,"======================================="
-        !print *,"==============",h5_dset_name,"========================="
-        !print *,"======================================="
+        print *,"======================================="
+        print *,"==============",h5_dset_name,"========================="
+        print *,"======================================="
         
         
         !% length of the attributes to be stored
@@ -4900,6 +4953,8 @@ contains
             deallocate(profile_data)
         end if
 
+        print *, 'exiting ',trim(subroutine_name)
+
     end subroutine outputML_HD5F_create_dset
 
 
@@ -4934,32 +4989,51 @@ contains
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
+             print *, 'in ',trim(subroutine_name)
+             print *, ' isFV ',isFV
 
         !% Dataset_data is allocated and filled with correct data, updated_size_data is stored 
         if(isFv) then    
+            print *, ' here 0000 A'
             allocate(dset_data(nIdx2+1,nLevel))
             updated_size_data(1:2) =(/nLevel,nIdx2+1/)
             dset_data(1,1:nLevel) = Out_ElemDataR(idx1,1,1,1:nLevel)
             dset_data(2:nIdx2+1,1:nLevel) = Out_ElemDataR(idx1,1:nIdx2,idx3,1:nLevel)
 
         else 
+            print *, ' here 0000 B'
             allocate(dset_data(nIdx2,nLevel))
             dset_data(:nIdx2,:nLevel) = Out_ProcessedDataR(idx1,1:nIdx2,1:nLevel)
             updated_size_data(1:2) = (/nLevel,nIdx2/)
 
         end if
+
+        print *, '   here 1111'
         
         !% the dataset is opened 
         CALL h5dopen_f(file_id, trim(h5_dset_name), dset_id, HD_error)
 
+        print *, '    here 2222'
+        print *, '    dset_id ', dset_id
+        print *, '    H5T_NATIVE_REAL ',H5T_NATIVE_REAL
+        print *, '    updated_size_data ', updated_size_data
+        print *, '    HD_error  ',HD_error
+        print *, '    dset_data ',dset_data
+
         !% the dataset is written to using the stored data 
         call h5dwrite_f(dset_id, H5T_NATIVE_REAL, dset_data, updated_size_data,HD_error)
+
+        print *, '    here 3333'
 
         !% the dataset is closed
         CALL h5dclose_f(dset_id, HD_error)
 
+        print *, 'leaving (before deallocate) ',trim(subroutine_name)
+
         !% deallocation of dset_data
         deallocate(dset_data)
+
+        print *, 'leaving ',trim(subroutine_name)
     
     end subroutine outputML_HD5F_write_file
 

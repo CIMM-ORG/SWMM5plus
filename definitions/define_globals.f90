@@ -66,7 +66,7 @@ module define_globals
 
     !% to capture L1 (central) at 1 m nominal
 
-    integer :: iet(7) = (/15,16,17,18,19,20,21/)
+   !integer :: iet(7) = (/15,16,17,18,19,20,21/)
 
     !% for Vasconcelos at 0.1 m nominal
     ! integer :: iet(12) = (/    308,     225,    166,    309,    5,  1,  3,   12,    82,    154,    156, 155  /)
@@ -75,6 +75,22 @@ module define_globals
    ! integer :: iet(7) = (/ 16,17, 18, 19, 20, 21, 22 /)
 
     !integer :: iet(7) = (/ 68, 69, 70, 71, 72, 73, 74 /)
+
+    !%
+    !integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    !integer :: ift(6) = (/91, 92, 93, 94, 95, 96/)
+
+    ! !% for Vasconcelos_TPA
+    ! integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    ! integer :: ift(6) = (/88, 89, 90, 91, 92, 93/)
+
+    !% for lavaca
+    !%                      JM    JB     CC   CC    CC
+    !integer :: iet(5) = (/ 8698, 8700, 8710, 3874, 3875 /)
+    !integer :: ift(4) = (/           8824, 4026, 4027, 4028 /)
+
+    integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
+    integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
 
     integer(kind=8) :: irecCount = 0
 
@@ -340,7 +356,7 @@ module define_globals
     real(8), parameter :: onehundredR = 100.d0
     real(8), parameter :: fivehundredR = 500.d0
     real(8), parameter :: onethousandR = 1000.d0
-    real(8), parameter :: pi = 4.d0*datan(1.d0)
+    !real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneOneThousandthR = oneR / onethousandR
     real(8), parameter :: oneOneHundredthR = oneR / onehundredR

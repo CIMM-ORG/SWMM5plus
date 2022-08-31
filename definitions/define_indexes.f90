@@ -65,6 +65,7 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
+        enumerator :: lr_BottomDepth   
         enumerator :: lr_BreadthScale
         enumerator :: lr_TopWidth
         enumerator :: lr_ElementLength
@@ -521,19 +522,20 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CC_rectangular_nonsurcharged = 1      !% CC rectangular channels that are not surcharged
-        enumerator :: epg_CC_rectangular_closed_nonsurcharged   !% CC rectangular conduits that are not surcharged
-        enumerator :: epg_CC_trapezoidal_nonsurcharged          !% CC trapezoidal channels that are not surcharged
-        enumerator :: epg_CC_triangular_nonsurcharged           !% CC triangular channels that are not surcharged
-        enumerator :: epg_CC_irregular_nonsurcharged            !% CC irregular channels that are not surcharged
-        enumerator :: epg_CC_circular_nonsurcharged             !% CC circular conduits that are not surcharged
-        enumerator :: epg_JM_functionalStorage_nonsurcharged    !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabularStorage_nonsurcharged       !% JM tabular geometry relationship nonsurcharges
-        enumerator :: epg_JM_impliedStorage_nonsurcharged       !% JM with artificial storage
-        enumerator :: epg_JB_rectangular                        !% all rectangular junction branches
-        enumerator :: epg_JB_trapezoidal                        !% all trapezoidal junction branches
-        enumerator :: epg_JB_triangular                         !% all triangular junction branches
-        enumerator :: epg_JB_circular                           !% all circular junction branches
+        enumerator :: epg_CC_rectangular_nonsurcharged = 1          !% CC rectangular channels that are not surcharged
+        enumerator :: epg_CC_rectangular_closed_nonsurcharged       !% CC rectangular conduits that are not surcharged
+        enumerator :: epg_CC_rectangular_triangular_nonsurcharged   !% CC rectangular_triangular that are not surcharged
+        enumerator :: epg_CC_trapezoidal_nonsurcharged              !% CC trapezoidal channels that are not surcharged
+        enumerator :: epg_CC_triangular_nonsurcharged               !% CC triangular channels that are not surcharged
+        enumerator :: epg_CC_irregular_nonsurcharged                !% CC irregular channels that are not surcharged
+        enumerator :: epg_CC_circular_nonsurcharged                 !% CC circular conduits that are not surcharged
+        enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_impliedStorage_nonsurcharged           !% JM with artificial storage
+        enumerator :: epg_JB_rectangular                            !% all rectangular junction branches
+        enumerator :: epg_JB_trapezoidal                            !% all trapezoidal junction branches
+        enumerator :: epg_JB_triangular                             !% all triangular junction branches
+        enumerator :: epg_JB_circular                               !% all circular junction branches
         enumerator :: epg_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
@@ -730,6 +732,16 @@ module define_indexes
          enumerator ::  esgr_Triangular_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSGR_Triangular =  esgr_Triangular_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for triangular channel
+    enum, bind(c)
+         enumerator ::  esgr_Rectangular_Triangular_TopBreadth = 1  !% top breadth of triangular geometry
+         enumerator ::  esgr_Rectangular_Triangular_BottomDepth     !% depth of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_BottomArea      !% area of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_BottomSlope     !% side slope of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_lastplusone     !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSGR_Rectangular_Triangular =  esgr_Rectangular_Triangular_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for trapezoidal pipe or channel
     enum, bind(c)

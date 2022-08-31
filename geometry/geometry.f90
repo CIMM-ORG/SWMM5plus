@@ -8,6 +8,7 @@ module geometry
     use rectangular_conduit
     use trapezoidal_channel
     use triangular_channel
+    use rectangular_triangular_conduit
     use circular_conduit
     use irregular_channel
     use storage_geometry
@@ -252,11 +253,15 @@ module geometry
             integer, intent(in)  :: eIdx
             real(8), intent(in)  :: inDepth
             real(8) :: thisPerimeter, thisArea
+            character(64) :: subroutine_name = "geo_sectionfactor_from_depth_singular"
         !%------------------------------------------------------------------  
+        !print *, 'in ',trim(subroutine_name)    
         thisArea      = geo_area_from_depth_singular      (eIdx,inDepth)
+        ! print *, '----- area     ',thisArea
         thisPerimeter = geo_perimeter_from_depth_singular (eIdx,inDepth)
-
+        ! print *, '----- perimeter',thisPerimeter
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
+        ! print *, '----- sf       ',outvalue
 
     end function geo_sectionfactor_from_depth_singular
 !%
@@ -390,9 +395,6 @@ module geometry
         !% The following are NOT assigned on JB
         !% FullHydDepth, FullPerimeter, FullVolume, Roughness
         !%
-        !% The following initializations are unknown as of 20211215
-        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
-        !% SmallVolume_xxx,
         !%-------------------------------------------------------------------
             integer, intent(in) :: whichTM, thisColP_JM
 
@@ -567,7 +569,16 @@ module geometry
 
                                 !    write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
                                     
-                                case (trapezoidal)                                    
+                                case (rect_triang)                                    
+                                    area(tB)     = rectangular_triangular_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydDepth(tB) = rectangular_triangular_hyddepth_from_depth_singular  (tB,depth(tB))
+                                    perimeter(tB)= rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB))
+                                    hydRadius(tB)= rectangular_triangular_hydradius_from_depth_singular (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
                                     hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular  (tB,depth(tB))
@@ -762,9 +773,16 @@ module geometry
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        ! call util_CLprint('after circular') 
- 
-        !% --- IRREGULAR CC
+        !% -- RECT_TRIANG
+        thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !call util_CLprint('after circular') 
+
+        !% --- IRREGULAR
         thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
@@ -963,9 +981,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (rect_triang)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = rectangular_triangular_area_from_depth_singular (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1095,6 +1111,13 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- RECT_TRIANG
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1138,9 +1161,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rect_triang)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = rectangular_triangular_topwidth_from_depth_singular  (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1271,6 +1292,13 @@ module geometry
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- RECT_TRIANG
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         !%     note this requires first using the table lookup for hydraulic radius
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -1317,9 +1345,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (rect_triang)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = rectangular_triangular_perimeter_from_depth_singular (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1451,6 +1477,13 @@ module geometry
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- RECT_TRIANG
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1496,9 +1529,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (rect_triang)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1840,9 +1871,6 @@ module geometry
         !% FullVolume, HydRadius, InterpWeight_xx, Length, Perimeter,
         !% Roughness, TopWidth, ZbreadthMax, Zcrown
         !%
-        !% The following initializations are unknown as of 20211215
-        !% Preissmann_Celerity, SlotVolume, SlotArea, SlotWidth, SlotDepth
-        !% SmallVolume_xxx
         !%------------------------------------------------------------------
         !% Declarations:
             integer, pointer :: thisCol, Npack, thisP(:)

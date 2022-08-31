@@ -610,6 +610,7 @@ module adjust
             integer, target  :: pset(2)
             real(8)          :: psign(2)
             integer :: ii
+            character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes'
         !% -----------------------------------------------------------------
         !% Preliminaries:   
             select case (whichTM)
@@ -665,6 +666,9 @@ module adjust
         if (setting%Solver%Roughness%useDynamicRoughness) then
             ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness_Dynamic))
         end if
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, ManningsN(139), elemR(139,er_Roughness_Dynamic), elemR(139,er_Roughness)
 
         !print *, 'mannings n', ManningsN(iet(1:2))
 
@@ -1239,7 +1243,7 @@ module adjust
             real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:), Zbottom(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
-            logical, pointer :: isSlot(:)
+            logical, pointer :: isSlot(:)  !% Preissman Slot logical
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
         !% Preliminaries      
@@ -1287,7 +1291,7 @@ module adjust
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
             Zbottom    => elemR(:,er_Zbottom)
-            isSlot     => elemYN(:,eYN_isSlot)
+            isSlot     => elemYN(:,eYN_isSlot)  !% Preissman slot
 
             ! print *, ' '
             ! print *, 'in ADJUST ------------', thisCol

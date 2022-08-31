@@ -396,8 +396,9 @@ contains
         !print *, this_image(), elemR(:,er_Depth)
     
         ! call util_CLprint('At end of initialization')
-        ! stop 445782
 
+        ! print *, setting%Output%Report%useHD5F
+        ! stop 4409872
 
         !%------------------------------------------------------------------- 
         !% Closing
@@ -599,6 +600,7 @@ contains
         do ii = 1, setting%SWMMinput%N_link
 
             !print *, 'in ',trim(subroutine_name), ii
+            !print *, api_linkf_geometry
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
@@ -606,6 +608,9 @@ contains
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
+
+            !print *, 'in ',trim(subroutine_name)
+            !print *, ii, link%I(ii,li_geometry)
 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -646,6 +651,7 @@ contains
             link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
             link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
             link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+            link%R(ii,lr_BottomDepth)     = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
             link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
             link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
             link%R(ii,lr_FlowrateInitial) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
@@ -693,10 +699,8 @@ contains
                  (link%I(ii,li_geometry) == lRectangular)    .or. &
                  (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
                  (link%I(ii,li_geometry) == lTriangular)     .or. &
+                 (link%I(ii,li_geometry) == lParabolic)      .or. &
                  (link%I(ii,li_geometry) == lPower_function) .or. &
-                 (link%I(ii,li_geometry) == lRect_triang)    .or. &
-                 (link%I(ii,li_geometry) == lRect_round)     .or. &
-                 (link%I(ii,li_geometry) == lMod_basket)     .or. &
                  (link%I(ii,li_geometry) == lIrregular)) ) then
 
                 link%I(ii,li_link_type) = lChannel
@@ -884,7 +888,7 @@ contains
                         print *, 'Found link length of ',link%R(ii,lr_Length)
                         print *, 'Link index is ',ii
                         print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
-                        print *, 'Either change setting.Discretization.AdjustLinkLengthYN to true, or'
+                        print *, 'Either change setting.Discretization.AdustLinkLengthForJunctionBranchYN to true, or'
                         print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
                         call util_crashpoint(447298)
                     end if
@@ -1532,7 +1536,7 @@ contains
         sync all
 
         !% Compute the amount of a conduit length that is added to a connected junction.
-        !% This modifies the conduit length itself if setting%Discretization%AdjustLinkLengthYN
+        !% This modifies the conduit length itself if setting%Discretization%AdustLinkLengthForJunctionBranchYN
         !% is true. The junction itself is setup in init_network_nJm_branch_length()
         call init_discretization_adjustlinklength()
 
@@ -1786,7 +1790,8 @@ contains
             !% use values from json file
         end if
 
-        !print *, setting%Time%EndEpoch
+        ! print *, setting%Time%EndEpoch
+        ! stop 309874
 
 
         !% Translate epoc endtime to seconds from a zero start time
@@ -1802,14 +1807,17 @@ contains
         !%     get the number of seconds.  A final application of floor() and conversion
         !%     back to real ensures we only have whole seconds
 
-        
+        ! print *, setting%Time%StartEpoch
+        ! print *, setting%Time%EndEpoch       
         ttime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday,KIND=8)
-        !print *, 'ttime ',ttime
+       ! print *, 'ttime ',ttime
         ttime = util_datetime_seconds_precision (ttime)
-        !print *, 'ttime ',ttime  
+       ! print *, 'ttime ',ttime  
         !setting%Time%End = real(floor(ttime),8)
         setting%Time%End = ttime
-        print *, 'time end ',setting%Time%End
+       ! print *, 'time end ',setting%Time%End
+
+       ! stop 2098734
 
         ! print *, ' '
         ! print *, ' '

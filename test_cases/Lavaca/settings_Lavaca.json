@@ -5,9 +5,22 @@
         "Long"  : "Lavaca_Trap_NoIC_EndTime",
         "Short" : "Lavaca"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 0.5
+        }
+    },
     "Discretization" : {
-        "AdjustLinkLengthYN" : false,
-        "JunctionBranchLengthFactor" : 0.33,
+        "AdustLinkLengthForJunctionBranchYN" : false,
+        "JunctionBranchLengthFactor" : 1.0,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 150.00
@@ -17,9 +30,6 @@
             "UseInflowLimiterYN" : true,
             "Approach" : "FroudeNumber",
             "FroudeInflowMaximum" : 1.5
-        },
-        "Channel" : {
-            "LargeDepthFactor" : 10.0
         },
         "Flowrate" : {
             "FaceVolumeTransport" : 0.5,
@@ -37,14 +47,19 @@
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
         }
-    },    
+    }, 
+    "Link" : {
+        "DefaultInitDepthType"     : "Linear", 
+        "OpenChannelLimitDepthYN"  : true,
+        "OpenChannelFullDepth"     :  20
+    },   
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 100
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -64,8 +79,9 @@
             "isWaveSpeedOut"    : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
-            "provideYN" : true,
+            "useSWMMinpYN" : true,
+            "useHD5F"      : true,
+            "provideYN"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,
