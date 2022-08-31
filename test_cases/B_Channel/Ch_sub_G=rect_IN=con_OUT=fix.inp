@@ -55,7 +55,7 @@ N3                4.3762     0          1          0          0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-O4                0          FREE                      NO                       
+O4                0          FREE                        YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   

@@ -38,32 +38,37 @@
         }
     },    
     "Output" : {
+        "UseFileNameFile" : false,
         "Verbose" : true,
         "Warning" : true,
         "StoredLevels" : 100,
+        "StoredFileNames" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 10
         },
         "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : true,
-            "isHydRadiusOut"    : false,
-            "isPerimeterOut"    : false,
+            "isAreaOut"             : true,
+            "isDepthOut"            : true,
+            "isFlowrateOut"         : true,
+            "isFluxConsOut"         : true,
+            "isFroudeNumberOut"     : false,
+            "isHeadOut"             : true,
+            "isHydRadiusOut"        : false,
+            "isPerimeterOut"        : false,
             "isRoughnessDynamicOut" : false,
-            "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
-            "isTopWidthOut"     : false,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isSlotWidthOut"        : false,
+            "isSlotDepthOut"        : false,
+            "isTopWidthOut"         : false,
+            "isVelocityOut"         : true,
+            "isVolumeOut"           : true,
+            "isWaveSpeedOut"        : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" : true,
             "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,

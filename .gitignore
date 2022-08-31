@@ -23,6 +23,7 @@ json-fortran
 
 # Executable
 SWMM
+swmm5_C
 
 # Directories
 interface/src
