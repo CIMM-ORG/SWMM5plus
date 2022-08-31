@@ -2836,6 +2836,8 @@ contains
                     (elemI(eup,ei_QeqType) == diagnostic))
         end if
 
+        faceYN(faceP(1:npack, ptype),fYN_isDiag_adjacent) = .true.
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_static_interior_faces

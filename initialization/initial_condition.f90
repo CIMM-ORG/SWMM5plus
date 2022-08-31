@@ -3093,6 +3093,10 @@ contains
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
+        elemR(1:size(elemR,1)-1,er_dSlotArea)             = zeroR
+        elemR(1:size(elemR,1)-1,er_dSlotDepth)            = zeroR
+        elemR(1:size(elemR,1)-1,er_dSlotVolume)           = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotVolumeOld)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR     
 
         !% only calculate slots for ETM time-march

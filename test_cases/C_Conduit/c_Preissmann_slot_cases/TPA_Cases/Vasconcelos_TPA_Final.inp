@@ -64,8 +64,8 @@ DRY_ONLY         NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                1                2                14.33       0.012       0          0          0          0  
-2                1                3                 1.43       0.012      0.32         0          0          0
+1                1                2                14.33       0.018       0          0          0          0  
+2                1                3                 1.43       0.018       0.32       0          0          0
 
 
 [XSECTIONS]

@@ -467,7 +467,6 @@ module update
             isSlot    => elemYN(:,eYN_isSlot)
         !%------------------------------------------------------------------
         !% cycle through the branches to compute weights
-        !print *, 'here in JB update '
         do ii=1,max_branch_per_node
             wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
 
@@ -478,12 +477,6 @@ module update
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
             endwhere
-            
-
-            ! if (setting%Time%Now/3600.0 > 388.0) then
-            !     write(*,"(A,10f16.9)") 'interp before', w_dQ(ietU1(1)), w_uQ(ietU1(2))
-            !     print *, 'depth, wavespeed JB ',depth(ietU1(2)),wavespeed(ietU1(2))
-            ! end if
 
             !% apply limiters to timescales
             where (w_uQ(thisP+ii) < zeroR)
@@ -505,10 +498,6 @@ module update
             where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
                 w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
             endwhere
-
-            ! if (setting%Time%Now/3600.0 > 388.0) then
-            !     write(*,"(A,10f16.9)") 'interp after ', w_dQ(ietU1(1)), w_uQ(ietU1(2))
-            ! end if
 
             !% set the geometry interp the same as flow interp
             w_uG(thisP+ii) = w_uQ(thisP+ii)

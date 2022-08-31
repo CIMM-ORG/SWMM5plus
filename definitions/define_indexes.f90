@@ -324,6 +324,9 @@ module define_indexes
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
+        enumerator :: er_dSlotArea                  !% change in slot volume
+        enumerator :: er_dSlotDepth                 !% change in slot depth
+        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
         enumerator :: er_ell_max                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
@@ -370,7 +373,8 @@ module define_indexes
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
         enumerator :: er_SlotHydRadius              !% slot hydraulic radius 
-        enumerator :: er_SlotVolume                 !% slot volume       
+        enumerator :: er_SlotVolume                 !% slot volume 
+        enumerator :: er_SlotVolumeOld              !% old slot volume      
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume

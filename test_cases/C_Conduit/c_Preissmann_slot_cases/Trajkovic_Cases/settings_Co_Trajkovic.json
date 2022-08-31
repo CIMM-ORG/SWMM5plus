@@ -2,8 +2,8 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "Trajkovic_CaseA3_dx0.2",
-        "Short" : "TA3_dx0.2"
+        "Long"  : "Trajkovic_Case_dx0.2",
+        "Short" : "TA_dx0.2"
     },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
@@ -97,7 +97,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 50.0,
+        "TargetPreissmannCelerity" : 100.0,
         "PreissmannAlpha" : 2.00
     },
     "VariableDT" : {
@@ -120,7 +120,7 @@
             "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : false,
+            "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0,
             "FullDepthMultiplier" : 0.00001

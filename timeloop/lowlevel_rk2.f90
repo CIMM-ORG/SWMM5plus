@@ -1438,8 +1438,9 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         integer, intent(in) :: thisCol, Npack
         integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
         real(8), pointer    :: AreaN0(:), BreadthMax(:), ellMax(:), fullarea(:)
-        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:), SlotHydRad(:) 
-        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:), Vvalue(:) 
+        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), temp(:), Dt
+        real(8), pointer    :: dSlotVol(:), dSlotArea(:), dSlotDepth(:), oldSlotVOl(:), volume(:) 
         real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
         logical, pointer    :: isSlot(:), isfSlot(:)
 
@@ -1450,19 +1451,23 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         !% pointers to elemR columns
         AreaN0     => elemR(:,er_Area_N0)
         BreadthMax => elemR(:,er_BreadthMax)
+        dSlotArea  => elemR(:,er_dSlotArea)
+        dSlotDepth => elemR(:,er_dSlotDepth)
+        dSlotVol   => elemR(:,er_dSlotVolume)
         ellMax     => elemR(:,er_ell_max)
         fullArea   => elemR(:,er_FullArea)
         fullVolume => elemR(:,er_FullVolume)
         length     => elemR(:,er_Length)
+        oldSlotVOl => elemR(:,er_SlotVolumeOld)
         PNumber    => elemR(:,er_Preissmann_Number)
         PCelerity  => elemR(:,er_Preissmann_Celerity)
         SlotWidth  => elemR(:,er_SlotWidth)
         SlotVolume => elemR(:,er_SlotVolume)
-        SlotHydRad => elemR(:,er_SlotHydRadius)
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         volume     => elemR(:,er_Volume)
         velocity   => elemR(:,er_velocity)
+        temp       => elemR(:,er_Temp01)
         !% pointer to elemYN column
         isSlot     => elemYN(:,eYN_isSlot)
         isfSlot    => faceYN(:,fYN_isSlot)
@@ -1477,55 +1482,90 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
         PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
         cfl                 => setting%VariableDT%CFL_target
         grav                => setting%Constant%gravity
-        Vvalue              => elemR(:,er_Temp01)
+        Dt                  => setting%Time%Hydraulics%Dt
 
-        !% initialize slot
-        SlotVolume(thisP) = zeroR
-        SlotArea(thisP)   = zeroR
-        SlotDepth(thisP)  = zeroR
-        SlotWidth(thisP)  = zeroR
-        PCelerity(thisP)  = zeroR
-        isSlot(thisP)     = .false.
-        isfSlot(fUp(thisP)) = .false.
-        isfSlot(fDn(thisP)) = .false.
-        
-        !% find out the slot volume/ area/ and the faces that are surcharged
-        where (volume(thisP) > fullVolume(thisP))
-            !% find the volume of the slot
-            SlotVolume(thisP) = volume(thisP) - fullvolume(thisP)
-            !% find the slot area
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            !% rest the volume to fullvolume which will affect velocity computation
-            ! volume(thisP)     = fullvolume(thisP)
-            !% set the fase slot to true
-            isfSlot(fUp(thisP)) = .true.
-            isfSlot(fDn(thisP)) = .true.
-        end where
-
-        !% Calculate the preissmann celerity with the already set preissmann number from
-        !% previous time/rk step. Also, any cell containig two slot faces will also designated
-        !% to have a slot. Which ensures a preissmann celerity in that element.
-        where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
-            !% set isSlot to true
-            isSlot(thisP)    = .true.
-            !% smooth the preissmann number from using simple face interpolation
-            PNumber(thisP) = max(onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP))), oneR)
-            !% Preissmann Celerity
-            PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-            !% find the water height at the slot
-            SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
-        end where
-
-        !% Now adjust the preissmann number for the next RK-step
+        !% Selet the type of slot method
         select case (SlotMethod)
             !% for a static slot, the preissmann number will always be one.
             case (StaticSlot)
+                !% initialize static slot
                 PNumber(thisP) = oneR
-            !% for dynamic slot, preissmann number is adjusted
+                SlotVolume(thisP) = zeroR
+                SlotArea(thisP)   = zeroR
+                SlotDepth(thisP)  = zeroR
+                SlotWidth(thisP)  = zeroR
+                PCelerity(thisP)  = zeroR
+                isSlot(thisP)     = .false.
+                isfSlot(fUp(thisP)) = .false.
+                isfSlot(fDn(thisP)) = .false.
+                !% find out the slot volume/ area/ and the faces that are surcharged
+                where (volume(thisP) >= fullVolume(thisP))
+                    !% find slot properties
+                    SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
+                    SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+                    isfSlot(fUp(thisP)) = .true.
+                    isfSlot(fDn(thisP)) = .true.
+                    isSlot(thisP)     = .true.
+                    PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
+                    SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                    SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+                end where
+            
+             !% for dynamic slot, preissmann number is adjusted
             case (DynamicSlot)
-                where (isSlot(thisP))
+                !% initialize dynamic slot
+                oldSlotVOl(thisP) = SlotVolume(thisP)
+                SlotVolume(thisP) = zeroR
+                SlotArea(thisP)   = zeroR
+                SlotWidth(thisP)  = zeroR
+                PCelerity(thisP)  = zeroR
+                dSlotVol          = zeroR
+                dSlotArea         = zeroR
+                dSlotDepth        = zeroR
+                temp              = zeroR
+                isSlot(thisP)       = .false.
+                isfSlot(fUp(thisP)) = .false.
+                isfSlot(fDn(thisP)) = .false.
+
+                !% find out the slot volume/ area/ and the faces that are surcharged
+                where (volume(thisP) > fullVolume(thisP))
+                    !% find slot properties
+                    SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
+                    SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)  
+                    !% logicals
+                    isfSlot(fUp(thisP)) = .true.
+                    isfSlot(fDn(thisP)) = .true.
+                    isSlot(thisP)       = .true.
+                    !% smooth out preissmann number
+                    ! PNumber = max(onehalfR * (fPNumber(fUP(thisP)) + fPNumber(fDn(thisP))), oneR)
+                    !% find the preissmann celerity
+                    PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
+                    !% find the change in slot volume
+                    dSlotVol(thisP)   = SlotVolume(thisP) - oldSlotVOl(thisP)
+                    !% find the change in slot area
+                    dSlotArea(thisP)  = dSlotVol(thisP) / length(thisP)
+                    !% find the change in slot depth
+                    dSlotDepth(thisP) = (dSlotArea(thisP)  * (PCelerity(thisP) ** twoR)) / (grav * (fullArea(thisP)))
+                end where
+
+                !% reset isfSlot to find ventilated positions
+                where (.not. isSlot(thisP))
+                    isfSlot(fUp(thisP)) = .false.
+                    isfSlot(fDn(thisP)) = .false.
+                end where
+
+                where (faceYN(fUP(thisP),fYN_isDiag_adjacent))
+                    isfSlot(fUp(thisP)) = .false.
+                end where
+
+                where (faceYN(fDn(thisP),fYN_isDiag_adjacent))
+                    isfSlot(fDn(thisP)) = .false.
+                end where
+
+                where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
                     !% get a new decreased preissmann number for the next time step for elements having a slot
-                    PNumber(thisP) = max((PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP), oneR)
+                    ! PNumber(thisP) = max((PNumber(thisP) ** twoR - PNumber(thisP) + oneR) / PNumber(thisP), oneR)
+                    PNumber(thisP) = max(PNumber(thisP) - PNumber(thisP) * Dt, oneR)
                 elsewhere
                     !% reset the preissmann number for every CC element not having a slot
                     PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))

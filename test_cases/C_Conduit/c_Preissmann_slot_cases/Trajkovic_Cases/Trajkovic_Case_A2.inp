@@ -72,7 +72,7 @@ DRY_ONLY         NO
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
 2                2                3                SIDE         0          0.76        NO      0.001          
-4                4                5                SIDE         0          0.76        NO      0.001        
+4                4                5                SIDE         0          0.76        NO      0.001   
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -98,7 +98,7 @@ THEN ORIFICE 4 SETTING = 0.0
 
 RULE R3
 IF SIMULATION TIME > 00:02:30
-THEN ORIFICE 4 SETTING = 0.28
+THEN ORIFICE 4 SETTING = 0.15
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
