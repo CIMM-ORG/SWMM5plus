@@ -48,9 +48,9 @@ def convert_dset_to_csv(file_name,dset_name):
 
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
-tol = 0.1                # tolerance for comparing between the norms
-recompile_swmmC = False  # logical for recompiling swmmC
-print_results = True     # logical to print individual swmm5 vs swmm5+ link and node results
+tol = 5.0                   # tolerance for comparing between the norms
+recompile_swmmC  = False    # logical for recompiling swmmC
+print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
 #-----------------------------------------------------------------------------------
 
 # Getting current working directory and time when the script is ran so that we can create a new folder
@@ -175,19 +175,21 @@ for x in all_dset_names:
         time = z[1:,0]
 
         # print link flowrate and depth data
-        if print_results:
-            link_col_headers = ["Time (hrs.)","SWMMC Q (cms)", "SWMM5+ Q (cms)", "SWMMC Y (m)", "SWMM5+ Y (m)"]
+        rsme_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q) / np.sqrt(len(swmmC_link_Q))
+        rsme_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y) / np.sqrt(len(swmmC_link_Y))
+        print(' ')
+        print('-------------------------------------------------------------------------------')
+        print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
+        if print_timeseries:
+            link_col_headers = ["Time (hrs.)","SWMM-C Q (cms)", "SWMM5+ Q (cms)", "SWMM-C Y (m)", "SWMM5+ Y (m)"]
             link_merged_array = np.array([time,swmmC_link_Q, swmmF_link_Q, swmmC_link_Y, swmmF_link_Y]).T
-            link_table = tabulate(link_merged_array , link_col_headers)
-            rsme_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q) / np.sqrt(len(swmmC_link_Q))
-            rsme_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y) / np.sqrt(len(swmmC_link_Y))
-            print(' ')
-            print('-------------------------------------------------------------------------------')
-            print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
+            link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
+            print(' ') 
             print(link_table)
-            print('Flowrate   RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_link_Q)
-            print('Flow depth RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_link_Y)
-            print('-------------------------------------------------------------------------------')
+            print(' ')
+        print('Flowrate   RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_link_Q)
+        print('Flow depth RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_link_Y)
+        print('-------------------------------------------------------------------------------')
 
         # ... Calculate the norms
         # calculate L1,L2,Linf norms for the swmm_c link flowrates
@@ -238,18 +240,20 @@ for x in all_dset_names:
         # extract the timestamp
         time = z[1:,0]
 
+        rsme_node_Y = np.linalg.norm(swmmC_node_H - swmmF_node_H) / np.sqrt(len(swmmC_node_H))
+        print(' ')
+        print('-------------------------------------------------------------------------------')
+        print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
         # print node depth data
-        if print_results:
+        if print_timeseries:
             node_col_headers = ["Time (hrs.)", "SWMMC H (m)", "SWMM5+ H (m)"]
             node_merged_array = np.array([time,swmmC_node_H, swmmF_node_H]).T
-            link_table = tabulate(node_merged_array , node_col_headers)
-            rsme_node_Y = np.linalg.norm(swmmC_node_H - swmmF_node_H) / np.sqrt(len(swmmC_node_H))
+            node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
             print(' ')
-            print('-------------------------------------------------------------------------------')
-            print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
-            print(link_table)
-            print('Head RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_node_Y)
-            print('-------------------------------------------------------------------------------')
+            print(node_table)
+            print(' ')
+        print('Head RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_node_Y)
+        print('-------------------------------------------------------------------------------')
 
         # calculate L1,L2,Linf norms for the swmm_c output
         swmmC_node_Y_l1 = np.linalg.norm(swmmC_node_H,1)
@@ -272,9 +276,9 @@ for x in all_dset_names:
 
 print(' ')
 if(len(list_of_errors) == 0):
-    print("no links or nodes are out of the L0, L1, L2, and Linf range for given tolerance", tol)
+    print("no links or nodes are out of the L0, L1, and Linf norm range for given tolerance", tol)
 else:
-    print("Issues: some links or nodes are out of the L0, L1, L2, and Linf range for given tolerance", tol)
+    print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance", tol)
     print(list_of_errors)
 
 print(' ')

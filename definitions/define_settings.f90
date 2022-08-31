@@ -205,7 +205,7 @@ module define_settings
     type ReportType
         logical :: useSWMMinpYN = .true.
         logical :: provideYN = .true.
-        logical :: useHD5F   = .false.
+        logical :: useHD5F   = .true.
         logical :: useCSV    = .true.
         logical :: suppress_MultiLevel_Output = .false.
         real(8) :: StartTime = 0.0d0
