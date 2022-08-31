@@ -4679,8 +4679,6 @@ contains
         character(len=99)   :: emsg
         character(64)       :: subroutine_name = 'outputML_HD5F_create_dset'
 
-        print *, 'in ',trim(subroutine_name)
-
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
@@ -4696,13 +4694,7 @@ contains
         if( allocated(output_profile_ids)) then
             allocate(profile_data(max_links_profile_N,max_profiles_N))
         end if
-
-
-        print *,"======================================="
-        print *,"==============",h5_dset_name,"========================="
-        print *,"======================================="
-        
-        
+             
         !% length of the attributes to be stored
         attrlen = 150
 
@@ -4953,8 +4945,6 @@ contains
             deallocate(profile_data)
         end if
 
-        print *, 'exiting ',trim(subroutine_name)
-
     end subroutine outputML_HD5F_create_dset
 
 
@@ -4988,10 +4978,7 @@ contains
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        
-             print *, 'in ',trim(subroutine_name)
              
-
         !% Dataset_data is allocated and filled with correct data, updated_size_data is stored 
         if(isFv) then    
             allocate(dset_data(nIdx2+1,nLevel))
@@ -5019,12 +5006,8 @@ contains
         !% the dataset is closed
         CALL h5dclose_f(dset_id, HD_error)
 
-        print *, 'leaving (before deallocate) ',trim(subroutine_name)
-
         !% deallocation of dset_data
         deallocate(dset_data)
-
-        print *, 'leaving ',trim(subroutine_name)
     
     end subroutine outputML_HD5F_write_file
 
