@@ -4990,40 +4990,31 @@ contains
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
              print *, 'in ',trim(subroutine_name)
-             print *, ' isFV ',isFV
+             
 
         !% Dataset_data is allocated and filled with correct data, updated_size_data is stored 
         if(isFv) then    
-            print *, ' here 0000 A'
             allocate(dset_data(nIdx2+1,nLevel))
             updated_size_data(1:2) =(/nLevel,nIdx2+1/)
             dset_data(1,1:nLevel) = Out_ElemDataR(idx1,1,1,1:nLevel)
             dset_data(2:nIdx2+1,1:nLevel) = Out_ElemDataR(idx1,1:nIdx2,idx3,1:nLevel)
 
         else 
-            print *, ' here 0000 B'
             allocate(dset_data(nIdx2,nLevel))
             dset_data(:nIdx2,:nLevel) = Out_ProcessedDataR(idx1,1:nIdx2,1:nLevel)
             updated_size_data(1:2) = (/nLevel,nIdx2/)
 
         end if
 
-        print *, '   here 1111'
         
         !% the dataset is opened 
         CALL h5dopen_f(file_id, trim(h5_dset_name), dset_id, HD_error)
 
-        print *, '    here 2222'
-        print *, '    dset_id ', dset_id
-        print *, '    H5T_NATIVE_REAL ',H5T_NATIVE_REAL
-        print *, '    updated_size_data ', updated_size_data
-        print *, '    HD_error  ',HD_error
-        print *, '    dset_data ',dset_data
+
 
         !% the dataset is written to using the stored data 
         call h5dwrite_f(dset_id, H5T_NATIVE_REAL, dset_data, updated_size_data,HD_error)
 
-        print *, '    here 3333'
 
         !% the dataset is closed
         CALL h5dclose_f(dset_id, HD_error)
