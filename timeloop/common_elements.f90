@@ -85,7 +85,7 @@ module common_elements
         Head = max(UpstreamFaceHead , DownstreamFaceHead)
         
         !% flow direction on a diagnostic element assigned based up upstream and downstream heads
-        FlowDirection = int(sign(oneR, (UpstreamFaceHead - DownstreamFaceHead)) )
+        FlowDirection = int(sign(oneR, (UpstreamFaceHead - DownstreamFaceHead)))
         
         !% nominal downstream head on a diagnostic element
         NominalDSHead = min(UpstreamFaceHead, DownstreamFaceHead)

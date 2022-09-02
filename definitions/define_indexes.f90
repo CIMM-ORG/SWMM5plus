@@ -658,7 +658,10 @@ module define_indexes
     integer, parameter :: Ncol_elemSR_Weir = esr_Weir_lastplusone-1
 
     enum, bind(c)
-        enumerator ::  esr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
+        enumerator ::  esr_Orifice_CriticalDepth = 1        !% critical depth bellow which the orifice acts like an weir
+        enumerator ::  esr_Orifice_CriticalHead             !% critical head for weir flow through an orifice
+        enumerator ::  esr_Orifice_FractionCriticalDepth    !% critical depth fracttion to distinct between weir and orifice flow
+        enumerator ::  esr_Orifice_DischargeCoeff           !% discharge coefficient orifice
         enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
         enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
         enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention

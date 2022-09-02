@@ -474,20 +474,11 @@ module weir_elements
         
         !% set geometry variables for weir types
         select case (SpecificWeirType) 
-            case (transverse_weir)
+            case (transverse_weir,side_flow)
                 Area      = RectangularBreadth * zY - RectangularBreadth * z
                 Volume    = Area * Length  !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
                 HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
-                ell       = Head - Zbottom
-                Perimeter = Topwidth + twoR * HydDepth
-                HydRadius = Area / Perimeter
-                
-            case (side_flow)
-                Area      = RectangularBreadth * zY - RectangularBreadth * z
-                Volume    = Area * Length
-                Topwidth  = RectangularBreadth
-                HydDepth  = Depth
                 ell       = Head - Zbottom
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
@@ -579,13 +570,11 @@ module weir_elements
         
         !% set geometry variables for weir types
         select case (SpecificWeirType) 
-            case (transverse_weir)
-                Area      = RectangularBreadth * zY - RectangularBreadth * z
-            case (side_flow)
+            case (transverse_weir,side_flow)
                 Area      = RectangularBreadth * zY - RectangularBreadth * z
             case (trapezoidal_weir)
                 Area      = (TrapezoidalBreadth + onehalfR * (TrapezoidalLeftSlope + TrapezoidalRightSlope) * zY) * zY &
-                        - (TrapezoidalBreadth + onehalfR * (TrapezoidalLeftSlope + TrapezoidalRightSlope) * z) * z
+                          - (TrapezoidalBreadth + onehalfR * (TrapezoidalLeftSlope + TrapezoidalRightSlope) * z ) * z
             case (vnotch_weir)
                 Area      = TriangularSideSlope * zY ** twoR - TriangularSideSlope * z ** twoR
             case default
