@@ -49,7 +49,7 @@ def convert_dset_to_csv(file_name,dset_name):
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
 tol = 5.0                   # tolerance for comparing between the norms
-recompile_swmmC  = False    # logical for recompiling swmmC
+recompile_swmmC  = True    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
 #-----------------------------------------------------------------------------------
 
@@ -63,9 +63,11 @@ settings_path  = ""
 # removes the SWMM5_C code from last comparison run and rebuilds it if needed 
 if  recompile_swmmC or os.system('find swmm5_C'):
     os.system('rm -rf swmm5_C')
+    os.system('cd interface \n cp Makefile_swmm5 src/')
     os.system('cd interface/src \n make -f Makefile_swmm5 ')
 
 #checking if a input file is given
+
 if(len(sys.argv) < 2):
     print('no local path to input file provided')
     exit()
