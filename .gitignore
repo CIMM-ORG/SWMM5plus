@@ -23,6 +23,7 @@ json-fortran
 
 # Executable
 SWMM
+swmm5_C
 
 # Directories
 interface/src
@@ -32,3 +33,5 @@ tests/*
 .vscode
 swmm5_output
 build/
+debug/
+dwflow/

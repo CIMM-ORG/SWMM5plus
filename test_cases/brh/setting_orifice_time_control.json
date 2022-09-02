@@ -1,0 +1,71 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "TimeControl_test",
+        "Short" : "TC_test"
+    },
+    "Adjust" : {
+        "Flowrate" : {
+            "SmallDepthMultiplier" : 3.0
+        }
+    },        
+    "BC" : {
+        "TimeSlotsStored" : 1000
+    },
+    "Discretization" : {
+        "NominalElemLength" : 0.50
+    },
+    "Output" : {
+        "StoredLevels" : 100,
+        "CommandLine" : {
+            "interval" : 1
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isRoughnessDynamicOut" : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
+        }
+    },
+    "Simulation" :{
+        "useSpinUp" : false,
+        "SpinUpDays" : 10.0,
+        "stopAfterSpinUp" : false
+    },
+    "SmallDepth" : {
+        "DepthCutoff" : 0.01,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "MomentumSourceMethod" : "T00"
+    },    
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.2,
+        "increaseFactor" : 2.0,
+        "NstepsForCheck" : 5,
+        "InitialDt"      : 1.0
+    },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "StaticSlot",
+        "TargetPreissmannCelerity" : 15.00,
+        "PreissmannAlpha"          : 2.00 
+    }
+}

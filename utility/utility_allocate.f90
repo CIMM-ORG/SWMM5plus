@@ -6,6 +6,7 @@ module utility_allocate
     use define_settings, only: setting
     use interface_
     use utility
+    use utility_crash, only: util_crashpoint
 
     ! use utility, only: utility_check_allocation
 
@@ -31,6 +32,7 @@ module utility_allocate
     public :: util_allocate_action_points
     public :: util_allocate_link_transect
     public :: util_allocate_element_transect
+    public :: util_allocate_uniformtable_array
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -47,6 +49,8 @@ module utility_allocate
     public :: util_allocate_check
     public :: util_allocate_boundary_ghost_elem_array
     public :: util_allocate_temporary_arrays
+    public :: util_allocate_output_profiles
+    
 
 
 contains
@@ -349,6 +353,45 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine util_allocate_uniformtable_array ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Allocates space for the lookup table for geometry = f(sectionfactor), etc.
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% --- only headBC locations at this time 20220726brh
+        !%     HACK -- to be expanded later to include transects and other geometry tables
+        N_uniformTable_locations = N_headBC
+
+        !% --- storage for integer data
+        allocate(uniformTableI &
+                (N_uniformTable_locations,Ncol_uniformTableI), &
+                stat=allocation_status,errmsg=emsg)
+
+        call util_allocate_check(allocation_status, emsg, 'uniformTableI')
+        uniformTableI(:,:) = nullvalueI
+
+        !% --- storage real data
+        allocate(uniformTableR &
+                (N_uniformTable_locations,Ncol_uniformTableR), &
+                stat=allocation_status,errmsg=emsg)
+                
+        call util_allocate_check(allocation_status, emsg, 'uniformTableR')
+        uniformTableR(:,:) = nullvalueR
+
+        !% ---3D table indexed by uniformly-divided section factor
+        allocate(uniformTableDataR &
+                 (N_uniformTable_locations, N_uniformTableData_items, Ncol_uniformTableDataR), &
+                  stat=allocation_status,errmsg=emsg)
+
+        call util_allocate_check(allocation_status, emsg, 'uniformTableDataR')
+        uniformTableDataR(:,:,:) = nullvalueR
+
+    end subroutine util_allocate_uniformtable_array
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_allocate_subcatch()
         !%------------------------------------------------------------------
         !% Description:
@@ -595,7 +638,6 @@ contains
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
-        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1053,6 +1095,14 @@ contains
                 write(*,"(I8)") N_OutElem(:)
                 stop 387053
             end if
+
+            if (nMaxElem * nTypeElem * nLevel > 29000000) then
+                print *, 'CONFIGURATION ERROR: the output stored is probably too large.'
+                print *, 'The number of time levels stored before writing is ',nLevel
+                print *, 'Suggest reducing below ',29000000 / (nMaxElem * nTypeElem)
+                call util_crashpoint(5598723)
+            end if
+
 
             !% --- allocate the local  multi-level element storage for each image
             !%    note that EVERY image allocates this array based on the maximum 
@@ -2110,6 +2160,20 @@ contains
         temp_BCupR(:,:) = nullvalueR
 
     end subroutine util_allocate_temporary_arrays
+
+
+    subroutine util_allocate_output_profiles()
+
+        allocate(output_profile_ids(max_profiles_N,max_links_profile_N),stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_profile_ids')
+
+
+    end subroutine util_allocate_output_profiles
+
+
+
+
+
 !%    
 !%==========================================================================
 !==========================================================================

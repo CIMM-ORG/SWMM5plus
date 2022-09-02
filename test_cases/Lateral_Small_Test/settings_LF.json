@@ -18,7 +18,7 @@
         }
     },    
     "Discretization" : {
-        "LinkShortingFactor" : 0.33,
+        "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 150.00
@@ -66,6 +66,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
+            "isRoughnessDynamicOut" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,

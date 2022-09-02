@@ -190,6 +190,10 @@ contains
         deallocate(node%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node%Names')
 
+        if(this_image() .eq. 1 .and. allocated(output_profile_ids)) then 
+            deallocate(output_profile_ids, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_profile_ids')
+        end if
         ! deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
         ! call util_deallocate_check(deallocation_status, emsg, 'link%Names')
 

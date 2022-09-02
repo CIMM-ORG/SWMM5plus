@@ -610,6 +610,7 @@ module adjust
             integer, target  :: pset(2)
             real(8)          :: psign(2)
             integer :: ii
+            character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes'
         !% -----------------------------------------------------------------
         !% Preliminaries:   
             select case (whichTM)
@@ -661,7 +662,13 @@ module adjust
     
         !% use the larger of available roughness values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
-        ManningsN(thisP) = min(ManningsN(thisP), elemR(thisP,er_Roughness))   
+        ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness))   
+        if (setting%Solver%Roughness%useDynamicRoughness) then
+            ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness_Dynamic))
+        end if
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, ManningsN(139), elemR(139,er_Roughness_Dynamic), elemR(139,er_Roughness)
 
         !print *, 'mannings n', ManningsN(iet(1:2))
 
@@ -1172,10 +1179,10 @@ module adjust
 
         !% --- Reducing V-filter when Qlateral is large  20220524brh
         !%     HACK the fraction below should be replaced with a coefficient
-        where (Qlateral(thisP) > onefourthR * elemFlow(thisP))
-            Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * elemFlow(thisP) / Qlateral(thisP))**2
-            Vvalue(thisP) = zeroR     
-        endwhere
+        ! where (Qlateral(thisP) > onefourthR * abs(elemFlow(thisP)))
+        !     Vcoef(thisP)  = Vcoef(thisP) * (onefourthR * abs(elemFlow(thisP)) / Qlateral(thisP))**2
+        !     Vvalue(thisP) = zeroR     
+        ! endwhere
 
         !% the Vvalue returns...
         !%  -1.0 if the element Q is between the face Q (not v-shaped)
@@ -1226,18 +1233,20 @@ module adjust
         !%------------------------------------------------------------------
         !% Description:
         !% Applies V-filter to surcharged head 
+        !% HACK: ONLY APPLIES FOR PREISSMANN SLOT
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, multiplier, smallDepth
-            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:)
+            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:), Zbottom(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
+            logical, pointer :: isSlot(:)  !% Preissman Slot logical
             character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
         !%-------------------------------------------------------------------
-        !% Preliminaries           
+        !% Preliminaries      
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
@@ -1245,10 +1254,14 @@ module adjust
             select case (whichTM)
             case (ALLtm)
                 thisCol => col_elemP(ep_CC_ALLtm_surcharged)
+                print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
+                call util_crashpoint(9587934)
             case (ETM)
-                thisCol => col_elemP(ep_Closed_Elements)
+                thisCol => col_elemP(ep_CC_Closed_Elements)
             case (AC)
                 thisCol => col_elemP(ep_CC_AC_surcharged)
+                print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
+                call util_crashpoint(558723)
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -1277,38 +1290,72 @@ module adjust
             w_uH       => elemR(:,er_InterpWeight_uH)
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
+            Zbottom    => elemR(:,er_Zbottom)
+            isSlot     => elemYN(:,eYN_isSlot)  !% Preissman slot
+
+            ! print *, ' '
+            ! print *, 'in ADJUST ------------', thisCol
+            ! print *, 'thisP'
+            ! print *, thisP
+            ! print *, ' '
+            ! print *, 'is surcharged'
+            ! print *, elemYN(thisP,eYN_isSurcharged)
+            ! print *, ' '
 
             multiplier => setting%Adjust%Head%FullDepthMultiplier
 
         !%-------------------------------------------------------------------
-        !% find the cells that are deep enough to use the V filter
-        !% The surcharge head must be larger than some multiple of the conduit full depth
-        Vvalue(thisP) = (elemHead(thisP) - elemCrown(thisP))  / (multiplier * elemEllMax(thisP))
-        where (Vvalue(thisP) > oneR)
+        !% --- For Preissman Slot, find the cells that are surcharged
+        where (isSlot(thisP))
             Vvalue(thisP) = oneR
         elsewhere
-            Vvalue(thisP) = zeroR !% HACK: to apply v shape head correction for all cases
+            Vvalue(thisP) = zeroR 
         endwhere
 
         !% identify the V-shape locations
-        Vvalue(thisP) =  (util_sign_with_ones(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
-                        *(util_sign_with_ones(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+        Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
+                        *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
                         * Vvalue(thisP)   
                 
         !% adjust where needed
-        where (Vvalue(thisP) > zeroR)   
-            !% averaging based on interpolation weights
-            ! elemHead(thisP) =  (oneR - coef) * elemHead(thisP)  &
-            !     + coef *                                        &
-            !     (  w_uH(thisP) * faceHeadUp(mapDn(thisP))       &
-            !      + w_dH(thisP) * faceHeadDn(mapUp(thisP))       &
-            !      )                                              &
-            !     / ( w_uH(thisP) + w_dH(thisP) )   
-                
+        where (Vvalue(thisP) > zeroR)    
             !% simple linear interpolation
             elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
-                + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
-        endwhere                     
+               + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+
+        endwhere 
+
+        !%-============================================================
+        !% test 20220731
+        !% --- for fully engaged preissmann slot -- use regular V-filter
+        ! where ( isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)) .and. (elemR(thisP,er_SlotDepth) > zeroR) )
+        !     Vvalue(thisP) = oneR
+        ! elsewhere
+        !     Vvalue(thisP) = zeroR 
+        ! endwhere
+
+        ! !% identify the V-shape locations
+        ! Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
+        !                 *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+        !                 * Vvalue(thisP)   
+                
+        ! !% adjust where needed
+        ! where (Vvalue(thisP) > zeroR)    
+        !     !% simple linear interpolation
+        !     elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
+        !        + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+        ! endwhere   
+
+        ! !% --- for cells where depth is below Zcrown, set the head to the minimum of neighbors
+        ! where ( isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)) .and. (elemR(thisP,er_SlotDepth) .le. zeroR) )
+        !     Vvalue(thisP) = oneR
+        ! elsewhere
+        !     Vvalue(thisP) = zeroR 
+        ! endwhere
+        ! !% --- for these cells use the minimum of adjacent heads
+        ! where (Vvalue(thisP) > zeroR)
+        !     elemHead(thisP) = min(faceHeadUp(mapDn(thisP)),faceHeadDn(mapUp(thisP))) 
+        ! end where
 
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 

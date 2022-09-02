@@ -333,7 +333,8 @@ module face
                 faceR(idx_fBoth,fGeoSetU(ii)) = faceR(idx_fBoth,fGeoSetD(ii))
             end do
 
-            !% HACK: copy the preissmann number as well
+            !% --- HACK: copy the preissmann number as well
+            !%     Note that for static slot this will always be unity
             faceR(idx_fBoth,fr_Preissmann_Number) = elemR(edn(idx_fBoth),er_Preissmann_Number) 
             
             !% gradient extrapolation for head at infow
@@ -479,8 +480,16 @@ module face
         !% --- upstream face head is the BC
         !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
         faceR(idx_fBC, fr_Head_u) = headBC(idx_P)
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'faceR value ', faceR(idx_fBC, fr_Head_u)
+        ! print *, 'BC head ',headBC(idx_P)
+        ! print *, 'BC depth',headBC(idx_P) - faceR(idx_fBC,fr_Zbottom)
+
         !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
         faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
+
+        ! print *, eHead(eup(idx_fBC)), headBC(idx_P)
         
         !% --- for a flap gate on a BC with higher head downstream
         where ( hasFlapGateBC(idx_P) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
@@ -488,6 +497,8 @@ module face
             faceR(idx_fBC, fr_Head_u) = eHead(eup(idx_fBC))
             faceR(idx_fBC, fr_Head_d) = headBC(idx_P)
         endwhere
+
+        ! print *, 'faceR value ',faceR(idx_fBC, fr_Head_u)
         
         !% --- get geometry for face from upstream element shape
         if (.not. isBConly) then
@@ -623,7 +634,7 @@ module face
                     faceR(idx_fBC(ii), fr_Flowrate) = eFlow(elemUpstream)
                 end if
 
-                !print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
+            !print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
             end do
 
 
@@ -661,7 +672,7 @@ module face
         else
             !% continue
         end if
-      
+
         !%--------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%boundary_conditions) &
@@ -838,7 +849,7 @@ module face
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
         call face_interp_interior_set &
-            (fPreissmenSet, ePreissmenSet, er_InterpWeight_dP, er_InterpWeight_uP, facePackCol, Npack)  
+            (fPreissmenSet, ePreissmenSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -944,7 +955,7 @@ module face
             (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
 
         call face_interp_shared_set &
-            (fPreissmenSet, eGhostPreissmenSet, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP, facePackCol, Npack)
+            (fPreissmenSet, eGhostPreissmenSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)

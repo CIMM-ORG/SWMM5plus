@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    03/03/2022
 REPORT_START_TIME    00:00:00
 END_DATE             03/03/2022
-END_TIME             00:06:00
+END_TIME             00:05:20
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -53,26 +53,26 @@ DRY_ONLY         NO
 3                0.13524    0.1        0.02       0.1        0         
 4                0.0196     0.1        0.02       0.1        0         
 5                0.0196     0.1        0.02       0.1        0         
-6                0          0.5        0.02       0.5        0         
+6                0          0.5        0.02       0.5        0           
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-7                0          FIXED      0.01             NO                       
+7                0          FIXED      0.0                NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
 1                1                2                1.5        0.008      0          0          0          0         
-3                3                4                8.26       0.008      0          0          0          0         
+3                3                4                8.3        0.008      0          0          0          0         
 5                5                6                1.4        0.008      0          0          0          0         
-6                6                7                5          0.016      0          0          0          0         
+6                6                7                5          0.016      0          0          0          0          
 
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
-2                2                3                SIDE         0          0.86       NO       0         
-4                4                5                SIDE         0          0.86       NO       0         
+2                2                3                SIDE         0          0.76        NO      0.001          
+4                4                5                SIDE         0          0.76        NO      0.001         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -81,13 +81,33 @@ DRY_ONLY         NO
 3                CIRCULAR     0.1              0          0          0          1                    
 5                CIRCULAR     0.1              0          0          0          1                    
 6                CIRCULAR     0.5              0          0          0          1                    
-2                CIRCULAR     0.014            0          0          0
+2                CIRCULAR     0.1              0          0          0
 4                CIRCULAR     0.1              0          0          0
+
+[CONTROLS]
+;;Control Rules
+
+RULE R1
+IF SIMULATION TIME > 00:00:00
+THEN ORIFICE 2 SETTING = 0.15
+
+RULE R2
+IF SIMULATION TIME < 00:02:00
+THEN ORIFICE 4 SETTING = 0.33
+
+RULE R3
+IF SIMULATION TIME > 00:02:00
+AND SIMULATION TIME < 00:02:16
+THEN ORIFICE 4 SETTING = 0.0
+
+RULE R4
+IF SIMULATION TIME > 00:02:30
+THEN ORIFICE 4 SETTING = 0.33
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      0.0013  
+1                FLOW             ""               FLOW     1.0      1.0      0.0015   
 
 [REPORT]
 ;;Reporting Options

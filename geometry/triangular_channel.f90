@@ -52,7 +52,7 @@ module triangular_channel
         sideslope => elemSGR(:,esgr_Triangular_Slope)
         !%-----------------------------------------------------------------------------  
 
-        depth(thisP) = sqrt((volume(thisP)/length(thisP)) / sideslope(thisP))
+        depth(thisP) = sqrt((volume(thisP) / length(thisP)) / sideslope(thisP))
 
     end subroutine triangular_depth_from_volume
     !%  
@@ -145,15 +145,15 @@ module triangular_channel
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: breadth(:), depth(:), perimeter(:)
+        real(8), pointer :: slope(:), depth(:), perimeter(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
-        breadth   => elemSGR(:,esgr_Triangular_TopBreadth)
+        slope     => elemSGR(:,esgr_Triangular_Slope)
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
         !%-----------------------------------------------------------------------------
 
-        perimeter(thisP) = twoR * sqrt(((breadth(thisP) ** twoR) / fourR) + (depth(thisP) ** twoR))
+        perimeter(thisP) = twoR * depth(thisP) * sqrt(oneR + slope(thisP) ** twoR)
 
     end subroutine triangular_perimeter_from_depth
 !%    
@@ -170,12 +170,12 @@ module triangular_channel
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer    :: breadth(:)
+        real(8), pointer    :: slope(:)
         !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
+        slope => elemSGR(:,esgr_Triangular_Slope)
         !%-----------------------------------------------------------------------------
         
-        outvalue = twoR * sqrt(((breadth(indx) ** twoR) / fourR) + (depth ** twoR))
+        outvalue = twoR * depth * sqrt(1 + slope(indx) ** twoR)
 
     end function triangular_perimeter_from_depth_singular
 !%    

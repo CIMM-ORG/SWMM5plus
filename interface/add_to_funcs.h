@@ -10,7 +10,7 @@ int     controls_count_thenAction(void);
 int     controls_count_elseAction(void); 
 int     controls_get_premise_data(
                 int* locationL,        int* locationR,
-                int* islinkL,          int* islinkR,
+                int* linknodesimTypeL,          int* linknodesimTypeR,
                 int* attributeL,       int* attributeR, 
                 int* thisPremiseLevel, int rIdx);
 int     controls_get_action_data(

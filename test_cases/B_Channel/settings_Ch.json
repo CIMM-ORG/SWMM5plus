@@ -6,10 +6,10 @@
         "Short" : "test"
     },
     "Discretization" : {
-        "LinkShortingFactor" : 0.33,
+        "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 200.00
+        "NominalElemLength" : 100.00
     },
     "Limiter" : {
         "BC" : {
@@ -36,44 +36,39 @@
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
         }
-    },
-    "VariableDT" : {
-        "ApplyYN" : true,
-        "limitByBC_YN" : true,
-        "CFL_hi_max" : 0.6,
-        "CFL_target" : 0.5,
-        "CFL_lo_max" : 0.4,
-        "CFL_inflow_max" : 0.2,
-        "increaseFactor" : 1.2,
-        "NstepsForCheck" : 10,
-        "InitialDt"      : 1.0
     },    
     "Output" : {
+        "UseFileNameFile" : false,
         "Verbose" : true,
         "Warning" : true,
         "StoredLevels" : 100,
+        "StoredFileNames" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 500
         },
         "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isFroudeNumberOut" : false,
-            "isHeadOut"         : true,
-            "isHydRadiusOut"    : false,
-            "isPerimeterOut"    : false,
-            "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
-            "isTopWidthOut"     : false,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : false
+            "isAreaOut"             : true,
+            "isDepthOut"            : true,
+            "isFlowrateOut"         : true,
+            "isFluxConsOut"         : true,
+            "isFroudeNumberOut"     : false,
+            "isHeadOut"             : true,
+            "isHydRadiusOut"        : false,
+            "isPerimeterOut"        : false,
+            "isRoughnessDynamicOut" : false,
+            "isSlotWidthOut"        : false,
+            "isSlotDepthOut"        : false,
+            "isTopWidthOut"         : false,
+            "isVelocityOut"         : true,
+            "isVolumeOut"           : true,
+            "isWaveSpeedOut"        : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" : true,
             "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,
@@ -101,5 +96,12 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4
     }
 }

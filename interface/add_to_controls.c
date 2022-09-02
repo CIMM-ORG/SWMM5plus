@@ -163,14 +163,14 @@ int controls_count_elseAction(void)
 //=============================================================================
 int controls_get_premise_data(
     int* locationL,        int* locationR,
-    int* islinkL,          int* islinkR,
+    int* linknodesimTypeL, int* linknodesimTypeR,
     int* attributeL,       int* attributeR, 
     int* thisPremiseLevel, int rIdx)
     ///
-    /// Input:   dummy values for location, islink, attribute for premise data
+    /// Input:   dummy values for location, linknodesimType, attribute for premise data
     ///          thisPremiseLevel is the Premise level we're trying to extract data from
     ///          rIdx is the rule index
-    /// Output:  location (index) in link/node space, islink is whether a link or node
+    /// Output:  location (index) in link/node space, linknodesimType is whether a link or node
     ///          attribute is keyword (number) for monitor data type
     ///          thisPremiseLevel is incremented (if successful) to setup for next call  
     ///          Returns 0 if thisPremiseLevel does not exist in linked list for Rule(rIdx)
@@ -210,19 +210,19 @@ int controls_get_premise_data(
         *attributeL = thisPremise->lhsVar.attribute;
         if (thisPremise->lhsVar.link > -1) // is link
         {
-            *islinkL = 1;
+            *linknodesimTypeL = 1;
             *locationL = thisPremise->lhsVar.link;
         }
         else
         {
             if (thisPremise->lhsVar.node > -1) //is node
             {
-                *islinkL = 0;
+                *linknodesimTypeL = 0;
                 *locationL = thisPremise->lhsVar.node;
             }
             else // neither link nor node
             {
-                *islinkL = -1;
+                *linknodesimTypeL = -1;
                 *locationL = -1;
             }
         }
@@ -232,19 +232,19 @@ int controls_get_premise_data(
         //printf(" RHS link and node %d %d \n ",thisPremise->rhsVar.link, thisPremise->rhsVar.node);
         if (thisPremise->rhsVar.link > -1) // is link
         {
-            *islinkR = 1;
+            *linknodesimTypeR = 1;
             *locationR = thisPremise->rhsVar.link;
         }
         else
         {
             if (thisPremise->rhsVar.node > -1) //is node
             {
-                *islinkR = 0;
+                *linknodesimTypeR = 0;
                 *locationR = thisPremise->rhsVar.node;
             }
             else  // neither link nor node
             {
-                *islinkR = -1;
+                *linknodesimTypeR = -1;
                 *locationR = -1;
             }
         }
