@@ -125,10 +125,6 @@ module geometry
         !% --- compute the depth on all non-surcharged elements of CC, JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
-        print*, 'In geometry update'
-
-        print*, elemR(:,er_depth) ,'depth'
-        print*, elemR(:, er_Volume), 'volume'
             ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM
@@ -1245,9 +1241,9 @@ module geometry
         end if
 
         !% --- PARABOLIC
-        Npack => npack_elemPGx(epg_CC_circular_nonsurcharged)
+        Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
+            thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
             call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
@@ -1454,19 +1450,6 @@ module geometry
                                 + areaBelowBreadthMax(thisP) ) / breadthMax(thisP)
             endwhere
         end if
-
-
-        ! print *, 'in geo ell_from_head'
-        ! do ii=1,size(thisP)
-        !     write(*,"(i5,10f12.5)")  thisP(ii), head(thisP(ii)), elemR(thisP(ii),er_Zbottom), elemR(thisP(ii),er_Depth), &
-        !         ZbreadthMax(thisP(ii)), breadthMax(thisP(ii)), areaBelowBreadthMax(thisP(ii)),  ell(thisP(ii)), hydDepth(thisP(ii))
-        ! end do
-        ! print *, 'thisP ',thisP
-        ! print *, 'head  ',head(thisP)
-        ! print *, 'Zbmax ',ZbreadthMax(thisP)
-        ! print *, 'ell   ',ell(thisP)
-
-        ! print *, 'at end of geo_ell_from_head', elemR(15,er_ell)
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

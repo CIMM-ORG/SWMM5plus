@@ -36,6 +36,17 @@
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
         }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4,
+        "CFL_inflow_max" : 0.2,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10,
+        "InitialDt"      : 1.0
     },    
     "Output" : {
         "Verbose" : true,

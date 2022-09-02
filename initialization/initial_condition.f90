@@ -389,9 +389,6 @@ contains
             end if
 
         end do
-
-        ! print *, elemR(12:14,er_Volume)
-        ! stop 29873
         
         !%------------------------------------------------------------------
         !% Closing
@@ -453,8 +450,6 @@ contains
         headUp = node%R(nUp,nr_Zbottom) + node%R(nUp,nr_InitialDepth)
         headDn = node%R(nDn,nr_Zbottom) + node%R(nDn,nr_InitialDepth)
 
-        !print *, 'headUP, Dn',headUp, headDn
-
         !% --- set upstream link depths including effects of offsets
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
@@ -462,12 +457,6 @@ contains
         !% --- set downstream link depths including effects of offsets
         !%     where downstream head is less than zbottom, depth is zero
         DepthDn = max(headDn - zLinkDn, zeroR)
-
-        ! print *, ' '
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, 'thislink ',thisLink
-        ! print *, 'DepthUp, Dn',DepthUp,DepthDn
-        ! print *, 'ZlinkUp, Dn',zLinkUp,zLinkDn
 
         !% --- check for a downstream gate on the node
         !%     adjust depths and head as needed
@@ -490,11 +479,6 @@ contains
             end if
         end if
 
-        ! print *, 'after: '
-        ! print *, 'headUP, Dn',headUp, headDn
-        ! print *, 'DepthUp, Dn',DepthUp,DepthDn
-
-
         !% --- pack the elements for this link
         pElem = pack(elemI(:,ei_Lidx), (elemI(:,ei_link_Gidx_BIPquick) == thisLink))
 
@@ -513,12 +497,8 @@ contains
         !% --- total depth delta
         dDelta = DepthUp - DepthDn
 
-        !print *, 'dDelta ',dDelta
-
         !% --- total length of all elements in link
         linkLength = sum(eLength(pElem))
-
-        ! print *, 'linkLength ',linkLength
 
         !% -- initialize length measure from the upper end of the link
         !%    to an interative element center
@@ -538,20 +518,6 @@ contains
             case (UniformDepth)
                 !% --- uniform depth uses the average of upstream and downstream depths
                 eDepth(pElem) = onehalfR * (DepthUp + DepthDn)
-
-                ! print *, 'uniform depth eDepth(pElem) ',eDepth(pElem)
-
-                ! !%  if the link has a uniform depth as an initial condition
-                ! if (link%R(thisLink,lr_InitialDepth) .ne. nullvalueR) then
-
-                !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                !         elemR(:,er_Depth) = link%R(thisLink,lr_InitialDepth)
-                !     endwhere
-                ! else
-                !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                !         elemR(:,er_Depth) = onehalfR * (DepthUp + DepthDn)
-                !     endwhere
-                ! end if
         
 
             case (LinearlyVaryingDepth)
@@ -564,23 +530,6 @@ contains
                     !% --- add the remainder of this element to the length
                     length2Here       = length2Here + onehalfR * eLength(pElem(mm))
                 end do
-
-                ! print *, 'Linear varying eDepth(pElem)',eDepth(pElem)
-
-                !where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !    elemR(:,er_Depth) = DepthUp
-                !endwhere
-
-                !%  using a linear distribution over the links
-                !ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                ! do mm=2,ei_max
-                !     !% find the element that is at the mm position in the link
-                !     where ( (elemI(:,ei_link_Pos) == mm) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !         !% use a linear interpolation
-                !         elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * real(mm - oneI) / real(ei_max - oneI)
-                !     endwhere
-                ! end do
 
             case (ExponentialDepth)
                 !% --- if the link has exponentially increasing or decreasing depth
@@ -596,48 +545,11 @@ contains
                     length2Here       = length2Here + onehalfR * eLength(pElem(mm))
                 end do
 
-                ! print *, 'exponential eDepth(pElem)',eDepth(pElem)
-                ! where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !     elemR(:,er_Depth) = DepthUp
-                ! endwhere
-
-                ! !% find the remaining elements in the link
-                ! ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                ! do mm=2,ei_max
-                !     kappa = real(mm - oneI)
-
-                !     !%  depth decreases exponentially going downstream
-                !     if (DepthUp - DepthDn > zeroR) then
-                !         where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
-                !                 (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !             elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * exp(-kappa)
-                !         endwhere
-
-                !     !%  depth increases exponentially going downstream
-                !     elseif (DepthUp - DepthDn < zeroR) then
-                !         where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
-                !                 (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !             elemR(:,er_Depth) = DepthUp + (DepthDn - DepthUp) * exp(-kappa)
-                !         endwhere
-
-                !     !%  uniform depth
-                !     else
-                !         where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
-                !                 (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !             elemR(:,er_Depth) = DepthUp
-                !         endwhere
-                !     end if
-                ! end do
-
             case (FixedHead)    
                 !% --- set the downstream depth as a fixed head (ponding)
                 !%     over all the elements in the link.
                 eDepth(pElem) = max(headDn - eZbottom(pElem), zeroR)
-
-                ! print *, 'fixedhead eDepth(pElem)',eDepth(pElem)
             
-
             case default
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
@@ -646,8 +558,6 @@ contains
                 call util_crashpoint(83753)
                 !return
         end select
-
-        !print *, 'at end  in init_IC_get_Depth',pElem,eDepth(pElem)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -678,12 +588,6 @@ contains
             elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
         endwhere
 
-        ! print *, ' '
-        ! print *, 'in ',trim(subroutine_name)
-        ! do ii=1,size(elemI,1)
-        !     print *, ii, elemI(ii,ei_link_Gidx_BIPquick), thisLink
-        ! end do
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_flow_and_roughness_from_linkdata
@@ -707,9 +611,6 @@ contains
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
-
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, thisLink, linkType
 
         select case (linkType)
 
@@ -829,13 +730,10 @@ contains
             case (lChannel)
                 !% get geometry data for channels
                 call init_IC_get_channel_geometry (thisLink)
-                print *, thisLink,elemSGR(thisLink,:)
 
             case (lpipe)
                 !% get geometry data for conduits
                 call init_IC_get_conduit_geometry (thisLink)
-
-                !print *, thisLink,'bb ',elemR(12:14,er_Volume)
 
             case (lweir)
                 !% get geometry data for weirs
@@ -1134,29 +1032,23 @@ contains
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Parabolic_Breadth)
                     elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
                     elemR(:,er_FullHydDepth)            = (twoR/threeR) * link%R(thisLink,lr_FullDepth) 
-                    
 
                     !% --- dependent on full depth
                     elemR(:,er_FullPerimeter)           = onehalfR * elemSGR(:, esgr_Parabolic_Breadth) * elemSGR(:, esgr_Parabolic_Breadth) &
-                    * ((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))) & 
-                    + log((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) + sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))))
-
-                    ! rbot = elemSGR(:, esgr_Parabolic_Breadth)
-                    ! x = (twoR * sqrt(elemR(: er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))
-                    ! t = sqrt(oneR + (twoR * sqrt(elemR(: er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(: er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))
+                                                        * ((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) &
+                                                        / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))) & 
+                                                        + log((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) + sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) &
+                                                        / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))))
 
                     elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)                = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_FullDepth) *  sqrt(elemR(:, er_FullDepth))
-
                     !% --- dependent on full area
                     elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
                     elemR(:,er_ell_max)                 = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
                                                          * elemR(:,er_BreadthMax)                      &
                                                          + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-                    
-               
                     !% --- store IC data
                     elemR(:, er_Area) = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_Depth) *  sqrt(elemR(:, er_Depth))
                     elemR(:,er_Area_N0)       = elemR(:,er_Area)
@@ -1167,26 +1059,12 @@ contains
                     
                 endwhere
 
-                print*, '.........................................'
-                print*, elemR(:,er_Depth), 'depth'
-                print*
-                print*, elemR(:, er_FullDepth), 'fulldepth'
-                print*
-                print*, elemSGR(:, esgr_parabolic_radius), 'parabolic_radius'
-                print*
-                print*, elemR(:, er_FullArea), 'full_area'
-                print*
-                print*, elemR(:,er_Volume), 'volume'
-                print*, ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,'
-
             case default
 
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
                 print *, 'which has key ',trim(reverseKey(geometryType))
-                !stop 
                 call util_crashpoint(98734)
-                !return
 
         end select
 
@@ -1540,10 +1418,6 @@ contains
         !% pointer to specific orifice geometry
         OrificeGeometryType => link%I(thisLink,li_geometry)
 
-        ! print *, 'here in init_IC_orifice_geometry'
-        ! print *, trim(reverseKey(OrificeGeometryType))
-        ! stop 558723
-
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
         case (lRectangular_closed)  !% brh20211219 added Rect_closed
@@ -1594,18 +1468,6 @@ contains
                 elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth) 
                 elemR(:,er_FullDepth)               = twoR * max(elemSR(:,esr_Orifice_Zcrown) - elemR(:,er_Zbottom),elemSR(:,esr_Orifice_FullDepth))
             end where
-
-           ! print *, 'here in init_IC_orifice_geometry'
-            ! do ii=1,size(elemSI,1)
-            !     print *, ii, elemSI(ii,esi_Orifice_GeometryType)
-            ! end do
-           ! print *, trim(reverseKey(elemI(iet(4),ei_geometryType)))
-            ! print *, elemR(iet(3),er_BreadthMax)
-            ! print *, elemSGR(iet(3),esgr_Rectangular_Breadth)
-            ! print *, elemSR(iet(3),esr_Orifice_RectangularBreadth)
-            ! print *, elemSR(iet(3),esr_Orifice_FullDepth)
-            ! print *, elemR(iet(3),er_Zbottom)
-            ! stop 4908723
 
         case default
             print *, 'In ', subroutine_name
@@ -3152,12 +3014,6 @@ contains
                 stop 38756
             end select
         end if
-
-        ! print*, reverseKey(elemI(:,ei_elementType))
-        ! print*, elemR(:,er_SlotVolume) , 'elemR(:,er_SlotVolume)'
-        ! print*, elemR(:,er_SlotDepth), 'elemR(:,er_SlotDepth)'
-        ! print*, elemR(:,er_SlotWidth), 'elemR(:,er_SlotWidth)'
-        ! print*, elemR(:,er_Preissmann_Celerity), 'elemR(:,er_Preissmann_Celerity)'
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
