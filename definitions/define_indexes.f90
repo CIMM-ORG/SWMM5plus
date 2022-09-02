@@ -740,6 +740,7 @@ module define_indexes
     !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
     enum, bind(c)
          enumerator ::  esgr_Parabolic_Breadth = 1    !% breadth for parabolic geometry
+         enumerator ::  esgr_Parabolic_Radius
          enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!

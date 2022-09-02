@@ -42,7 +42,7 @@ module parabolic_channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), volume(:), length(:), breadth(:), fulldepth(:)
+        real(8), pointer :: depth(:), volume(:), length(:), breadth(:), fulldepth(:), rbot(:)
         !%-----------------------------------------------------------------------------
         thisP   => elemPGx(1:Npack,thisCol) 
         depth   => elemR(:,er_Depth)
@@ -50,9 +50,10 @@ module parabolic_channel
         length  => elemR(:,er_Length)
         fulldepth => elemR(:,er_FullDepth)
         breadth => elemSGR(:,esgr_Parabolic_Breadth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------  
 
-        depth(thisP) = ( threeR/fourR * (volume(thisP)/length(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP))) ) ** twothirdR
+        depth(thisP) = ( threeR/fourR * (volume(thisP)/length(thisP)) / rbot(thisP) ) ** twothirdR
     end subroutine parabolic_depth_from_volume
     !%  
 !%==========================================================================
@@ -66,7 +67,7 @@ module parabolic_channel
         integer, intent(in) :: indx  ! may be a packed array of indexes
         !%-----------------------------------------------------------------------------
         
-        outvalue = (fourR / threeR) * (elemSGR(indx, esgr_parabolic_Breadth) / twoR / elemR(indx, er_FullDepth)) * elemR(indx, er_Depth) *  sqrt(elemR(indx, er_Depth))
+        outvalue = (fourR / threeR) * elemSGR(indx, esgr_Parabolic_Radius) * elemR(indx, er_Depth) *  sqrt(elemR(indx, er_Depth))
         
     end function parabolic_area_from_depth
 !%
@@ -81,14 +82,15 @@ module parabolic_channel
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), fulldepth(:)
+        real(8), pointer ::  breadth(:), fulldepth(:), rbot(:)
         !%-----------------------------------------------------------------------------
         breadth => elemSGR(:,esgr_Parabolic_Breadth)
         fulldepth => elemR(:, er_FullDepth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
        ! print *, 'in parabolic_area_from_depth_singular'
        ! print *, indx, breadth(indx), depth
-        outvalue = (fourR / threeR) * (breadth(indx) / twoR / fulldepth(indx)) * depth *  sqrt(depth)
+        outvalue = (fourR / threeR) * rbot(indx) * depth *  sqrt(depth)
 
     end function parabolic_area_from_depth_singular
 !%
@@ -104,7 +106,7 @@ module parabolic_channel
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:), GeomType(:)
-        real(8), pointer :: breadth(:), topwidth(:), depth(:), fullDepth(:)
+        real(8), pointer :: breadth(:), topwidth(:), depth(:), fullDepth(:), rbot(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
         GeomType  => elemI(:,ei_geometryType)
@@ -112,9 +114,10 @@ module parabolic_channel
         depth     => elemR(:,er_Depth)
         fullDepth => elemR(:,er_FullDepth)
         breadth   => elemSGR(:,esgr_parabolic_Breadth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
 
-        topwidth(thisP) = twoR * (breadth(thisP) / twoR / sqrt(fulldepth(thisP))) * sqrt(depth(thisP))
+        topwidth(thisP) = twoR * rbot(thisP) * sqrt(depth(thisP))
         
         ! rbot = (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))
 
@@ -132,13 +135,14 @@ module parabolic_channel
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx 
         real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), fulldepth(:)
+        real(8), pointer ::  breadth(:), fulldepth(:), rbot(:)
         !%-----------------------------------------------------------------------------
         breadth => elemSGR(:,esgr_parabolic_Breadth)
         fulldepth => elemR(:, er_FullDepth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
         !%  
-        outvalue = twoR * (breadth(indx) / twoR / sqrt(fulldepth(indx))) * sqrt(depth)
+        outvalue = twoR * rbot(indx) * sqrt(depth)
 
         ! outvalue = twoR * sqrt(((elemSGR(indx, esgr_Parabolic_Breadth) * elemSGR(indx, esgr_Parabolic_Breadth)) / fourR * elemR(indx, er_FullDepth) ) * depth)
 
@@ -156,21 +160,32 @@ module parabolic_channel
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: breadth(:), depth(:), perimeter(:), fulldepth(:)
+        real(8), pointer :: breadth(:), depth(:), perimeter(:), fulldepth(:), rbot(:), temp02(:), temp03(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
         breadth   => elemSGR(:,esgr_parabolic_Breadth)
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
         fulldepth => elemR(:,er_FullDepth)
+        rbot    => elemSGR(:,esgr_Parabolic_Radius)
+        temp02    => elemR(:, er_Temp02)
+        temp03    => elemr(:, er_Temp03)
         !%-----------------------------------------------------------------------------
+        ! rbot = (breadth / twoR / sqrt(fulldepth))temp01
+        temp02(thisP) = (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP))))
+        temp03(thisP) = (oneR + temp02(thisP) * temp02(thisP))
+
+        ! t = sqrt(oneR + (twoR * sqrt(depth(:)) / (breadth(:) / twoR / sqrt(fulldepth(:)))) * (twoR * sqrt(depth(:)) / (breadth(:) / twoR / sqrt(fulldepth(:)))))
+        ! t = sqrt(oneR + x * x)
         !%-----------------------------------------------------------------------------
 
-        perimeter(thisP) = onehalfR * (breadth(thisP) / twoR / sqrt(fulldepth(thisP))) * (breadth(thisP) / twoR / sqrt(fulldepth(thisP))) * &
-        ((twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) * &
-        sqrt(oneR + (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) * (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP))))) + &
-        log((twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) + &
-        sqrt(oneR + (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) * (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))))))
+        perimeter(thisP) = onehalfR * rbot(thisP) * rbot(thisP) * (temp02(thisP) * temp03(thisP) + log(temp02(thisP) + temp03(thisP)))
+
+        ! perimeter(thisP) = onehalfR * (breadth(thisP) / twoR / sqrt(fulldepth(thisP))) * (breadth(thisP) / twoR / sqrt(fulldepth(thisP))) * &
+        ! ((twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) * &
+        ! sqrt(oneR + (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) * (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP))))) + &
+        ! log((twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) + &
+        ! sqrt(oneR + (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))) * (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))))))
 
         ! rbot = (breadth(thisP) / twoR / sqrt(fulldepth(thisP)))
         ! x = (twoR * sqrt(depth(thisP)) / (breadth(thisP) / twoR / sqrt(fulldepth(thisP))))
@@ -190,17 +205,20 @@ module parabolic_channel
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), fulldepth(:)
+        real(8) :: x, t
+        real(8), pointer ::  breadth(:), fulldepth(:), rbot(:)
         !%-----------------------------------------------------------------------------
         breadth => elemSGR(:,esgr_parabolic_Breadth)
         fulldepth => elemR(:, er_FullDepth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
+        !%-----------------------------------------------------------------------------
+        x = (twoR * sqrt(depth) / rbot(indx))
+        ! t = sqrt(oneR + (twoR * sqrt(depth(:)) / (breadth(:) / twoR / sqrt(fulldepth(:)))) * (twoR * sqrt(depth(:)) / (breadth(:) / twoR / sqrt(fulldepth(:)))))
+        t = sqrt(oneR + (x * x))
         !%-----------------------------------------------------------------------------
 
-        outvalue = onehalfR * (breadth(indx) / twoR / sqrt(fulldepth(indx))) * (breadth(indx) / twoR / sqrt(fulldepth(indx))) * &
-        ((twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) * &
-        sqrt(oneR + (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) * (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx))))) + &
-        log((twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) + &
-        sqrt(oneR + (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) * (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))))))
+        outvalue = onehalfR * rbot(indx) * rbot(indx) * (x * t + log(x + t))
+
 
     end function parabolic_perimeter_from_depth_singular
 !%    
@@ -261,27 +279,19 @@ module parabolic_channel
         !%------------------------------------------------------------------
             integer, intent(in) :: indx
             real(8), intent(in) :: depth
-            real(8), pointer :: breadth(:), fulldepth(:)
+            real(8) :: x, t, area, perimeter
+            real(8), pointer :: breadth(:), fulldepth(:), rbot(:)
         !%------------------------------------------------------------------
         breadth => elemSGR(:,esgr_parabolic_Breadth)
         fulldepth => elemR(:, er_FullDepth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%------------------------------------------------------------------
-
-        outvalue = (fourR / threeR) * (breadth(indx) / twoR / fulldepth(indx)) * depth *  sqrt(depth) / &
-        onehalfR * (breadth(indx) / twoR / sqrt(fulldepth(indx))) * (breadth(indx) / twoR / sqrt(fulldepth(indx))) * &
-        ((twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) * &
-        sqrt(oneR + (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) * (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx))))) + &
-        log((twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) + &
-        sqrt(oneR + (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))) * (twoR * sqrt(depth) / (breadth(indx) / twoR / sqrt(fulldepth(indx)))))))
+        x = (twoR * sqrt(depth) / rbot(indx))
+        t = sqrt(oneR + (x * x))
+        area = (fourR / threeR) * rbot(indx) * depth *  sqrt(depth)
+        perimeter = onehalfR * rbot(indx) * rbot(indx) * (x * t + log(x + t))
         
-        ! outvalue = twoR * ((fourR/threeR) * depth * sqrt((breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))) * depth)) / &
-        ! (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))) * ((twoR * sqrt(depth / (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))))) * & 
-        ! (sqrt(1 + (twoR * sqrt(depth / (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))))) ** 2)) + & 
-        ! log((twoR * sqrt(depth / (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))))) + (sqrt(1 + (twoR * sqrt(depth / (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))))) ** 2))))
-
-        ! c = (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx)))
-        ! x = (twoR * sqrt(depth / (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx)))))
-        ! t = (sqrt(1 + (twoR * sqrt(depth / (breadth(indx) * breadth(indx) / (fourR * fulldepth(indx))))) ** 2))
+        outvalue = area / perimeter
 
     end function parabolic_hydradius_from_depth_singular
 !%      

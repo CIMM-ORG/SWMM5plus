@@ -810,7 +810,7 @@ contains
                 )
         end if
 
-        !% rectangular channels 
+        !% parabolic channels 
         ptype => col_elemPGac(epg_CC_parabolic_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
@@ -1132,7 +1132,7 @@ contains
                 )
         end if
 
-        !% --- rectangular channels nonsurcharged
+        !% --- parabolic channels nonsurcharged
         ptype => col_elemPGetm(epg_CC_parabolic_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &

@@ -640,7 +640,6 @@ contains
 
             link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
             link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
-            print *, ii, 'breadthscale', link%R(ii, lr_BreadthScale)
             link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
             link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
             link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
@@ -648,6 +647,11 @@ contains
             link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
             link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
             link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+            print*, "initial condition......................................."
+            print *, ii, 'breadthscale', link%R(ii, lr_BreadthScale)
+            print *, ii, 'conduit_length', link%R(ii, lr_Length)
+            print *, ii, 'fulldepth', link%R(ii, lr_FullDepth)
+            print*, "end initial condition ....................................."
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 

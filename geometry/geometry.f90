@@ -125,6 +125,10 @@ module geometry
         !% --- compute the depth on all non-surcharged elements of CC, JM
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
+        print*, 'In geometry update'
+
+        print*, elemR(:,er_depth) ,'depth'
+        print*, elemR(:, er_Volume), 'volume'
             ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
 
         !% reset all zero or near-zero depths in non-surcharged CC and JM

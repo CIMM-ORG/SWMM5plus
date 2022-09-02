@@ -218,6 +218,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
 
+        ! stop 23123
             ! call util_CLprint ('initial_condition after update_auxiliary_variables')
 
         !% --- initialize old head 
@@ -1125,27 +1126,28 @@ contains
 
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
-                    elemI(:,ei_geometryType) = rectangular
+                    elemI(:,ei_geometryType) = parabolic
 
                     !% --- independent data
                     elemSGR(:,esgr_Parabolic_Breadth) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Parabolic_Radius)  = elemSGR(:,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Parabolic_Breadth)
                     elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullHydDepth)            = link%R(thisLink,lr_FullDepth) 
+                    elemR(:,er_FullHydDepth)            = (twoR/threeR) * link%R(thisLink,lr_FullDepth) 
+                    
 
                     !% --- dependent on full depth
-                    elemR(:,er_FullPerimeter)           = onehalfR * (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) * (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) * &
-                                                        (( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * &
-                                                        (sqrt(oneR + ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ))) + &
-                                                        log(( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) + (sqrt(oneR + ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) )))))
-                    
-                    ! rbot = (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) 
-                    ! x = ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) )
-                    ! t = (sqrt(oneR + ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) ) * ( twoR * sqrt(elemR(:, er_FullDepth)) / (elemSGR(:, esgr_Parabolic_Breadth) / twoR / sqrt(elemR(:, er_FullDepth))) )))
+                    elemR(:,er_FullPerimeter)           = onehalfR * elemSGR(:, esgr_Parabolic_Breadth) * elemSGR(:, esgr_Parabolic_Breadth) &
+                    * ((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))) & 
+                    + log((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) + sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))))
+
+                    ! rbot = elemSGR(:, esgr_Parabolic_Breadth)
+                    ! x = (twoR * sqrt(elemR(: er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))
+                    ! t = sqrt(oneR + (twoR * sqrt(elemR(: er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(: er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))
 
                     elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)                = twothirdR * elemR(:, er_FullDepth) * elemSGR(:, esgr_Parabolic_Breadth)
+                    elemR(:,er_FullArea)                = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_FullDepth) *  sqrt(elemR(:, er_FullDepth))
 
                     !% --- dependent on full area
                     elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
@@ -1153,9 +1155,10 @@ contains
                     elemR(:,er_ell_max)                 = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
                                                          * elemR(:,er_BreadthMax)                      &
                                                          + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                    
                
                     !% --- store IC data
-                    elemR(:,er_Area)          = (twoR/threeR) * elemR(:,er_Depth) * elemSGR(:, esgr_Parabolic_Breadth)
+                    elemR(:, er_Area) = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_Depth) *  sqrt(elemR(:, er_Depth))
                     elemR(:,er_Area_N0)       = elemR(:,er_Area)
                     elemR(:,er_Area_N1)       = elemR(:,er_Area)
                     elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
@@ -1163,6 +1166,18 @@ contains
                     elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
                     
                 endwhere
+
+                print*, '.........................................'
+                print*, elemR(:,er_Depth), 'depth'
+                print*
+                print*, elemR(:, er_FullDepth), 'fulldepth'
+                print*
+                print*, elemSGR(:, esgr_parabolic_radius), 'parabolic_radius'
+                print*
+                print*, elemR(:, er_FullArea), 'full_area'
+                print*
+                print*, elemR(:,er_Volume), 'volume'
+                print*, ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,'
 
             case default
 
