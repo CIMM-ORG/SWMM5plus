@@ -350,6 +350,7 @@ module define_globals
     real(8), parameter :: eightR = 8.d0
     real(8), parameter :: nineR = 9.d0
     real(8), parameter :: tenR = 10.d0
+    real(8), parameter :: sixteenR = 16.d0
     real(8), parameter :: twentyR = 20.d0
     real(8), parameter :: twentyfourR = 24.d0
     real(8), parameter :: sixtyR = 60.d0

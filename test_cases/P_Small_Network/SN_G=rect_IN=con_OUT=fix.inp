@@ -16,14 +16,14 @@ START_TIME           00:00:00
 REPORT_START_DATE    03/16/2019
 REPORT_START_TIME    00:00:00
 END_DATE             03/16/2019
-END_TIME             23:30:00
+END_TIME             23:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:30:00
+REPORT_STEP          01:00:00
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
-ROUTING_STEP         00:00:30 
+ROUTING_STEP         00:00:01 
 RULE_STEP            00:00:00
 
 INERTIAL_DAMPING     PARTIAL

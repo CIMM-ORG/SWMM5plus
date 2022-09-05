@@ -8,8 +8,10 @@ module geometry
     use rectangular_conduit
     use trapezoidal_channel
     use triangular_channel
+    use rectangular_triangular_conduit
     use circular_conduit
     use irregular_channel
+    use parabolic_channel
     use storage_geometry
     use xsect_tables
     use adjust
@@ -256,11 +258,11 @@ module geometry
         !%------------------------------------------------------------------  
         !print *, 'in ',trim(subroutine_name)    
         thisArea      = geo_area_from_depth_singular      (eIdx,inDepth)
-        !print *, '----- area     ',thisArea
+        ! print *, '----- area     ',thisArea
         thisPerimeter = geo_perimeter_from_depth_singular (eIdx,inDepth)
-        !print *, '----- perimeter',thisPerimeter
+        ! print *, '----- perimeter',thisPerimeter
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
-        !print *, '----- sf       ',outvalue
+        ! print *, '----- sf       ',outvalue
 
     end function geo_sectionfactor_from_depth_singular
 !%
@@ -552,9 +554,6 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
                                     dHdA(tB)     = oneR / topwidth(tB) 
 
-                                    ! print *, 'in geo_assign_JB  for rect element'
-                                    ! print *, 'area ',area(tB), depth(tB)
-
                                 !    write(*,"(A,i5,10f12.5)") 'DDD ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                                 case (triangular)
@@ -568,7 +567,16 @@ module geometry
 
                                 !    write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
                                     
-                                case (trapezoidal)                                    
+                                case (rect_triang)                                    
+                                    area(tB)     = rectangular_triangular_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydDepth(tB) = rectangular_triangular_hyddepth_from_depth_singular  (tB,depth(tB))
+                                    perimeter(tB)= rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB))
+                                    hydRadius(tB)= rectangular_triangular_hydradius_from_depth_singular (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
                                     hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular  (tB,depth(tB))
@@ -589,6 +597,15 @@ module geometry
                                     dHdA(tB)     = oneR / topwidth(tB)
 
                                     ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+
+                                case (parabolic)
+                                    area(tB)     = parabolic_area_from_depth_singular      (tB, depth(tB))
+                                    topwidth(tB) = parabolic_topwidth_from_depth_singular  (tB, depth(tB))
+                                    hydDepth(tB) = parabolic_hyddepth_from_depth_singular  (tB, depth(tB))
+                                    perimeter(tB)= parabolic_perimeter_from_depth_singular (tB, depth(tB))
+                                    hydRadius(tB)= parabolic_hydradius_from_depth_singular (tB, depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
+                                    dHdA(tB)     = oneR / topwidth(tB)
 
                                 case (irregular)
                                     area(tB)    = irregular_geometry_from_depth_singular ( &
@@ -763,9 +780,23 @@ module geometry
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        ! call util_CLprint('after circular') 
- 
-        !% --- IRREGULAR CC
+        !% -- PARABOLIC
+        thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECT_TRIANG
+        thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !call util_CLprint('after circular') 
+
+        !% --- IRREGULAR
         thisCol => col_elemPGx(epg_CC_irregular_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
@@ -956,17 +987,13 @@ module geometry
         case (triangular)
             outvalue = triangular_area_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = parabolic_area_from_depth_singular (idx, indepth)
         case (power_function)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (rect_triang)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = rectangular_triangular_area_from_depth_singular (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1097,6 +1124,20 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+            call parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECT_TRIANG
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1132,17 +1173,13 @@ module geometry
         case (triangular)
             outvalue = triangular_topwidth_from_depth_singular  (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = parabolic_topwidth_from_depth_singular (idx, indepth)
         case (power_function)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (rect_triang)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = rectangular_triangular_topwidth_from_depth_singular  (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1274,6 +1311,20 @@ module geometry
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+            call parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECT_TRIANG
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         !%     note this requires first using the table lookup for hydraulic radius
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -1312,17 +1363,13 @@ module geometry
         case (triangular)
             outvalue = triangular_perimeter_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = parabolic_perimeter_from_depth_singular (idx, indepth)
         case (power_function)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (rect_triang)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = rectangular_triangular_perimeter_from_depth_singular (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1455,6 +1502,20 @@ module geometry
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic_nonsurcharged)
+            call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECT_TRIANG
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
+            call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1492,17 +1553,13 @@ module geometry
         case (triangular)
             outvalue = triangular_hyddepth_from_depth_singular (idx, indepth)
         case (parabolic)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            outvalue = parabolic_hyddepth_from_depth_singular (idx, indepth)
         case (power_function)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (rect_triang)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
         case (rect_round )
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1659,19 +1716,6 @@ module geometry
             endwhere
         end if
 
-
-        ! print *, 'in geo ell_from_head'
-        ! do ii=1,size(thisP)
-        !     write(*,"(i5,10f12.5)")  thisP(ii), head(thisP(ii)), elemR(thisP(ii),er_Zbottom), elemR(thisP(ii),er_Depth), &
-        !         ZbreadthMax(thisP(ii)), breadthMax(thisP(ii)), areaBelowBreadthMax(thisP(ii)),  ell(thisP(ii)), hydDepth(thisP(ii))
-        ! end do
-        ! print *, 'thisP ',thisP
-        ! print *, 'head  ',head(thisP)
-        ! print *, 'Zbmax ',ZbreadthMax(thisP)
-        ! print *, 'ell   ',ell(thisP)
-
-        ! print *, 'at end of geo_ell_from_head', elemR(15,er_ell)
-
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_ell_from_head
@@ -1756,8 +1800,8 @@ module geometry
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP_closed_CC
-        integer, pointer    :: thisP(:), Npack
-        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:)
+        integer, pointer    :: thisP(:), Npack, SlotMethod
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), dSlotDepth(:)
         real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:)
         real(8), pointer    :: head(:), fullVolume(:), fullArea(:), fullDepth(:)
         real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:), SlotHydRad(:)
@@ -1772,6 +1816,7 @@ module geometry
         Npack      => npack_elemP(thisColP_closed_CC)
         area       => elemR(:,er_Area)
         depth      => elemR(:,er_Depth)
+        dSlotDepth => elemR(:,er_dSlotDepth)
         ell        => elemR(:,er_ell)
         ellMax     => elemR(:,er_ell_max)
         fullDepth  => elemR(:,er_FullDepth)
@@ -1787,17 +1832,38 @@ module geometry
         volume     => elemR(:,er_Volume)
         zbottom    => elemR(:,er_Zbottom)
         isSlot     => elemYN(:,eYN_isSlot)
+
+        !% pointer to necessary settings struct
+        SlotMethod => setting%PreissmannSlot%PreissmannSlotMethod
         !%-----------------------------------------------------------------------------
 
         !% CC slot adjustment
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP_closed_CC)
-            where (isSlot(thisP)) 
-                volume(thisP) = volume(thisP)  + SlotVolume(thisP)
-                depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                head(thisP)   = head(thisP)    + SlotDepth(thisP)
-                Overflow(thisP) = zeroR
-            end where 
+
+            select case (SlotMethod)
+                case (StaticSlot)
+                    where (isSlot(thisP)) 
+                        volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                        ! area(thisP)   = area(thisP)    + SlotArea(thisP) 
+                        depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
+                        head(thisP)   = head(thisP)    + SlotDepth(thisP)
+                        ell(thisP)    = ellMax(thisP)
+                        Overflow(thisP) = zeroR
+                    end where 
+
+                case (DynamicSlot)
+                    where (isSlot(thisP)) 
+                        volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
+                        ! area(thisP)      = area(thisP)    + SlotArea(thisP)
+                        SlotDepth(thisP) = max(SlotDepth(thisP) + dSlotDepth(thisP), zeroR) !% HACK: TESTING STUFF
+                        head(thisP)      = max(head(thisP)  + SlotDepth(thisP), zbottom(thisP))
+                        Overflow(thisP)  = zeroR
+                    elsewhere
+                        SlotDepth(thisP)  = zeroR
+                        ! SlotVolume(thisP) = zeroR
+                    end where 
+            end select
         end if
 
         if (setting%Debug%File%geometry) &
@@ -1854,7 +1920,7 @@ module geometry
             integer, intent(in) :: thisColP_JM
             integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
             real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
-            real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:)
+            real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ell(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), ellMax(:)
             real(8), pointer :: overflow(:), grav, TargetPCelerity, PreissmannAlpha
             logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:)
@@ -1875,6 +1941,7 @@ module geometry
             volume        => elemR(:,er_Volume)
             zcrown        => elemR(:,er_Zcrown)
             zbottom       => elemR(:,er_Zbottom)
+            ell           => elemR(:,er_ell)
             ellMax        => elemR(:,er_ell_max)
             fUp           => elemI(:,ei_Mface_uL)
             fDn           => elemI(:,ei_Mface_dL)
@@ -1914,30 +1981,24 @@ module geometry
                         SlotVolume(tB) = zeroR
                         PCelerity(tB)  = zeroR
 
-                        !% --- a slot condition exists if the head is above the crown
-                        !%     or the upstream CC is in a slot
-                        if ((head(tB) .gt. zcrown(tB)) .or. fSlot(fUp(tB))) then
-                            !% set the slot T/F to true
+                        !% assuming a slot if the head is above the crown
+                        !% or the upstream CC is in a slot
+                        if (head(tB) .gt. zcrown(tB)) then
                             isSlot(tB)     = .true.
-                            !% upstream face sees a slot
                             fSlot(fUp(tB)) = .true.
-                            !% copy the preissmann number from the adjacent face
                             PNumber(tB)    = fPNumber(fUp(tB))
-                            !% calculate the preissmann celerity
                             PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-                            !% calculater the slot depth
-                            SlotDepth(tB)  = max(head(tB) - fulldepth(tB) - zbottom(tB), zeroR) 
-                            !% calculate the slot area  
+                            SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)   
                             SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
                                                 fullArea(tB)) / (TargetPCelerity ** twoR)
-                            !% calculate the slot volume
                             SlotVolume(tB) = SlotArea(tB) * length(tB)
                             
                             !% add the slot geometry back to previously solved geometry
                             volume(tB) = volume(tB)  + SlotVolume(tB)
+                            area(tB)   = area(tB)    + SlotArea(tB)
                             depth(tB)  = depth(tB)   + SlotDepth(tB)
                             Overflow(tB) = zeroR
-                        end if 
+                        end if  
                     end if
                 end do
                 !% handle the downstream branches
@@ -1952,27 +2013,21 @@ module geometry
                         SlotVolume(tB) = zeroR
                         PCelerity(tB)  = zeroR
 
-                        !% --- a slot condition exists if the head is above the crown
-                        !%     or the downstream CC is in a slot
-                        if ((head(tB) .gt. zcrown(tB)) .or. fSlot(fDn(tB))) then
-                            !% set the slot T/F to true
+                        !% assuming a slot if the head is above the crown
+                        !% or the downstream CC is in a slot
+                        if (head(tB) .gt. zcrown(tB)) then
                             isSlot(tB)     = .true.
-                            !% downstream face sees a slot
                             fSlot(fDn(tB)) = .true.
-                            !% copy the preissmann number from the adjacent face
                             PNumber(tB)    = fPNumber(fDn(tB))
-                            !% calculate the preissmann celerity
                             PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-                            !% calculater the slot depth
-                            SlotDepth(tB)  = max(head(tB) - fulldepth(tB) - zbottom(tB), zeroR) 
-                            !% calculate the slot area  
+                            SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)    
                             SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
                                                 fullArea(tB)) / (TargetPCelerity ** twoR)
-                            !% calculate the slot volume
                             SlotVolume(tB) = SlotArea(tB) * length(tB)
-                            
+
                             !% add the slot geometry back to previously solved geometry
                             volume(tB) = volume(tB)  + SlotVolume(tB)
+                            area(tB)   = area(tB)    + SlotArea(tB)
                             depth(tB)  = depth(tB)   + SlotDepth(tB)
                             Overflow(tB) = zeroR
                         end if

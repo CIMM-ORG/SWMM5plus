@@ -1,4 +1,4 @@
-module triangular_channel
+module parabolic_channel
 
     use define_settings, only: setting
     use define_globals
@@ -9,21 +9,21 @@ module triangular_channel
 
     !%----------------------------------------------------------------------------- 
     !% Description:
-    !% triangular channel geometry
+    !% parabolic channel geometry
     !%
 
     private
 
-    public :: triangular_depth_from_volume
-    public :: triangular_area_from_depth
-    public :: triangular_area_from_depth_singular
-    public :: triangular_topwidth_from_depth
-    public :: triangular_topwidth_from_depth_singular 
-    public :: triangular_perimeter_from_depth
-    public :: triangular_perimeter_from_depth_singular
-    public :: triangular_hyddepth_from_depth
-    public :: triangular_hyddepth_from_depth_singular
-    public :: triangular_hydradius_from_depth_singular
+    public :: parabolic_depth_from_volume
+    public :: parabolic_area_from_depth
+    public :: parabolic_area_from_depth_singular
+    public :: parabolic_topwidth_from_depth
+    public :: parabolic_topwidth_from_depth_singular 
+    public :: parabolic_perimeter_from_depth
+    public :: parabolic_perimeter_from_depth_singular
+    public :: parabolic_hyddepth_from_depth
+    public :: parabolic_hyddepth_from_depth_singular
+    public :: parabolic_hydradius_from_depth_singular
 
     contains
 
@@ -31,10 +31,10 @@ module triangular_channel
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine triangular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine parabolic_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on open channels (or non-surcharged triangular conduits)
+        !% Only applies on open channels (or non-surcharged parabolic conduits)
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point
@@ -42,151 +42,159 @@ module triangular_channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), volume(:), length(:), breadth(:), sideslope(:)
+        real(8), pointer :: depth(:), volume(:), length(:), breadth(:), fulldepth(:), rbot(:)
         !%-----------------------------------------------------------------------------
         thisP   => elemPGx(1:Npack,thisCol) 
         depth   => elemR(:,er_Depth)
         volume  => elemR(:,er_Volume)
         length  => elemR(:,er_Length)
-        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
-        sideslope => elemSGR(:,esgr_Triangular_Slope)
+        fulldepth => elemR(:,er_FullDepth)
+        breadth => elemSGR(:,esgr_Parabolic_Breadth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------  
 
-        depth(thisP) = sqrt((volume(thisP) / length(thisP)) / sideslope(thisP))
-
-    end subroutine triangular_depth_from_volume
+        depth(thisP) = ( threeR/fourR * (volume(thisP)/length(thisP)) / rbot(thisP) ) ** twothirdR
+    end subroutine parabolic_depth_from_volume
     !%  
 !%==========================================================================
 !%==========================================================================
 !%
-    elemental real(8) function triangular_area_from_depth (indx) result (outvalue)
+    elemental real(8) function parabolic_area_from_depth (indx) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes area from known depth for triangular cross section
+        !% Computes area from known depth for parabolic cross section
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx  ! may be a packed array of indexes
         !%-----------------------------------------------------------------------------
-        outvalue = elemSGR(indx,esgr_Triangular_Slope) * (elemR(indx,er_Depth) ** twoR)
-
-    end function triangular_area_from_depth
+        
+        outvalue = (fourR / threeR) * elemSGR(indx, esgr_Parabolic_Radius) * elemR(indx, er_Depth) *  sqrt(elemR(indx, er_Depth))
+        
+    end function parabolic_area_from_depth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function triangular_area_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function parabolic_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes area from known depth for triangular cross section of a single element
+        !% Computes area from known depth for parabolic cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), sideslope(:)
+        real(8), pointer    ::  rbot(:)
         !%-----------------------------------------------------------------------------
-        sideslope => elemSGR(:,esgr_Triangular_Slope)
-        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
-        outvalue = sideslope(indx) * (depth ** twoR)
+        outvalue = (fourR / threeR) * rbot(indx) * depth *  sqrt(depth)
 
-    end function triangular_area_from_depth_singular
+    end function parabolic_area_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth from a known depth in a triangular channel
+        !% Computes the topwidth from a known depth in a parabolic channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: breadth(:), topwidth(:), sideslope(:), depth(:)
+        real(8), pointer :: topwidth(:), depth(:), rbot(:)
         !%-----------------------------------------------------------------------------
-        thisP    => elemPGx(1:Npack,thisCol) 
-        topwidth => elemR(:,er_Topwidth)
-        sideslope => elemSGR(:,esgr_Triangular_Slope)
-        depth    => elemR(:,er_Depth)
+        thisP     => elemPGx(1:Npack,thisCol) 
+        topwidth  => elemR(:,er_Topwidth)
+        depth     => elemR(:,er_Depth)
+        rbot      => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
 
-        topwidth(thisP) = twoR * sideslope(thisP) * depth(thisP) 
-
-    end subroutine triangular_topwidth_from_depth
+        topwidth(thisP) = twoR * rbot(thisP) * sqrt(depth(thisP))
+        
+    end subroutine parabolic_topwidth_from_depth
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function triangular_topwidth_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function parabolic_topwidth_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth for a triangular cross section of a single element
+        !% Computes the topwidth for a parabolic cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx 
         real(8), intent(in) :: depth
-        real(8), pointer    :: sideslope(:)
+        real(8), pointer    ::  rbot(:)
         !%-----------------------------------------------------------------------------
-        sideslope => elemSGR(:,esgr_Triangular_Slope)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
-        !%  
-        outvalue = twoR * sideslope(indx) * depth
 
-    end function triangular_topwidth_from_depth_singular
+        outvalue = twoR * rbot(indx) * sqrt(depth)
+
+    end function parabolic_topwidth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the perimeter from a known depth in a triangular channel
+        !% Computes the perimeter from a known depth in a parabolic channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: slope(:), depth(:), perimeter(:)
+        real(8), pointer :: depth(:), perimeter(:), rbot(:), x(:), t(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
-        slope     => elemSGR(:,esgr_Triangular_Slope)
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
+        rbot      => elemSGR(:,esgr_Parabolic_Radius)
+        x         => elemR(:, er_Temp02)
+        t         => elemr(:, er_Temp03)
+        !%-----------------------------------------------------------------------------
+        x(thisP) = twoR * sqrt(depth(thisP)) / rbot(thisP)
+        t(thisP) = sqrt(oneR + x(thisP) * x(thisP))
         !%-----------------------------------------------------------------------------
 
-        perimeter(thisP) = twoR * depth(thisP) * sqrt(oneR + slope(thisP) ** twoR)
+        perimeter(thisP) = onehalfR * rbot(thisP) * rbot(thisP) * (x(thisP) * t(thisP) + log(x(thisP) + t(thisP)))
 
-    end subroutine triangular_perimeter_from_depth
+    end subroutine parabolic_perimeter_from_depth
 !%    
 !%==========================================================================    
 !%==========================================================================
 !%
-    real(8) function triangular_perimeter_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function parabolic_perimeter_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes wetted perimeter from known depth for a triangular cross section of
+        !% Computes wetted perimeter from known depth for a parabolic cross section of
         !% a single element 
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer    :: slope(:)
+        real(8), pointer    ::  rbot(:)
+        real(8) :: x, t
         !%-----------------------------------------------------------------------------
-        slope => elemSGR(:,esgr_Triangular_Slope)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
         !%-----------------------------------------------------------------------------
-        
-        outvalue = twoR * depth * sqrt(1 + slope(indx) ** twoR)
+        x = twoR * sqrt(depth) / rbot(indx)
+        t = sqrt(oneR + x * x)
+        !%-----------------------------------------------------------------------------
+        outvalue = onehalfR * rbot(indx) * rbot(indx) * (x * t + log(x + t))
 
-    end function triangular_perimeter_from_depth_singular
+    end function parabolic_perimeter_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    subroutine parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a triangular channel
+        !% Computes the hydraulic (average) depth from a known depth in a parabolic channel
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
@@ -198,50 +206,62 @@ module triangular_channel
         hyddepth  => elemR(:,er_HydDepth)
         !%-----------------------------------------------------------------------------
 
-        hyddepth(thisP) = depth(thisP) / twoR
+        hyddepth(thisP) = (twoR/threeR) * depth(thisP)
 
-    end subroutine triangular_hyddepth_from_depth
+    end subroutine parabolic_hyddepth_from_depth
 !%    
 !%==========================================================================  
 !%==========================================================================
 !%
-    real(8) function triangular_hyddepth_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function parabolic_hyddepth_from_depth_singular (indx,depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for triangular cross section of 
+        !% Computes hydraulic depth from known depth for parabolic cross section of 
         !% a single element
         !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx     
-        real(8), intent(in) :: depth
+        integer, intent(in) :: indx   
+        real(8), intent(in) :: depth  
         !%-----------------------------------------------------------------------------  
 
-        outvalue = depth / twoR
+        outvalue = (twoR/threeR) * depth
 
-    end function triangular_hyddepth_from_depth_singular 
+    end function parabolic_hyddepth_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function triangular_hydradius_from_depth_singular (indx,depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic radius from known depth for a triangular cross section of
-        !% a single element 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    :: breadth(:), sideslope(:)
-        !%-----------------------------------------------------------------------------
-        sideslope => elemSGR(:,esgr_Triangular_Slope)
-        breadth   => elemSGR(:,esgr_Triangular_TopBreadth)
-        !%-----------------------------------------------------------------------------
-        
-        outvalue = (sideslope(indx) * depth) / (twoR * sqrt(oneR + sideslope(indx) ** twoR))
-
-    end function triangular_hydradius_from_depth_singular
-    !%    
+!%    
 !%==========================================================================
+!%==========================================================================
+!%
+    real(8) function parabolic_hydradius_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes hydraulic radius from known depth for a parabolic cross section of
+        !% a single element 
+        !%------------------------------------------------------------------
+            integer, intent(in) :: indx
+            real(8), intent(in) :: depth
+            real(8) :: x, t, area, perimeter
+            real(8), pointer :: breadth(:), fulldepth(:), rbot(:)
+        !%------------------------------------------------------------------
+        breadth => elemSGR(:,esgr_parabolic_Breadth)
+        fulldepth => elemR(:, er_FullDepth)
+        rbot => elemSGR(:, esgr_Parabolic_Radius)
+        !%------------------------------------------------------------------
+        x = (twoR * sqrt(depth) / rbot(indx))
+        t = sqrt(oneR + (x * x))
+        area = (fourR / threeR) * rbot(indx) * depth *  sqrt(depth)
 
-end module triangular_channel
+        perimeter = onehalfR * rbot(indx) * rbot(indx) * (x * t + log(x + t))
+        
+        outvalue = area / perimeter
+
+    end function parabolic_hydradius_from_depth_singular
+!%      
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
+end module parabolic_channel

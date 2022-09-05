@@ -655,21 +655,17 @@ contains
             !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
-            link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-            link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
-            link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
-            link%R(ii,lr_RightSlope)         = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
-            link%R(ii,lr_Roughness)          = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
-            link%R(ii,lr_FullDepth)          = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
-            link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
-            link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
-            link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
-            link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
-            link%R(ii,lr_Kentry_MinorLoss)   = interface_get_linkf_attribute(ii, api_linkf_cLossInlet,       .false.)
-            link%R(ii,lr_Kexit_MinorLoss)    = interface_get_linkf_attribute(ii, api_linkf_cLossOutlet,      .false.)
-            link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
-            link%R(ii,lr_ForceMain_Coef)     = interface_get_linkf_attribute(ii, api_linkf_forcemain_coef,   .false.)
-
+            link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
+            link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
+            link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
+            link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
+            link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
+            link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+            link%R(ii,lr_BottomDepth)     = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
+            link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
+            link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+            link%R(ii,lr_FlowrateInitial) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+            link%R(ii,lr_FlowrateLimit)   = interface_get_linkf_attribute(ii, api_linkf_qlimit,            .false.)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -712,10 +708,8 @@ contains
                  (link%I(ii,li_geometry) == lRectangular)    .or. &
                  (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
                  (link%I(ii,li_geometry) == lTriangular)     .or. &
+                 (link%I(ii,li_geometry) == lParabolic)      .or. &
                  (link%I(ii,li_geometry) == lPower_function) .or. &
-                 (link%I(ii,li_geometry) == lRect_triang)    .or. &
-                 (link%I(ii,li_geometry) == lRect_round)     .or. &
-                 (link%I(ii,li_geometry) == lMod_basket)     .or. &
                  (link%I(ii,li_geometry) == lIrregular)) ) then
 
                 link%I(ii,li_link_type) = lChannel

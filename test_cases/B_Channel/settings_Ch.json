@@ -9,7 +9,7 @@
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 5.00
+        "NominalElemLength" : 100.00
     },
     "Limiter" : {
         "BC" : {
@@ -34,12 +34,14 @@
         }
     },    
     "Output" : {
+        "UseFileNameFile" : false,
         "Verbose" : true,
         "Warning" : true,
         "StoredLevels" : 100,
+        "StoredFileNames" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 500
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -58,8 +60,10 @@
             "isWaveSpeedOut"    : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" : true,
             "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,
@@ -87,5 +91,12 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4
     }
 }

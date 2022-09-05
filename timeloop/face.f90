@@ -672,13 +672,7 @@ module face
         else
             !% continue
         end if
-      
-        ! print *, 'at end of ',trim(subroutine_name)
-        ! print *, 'faceR head ',faceR(idx_fBC, fr_Head_u)
-        ! print *, 'faceR area ',faceR(idx_fBC, fr_Area_u)
-        ! print *, 'faceR flow ',faceR(idx_fBC, fr_Flowrate)
-        ! print *, 'faceR vel  ',faceR(idx_fBC, fr_Velocity_u)
-        
+
         !%--------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%boundary_conditions) &

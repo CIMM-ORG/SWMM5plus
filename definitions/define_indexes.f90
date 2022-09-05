@@ -65,6 +65,7 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
+        enumerator :: lr_BottomDepth   
         enumerator :: lr_BreadthScale
         enumerator :: lr_TopWidth
         enumerator :: lr_ElementLength
@@ -325,6 +326,9 @@ module define_indexes
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
+        enumerator :: er_dSlotArea                  !% change in slot volume
+        enumerator :: er_dSlotDepth                 !% change in slot depth
+        enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
         enumerator :: er_ell_max                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
@@ -374,7 +378,8 @@ module define_indexes
         enumerator :: er_SlotDepth                  !% slot depth
         enumerator :: er_SlotArea                   !% slot area
         enumerator :: er_SlotHydRadius              !% slot hydraulic radius 
-        enumerator :: er_SlotVolume                 !% slot volume       
+        enumerator :: er_SlotVolume                 !% slot volume 
+        enumerator :: er_SlotVolumeOld              !% old slot volume      
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume
@@ -527,19 +532,21 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CC_rectangular_nonsurcharged = 1      !% CC rectangular channels that are not surcharged
-        enumerator :: epg_CC_rectangular_closed_nonsurcharged   !% CC rectangular conduits that are not surcharged
-        enumerator :: epg_CC_trapezoidal_nonsurcharged          !% CC trapezoidal channels that are not surcharged
-        enumerator :: epg_CC_triangular_nonsurcharged           !% CC triangular channels that are not surcharged
-        enumerator :: epg_CC_irregular_nonsurcharged            !% CC irregular channels that are not surcharged
-        enumerator :: epg_CC_circular_nonsurcharged             !% CC circular conduits that are not surcharged
-        enumerator :: epg_JM_functionalStorage_nonsurcharged    !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabularStorage_nonsurcharged       !% JM tabular geometry relationship nonsurcharges
-        enumerator :: epg_JM_impliedStorage_nonsurcharged       !% JM with artificial storage
-        enumerator :: epg_JB_rectangular                        !% all rectangular junction branches
-        enumerator :: epg_JB_trapezoidal                        !% all trapezoidal junction branches
-        enumerator :: epg_JB_triangular                         !% all triangular junction branches
-        enumerator :: epg_JB_circular                           !% all circular junction branches
+        enumerator :: epg_CC_rectangular_nonsurcharged = 1          !% CC rectangular channels that are not surcharged
+        enumerator :: epg_CC_rectangular_closed_nonsurcharged       !% CC rectangular conduits that are not surcharged
+        enumerator :: epg_CC_rectangular_triangular_nonsurcharged   !% CC rectangular_triangular that are not surcharged
+        enumerator :: epg_CC_trapezoidal_nonsurcharged              !% CC trapezoidal channels that are not surcharged
+        enumerator :: epg_CC_triangular_nonsurcharged               !% CC triangular channels that are not surcharged
+        enumerator :: epg_CC_irregular_nonsurcharged                !% CC irregular channels that are not surcharged
+        enumerator :: epg_CC_circular_nonsurcharged                 !% CC circular conduits that are not surcharged
+        enumerator :: epg_CC_parabolic_nonsurcharged
+        enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_impliedStorage_nonsurcharged           !% JM with artificial storage
+        enumerator :: epg_JB_rectangular                            !% all rectangular junction branches
+        enumerator :: epg_JB_trapezoidal                            !% all trapezoidal junction branches
+        enumerator :: epg_JB_triangular                             !% all triangular junction branches
+        enumerator :: epg_JB_circular                               !% all circular junction branches
         enumerator :: epg_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
@@ -670,7 +677,10 @@ module define_indexes
     integer, parameter :: Ncol_elemSR_Weir = esr_Weir_lastplusone-1
 
     enum, bind(c)
-        enumerator ::  esr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
+        enumerator ::  esr_Orifice_CriticalDepth = 1        !% critical depth bellow which the orifice acts like an weir
+        enumerator ::  esr_Orifice_CriticalHead             !% critical head for weir flow through an orifice
+        enumerator ::  esr_Orifice_FractionCriticalDepth    !% critical depth fracttion to distinct between weir and orifice flow
+        enumerator ::  esr_Orifice_DischargeCoeff           !% discharge coefficient orifice
         enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
         enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
         enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
@@ -757,6 +767,16 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSGR_Triangular =  esgr_Triangular_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for triangular channel
+    enum, bind(c)
+         enumerator ::  esgr_Rectangular_Triangular_TopBreadth = 1  !% top breadth of triangular geometry
+         enumerator ::  esgr_Rectangular_Triangular_BottomDepth     !% depth of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_BottomArea      !% area of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_BottomSlope     !% side slope of the triangular section
+         enumerator ::  esgr_Rectangular_Triangular_lastplusone     !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSGR_Rectangular_Triangular =  esgr_Rectangular_Triangular_lastplusone-1
+
     !% Define the column indexes for elemGSR(:,:) for trapezoidal pipe or channel
     enum, bind(c)
          enumerator ::  esgr_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
@@ -778,6 +798,15 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Circular =  esgr_Circular_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
+    enum, bind(c)
+         enumerator ::  esgr_Parabolic_Breadth = 1    !% breadth for parabolic geometry
+         enumerator ::  esgr_Parabolic_Radius
+         enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Circular_lastplusone-1
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
@@ -786,7 +815,9 @@ module define_indexes
     integer, target :: Ncol_elemSGR = max(&
                             Ncol_elemSGR_Rectangular, &
                             Ncol_elemSGR_Trapezoidal, &
-                            Ncol_elemSGR_Circular)
+                            Ncol_elemSGR_Circular,    &
+                            Ncol_elemSGR_Trapezoidal, &
+                            Ncol_elemSGR_Parabolic)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or

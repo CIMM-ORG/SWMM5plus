@@ -2798,7 +2798,6 @@ contains
             !% -----------------------------------
                 if (NtotalOutputFaces > 0) then
                     do kk=1,nOutNodeFace
-                        !print *, '  kk = ',kk
                         !% --- Cycle through the nodes to create the individual nodes output files
                         !% get the global SWMM index for this node
                         SWMMnode => OutNodeFace_pSWMMidx(kk)
@@ -2858,7 +2857,6 @@ contains
                                 !     dummyarrayI,    &
                                 !     tnodename, setting%Time%DateTimeStamp, time_units_str, .false.)
 
-                                !print *, ' setting%Output%Report%useCSV ', setting%Output%Report%useCSV
                                 if(setting%Output%Report%useCSV) then
                                     !% --- open formatted csv node file
                                     open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted', &
@@ -2937,7 +2935,6 @@ contains
                         !% --- NODE-FACE FINITE-VOLUME FILES CSV (1 type per file)
                         !%
                         do mm=1,nTypeFace
-                            !print *, '   mm  = ',mm
                             !% --- cycle through the types
                             mminc = mm+1 !% increment to skip time level
                             !% --- create the filename
@@ -4682,8 +4679,6 @@ contains
         character(len=99)   :: emsg
         character(64)       :: subroutine_name = 'outputML_HD5F_create_dset'
 
-        print *, 'in ',trim(subroutine_name)
-
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
@@ -4699,13 +4694,7 @@ contains
         if( allocated(output_profile_ids)) then
             allocate(profile_data(max_links_profile_N,max_profiles_N))
         end if
-
-
-        print *,"======================================="
-        print *,"==============",h5_dset_name,"========================="
-        print *,"======================================="
-        
-        
+             
         !% length of the attributes to be stored
         attrlen = 150
 
@@ -4956,8 +4945,6 @@ contains
             deallocate(profile_data)
         end if
 
-        print *, 'exiting ',trim(subroutine_name)
-
     end subroutine outputML_HD5F_create_dset
 
 
@@ -4991,52 +4978,36 @@ contains
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        
-             print *, 'in ',trim(subroutine_name)
-             print *, ' isFV ',isFV
-
+             
         !% Dataset_data is allocated and filled with correct data, updated_size_data is stored 
         if(isFv) then    
-            print *, ' here 0000 A'
             allocate(dset_data(nIdx2+1,nLevel))
             updated_size_data(1:2) =(/nLevel,nIdx2+1/)
             dset_data(1,1:nLevel) = Out_ElemDataR(idx1,1,1,1:nLevel)
             dset_data(2:nIdx2+1,1:nLevel) = Out_ElemDataR(idx1,1:nIdx2,idx3,1:nLevel)
 
         else 
-            print *, ' here 0000 B'
             allocate(dset_data(nIdx2,nLevel))
             dset_data(:nIdx2,:nLevel) = Out_ProcessedDataR(idx1,1:nIdx2,1:nLevel)
             updated_size_data(1:2) = (/nLevel,nIdx2/)
 
         end if
 
-        print *, '   here 1111'
         
         !% the dataset is opened 
         CALL h5dopen_f(file_id, trim(h5_dset_name), dset_id, HD_error)
 
-        print *, '    here 2222'
-        print *, '    dset_id ', dset_id
-        print *, '    H5T_NATIVE_REAL ',H5T_NATIVE_REAL
-        print *, '    updated_size_data ', updated_size_data
-        print *, '    HD_error  ',HD_error
-        print *, '    dset_data ',dset_data
+
 
         !% the dataset is written to using the stored data 
         call h5dwrite_f(dset_id, H5T_NATIVE_REAL, dset_data, updated_size_data,HD_error)
 
-        print *, '    here 3333'
 
         !% the dataset is closed
         CALL h5dclose_f(dset_id, HD_error)
 
-        print *, 'leaving (before deallocate) ',trim(subroutine_name)
-
         !% deallocation of dset_data
         deallocate(dset_data)
-
-        print *, 'leaving ',trim(subroutine_name)
     
     end subroutine outputML_HD5F_write_file
 

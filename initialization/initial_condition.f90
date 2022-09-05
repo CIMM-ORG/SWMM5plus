@@ -21,7 +21,9 @@ module initial_condition
     use geometry !BRHbugfix 20210813
     use circular_conduit
     use rectangular_channel, only: rectangular_area_from_depth
+    use parabolic_channel, only: parabolic_area_from_depth
     use rectangular_conduit, only: rectangular_closed_area_from_depth
+    use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth
     use trapezoidal_channel, only: trapezoidal_area_from_depth
     use triangular_channel, only: triangular_area_from_depth
     use storage_geometry
@@ -236,6 +238,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
 
+        ! stop 23123
             ! call util_CLprint ('initial_condition after update_auxiliary_variables')
 
         !% --- initialize old head 
@@ -409,9 +412,6 @@ contains
             end if
 
         end do
-
-        ! print *, elemR(12:14,er_Volume)
-        ! stop 29873
         
         !%------------------------------------------------------------------
         !% Closing
@@ -473,8 +473,6 @@ contains
         headUp = node%R(nUp,nr_Zbottom) + node%R(nUp,nr_InitialDepth)
         headDn = node%R(nDn,nr_Zbottom) + node%R(nDn,nr_InitialDepth)
 
-        !print *, 'headUP, Dn',headUp, headDn
-
         !% --- set upstream link depths including effects of offsets
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
@@ -482,12 +480,6 @@ contains
         !% --- set downstream link depths including effects of offsets
         !%     where downstream head is less than zbottom, depth is zero
         DepthDn = max(headDn - zLinkDn, zeroR)
-
-        ! print *, ' '
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, 'thislink ',thisLink
-        ! print *, 'DepthUp, Dn',DepthUp,DepthDn
-        ! print *, 'ZlinkUp, Dn',zLinkUp,zLinkDn
 
         !% --- check for a downstream gate on the node
         !%     adjust depths and head as needed
@@ -510,11 +502,6 @@ contains
             end if
         end if
 
-        ! print *, 'after: '
-        ! print *, 'headUP, Dn',headUp, headDn
-        ! print *, 'DepthUp, Dn',DepthUp,DepthDn
-
-
         !% --- pack the elements for this link
         pElem = pack(elemI(:,ei_Lidx), (elemI(:,ei_link_Gidx_BIPquick) == thisLink))
 
@@ -533,12 +520,8 @@ contains
         !% --- total depth delta
         dDelta = DepthUp - DepthDn
 
-        !print *, 'dDelta ',dDelta
-
         !% --- total length of all elements in link
         linkLength = sum(eLength(pElem))
-
-        ! print *, 'linkLength ',linkLength
 
         !% -- initialize length measure from the upper end of the link
         !%    to an interative element center
@@ -558,20 +541,6 @@ contains
             case (UniformDepth)
                 !% --- uniform depth uses the average of upstream and downstream depths
                 eDepth(pElem) = onehalfR * (DepthUp + DepthDn)
-
-                ! print *, 'uniform depth eDepth(pElem) ',eDepth(pElem)
-
-                ! !%  if the link has a uniform depth as an initial condition
-                ! if (link%R(thisLink,lr_InitialDepth) .ne. nullvalueR) then
-
-                !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                !         elemR(:,er_Depth) = link%R(thisLink,lr_InitialDepth)
-                !     endwhere
-                ! else
-                !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                !         elemR(:,er_Depth) = onehalfR * (DepthUp + DepthDn)
-                !     endwhere
-                ! end if
         
 
             case (LinearlyVaryingDepth)
@@ -584,23 +553,6 @@ contains
                     !% --- add the remainder of this element to the length
                     length2Here       = length2Here + onehalfR * eLength(pElem(mm))
                 end do
-
-                ! print *, 'Linear varying eDepth(pElem)',eDepth(pElem)
-
-                !where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !    elemR(:,er_Depth) = DepthUp
-                !endwhere
-
-                !%  using a linear distribution over the links
-                !ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                ! do mm=2,ei_max
-                !     !% find the element that is at the mm position in the link
-                !     where ( (elemI(:,ei_link_Pos) == mm) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !         !% use a linear interpolation
-                !         elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * real(mm - oneI) / real(ei_max - oneI)
-                !     endwhere
-                ! end do
 
             case (ExponentialDepth)
                 !% --- if the link has exponentially increasing or decreasing depth
@@ -616,48 +568,11 @@ contains
                     length2Here       = length2Here + onehalfR * eLength(pElem(mm))
                 end do
 
-                ! print *, 'exponential eDepth(pElem)',eDepth(pElem)
-                ! where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !     elemR(:,er_Depth) = DepthUp
-                ! endwhere
-
-                ! !% find the remaining elements in the link
-                ! ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                ! do mm=2,ei_max
-                !     kappa = real(mm - oneI)
-
-                !     !%  depth decreases exponentially going downstream
-                !     if (DepthUp - DepthDn > zeroR) then
-                !         where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
-                !                 (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !             elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * exp(-kappa)
-                !         endwhere
-
-                !     !%  depth increases exponentially going downstream
-                !     elseif (DepthUp - DepthDn < zeroR) then
-                !         where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
-                !                 (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !             elemR(:,er_Depth) = DepthUp + (DepthDn - DepthUp) * exp(-kappa)
-                !         endwhere
-
-                !     !%  uniform depth
-                !     else
-                !         where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
-                !                 (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                !             elemR(:,er_Depth) = DepthUp
-                !         endwhere
-                !     end if
-                ! end do
-
             case (FixedHead)    
                 !% --- set the downstream depth as a fixed head (ponding)
                 !%     over all the elements in the link.
                 eDepth(pElem) = max(headDn - eZbottom(pElem), zeroR)
-
-                ! print *, 'fixedhead eDepth(pElem)',eDepth(pElem)
             
-
             case default
                 print *, 'In ', subroutine_name
                 print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
@@ -666,8 +581,6 @@ contains
                 call util_crashpoint(83753)
                 !return
         end select
-
-        !print *, 'at end  in init_IC_get_Depth',pElem,eDepth(pElem)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -704,7 +617,6 @@ contains
             elemR(:,er_ManningsN_Dynamic)  = elemR(:,er_ManningsN)
         endwhere
 
-
         !% --- assign minor losses at entry and exit to the first and last elements
         !%     in the link
         elemR(firstelem,er_Kentry_MinorLoss) = link%R(thisLink,lr_Kentry_MinorLoss)
@@ -739,9 +651,6 @@ contains
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
-
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, thisLink, linkType
 
         select case (linkType)
 
@@ -1028,8 +937,6 @@ contains
                 !% get geometry data for conduits
                 call init_IC_get_conduit_geometry (thisLink)
 
-                !print *, thisLink,'bb ',elemR(12:14,er_Volume)
-
             case (lweir)
                 !% get geometry data for weirs
                 call init_IC_get_weir_geometry (thisLink)
@@ -1232,7 +1139,6 @@ contains
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    
                 endwhere
 
             case (lIrregular)
@@ -1320,24 +1226,54 @@ contains
                 ! !print *, 'working on irregular cross-sections'
                 ! !call util_crashpoint(448792)
                 ! !return
-                
+
+            case (lParabolic)
+
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+
+                    elemI(:,ei_geometryType) = parabolic
+
+                    !% --- independent data
+                    elemSGR(:,esgr_Parabolic_Breadth)   = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Parabolic_Radius)    = elemSGR(:,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
+                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Parabolic_Breadth)
+                    elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullHydDepth)            = (twoR/threeR) * link%R(thisLink,lr_FullDepth) 
+
+                    !% --- dependent on full depth
+                    elemR(:,er_FullPerimeter)           = onehalfR * elemSGR(:, esgr_Parabolic_Breadth) * elemSGR(:, esgr_Parabolic_Breadth) &
+                                                        * ((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) &
+                                                        / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))) & 
+                                                        + log((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) + sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) &
+                                                        / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))))
+
+                    elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)                = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_FullDepth) *  sqrt(elemR(:, er_FullDepth))
+                    !% --- dependent on full area
+                    elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
+                    elemR(:,er_ell_max)                 = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
+                                                         * elemR(:,er_BreadthMax)                      &
+                                                         + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                    !% --- store IC data
+                    elemR(:, er_Area) = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_Depth) *  sqrt(elemR(:, er_Depth))
+                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                    
+                endwhere
+
             case default
 
                 print *, 'In, ', subroutine_name
                 print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
                 print *, 'which has key ',trim(reverseKey(geometryType))
-                !stop 
                 call util_crashpoint(98734)
-                !return
 
         end select
-
-        ! do ii=1,N_elem(this_image())
-        !     if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-        !         print *, '----- ',thisLink, elemR(ii,er_FullDepth)
-        !     end if
-        ! end do
-        ! stop 2098734
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1364,13 +1300,6 @@ contains
         geometryType => link%I(thisLink,li_geometry)
         pi => setting%Constant%pi
 
-        !print *, geometryType
-
-        ! if (thisLink == 191) then
-        !     print *, 'geometry Type',geometryType,' ', trim(reverseKey(geometryType))
-        !     print *, 'depth ', elemR(2227,er_Depth)
-        ! end if
-
         select case (geometryType)
 
         case (lRectangular_closed)
@@ -1388,8 +1317,9 @@ contains
                 elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
                 elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                 elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                elemR(:,er_ell_max)               = (  (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
+                                                        + elemR(:,er_AreaBelowBreadthMax )                                     &
+                                                    ) / elemR(:,er_BreadthMax) 
                 elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth) 
                 elemR(:,er_FullPerimeter)         = twoR * elemR(:,er_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth)
@@ -1478,6 +1408,47 @@ contains
                 elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
                                                     elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
             end where
+        
+        case (lRect_triang)
+
+                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_geometryType)                            = rect_triang
+                    elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
+                    elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+                    elemSGR(:,esgr_Rectangular_Triangular_BottomArea)   = onehalfR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) * elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)                                                
+                    elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+
+                    where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+                            elemR(:,er_Area) = elemR(:,er_Depth) * elemR(:,er_Depth) * elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
+                        elsewhere
+                            elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) + (elemR(:,er_Depth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)) * &
+                                                elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
+                        end where   
+                        elemR(:,er_SlotDepth) = zeroR              
+                    elsewhere   
+                        !% --- Preissmann Slot
+                        elemR(:,er_Area)      = elemR(:,er_FullArea)
+                        elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
+                        elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                        elemYN(:,eYN_isSlot)  = .true.
+                    endwhere
+
+                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) &
+                                                + (elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) * (elemR(:,er_FullDepth)-elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) )) 
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                endwhere
 
         case (lIrregular)
             print *, 'In ', trim(subroutine_name)
@@ -1496,12 +1467,6 @@ contains
             call util_crashpoint(887344)
             !return
         end select
-
-        ! if (thisLink == 191) then
-        !     print *, 'at end of init_IC_get_conduit_geometry'
-        !     print *, 'geometry Type',geometryType,' ', trim(reverseKey(geometryType))
-        !     print *, 'depth ', elemR(2227,er_Depth)
-        ! end if
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1723,10 +1688,6 @@ contains
         !% pointer to specific orifice geometry
         OrificeGeometryType => link%I(thisLink,li_geometry)
 
-        ! print *, 'here in init_IC_orifice_geometry'
-        ! print *, trim(reverseKey(OrificeGeometryType))
-        ! stop 558723
-
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
         case (lRectangular_closed)  !% brh20211219 added Rect_closed
@@ -1777,18 +1738,6 @@ contains
                 elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth) 
                 elemR(:,er_FullDepth)               = twoR * max(elemSR(:,esr_Orifice_Zcrown) - elemR(:,er_Zbottom),elemSR(:,esr_Orifice_FullDepth))
             end where
-
-           ! print *, 'here in init_IC_orifice_geometry'
-            ! do ii=1,size(elemSI,1)
-            !     print *, ii, elemSI(ii,esi_Orifice_GeometryType)
-            ! end do
-           ! print *, trim(reverseKey(elemI(iet(4),ei_geometryType)))
-            ! print *, elemR(iet(3),er_BreadthMax)
-            ! print *, elemSGR(iet(3),esgr_Rectangular_Breadth)
-            ! print *, elemSR(iet(3),esr_Orifice_RectangularBreadth)
-            ! print *, elemSR(iet(3),esr_Orifice_FullDepth)
-            ! print *, elemR(iet(3),er_Zbottom)
-            ! stop 4908723
 
         case default
             print *, 'In ', subroutine_name
@@ -2510,7 +2459,7 @@ contains
 
             select case  (elemI(JBidx,ei_geometryType))
 
-            case (rectangular, trapezoidal, triangular, rectangular_closed, circular, irregular)
+            case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rectangular_closed, circular, irregular)
                 !% --- Copy all the geometry specific data from the adjacent element cell
                 !%     Note that because irregular transect tables are not yet initialized, the
                 !%     Area and Volume here will be junk for an irregular cross-section and will need to be
@@ -2569,14 +2518,7 @@ contains
             elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
-
-            ! print *, 'in JB IC'
-            ! print *, JBidx, Aidx, elemR(JBidx,er_BreadthMax)
-            
-
         end do
-
-     
 
         !% --- set a JM length based on longest branches (20220711brh)
         LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
@@ -2597,13 +2539,6 @@ contains
         select case (JmType)
 
         case (ImpliedStorage)
-            !% the JM characteristic length is the sum of the two longest branches
-            ! elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
-            !                                 elemR(JMidx+5,er_Length)) + &
-            !                             max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
-            !                                 elemR(JMidx+6,er_Length))
-
-                          
 
             !% --- Plane area is the sum of the branch plane area 
             !%     This uses simplified geometry approximations as the junction main is only
@@ -2636,7 +2571,17 @@ contains
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
+                case (lParabolic)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                          * elemR(  JBidx,er_Length)                                          &
+                          * elemSGR(JBidx,esgr_Parabolic_Breadth) )
 
+                case (lRect_triang)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                    * elemR(  JBidx,er_Length)                                   &
+                                    * (elemSGR(JBidx,esgr_Rectangular_Triangular_TopBreadth)/twoR) )
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
@@ -3182,6 +3127,15 @@ contains
             tPack(1:npack) = pack(eIdx,geoType == rectangular)
             smallvolume(tPack(1:npack)) = rectangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
         end if
+
+        !% --- parabolic channel
+        tPack = zeroI
+        npack = count(geoType == parabolic)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == parabolic)
+            smallvolume(tPack(1:npack)) = parabolic_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+        end if
+
         !where (geoType == rectangular)
         !    !smallVolume = depthCutoff * length * rectB
         !end where
@@ -3195,7 +3149,6 @@ contains
             smallvolume(tPack(1:npack)) = rectangular_closed_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
         end if
       
-        !print *, 'CCCC '
         !% --- trapezoidal conduit  
         tPack = zeroI
         npack = count(geoType == trapezoidal)
@@ -3219,7 +3172,7 @@ contains
 
         !% ---  circular conduit
 
-       ! print *, 'EEEE '
+
         tPack = zeroI
         npack = count(geoType == circular)
         if (npack > 0) then
@@ -3319,6 +3272,10 @@ contains
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
+        elemR(1:size(elemR,1)-1,er_dSlotArea)             = zeroR
+        elemR(1:size(elemR,1)-1,er_dSlotDepth)            = zeroR
+        elemR(1:size(elemR,1)-1,er_dSlotVolume)           = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotVolumeOld)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR     
 
         !% only calculate slots for ETM time-march

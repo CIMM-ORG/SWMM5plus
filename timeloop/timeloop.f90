@@ -247,14 +247,6 @@ contains
                 else
                     BCupdateYN = .true.
                 end if
-                    ! print *, ' '
-                    ! print *, ' '
-                    ! print *, '*******************************************************************************'
-                    ! print *, '*******************************************************************************'
-                    ! write(6,"(A,f12.5,A,f12.5)") ' ... beginning time loop ======== time (h):',&
-                    !    setting%Time%Now/3600.d0, ';  DT (s) =',setting%Time%Hydraulics%Dt
-                   
-                    ! call util_CLprint ('at start of time loop')
     
                 !% --- push the old values down the stack 
                 call tl_save_previous_values()
@@ -273,7 +265,6 @@ contains
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
     
-                    !print *, 'about to update BC in timeloop'
 
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
@@ -281,8 +272,6 @@ contains
                         call tl_lateral_inflow()
                         call tl_smallestBC_timeInterval ()
                     end if
-
-                    !print *, 'about to perform control rules '
 
                     !% --- perform control rules
                     if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
@@ -298,7 +287,6 @@ contains
                         ! print *, 'orifice setting ',elemR(iet(3),er_Setting)
                     end if
 
-                    !print *, 'about to call tl_subcatchment_lateral_inflow'
     
                     !% --- add subcatchment inflows
                     !%     note, this has "useHydrology" and not "doHydrologyStepYN" because the

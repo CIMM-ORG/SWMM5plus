@@ -2,14 +2,14 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "Trajkovic_Case_dx0.2",
-        "Short" : "TA_dx0.2"
+        "Long"  : "Rect_triag_test",
+        "Short" : "Rect_triag_test"
     },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "RawElemLength",
-        "NominalElemLength" : 0.1
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "BC" : {
@@ -28,6 +28,10 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
+        "ArraySize" : {
+            "TemporalInflows" : 10,
+            "TotalInflows" : 50
+        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-10
@@ -39,7 +43,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 5000
+            "interval" : 1000
         },
         "DataOut" :{
             "isAreaOut"                 : true,
@@ -49,7 +53,6 @@
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
-            "isManningsNout"     : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,
@@ -60,11 +63,11 @@
             "isPreissmannNumberOut"     : true
         },
         "Report" : {
-            "useSWMMinpYN" :false,
+            "useSWMMinpYN" :true,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
-            "StartTime" : 115.0,
-            "TimeInterval" : 0.1,
+            "StartTime" : 0.0,
+            "TimeInterval" : 1.0,
             "TimeUnits" : "Seconds"
         }
     },
@@ -72,8 +75,12 @@
         "useYN" : false
     },
     "Simulation" : {
-        "useHydrology" : false,
-        "useHydraulics" : true
+        "stopAfterInitializationYN" : false,
+        "useHydrology"              : true,
+        "useHydraulics"             : true,
+        "useSpinUp"                 : false,
+        "stopAfterSpinUp"           : false,
+        "SpinUpDays"                : 10.0
     },
 
     "TestCase" : {
@@ -93,13 +100,13 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 100.0,
-        "PreissmannAlpha" : 2.00
+        "TargetPreissmannCelerity" : 2.0,
+        "PreissmannAlpha" : 1.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.4,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
         "CFL_lo_max" : 0.3,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
@@ -113,14 +120,69 @@
             "ApplyYN" : true,
             "Approach" : "vshape",
             "Coef" : 1.0,
-            "SmallDepthMultiplier" : 1.0
+            "SmallDepthMultiplier" : 3.0
         },
         "Head" : {
-            "ApplyYN" : true,
+            "ApplyYN" : false,
             "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0,
-            "FullDepthMultiplier" : 0.00001
+            "Coef" : 1.0
         }
+    },
+    "Debug" : {
+        "File" : {
+            "adjust" : false,
+            "BIPquick" : false,
+            "boundary_conditions" : false,
+            "c_library" : false,
+            "define_globals" : false,
+            "define_indexes" : false,
+            "define_keys" : false,
+            "define_settings" : false,
+            "define_types" : false,
+            "diagnostic_elements" : false,
+            "discretization" : false,
+            "face" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "initial_condition" : false,
+            "initialization" : false,
+            "interface" : false,
+            "jump" : false,
+            "lowlevel_rk2" : false,
+            "network_define" : false,
+            "orifice_elements" : false,
+	        "output" : false,
+            "pack_mask_arrays" : false,
+            "partitioning" : false,
+            "pump_elements" : false,
+            "rectangular_channel" : false,
+            "trapezoidal_channel" : false,
+            "runge_kutta2" : false,
+            "timeloop" : false,
+            "update" : false,
+            "utility" : false,
+            "utility_allocate" : false,
+            "utility_deallocate" : false,
+            "utility_array" : false,
+            "utility_datetime" : false,
+            "utility_interpolate" : false,
+            "utility_output" : false,
+            "utility_string" : false,
+            "weir_elements" : false
+        },
+        "FileGroup" : {
+            "all" : false,
+            "definitions" : false,
+            "finalization" : true,
+            "geometry" : false,
+            "initialization" : false,
+            "interface" : false,
+            "output" : false,
+            "timeloop" : false,
+            "utility" : false
+        },
+        "SetupYN"  : true,
+        "OutputYN" : true
     },
     "Solver" : {
         "PreissmannSlot" : true,
@@ -129,9 +191,6 @@
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0,
-        "ManningsN" : {
-            "useDynamicManningsN" : false
-        }
-    }       
+        "ReferenceHead"     : 0.0
+    }
 }

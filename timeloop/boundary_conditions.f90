@@ -8,6 +8,7 @@ module boundary_conditions
     use utility_interpolate
     use define_settings, only: setting
     use face, only: face_interpolate_bc
+    use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth_singular, rectangular_triangular_topwidth_from_depth_singular
     use define_xsect_tables
     use geometry
     use xsect_tables
@@ -904,7 +905,6 @@ contains
 !             case (triangular)
 !                 sideSlope = elemSGR(elemIdx,esgr_Triangular_Slope)
 !                 criticalDepth = (twoR * Q2g / sideSlope ** twoR) ** onefifthR
-                
 !             case (trapezoidal)
 !                 !% use the average side slope
 !                 sideSlope = onehalfR * (  elemSGR(elemIdx,esgr_Trapezoidal_LeftSlope)   &
@@ -1160,6 +1160,11 @@ function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
                     setting%ZeroValue%Topwidth)
 
         Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
+    
+    case (rect_triang)
+        Area     = rectangular_triangular_area_from_depth_singular (elemIdx, Depth)
+        Topwidth = rectangular_triangular_topwidth_from_depth_singular (elemIdx, Depth)
+        Flow     = Area * sqrt(grav*Area/Topwidth) - Flow_0
 
     case default
         print *, 'in ',trim(subroutine_name)

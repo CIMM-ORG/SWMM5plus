@@ -99,14 +99,14 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 50.00,
+        "TargetPreissmannCelerity" : 1000.00,
         "PreissmannAlpha" : 2.0
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.4,
-        "CFL_lo_max" : 0.3,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     },
@@ -122,7 +122,7 @@
             "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : false,
+            "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0,
             "FullDepthMultiplier" : 0.5
