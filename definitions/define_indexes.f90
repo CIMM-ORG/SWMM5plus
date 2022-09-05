@@ -810,8 +810,11 @@ module define_indexes
 
     !% Define the column indexes for elemGSR(:,:) for basket_handle_channel
     enum, bind(c)
-         enumerator ::  esgr_Basket_Handle_FullDepth = 1 !% breadth for parabolic geometry
-         enumerator ::  esgr_Basket_Handle_lastplusone       !% must be last enum item
+         enumerator ::  esgr_Basket_Handle_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Basket_Handle_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Basket_Handle_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Basket_Handle_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Basket_Handle_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Basket_Handle =  esgr_Basket_Handle_lastplusone-1

@@ -10,6 +10,7 @@ module geometry
     use triangular_channel
     use rectangular_triangular_conduit
     use circular_conduit
+    use basket_handle_conduit
     use irregular_channel
     use parabolic_channel
     use storage_geometry
@@ -576,6 +577,15 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (basket_handle)                                    
+                                    area(tB)     = basket_handle_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = basket_handle_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = basket_handle_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= basket_handle_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= basket_handle_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
@@ -653,11 +663,6 @@ module geometry
                                     !stop 399848
                                 end select
                             end if
-
-                            ! print *, 'in geo_assign_JB at bottom'
-                            ! write(*,"(A,i5,10f12.5)") 'III ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
-                            ! write(*,"(A,10f12.5)") 'hyd depth', hydDepth(tB)
-                            ! print *, area(tB), length(tB)
 
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
@@ -792,6 +797,13 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  BASKET_HANDLE
+        thisCol => col_elemPGx(epg_CC_basket_handle_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !call util_CLprint('after circular') 
@@ -1138,6 +1150,13 @@ module geometry
             call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- BASKET_HANDLE
+        Npack => npack_elemPGx(epg_CC_basket_handle_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_basket_handle_nonsurcharged)
+            call basket_handle_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1231,9 +1250,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (basket_handle)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = basket_handle_topwidth_from_depth_singular (idx, indepth)
         case (semi_circular)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1323,6 +1340,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
             call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- BASKET_HANDLE
+        Npack => npack_elemPGx(epg_CC_basket_handle_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_basket_handle_nonsurcharged)
+            call basket_handle_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- IRREGULAR
@@ -1421,9 +1445,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (basket_handle)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = basket_handle_perimeter_from_depth_singular (idx, indepth)
         case (semi_circular)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1514,6 +1536,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular_nonsurcharged)
             call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- BASKET_HANDLE
+        Npack => npack_elemPGx(epg_CC_basket_handle_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_basket_handle_nonsurcharged)
+            call basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
         !% --- IRREGULAR
@@ -1616,9 +1645,9 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (basket_handle)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = basket_handle_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = basket_handle_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (semi_circular)
             print *, 'CODE ERROR: hyddepth code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)

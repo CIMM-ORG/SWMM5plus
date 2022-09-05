@@ -20,6 +20,7 @@ module initial_condition
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
     use circular_conduit
+    use basket_handle_conduit
     use rectangular_channel, only: rectangular_area_from_depth
     use parabolic_channel, only: parabolic_area_from_depth
     use rectangular_conduit, only: rectangular_closed_area_from_depth
@@ -1435,20 +1436,66 @@ contains
                         elemYN(:,eYN_isSlot)  = .true.
                     endwhere
 
-                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) &
+                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)      = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) &
                                                 + (elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) * (elemR(:,er_FullDepth)-elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) )) 
-                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_FullHydDepth)  = elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) / twoR + (elemR(:,er_FullDepth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+
+                    elemR(:,er_FullPerimeter) = twoR * sqrt( ((elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) ** twoR) / fourR) + (elemR(:,esgr_Rectangular_Triangular_BottomDepth) ** twoR) ) &
+                                              + twoR * (elemR(:,er_FullDepth) - elemR(:,esgr_Rectangular_Triangular_BottomDepth)) + elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
+                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
                     elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
                     elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
                                                     elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
+
+        case (lBasket_handle)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType)                  = basket_handle
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = 0.7862 * elemSGR(ii,lr_FullDepth) ** twoR
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Basket_Handle_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Basket_Handle_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) = 0.2 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                    else
+                        !% --- Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isSlot)  = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Basket_Handle_BreadthMax)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.2464 * elemR(ii,er_FullDepth) )
+                    elemR(ii,er_AreaBelowBreadthMax) = basket_handle_area_from_depth_singular (ii, elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
 
         case (lIrregular)
             print *, 'In ', trim(subroutine_name)
@@ -2459,7 +2506,7 @@ contains
 
             select case  (elemI(JBidx,ei_geometryType))
 
-            case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rectangular_closed, circular, irregular)
+            case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rectangular_closed, circular, basket_handle, irregular)
                 !% --- Copy all the geometry specific data from the adjacent element cell
                 !%     Note that because irregular transect tables are not yet initialized, the
                 !%     Area and Volume here will be junk for an irregular cross-section and will need to be
@@ -2582,6 +2629,11 @@ contains
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Rectangular_Triangular_TopBreadth)/twoR) )
+                case (lBasket_handle)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                    * elemR(  JBidx,er_Length)                                   &
+                                    * (elemSGR(JBidx,esgr_Basket_Handle_BreadthMax)/twoR) )
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
