@@ -156,6 +156,9 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
+        !% --- initialize ForceMain
+        call init_ForceMain ()
+
         !% --- setup the irregular transect arrays associated with SWMM-C input links
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
@@ -182,6 +185,9 @@ contains
         if (this_image() .eq. 1) then 
             call init_profiles()
         end if
+
+        !% --- set water kinematic viscosity
+        call init_viscosity()
 
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
@@ -221,7 +227,6 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
-
 
         !% --- initialize the time variables
         if (setting%Output%Verbose) print *, "begin initializing time"
@@ -599,18 +604,23 @@ contains
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
-            !print *, 'in ',trim(subroutine_name), ii
-            !print *, api_linkf_geometry
+            ! print *, ' '
+            ! print *, '================================================='
+            ! print *, 'AAA in ',trim(subroutine_name), ii
+            ! print *, api_linkf_geometry
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
+                ! print *, 'link_direction ',link%I(ii,li_link_direction)
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
+                ! print *, 'link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
+                ! print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
 
-            !print *, 'in ',trim(subroutine_name)
-            !print *, ii, link%I(ii,li_geometry)
+            ! print *, 'BBB in ',trim(subroutine_name)
+            ! print *, ii, link%I(ii,li_geometry), trim(reverseKey(link%I(ii,li_geometry)))
 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -645,16 +655,21 @@ contains
             !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
-            link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-            link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
-            link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
-            link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
-            link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
-            link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
-            link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
-            link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
-            link%R(ii,lr_FlowrateInitial) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
-            link%R(ii,lr_FlowrateLimit)   = interface_get_linkf_attribute(ii, api_linkf_qlimit,            .false.)
+            link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
+            link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
+            link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
+            link%R(ii,lr_RightSlope)         = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
+            link%R(ii,lr_Roughness)          = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
+            link%R(ii,lr_FullDepth)          = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+            link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
+            link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+            link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+            link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
+            link%R(ii,lr_Kentry_MinorLoss)   = interface_get_linkf_attribute(ii, api_linkf_cLossInlet,       .false.)
+            link%R(ii,lr_Kexit_MinorLoss)    = interface_get_linkf_attribute(ii, api_linkf_cLossOutlet,      .false.)
+            link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
+            link%R(ii,lr_ForceMain_Coef)     = interface_get_linkf_attribute(ii, api_linkf_forcemain_coef,   .false.)
+
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -689,7 +704,6 @@ contains
             else
                 link%YN(ii,lYN_hasFlapGate)   = .false.
             end if
-
 
             !% --- SWMM5 does not distinguish between channel and conduit
             !%     however we need that distinction to set up the init condition
@@ -1061,7 +1075,7 @@ contains
             link%transectR(ii,tr_sectionFactor)     = interface_get_transectf_attribute(ii,api_transectf_sMax)
             link%transectR(ii,tr_areaAtMaxFlow)     = interface_get_transectf_attribute(ii,api_transectf_aMax)
             link%transectR(ii,tr_lengthFactor)      = interface_get_transectf_attribute(ii,api_transectf_lengthFactor)
-            link%transectR(ii,tr_roughness)         = interface_get_transectf_attribute(ii,api_transectf_roughness)
+            link%transectR(ii,tr_ManningsN)         = interface_get_transectf_attribute(ii,api_transectf_roughness)
         end do
 
         !% --- get the transect ID names from EPA-SWMM
@@ -1322,7 +1336,6 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-
     subroutine init_profiles
         character(50) :: line, name, link_names, num_links
         character(50) :: choosen_name
@@ -1483,8 +1496,6 @@ contains
 
 
     end subroutine init_profiles
-
-
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2354,7 +2365,78 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine init_viscosity ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initializes the kinematic viscosity of water
+        !% Note that temperature limits are hard-coded based on
+        !% data used in util_kinematic_viscosity_from_temperature
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), pointer :: temperature, viscosity
+        !%------------------------------------------------------------------
+        !% Aliases
+            temperature => setting%Constant%water_temperature
+            viscosity   => setting%Constant%water_kinematic_viscosity
+        !%------------------------------------------------------------------
+        if (      (temperature .ge. -8.d0) &
+            .and. (temperature .le. 70.d0)   ) then
+                viscosity = util_kinematic_viscosity_from_temperature(temperature)
+        else
+            print *, 'USER INPUT ERROR:'
+            print *, 'Water temperature outside valid range of -8C < T < 70 C'
+            print *, 'Value in setting.Constant.water_temperature is ',temperature
+            call util_crashpoint(408734)
+        end if
 
+    end subroutine init_viscosity
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_ForceMain ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets the UseForceMainTF to false if no FM are found in the
+        !% SWMMinput file links. 
+        !%------------------------------------------------------------------
+        !%
+        !% --- check to see if any Force Main links exists
+        if (setting%Solver%ForceMain%UseForceMainTF) then
+            if (any(link%I(:,li_geometry) .eq. lForce_main)) then
+                !% --- maintain "true" for UseForceMainTF
+            else 
+                !% -- no force main found
+                setting%Solver%ForceMain%UseForceMainTF = .false.
+            end if
+        end if
+
+        !% --- check to see if user requests all closed conduits to be
+        !%     treated as force mains. 
+        if (setting%Solver%ForceMain%FMallClosedConduitsTF) then 
+            if (.not. setting%Solver%ForceMain%UseForceMainTF) then
+                !% --- inconsistent between using force main and
+                !%     setting all to closed conduits
+                if (this_image() == 1) then
+                    print *, 'CONFIGURATION ERROR: Inconsistency in settings.'
+                    print *, 'setting.Solver.ForceMain.UseForceMainTF is false '
+                    print *, 'setting.Solver.ForceMain.FMallClosedConduitsTF is true.'
+                    print *, 'If you want to use Force main with all closed conduits then set '
+                    print *, 'setting.Solver.ForceMain.UseForceMainTF = true '
+                    print *, 'otherwise set setting.Solver.ForceMain.FMallClosedConduits = false '
+                end if
+                call util_crashpoint(4298732)
+            end if
+        else 
+            !% --- FMallClosedConduits = false is compatible with any value of
+            !%     UseForceMainTF
+        end if
+
+    end subroutine init_ForceMain
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
 !%    
 !%==========================================================================
 !% END OF MODULE

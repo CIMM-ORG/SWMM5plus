@@ -142,32 +142,36 @@ enum api_linkf_attributes {
   linkf_conduit_length,         // 65 *
   linkf_rptFlag,                // 66
   linkf_hasFlapGate,            // 67
-  linkf_commonBreak,            // 68
+  linkf_cLossInlet,             // 68
+  linkf_cLossOutlet,            // 69
+  linkf_cLossAvg,               // 70
+  linkf_commonBreak,            // 71
   // --- special elements attributes
-  linkf_type,                   // 69 *
-  linkf_sub_type,               // 70 *
-  linkf_typeBreak,              // 71
+  linkf_type,                   // 72 *
+  linkf_sub_type,               // 73 *
+  linkf_typeBreak,              // 74
   // --- xsect attributes
-  linkf_xsect_type,         // 72 *
-  linkf_geometry,           // 73 
-  linkf_xsect_wMax,         // 74 *
-  linkf_xsect_yBot,         // 75 *
-  linkf_xsect_yFull,        // 76 *
-  linkf_transectid          // 77
+  linkf_xsect_type,         // 75 *
+  linkf_geometry,           // 76 
+  linkf_xsect_wMax,         // 77 *
+  linkf_xsect_yBot,         // 78 *
+  linkf_xsect_yFull,        // 79 *
+  linkf_transectid,          // 80
+  linkf_forcemain_coef       // 81
 };
 // skip 2 numbers for index start and end flags
 // these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 80,       // 80
-  transectf_yFull,         // 81
-  transectf_aFull,         // 82
-  transectf_rFull,         // 83
-  transectf_wMax,          // 84
-  transectf_ywMax,         // 85
-  transectf_sMax,          // 86
-  transectf_aMax,          // 87
-  transectf_lengthFactor,  // 88
-  transectf_roughness      // 89
+  transectf_ID = 80,       // 83
+  transectf_yFull,         // 84
+  transectf_aFull,         // 85
+  transectf_rFull,         // 86
+  transectf_wMax,          // 87
+  transectf_ywMax,         // 88
+  transectf_sMax,          // 89
+  transectf_aMax,          // 90
+  transectf_lengthFactor,  // 91
+  transectf_roughness      // 92
 };
 
 // API vars are those necessary for external applications

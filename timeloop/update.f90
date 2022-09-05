@@ -235,40 +235,6 @@ module update
 !%==========================================================================
 !%==========================================================================
 !%
-  !  subroutine update_SectionFactor_element (thisCol)
-        !%------------------------------------------------------------------
-        !% Description
-        !% Computes the SectionFactor = Qn/S0 that is used for normal
-        !% depth computations
-        !%------------------------------------------------------------------
-        !% Declarations
-         !   integer, intent(in) :: thisCol
-        !     integer, pointer    :: Npack, thisP(:)
-        !     real(8), pointer    :: SectionFactor(:), SectionFactorMax(:)
-        !     real(8), pointer    :: Flowrate(:), Roughness(:), BottomSlope(:)
-        ! !%------------------------------------------------------------------
-        ! !% Aliases   
-        !     Npack => npack_elemP(thisCol)
-        !     !SectionFactor    => elemR(:,er_SectionFactor)
-        !     Flowrate         => elemR(:,er_Flowrate)
-        !     Roughness        => elemR(:,er_Roughness)
-        !     BottomSlope      => elemR(:,er_BottomSlope)
-        !     SectionFactorMax => elemR(:,er_SectionFactor_Max)
-        !%------------------------------------------------------------------     
-        ! if (Npack > 0) then
-        !     thisP => elemP(1:Npack,thisCol)
-        !     where (BottomSlope(thisP) > zeroR)
-        !         SectionFactor(thisP) = abs(Flowrate(thisP) * Roughness(thisP) / BottomSlope(thisP))
-        !     elsewhere
-        !         SectionFactor(thisP) = SectionFactorMax(thisP)
-        !     end where
-        ! end if
-
- !   end subroutine update_SectionFactor_element
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine update_wavespeed_element(thisCol)
         !%------------------------------------------------------------------
         !% Description

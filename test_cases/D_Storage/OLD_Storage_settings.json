@@ -77,9 +77,6 @@
         "library_folder" : "",
         "force_folder_creationYN"  : true
     },
-    "Junction" : {
-        "kFactor"  : 0.0
-    },
     "Limiter" : {
         "BC" : {
             "approach" : "FroudeNumber",
@@ -100,10 +97,6 @@
         "Velocity" : {
             "Maximum" : 10.0,
             "UseLimitMaxYN" : true
-        },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
         },
         "Dt" : {
             "Minimum"     : 1e-4,
@@ -141,7 +134,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,

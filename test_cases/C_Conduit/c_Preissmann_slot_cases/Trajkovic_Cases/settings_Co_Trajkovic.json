@@ -28,10 +28,6 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-10
@@ -53,7 +49,7 @@
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
-            "isRoughnessDynamicOut"     : false,
+            "isManningsNout"     : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,
@@ -134,8 +130,8 @@
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
         "ReferenceHead"     : 0.0,
-        "Roughness" : {
-            "useDynamicRoughness" : false
+        "ManningsN" : {
+            "useDynamicManningsN" : false
         }
     }       
 }

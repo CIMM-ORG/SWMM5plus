@@ -72,9 +72,9 @@
         enumerator :: lSemi_circular         !% semi-circular closed conduit
         enumerator :: lCustom                !% custom closed conduit
         enumerator :: lForce_main            !% force main closed conduit
-        !% different link roughness types
-        enumerator :: lManningsN            !% ManningsN roughness type
-        enumerator :: lCD                   !% drag coefficient roughness type
+        !!% different link roughness types (OBSOLETE)
+        !enumerator :: lManningsN            !% ManningsN roughness type
+        !enumerator :: lCD                   !% drag coefficient roughness type
         !% different node types 
         enumerator :: nJ1                   !% a node without an inflow connecting to only 1 link    
         enumerator :: nJ2                   !% junction node with 2 links
@@ -125,8 +125,8 @@
         enumerator :: custom                !% custom closed conduit
         enumerator :: force_main            !% force main closed conduit
         !% SWMM5+ CC roughness type
-        enumerator :: ManningsN             !% ID for mannings n for roughness_type
-        enumerator :: CD                    !% ID for using drag coefficient for roughness_type
+        !enumerator :: ManningsN             !% ID for mannings n for roughness_type
+        !enumerator :: CD                    !% ID for using drag coefficient for roughness_type
         !% SWMM5+ element types based on time marching
         enumerator :: diagnostic            !% diagnostic element
         enumerator :: time_march            !% indicates a time marched
@@ -236,6 +236,10 @@
         enumerator :: VolumeData
         enumerator :: SectionFactorData
         enumerator :: QcriticalData
+        !% Keys for Force Main
+        enumerator :: NotForceMain
+        enumerator :: HazenWilliams
+        enumerator :: DarcyWeisbach
         !% last items for bookkeeping
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone
@@ -309,8 +313,8 @@
         reverseKey(lSemi_circular) = 'lSemi_circular'
         reverseKey(lCustom) = 'lCustom'
         reverseKey(lForce_main) = 'lForce_main'
-        reverseKey(lManningsN) = 'lManningsN'
-        reverseKey(lCD) = 'lCD'
+        !reverseKey(lManningsN) = 'lManningsN'
+        !reverseKey(lCD) = 'lCD'
         reverseKey(nJ1) = 'nJ1'
         reverseKey(nJ2) = 'nJ2'
         reverseKey(nJm) = 'nJm'
@@ -355,8 +359,8 @@
         reverseKey(semi_circular) = 'semi_circular'
         reverseKey(custom) = 'custom'
         reverseKey(force_main) = 'force_main'
-        reverseKey(ManningsN) = 'ManningsN'
-        reverseKey(CD) = 'CD'
+        !reverseKey(ManningsN) = 'ManningsN'
+        !reverseKey(CD) = 'CD'
         reverseKey(diagnostic) = 'diagnostic'
         reverseKey(time_march) = 'time_march'
         reverseKey(notused) = 'notused'
@@ -447,6 +451,9 @@
         reverseKey(VolumeData) = 'VolumeData'
         reverseKey(SectionFactorData) = 'SectionFactorData'
         reverseKey(QcriticalData) = 'QcriticalData'
+        reverseKey(NotForceMain) = 'NotForceMain'
+        reverseKey(HazenWilliams) = 'HazenWilliams'
+        reverseKey(DarcyWeisbach) = 'DarcyWeisbach'
         reverseKey(undefinedKey)     = 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 
@@ -514,10 +521,11 @@
         write(*,'(A," = ",i4)') trim(reverseKey(catenary)) , catenary
         write(*,'(A," = ",i4)') trim(reverseKey(CC)) , CC
         write(*,'(A," = ",i4)') trim(reverseKey(CCJM)) , CCJM
-        write(*,'(A," = ",i4)') trim(reverseKey(CD)) , CD
+        !write(*,'(A," = ",i4)') trim(reverseKey(CD)) , CD
         write(*,'(A," = ",i4)') trim(reverseKey(circular)) , circular
         write(*,'(A," = ",i4)') trim(reverseKey(ControlCurve)) , ControlCurve
         write(*,'(A," = ",i4)') trim(reverseKey(custom)) , custom
+        write(*,'(A," = ",i4)') trim(reverseKey(DarcyWeisbach)), DarcyWeisbach
         write(*,'(A," = ",i4)') trim(reverseKey(Default)) , Default
         write(*,'(A," = ",i4)') trim(reverseKey(DepthValue)), DepthValue
         write(*,'(A," = ",i4)') trim(reverseKey(diagnostic)) , diagnostic
@@ -536,6 +544,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(func_head_outlet)) , func_head_outlet
         write(*,'(A," = ",i4)') trim(reverseKey(FunctionalStorage)) , FunctionalStorage
         write(*,'(A," = ",i4)') trim(reverseKey(gothic)) , gothic
+        write(*,'(A," = ",i4)') trim(reverseKey(HazenWilliams)), HazenWilliams
         write(*,'(A," = ",i4)') trim(reverseKey(horseshoe)) , horseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(horiz_ellipse)) , horiz_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(InDays)) , InDays
@@ -553,7 +562,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lBasket_handle)) , lBasket_handle
         write(*,'(A," = ",i4)') trim(reverseKey(lBottomOrifice)) , lBottomOrifice
         write(*,'(A," = ",i4)') trim(reverseKey(lCatenary)) , lCatenary
-        write(*,'(A," = ",i4)') trim(reverseKey(lCD)) , lCD
+        !write(*,'(A," = ",i4)') trim(reverseKey(lCD)) , lCD
         write(*,'(A," = ",i4)') trim(reverseKey(lCircular)) , lCircular
         write(*,'(A," = ",i4)') trim(reverseKey(lChannel)) , lChannel
         write(*,'(A," = ",i4)') trim(reverseKey(lEggshaped)) , lEggshaped
@@ -563,7 +572,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lHoriz_ellipse)) , lHoriz_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(lHorseshoe)) , lHorseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(lIrregular)) , lIrregular
-        write(*,'(A," = ",i4)') trim(reverseKey(lManningsN)) , lManningsN
+        !write(*,'(A," = ",i4)') trim(reverseKey(lManningsN)) , lManningsN
         write(*,'(A," = ",i4)') trim(reverseKey(lMod_basket)) , lMod_basket
         write(*,'(A," = ",i4)') trim(reverseKey(lNodeDepth)) , lNodeDepth
         write(*,'(A," = ",i4)') trim(reverseKey(lNodeHead)) , lNodeHead
@@ -596,7 +605,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lWeir)) , lWeir
         write(*,'(A," = ",i4)') trim(reverseKey(LinkOut)) , LinkOut
         write(*,'(A," = ",i4)') trim(reverseKey(manhole)) , manhole
-        write(*,'(A," = ",i4)') trim(reverseKey(ManningsN)) , ManningsN
+        !write(*,'(A," = ",i4)') trim(reverseKey(ManningsN)) , ManningsN
         write(*,'(A," = ",i4)') trim(reverseKey(MaximumValue)) , MaximumValue
         write(*,'(A," = ",i4)') trim(reverseKey(mod_basket)) , mod_basket
         write(*,'(A," = ",i4)') trim(reverseKey(nBCdn)) , nBCdn

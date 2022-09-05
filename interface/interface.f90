@@ -553,7 +553,7 @@ contains
 !%=============================================================================
 !% PUBLIC
 !%=============================================================================
-
+!%
     subroutine interface_teststuff()
         !%---------------------------------------------------------------------
         !% Description:
@@ -1170,13 +1170,16 @@ contains
             end if
         !%----------------------------------------------------------------------
 
+            ! print *, ' '
+            ! print *, 'in ',trim(subroutine_name), ' at TOP ------------------------------'
+            ! print *, attr, trim(reverseKey_api(attr))
+
         !% --- parse the link section
         if     (  attr .le. api_linkf_start) then    
             !% --- link attr number too small
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint( 498705)
-            !return
 
         elseif     ( (attr  >   api_linkf_start) .and. (  attr <  api_linkf_commonbreak)) then
             !% --- for link attributes 1 to < api_linkf_commonBreak
@@ -1209,7 +1212,13 @@ contains
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
 
+            !print *, 'here 5098734'
+            ! print *, link_value
+
             ilink_value = int(link_value) !% the linkf_type is always an integer
+
+            ! print *, 'ilink_value', ilink_value
+            ! print *, API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
 
             !% --- handle the different linkf_type
             select case (ilink_value)
@@ -1424,15 +1433,17 @@ contains
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
             !% --- load the cross-section type no matter what the input attr is.
-            !print *, 'call GGG'
+            ! print *, ' '
+            ! print *, 'call GGG calling get_linkf_attribute for xsect_type'
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_type, link_value)
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
 
-            !print *, 'attr ',attr, trim(reverseKey_api(attr))
-            !print *, 'link_value ',link_value
+            ! print *, 'attr ',attr, trim(reverseKey_api(attr))
+            ! print *, 'link_value ',link_value, API_FORCE_MAIN
             !print *, 'error ',error
+            !print *, API_FORCE_MAIN
 
             !% 20220420brh
             ilink_value = int(link_value) !% these attributes should be integers
@@ -1771,13 +1782,31 @@ contains
                     end select
 
                 case (API_FORCE_MAIN)
-                    print *, 'CODE ERROR: API_FORCE_MAIN geometry not handled yet'
-                    call util_crashpoint(4767823)
+                    !print *, ' '
+                    !print *, 'in FORCE MAIN'
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lForce_main
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                                ! print *, 'in ',trim(subroutine_name), ' at S26',link_value
+                            thisposition = trim(subroutine_name)//'_S26'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                                ! print *, 'in ',trim(subroutine_name), ' at T27',link_value
+                            thisposition = trim(subroutine_name)//'_T27'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_forcemain_coef)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_forcemain_coef, link_value)
+                                ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
+                            thisposition = trim(subroutine_name)//'_U28'  
+                            call print_api_error(error, thisposition)
                         case default
+                            print *, 'case ',attr,trim(reverseKey_api(attr))
                     end select
                 case default
                     !print *, 'in else ',link_value
@@ -1862,7 +1891,7 @@ contains
             !     case (api_transectf_lengthFactor)
             !         link%transectR(transect_idx,tr_lengthFactor) = transect_value
             !     case (api_transectf_roughness)
-            !         link%transectR(transect_idx,tr_roughness) = transect_value
+            !         link%transectR(transect_idx,tr_ManningsN) = transect_value
             !     case default
             !         write(*,*)
             !         write(*,*) '****** Unexpected case default '
@@ -2698,7 +2727,8 @@ contains
         !%---------------------------------------------------------------------
         !% Description
         !% gets control variables that have been input in the SWMM-C *.inp
-        !% file and have been processed by SWMM-C
+        !% file and have been processed by SWMM-C. Stores data that will be
+        !% used in SWMM5+ in the setting.SWMMinput... structure
         !%---------------------------------------------------------------------
             integer       :: flow_units, route_model, allow_ponding
             integer       :: inertial_damping, num_threads, skip_steady_state
@@ -2710,6 +2740,7 @@ contains
             integer       :: error, ii
             integer, parameter  :: nset = 30
             logical       :: thisWarning(1:nset)
+            logical       :: thisFailure(1:nset)
             character(64) :: thisProblem(1:nset)
             character(30) :: thisVariable(1:nset)
             character(64) :: subroutine_name = 'interface_get_SWMM_setup'
@@ -2763,6 +2794,7 @@ contains
         !print *, 'route_step ', route_step
     
 
+        thisFailure(:) = .false.
         thisWarning(:) = .false.
         thisVariable(:) = ''
 
@@ -2773,10 +2805,12 @@ contains
         case(3)
             !% continue with CMS units
             thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case default
             thisWarning(ii) = .true.
+            thisFailure(ii) = .false.
             thisVariable(ii) = 'FLOW_UNITS'
-            thisProblem(ii) = 'CMS is used in SWMM5+ computation and output.'
+            thisProblem(ii) = 'CFS input units are converted to CMS for all SWMM5+ computation and output.'
         end select
 
         !% Routing model is always DYNWAVE for SWMM5+
@@ -2784,10 +2818,12 @@ contains
         select case (route_model)
         case (4)
             thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = 'FLOW_ROUTING'
-            thisProblem(ii)  = 'is set to DYNWAVE'
+            thisProblem(ii)  = 'must be set to DYNWAVE in *.inp file'
         end select
 
         !% Ponding is not allowed as of 20211223
@@ -2795,10 +2831,12 @@ contains
         select case (allow_ponding)
         case (0)
             thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case (1)
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = 'ALLOW_PONDING'
-            thisProblem(ii)  = 'is set to NO.'
+            thisProblem(ii)  = 'is not presently available in SWMM5+, must be set to NO.'
         case default
         end select
 
@@ -2807,10 +2845,12 @@ contains
         select case (inertial_damping)
         case (0)
             thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'INERTIAL_DAMPING'
-            thisProblem(ii)  = 'is set to NONE.'
+            thisProblem(ii)  = 'is ignored.'
         end select
 
         !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
@@ -2818,8 +2858,10 @@ contains
         select case (num_threads)
         case (1)
             thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'NUM_THREADS'
             thisProblem(ii)  = 'is ignored.'
         end select
@@ -2828,35 +2870,48 @@ contains
         ii=ii+1
         if (skip_steady_state) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'SKIP_STEADY_STATE'
             thisProblem(ii)  = 'is ignored.'
         end if
 
-        !% Force mains are not supported in SWMM5+ as of 20211223
+        !% Force mains in EPA SWMM use 0 = Hazen-Williams, 1 = Darcy-Weisbach 
         ii=ii+1
         select case (force_main_eqn)
+        case (0)
+            setting%SWMMinput%ForceMainEquation = HazenWilliams
+            thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
+        case (1)
+            setting%SWMMinput%ForceMainEquation = DarcyWeisbach
+            thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = 'FORCE_MAIN_EQUATION'
-            thisProblem(ii)  = 'is ignored.'
+            thisProblem(ii)  = 'unknown option (should be 0 for HW or 1 for DW).'
         end select
 
         !% Max trials is irrelevant
         ii=ii+1
         thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
         thisVariable(ii) = 'MAX_TRIALS'
         thisProblem(ii)  = 'is ignored.'
 
-        !% Normal flow limiters not yet implemented
+        !% Normal flow limiters are not implemented
         ii=ii+1
         thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
         thisVariable(ii) = 'NORMAL_FLOW_LIMITED'
-        thisProblem(ii)  = 'have not been implemented, use NORMAL outfalls with caution.'
+        thisProblem(ii)  = 'is ignored.'
 
 
         !% Rule Step is always OK
         ii=ii+1
         thisWarning(ii) = .false.
+        thisFailure(ii) = .false.
         thisVariable(ii) = 'RULESTEP'
 
         !% only Preissman SLOT is presently allowed for surcharge method -- handled by JSON file
@@ -2865,54 +2920,61 @@ contains
         case (1)
             !% Preissmann SLOT is specified
             thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
             thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'is changed to SLOT (set in JSON file).'
+            thisProblem(ii)  = 'SWMM5+ uses Preissmann slot (set in JSON file).'
         end select
 
         if (tempdir_provided ==1) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'TEMPDIR'
-            thisProblem(ii)  = 'is ignored.'
+            thisProblem(ii)  = 'is ignored for SWMM5+ output (available for some EPA-SWMM output).'
         end if
 
         !% Variable time step in SWMM5+ does not use external controls
         ii=ii+1
         if (variable_step .ne. zeroR) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'VARIABLE_STEP'
-            thisProblem(ii)  = 'is ignored in the SWMM5+ variable step computation.'
+            thisProblem(ii)  = 'is ignored. JSON file setting.VariableDT is used.'
         end if
 
         !% Dynamic lengthening of pipe not used in SWMM5+ as of 20211223
         ii=ii+1
         if (lengthening_step .ne. zeroR) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'LENGTHENING_STEP'
-            thisProblem(ii)  = 'is set off (0)'
+            thisProblem(ii)  = 'is ignored.'
         end if
 
         !% User-set routing time step is not allowed
         ii=ii+1
         if (route_step .ne. zeroR) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'ROUTING_STEP'
-            thisProblem(ii)  = 'is ignored.'
+            thisProblem(ii)  = 'is ignored. JSON file setting.Time.Hydraulics.Dt is used.'
         end if
 
         !% Minimum time steps are set through the json file
         ii=ii+1
         if (min_route_step .ne. zeroR) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'MIN_ROUTE_STEP'
-            thisProblem(ii)  = 'is ignored (alternative in json file).'
+            thisProblem(ii)  = 'is ignored (JSON file setting.VariableDT.cfl_lo_max is used).'
         end if
 
         !% Minimum surface area for nodes is not used
         ii=ii+1
         if (min_surface_area .ne. zeroR) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = 'MIN_SURFAREA'
             thisProblem(ii)  = 'is ignored.'
         end if
@@ -2920,24 +2982,28 @@ contains
         !% Minimum slope is never used (default of 0.0 is ignored)
         ii=ii+1
         thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
         thisVariable(ii) = 'MIN_SLOPE'
         thisProblem(ii)  = 'is ignored.'
 
         !% Head Tolerance is irrelevant 
         ii=ii+1
         thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
         thisVariable(ii) = 'HEAD_TOL'
         thisProblem(ii)  = 'is ignored.'
 
         !% System Flow Tolerance is not used
         ii=ii+1
         thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
         thisVariable(ii) = 'SYS_FLOW_TOL'
         thisProblem(ii)  = 'is ignored.'
 
         !% Lateral in/out Flow Tolerance is not used
         ii=ii+1
         thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
         thisVariable(ii) = 'LAT_FLOW_TOL'
         thisProblem(ii)  = 'is ignored.'
 
@@ -2945,6 +3011,7 @@ contains
         ii=ii+1
         if (setting%SWMMinput%N_pollutant > 0) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = '[POLLUTANTS]'
             thisProblem(ii)  = 'are ignored in routing'
         end if
@@ -2953,6 +3020,7 @@ contains
         ii=ii+1
         if (setting%SWMMinput%N_control > 0) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = '[CONTROL]'
             thisProblem(ii)  = 'all ignored in routing.'
         end if
@@ -2961,6 +3029,7 @@ contains
         ii=ii+1
         if (setting%SWMMinput%N_divider > 0) then
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
             thisVariable(ii) = '[DIVIDER]'
             thisProblem(ii)  = 'are ignored.'
         end if
@@ -2980,6 +3049,24 @@ contains
             write(*,'(A)') '*******************************************************************'
             write(*,*) ' '
         end if
+
+        if ((any(thisFailure)) .and. (this_image() == 1) ) then
+            write(*,'(A)') ' '
+            write(*,'(A)') ' '
+            write(*,'(A)') ' *******************************************************************'
+            write(*,'(A)') ' **                   FATAL INPUT FILE FAILURE'
+            write(*,'(A)') ' ** The following from the SWMM *.inp file values or code defaults  '
+            write(*,'(A)') ' ** cannot be used in SWMM5+ due to present code limitations.'
+            do ii=1,nset
+                if (thisFailure(ii)) then
+                    write(*,"(A,A,A,A)") ' **    ',trim(thisVariable(ii)),'--',trim(thisProblem(ii))
+                end if
+            end do
+            write(*,'(A)') '*******************************************************************'
+            write(*,*) ' '
+            call util_crashpoint(559874)
+        end if
+
 
         !%----------------------------------------------------------------------
         !% closing

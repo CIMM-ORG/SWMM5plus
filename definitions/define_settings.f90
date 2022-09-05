@@ -126,6 +126,7 @@ module define_settings
     end type CommandLineType
 
     !% setting%Time%CPU
+    !% NOT USER SETTINGS
     type CPUTimeType
         real (8) :: EpochStartSeconds = 0.0d0
         real (8) :: EpochNowSeconds  = 0.0d0
@@ -142,7 +143,7 @@ module define_settings
         logical :: isHeadOut                = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
-        logical :: isRoughnessDynamicOut    = .false.
+        logical :: isManningsNout           = .false.
         logical :: isSlotWidthOut           = .false.
         logical :: isSlotDepthOut           = .false.
         logical :: isTopWidthOut            = .false.
@@ -153,6 +154,20 @@ module define_settings
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
     end type DataOutType
+
+    !% setting%Solver%ForceMain
+    type ForceMainType
+        logical :: UseForceMainTF        = .true.
+        logical :: UseSWMMinputMethodTF  = .true.
+        logical :: FMallClosedConduitsTF = .false. 
+        logical :: errorCheck_RoughnessTF     = .true. !% check scale of FM coef is consistent with HW or DW
+        logical :: HazenWilliams_equivalent_isSetTF = .false.  !% NOT A USER SETTING
+        integer :: Default_method = HazenWilliams
+        real(8) :: Default_HazenWilliams_coef = 120          !% 120  is concrete
+        real(8) :: Default_DarcyWeisbach_roughness_mm = 0.36 !% 0.36 is concrete, good joints 
+        real(8) :: Default_ManningsN = 0.03  !% used on FM elements when UseForceMainTF = false
+        real(8) :: minimum_slope  = 1.0d-3  !% minimum slope in HW computation
+    end type ForceMainType
 
     !% setting%Limiter%ArraySize
     ! type LimiterArraySizeType
@@ -191,8 +206,8 @@ module define_settings
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
-        real(8) :: Maximum = 1.0d16
-        real(8) :: Minimum = 1.0d-16
+        real(8) :: Maximum = 1.0d6
+        real(8) :: Minimum = 1.0d-6
     end type LimiterInterpWeightType
 
     !% setting%Limiter%Velocity
@@ -210,27 +225,28 @@ module define_settings
         logical :: suppress_MultiLevel_Output = .false.
         real(8) :: StartTime = 0.0d0
         real(8) :: TimeInterval = 300.0d0
-        integer :: ThisStep
+        integer :: ThisStep                  !% NOT A USER SETTING
         integer :: TimeUnits = InHours
     end type ReportType
 
-    !% setting%Solver%Roughness
-    type RoughnessType
-        logical :: useDynamicRoughness = .false.
+    !% setting%Solver%ManningsN
+    type ManningsNtype
+        logical :: useDynamicManningsN = .false. !% TRUE is not working
         real(8) :: alpha = 1.0d0
         real(8) :: beta  = 1.0d0
-    end type RoughnessType
+    end type ManningsNtype
 
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
     type TimeStepType
        real(8) :: Dt
-       real(8) :: LastTime
-       real(8) :: NextTime
-       integer(kind=8) :: Step
+       real(8) :: LastTime  !% NOT A USER SETTING
+       real(8) :: NextTime  !% NOT A USER SETTING
+       integer(kind=8) :: Step  !% NOT A USER SETTING
     end type TimeStepType
 
     !% setting%File%UnitNumber
+    !% NOT USER SETTINGS
     type UnitNumberType
         integer :: inp_file
         integer :: out_file
@@ -241,6 +257,7 @@ module define_settings
     end type
 
     !% setting%Time%WallClock
+    !% NOT USER SETTINGS
     type WallClockType
         integer         :: StoreInterval = 1000
         integer         :: LastStepStored
@@ -361,32 +378,34 @@ module define_settings
     type AdjustType
         type(AdjustFlowrateType)   :: Flowrate
         type(AdjustHeadType)       :: Head
-        !type(AdjustWidthDepthType) :: WidthDepth
     end type AdjustType
 
     ! setting%BC
     type BCPropertiesType
         integer :: TimeSlotsStored        = 1000
         logical :: disableInterpolationYN = .false.
-        real(8) :: smallestTimeInterval   = 86400.d0
+        real(8) :: smallestTimeInterval   = 86400.d0  !% NOT A USER SETTING
     end type BCPropertiesType
 
     ! setting%CaseName
     type CaseNameType
         character(256) ::    Long = 'default_CaseName'
         character(16)  ::    Short = 'default'
-        character(31)  ::    withTimeStamp
+        character(31)  ::    withTimeStamp   !% NOT A USER SETTING
     end type CaseNameType
 
     ! setting%Constant
     type ConstantType
         real(8) :: gravity = 9.81d0 ! m^2/s
         real(8) :: energy_correction_factor = 1.0d0 
-        real(8) :: pi = 4.d0*datan(1.d0)
+        real(8) :: pi = 4.d0*datan(1.d0)   !% NOT A USER SETTING
+        real(8) :: water_temperature = 20.d0
+        real(8) :: water_kinematic_viscosity = 1.0d-6  !% NOT A USER SETTING
     end type ConstantType
 
     ! setting%Control
     !% structure to setup a simple time-setting based controls for links
+    !% NOT USER SETTINGS
     type ControlType
         integer              :: NumControl = 0          !% number of links controlled
         integer, allocatable :: LinkIdx(:)              !% index of the links controlled             
@@ -397,6 +416,7 @@ module define_settings
     end type ControlType
 
     !% setting%Crash
+    !% NOT USER SETTING(see util_crash_initialize)
     type CrashType
         real(8) :: DepthMax  !% maximum depth exceedence in 1 cell that causes crash
         real(8) :: HeadMax   !% maximum head exceedence in 1 cell that causes crash
@@ -405,6 +425,7 @@ module define_settings
     end type CrashType
 
     !% setting%Debug
+    !% THESE WILL BE OBSOLETE
     type DebugType
         type(DebugFileYNType) :: File
         type(DebugFileGroupYNType) :: FileGroup
@@ -414,7 +435,7 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB length is subtracted from link length
+        logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
         real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
@@ -445,7 +466,7 @@ module define_settings
     type FileType
         logical              :: UseCommandLineFoldersYN  = .true.
         logical              :: force_folder_creationYN = .true.
-        logical              :: duplicate_input_file = .true.
+        logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
         character(len=256)   :: base_folder = "build"
         character(len=256)   :: library_folder = "build"
@@ -454,13 +475,13 @@ module define_settings
         character(len=256)   :: output_temp_subfolder = "temp"
         character(len=256)   :: project_folder = "" ! project path
         character(len=256)   :: setting_file = "" ! path to settings JSON file
-        character(len=256)   :: input_kernel = "" ! main part of input file name
-        character(len=256)   :: output_kernel= "" ! main part ouf output file name
+        character(len=256)   :: input_kernel = "" ! main part of input file name   NOT A USER SETTING
+        character(len=256)   :: output_kernel= "" ! main part ouf output file name  NOT A USER SETTING
         character(len=256)   :: inp_file = "" ! path to SWMM input (.inp) file
-        character(len=256)   :: rpt_file = "" ! path to SWMM report (.rpt) file
-        character(len=256)   :: out_file = "" ! path to SWMM output (.out) file
+        character(len=256)   :: rpt_file = "" ! path to SWMM report (.rpt) file  NOT A USER SETTING
+        character(len=256)   :: out_file = "" ! path to SWMM output (.out) file  NOT A USER SETTING
         
-        !% for multi-level output
+        !% for multi-level output NOT USER SETTINGS
         character(len=256)   :: outputML_Link_kernel = "link"
         character(len=256)   :: outputML_Node_kernel = "node"
         character(len=256)   :: outputML_combinedfile_kernel = "combined_output" !% filenames that combine across images
@@ -480,56 +501,52 @@ module define_settings
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
         !rm 20220207brh real(8) :: HeadCoef     = 1.0d0   !% junction branch head coef for diagnostic junction (must be > 0)
-        real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        !rm real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
     end type JunctionType
 
     ! setting%Limiter
     type LimiterType
         real(8) :: NormalDepthInfinite   = 1000.d0     ! value used when normal depth would be infinite.
-        !rm 20220207brh type(LimiterBCType)           :: BC  !% not used
-        !rm 20220209brh type(LimiterChannelType)      :: Channel
-        !rm 20220207brh type(LimiterFlowrateType)     :: Flowrate  !% not used
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
-        !rm 20220207brh type(LimiterArraySizeType)    :: ArraySize  !% not used
         type(LimiterDtType)           :: Dt
     end type LimiterType
 
     type LinkType
-        ! UniformDepth, LinearlyVaryingDepth, IncreasingDepth,  FixedHead
+        ! Allowable: UniformDepth, LinearlyVaryingDepth, IncreasingDepth,  FixedHead
         integer :: DefaultInitDepthType = LinearlyVaryingDepth 
         !% --- if users include an unnecessarily large full depth, this can affect the precision in 
         !%     look up tables. The following allows global replacement of excessive maximum depths.
         logical :: OpenChannelLimitDepthYN = .false.  !% Y/N overwrite for the max depth from SWMM.inp file
         real(8) :: OpenChannelFullDepth = 100.d0      !% overwrite the max depth of open channels in SWMM.inp file
-        ! HACK - TODO file for properties of specific links
     end type
 
     !% setting%Orifice
     type OrificeType
-        real(8) :: SharpCrestedWeirCoefficient
-        real(8) :: TransverseWeirExponent
-        real(8) :: VillemonteCorrectionExponent
+        real(8) :: SharpCrestedWeirCoefficient = 0.414
+        real(8) :: TransverseWeirExponent = 1.5
+        real(8) :: VillemonteCorrectionExponent = 0.385
     end type OrificeType
 
     !% setting%Output
     type OutputType
         logical :: UseFileNameFile = .false.
-        logical, allocatable :: ElementsExist_byImage(:)[:]
-        logical, allocatable :: FacesExist_byImage(:)[:]
-        logical :: ElementsExist_global
-        logical :: FacesExist_global
+        logical, allocatable :: ElementsExist_byImage(:)[:]  !% NOT A USER SETTING
+        logical, allocatable :: FacesExist_byImage(:)[:]     !% NOT A USER SETTING
+        logical :: ElementsExist_global                      !% NOT A USER SETTING 
+        logical :: FacesExist_global                         !% NOT A USER SETTING  
         logical :: Verbose = .true.
         logical :: Warning = .true.
-        integer :: LastLevel = 0
-        integer :: MaxExpectedLevels = 0
-        integer :: NumberOfWriteSteps = 0
-        integer :: NumberOfTimeLevelSaved = 0
+        integer :: LastLevel = 0                             !% NOT A USER SETTING
+        integer :: MaxExpectedLevels = 0                     !% NOT A USER SETTING
+        integer :: NumberOfWriteSteps = 0                    !% NOT A USER SETTING
+        integer :: NumberOfTimeLevelSaved = 0                !% NOT A USER SETTING
         integer :: StoredLevels = 100        
         integer :: StoredFileNames = 100
-        integer :: ElemHeadIndex = 0
-        integer :: FaceUpHeadIndex = 0
-        integer :: faceDnHeadIndex = 0
+        integer :: ElemHeadIndex = 0                         !% NOT A USER SETTING
+        integer :: FaceUpHeadIndex = 0                       !% NOT A USER SETTING
+        integer :: faceDnHeadIndex = 0                       !% NOT A USER SETTING
+        integer (kind=8) :: MemoryStorageMax = 29000000  
         type(CommandLineType) :: CommandLine
         type(DataOutType) :: DataOut
         type(ReportType) :: Report
@@ -537,11 +554,13 @@ module define_settings
 
     !% setting%Partitioning
     type PartitioningType
+        !% Allowable values: BQquick
         integer :: PartitioningMethod = BQuick
     endtype PartitioningType
 
     !% setting%PreissmannSlot
     type PreissmannSlotType
+        !% Allowable values: DynamicSlot
         integer :: PreissmannSlotMethod = DynamicSlot
         real(8) :: TargetPreissmannCelerity = 3.0d0
         real(8) :: PreissmannAlpha = 2.0d0
@@ -569,9 +588,6 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
-        ! Dont using small volumes for weir case.
-        ! Needed to be changed later SmallVolumeType
-        !logical :: UseSmallVolumesYN = .true.
         real(8) :: DepthCutoff = 0.03d0 ! m
         real(8) :: ManningsN = 0.1d0
     end type SmallDepthType
@@ -585,19 +601,23 @@ module define_settings
         real(8) :: SwitchFractionDn = 0.8d0
         real(8) :: SwitchFractionUp = 0.9d0
         real(8) :: ReferenceHead = zeroR
-        real(8) :: AverageZbottom = zeroR
-        real(8) :: MaxZbottom = zeroR
-        real(8) :: MinZbottom = zeroR
-        real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]
-        type(RoughnessType) :: Roughness
+        real(8) :: AverageZbottom = zeroR               !% NOT A USER SETTING
+        real(8) :: MaxZbottom = zeroR                   !% NOT A USER SETTING
+        real(8) :: MinZbottom = zeroR                   !% NOT A USER SETTING
+        real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]  !% NOT A USER SETTING
+        type(ManningsNtype) :: ManningsN
+        type(ForceMainType) :: ForceMain
     end type SolverType
 
-    type TestCaseType
+    type TestCaseType  !% NOT WORKING YET
         logical       :: UseTestCaseYN = .false.
         character(64) :: TestName
     end type TestCaseType
 
+    !% storage for data read from SWMM input file
+    !% NOT USER SETTINGS
     type SWMMinputType
+        integer :: ForceMainEquation
         integer :: N_control = zeroI
         integer :: N_curve = zeroI
         integer :: N_divider = zeroI
@@ -623,18 +643,18 @@ module define_settings
         logical            :: useSWMMinpYN = .true.
         logical            :: matchHydrologyStep = .true.
         real(8)            :: DtTol = 1.0d-1   !% tolerance when comparing Now time and accumulation of time steps.
-        character(14)      :: DateTimeStamp
-        integer(kind=8)    :: Step  !% count of the number of steps (either hydrology, hydraulics, or combined)
-        real(8)            :: Start
-        real(8)            :: Now
-        real(8)            :: End
-        real(8)            :: StartEpoch = nullvalueR
-        real(8)            :: EndEpoch   = nullvalueR
+        character(14)      :: DateTimeStamp  !% NOT A USER SETTING
+        integer(kind=8)    :: Step  !% NOT A USER SETTING count of the number of steps (either hydrology, hydraulics, or combined)
+        real(8)            :: Start !% NOT A USER SETTING
+        real(8)            :: Now  ! % NOT A USER SETTING
+        real(8)            :: End   !% NOT A USER SETTING
+        real(8)            :: StartEpoch = nullvalueR  !% NOT A USER SETTING
+        real(8)            :: EndEpoch   = nullvalueR  !% NOT A USER SETTING
         type(TimeStepType) :: Hydraulics
         type(TimeStepType) :: Hydrology
-        type(TimeStepType) :: ControlRule
-        type(WallClockType):: WallClock
-        type(CPUTimeType)  :: CPU
+        type(TimeStepType) :: ControlRule  !% NOT A USER SETTING
+        type(WallClockType):: WallClock    !% NOT A USER SETTING
+        type(CPUTimeType)  :: CPU          !% NOT A USER SETTING
     end type TimeType
 
     !% setting%Weir
@@ -657,19 +677,19 @@ module define_settings
         real(8) :: increaseFactor = 1.2d0 
         real(8) :: InitialDt = 10.d0
         integer :: NstepsForCheck = 10
-        integer(kind=8) :: LastCheckStep = 0
+        integer(kind=8) :: LastCheckStep = 0  !% NOT A USER SETTING
     end type VariableDTType
 
     !% setting%ZeroValue
     !% Note that Depth is the setting users should change
     type ZerovalueType
         logical :: UseZeroValues = .true.
-        real(8) :: Area = 1.d-3 ! m^2 -- set by code
+        real(8) :: Area = 1.d-3 ! m^2 -- NOT A USER SETTING
         real(8) :: Depth = 1.d-3 ! m
-        real(8) :: Slope = 1.e-6 ! prevents zero values
-        real(8) :: Topwidth = 1.d-3 ! m -- set by code
-        real(8) :: Volume = 1.d-2 ! m^3 -- set by code
-        real(8) :: VolumeResetLevel !m^3 -- set by code
+        real(8) :: Slope = 1.e-6 ! prevents zero values (may be + or -)
+        real(8) :: Topwidth = 1.d-3 ! m -- NOT A USER SETTING
+        real(8) :: Volume = 1.d-2 ! m^3 -- NOT A USER SETTING
+        real(8) :: VolumeResetLevel !m^3 -- NOT A USER SETTING
         real(8) :: Velocity = 1.d-3
     end type ZerovalueType
 
@@ -1247,9 +1267,9 @@ contains
         ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.HeeadCoef not found'
 
         !%                       Junction.kFactor
-        call json%get('Junction.kFactor', real_value, found)
-        if (found) setting%Junction%kFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
+        ! call json%get('Junction.kFactor', real_value, found)
+        ! if (found) setting%Junction%kFactor = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
 
    
     !% Limiter. =====================================================================
@@ -1470,10 +1490,10 @@ contains
         if (found) setting%Output%DataOut%isPerimeterOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'
 
-        !%                       Dataout.isRoughnessDynamicOut
-        call json%get('Output.DataOut.isRoughnessDynamicOut', logical_value, found)
-        if (found) setting%Output%DataOut%isRoughnessDynamicOut = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isRoughnessDynamicOut not found'
+        !%                       Dataout.isManningsNout
+        call json%get('Output.DataOut.isManningsNout', logical_value, found)
+        if (found) setting%Output%DataOut%isManningsNout = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isManningsNout not found'
         
         !%                       Dataout.isSlotWidthOut
         call json%get('Output.DataOut.isSlotWidthOut', logical_value, found)
@@ -1708,7 +1728,7 @@ contains
                 stop 110985
             end if
         end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.MomentumSourceMethod not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.MomentumSourceMethod not found'     
 
         !%                       Solver.SolverSelect
         call json%get('Solver.SolverSelect', c, found)
@@ -1729,6 +1749,23 @@ contains
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SolverSelect not found'
 
+        ! !%                       Solver.ForceMainEquation
+        ! call json%get('Solver.ForceMainEquation', c, found)
+        ! call util_lower_case(c)
+        ! if (found) then 
+        !     if (c == 'hazenwilliams') then
+        !         setting%Solver%ForceMainEquation = HazenWilliams
+        !     else if (c == 'darcyweisbach') then
+        !         setting%Solver%ForceMainEquation = DarcyWeisbach
+        !     else
+        !         write(*,"(A)") 'Error - json file - setting.Solver.ForceMainEquation of ',trim(c)
+        !         write(*,"(A)") '..is not in allowed options of:'
+        !         write(*,"(A)") '... HazenWilliams, DarcyWeisbach'
+        !         stop 9375466
+        !     end if
+        ! end if
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMainEquation not found'
+
         !%                       Solver.SwitchFractionDn
         call json%get('Solver.SwitchFractionDn', real_value, found)
         if (found)  setting%Solver%SwitchFractionDn = real_value
@@ -1743,22 +1780,82 @@ contains
 
         !% do not read          Solver.ReferenceHead
 
-    !% Solver.Roughness =====================================================================
-        !%                       Solver.Roughness.useDynamicRoughness
-        call json%get('Solver.Roughness.useDynamicRoughness', logical_value, found)
-        if (found) setting%Solver%Roughness%useDynamicRoughness = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.useDynamicRoughness not found'
+    !% Solver.ManningsN =====================================================================
+        !%                       Solver.ManningsN.useDynamicManningsN
+        call json%get('Solver.ManningsN.useDynamicManningsN', logical_value, found)
+        if (found) setting%Solver%ManningsN%useDynamicManningsN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.useDynamicManningsN not found'
        
-    !%                       Solver.Roughness.alpha
-        call json%get('Solver.Roughness.alpha', real_value, found)
-        if (found)  setting%Solver%Roughness%alpha = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.alpha not found'
+    !%                       Solver.ManningsN.alpha
+        call json%get('Solver.ManningsN.alpha', real_value, found)
+        if (found)  setting%Solver%ManningsN%alpha = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.alpha not found'
   
-    !%                       Solver.Roughness.beta
-        call json%get('Solver.Roughness.beta', real_value, found)
-        if (found)  setting%Solver%Roughness%beta = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.Roughness.beta not found'
+    !%                       Solver.ManningsN.beta
+        call json%get('Solver.ManningsN.beta', real_value, found)
+        if (found)  setting%Solver%ManningsN%beta = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.beta not found'
       
+    !% Solver.ForceMain =====================================================================
+        !%                       Solver.ForceMain.UseForceMainTF
+        call json%get('Solver.ForceMain.UseForceMainTF', logical_value, found)
+        if (found) setting%Solver%ForceMain%UseForceMainTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.UseForceMainTF not found'
+
+        !%                       Solver.ForceMain.UseSWMMinputMethodTF
+        call json%get('Solver.ForceMain.UseSWMMinputMethodTF', logical_value, found)
+        if (found) setting%Solver%ForceMain%UseSWMMinputMethodTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.x\UseSWMMinputMethodTF not found'
+
+        !%                       Solver.ForceMain.FMallClosedConduitsTF
+        call json%get('Solver.ForceMain.FMallClosedConduitsTF', logical_value, found)
+        if (found) setting%Solver%ForceMain%FMallClosedConduitsTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.FMallClosedConduitsTF not found'
+
+         !%                       Solver.ForceMain.FMallClosedConduitsTF
+        call json%get('Solver.ForceMain.errorCheck_RoughnessTF', logical_value, found)
+        if (found) setting%Solver%ForceMain%errorCheck_RoughnessTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.errorCheck_RoughnessTF not found'
+  
+        !%                       Solver.ForceMain.Default_method
+        call json%get('Solver.ForceMain.Default_method', c, found)
+        if (found) then
+            call util_lower_case(c)
+            select case (trim(c))
+            case ('hazenwilliams')
+                setting%Solver%ForceMain%Default_method = HazenWilliams
+            case ('darcyweisbach')
+                setting%Solver%ForceMain%Default_method = DarcyWeisbach
+            case default 
+                write(*,"(A)") 'Error - json file - setting.Solver.ForceMain.Default_method of ',trim(c)
+                write(*,"(A)") '..is not in allowed options of:'
+                write(*,"(A)") '... HazenWilliams, DarcyWeisbach'
+                stop 9375467
+            end select
+        end if
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.Default_method  not found'     
+      
+        !%                       Solver.ForceMain.Default_HazenWilliams_coef
+        call json%get('Solver.ForceMain.Default_HazenWilliams_coef', real_value, found)
+        if (found)  setting%Solver%ForceMain%Default_HazenWilliams_coef = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.Default_HazenWilliams_coef not found'
+
+        !%                       Solver.ForceMain.Default_DarcyWeisbach_roughness_mm
+        call json%get('Solver.ForceMain.Default_DarcyWeisbach_roughness_mm', real_value, found)
+        if (found)  setting%Solver%ForceMain%Default_DarcyWeisbach_roughness_mm = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.Default_DarcyWeisbach_roughness_mm not found'
+
+        !%                       Solver.ForceMain.Default_ManningsN
+        call json%get('Solver.ForceMain.Default_ManningsN', real_value, found)
+        if (found)  setting%Solver%ForceMain%Default_ManningsN = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.Default_ManningsN not found'
+
+        !%                       Solver.ForceMain.minimum_slope
+        call json%get('Solver.ForceMain.minimum_slope', real_value, found)
+        if (found)  setting%Solver%ForceMain%minimum_slope = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.minimum_slope not found'
+
+
     !% TestCase.  =====================================================================
         !%                       TestCase.UseTestCaseYN
         call json%get('TestCase.UseTestCaseYN', logical_value, found)

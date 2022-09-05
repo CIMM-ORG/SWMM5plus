@@ -31,11 +31,13 @@ module lowlevel_rk2
     public :: ll_momentum_Ksource_CC
     public :: ll_momentum_source_CC
     public :: ll_momentum_lateral_source_CC
-    public :: ll_momentum_gamma_CC
+    public :: ll_momentum_gammaCM_CC
+    public :: ll_momentum_gammaFM_CC
     public :: ll_momentum_solve_CC
     public :: ll_momentum_velocity_CC
     public :: ll_momentum_add_gamma_CC_AC
     public :: ll_momentum_add_source_CC_AC
+    public :: ll_minorloss_friction_gamma_CC
     public :: ll_enforce_flapgate_CC
     public :: ll_store_in_temporary
     public :: ll_restore_from_temporary
@@ -44,7 +46,9 @@ module lowlevel_rk2
     public :: ll_flowrate_and_velocity_JB
     !public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
-    public :: ll_get_dynamic_roughness
+    public :: ll_get_dynamic_ManningsN
+    public :: ll_ForceMain_equivalent_manningsN
+    public :: ll_ForceMain_dw_friction
 
     contains
 !%==========================================================================
@@ -588,46 +592,234 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_momentum_gamma_CC (outCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
+    subroutine ll_momentum_gammaCM_CC (outCol, thisCol, Npack)
+        !%------------------------------------------------------------------
         !% Description:
-        !% Common Gamma for momentum on channels and conduits for  ETM
+        !% Common Gamma for momentum on channels and conduits 
+        !% using the Chezy-Manning roughness approach.
         !% Computes the common part of the Gamma term, which
         !% is the implict friction used in both AC and ETM
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol, thisCol, Npack
-        real(8), pointer :: velocity(:), mn(:), rh(:), oneVec(:), grav
-        integer, pointer :: thisP(:)
-        character(64) :: subroutine_name = 'll_momentum_gamma_CC'
-        !%------------------------------------------------------------------------------
-        thisP    => elemP(1:Npack,thisCol)
-        velocity => elemR(:,er_velocity)
-        if (.not. setting%Solver%Roughness%useDynamicRoughness) then
-            mn       => elemR(:,er_Roughness)
-        else
-            mn       => elemR(:,er_Roughness_Dynamic)
-        end if
-        rh       => elemR(:,er_HydRadius)
-        oneVec   => elemR(:,er_ones)
-        grav => setting%constant%gravity
-        !%------------------------------------------------------------------------------
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: outCol, thisCol, Npack
+            real(8), pointer :: velocity(:), mn(:), rh(:),  grav
+            integer, pointer :: thisP(:)
+            character(64) :: subroutine_name = 'll_momentum_gammaCM_CC'
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            velocity => elemR(:,er_velocity)
+            rh       => elemR(:,er_HydRadius)
+            grav     => setting%constant%gravity
+            if (.not. setting%Solver%ManningsN%useDynamicManningsN) then
+                mn   => elemR(:,er_ManningsN)
+            else
+                mn   => elemR(:,er_ManningsN_Dynamic)
+            end if
+            
+        !%---------------------------------------------------------------------
 
-        elemR(thisP,outCol) = &
-                sign(oneVec(thisP), velocity(thisP)) &
-                * grav * (mn(thisP)**twoR) * velocity(thisP)  &
-                / &
-                ( rh(thisP)**fourthirdsR )
-
+        !% ---- standard Manning's n approach
+        elemR(thisP,outCol) =                                       &
+                grav * (mn(thisP)**twoR) * abs(velocity(thisP))     &
+                /                                                   &
+                ( rh(thisP)**fourthirdsR )                         
+    
     !    print *, 'in ll_momentum_gamma_CC'
     !    print *, elemR(139,outCol)      
     !    print *, rh(139), mn(139),velocity(139)
-    !    print *, elemR(139,er_Roughness), elemR(139,er_Roughness_Dynamic)
-    !    print *, setting%Solver%Roughness%useDynamicRoughness
+    !    print *, elemR(139,er_ManningsN), elemR(139,er_ManningsN_Dynamic)
+    !    print *, setting%Solver%ManningsN%useDynamicManningsN
 
                 ! print *, 'in ', trim(subroutine_name)
                 ! print *, mn(thisP)
 
-    end subroutine ll_momentum_gamma_CC
+    end subroutine ll_momentum_gammaCM_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_momentum_gammaFM_CC (outCol, thisCol, Npack, FMmethod)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the gamma term in momentum for Force Main roughness
+        !% for surcharged pipes.
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: outCol, thisCol, Npack, FMmethod
+            real(8), pointer   :: grav, velocity(:), AFull(:), Pfull(:)
+            real(8), pointer   :: FMcoef(:), DWf(:)
+            integer, pointer   :: thisP(:)
+            real(8), parameter :: HZfactor = 1.351d0
+            real(8), parameter :: HZexpU   = 0.852d0
+            real(8), parameter :: HZexpD1  = 1.852d0
+            real(8), parameter :: HZexpD2  = 1.1667d0
+            character(64) :: subroutine_name = 'll_momentum_gammaFM_CC'
+        !%------------------------------------------------------------------
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            velocity => elemR(:,er_velocity)
+            Afull    => elemR(:,er_FullArea)
+            Pfull    => elemR(:,er_FullPerimeter)
+            FMcoef   => elemSR(:,esr_ForceMain_Coef)
+            DWf      => elemSR(:,esr_ForceMain_FrictionFactor)
+            grav => setting%constant%gravity
+        !%------------------------------------------------------------------
+
+        select case (FMmethod)
+        case (HazenWilliams)
+            elemR(thisP,outCol) =                                            &
+                (HZfactor * grav * abs(velocity(thisP))**(HZexpU))           &
+                / ( (FMcoef(thisP)**HZexpD1) * ((Afull(thisP) / Pfull(thisP))**HZexpD2) )
+        case (DarcyWeisbach)
+            elemR(thisP,outCol) = &
+                (DWf(thisP) * abs(velocity(thisP)) ) &
+                / ( eightR * Afull(thisP)/Pfull(thisP)  )
+        case default
+            print *, 'CODE ERROR: unexpected case default'
+            call util_crashpoint(5592283)
+        end select
+               
+        !%------------------------------------------------------------------
+    end subroutine ll_momentum_gammaFM_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_minorloss_friction_gamma_CC (inoutCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adds the minor loss term for channels and conduits to elemR(:,inoutCol)
+        !% note this term is g h_L / L = KU/2L
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: inoutCol, thisCol, Npack
+            real(8), pointer :: velocity(:), oneVec(:)
+            real(8), pointer :: Kentry(:), Kexit(:), Kconduit(:), length(:)
+            integer, pointer :: thisP(:)
+            character(64) :: subroutine_name = 'll_minorloss_friction_CC'
+        !%--------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%--------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            velocity => elemR(:,er_velocity)
+            Kentry   => elemR(:,er_Kentry_MinorLoss)
+            Kexit    => elemR(:,er_Kexit_MinorLoss)
+            Kconduit => elemR(:,er_Kconduit_MinorLoss)
+            length   => elemR(:,er_Length)
+            oneVec   => elemR(:,er_ones)
+        !%------------------------------------------------------------------------------
+
+        !% ---- minor loss term (without gravity, which cancels out in derivation)
+        elemR(thisP,inoutCol) = elemR(thisP,inoutCol)               &
+                + abs(velocity(thisP))                              & 
+                * (Kentry(thisP) + Kexit(thisP) + Kconduit(thisP))  &
+               /                                                    &
+               (twoR * length(thisP)) 
+
+    end subroutine ll_minorloss_friction_gamma_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_ForceMain_dw_friction (thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes the friction factor for Darcy-Weisbach force mains
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisCol, Npack
+            integer, pointer    :: thisP(:)
+            real(8), pointer    :: Re(:), hydradius(:), Afull(:), Pfull(:)
+            real(8), pointer    :: velocity(:), rough(:), Ffac(:), viscosity
+            real(8), parameter  :: eCoef = 1.081d0 !% roughness multiplier in SI
+            real(8), parameter  :: rCoef = 5.74d0  !% Reynolds number coef
+            real(8), parameter  :: rExpon = 0.9d0  !% Reynolds number exponent
+        !%--------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP     => elemP(1:Npack,thisCol)
+            Re        => elemR(:,er_Temp01)
+            hydradius => elemR(:,er_HydRadius)
+            Afull     => elemR(:,er_FullArea)
+            Pfull     => elemR(:,er_FullPerimeter)
+            velocity  => elemR(:,er_Velocity)
+            rough     => elemSR(:,esr_ForceMain_Coef)
+            Ffac      => elemSR(:,esr_ForceMain_FrictionFactor)
+            viscosity => setting%Constant%water_kinematic_viscosity
+        !%------------------------------------------------------------------
+        !% --- for Reynolds number, use Hydraulic Diameter = 4 * hydraulic radius
+        !%     This uses the hydraulic radius associated with the full flow area
+        !%     for consistency in the friction factor computation for equivalent 
+        !%     manning's n computed at full pipe conditions.
+        Re(thisP) = velocity(thisP) * fourR * (Afull(thisP) / Pfull(thisP)) / viscosity
+
+        !% --- compute the friction factor
+        !%     This uses the full hydraulic radius for consistency in the derivation
+        !%     of the equivalent Manning's n
+        Ffac(thisP) = onefourthR                                             &
+            / ( log10(                                                       &
+                      (eCoef * rough(thisP) / (Afull(thisP) / Pfull(thisP))) &
+                       + (rCoef / (Re(thisP)**rExpon))                       &
+                     )**2 ) 
+
+    end subroutine ll_ForceMain_dw_friction
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_ForceMain_equivalent_manningsN (thisCol, Npack, fmMethod)  
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the equivalent Mannings N used in force mains that are
+        !% not surcharged
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisCol, Npack, fmMethod
+            integer, pointer    :: thisP(:)
+            real(8), pointer    :: manningsN(:), slope(:), Afull(:), Pfull(:)
+            real(8), pointer    :: HWcoef(:), Ffactor(:)
+            real(8), pointer    :: slopeMin, grav
+            real(8), parameter  :: HWfactorD = 0.85d0
+            real(8), parameter  :: HWslopeExp = 0.04d0
+            real(8), parameter  :: HWhydradExp = 0.037d0
+            real(8), parameter  :: DWhydradExp = 0.1667d0
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP      => elemP(1:Npack,thisCol)
+            HWcoef     => elemSR(:,esr_ForceMain_Coef)
+            Ffactor    => elemSR(:,esr_ForceMain_FrictionFactor)
+            manningsN  => elemR(:,er_ManningsN)
+            Afull      => elemR(:,er_FullArea)
+            Pfull      => elemR(:,er_FullPerimeter)
+            slope      => elemR(:,er_BottomSlope)
+            slopeMin   => setting%Solver%ForceMain%minimum_slope
+            grav       => setting%Constant%gravity
+        !%------------------------------------------------------------------
+        select case (fmMethod)
+        case (HazenWilliams)
+            !% N = Rh^0.037 / (0.85 * C * S^0.04)
+            manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**HWhydradExp ) &
+                / (HWfactorD * HWcoef(thisP) * (max( slope(thisP), slopeMin )**HWslopeExp) )
+        case (DarcyWeisbach)
+            !% N = Rh^1/6  * sqrt( f / 8g )
+            manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**DWhydradExp ) &
+                * sqrt( Ffactor(thisP) / (eightR * grav) )
+        case default
+            print *, 'CODE ERROR: unexpected case default'
+            call util_crashpoint(779834)
+        end select
+
+    end subroutine ll_ForceMain_equivalent_manningsN  
 !%
 !%==========================================================================
 !%==========================================================================
@@ -937,7 +1129,7 @@ module lowlevel_rk2
         eVolume      => elemR(:,er_Volume)
         eLength      => elemR(:,er_Length)
         eRH          => elemR(:,er_HydRadius)
-        eRough       => elemR(:,er_Roughness)
+        eRough       => elemR(:,er_ManningsN)
 
         fFlow        => faceR(:,fr_Flowrate)
         !fFlowMax     => faceR(:,fr_Flowrate_Max)
@@ -1430,7 +1622,7 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-subroutine ll_slot_computation_ETM (thisCol, Npack)
+    subroutine ll_slot_computation_ETM (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for conduits in ETM methods
@@ -1565,10 +1757,10 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_get_dynamic_roughness (thisP, dpnorm_col) 
+    subroutine ll_get_dynamic_ManningsN (thisP, dpnorm_col) 
         !%------------------------------------------------------------------
         !% Description:
-        !% called to get the dynamic roughness for a set of points thisP(:)
+        !% called to get the dynamic ManningsN for a set of points thisP(:)
         !% the dpnorm_col is the location where the normalized pressured 
         !% delta is stored.
         !%------------------------------------------------------------------
@@ -1578,15 +1770,15 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             real(8), pointer    :: length(:)
             real(8), pointer    :: alpha, beta, dt, pi
             integer :: ii
-            character(64) :: subroutine_name ='ll_get_dynamic_roughness'
+            character(64) :: subroutine_name ='ll_get_dynamic_ManningsN'
         !%------------------------------------------------------------------  
         !% Aliases
             pi           => setting%Constant%pi
             dt           => setting%Time%Hydraulics%Dt
-            alpha        => setting%Solver%Roughness%alpha
-            beta         => setting%Solver%Roughness%beta
-            mn           => elemR(:,er_Roughness)
-            dynamic_mn   => elemR(:,er_Roughness_Dynamic)
+            alpha        => setting%Solver%ManningsN%alpha
+            beta         => setting%Solver%ManningsN%beta
+            mn           => elemR(:,er_ManningsN)
+            dynamic_mn   => elemR(:,er_ManningsN_Dynamic)
             dp_norm      => elemR(:,dpnorm_col)
             length       => elemR(:,er_Length)
             
@@ -1607,7 +1799,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
                 ) 
             
 
-        print *, 'DYNAMIC ROUGHNESS CANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
+        print *, 'DYNAMIC MANNINGS NCANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
         stop 1093874   
 
         ! do ii=1,size(thisP)
@@ -1633,7 +1825,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
            ! dynamic_mn(thisP) =  mn(thisP) &
            !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR ) 
 
-    end subroutine ll_get_dynamic_roughness
+    end subroutine ll_get_dynamic_ManningsN
 !%
 !%==========================================================================
 !%==========================================================================

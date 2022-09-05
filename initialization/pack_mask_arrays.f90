@@ -1419,8 +1419,8 @@ contains
                     (elemI(:,ei_geometryType) == semi_circular) &
                     .or. &
                     (elemI(:,ei_geometryType) == custom) &
-                    .or. &
-                    (elemI(:,ei_geometryType) == force_main) &
+                   !% .or. &
+                   !% (elemI(:,ei_geometryType) == force_main) & !% 20220905brh removed as force_main is not a geometry type
                 ) )
 
         if (npack > 0) then
@@ -1461,8 +1461,8 @@ contains
                     (elemI(:,ei_geometryType) == semi_circular) &
                     .or. &
                     (elemI(:,ei_geometryType) == custom) &
-                    .or. &
-                    (elemI(:,ei_geometryType) == force_main) &
+                   ! .or. &
+                   ! (elemI(:,ei_geometryType) == force_main) & !!% 20220905brh removed as force_main is not a geometry type
                 ) )
         end if
 
@@ -1505,8 +1505,8 @@ contains
                     (elemI(:,ei_geometryType) == semi_circular) &
                     .or. &
                     (elemI(:,ei_geometryType) == custom) &
-                    .or. &
-                    (elemI(:,ei_geometryType) == force_main) &
+                    !.or. &
+                    !(elemI(:,ei_geometryType) == force_main) & !% 20220905brh removed as force_main is not a geometry type
                 ) )
 
         if (npack > 0) then
@@ -1545,10 +1545,31 @@ contains
                     (elemI(:,ei_geometryType) == semi_circular) &
                     .or. &
                     (elemI(:,ei_geometryType) == custom) &
-                    .or. &
-                    (elemI(:,ei_geometryType) == force_main) &
+                    !.or. &
+                    !(elemI(:,ei_geometryType) == force_main) & !% 20220905brh removed as force_main is not a geometry type
                 ) )
         end if
+
+        if (setting%Solver%ForceMain%UseForceMainTF) then
+            !% print *, 'ForceMain Hazen-Williams ALL elements
+            !% ep_FM_HW_all
+            !% --- all force main (CC) elements that HW roughness method
+            ptype => col_elemP(ep_FM_HW_all)
+            npack => npack_elemP(ptype)
+
+            npack = count(                                            &
+                    (elemYN(:,eYN_isForceMain))                       &
+                    .and.                                             &
+                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,                     &
+                    (elemYN(:,eYN_isForceMain))                       &
+                    .and.                                             &
+                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) )
+            end if
+        end if
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_static_elements
@@ -2232,6 +2253,97 @@ contains
                 (elemI(:,ei_elementType) == CC ) &
                 .and. &
                 (elemR(:,er_Setting) == zeroR ) )        
+        end if
+
+        if (setting%Solver%ForceMain%UseForceMainTF) then
+            !% print *, 'ForceMain Hazen-Williams Preissmann Slot Surcharged elements
+            !% ep_FM_HW_PS_isSurcharged
+            !% --- all force main (CC) elements that are full pipe and HW roughness method
+            ptype => col_elemP(ep_FM_HW_PS_isSurcharged)
+            npack => npack_elemP(ptype)
+
+            npack = count(                                            &
+                    (elemYN(:,eYN_isForceMain))                       &
+                    .and.                                             &
+                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) &
+                    .and.                                             &
+                    (elemR(:,er_SlotVolume) > zeroR) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,                     &
+                    (elemYN(:,eYN_isForceMain))                       &
+                    .and.                                             &
+                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) &
+                    .and.                                             &
+                    (elemR(:,er_SlotVolume) > zeroR)  )
+            end if
+
+            !% --- the unsubmerged HW should not be needed.
+            ! !% print *, 'ForceMain Hazen-Williams Preissmann Slot open-channel (unsubmerged) elements
+            ! !% ep_FM_HW_PS_NonSurcharged
+            ! !% --- all force main (CC) elements that are full pipe and HW roughness method
+            ! ptype => col_elemP(ep_FM_HW_PS_NonSurcharged)
+            ! npack => npack_elemP(ptype)
+
+            ! npack = count(                                             &
+            !         (elemYN(:,eYN_isForceMain))                        &
+            !         .and.                                              &
+            !         (elemSI(:,eSI_ForceMain_method) == HazenWilliams)  &
+            !         .and.                                              &
+            !         (elemR(:,er_SlotVolume) .eq. zeroR) )
+
+            ! if (npack > 0) then
+            !     elemP(1:npack,ptype) = pack(eIdx,                      &
+            !         (elemYN(:,eYN_isForceMain))                        &
+            !         .and.                                              &
+            !         (elemSI(:,eSI_ForceMain_method) == HazenWilliams)  &
+            !         .and.                                              &
+            !         (elemR(:,er_SlotVolume) .eq. zeroR)  )
+            ! end if
+
+            !% print *, 'ForceMain Darcy-Weisbach Preissmann Slot Surcharged elements
+            !% ep_FM_dw_PS_isSurcharged
+            !% --- all force main (CC) elements that are full pipe and DW roughness method
+            ptype => col_elemP(ep_FM_dw_PS_isSurcharged)
+            npack => npack_elemP(ptype)
+
+            npack = count(                                             &
+                    (elemYN(:,eYN_isForceMain))                        &
+                    .and.                                              &
+                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)  &
+                    .and.                                              &
+                    (elemR(:,er_SlotVolume) > zeroR) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,                      &
+                    (elemYN(:,eYN_isForceMain))                        &
+                    .and.                                              &
+                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)  &
+                    .and.                                              &
+                    (elemR(:,er_SlotVolume) > zeroR)  )
+            end if
+
+            !% print *, 'ForceMain Darcy-Weisbach Preissmann Slot open-channel (unsubmerged) elements
+            !% ep_FM_dw_PS_NonSurcharged
+            !% --- all force main (CC) elements that are full pipe using DW roughness method
+            ptype => col_elemP(ep_FM_dw_PS_NonSurcharged)
+            npack => npack_elemP(ptype)
+
+            npack = count(                                                &
+                    (elemYN(:,eYN_isForceMain))                           &
+                    .and.                                                 &
+                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)     &
+                    .and.                                                 &
+                    (elemR(:,er_SlotVolume) .eq. zeroR) )
+
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,                         &
+                    (elemYN(:,eYN_isForceMain))                           &
+                    .and.                                                 &
+                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)     &
+                    .and.                                                 &
+                    (elemR(:,er_SlotVolume) .eq. zeroR)  )
+            end if
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &

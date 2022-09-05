@@ -72,8 +72,12 @@ module define_indexes
         enumerator :: lr_LeftSlope
         enumerator :: lr_RightSlope
         enumerator :: lr_Roughness
+        enumerator :: lr_Kentry_MinorLoss           !% K factor for entry minor loss
+        enumerator :: lr_Kexit_MinorLoss            !% K factor for exit minor loss
+        enumerator :: lr_Kconduit_MinorLoss         !% K factor over the body of the conduit
         enumerator :: lr_FlowrateInitial
         enumerator :: lr_FlowrateLimit           ! user.inp file Qmax (0 is does not apply)
+        enumerator :: lr_ForceMain_Coef
         !enumerator :: lr_InitialDepth
         enumerator :: lr_InitialUpstreamDepth
         enumerator :: lr_InitialDnstreamDepth
@@ -192,7 +196,7 @@ module define_indexes
         enumerator :: nr_head
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
-        enumerator :: nr_JunctionBranch_Kfactor
+        !enumerator :: nr_JunctionBranch_Kfactor
         enumerator :: nr_lastplusone !% must be last enum item
     end enum
     integer, parameter :: nr_idx_base1 = nr_lastplusone-1
@@ -224,9 +228,6 @@ module define_indexes
     enum, bind(c)
         enumerator :: br_value = 1    !% interpolated value for BC at this time step
         enumerator :: br_timeInterval !% time interval for latest forcing data
-        !enumerator :: br_SectionFactor!% present value of A * Rh^2/3 used to compute normal depth 
-        !enumerator :: br_BottomSlope  !% Bottom slope of element upstream of an outfall or downstream of inflow
-        !enumerator :: br_Roughness    !% Roughness of element upstream of outfall or downstream of inflow
         enumerator :: br_Temp01       !% temporary array
         enumerator :: br_lastplusone  !% must be last enum item
     end enum
@@ -356,13 +357,16 @@ module define_indexes
         enumerator :: er_InterpWeight_uP            !% interpolation Weight, upstream, for Preissmann number
         enumerator :: er_InterpWeight_dP            !% interpolation Weight, downstream, for Preissmann number
         enumerator :: er_Ksource                    !% k source term for AC solver
+        enumerator :: er_Kentry_MinorLoss           !% K factor for entry minor loss
+        enumerator :: er_Kexit_MinorLoss            !% K factor for exit minor loss
+        enumerator :: er_Kconduit_MinorLoss         !% K factor over the body of the conduit
         enumerator :: er_Length                     !% length of element (static)
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Preissmann_Number          !% Preissmann number
-        enumerator :: er_Roughness                  !% baseline roughness value for friction model
-        enumerator :: er_Roughness_Dynamic          !% total roughness, including dynamic adjustment
+        enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
+        enumerator :: er_ManningsN_Dynamic          !% total ManningsN roughness, including dynamic adjustment (experimental)
         enumerator :: er_Setting                    !% percent open setting for a link element
         !enumerator :: er_SectionFactor              !% present value of Qn/S0 section factor
         !enumerator :: er_SectionFactor_Max          !% maximum value of section factor (for S0 = 0)
@@ -422,6 +426,7 @@ module define_indexes
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
         enumerator :: eYN_isSlot                        !% TRUE if Preissmann slot is present for this cell
+        enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
@@ -501,6 +506,11 @@ module define_indexes
         enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
         enumerator :: ep_CCJM_NOTsmalldepth         !% alternate elements for CFL computation 
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
+        enumerator :: ep_FM_HW_all                  !% all Hazen-Williams Force Main elements
+        enumerator :: ep_FM_HW_PS_isSurcharged      !% all Hazen-Williams Force Main elements Preissmann Slot method that are surcharged
+        !enumerator :: ep_FM_HW_PS_NonSurcharged     !% all Hazen-Williams Force Main elements with Preissmann Slot that are not surcharged
+        enumerator :: ep_FM_dw_PS_isSurcharged      !% all Darcy-Weisbach Force Main elements Preissmann Slot method that are surcharged
+        enumerator :: ep_FM_dW_PS_NonSurcharged     !% all Darcy-Weisbach Force Main elements with Preissmann Slot that are not surcharged
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemP = ep_lastplusone-1
@@ -598,13 +608,22 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSI_Pump = esi_Pump_lastplusone-1
 
+    enum, bind(c)
+        !% define the column indexes for the elemSi(:,:) force main elements
+        enumerator :: esi_ForceMain_method = 1       !% type key  HazenWilliams or DarcyWeisbach
+        !enumerator :: esi_ForceMain_isSubmerged    !% 0 = no, 1 = yes
+        enumerator :: esi_ForceMain_lastplusone    !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_ForceMain = esi_ForceMain_lastplusone-1
+
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
                             Ncol_elemSI_junction, &
                             Ncol_elemSI_orifice, &
                             Ncol_elemSI_weir, &
                             Ncol_elemSI_outlet, &
-                            Ncol_elemSI_Pump)
+                            Ncol_elemSI_Pump,  &
+                            Ncol_elemSI_ForceMain)
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSr(:,:) arrays
@@ -615,8 +634,7 @@ module define_indexes
 
     !% define the column indexes for elemSr(:,:) for geometry that has not yet been confirmed and assigned:
     enum, bind(c)
-        enumerator ::  esr_JunctionBranch_Kfactor = 1
-        enumerator ::  esr_JunctionBranch_lastplusone !% must be last enum item
+        enumerator ::  esr_JunctionBranch_lastplusone = 1 !% must be last enum item
     end enum
 
     integer, parameter :: Ncol_elemSR_JunctionBranch = esr_JunctionBranch_lastplusone-1
@@ -685,9 +703,20 @@ module define_indexes
         enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
         enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
         enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
-        enumerator ::  esr_pump_lastplusone                !% must be last enum item
+        enumerator ::  esr_Pump_lastplusone                !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSR_Pump = esr_pump_lastplusone-1
+    integer, parameter :: Ncol_elemSR_Pump = esr_Pump_lastplusone-1
+
+    !% --- Force main in elemSR array 
+    !%     This implies that Storage, Pump, Weir, Orifice, Outlet cannot also be Force Main
+    !%     HACK -- if Storage needs to be defined as force main, then the coef will need to
+    !%     be moved to the elemR array.
+    enum, bind(c)
+        enumerator :: esr_ForceMain_Coef = 1               !% Hazen-Williams C or Darcy-Weisbach epsilon
+        enumerator :: esr_ForceMain_FrictionFactor         !% Darcy-Weisbach friction factor
+        enumerator :: esr_ForceMain_lastplusone            !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_ForceMain = esr_ForceMain_lastplusone-1
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
@@ -696,7 +725,8 @@ module define_indexes
                             Ncol_elemSR_Weir,           &
                             Ncol_elemSR_Orifice,        &
                             Ncol_elemSR_Outlet,         &
-                            Ncol_elemSR_Pump) !, &
+                            Ncol_elemSR_Pump,           &
+                            Ncol_elemSR_ForceMain) !, &
                             ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
@@ -1213,7 +1243,7 @@ module define_indexes
         enumerator :: tr_sectionFactor     ! section factor at max flow (sMax in EPA-SWMM)
         enumerator :: tr_areaAtMaxFlow     ! area at max flow (aMax in EPA-SWMM)
         enumerator :: tr_lengthFactor      ! floodplain / channel length (lengthFactor in EPA-SWMM)
-        enumerator :: tr_roughness         ! Mannings n (roughness in EPA-SWMM)
+        enumerator :: tr_ManningsN         ! Mannings n (roughness in EPA-SWMM)
         enumerator :: tr_widthFull         ! not in EPA-SWMM
         enumerator :: tr_areaBelowBreadthMax ! not in EPA-SWMM
         enumerator :: tr_lastplusone

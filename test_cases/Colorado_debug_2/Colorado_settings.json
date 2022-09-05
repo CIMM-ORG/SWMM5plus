@@ -37,10 +37,6 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
@@ -63,7 +59,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isRoughnessDynamicOut" : true,
+            "isManningsNout" : true,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -94,8 +90,8 @@
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T00",
         "ReferenceHead"     : 0.0,
-        "Roughness" : {
-            "useDynamicRoughness" : false,
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
             "alpha"               : 1.0,
             "beta"                : 100.0
         }

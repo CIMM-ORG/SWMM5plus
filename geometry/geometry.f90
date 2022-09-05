@@ -338,7 +338,7 @@ module geometry
             thisTable => uniformTableDataR(UT_idx,:,utd_SF_depth_nonuniform)  !% element index
         !%------------------------------------------------------------------
         !% --- section factor for the associated element
-        sectionFactor = elemR(eIdx,er_Flowrate) * elemR(eIdx,er_Roughness) / elemR(eIdx,er_BottomSlope)
+        sectionFactor = elemR(eIdx,er_Flowrate) * elemR(eIdx,er_ManningsN) / elemR(eIdx,er_BottomSlope)
 
         !print *, 'sectionFactor ',sectionFactor
 
@@ -438,7 +438,7 @@ module geometry
             fulldepth     => elemR(:,er_FullDepth)
             fullhyddepth  => elemR(:,er_FullHydDepth)
             fullperimeter => elemR(:,er_FullPerimeter)
-            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
+            !Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
             thisSolve     => elemI(:,ei_tmType)
             grav => setting%Constant%gravity
@@ -1031,7 +1031,8 @@ module geometry
             call util_crashpoint(33234)
         case (force_main)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)   
+            print *, 'in ',trim(subroutine_name)   
+            print *, 'This should never be reached as a force_main is not a valid geometryType'
             call util_crashpoint(33234)
         case default
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
@@ -1206,7 +1207,8 @@ module geometry
             call util_crashpoint(4498734)
         case (force_main)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)   
+            print *, 'in ',trim(subroutine_name)   
+            print *, 'This should never be reached as a force_main is not a valid geometryType'
             call util_crashpoint(4498734)
         case default
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
@@ -1385,7 +1387,8 @@ module geometry
             call util_crashpoint(338234)
         case (force_main)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)   
+            print *, 'in ',trim(subroutine_name)   
+            print *, 'This should never be reached as a force_main is not a valid geometryType' 
             call util_crashpoint(338234)
         case default
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
@@ -1569,7 +1572,8 @@ module geometry
             call util_crashpoint(449734)
         case (force_main)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)   
+            print *, 'in ',trim(subroutine_name)   
+            print *, 'This should never be reached as a force_main is not a valid geometryType'  
             call util_crashpoint(449734)
         case default
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))

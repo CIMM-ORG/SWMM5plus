@@ -1443,7 +1443,7 @@ int DLLEXPORT api_get_linkf_attribute(
 
         case linkf_qlimit :
             *value = CFTOCM(Link[link_idx].qLimit);
-            break;        
+            break;            
 
         case linkf_flow :
             *value = CFTOCM(Link[link_idx].newFlow);
@@ -1624,6 +1624,18 @@ int DLLEXPORT api_get_linkf_attribute(
                 *value = 0;
             break;
 
+        case linkf_cLossInlet :
+            *value = Link[link_idx].cLossInlet;
+            break;
+
+        case linkf_cLossOutlet :
+            *value = Link[link_idx].cLossOutlet;
+            break;
+
+        case linkf_cLossAvg :
+            *value = Link[link_idx].cLossAvg;
+            break;
+
         case linkf_commonBreak :
             // placeholder with no action
             *value = 0;
@@ -1682,6 +1694,25 @@ int DLLEXPORT api_get_linkf_attribute(
 
         case linkf_transectid :
             *value = Link[link_idx].xsect.transect;
+            break;
+
+        case linkf_forcemain_coef :
+             switch ( ForceMainEqn )
+            {
+                case H_W:
+                    // Link.xsect.rBot stores the input H-W coefficient
+                    //printf(" ****** in api_get_linkf_attribute  %e \n ", Link[link_idx].xsect.rBot);
+                    *value = Link[link_idx].xsect.rBot;
+                    break;
+                case D_W:
+                    // Link.xsect.rBot stores the input D-W roughness divided by UCF(RAINDEPTH), either 12.0 (in) or 304.8 (mm)
+                    // which is converting the input (inches or mm) into ft. Here we take the ft from EPA-SWM and covert to meters
+                    //printf(" ****** in api_get_linkf_attribute  %e \n ", FTTOM(Link[link_idx].xsect.rBot));
+                    *value = FTTOM(Link[link_idx].xsect.rBot);
+                    break;
+            }
+            //printf(" ****** in api_get_linkf_attribute  %e \n ", Link[link_idx].xsect.rBot);
+            //*value = Link[link_idx].xsect.rBot;  // works for H-W
             break;
         
               

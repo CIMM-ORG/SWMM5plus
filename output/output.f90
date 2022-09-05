@@ -473,7 +473,7 @@ contains
         if (setting%Output%DataOut%isHeadOut)                    N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isHydRadiusOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPerimeterOut)               N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isRoughnessDynamicOut)        N_OutTYpeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isManningsNout)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isSlotWidthOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isSlotDepthOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isTopWidthOut)                N_OutTypeElem =  N_OutTypeElem + 1
@@ -566,11 +566,11 @@ contains
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
         end if
-        !% --- Dynamic Roughness
-        if (setting%Output%DataOut%isRoughnessDynamicOut) then
+        !% --- Manning's n Roughness (changed by Force Main)
+        if (setting%Output%DataOut%isManningsNout) then
             ii = ii+1
-            output_types_elemR(ii) = er_Roughness_Dynamic
-            output_typenames_elemR(ii) = 'RoughnessDynamic'
+            output_types_elemR(ii) = er_ManningsN
+            output_typenames_elemR(ii) = 'ManningsN'
             output_typeUnits_elemR(ii) = 's/m^(1/3)'
             output_typeProcessing_elemR(ii) = AverageElements
         end if
@@ -725,7 +725,7 @@ contains
         !% HydRadius, Perimeter, SlotWidth, and SlotDepth do not exist at a face
         !if (setting%Output%DataOut%isHydRadiusOut)      N_OutTypeFace =  N_OutTypeFace + 1
         !if (setting%Output%DataOut%isPerimeterOut)      N_OutTypeFace =  N_OutTypeFace + 1
-        !if (setting%Output%DataOut%isRoughnessDynamicOut)      N_OutTypeFace =  N_OutTypeFace + 1
+        !if (setting%Output%DataOut%isManningsNout)      N_OutTypeFace =  N_OutTypeFace + 1
         !if (setting%Output%DataOut%isSlotWidthOut)      N_OutTypeFace =  N_OutTypeFace + 1
         !if (setting%Output%DataOut%isSlotDepthOut)      N_OutTypeFace =  N_OutTypeFace + 1
 
@@ -2798,7 +2798,7 @@ contains
             !% -----------------------------------
                 if (NtotalOutputFaces > 0) then
                     do kk=1,nOutNodeFace
-                        print *, '  kk = ',kk
+                        !print *, '  kk = ',kk
                         !% --- Cycle through the nodes to create the individual nodes output files
                         !% get the global SWMM index for this node
                         SWMMnode => OutNodeFace_pSWMMidx(kk)
@@ -2858,7 +2858,7 @@ contains
                                 !     dummyarrayI,    &
                                 !     tnodename, setting%Time%DateTimeStamp, time_units_str, .false.)
 
-                                print *, ' setting%Output%Report%useCSV ', setting%Output%Report%useCSV
+                                !print *, ' setting%Output%Report%useCSV ', setting%Output%Report%useCSV
                                 if(setting%Output%Report%useCSV) then
                                     !% --- open formatted csv node file
                                     open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted', &
@@ -2937,7 +2937,7 @@ contains
                         !% --- NODE-FACE FINITE-VOLUME FILES CSV (1 type per file)
                         !%
                         do mm=1,nTypeFace
-                            print *, '   mm  = ',mm
+                            !print *, '   mm  = ',mm
                             !% --- cycle through the types
                             mminc = mm+1 !% increment to skip time level
                             !% --- create the filename

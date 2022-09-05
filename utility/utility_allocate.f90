@@ -1033,7 +1033,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
         !% --- shorthand for the stored levels
-        nLevel => setting%Output%StoredLevels
+        nLevel         => setting%Output%StoredLevels
 
         !% --- get the total number of time levels for the report
         !% --- increase by 2 for start and end files
@@ -1053,9 +1053,11 @@ contains
         !% --- check and adjust stored level output so as not to waste memory
         if ( setting%Output%StoredLevels > setting%Output%MaxExpectedLevels+ 2) then
             if (this_image() == 1) then
-                write (*,"(A,i5)") ' ... changing output levels stored before writing; originally: ',setting%Output%StoredLevels 
-                write (*,"(A,i5)") '                Now using the max expected output time levels: ',setting%Output%MaxExpectedLevels
+                write (*,"(A,i5)") ' ... changing output levels stored before writing; originally: ',nLevel 
+                write (*,"(A,i5)") '                Now using the max expected output time levels: ',setting%Output%MaxExpectedLevels+2
             end if
+            !% --- reset the nLevel global setting
+            nLevel = setting%Output%MaxExpectedLevels + 2
         end if
 
         !% --- bug check
@@ -1096,10 +1098,15 @@ contains
                 stop 387053
             end if
 
-            if (nMaxElem * nTypeElem * nLevel > 29000000) then
-                print *, 'CONFIGURATION ERROR: the output stored is probably too large.'
-                print *, 'The number of time levels stored before writing is ',nLevel
-                print *, 'Suggest reducing below ',29000000 / (nMaxElem * nTypeElem)
+            if (int(nMaxElem,8) * int(nTypeElem,8) * int(nLevel,8) > setting%Output%MemoryStorageMax) then
+                print *, 'CONFIGURATION ERROR: the output stored is probably too large'
+                print *, '  based on the value in setting.Output.MemoryStorageMax.'
+                print *, 'The number of time levels stored before writing (nLevel) is ',nLevel
+                print *, '  which is set in setting.Output.StoredLevels of JSON file. '
+                print *, 'There are ',nMaxElem,' elements and ',nTypeElem, 'element types'
+                print *, '  such that nLevel * nMaxElem * nTypeElem = ',int(nMaxElem,8) * int(nTypeElem,8) * int(nLevel,8)
+                print *, 'Suggest reducing setting.Output.StoredLevels below ', &
+                            setting%Output%MemoryStorageMax / (int(nMaxElem,8) * int(nTypeElem,8) )
                 call util_crashpoint(5598723)
             end if
 

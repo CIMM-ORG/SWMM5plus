@@ -65,18 +65,18 @@ C2                N2                N3                1000       0.03       0   
 C3                N3                O4                1000       0.03       0          0          4.6981     0         
 
 [XSECTIONS]
-;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;Link           Shape        Diameter           Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1                RECT_OPEN    2                3          0          0          1                    
-C2                RECT_OPEN    2                3          0          0          1                    
-C3                RECT_OPEN    2                3          0          0          1         
+C1                CIRCULAR    2                   0           0          0           1                   
+C2                CIRCULAR    2                   0           0          0           1                   
+C3                CIRCULAR    2                   0           0          0           1        
 
 [LOSSES]
 ;; Conduit      Kentry      Kexit       Kavg        Flap       Seepage
 ;;---------   ----------   -------    --------     -------    -----------
-C1                0.5       0.0         0.0          NO         0.0
-C2                0.0       0.0         0.2          NO         0.0
-C3                0.9       0.5         0.0          NO         0.0
+C1                0.0       0.0         0.0          NO         0.0
+C2                0.0       0.0         0.0          NO         0.0
+C3                0.0       0.0         0.0          NO         0.0
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

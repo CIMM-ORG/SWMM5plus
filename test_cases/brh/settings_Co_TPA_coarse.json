@@ -29,10 +29,6 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-10
@@ -54,7 +50,7 @@
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout" : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,

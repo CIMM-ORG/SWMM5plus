@@ -660,15 +660,15 @@ module adjust
 
         !print *, 'svRatio ', svRatio(iet(1:2))
     
-        !% use the larger of available roughness values
+        !% use the larger of available ManningsN values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
-        ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness))   
-        if (setting%Solver%Roughness%useDynamicRoughness) then
-            ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_Roughness_Dynamic))
+        ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_ManningsN))   
+        if (setting%Solver%ManningsN%useDynamicManningsN) then
+            ManningsN(thisP) = max(ManningsN(thisP), elemR(thisP,er_ManningsN_Dynamic))
         end if
 
         ! print *, 'in ',trim(subroutine_name)
-        ! print *, ManningsN(139), elemR(139,er_Roughness_Dynamic), elemR(139,er_Roughness)
+        ! print *, ManningsN(139), elemR(139,er_ManningsN_Dynamic), elemR(139,er_ManningsN)
 
         !print *, 'mannings n', ManningsN(iet(1:2))
 
@@ -1602,11 +1602,11 @@ module adjust
     !         velocityBlend => elemR(:,er_Temp01)
     !     !%----------------------------------------------------------------------
     !     !% Adjust ManningsN for small volume CM velocity.
-    !     !% Use the larger of the actual roughness or the setting% value
+    !     !% Use the larger of the actual ManningsN or the setting% value
 
     !     ManningsN(thisP) = setting%SmallDepth%ManningsN
-    !     where (ManningsN(thisP) < elemR(thisP,er_Roughness))
-    !         ManningsN(thisP) = elemR(thisP,er_Roughness)
+    !     where (ManningsN(thisP) < elemR(thisP,er_ManningsN))
+    !         ManningsN(thisP) = elemR(thisP,er_ManningsN)
     !     endwhere
 
     !     !% slope of the piezometric head

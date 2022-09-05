@@ -38,6 +38,8 @@ module utility
 
     public :: util_unique_rank
 
+    public :: util_kinematic_viscosity_from_temperature
+
     contains
 !%
 !%==========================================================================
@@ -208,13 +210,13 @@ module utility
         !                                                 faceR(elemI(iet(5),ei_Mface_dL),fr_Head_u), &
         !                                                 faceR(elemI(iet(6),ei_Mface_dL),fr_Head_u)
 
-        ! write(*,"(A,10e12.4)") 'n elem          ',elemR(iet(1),er_Roughness_Dynamic), &
-        !                                                 elemR(iet(2),er_Roughness_Dynamic), &
-        !                                                 elemR(iet(3),er_Roughness_Dynamic), &
-        !                                                 elemR(iet(4),er_Roughness_Dynamic), &
-        !                                                 elemR(iet(5),er_Roughness_Dynamic), &
-        !                                                 elemR(iet(6),er_Roughness_Dynamic), &
-        !                                                 elemR(iet(7),er_Roughness_Dynamic)     
+        ! write(*,"(A,10e12.4)") 'n elem          ',elemR(iet(1),er_ManningsN_Dynamic), &
+        !                                                 elemR(iet(2),er_ManningsN_Dynamic), &
+        !                                                 elemR(iet(3),er_ManningsN_Dynamic), &
+        !                                                 elemR(iet(4),er_ManningsN_Dynamic), &
+        !                                                 elemR(iet(5),er_ManningsN_Dynamic), &
+        !                                                 elemR(iet(6),er_ManningsN_Dynamic), &
+        !                                                 elemR(iet(7),er_ManningsN_Dynamic)     
         
         ! write(*,"(A,10f12.4)") 'Head elem       ',elemR(iet(1),er_Head), &
         !                                           elemR(iet(2),er_Head), &
@@ -1514,7 +1516,80 @@ module utility
         !% Closing:
     end subroutine util_unique_rank        
 !%
-!%==========================================================================          
+!%========================================================================== 
+!%==========================================================================
+!%
+    real(8) function util_kinematic_viscosity_from_temperature &
+        (thisTemperature) result(outViscosity)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the kinematic viscosity of water based on temperature
+        !% by linear interpolation in a table of observed values
+        !% taken from Kestin, Sokolov and Wakeham (1978) in Journal of
+        !% Physical and Chemical Reference Data, Vol 7, pp 941-948.
+        !% Our approach is to take the kinematic viscosity values from 
+        !% Table 2 and Table 4 and average where there are two values.
+        !%
+        !% Based on fresh water and standard atmospheric pressure.
+        !%
+        !% NOTE: we do not use the SWMM curve interpolation so that this
+        !% subroutine is entirely portable to other codes
+        !%
+        !% NOTE: This has lower and upper temperature limits of -8C and
+        !% +70C. Values above or below this return the max and min 
+        !%  viscosities 
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(in)    :: thisTemperature
+            integer :: ii
+            real(8) :: deltaT, deltaNu
+            !% --- temperature is in Celsius
+            real(8), dimension(19) :: temperature = (/ &
+                -8.28d0, -6.647d0, -4.534d0, -1.108d0,  0.d0,  5.d0,     &
+                10.d0,    15.d0,   20.d0,    25.d0,    30.d0, 35.d0,     &
+                40.d0,    45.d0,   50.d0,    55.d0,    60.d0, 65.d0,      &
+                70.d0 /)
+            !% --- Kinematic viscosity is in mm^2/s, converted to m^2/s below   
+            real(8), dimension(19) :: viscosity = (/                            &
+                2.4603d0,  2.2999d0,  2.1164d0,  1.864d0,  1.793d0,  1.5196d0,  &
+                1.30725d0, 1.13915d0, 1.00345d0, 0.8924d0, 0.8003d0, 0.72315d0, &
+                0.6579d0,  0.601d0,   0.553d0,   0.511d0,  0.475d0,  0.443d0,   &
+                0.414d0 /)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            !% --- convert viscosity to m^2/s
+            viscosity = viscosity / 1.d-6
+        !%------------------------------------------------------------------
+        !% Aliases:
+            
+        !%------------------------------------------------------------------
+        !% --- bound the lookup temperature by the max/min in the table
+        if (thisTemperature .le. temperature(1)) then 
+            outViscosity = viscosity(1)
+            return
+        elseif (thisTemperature .ge. temperature(19)) then 
+            outViscosity = viscosity(19)
+            return
+        end if
+
+        !% --- cycle through the table
+        do ii=2,19
+            if (       (thisTemperature  >   temperature(ii-1)) &
+                 .and. (thisTemperature .le. temperature(ii))     ) then
+                !% --- linear interpolate
+                deltaT  = temperature(ii) - temperature(ii-1)
+                deltaNu = viscosity(ii)   - viscosity(ii-1)
+                outViscosity = viscosity(ii-1) &
+                    + ( thisTemperature - temperature(ii) ) * deltaNu / deltaT
+                return
+            else
+                !% --- cycle
+            end if
+        end do
+  
+    end function util_kinematic_viscosity_from_temperature
+!%
+!%==========================================================================         
 !%==========================================================================
 !%
         !%------------------------------------------------------------------

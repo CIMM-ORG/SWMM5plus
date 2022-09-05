@@ -87,6 +87,12 @@ contains
         elemR(1:size(elemR,1)-1,er_TargetSetting) = oneR
         elemR(1:size(elemR,1)-1,er_Setting)       = oneR
 
+        !% --- initialize all the minor losses to zero
+        elemR(:,er_Kentry_MinorLoss)   = zeroR
+        elemR(:,er_Kexit_MinorLoss)    = zeroR
+        elemR(:,er_Kconduit_MinorLoss) = zeroR
+
+
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
@@ -288,7 +294,7 @@ contains
         ! print *, '**************************************************************************'
         ! print *, 'TEMPORARY TEST INCREASING MANNINGS N'
         ! print *, '**************************************************************************'
-        ! elemR(:,er_Roughness) = tenR * elemR(:,er_Roughness) 
+        ! elemR(:,er_ManningsN) = tenR * elemR(:,er_ManningsN) 
     
 
         ! !% --- initialized the max face flowrate
@@ -389,6 +395,8 @@ contains
             call init_IC_get_geometry_from_linkdata (thisLink)
 
             call init_IC_get_flapgate_from_linkdata (thisLink)
+
+            call init_IC_get_ForceMain_from_linkdata (thisLink)       
 
             !%brh20211215 this stuff moved to init_IC_derived_data as it
             !% does not need to be done on a link-by-link basis.
@@ -676,22 +684,32 @@ contains
         !% Declarations:
             integer, intent(in) :: thisLink
             integer :: ii
+            integer, pointer :: firstelem, lastelem
             character(64) :: subroutine_name = 'init_IC_get_flow_and_roughness_from_linkdata'
         !--------------------------------------------------------------------------
-            !if (crashYN) return
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !%  handle all the initial conditions that don't depend on geometry type
+            firstelem => link%I(thisLink,li_first_elem_idx)
+            lastelem  => link%I(thisLink,li_last_elem_idx)
+        !--------------------------------------------------------------------------   
+        !% --- handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-            elemR(:,er_Flowrate)       = link%R(thisLink,lr_FlowrateInitial)
-            elemR(:,er_Flowrate_N0)    = link%R(thisLink,lr_FlowrateInitial)
-            elemR(:,er_Flowrate_N1)    = link%R(thisLink,lr_FlowrateInitial)
-            elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
-            elemR(:,er_FlowrateLimit)   = link%R(thisLink,lr_FlowrateLimit)
-            elemR(:,er_Roughness_Dynamic) = elemR(:,er_Roughness)
+            elemR(:,er_Flowrate)           = link%R(thisLink,lr_FlowrateInitial)
+            elemR(:,er_Flowrate_N0)        = link%R(thisLink,lr_FlowrateInitial)
+            elemR(:,er_Flowrate_N1)        = link%R(thisLink,lr_FlowrateInitial)
+            elemR(:,er_ManningsN)          = link%R(thisLink,lr_Roughness)
+            elemR(:,er_Kconduit_MinorLoss) = link%R(thisLink,lr_Kconduit_MinorLoss)
+            elemR(:,er_FlowrateLimit)      = link%R(thisLink,lr_FlowrateLimit)
+            elemR(:,er_ManningsN_Dynamic)  = elemR(:,er_ManningsN)
         endwhere
 
+
+        !% --- assign minor losses at entry and exit to the first and last elements
+        !%     in the link
+        elemR(firstelem,er_Kentry_MinorLoss) = link%R(thisLink,lr_Kentry_MinorLoss)
+        elemR(lastelem ,er_Kexit_MinorLoss)  = link%R(thisLink,lr_Kexit_MinorLoss)
+        
         ! print *, ' '
         ! print *, 'in ',trim(subroutine_name)
         ! do ii=1,size(elemI,1)
@@ -732,6 +750,7 @@ contains
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
                     elemI(:,ei_QeqType)         = time_march
+                    elemYN(:,eYN_canSurcharge)  = .false.
                 endwhere
 
 
@@ -819,6 +838,163 @@ contains
         
     end subroutine init_IC_get_flapgate_from_linkdata
 !
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_IC_get_ForceMain_from_linkdata (thisLink)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% Sets the Force main coefficients
+        !%-----------------------------------------------------------------
+        !% Declarations:
+        integer, intent(in)  :: thisLink
+        integer, pointer     :: firstE, lastE, linkType, linkGeo
+        
+        character(64) :: subroutine_name = 'init_IC_get_flapgate_linkdata'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+
+        !%-----------------------------------------------------------------
+        !% Aliases
+        firstE      => link%I(thisLink,li_first_elem_idx)
+        lastE       => link%I(thisLink,li_last_elem_idx)
+        linkType    => link%I(thisLink,li_link_type)
+        linkGeo     => link%I(thisLink,li_geometry)
+        !%-----------------------------------------------------------------
+        !%
+        !% --- if UseForceMain
+        if (setting%Solver%ForceMain%UseForceMainTF) then
+            !% --- if FMallClosedConduits
+            if (setting%Solver%ForceMain%FMallClosedConduitsTF) then
+                !% --- forcing all closed conduits to be Force Main
+                if (linkType .eq. lpipe) then
+                    call init_IC_set_forcemain_elements (firstE, lastE, thisLink)
+                else
+                    !% --- not a force main
+                    elemYN(firstE:lastE,eYN_isForceMain)      = .false.
+                    elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
+                    elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+                end if 
+            else 
+                !% --- handle links designated as force main in SWMM input file
+                if (linkGeo .eq. lForce_main) then
+                    call init_IC_set_forcemain_elements (firstE, lastE, thisLink)
+                else
+                    !% --- not a force main
+                    elemYN(firstE:lastE,eYN_isForceMain)      = .false.
+                    elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
+                    elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+                end if
+            end if
+        else    
+            !% --- if NOT UseForceMain
+            elemYN(firstE:lastE,eYN_isForceMain)      = .false.
+            elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
+            elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+            !% --- if force main was specified in SWMMinput file, then
+            !%     use default roughness if none provided.
+            if (linkGeo .eq. lForce_main) then 
+                if ((link%I(thisLink,lr_Roughness) .le. zeroR) .or. &
+                    (link%I(thisLink,lr_Roughness) .eq. nullvalueR) ) then 
+                    !% --- use default Mannings n roughness    
+                    elemR(firstE:lastE,er_ManningsN) = setting%Solver%ForceMain%Default_ManningsN
+                else
+                    !% --- use supplied link roughness
+                end if
+            else 
+                !% --- not designated a force main, so no roughness change needed
+            end if   
+        end if
+
+    end subroutine init_IC_get_ForceMain_from_linkdata
+!    
+!==========================================================================
+!==========================================================================
+!    
+    subroutine init_IC_set_forcemain_elements (firstE, lastE, thisLink)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% sets the force main conditions between the first element (firstE)
+        !% and last element (lastE) of a link (thisLink)
+        !%-----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: firstE, lastE, thisLink
+        !%-----------------------------------------------------------------
+        !%-----------------------------------------------------------------
+        !%
+        !% --- set these elements to a force main    
+        elemYN(firstE:lastE,eYN_isForceMain)      = .true.
+
+        !% --- check as to whether SWMMinput methods or an overwrite of
+        !%     the JSON file is used
+        if (setting%Solver%ForceMain%UseSWMMinputMethodTF) then 
+            !% --- using SWMM input method
+            elemSR(firstE:lastE,esr_ForceMain_Coef)   = link%R(thisLink,lr_ForceMain_Coef)
+            elemSI(firstE:lastE,esi_ForceMain_method) = setting%SWMMinput%ForceMainEquation
+        else
+            !% --- overwriting with default method from JSON file
+            select case (setting%Solver%ForceMain%Default_method)
+            case (HazenWilliams)
+                elemSI(firstE:lastE,esi_ForceMain_method) = HazenWilliams
+                elemSR(firstE:lastE,esr_ForceMain_Coef)   = setting%Solver%ForceMain%Default_HazenWilliams_coef
+            case (DarcyWeisbach)
+                elemSI(firstE:lastE,esi_ForceMain_method) = DarcyWeisbach
+                elemSR(firstE:lastE,esr_ForceMain_Coef)   = setting%Solver%ForceMain%Default_DarcyWeisbach_roughness_mm
+            case default 
+                print *, 'CODE ERROR: unexpected case default'
+                call util_crashpoint(7729873)
+            end select
+        end if
+
+        !% --- error checking
+        !%     Examines if roughness values for FM are consistent with what's expected for the
+        !%     Hazen-Williams or Darcy-Weisbach approaches.
+        if (setting%Solver%ForceMain%errorCheck_RoughnessTF) then 
+            if (elemSI(firstE,esi_ForceMain_method) .eq. HazenWilliams) then 
+                !% --- for Hazen Williams Force main
+                if (elemSR(firstE,esr_ForceMain_Coef) < 90.0) then
+                    print *, 'POSSIBLE CONFIGURATION ERROR: Force Main Coefficients'
+                    print *, 'The Hazen-Williams equation for Force Mains is invoked '
+                    print *, '   however the HW roughness coefficient seems small for'
+                    print *, '   an HW solution.' 
+                    print *, 'At link name ',trim(link%Names(thisLink)%str)
+                    print *, '  the HW roughness was ', elemSR(firstE,esr_ForceMain_Coef)
+                    print *, 'This might be because the roughness is for a Darcy-Weisbach'
+                    print *, '  force main, in which case you need to change the FORCE_MAIN_EQUATION'
+                    print *, '  in the SWMM input file.'
+                    print *, 'If this coefficient (and all other small coefficients) are OK'
+                    print *, '  then use setting.Solver.ForceMain.errorCheck_RoughnessTF = false'
+                    print *, '  and re-run to pass this error check point.'
+                    call util_crashpoint(509874)
+                end if
+            else
+                !% --- for Darcy-Weisbach Force Main
+                if (elemSR(firstE,esr_ForceMain_Coef)*1000.d0 > 60) then 
+                    print *, 'POSSIBLE CONFIGURATION ERROR: Force Main Coefficients'
+                    print *, 'The Darcy-Weisbach equation for Force Mains is invoked '
+                    print *, '   however the DW roughness coefficient seems large for'
+                    print *, '   a DW solution.' 
+                    print *, 'At link name ',trim(link%Names(thisLink)%str)
+                    print *, '  the input DW roughness (in SI) was ', elemSR(firstE,esr_ForceMain_Coef)*1000.d0, ' mm'
+                    print *, 'This might be because the roughness is for a Hazen-Williams'
+                    print *, '  force main, in which case you need to change the FORCE_MAIN_EQUATION'
+                    print *, '  in the SWMM input file.'
+                    print *, 'If this coefficient (and all other large coefficients) are OK'
+                    print *, '  then use setting.Solver.ForceMain.errorCheck_RoughnessTF = false'
+                    print *, '  and re-run to pass this error check point.'
+                    call util_crashpoint(5098742)
+                end if
+            end if
+        else
+            !% -- no error checking
+        end if
+
+    end subroutine init_IC_set_forcemain_elements
+!    
+!==========================================================================
+!==========================================================================
+!      
+!    
 !==========================================================================
 !==========================================================================
 !
@@ -1238,8 +1414,32 @@ contains
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
             endwhere
             
-        case (lCircular)
+        case (lCircular,lForce_main) 
+
+            !% --- Get data for force main
+            !%     Note: all force mains are circular pipes
+            if (setting%Solver%ForceMain%UseForceMainTF) then
+                if (geometryType == lForce_main) then 
+                    where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                        elemYN(:,eYN_isForceMain)    = .TRUE.
+                        elemSI(:,esi_ForceMain_method) = setting%SWMMinput%ForceMainEquation
+                        elemSR(:,esr_ForceMain_Coef) = link%R(thislink,lr_ForceMain_Coef)
+                    endwhere
+                endif
+            else
+                !% -- if global UseForceMainTF is false, then
+                !%    make sure FM from the SWMM input are set to
+                !%    non-force-main.
+                if (geometryType == lForce_main) then 
+                    where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                        elemSI(:,esi_ForceMain_method) = nullvalueI
+                        elemYN(:,eYN_isForceMain) = .FALSE.
+                        elemSR(:,esr_ForceMain_Coef) = nullvalueR
+                    endwhere
+                end if
+            end if
         
+            !% --- set up for circular pipe
             where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 elemI(:,ei_geometryType)    = circular
@@ -2266,14 +2466,14 @@ contains
             elemI(JBidx,ei_HeqType) = notused !% time_march
             elemI(JBidx,ei_QeqType) = notused !%time_march
 
-            !% ---Junction branch k-factor
-            !%    If the user does not input the K-factor for junction branches entrance/exit loses then
-            !%    use default from setting
-            if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
-            else
-                elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
-            end if
+            ! !% ---Junction branch k-factor OBSOLETE 20220905brh
+            ! !%    If the user does not input the K-factor for junction branches entrance/exit loses then
+            ! !%    use default from setting
+            ! if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
+            !     elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+            ! else
+            !     elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+            ! end if
 
             !% --- set the initial head and to the same as the junction main
             elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
@@ -2328,8 +2528,8 @@ contains
                 elemR(JBidx,er_ZbreadthMax)         = (elemR(Aidx,er_ZbreadthMax)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)
                 !% --- reference the Zcrown to the local bottom
                 elemR(JBidx,er_Zcrown)              = (elemR(Aidx,er_Zcrown)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)         
-                elemR(JBidx,er_Roughness)           = elemR(Aidx,er_Roughness)[Ci]
-                elemR(JBidx,er_Roughness_Dynamic)   = elemR(Aidx,er_Roughness)[Ci]
+                elemR(JBidx,er_ManningsN)           = elemR(Aidx,er_ManningsN)[Ci]
+                elemR(JBidx,er_ManningsN_Dynamic)   = elemR(Aidx,er_ManningsN)[Ci]
                 elemI(JBidx,ei_link_transect_idx)   = elemI(Aidx,ei_link_transect_idx)[Ci]
                 !% copy the entire row of the elemSGR array
                 elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
@@ -4003,7 +4203,7 @@ contains
     !         if (npack < 1) return
     !         thisP     => elemP(1:npack,thisCol)
     !         slope     => elemR(:,er_BottomSlope)
-    !         roughness => elemR(:,er_Roughness)
+    !         roughness => elemR(:,er_ManningsN)
     !         beta      => elemR(:,er_Beta)
     !     !%------------------------------------------------------------------
     !     !% check for minimum value of roughness
