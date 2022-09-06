@@ -55,7 +55,7 @@ N3                4.3762     0          1          0          0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-O4                0          FREE                        YES                       
+O4                0.0        FIXED         1.0            YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -74,9 +74,9 @@ C3                RECT_OPEN    2                3          0          0         
 [LOSSES]
 ;; Conduit      Kentry      Kexit       Kavg        Flap       Seepage
 ;;---------   ----------   -------    --------     -------    -----------
-C1                0.5       0.0         0.0          NO         0.0
-C2                0.0       0.0         0.2          NO         0.0
-C3                0.9       0.5         0.0          NO         0.0
+C1                0.0       0.0         0.0          NO         0.0
+C2                0.0       0.0         0.0          NO         0.0
+C3                0.0       0.0         0.0          NO         0.0
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

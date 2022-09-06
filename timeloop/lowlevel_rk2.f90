@@ -626,6 +626,9 @@ module lowlevel_rk2
                 ( rh(thisP)**fourthirdsR )                         
     
     !    print *, 'in ll_momentum_gamma_CC'
+    !    print *, elemR(thisP,outCol)
+    !    print *, ' '
+    !    print *, '============================'
     !    print *, elemR(139,outCol)      
     !    print *, rh(139), mn(139),velocity(139)
     !    print *, elemR(139,er_ManningsN), elemR(139,er_ManningsN_Dynamic)
@@ -714,12 +717,31 @@ module lowlevel_rk2
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------------------
 
+        ! print *, ' '
+        ! print *,  elemR(thisP,inoutCol)
+        ! print *, ' '
+
         !% ---- minor loss term (without gravity, which cancels out in derivation)
         elemR(thisP,inoutCol) = elemR(thisP,inoutCol)               &
                 + abs(velocity(thisP))                              & 
                 * (Kentry(thisP) + Kexit(thisP) + Kconduit(thisP))  &
                /                                                    &
                (twoR * length(thisP)) 
+
+        ! !print *, elemR(thisP,inoutCol)
+        ! print *, elemR(thisP,inoutCol)
+        ! print *, ' '
+        ! !print *, velocity(thisP)
+        ! !print *, ' '
+        ! print *, Kentry(thisP)
+        ! print *, ' '
+        ! print *, Kexit(thisP)
+        ! print *, ' '
+        ! print *, Kconduit(thisP)
+        ! print *, ' '
+        ! print *, length(thisP)
+        ! stop 298734
+
 
     end subroutine ll_minorloss_friction_gamma_CC
 !%
