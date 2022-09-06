@@ -41,7 +41,7 @@
         "StoredFileNames" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 500
+            "interval" : 10
         },
         "DataOut" :{
             "isAreaOut"         : true,
