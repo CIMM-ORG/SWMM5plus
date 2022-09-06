@@ -1461,10 +1461,10 @@ contains
             do ii = 1,N_elem(this_image())
                 if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
                     !% elemI data
-                    elemI(ii,ei_geometryType)                  = basket_handle
+                    elemI(ii,ei_geometryType) = basket_handle
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.7862 * elemSGR(ii,lr_FullDepth) ** twoR
+                    elemR(ii,er_FullArea)     = 0.7862 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
                     !% elemSGR data
                     elemSGR(ii,esgr_Basket_Handle_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Basket_Handle_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
