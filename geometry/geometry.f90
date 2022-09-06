@@ -11,6 +11,7 @@ module geometry
     use rectangular_triangular_conduit
     use circular_conduit
     use basket_handle_conduit
+    use egg_shaped_conduit
     use irregular_channel
     use parabolic_channel
     use storage_geometry
@@ -586,6 +587,15 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (eggshaped)                                    
+                                    area(tB)     = egg_shaped_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = egg_shaped_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = egg_shaped_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= egg_shaped_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= egg_shaped_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
@@ -804,6 +814,13 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  EGG_SHAPED
+        thisCol => col_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call egg_shaped_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !call util_CLprint('after circular') 
@@ -1037,9 +1054,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (eggshaped)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = egg_shaped_area_from_depth_singular (idx, indepth)
         case (horseshoe)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1155,6 +1170,13 @@ module geometry
             call basket_handle_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- EGG_SHAPED
+        Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+            call egg_shaped_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1228,9 +1250,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (eggshaped)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = egg_shaped_topwidth_from_depth_singular (idx, indepth)
         case (horseshoe)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1347,6 +1367,13 @@ module geometry
             call basket_handle_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- EGG_SHAPED
+        Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+            call egg_shaped_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         !%     note this requires first using the table lookup for hydraulic radius
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -1423,9 +1450,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (eggshaped)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = egg_shaped_perimeter_from_depth_singular (idx, indepth)
         case (horseshoe)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1543,6 +1568,13 @@ module geometry
             call basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- EGG_SHAPED
+        Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_egg_shaped_nonsurcharged)
+            call egg_shaped_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1623,9 +1655,8 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (eggshaped)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = egg_shaped_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = egg_shaped_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (horseshoe)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)

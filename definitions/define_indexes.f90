@@ -540,7 +540,8 @@ module define_indexes
         enumerator :: epg_CC_irregular_nonsurcharged                !% CC irregular channels that are not surcharged
         enumerator :: epg_CC_circular_nonsurcharged                 !% CC circular conduits that are not surcharged
         enumerator :: epg_CC_parabolic_nonsurcharged                !% CC parabolic channels that are not surcharged
-        enumerator :: epg_CC_basket_handle_nonsurcharged                !% CC parabolic channels that are not surcharged
+        enumerator :: epg_CC_basket_handle_nonsurcharged            !% CC basket handle conduits that are not surcharged
+        enumerator :: epg_CC_egg_shaped_nonsurcharged               !% CC egg shaped conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JM_impliedStorage_nonsurcharged           !% JM with artificial storage
@@ -808,7 +809,7 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Circular_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for basket_handle_channel
+    !% Define the column indexes for elemGSR(:,:) for basket_handle_conduit
     enum, bind(c)
          enumerator ::  esgr_Basket_Handle_BreadthMax = 1   !% breadth max for basket handle geometry
          enumerator ::  esgr_Basket_Handle_YatMaxBreadth    !% depth at maximum breadth
@@ -819,19 +820,31 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Basket_Handle =  esgr_Basket_Handle_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for Egg_Shaped_conduit
+    enum, bind(c)
+         enumerator ::  esgr_Egg_Shaped_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Egg_Shaped_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Egg_Shaped_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Egg_Shaped_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Egg_Shaped_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Egg_Shaped=  esgr_Egg_Shaped_lastplusone-1
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSGR = max(&
-                            Ncol_elemSGR_Rectangular, &
-                            Ncol_elemSGR_Trapezoidal, &
-                            Ncol_elemSGR_Circular,    &
-                            Ncol_elemSGR_Trapezoidal, &
+                            Ncol_elemSGR_Rectangular,   &
+                            Ncol_elemSGR_Trapezoidal,   &
+                            Ncol_elemSGR_Circular,      &
+                            Ncol_elemSGR_Trapezoidal,   &
                             Ncol_elemSGR_Rectangular_Triangular, &
-                            Ncol_elemSGR_Parabolic,   &
-                            Ncol_elemSGR_Basket_Handle)
+                            Ncol_elemSGR_Parabolic,     &
+                            Ncol_elemSGR_Basket_Handle, &
+                            Ncol_elemSGR_Egg_Shaped)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or
