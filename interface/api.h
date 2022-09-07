@@ -99,82 +99,86 @@ enum api_nodef_attributes {
   nodef_has_dwfInflow,              // 24
   nodef_newDepth,                   // 25
   nodef_fullDepth,                  // 26
-  nodef_inflow,                     // 27
-  nodef_volume,                     // 28
-  nodef_overflow,                   // 29
-  nodef_rptFlag,                    // 30
-  nodef_hasFlapGate,                // 31
-  nodef_head_tSeries,               // 32
-  nodef_head_tSeries_x1,            // 33
-  nodef_head_tSeries_x2,            // 34
-  nodef_has_extHead                 // 35
+  nodef_surDepth,                   // 27
+  nodef_inflow,                     // 28
+  nodef_volume,                     // 29
+  nodef_overflow,                   // 30
+  nodef_pondedarea,                 // 31
+  nodef_rptFlag,                    // 32
+  nodef_hasFlapGate,                // 33
+  nodef_head_tSeries,               // 34
+  nodef_head_tSeries_x1,            // 35
+  nodef_head_tSeries_x2,            // 36
+  nodef_has_extHead                 // 37
 };
-// skip 2 numbers for index end and start flags
+// skip 2 numbers for index end and start flags in 
+//                               // 38
+//                               // 39
 // these "linkf" are identical to the fortran api_linkf_... values in define_api_keys.f90
 enum api_linkf_attributes {
-  linkf_ID = 38,                // 38
-  linkf_subIndex,               // 39 *
-  linkf_direction,              // 40 *
-  linkf_node1,                  // 41 *
-  linkf_node2,                  // 42 *
-  linkf_offset1,                // 43 *
-  linkf_offset2,                // 44 *
-  linkf_q0,                     // 45 *
-  linkf_qlimit,                 // 46
-  linkf_flow,                   // 47 *
-  linkf_depth,                  // 48 *
-  linkf_volume,                 // 49 *
-  linkf_froude,                 // 50 *
-  linkf_setting,                // 51 
-  linkf_targetsetting,          // 52
-  linkf_timelastset,            // 53 *
-  linkf_left_slope,             // 54 *
-  linkf_right_slope,            // 55 *
-  linkf_weir_end_contractions,  // 56 *
-  linkf_weir_side_slope,        // 57 *
-  linkf_curveid,                // 58 *
-  linkf_discharge_coeff1,       // 59 *
-  linkf_discharge_coeff2,       // 60 *
-  linkf_initSetting,            // 61 *
-  linkf_yOn,                    // 62 *
-  linkf_yOff,                   // 63 *
-  linkf_conduit_roughness,      // 64 *
-  linkf_conduit_length,         // 65 *
-  linkf_rptFlag,                // 66
-  linkf_hasFlapGate,            // 67
-  linkf_cLossInlet,             // 68
-  linkf_cLossOutlet,            // 69
-  linkf_cLossAvg,               // 70
-  linkf_seepRate,               // 71
-  linkf_commonBreak,            // 72
+  linkf_ID = 40,                // 40
+  linkf_subIndex,               // 41 *
+  linkf_direction,              // 42 *
+  linkf_node1,                  // 43 *
+  linkf_node2,                  // 44 *
+  linkf_offset1,                // 45 *
+  linkf_offset2,                // 46 *
+  linkf_q0,                     // 47 *
+  linkf_qlimit,                 // 48
+  linkf_flow,                   // 49 *
+  linkf_depth,                  // 50 *
+  linkf_volume,                 // 51 *
+  linkf_froude,                 // 52 *
+  linkf_setting,                // 53 
+  linkf_targetsetting,          // 54
+  linkf_timelastset,            // 55 *
+  linkf_left_slope,             // 56 *
+  linkf_right_slope,            // 57 *
+  linkf_weir_end_contractions,  // 58 *
+  linkf_weir_side_slope,        // 59 *
+  linkf_curveid,                // 60 *
+  linkf_discharge_coeff1,       // 61 *
+  linkf_discharge_coeff2,       // 62 *
+  linkf_initSetting,            // 63 *
+  linkf_yOn,                    // 64 *
+  linkf_yOff,                   // 65 *
+  linkf_conduit_roughness,      // 66 *
+  linkf_conduit_length,         // 67 *
+  linkf_rptFlag,                // 68
+  linkf_hasFlapGate,            // 69
+  linkf_cLossInlet,             // 70
+  linkf_cLossOutlet,            // 71
+  linkf_cLossAvg,               // 72
+  linkf_seepRate,               // 73
+  linkf_commonBreak,            // 74
   // --- special elements attribute
-  linkf_type,                   // 73 *
-  linkf_sub_type,               // 74 *
-  linkf_typeBreak,              // 75
+  linkf_type,                   // 75 *
+  linkf_sub_type,               // 76 *
+  linkf_typeBreak,              // 77
   // --- xsect attributes
-  linkf_xsect_type,         // 76 *
-  linkf_geometry,           // 77 
-  linkf_xsect_wMax,         // 78 *
-  linkf_xsect_yBot,         // 79 *
-  linkf_xsect_yFull,        // 80 *
-  linkf_transectid,          // 81
-  linkf_forcemain_coef       // 82
+  linkf_xsect_type,         // 78 *
+  linkf_geometry,           // 79 
+  linkf_xsect_wMax,         // 80 *
+  linkf_xsect_yBot,         // 81 *
+  linkf_xsect_yFull,        // 82 *
+  linkf_transectid,          // 83
+  linkf_forcemain_coef       // 84
 };
 // skip 2 numbers for index start and end flags
-// end flag                  // 83
-// start flag                // 84
+// end flag                  // 85
+// start flag                // 86
 // these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 85,       // 85
-  transectf_yFull,         // 86
-  transectf_aFull,         // 87
-  transectf_rFull,         // 88
-  transectf_wMax,          // 89
-  transectf_ywMax,         // 90
-  transectf_sMax,          // 91
-  transectf_aMax,          // 92
-  transectf_lengthFactor,  // 93
-  transectf_roughness      // 94
+  transectf_ID = 87,       // 87
+  transectf_yFull,         // 88
+  transectf_aFull,         // 89
+  transectf_rFull,         // 90
+  transectf_wMax,          // 91
+  transectf_ywMax,         // 92
+  transectf_sMax,          // 93
+  transectf_aMax,          // 94
+  transectf_lengthFactor,  // 95
+  transectf_roughness      // 96
 };
 
 // API vars are those necessary for external applications

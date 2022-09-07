@@ -289,6 +289,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
+
           !  call util_CLprint ('initial_condition at end')
 
         ! print *, trim(reverseKey(elemI(14,ei_elementType))),' ', trim(reverseKey(elemI(14,ei_geometryType)))
@@ -2464,6 +2465,29 @@ contains
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
 
+        !% --- ponded area is stored in elemSR array
+        if (setting%SWMMinput%AllowPonding) then
+            elemSR(JMidx,esr_JunctionMain_PondedArea) = node%R(thisJunctionNode,nr_PondedArea)
+        else
+            elemSR(JMidx,esr_JunctionMain_PondedArea) = zeroR
+        end if
+        elemSR(JMidx,esr_JunctionMain_PondedVolume) = zeroR
+
+        if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) > zeroR) then
+            !% --- Piezometric head for maximum surcharge at Junction
+            elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead) = node%R(thisJunctionNode,nr_SurchargeExtraDepth) + elemR(JMidx,er_FullDepth)
+            elemYN(JMidx,eYN_canSurcharge) = .true.
+        else 
+            elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead) = elemR(JMidx,er_FullDepth)
+            elemYN(JMidx,eYN_canSurcharge) = .false.
+        end if    
+
+        ! print *, 'JMidx',JMidx
+        ! print *, elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead)
+        ! print *, elemSR(JMidx,esr_JunctionMain_PondedArea)
+        ! print *, elemYN(JMidx,eYN_canSurcharge)
+        ! print *, ' '
+
         !% JM elements are not solved for momentum.
         elemR(JMidx,er_Flowrate)     = zeroR
         elemR(JMidx,er_Velocity)     = zeroR
@@ -2472,19 +2496,22 @@ contains
         elemR(JMidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JMidx,er_Depth))
         elemR(JMidx,er_FroudeNumber) = zeroR
 
-        !% find if the node can surcharge
-        if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
-            elemYN(JMidx,eYN_canSurcharge)  = .true.
-            elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeDepth)
-            ! elemI(JMidx,ei_geometryType)    = rectangular_closed
-        else
-            elemYN(JMidx,eYN_canSurcharge)  = .false.
-        end if
+
+        !% REPLACED THIS WITH STUFF ABOVE 20220907brh
+        ! !% find if the node can surcharge
+        ! if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
+        !     elemYN(JMidx,eYN_canSurcharge)  = .true.
+        !     elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeDepth)
+        !     ! elemI(JMidx,ei_geometryType)    = rectangular_closed
+        ! else
+        !     elemYN(JMidx,eYN_canSurcharge)  = .false.
+        ! end if
 
         !% --- self index
         !elemI(JMidx,ei_main_idx_for_branch) = JMidx
         elemSI(JMidx,esi_JunctionBranch_Main_Index ) = JMidx
 
+        
         !%................................................................
         !% Junction Branches
         !%................................................................
@@ -2493,6 +2520,8 @@ contains
         !% been done. The branch depth should be based on the upstream or downstream depth of the
         !% adjacent element.
         do ii = 1,max_branch_per_node
+
+            !print *, ii, 'in branch'
 
             !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
 
@@ -2549,14 +2578,14 @@ contains
             elemI(JBidx,ei_HeqType) = notused !% time_march
             elemI(JBidx,ei_QeqType) = notused !%time_march
 
-            ! !% ---Junction branch k-factor OBSOLETE 20220905brh
-            ! !%    If the user does not input the K-factor for junction branches entrance/exit loses then
-            ! !%    use default from setting
-            ! if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-            !     elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
-            ! else
-            !     elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
-            ! end if
+            !% ---Junction branch k-factor 
+            !%    If the user does not input the K-factor for junction branches entrance/exit loses then
+            !%    use default from setting
+            if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
+                elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+            else
+                elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+            end if
 
             !% --- set the initial head and to the same as the junction main
             elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
@@ -2584,7 +2613,7 @@ contains
             end if
 
 
-            !% --- Set the geometry from the adjacent elements
+            !% --- Set the geometry from the adjacent elements on connected images
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
             elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
 
@@ -2652,8 +2681,9 @@ contains
             elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
-        end do
 
+        end do
+        
         !% --- set a JM length based on longest branches (20220711brh)
         LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
         do ii=2,max_up_branch_per_node
