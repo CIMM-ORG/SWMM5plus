@@ -76,6 +76,7 @@ module define_indexes
         enumerator :: lr_Kentry_MinorLoss           !% K factor for entry minor loss
         enumerator :: lr_Kexit_MinorLoss            !% K factor for exit minor loss
         enumerator :: lr_Kconduit_MinorLoss         !% K factor over the body of the conduit
+        enumerator :: lr_SeepRate                   !% seepage rate (converted to m/s)
         enumerator :: lr_FlowrateInitial
         enumerator :: lr_FlowrateLimit           ! user.inp file Qmax (0 is does not apply)
         enumerator :: lr_ForceMain_Coef
@@ -371,6 +372,7 @@ module define_indexes
         enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
         enumerator :: er_ManningsN_Dynamic          !% total ManningsN roughness, including dynamic adjustment (experimental)
+        enumerator :: er_SeepRate                   !% Local seepage rate in m/s
         enumerator :: er_Setting                    !% percent open setting for a link element
         !enumerator :: er_SectionFactor              !% present value of Qn/S0 section factor
         !enumerator :: er_SectionFactor_Max          !% maximum value of section factor (for S0 = 0)
@@ -507,6 +509,7 @@ module define_indexes
         enumerator :: ep_Closed_Elements_JB         !% all closed JB elements   
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
+        enumerator :: ep_CC_NOTzerodepth            !% all Conduits that have time-marching and are above zero depth
         enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
         enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
         enumerator :: ep_CCJM_NOTsmalldepth         !% alternate elements for CFL computation 

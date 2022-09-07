@@ -2935,6 +2935,28 @@ contains
                 (.not. elemYN(:,eYN_isZeroDepth))     )
         end if
 
+        !print *, 'CC_NOTzerodepth'
+        !% ep_CC_NOTzerodepth  ====================================
+        !% Flow solution that are NOT zero depth
+        !% -- needed for seepage computations
+        ptype => col_elemP(ep_CC_NOTzerodepth)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_QeqType) == time_march) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_QeqType) == time_march) &
+                .and. &
+                (.not. elemYN(:,eYN_isZeroDepth))     )
+        end if
+
+
         !print *, 'JBJM_NOTsmalldepth'
         !% ep_JBJM_NOTsmalldepth  ====================================
         !% Flow solution that are NOT small volume or zero depth

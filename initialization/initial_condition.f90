@@ -89,10 +89,11 @@ contains
         elemR(1:size(elemR,1)-1,er_TargetSetting) = oneR
         elemR(1:size(elemR,1)-1,er_Setting)       = oneR
 
-        !% --- initialize all the minor losses to zero
+        !% --- initialize all the minor losses and seepage rates to zero
         elemR(:,er_Kentry_MinorLoss)   = zeroR
         elemR(:,er_Kexit_MinorLoss)    = zeroR
         elemR(:,er_Kconduit_MinorLoss) = zeroR
+        elemR(:,er_SeepRate)           = zeroR
 
 
         !% --- get data that can be extracted from links
@@ -170,9 +171,9 @@ contains
 
             ! call util_CLprint ('initial_condition after IC_bottom_slope')
 
-    !     !% --- get beta (S0/n, used for section factor)
-    !    ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC beta'
-    !     call init_IC_beta ()
+        !     !% --- get beta (S0/n, used for section factor)
+        !    ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC beta'
+        !     call init_IC_beta ()
 
         !% --- set small volume values in elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
@@ -612,9 +613,11 @@ contains
             elemR(:,er_Flowrate_N0)        = link%R(thisLink,lr_FlowrateInitial)
             elemR(:,er_Flowrate_N1)        = link%R(thisLink,lr_FlowrateInitial)
             elemR(:,er_ManningsN)          = link%R(thisLink,lr_Roughness)
-            elemR(:,er_Kconduit_MinorLoss) = link%R(thisLink,lr_Kconduit_MinorLoss)
+            !% --- distribute minor losses uniformly over all the elements in thi link
+            elemR(:,er_Kconduit_MinorLoss) = link%R(thisLink,lr_Kconduit_MinorLoss) / (real(lastelem - firstelem + oneI,8))
             elemR(:,er_FlowrateLimit)      = link%R(thisLink,lr_FlowrateLimit)
-            elemR(:,er_ManningsN_Dynamic)  = elemR(:,er_ManningsN)
+            elemR(:,er_SeepRate)           = link%R(thisLink,lr_SeepRate)
+            elemR(:,er_ManningsN_Dynamic)  = elemR(:,er_ManningsN)   
         endwhere
 
         !% --- assign minor losses at entry and exit to the first and last elements

@@ -378,6 +378,10 @@ module define_settings
     type AdjustType
         type(AdjustFlowrateType)   :: Flowrate
         type(AdjustHeadType)       :: Head
+        real(8), dimension(12)     :: Temperature   !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Evaporation   !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Rainfall      !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] not use setting
     end type AdjustType
 
     ! setting%BC

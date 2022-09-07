@@ -564,36 +564,37 @@ module define_api_keys
         enumerator :: api_linkf_cLossInlet               ! 68
         enumerator :: api_linkf_cLossOutlet              ! 69
         enumerator :: api_linkf_cLossAvg                 ! 70
-        enumerator :: api_linkf_commonBreak              ! 71  ! must be end of common  ...linkf... types
+        enumerator :: api_linkf_seepRate                 ! 71
+        enumerator :: api_linkf_commonBreak              ! 72  ! must be end of common  ...linkf... types
 
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 72  ! must match linkf_type in api.h
-        enumerator :: api_linkf_sub_type     ! 73
-        enumerator :: api_linkf_typeBreak    ! 74  ! must be end of ...linkf... special types
+        enumerator :: api_linkf_type         ! 73  ! must match linkf_type in api.h
+        enumerator :: api_linkf_sub_type     ! 74
+        enumerator :: api_linkf_typeBreak    ! 75  ! must be end of ...linkf... special types
         ! --- xsect attributes for linkf
-        enumerator :: api_linkf_xsect_type   ! 75
-        enumerator :: api_linkf_geometry     ! 76
-        enumerator :: api_linkf_xsect_wMax   ! 77
-        enumerator :: api_linkf_xsect_yBot   ! 78
-        enumerator :: api_linkf_xsect_yFull  ! 79
-        enumerator :: api_linkf_transectidx  ! 80
-        enumerator :: api_linkf_forcemain_coef ! 81
-        enumerator :: api_linkf_end          ! 82  ! must be end of the ...linkf... xsect attributes
+        enumerator :: api_linkf_xsect_type   ! 76
+        enumerator :: api_linkf_geometry     ! 77
+        enumerator :: api_linkf_xsect_wMax   ! 78
+        enumerator :: api_linkf_xsect_yBot   ! 79
+        enumerator :: api_linkf_xsect_yFull  ! 80
+        enumerator :: api_linkf_transectidx  ! 81
+        enumerator :: api_linkf_forcemain_coef ! 82
+        enumerator :: api_linkf_end          ! 83  ! must be end of the ...linkf... xsect attributes
         !% --- transect data
-        enumerator :: api_transectf_start   ! 83
-        enumerator :: api_transectf_ID      ! 84
-        enumerator :: api_transectf_yFull   ! 85
-        enumerator :: api_transectf_aFull   ! 86
-        enumerator :: api_transectf_rFull   ! 87
-        enumerator :: api_transectf_wMax    ! 88
-        enumerator :: api_transectf_ywMax   ! 89
-        enumerator :: api_transectf_sMax    ! 90
-        enumerator :: api_transectf_aMax    ! 91
-        enumerator :: api_transectf_lengthFactor    ! 92
-        enumerator :: api_transectf_roughness       ! 93
-        enumerator :: api_transectf_end             ! 94
+        enumerator :: api_transectf_start   ! 84
+        enumerator :: api_transectf_ID      ! 85
+        enumerator :: api_transectf_yFull   ! 86
+        enumerator :: api_transectf_aFull   ! 87
+        enumerator :: api_transectf_rFull   ! 88
+        enumerator :: api_transectf_wMax    ! 89
+        enumerator :: api_transectf_ywMax   ! 90
+        enumerator :: api_transectf_sMax    ! 91
+        enumerator :: api_transectf_aMax    ! 92
+        enumerator :: api_transectf_lengthFactor    ! 93
+        enumerator :: api_transectf_roughness       ! 94
+        enumerator :: api_transectf_end             ! 95
 
-        enumerator :: api_keyslastplusone  ! 95
+        enumerator :: api_keyslastplusone  ! 96
     end enum
 
     ! !% API link attributes
@@ -762,7 +763,7 @@ module define_api_keys
             reverseKey_api(api_linkf_cLossInlet) = 'api_linkf_cLossInlet'
             reverseKey_api(api_linkf_cLossOutlet) = 'api_linkf_cLossOutlet'
             reverseKey_api(api_linkf_cLossAvg) = 'api_linkf_cLossAvg'
-            reverseKey_api(api_linkf_forcemain_coef) = 'api_linkf_forcemain_coef'
+            reverseKey_api(api_linkf_seepRate) = 'api_linkf_seepRate'
             reverseKey_api(api_linkf_commonBreak) = 'api_linkf_commonBreak'
 
             reverseKey_api(api_linkf_type) = 'api_linkf_type'
@@ -775,6 +776,7 @@ module define_api_keys
             reverseKey_api(api_linkf_xsect_yBot) = 'api_linkf_xsect_yBot'
             reverseKey_api(api_linkf_xsect_yFull) = 'api_linkf_xsect_yFull'
             reverseKey_api(api_linkf_transectidx) = 'api_linkf_transectidx'
+            reverseKey_api(api_linkf_forcemain_coef) = 'api_linkf_forcemain_coef'
             reverseKey_api(api_linkf_end) = 'api_linkf_end'
 
             reverseKey_api(api_transectf_start) = 'api_transectf_start'

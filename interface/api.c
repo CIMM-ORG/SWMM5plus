@@ -1636,6 +1636,11 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = Link[link_idx].cLossAvg;
             break;
 
+        case linkf_seepRate :
+            *value = FTTOM(Link[link_idx].seepRate);
+            //printf("\n ****** seep rate  %e \n ", FTTOM(Link[link_idx].seepRate));
+            break;
+
         case linkf_commonBreak :
             // placeholder with no action
             *value = 0;
@@ -1856,6 +1861,31 @@ int DLLEXPORT api_get_linkf_attribute(
     //     *value = API_NULL_VALUE_I;
     // }    
     return 0;
+}
+
+
+//===============================================================================
+int DLLEXPORT api_get_adjustments(
+    int adj_len, double* adjTemperature, double* adjEvaporation, 
+    double* adjRainfall, double* adjConductivity)
+//===============================================================================
+{
+    int error;
+    int ii;
+
+    error = check_api_is_initialized("api_get_adjustments");
+    if (error) return error;
+
+    for(ii=0; ii< adj_len; ii++)
+    {
+        adjTemperature[ii]  = Adjust.temp[ii];
+        adjEvaporation[ii]  = Adjust.evap[ii];
+        adjRainfall[ii]     = Adjust.rain[ii];
+        adjConductivity[ii] = Adjust.hydcon[ii];
+    }
+
+    return 0;
+
 }
 
 //===============================================================================

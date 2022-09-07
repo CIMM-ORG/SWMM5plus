@@ -37,6 +37,8 @@ module interface_
     public :: interface_get_nodef_attribute
     public :: interface_get_linkf_attribute
 
+    public :: interface_get_adjustments
+
     public :: interface_get_transectf_attribute
     public :: interface_get_transect_table
     public :: interface_get_N_TRANSECT_TBL
@@ -160,6 +162,8 @@ module interface_
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_run_step
+
+
         !% -------------------------------------------------------------------------------
         ! --- Property-extraction
         !% -------------------------------------------------------------------------------
@@ -312,6 +316,18 @@ module interface_
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
         end function api_get_transectf_attribute
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_get_adjustments &
+        (adj_len, adjTemperature, adjEvaporation, adjRainfall, adjConductivity) &
+            BIND(C, name="api_get_adjustments")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int), value, intent(in   ) :: adj_len
+            real(c_double),        intent(inout) :: adjTemperature(adj_len)
+            real(c_double),        intent(inout) :: adjEvaporation(adj_len)
+            real(c_double),        intent(inout) :: adjRainfall(adj_len)
+            real(c_double),        intent(inout) :: adjConductivity(adj_len)
+        end function api_get_adjustments
         !% -------------------------------------------------------------------------------
         integer (c_int) function api_get_N_TRANSECT_TBL() &
             BIND(C, name="api_get_N_TRANSECT_TBL")
@@ -521,6 +537,7 @@ module interface_
     procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
     procedure(api_get_nodef_attribute),        pointer :: ptr_api_get_nodef_attribute
     procedure(api_get_linkf_attribute),        pointer :: ptr_api_get_linkf_attribute
+    procedure(api_get_adjustments),            pointer :: ptr_api_get_adjustments
     procedure(api_get_transectf_attribute),    pointer :: ptr_api_get_transectf_attribute
     procedure(api_get_N_TRANSECT_TBL),         pointer :: ptr_api_get_N_TRANSECT_TBL
     procedure(api_get_transect_table),         pointer :: ptr_api_get_transect_table
@@ -1173,6 +1190,9 @@ contains
             ! print *, ' '
             ! print *, 'in ',trim(subroutine_name), ' at TOP ------------------------------'
             ! print *, attr, trim(reverseKey_api(attr))
+            ! print *, 'api_linkf_start       ',api_linkf_start
+            ! print *, 'api_linkf_commonbreak ',api_linkf_commonbreak
+            ! print *, 'api_linkf_typeBreak   ',api_linkf_typeBreak
 
         !% --- parse the link section
         if     (  attr .le. api_linkf_start) then    
@@ -1843,6 +1863,37 @@ contains
             "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
         end if
     end function interface_get_linkf_attribute
+!%
+!%=============================================================================    
+!%=============================================================================
+!%
+    subroutine interface_get_adjustments ()
+        !%---------------------------------------------------------------------
+        !% Description
+        !% Loads data in month arrays from SWMM input [ADJUSTMENTS]
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer :: error
+        !%---------------------------------------------------------------------
+
+        call load_api_procedure("api_get_adjustments")
+
+        !print *, 'in interface_get_adjustments'
+
+        !% --- set default values
+        setting%Adjust%Temperature  = zeroR
+        setting%Adjust%Evaporation  = zeroR
+        setting%Adjust%Rainfall     = oneR
+        setting%Adjust%Conductivity = oneR
+        
+         error = ptr_api_get_adjustments(         &
+                12,                               &
+                setting%Adjust%Temperature(:),    &
+                setting%Adjust%Evaporation(:),    &
+                setting%Adjust%Rainfall(:),       &
+                setting%Adjust%Conductivity(:))
+
+    end subroutine interface_get_adjustments
 !%
 !%=============================================================================
 !%=============================================================================
@@ -3299,6 +3350,8 @@ contains
             case ("api_get_linkf_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_linkf_attribute)
                 !stop 298734
+            case ("api_get_adjustments")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_adjustments)
             case ("api_get_transectf_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_transectf_attribute)
             case ("api_get_N_TRANSECT_TBL")

@@ -156,8 +156,13 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
-        !% --- initialize ForceMain
-        call init_ForceMain ()
+        !% --- initialize ForceMain settings (determines if FM is used)
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
+        call init_ForceMain_setting ()
+
+        !% --- initialize Adjustments from EPA SWMM input file
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin get adjustments"
+        call interface_get_adjustments ()
 
         !% --- setup the irregular transect arrays associated with SWMM-C input links
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
@@ -608,6 +613,7 @@ contains
             ! print *, '================================================='
             ! print *, 'AAA in ',trim(subroutine_name), ii
             ! print *, api_linkf_geometry
+            ! print *, trim(reverseKey_api(api_linkf_geometry))
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
@@ -656,19 +662,35 @@ contains
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
+                ! print *, 'link_Length            ',link%R(ii,lr_Length)
             link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
+                ! print *, 'link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
             link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
+                ! print *, 'link_LeftSlope          ', link%R(ii,lr_LeftSlope)
             link%R(ii,lr_RightSlope)         = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
+                ! print *, 'link_RightSlope         ', link%R(ii,lr_RightSlope)
             link%R(ii,lr_Roughness)          = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
+                ! print *, 'link_Roughness          ', link%R(ii,lr_Roughness)
             link%R(ii,lr_FullDepth)          = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+                ! print *, 'link_FullDepth          ', link%R(ii,lr_FullDepth)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
+                ! print *, 'link_BottomDepth        ', link%R(ii,lr_BottomDepth)
             link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
+                ! print *, 'link_InletOffset        ', link%R(ii,lr_InletOffset)
             link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+                ! print *, 'link_OutletOffset       ', link%R(ii,lr_OutletOffset)
             link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+                ! print *, 'link_FlowrateInitial    ', link%R(ii,lr_FlowrateInitial)
             link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
+                ! print *, 'link_FlowrateLimit      ', link%R(ii,lr_FlowrateLimit)
             link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
+                ! print *, 'link_Kconduit_MinorLoss ', link%R(ii,lr_Kconduit_MinorLoss)
             link%R(ii,lr_Kentry_MinorLoss)   = interface_get_linkf_attribute(ii, api_linkf_cLossInlet,       .false.)
+                ! print *, 'link_Kentry_MinorLoss   ', link%R(ii,lr_Kentry_MinorLoss)
             link%R(ii,lr_Kexit_MinorLoss)    = interface_get_linkf_attribute(ii, api_linkf_cLossOutlet,      .false.)
+                ! print *, 'link_Kexit_MinorLoss    ', link%R(ii,lr_Kexit_MinorLoss)
+            link%R(ii,lr_SeepRate)           = interface_get_linkf_attribute(ii, api_linkf_seepRate,         .false.)
+                ! print *, 'link_SeepRate           ', link%R(ii,lr_SeepRate)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -703,8 +725,6 @@ contains
             else
                 link%YN(ii,lYN_hasFlapGate)   = .false.
             end if
-
-
 
             !% --- SWMM5 does not distinguish between channel and conduit
             !%     however we need that distinction to set up the init condition
@@ -2393,7 +2413,7 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_ForceMain ()
+    subroutine init_ForceMain_setting ()
         !%------------------------------------------------------------------
         !% Description:
         !% Sets the UseForceMainTF to false if no FM are found in the
@@ -2431,7 +2451,7 @@ contains
             !%     UseForceMainTF
         end if
 
-    end subroutine init_ForceMain
+    end subroutine init_ForceMain_setting
 !% 
 !%==========================================================================
 !%==========================================================================

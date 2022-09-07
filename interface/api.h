@@ -145,33 +145,36 @@ enum api_linkf_attributes {
   linkf_cLossInlet,             // 68
   linkf_cLossOutlet,            // 69
   linkf_cLossAvg,               // 70
-  linkf_commonBreak,            // 71
-  // --- special elements attributes
-  linkf_type,                   // 72 *
-  linkf_sub_type,               // 73 *
-  linkf_typeBreak,              // 74
+  linkf_seepRate,               // 71
+  linkf_commonBreak,            // 72
+  // --- special elements attribute
+  linkf_type,                   // 73 *
+  linkf_sub_type,               // 74 *
+  linkf_typeBreak,              // 75
   // --- xsect attributes
-  linkf_xsect_type,         // 75 *
-  linkf_geometry,           // 76 
-  linkf_xsect_wMax,         // 77 *
-  linkf_xsect_yBot,         // 78 *
-  linkf_xsect_yFull,        // 79 *
-  linkf_transectid,          // 80
-  linkf_forcemain_coef       // 81
+  linkf_xsect_type,         // 76 *
+  linkf_geometry,           // 77 
+  linkf_xsect_wMax,         // 78 *
+  linkf_xsect_yBot,         // 79 *
+  linkf_xsect_yFull,        // 80 *
+  linkf_transectid,          // 81
+  linkf_forcemain_coef       // 82
 };
 // skip 2 numbers for index start and end flags
+// end flag                  // 83
+// start flag                // 84
 // these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 80,       // 83
-  transectf_yFull,         // 84
-  transectf_aFull,         // 85
-  transectf_rFull,         // 86
-  transectf_wMax,          // 87
-  transectf_ywMax,         // 88
-  transectf_sMax,          // 89
-  transectf_aMax,          // 90
-  transectf_lengthFactor,  // 91
-  transectf_roughness      // 92
+  transectf_ID = 85,       // 85
+  transectf_yFull,         // 86
+  transectf_aFull,         // 87
+  transectf_rFull,         // 88
+  transectf_wMax,          // 89
+  transectf_ywMax,         // 90
+  transectf_sMax,          // 91
+  transectf_aMax,          // 92
+  transectf_lengthFactor,  // 93
+  transectf_roughness      // 94
 };
 
 // API vars are those necessary for external applications

@@ -74,14 +74,19 @@ C3                RECT_OPEN    2                3          0          0         
 [LOSSES]
 ;; Conduit      Kentry      Kexit       Kavg        Flap       Seepage
 ;;---------   ----------   -------    --------     -------    -----------
-C1                0.0       0.0         0.0          NO         0.0
-C2                0.0       0.0         0.0          NO         0.0
-C3                0.0       0.0         0.0          NO         0.0
+C1                0.0       0.0         0.0          NO        0.0
+C2                0.0       0.0         0.0          NO        100.0
+C3                0.0       0.0         0.0          NO        0.0
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
 N1                FLOW             ""               FLOW     1.0      1.0      4.6981   
+
+[ADJUSTMENTS]
+;; Type         01     02     03     04     05     06     07     08     09     10     11     12
+;;---------   -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+CONDUCTIVITY   1.0    1.0     1.0    1.0   1.0    1.0    1.0    1.0     1.0    1.0    1.0   1.0
 
 [REPORT]
 ;;Reporting Options
