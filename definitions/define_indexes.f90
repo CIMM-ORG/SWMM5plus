@@ -87,6 +87,8 @@ module define_indexes
         enumerator :: lr_SideSlope             ! for weirs only
         enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_RoadSurface           ! roadsurface type for roadway weir
+        enumerator :: lr_RoadWidth             ! road width for roadway weir
         enumerator :: lr_initSetting           ! initial pump speed setting 
         enumerator :: lr_yOn                   ! startup depth for pumps   
         enumerator :: lr_yOff                  ! shutoff depth for pumps   
@@ -685,6 +687,8 @@ module define_indexes
         enumerator ::  esr_Weir_TrapezoidalLeftSlope    !% trapezoidal weir left slope
         enumerator ::  esr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  esr_Weir_TriangularSideSlope     !% triangular weir side slope
+        enumerator ::  esr_Weir_RoadSurface             !% road surface type for roadway weir
+        enumerator ::  esr_Wier_RoadWidth               !% road width for roadway weir
         enumerator ::  esr_Weir_Zcrown                  !% weir crown elevation
         enumerator ::  esr_Weir_Zcrest                  !% weir crest elevation
         enumerator ::  esr_Weir_lastplusone !% must be last enum item
