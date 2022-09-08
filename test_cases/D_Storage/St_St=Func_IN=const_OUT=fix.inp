@@ -3,12 +3,12 @@
 
 [OPTIONS]
 ;;Option             Value
-FLOW_UNITS           CMS
+FLOW_UNITS           CFS
 INFILTRATION         MODIFIED_GREEN_AMPT
 FLOW_ROUTING         DYNWAVE
 LINK_OFFSETS         DEPTH
 MIN_SLOPE            0
-ALLOW_PONDING        NO
+ALLOW_PONDING        YES
 SKIP_STEADY_STATE    NO
 
 START_DATE           10/12/2021
@@ -48,7 +48,7 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                0.2781     2          1          0          0         
+1                0.2781     2          1          0.5          1000         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        

@@ -148,7 +148,7 @@ module geometry
         !% --- compute the head on all non-surcharged elements of CC and JM
         !%     This sets head consistent with depth
         call geo_head_from_depth (thisColP_NonSurcharged)
-
+ 
             ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Volume)') 
 
         !% --- limit volume for incipient surcharge. This is done after depth is computed
@@ -444,7 +444,7 @@ module geometry
             fulldepth     => elemR(:,er_FullDepth)
             fullhyddepth  => elemR(:,er_FullHydDepth)
             fullperimeter => elemR(:,er_FullPerimeter)
-            !Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
+            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
             thisSolve     => elemI(:,ei_tmType)
             grav => setting%Constant%gravity
@@ -458,6 +458,8 @@ module geometry
                 
                 tM => thisP(ii) !% junction main ID
 
+                !print *, 'thisP ',thisP(ii)
+
                 !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
                     !% cycle through the possible junction branches
@@ -465,8 +467,15 @@ module geometry
                         
                         tB = tM + kk !% junction branch ID
 
+                        ! print *, kk, tB
+                        ! print *, BranchExists(tB)
+
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
+                            ! print *, head(tM), zBtm(tB)
+                            ! print *, kk, branchsign(kk)
+                            ! print *, velocity(tB)
+                            ! print *, Kfac(tB)
                             if ( head(tM) > zBtm(tB) ) then
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
@@ -474,8 +483,9 @@ module geometry
                                 !% an outflow
                                 !% Note this is a time-lagged velocity as the JB velocity
                                 !% is not updated until after face interpolation                                
-                                head(tB) = head(tM)  + branchsign(kk) * sign(oneR,velocity(tB)) &
+                                head(tB) = head(tM) + branchsign(kk) * sign(oneR,velocity(tB)) &
                                     * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
+                               
                             else
                                 !% for main head below the branch bottom entrance we assign a
                                 !% Froude number of one on an inflow to the junction main. Note
@@ -692,6 +702,8 @@ module geometry
                                     !stop 399848
                                 end select
                             end if
+
+                            ! print *, 'at bottom '
 
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)

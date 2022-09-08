@@ -2956,17 +2956,19 @@ contains
             thisProblem(ii)  = 'must be set to DYNWAVE in *.inp file'
         end select
 
-        !% Ponding is not allowed as of 20211223
+        !% Ponding is being developed as of 20220907
         ii=ii+1
         select case (allow_ponding)
         case (0)
+            setting%SWMMinput%AllowPonding = .false.
             thisWarning(ii) = .false.
             thisFailure(ii) = .false.
         case (1)
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .true.
-            thisVariable(ii) = 'ALLOW_PONDING'
-            thisProblem(ii)  = 'is not presently available in SWMM5+, must be set to NO.'
+            setting%SWMMinput%AllowPonding = .true.
+            thisWarning(ii)  = .false.
+            thisFailure(ii)  = .false.
+            !thisVariable(ii) = 'ALLOW_PONDING'
+            !thisProblem(ii)  = 'is not presently available in SWMM5+, must be set to NO.'
         case default
         end select
 

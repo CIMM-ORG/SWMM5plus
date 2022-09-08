@@ -855,7 +855,11 @@ int DLLEXPORT api_get_nodef_attribute(
 
         case nodef_fullDepth  :
             *value = FTTOM(Node[node_idx].fullDepth);
-            break;      
+            break;  
+
+        case nodef_surDepth :
+            *value = FTTOM(Node[node_idx].surDepth);
+            break;        
 
         case nodef_initDepth  :
             switch (Node[node_idx].type) {
@@ -1083,8 +1087,13 @@ int DLLEXPORT api_get_nodef_attribute(
             break;
 
         case nodef_overflow  :
+            // THIS SHOULD NOT BE NEEDED
             *value = CFTOCM(Node[node_idx].overflow);
             break;     
+
+        case nodef_pondedarea :
+            *value = FT2TOM2(Node[node_idx].pondedArea);
+            break;
 
         case nodef_rptFlag  :
             if (Node[node_idx].rptFlag)

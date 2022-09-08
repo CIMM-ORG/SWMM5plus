@@ -865,6 +865,10 @@ contains
             !write(*,*) '... nr_FullDepth = ',node%R(ii,nr_FullDepth) 
             !write(*,*)
 
+            !% --- Total pressure head above max depth allowed for surcharge
+            !%     If 0 then node cannot surcharge.
+            node%R(ii,nr_SurchargeExtraDepth) = interface_get_nodef_attribute(ii, api_nodef_surDepth)
+
             !write(*,*) 'call api_nodef_StorageConstant'
             node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
             !write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
@@ -890,12 +894,18 @@ contains
             !write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
             !write(*,*)  
 
-            !% brh20211207s
+            !% --- ponded area
+            if (setting%SWMMinput%AllowPonding) then
+                node%R(ii,nr_PondedArea) = interface_get_nodef_attribute(ii, api_nodef_PondedArea)
+            else
+                node%R(ii,nr_PondedArea) = zeroR
+            end if
+
             !write(*,*) 'call api_nodef_rptFlag'
             node%YN(ii,nYN_isOutput)          = (interface_get_nodef_attribute(ii, api_nodef_rptFlag) == 1)
             !write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
             !write(*,*)
-            !% brh20211207e
+
         end do
 
         !% --- Store the Link/Node names

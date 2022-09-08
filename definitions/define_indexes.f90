@@ -191,14 +191,14 @@ module define_indexes
         enumerator :: nr_StorageCoeff
         enumerator :: nr_StorageExponent
         enumerator :: nr_PondedArea
-        enumerator :: nr_SurchargeDepth
+        enumerator :: nr_SurchargeExtraDepth
         enumerator :: nr_MaxInflow
         enumerator :: nr_Eta
         enumerator :: nr_Depth
         enumerator :: nr_head
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
-        !enumerator :: nr_JunctionBranch_Kfactor
+        enumerator :: nr_JunctionBranch_Kfactor
         enumerator :: nr_lastplusone !% must be last enum item
     end enum
     integer, parameter :: nr_idx_base1 = nr_lastplusone-1
@@ -572,6 +572,8 @@ module define_indexes
 
     enum, bind(c)
         !% define the column indexes for elemSI(:,:) junction branch elements
+        !% Note that esi_JunctionMain, esi_JunctionBranch, and (if needed) esi_Storage will
+        !% share the same column sets.
         enumerator ::  esi_JunctionMain_Type       = 1             !% KEY junction main type
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
@@ -646,16 +648,21 @@ module define_indexes
     !% share the same columns since a row can only have one type of element.
     !%-------------------------------------------------------------------------
 
-    !% define the column indexes for elemSr(:,:) for geometry that has not yet been confirmed and assigned:
-    enum, bind(c)
-        enumerator ::  esr_JunctionBranch_lastplusone = 1 !% must be last enum item
-    end enum
+    ! !% define the column indexes for elemSr(:,:) for geometry that has not yet been confirmed and assigned:
+    ! enum, bind(c)
+    !     enumerator ::  esr_JunctionBranch_lastplusone = 1 !% must be last enum item
+    ! end enum
 
-    integer, parameter :: Ncol_elemSR_JunctionBranch = esr_JunctionBranch_lastplusone-1
+    ! integer, parameter :: Ncol_elemSR_JunctionBranch = esr_JunctionBranch_lastplusone-1
 
-    !% define the column indexes for elemSr(:,:) for geometry that has not yet been confirmed and assigned:
+    !% define the column indexes for elemSR(:,:) for geometry that has not yet been confirmed and assigned:
+    !% Note that esr_JunctionMain, esr_JunctionBranch and esr_Storage share the same column sets.
     enum, bind(c)
-        enumerator ::  esr_Storage_Constant = 1
+        enumerator ::  esr_JunctionMain_PondedArea = 1
+        enumerator ::  esr_JunctionMain_PondedVolume
+        enumerator ::  esr_JunctionMain_MaxSurchargeHead
+        enumerator ::  esr_JunctionBranch_Kfactor
+        enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
         enumerator ::  esr_Storage_Plane_Area
@@ -737,7 +744,6 @@ module define_indexes
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
-                            Ncol_elemSR_JunctionBranch, &
                             Ncol_elemSR_Storage,        &
                             Ncol_elemSR_Weir,           &
                             Ncol_elemSR_Orifice,        &
