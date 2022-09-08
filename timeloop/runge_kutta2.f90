@@ -411,7 +411,14 @@ module runge_kutta2
             thisPackCol => col_elemP(ep_CC_Closed_Elements)
             Npack => npack_elemP(thisPackCol)
             if (Npack > 0) then
-                call ll_slot_computation_ETM (thisPackCol, Npack)
+                call ll_CC_slot_computation_ETM (thisPackCol, Npack)
+            end if
+
+            !% all the closed JM elements
+            thisPackCol => col_elemP(ep_JM_Closed_Elements)
+            Npack => npack_elemP(thisPackCol)
+            if (Npack > 0) then
+                call ll_JM_slot_computation_ETM (thisPackCol, Npack)
             end if
         endif
 

@@ -45,7 +45,8 @@ module lowlevel_rk2
     public :: ll_interpolate_values
     public :: ll_flowrate_and_velocity_JB
     !public :: ll_momentum_solve_JB
-    public :: ll_slot_computation_ETM
+    public :: ll_CC_slot_computation_ETM
+    public :: ll_JM_slot_computation_ETM
     public :: ll_get_dynamic_ManningsN
     public :: ll_ForceMain_equivalent_manningsN
     public :: ll_ForceMain_dw_friction
@@ -1644,7 +1645,7 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_slot_computation_ETM (thisCol, Npack)
+    subroutine ll_CC_slot_computation_ETM (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for conduits in ETM methods
@@ -1659,7 +1660,7 @@ module lowlevel_rk2
         logical, pointer    :: isSlot(:), isfSlot(:)
         integer :: ii
 
-        character(64) :: subroutine_name = 'll_slot_computation_ETM'
+        character(64) :: subroutine_name = 'll_CC_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
         !% pointer packed element indexes
         thisP => elemP(1:Npack,thisCol)
@@ -1794,7 +1795,88 @@ module lowlevel_rk2
                 stop 38756
         end select
 
-    end subroutine ll_slot_computation_ETM
+    end subroutine ll_CC_slot_computation_ETM
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+
+    subroutine ll_JM_slot_computation_ETM (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Compute Preissmann slot for closed JM's in ETM methods
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer    :: thisP(:), SlotMethod
+        real(8), pointer    :: fullarea(:), fullVolume(:), length(:), PNumber(:), PCelerity(:) 
+        real(8), pointer    :: volume(:) , SlotVolume(:), SlotDepth(:), SlotArea(:), maxSlotDepth(:), Dt
+        real(8), pointer    :: TargetPCelerity, cfl, grav, PreissmannAlpha
+        logical, pointer    :: isSlot(:)
+        integer :: ii
+
+        character(64) :: subroutine_name = 'll_JM_slot_computation_ETM'
+        !%-----------------------------------------------------------------------------
+        !% pointer packed element indexes
+        thisP => elemP(1:Npack,thisCol)
+        !% pointers to elemR columns
+        fullArea   => elemR(:,er_FullArea)
+        fullVolume => elemR(:,er_FullVolume)
+        length     => elemR(:,er_Length)
+        PNumber    => elemR(:,er_Preissmann_Number)
+        PCelerity  => elemR(:,er_Preissmann_Celerity)
+        SlotVolume => elemR(:,er_SlotVolume)
+        SlotDepth  => elemR(:,er_SlotDepth)
+        SlotArea   => elemR(:,er_SlotArea)
+        volume     => elemR(:,er_Volume)
+        maxSlotDepth => elemSR(:,esr_JunctionMain_MaxSurchargeHead)
+        !% pointer to elemYN column
+        isSlot     => elemYN(:,eYN_isSlot)
+        !% pointer to necessary settings struct
+        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
+        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
+        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
+        cfl                 => setting%VariableDT%CFL_target
+        grav                => setting%Constant%gravity
+        Dt                  => setting%Time%Hydraulics%Dt
+
+        !% Selet the type of slot method
+        select case (SlotMethod)
+            !% for a static slot, the preissmann number will always be one.
+            case (StaticSlot)
+                !% initialize static slot
+                PNumber(thisP)    = oneR
+                SlotVolume(thisP) = zeroR
+                SlotArea(thisP)   = zeroR
+                SlotDepth(thisP)  = zeroR
+                PCelerity(thisP)  = zeroR
+                isSlot(thisP)     = .false.
+                !% find out the slot volume/ area/ and the faces that are surcharged
+                where (volume(thisP) >= fullVolume(thisP))
+                    !% find slot properties
+                    SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
+                    SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+                    isSlot(thisP)     = .true.
+                    PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
+                    SlotDepth(thisP)  = min((SlotArea(thisP)  * (PCelerity(thisP) ** twoR)) / (grav * (fullArea(thisP))), maxSlotDepth(thisP)) 
+                end where
+            
+            !% for dynamic slot, preissmann number is adjusted
+            case (DynamicSlot)
+                
+                print*, 'In ', subroutine_name
+                print *, 'Dynamic slot for junction mains is under development'
+                stop 45756
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                stop 38756
+
+        end select
+
+    end subroutine ll_JM_slot_computation_ETM
 !%
 !%==========================================================================
 !%==========================================================================

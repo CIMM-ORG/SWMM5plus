@@ -506,7 +506,8 @@ module define_indexes
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_CC_Closed_Elements         !% all closed CC elements 
-        enumerator :: ep_Closed_Elements_JB         !% all closed JB elements   
+        enumerator :: ep_JM_Closed_Elements         !% all closed CC elements
+        enumerator :: ep_Closed_JB_Elements         !% all closed JB elements   
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
         enumerator :: ep_CC_NOTzerodepth            !% all Conduits that have time-marching and are above zero depth

@@ -63,7 +63,8 @@ module geometry
             integer, intent(in) :: whichTM
             integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
-            integer, pointer :: thisColP_JM, thisColP_JB, thisColP_Closed_CC, thisColP_Closed_JB
+            integer, pointer :: thisColP_JM, thisColP_JB
+            integer, pointer :: thisColP_Closed_CC, thisColP_Closed_JB, thisColP_Closed_JM
             logical :: isreset
             integer, allocatable :: tempP(:) !% debugging
             character(64) :: subroutine_name = 'geometry_toplevel'
@@ -87,7 +88,8 @@ module geometry
                     thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ALLtm)
                     thisColP_all           => col_elemP(ep_ALLtm)
                     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                    thisColP_Closed_JB     => col_elemP(ep_Closed_Elements_JB)
+                    thisColP_Closed_JB     => col_elemP(ep_Closed_JB_Elements)
+                    thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
                 case (ETM)
                     elemPGx                => elemPGetm(:,:)
                     npack_elemPGx          => npack_elemPGetm(:)
@@ -98,7 +100,8 @@ module geometry
                     thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ETM)
                     thisColP_all           => col_elemP(ep_ETM)
                     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                    thisColP_Closed_JB     => col_elemP(ep_Closed_Elements_JB)
+                    thisColP_Closed_JB     => col_elemP(ep_Closed_JB_Elements)
+                    thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
                 case (AC)
                     elemPGx                => elemPGac(:,:)
                     npack_elemPGx          => npack_elemPGac(:)
@@ -109,7 +112,8 @@ module geometry
                     thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_AC)
                     thisColP_all           => col_elemP(ep_AC)
                     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                    thisColP_Closed_JB     => col_elemP(ep_Closed_Elements_JB)
+                    thisColP_Closed_JB     => col_elemP(ep_Closed_JB_Elements)
+                    thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
                 case default
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
@@ -406,10 +410,12 @@ module geometry
             integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
             real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
-            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:)
+            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:), ellMax(:)
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
             real(8), pointer :: fullhyddepth(:), thisTable(:,:)
-            real(8), pointer :: grav       
+            real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:)
+            real(8), pointer :: grav  
+            logical, pointer :: isSlot(:)     
 
             real(8) :: depthnorm, zeroHydRadius
             integer :: tB, ii, kk
@@ -430,6 +436,7 @@ module geometry
             depth         => elemR(:,er_Depth)
             dHdA          => elemR(:,er_dHdA)
             ell           => elemR(:,er_ell)
+            ellMax        => elemR(:,er_ell_max)
             head          => elemR(:,er_Head)
             hyddepth      => elemR(:,er_HydDepth)
             hydradius     => elemR(:,er_HydRadius)
@@ -444,9 +451,13 @@ module geometry
             fulldepth     => elemR(:,er_FullDepth)
             fullhyddepth  => elemR(:,er_FullHydDepth)
             fullperimeter => elemR(:,er_FullPerimeter)
+            overflow      => elemR(:,er_VolumeOverFlow)
+            slotDepth     => elemR(:,er_SlotDepth)
+            slotVolume    => elemR(:,er_SlotVolume)
             Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
             thisSolve     => elemI(:,ei_tmType)
+            isSlot        => elemYN(:,eYN_isSlot)
             grav => setting%Constant%gravity
         !%------------------------------------------------------------------
 
@@ -458,7 +469,14 @@ module geometry
                 
                 tM => thisP(ii) !% junction main ID
 
-                !print *, 'thisP ',thisP(ii)
+                !% if a slot present, add the slot depth and volume back to JM
+                if (isSlot(tM)) then
+                    volume(tM)   = volume(tM)  + SlotVolume(tM) 
+                    depth(tM)    = depth(tM)   + SlotDepth(tM)
+                    head(tM)     = head(tM)    + SlotDepth(tM)
+                    ell(tM)      = ellMax(tM)
+                    Overflow(tM) = zeroR
+                end if 
 
                 !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then

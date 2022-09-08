@@ -2526,6 +2526,7 @@ contains
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
+        elemR(JMidx,er_ell_max)   = node%R(thisJunctionNode,nr_FullDepth)
 
         !% --- ponded area is stored in elemSR array
         if (setting%SWMMinput%AllowPonding) then

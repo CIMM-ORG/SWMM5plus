@@ -2003,9 +2003,45 @@ contains
                 ) )
         end if
 
-        !% ep_Closed_Elements_JB
+        !% ep_JM_Closed_Elements
+        !% - all the closed JM elements
+        ptype => col_elemP(ep_JM_Closed_Elements)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    elemYN(:,eYN_canSurcharge) &
+                ) )
+
+        if (npack > 0) then
+            elemP(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    elemYN(:,eYN_canSurcharge) &
+                ) )
+        end if
+
+        !% ep_Closed_JB_Elements
         !% - all the closed time-marching elements
-        ptype => col_elemP(ep_Closed_Elements_JB)
+        ptype => col_elemP(ep_Closed_JB_Elements)
         npack => npack_elemP(ptype)
         npack = count( &
                 ( &
