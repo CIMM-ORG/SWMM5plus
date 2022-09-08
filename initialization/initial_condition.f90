@@ -1755,12 +1755,28 @@ contains
 
             case (lRoadWayWeir)
 
-                print *, 'In ', subroutine_name
-                print *, 'roadway weir is not handeled yet for #',specificWeirType
-                print *, 'which has key ',trim(reverseKey(specificWeirType))
-                !stop 
-                call util_crashpoint(557834)
-                !return
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)  
+                    !% integer data
+                    elemSI(:,esi_Weir_SpecificType)          = roadway_weir
+                    elemSI(:,esi_Weir_GeometryType)          = rectangular
+                    elemSI(:,esi_Weir_RoadSurface)           = link%I(thisLink,li_RoadSurface)
+                    !% real data
+                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
+                    elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Wier_RoadWidth)             = link%R(thisLink,lr_RoadWidth)
+
+                    !% --- default channel geometry (overwritten later by adjacent CC shape)
+                    !%     assumes channel is rectangular and uses weir data
+                    elemI(:,ei_geometryType)            = rectangular
+                    elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Weir_RectangularBreadth) 
+                    elemR(:,er_BreadthMax)              = elemSR(:,esr_Weir_RectangularBreadth)                                     
+                    elemR(:,er_FullDepth)               = twoR * max(elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom),elemR(:,er_FullDepth))
+                end where
 
             case (lVnotchWeir)
 

@@ -474,12 +474,12 @@ module define_api_keys
     !     enumerator :: API_NODE_HEAD
     ! end enum
 
-    ! !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
-    ! enum, bind(c)
-    !     enumerator :: API_TIMEPATTERN = 6
-    !     enumerator :: API_CURVE
-    !     enumerator :: API_TSERIES
-    ! end enum
+    !% SWMM roadway weir road surface type
+    enum, bind(c)
+        enumerator :: API_NOSURFACE = 0
+        enumerator :: API_PAVED
+        enumerator :: API_GRAVEL
+    end enum
 
     !% brh20211208s -- this looks like obsolete code
     !% API VARS

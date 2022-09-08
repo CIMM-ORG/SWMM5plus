@@ -593,6 +593,7 @@ module define_indexes
         enumerator :: esi_Weir_FlowDirection            !% weir flow direction (-1, +1)
         enumerator :: esi_Weir_SpecificType             !% KEY specific weir type
         enumerator :: esi_Weir_GeometryType             !% KEY specific weir geometry type
+        enumerator :: esi_Weir_RoadSurface              !% road surface type for roadway weir
         enumerator :: esi_Weir_lastplusone !% must be last enum item
     end enum
 
@@ -687,7 +688,6 @@ module define_indexes
         enumerator ::  esr_Weir_TrapezoidalLeftSlope    !% trapezoidal weir left slope
         enumerator ::  esr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  esr_Weir_TriangularSideSlope     !% triangular weir side slope
-        enumerator ::  esr_Weir_RoadSurface             !% road surface type for roadway weir
         enumerator ::  esr_Wier_RoadWidth               !% road width for roadway weir
         enumerator ::  esr_Weir_Zcrown                  !% weir crown elevation
         enumerator ::  esr_Weir_Zcrest                  !% weir crest elevation

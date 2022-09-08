@@ -662,7 +662,7 @@ contains
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-                print *, 'link_Length            ',link%R(ii,lr_Length)
+                ! print *, 'link_Length            ',link%R(ii,lr_Length)
             link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
                 ! print *, 'link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
             link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
@@ -714,7 +714,6 @@ contains
             !% --- special element attributes
             link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
             link%I(ii,li_RoadSurface)         = interface_get_linkf_attribute(ii, api_linkf_weir_road_surface,    .true.)
-            print*, link%I(ii,li_RoadSurface), 'link%I(ii,li_RoadSurface)'
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -723,7 +722,7 @@ contains
             link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
             link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
             link%R(ii,lr_RoadWidth)           = interface_get_linkf_attribute(ii, api_linkf_weir_road_width,      .false.)
-            print*, link%R(ii,lr_RoadWidth)  , 'link%R(ii,lr_RoadWidth)  '
+
             if (interface_get_linkf_attribute(ii, api_linkf_hasFlapGate,.true.) == 1) then
                 link%YN(ii,lYN_hasFlapGate)   = .true.
             else
@@ -744,6 +743,26 @@ contains
                 link%I(ii,li_link_type) = lChannel
             end if
 
+            if (link%I(ii,li_link_type) == lWeir) then
+                !% --- set road surface types
+                if (link%I(ii,li_RoadSurface) == API_NOSURFACE) then
+                    link%I(ii,li_RoadSurface) = NoRoadSurface
+                else if (link%I(ii,li_RoadSurface) == API_PAVED) then
+                    link%I(ii,li_RoadSurface) = Paved
+                else if (link%I(ii,li_RoadSurface) == API_GRAVEL) then
+                    link%I(ii,li_RoadSurface) = Gravel
+                else
+                    if (this_image() == 1) then
+                        write(*,*) 'FATAL ERROR IN INPUT FILE'
+                        write(*,"(A,i4,A)") 'One of the Roadway weir does not have a proper road surface tupe'
+                        write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
+                    end if
+                    call util_crashpoint(548976)
+                end if
+            else
+                link%I(ii,li_RoadSurface) = nullValueI
+            end if
+            
             ! !% HACK CODE FOR TESTING:
             ! !% for filled circular cross-sections, swmm always sets inlet and outlet offsets
             ! !% for the bottom filled elevation. For now, I am removing those for testing
