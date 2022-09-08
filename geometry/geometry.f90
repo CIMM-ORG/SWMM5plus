@@ -10,6 +10,7 @@ module geometry
     use triangular_channel
     use rectangular_triangular_conduit
     use circular_conduit
+    use filled_circular_conduit
     use basket_handle_conduit
     use egg_shaped_conduit
     use horse_shoe_conduit
@@ -627,6 +628,14 @@ module geometry
                                     dHdA(tB)     = oneR / topwidth(tB)
 
                                     ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                case (filled_circular)
+                                    area(tB)     = filled_circular_area_from_depth_singular          (tB,depth(tB))
+                                    topwidth(tB) = filled_circular_topwidth_from_depth_singular      (tB,depth(tB))
+                                    hydDepth(tB) = filled_circular_hyddepth_from_topwidth_singular   (tB,topwidth(tB),depth(tB))
+                                    hydRadius(tB)= filled_circular_hydradius_from_depth_singular     (tB,depth(tB))
+                                    perimeter(tB)= filled_circular_perimeter_from_hydradius_singular (tB,hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+                                    dHdA(tB)     = oneR / topwidth(tB)
 
                                 case (parabolic)
                                     area(tB)     = parabolic_area_from_depth_singular      (tB, depth(tB))
@@ -803,6 +812,13 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- FILLED CIRCULAR CC
+        thisCol => col_elemPGx(epg_CC_filled_circular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% -- PARABOLIC
@@ -1053,9 +1069,7 @@ module geometry
         case (circular )
             outvalue = circular_area_from_depth_singular (idx, indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = filled_circular_area_from_depth_singular (idx, indepth)
         case (rectangular_closed)
             outvalue = rectangular_closed_area_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
@@ -1164,6 +1178,13 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- FILLED CIRCULAR
+        Npack => npack_elemPGx(epg_CC_filled_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_filled_circular_nonsurcharged)
+            call filled_circular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- PARABOLIC
         Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
         if (Npack > 0) then
@@ -1254,9 +1275,7 @@ module geometry
         case (circular )
             outvalue = circular_topwidth_from_depth_singular  (idx, indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = filled_circular_topwidth_from_depth_singular  (idx, indepth)
         case (rectangular_closed)
             outvalue = rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
         case (horiz_ellipse)
@@ -1366,6 +1385,13 @@ module geometry
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- FILLED CIRCULAR
+        Npack => npack_elemPGx(epg_CC_filled_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_filled_circular_nonsurcharged)
+            call filled_circular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- PARABOLIC
         Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
         if (Npack > 0) then
@@ -1459,9 +1485,7 @@ module geometry
         case (circular )
             outvalue = circular_perimeter_from_depth_singular (idx, indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = filled_circular_perimeter_from_depth_singular (idx, indepth)
         case (rectangular_closed)
             outvalue = rectangular_closed_perimeter_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
@@ -1572,6 +1596,13 @@ module geometry
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- FILLED CIRCULAR
+        Npack => npack_elemPGx(epg_CC_filled_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_filled_circular_nonsurcharged)
+            call filled_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- PARABOLIC
         Npack => npack_elemPGx(epg_CC_parabolic_nonsurcharged)
         if (Npack > 0) then
@@ -1669,9 +1700,9 @@ module geometry
             temp1    = circular_topwidth_from_depth_singular    (idx, indepth)
             outvalue = circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (filled_circular)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = filled_circular_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = filled_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (rectangular_closed)
             outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
         case (horiz_ellipse)

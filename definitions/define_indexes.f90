@@ -545,6 +545,7 @@ module define_indexes
         enumerator :: epg_CC_parabolic_nonsurcharged                !% CC parabolic channels that are not surcharged
         enumerator :: epg_CC_basket_handle_nonsurcharged            !% CC basket handle conduits that are not surcharged
         enumerator :: epg_CC_horse_shoe_nonsurcharged               !% CC horse shoe conduits that are not surcharged
+        enumerator :: epg_CC_filled_circular_nonsurcharged          !% CC filled circular conduits that are not surcharged
         enumerator :: epg_CC_egg_shaped_nonsurcharged               !% CC egg shaped conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
@@ -804,6 +805,21 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Circular =  esgr_Circular_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for filled circular pipe or channel
+    enum, bind(c)
+         enumerator ::  esgr_Filled_Circular_Diameter = 1    !% diameter for filled circular geometry
+         enumerator ::  esgr_Filled_Circular_YoverYfull      !% Y/Yfull for filled circular geometry
+         enumerator ::  esgr_Filled_Circular_AoverAfull      !% A/Afull for filled circular geometry
+         enumerator ::  esgr_Filled_Circular_Ybot            !% filled depth of filled circular geometry
+         enumerator ::  esgr_Filled_Circular_Abot            !% filled area of filled circular geometry
+         enumerator ::  esgr_Filled_Circular_Pbot            !% filled wetted perimeter of filled circular geometry
+         enumerator ::  esgr_Filled_Circular_Tbot            !% filled top-width of filled circular geometry
+         enumerator ::  esgr_Filled_Circular_YatMaxBreadth   !% depth at maximum breadth
+         enumerator ::  esgr_Filled_Circular_lastplusone     !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Filled_Circular =  esgr_Filled_Circular_lastplusone-1
+
     !% Define the column indexes for elemGSR(:,:) for parabolic channel
     enum, bind(c)
          enumerator ::  esgr_Parabolic_Breadth = 1    !% breadth for parabolic geometry
@@ -860,7 +876,8 @@ module define_indexes
                             Ncol_elemSGR_Parabolic,     &
                             Ncol_elemSGR_Basket_Handle, &
                             Ncol_elemSGR_Egg_Shaped,    &
-                            Ncol_elemSGR_Horse_Shoe)
+                            Ncol_elemSGR_Horse_Shoe,    &
+                            Ncol_elemSGR_Filled_Circular)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or

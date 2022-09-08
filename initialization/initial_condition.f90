@@ -13,6 +13,7 @@ module initial_condition
     use define_keys
     use define_globals
     use define_settings
+    use define_xsect_tables
     use pack_mask_arrays
     use boundary_conditions
     use update
@@ -23,6 +24,7 @@ module initial_condition
     use basket_handle_conduit
     use egg_shaped_conduit
     use horse_shoe_conduit
+    use filled_circular_conduit
     use rectangular_channel, only: rectangular_area_from_depth
     use parabolic_channel, only: parabolic_area_from_depth
     use rectangular_conduit, only: rectangular_closed_area_from_depth
@@ -1583,6 +1585,66 @@ contains
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
                 end if
             end do
+        
+        case (lFilled_circular)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = filled_circular
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Filled_Circular_Diameter) = link%R(thisLink,lr_FullDepth) + elemSGR(ii,esgr_Filled_Circular_Ybot) 
+                    elemSGR(ii,esgr_Filled_Circular_Ybot)     = link%R(thisLink,lr_BottomDepth)
+                    !% dummy elemR data -- needed for primary bottom geometry calculations
+                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth) + elemSGR(ii,esgr_Filled_Circular_Ybot) 
+                    elemR(ii,er_FullArea)      = (pi / fourR) * elemR(ii,er_FullDepth) ** twoR
+
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Filled_Circular_Abot) = circular_area_from_depth_singular (ii, elemSGR(ii,esgr_Filled_Circular_Ybot))
+                    elemSGR(ii,esgr_Filled_Circular_Tbot) = circular_topwidth_from_depth_singular(ii,elemSGR(ii,esgr_Filled_Circular_Ybot))
+                    elemSGR(ii,esgr_Filled_Circular_Pbot) = elemSGR(ii,esgr_Filled_Circular_Abot) / (onefourthR * elemR(ii,er_FullDepth) &
+                                                            * xsect_table_lookup_singular (elemSGR(ii,esgr_Filled_Circular_Ybot) / elemR(ii,er_FullDepth), RCirc))
+                    !% elemR data
+                    if (elemSGR(ii,esgr_Filled_Circular_Ybot) > elemR(ii,er_FullDepth)/twoR ) then
+                        elemSGR(ii,esgr_Filled_Circular_YatMaxBreadth) = elemSGR(ii,esgr_Filled_Circular_Ybot)
+                        elemR(ii,er_ZbreadthMax) = elemR(ii,esgr_Filled_Circular_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                        elemR(ii,er_BreadthMax)  = elemSGR(ii,esgr_Filled_Circular_Tbot)
+                    else 
+                        elemSGR(ii,esgr_Filled_Circular_YatMaxBreadth) = elemR(ii,er_FullDepth) / twoR
+                        elemR(ii,er_ZbreadthMax) = elemR(ii,esgr_Filled_Circular_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                        elemR(ii,er_BreadthMax)  = elemR(ii,er_FullDepth)
+                    end if
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth) ) &
+                                               - elemSGR(ii,esgr_Filled_Circular_Pbot) + elemSGR(ii,esgr_Filled_Circular_Tbot)
+
+                    !% elemR data -- fix the full depth and area by removing the filled portion
+                    elemR(ii,er_FullArea)      = elemR(ii,er_FullArea) - elemSGR(ii,esgr_Filled_Circular_Abot)
+                    elemR(ii,er_FullDepth)     = elemR(ii,er_FullDepth) - elemSGR(ii,esgr_Filled_Circular_Ybot)
+                    
+                    !% Check for slot
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        elemR(ii,er_Area)      = filled_circular_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                    else
+                        !% --- Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isSlot)  = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_AreaBelowBreadthMax) = filled_circular_area_from_depth_singular (ii, elemSGR(ii,esgr_Filled_Circular_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                            + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
 
         case (lIrregular)
             print *, 'In ', trim(subroutine_name)
@@ -2593,7 +2655,7 @@ contains
 
             select case  (elemI(JBidx,ei_geometryType))
 
-            case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rectangular_closed, circular, basket_handle, eggshaped, irregular)
+            case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rectangular_closed, filled_circular, circular, basket_handle, eggshaped, irregular)
                 !% --- Copy all the geometry specific data from the adjacent element cell
                 !%     Note that because irregular transect tables are not yet initialized, the
                 !%     Area and Volume here will be junk for an irregular cross-section and will need to be
@@ -2740,6 +2802,12 @@ contains
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Circular_Diameter) )
+                
+                case (lFilled_circular)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                          * elemR(  JBidx,er_Length)                                          &
+                          * elemSGR(JBidx,esgr_Filled_Circular_Diameter) )
 
                 case (lIrregular)    
                     !% --- for irregular geometry, we use the average breadth for the area below
@@ -3324,8 +3392,6 @@ contains
         end if 
 
         !% ---  circular conduit
-
-
         tPack = zeroI
         npack = count(geoType == circular)
         if (npack > 0) then
@@ -3333,7 +3399,42 @@ contains
             !% HACK -- temporary until problem for small volumes in circular conduits is fixed
             smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Circular_Diameter) * depthCutoff * length
         end if
-           
+
+        !% ---  filled circular conduit
+        tPack = zeroI
+        npack = count(geoType == filled_circular)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == filled_circular)
+            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Filled_Circular_Diameter) * depthCutoff * length
+        end if
+
+        !% ---  basket handle conduit
+        tPack = zeroI
+        npack = count(geoType == basket_handle)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == basket_handle)
+            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Basket_Handle_BreadthMax) * depthCutoff * length
+        end if
+        
+        !% ---  horse shoe conduit
+        tPack = zeroI
+        npack = count(geoType == horseshoe)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == horseshoe)
+            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Horse_Shoe_BreadthMax) * depthCutoff * length
+        end if
+
+        !% ---  egg shaped conduit
+        tPack = zeroI
+        npack = count(geoType == eggshaped)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == eggshaped)
+            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Egg_Shaped_BreadthMax) * depthCutoff * length
+        end if
             ! do ii=1,npack
             !     indx = tPack(ii)
             !     if (elemI(indx,ei_elementType) .eq. CC) then
@@ -4395,7 +4496,7 @@ contains
                 case (CC)
                     !% temporary store a values for zero depth
                     elemR(thisP,er_Temp01) = geo_topwidth_from_depth_singular (thisP,depth0)
-                    elemR(thisP,er_Temp02) = geo_area_from_depth_singular     (thisP,depth0)
+                    elemR(thisP,er_Temp02) = geo_area_from_depth_singular     (thisP,depth0) 
                     !% volume is area * length
                     elemR(thisP,er_Temp03) = elemR(thisP,er_Temp02) * elemR(thisP,er_Length)
                 case (JM)

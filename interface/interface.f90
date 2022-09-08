@@ -1495,13 +1495,33 @@ contains
                     end select
 
                 case (API_FILLED_CIRCULAR)
-                    print *, 'CODE ERROR:  geometry not handled yet'
-                    call util_crashpoint(448973)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lFilled_circular
                         case (api_linkf_xsect_wMax)
+                            !print *, 'call HHH'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_Q16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_R17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yBot) 
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% filled circular geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_RECT_CLOSED)
@@ -1640,28 +1660,33 @@ contains
                     end select
 
                 case (API_RECT_TRIANG)
-                    if (attr == api_linkf_geometry) then
-                        link_value = lRect_triang
-                    else if (attr == api_linkf_xsect_wMax) then
-                        call load_api_procedure("api_get_linkf_attribute")
-                        error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                        thisposition = trim(subroutine_name)//'_S18'
-                        call print_api_error(error, thisposition)
-                    else if (attr == api_linkf_xsect_yFull) then
-                        call load_api_procedure("api_get_linkf_attribute")
-                        error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                        thisposition = trim(subroutine_name)//'_T19'
-                        call print_api_error(error, thisposition)
-                    else if (attr == api_linkf_xsect_yBot) then
-                        call load_api_procedure("api_get_linkf_attribute")
-                        error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
-                        thisposition = trim(subroutine_name)//'_T19'
-                        call print_api_error(error, thisposition)
-                    else
-                        !% rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
-                        !% thus, set that link%R column to nullvalueR
-                        link_value = nullvalueR
-                    end if
+                    select case (attr)
+                        case (api_linkf_geometry)
+                            link_value = lRect_triang
+                        case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_S18'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
+                        case default
+                            !% rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
+                            !% thus, set that link%R column to nullvalueR
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
+                    end select
 
                 case (API_RECT_ROUND)
                     print *, 'CODE ERROR: API_RECT_ROUND geometry not handled yet'

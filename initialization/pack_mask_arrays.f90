@@ -519,6 +519,37 @@ contains
                 ))
         end if
 
+        !% --- filled circular conduits 
+        ptype => col_elemPGalltm(epg_CC_filled_circular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == filled_circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == filled_circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
         !% --- irregular channels
         ptype => col_elemPGalltm(epg_CC_irregular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
@@ -1114,6 +1145,31 @@ contains
                 )
         end if
 
+        !% filled circular conduits 
+        ptype => col_elemPGac(epg_CC_filled_circular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == filled_circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == filled_circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+
         !% junction main with functional geometry relationship
         ptype => col_elemPGac(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGac(ptype)
@@ -1374,6 +1430,31 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
+        !% --- filled circular conduits, channels
+        ptype => col_elemPGetm(epg_CC_filled_circular_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemI(:,ei_geometryType) == filled_circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                (elemI(:,ei_geometryType) == filled_circular) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &

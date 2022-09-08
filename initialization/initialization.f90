@@ -740,6 +740,14 @@ contains
                 link%I(ii,li_link_type) = lChannel
             end if
 
+            ! !% HACK CODE FOR TESTING:
+            ! !% for filled circular cross-sections, swmm always sets inlet and outlet offsets
+            ! !% for the bottom filled elevation. For now, I am removing those for testing
+            ! if (link%I(ii,li_geometry) ==  lFilled_circular) then
+            !     link%R(ii,lr_InletOffset)  = link%R(ii,lr_InletOffset) - link%R(ii,lr_BottomDepth)
+            !     link%R(ii,lr_OutletOffset) = link%R(ii,lr_OutletOffset) - link%R(ii,lr_BottomDepth) 
+            ! end if
+
             !% --- Irregular cross-sections (TRANSECTS in SWMM input file)
             if (link%I(ii,li_geometry) == lIrregular) then
                link%I(ii,li_transect_idx) = interface_get_linkf_attribute(ii, api_linkf_transectidx,.true.)
