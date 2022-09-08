@@ -48,6 +48,7 @@ module define_indexes
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         !enumerator :: li_num_phantom_links   ! Number of phantom links associated 
         enumerator :: li_weir_EndContractions ! (0,1) to indicate contraction
+        enumerator :: li_RoadSurface           ! roadsurface type for roadway weir
         enumerator :: li_curve_id            ! curve id if the link is associated with any curve
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
@@ -87,7 +88,6 @@ module define_indexes
         enumerator :: lr_SideSlope             ! for weirs only
         enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
-        enumerator :: lr_RoadSurface           ! roadsurface type for roadway weir
         enumerator :: lr_RoadWidth             ! road width for roadway weir
         enumerator :: lr_initSetting           ! initial pump speed setting 
         enumerator :: lr_yOn                   ! startup depth for pumps   

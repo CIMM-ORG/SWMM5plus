@@ -1509,6 +1509,26 @@ int DLLEXPORT api_get_linkf_attribute(
                     *value = 0;
             }
             break;
+        
+        case linkf_weir_road_width :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = FTTOM(Weir[Link[link_idx].subIndex].roadWidth);
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_weir_road_surface :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].roadSurface;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
 
         case linkf_curveid :
             switch (Link[link_idx].type) {

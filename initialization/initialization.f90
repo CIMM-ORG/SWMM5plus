@@ -662,7 +662,7 @@ contains
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-                ! print *, 'link_Length            ',link%R(ii,lr_Length)
+                print *, 'link_Length            ',link%R(ii,lr_Length)
             link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
                 ! print *, 'link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
             link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
@@ -713,6 +713,8 @@ contains
     
             !% --- special element attributes
             link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_RoadSurface)         = interface_get_linkf_attribute(ii, api_linkf_weir_road_surface,    .true.)
+            print*, link%I(ii,li_RoadSurface), 'link%I(ii,li_RoadSurface)'
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -720,6 +722,8 @@ contains
             link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
             link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
             link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
+            link%R(ii,lr_RoadWidth)           = interface_get_linkf_attribute(ii, api_linkf_weir_road_width,      .false.)
+            print*, link%R(ii,lr_RoadWidth)  , 'link%R(ii,lr_RoadWidth)  '
             if (interface_get_linkf_attribute(ii, api_linkf_hasFlapGate,.true.) == 1) then
                 link%YN(ii,lYN_hasFlapGate)   = .true.
             else
