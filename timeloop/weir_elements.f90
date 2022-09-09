@@ -72,16 +72,18 @@ module weir_elements
         !%------------------------------------------------------------------
         !% Declarations:
         integer, intent(in) :: eIdx
-
+        integer, pointer :: SpecificWeirType
         real(8), pointer :: FullDepth, EffectiveFullDepth
         real(8), pointer :: CurrentSetting, TargetSetting
         !%------------------------------------------------------------------
-
+        SpecificWeirType   => elemSI(eIdx,esi_Weir_SpecificType)
         FullDepth          => elemSR(eIdx,esr_Weir_FullDepth)
         EffectiveFullDepth => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
         CurrentSetting     => elemR(eIdx,er_Setting)
         TargetSetting      => elemR(eIdx,er_TargetSetting)
 
+        !% roadway weir does not have any setting
+        if (SpecificWeirType == roadway_weir) return
         !% --- instantaneous adjustment
         CurrentSetting = TargetSetting 
 

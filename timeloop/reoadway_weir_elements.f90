@@ -14,31 +14,38 @@ module roadway_weir_elements
     !% derived from Figure 10 in "Bridge Waterways Analysis Model: Research
     !% Report", U.S. Dept. of Transportation Federal Highway Administration
     !% Report No. FHWA/RD-86/108, McLean, VA, July 1986. 
-    !% (copied over from SWMM5C)
+
+    !% (these tables are copid over from SWMM5C and then moified.
+    !% In SWMM5C, all the roadway weir calculations are done in CFS units.
+    !% Since default units in SWMM5+ is SI, the 2nd colums (discharge coefficients) 
+    !% of the tables were converted. The original unit of the discharge coefficients 
+    !% were is ft^(1/2)/sec. Thus, the discharge coefficients were multipiled by
+    !% 0.552 to convert them to m^(1/2)/sec.)
 
     !% Discharge Coefficients for (head / road width) <= 0.15
     integer, parameter :: N_Cd_LowPaved = 4
     real(8), dimension(4,2) :: Cd_LowPaved = (/ 0.0, 0.2, 0.7, 4.0, &
-                                                2.85,2.95,3.03,3.05 &
+                                                1.57,1.63,1.67,1.68 &
                                              /)
 
     integer, parameter :: N_Cd_LowGravel = 8
     real(8), dimension(8,2) :: Cd_LowGravel = (/ 0.0, 0.5, 1.0, 1.5, &
                                                  2.0, 2.5, 3.0, 4.0, &
-                                                 2.5, 2.7, 2.8, 2.9, &
-                                                 2.98,3.02,3.03,3.05 &
+                                                 1.38,1.49,1.55,1.6, &
+                                                 1.64,1.667,1.673,1.683 &
                                                /)
     !% Discharge Coefficients for (head / road width) > 0.15
     integer, parameter :: N_Cd_HighPaved = 2
     real(8), dimension(2,2) :: Cd_HighPaved = (/ 0.15,0.25, &
-                                                 3.05,3.10  &
+                                                 1.68,1.71  &
                                               /)
 
-    integer, parameter :: N_Cd_HighGravel = 8
+    integer, parameter :: N_Cd_HighGravel = 2
     real(8), dimension(2,2) :: Cd_HighGravel = (/ 0.15,0.30, &
-                                                  2.95,3.10  &
+                                                  1.63,1.71  &
                                                /)
     !% Submergence Factors
+    !% (these are factor and unitless. Thus do not need correction)
     integer, parameter :: N_Sf_Paved = 9
     real(8), dimension(9,2) :: Sf_Paved = (/ 0.8, 0.85,0.9, 0.93, &
                                              0.95,0.97,0.98,0.99, &
