@@ -768,7 +768,7 @@ contains
         integer, intent(in)  :: thisLink
         integer, pointer     :: firstE, lastE, linkType, linkGeo
         
-        character(64) :: subroutine_name = 'init_IC_get_flapgate_linkdata'
+        character(64) :: subroutine_name = 'init_IC_get_ForceMain_from_linkdata'
         !%-----------------------------------------------------------------
         !% Preliminaries
 
@@ -780,48 +780,45 @@ contains
         linkGeo     => link%I(thisLink,li_geometry)
         !%-----------------------------------------------------------------
         !%
-        !% --- if UseForceMain
-        if (setting%Solver%ForceMain%UseForceMainTF) then
-            !% --- if FMallClosedConduits
-            if (setting%Solver%ForceMain%FMallClosedConduitsTF) then
-                !% --- forcing all closed conduits to be Force Main
-                if (linkType .eq. lpipe) then
+        !% only call for pipes
+        if (linkType .eq. lpipe) then
+            !% --- if UseForceMain
+            if (setting%Solver%ForceMain%UseForceMainTF) then
+                !% --- if FMallClosedConduits
+                if (setting%Solver%ForceMain%FMallClosedConduitsTF) then
+                    !% --- forcing all closed conduits to be Force Main
                     call init_IC_set_forcemain_elements (firstE, lastE, thisLink)
-                else
-                    !% --- not a force main
-                    elemYN(firstE:lastE,eYN_isForceMain)      = .false.
-                    elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
-                    elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
-                end if 
-            else 
-                !% --- handle links designated as force main in SWMM input file
-                if (linkGeo .eq. lForce_main) then
-                    call init_IC_set_forcemain_elements (firstE, lastE, thisLink)
-                else
-                    !% --- not a force main
-                    elemYN(firstE:lastE,eYN_isForceMain)      = .false.
-                    elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
-                    elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+                else 
+                    !% --- handle links designated as force main in SWMM input file
+                    if (linkGeo .eq. lForce_main) then
+                        call init_IC_set_forcemain_elements (firstE, lastE, thisLink)
+                    else
+                        !% --- not a force main
+                        elemYN(firstE:lastE,eYN_isForceMain)      = .false.
+                        elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
+                        elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+                    end if
                 end if
+            ! else    
+            !     !% --- if NOT UseForceMain
+            !     elemYN(firstE:lastE,eYN_isForceMain)      = .false.
+            !     elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
+            !     elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+
+            !     !% --- if force main was specified in SWMMinput file, then
+            !     !%     use default roughness if none provided.
+            !     if (linkGeo .eq. lForce_main) then 
+            !         if ((link%I(thisLink,lr_Roughness) .le. zeroR) .or. &
+            !             (link%I(thisLink,lr_Roughness) .eq. nullvalueR) ) then 
+            !             !% --- use default Mannings n roughness    
+            !             elemR(firstE:lastE,er_ManningsN) = setting%Solver%ForceMain%Default_ManningsN
+            !         else
+            !             !% --- use supplied link roughness
+            !         end if
+            !     else 
+            !         !% --- not designated a force main, so no roughness change needed
+            !     end if   
             end if
-        else    
-            !% --- if NOT UseForceMain
-            elemYN(firstE:lastE,eYN_isForceMain)      = .false.
-            elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
-            elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
-            !% --- if force main was specified in SWMMinput file, then
-            !%     use default roughness if none provided.
-            if (linkGeo .eq. lForce_main) then 
-                if ((link%I(thisLink,lr_Roughness) .le. zeroR) .or. &
-                    (link%I(thisLink,lr_Roughness) .eq. nullvalueR) ) then 
-                    !% --- use default Mannings n roughness    
-                    elemR(firstE:lastE,er_ManningsN) = setting%Solver%ForceMain%Default_ManningsN
-                else
-                    !% --- use supplied link roughness
-                end if
-            else 
-                !% --- not designated a force main, so no roughness change needed
-            end if   
         end if
 
     end subroutine init_IC_get_ForceMain_from_linkdata

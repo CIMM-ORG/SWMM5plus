@@ -55,7 +55,7 @@ J3               0.1390     2          1          0          0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-Out1             0          FIXED      1                NO                       
+Out1             0          FREE                         YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -73,7 +73,7 @@ W1               J2               J3               ROADWAY      0          3.33 
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
 C1               RECT_OPEN    4                4          0          0          1                    
 C2               RECT_OPEN    4                4          0          0          1                    
-W1               RECT_OPEN    4                3          0          0         
+W1               RECT_OPEN    4                4          0          0         
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

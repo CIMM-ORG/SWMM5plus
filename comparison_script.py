@@ -175,7 +175,6 @@ for x in all_dset_names:
         swmmF_link_Y = z[1:,2]
         # extract the timestamp
         time = z[1:,0]
-
         array_len_Q = len(swmmC_link_Q)
         array_len_Y = len(swmmC_link_Y)
         # print link flowrate and depth data
@@ -188,7 +187,7 @@ for x in all_dset_names:
         print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
         if print_timeseries:
             link_col_headers = ["Time (hrs.)","SWMM-C Q (cms)", "SWMM5+ Q (cms)", "SWMM-C Y (m)", "SWMM5+ Y (m)"]
-            link_merged_array = np.array([time,swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
+            link_merged_array = np.array([time[:array_len_Q],swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
             link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
             print(' ') 
             print(link_table)
@@ -256,7 +255,7 @@ for x in all_dset_names:
         # print node depth data
         if print_timeseries:
             node_col_headers = ["Time (hrs.)", "SWMMC H (m)", "SWMM5+ H (m)"]
-            node_merged_array = np.array([time,swmmC_node_H, swmmF_node_H[:array_len_H]]).T
+            node_merged_array = np.array([time[:array_len_H],swmmC_node_H, swmmF_node_H[:array_len_H]]).T
             node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
             print(' ')
             print(node_table)

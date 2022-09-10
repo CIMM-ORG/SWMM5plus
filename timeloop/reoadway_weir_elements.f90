@@ -91,7 +91,7 @@ module roadway_weir_elements
         Head                  => elemR(eIdx,er_Head)
         RoadHeight            => elemSR(eIdx,esr_Weir_Zcrest) 
         RoadWidth             => elemSR(eIdx,esr_Wier_RoadWidth)
-        disCoeff              => elemSR(eIdx,esr_Weir_Rectangular)
+        disCoeff              => elemSR(eIdx,esr_Weir_Rectangular) 
         NominalDSmHead        => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
         RectangularBreadth    => elemSR(eIdx,esr_Weir_RectangularBreadth)
         FlowDirection         => elemSI(eIdx,esi_Weir_FlowDirection)
@@ -104,13 +104,13 @@ module roadway_weir_elements
         !% find water depths upstream and downstream of the roadway weir
         HeadUp = Head - RoadHeight
         HeadDn = NominalDSmHead - RoadHeight 
-        cD      = disCoeff
-
+        cD     = disCoeff
+        
         if (HeadUp > zeroR) then  
             if (useVariableCoeff) cD = get_roadway_discharge_coeff &
                 (HeadUp, HeadDn, RoadWidth, RoadSurf)
 
-            Flowrate = cD * RectangularBreadth * (HeadUp ** 1.5)
+            Flowrate = real(FlowDirection,8) * cD * RectangularBreadth * (HeadUp ** 1.5)
         end if
 
     end subroutine roadway_weir_flow
