@@ -22,6 +22,7 @@ module initial_condition
     use geometry !BRHbugfix 20210813
     use circular_conduit
     use basket_handle_conduit
+    use catenary_conduit
     use egg_shaped_conduit
     use horse_shoe_conduit
     use filled_circular_conduit
@@ -1577,8 +1578,49 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horse_Shoe_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.1931 * elemR(ii,er_FullDepth) )
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.1931 * elemR(ii,er_FullDepth))
                     elemR(ii,er_AreaBelowBreadthMax) = horse_shoe_area_from_depth_singular (ii, elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+        
+        case (lCatenary)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = catenary
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = 0.70277 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Catenary_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Catenary_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Catenary_YatMaxBreadth) = 0.25 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        elemR(ii,er_Area) = catenary_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                    else
+                        !% --- Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isSlot)  = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Catenary_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Catenary_BreadthMax)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.23172 * elemR(ii,er_FullDepth))
+                    elemR(ii,er_AreaBelowBreadthMax) = catenary_area_from_depth_singular (ii, elemSGR(ii,esgr_catenary_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
                 end if
@@ -2840,6 +2882,11 @@ contains
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Horse_Shoe_BreadthMax)/twoR) )
+                case (lCatenary)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                    * elemR(  JBidx,er_Length)                                   &
+                                    * (elemSGR(JBidx,esgr_Catenary_BreadthMax)/twoR) )
                                     
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
@@ -3467,6 +3514,15 @@ contains
         npack = count(geoType == horseshoe)
         if (npack > 0) then
             tPack(1:npack) = pack(eIdx,geoType == horseshoe)
+            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Horse_Shoe_BreadthMax) * depthCutoff * length
+        end if
+
+        !% ---  catenary conduit
+        tPack = zeroI
+        npack = count(geoType == catenary)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == catenary)
             !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
             smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Horse_Shoe_BreadthMax) * depthCutoff * length
         end if

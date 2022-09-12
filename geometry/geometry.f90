@@ -636,6 +636,15 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (catenary)                                    
+                                    area(tB)     = catenary_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = catenary_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = catenary_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= catenary_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= catenary_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
@@ -887,6 +896,13 @@ module geometry
             call horse_shoe_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --  CATENARY
+        thisCol => col_elemPGx(epg_CC_catenary_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call catenary_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !call util_CLprint('after circular') 
 
         !% --- IRREGULAR
@@ -1124,9 +1140,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (catenary)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = catenary_area_from_depth_singular (idx, indepth)
         case (semi_elliptical)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1251,6 +1265,13 @@ module geometry
             call horse_shoe_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- CATENARY
+        Npack => npack_elemPGx(epg_CC_catenary_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary_nonsurcharged)
+            call catenary_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1330,9 +1351,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (catenary)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = catenary_topwidth_from_depth_singular (idx, indepth)
         case (semi_elliptical)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1458,6 +1477,13 @@ module geometry
             call horse_shoe_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- CATENARY
+        Npack => npack_elemPGx(epg_CC_catenary_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary_nonsurcharged)
+            call catenary_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         !%     note this requires first using the table lookup for hydraulic radius
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -1540,9 +1566,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (catenary)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = catenary_perimeter_from_depth_singular (idx, indepth)
         case (semi_elliptical)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1669,6 +1693,13 @@ module geometry
             call horse_shoe_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- CATENARY
+        Npack => npack_elemPGx(epg_CC_catenary_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary_nonsurcharged)
+            call catenary_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1760,9 +1791,8 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (catenary)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (semi_elliptical)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
