@@ -791,6 +791,41 @@ contains
                 ))
         end if
 
+        !% --- Semi-Circular conduits
+        ptype => col_elemPGalltm(epg_CC_semi_circular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
         !% --- junction main with functional geometry relationship
         ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
@@ -1221,7 +1256,35 @@ contains
                 )
         end if
 
-        
+        !% Semi-Circular shaped conduits 
+        ptype => col_elemPGac(epg_CC_semi_circular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+
         !% rectangular triangular channels 
         ptype => col_elemPGac(epg_CC_rectangular_triangular_nonsurcharged)
         npack => npack_elemPGac(ptype)
@@ -1780,6 +1843,35 @@ contains
                 .and. &
                 ( &
                     (elemI(:,ei_geometryType) == gothic) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
+        !% Semi-Circular conduits 
+        ptype => col_elemPGetm(epg_CC_semi_circular_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                ) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == CC)  &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == semi_circular) &
                 ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged))&

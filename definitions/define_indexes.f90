@@ -551,6 +551,7 @@ module define_indexes
         enumerator :: epg_CC_catenary_nonsurcharged                 !% CC catenary conduits that are not surcharged
         enumerator :: epg_CC_gothic_nonsurcharged                   !% CC gothic conduits that are not surcharged
         enumerator :: epg_CC_filled_circular_nonsurcharged          !% CC filled circular conduits that are not surcharged
+        enumerator :: epg_CC_semi_circular_nonsurcharged            !% CC semi circular conduits that are not surcharged
         enumerator :: epg_CC_egg_shaped_nonsurcharged               !% CC egg shaped conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
@@ -899,6 +900,18 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Gothic = esgr_Gothic_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for Semi-Circular shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Semi_Circular_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Semi_Circular_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Semi_Circular = esgr_Semi_Circular_lastplusone-1
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
@@ -916,7 +929,8 @@ module define_indexes
                             Ncol_elemSGR_Egg_Shaped,    &
                             Ncol_elemSGR_Horse_Shoe,    &
                             Ncol_elemSGR_Catenary,      &
-                            Ncol_elemSGR_Gothic)
+                            Ncol_elemSGR_Gothic,        &
+                            Ncol_elemSGR_Semi_Circular)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or

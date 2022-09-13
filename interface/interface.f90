@@ -1863,13 +1863,26 @@ contains
                     end select
 
                 case (API_SEMICIRCULAR)
-                    print *, 'CODE ERROR: API_SEMICIRCULAR geometry not handled yet'
-                    call util_crashpoint(199173)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lSemi_circular
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_IRREGULAR)

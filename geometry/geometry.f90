@@ -11,8 +11,9 @@ module geometry
     use rectangular_triangular_conduit
     use basket_handle_conduit
     use catenary_conduit
-    use circular_conduit
     use egg_shaped_conduit
+    use circular_conduit
+    use semi_circular_conduit
     use filled_circular_conduit
     use gothic_conduit
     use horse_shoe_conduit
@@ -674,6 +675,15 @@ module geometry
                                     perimeter(tB)= circular_perimeter_from_hydradius_singular (tB,hydRadius(tB))
                                     ell(tB)      = geo_ell_singular (tB) 
                                     dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (semi_circular)                                    
+                                    area(tB)     = semi_circular_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = semi_circular_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = semi_circular_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= semi_circular_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= semi_circular_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
 
                                     ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
                                 case (filled_circular)
@@ -862,6 +872,13 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call circular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  SEMI-CIRCULAR
+        thisCol => col_elemPGx(epg_CC_semi_circular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call semi_circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% --- FILLED CIRCULAR CC
@@ -1163,9 +1180,7 @@ module geometry
         case (basket_handle)
             outvalue = basket_handle_area_from_depth_singular (idx, indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = semi_circular_area_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1236,6 +1251,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- SEMI-CIRCULAR
+        Npack => npack_elemPGx(epg_CC_semi_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_circular_nonsurcharged)
+            call semi_circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- FILLED CIRCULAR
@@ -1379,9 +1401,7 @@ module geometry
         case (basket_handle)
             outvalue = basket_handle_topwidth_from_depth_singular (idx, indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = semi_circular_topwidth_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1453,6 +1473,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- SEMI-CIRCULAR
+        Npack => npack_elemPGx(epg_CC_semi_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_circular_nonsurcharged)
+            call semi_circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- FILLED CIRCULAR
@@ -1599,9 +1626,7 @@ module geometry
         case (basket_handle)
             outvalue = basket_handle_perimeter_from_depth_singular (idx, indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = semi_circular_perimeter_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1674,6 +1699,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_circular_nonsurcharged)
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- SEMI-CIRCULAR
+        Npack => npack_elemPGx(epg_CC_semi_circular_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_circular_nonsurcharged)
+            call semi_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
         !% --- FILLED CIRCULAR
@@ -1833,9 +1865,8 @@ module geometry
             temp1    = basket_handle_topwidth_from_depth_singular    (idx, indepth)
             outvalue = basket_handle_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: hyddepth code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = semi_circular_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = semi_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (custom)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
