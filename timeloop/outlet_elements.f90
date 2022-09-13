@@ -94,26 +94,39 @@ module outlet_elements
         integer, intent(in) :: eIdx !% single ID of element
         real(8), pointer :: EffectiveHeadDelta, Head, Zcrest
         real(8), pointer :: NominalDownstreamHead
-        integer, pointer :: OutletType
+        integer, pointer :: OutletType, FlowDirection
+        logical, pointer :: hasFlapGate
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         !% input
         OutletType            => elemSI(eIdx,esi_Outlet_SpecificType)
+        FlowDirection         => elemSI(eIdx,esi_Outlet_FlowDirection)
         Head                  => elemR(eIdx,er_Head)
         Zcrest                => elemSR(eIdx,esr_Outlet_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Outlet_NominalDownstreamHead)
+        hasFlapGate           => elemYN(eIdx,eYN_hasFlapGate)
 
         !% output
         EffectiveHeadDelta    => elemSR(eIdx,esr_Outlet_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
+        !% find the effective head delta
+        if (hasFlapGate .and. (FlowDirection < zeroR)) then
+            EffectiveHeadDelta = zeroR
+        else
+            select case (OutletType)
+                case (func_head_outlet, tabl_head_outlet)
+                    EffectiveHeadDelta = Head - max(NominalDownstreamHead,Zcrest)
 
-        if ((OutletType == func_head_outlet) .or. (OutletType == tabl_head_outlet)) then
-            EffectiveHeadDelta = max(Head - max(NominalDownstreamHead,Zcrest), zeroR)
+                case (func_depth_outlet, tabl_depth_outlet) 
+                    EffectiveHeadDelta = Head - Zcrest
 
-        elseif ((OutletType == func_depth_outlet) .or. (OutletType == tabl_depth_outlet)) then
-            EffectiveHeadDelta = max(Head - Zcrest, zeroR)
-        endif
-
+                case default
+                    print *, 'CODE ERROR outlet type unknown for # ', OutletType
+                    print *, 'which has key ',trim(reverseKey(OutletType))
+                    stop 5878
+            end select
+        end if
+        
     end subroutine outlet_effective_head_delta
 !%
 !%========================================================================== 
@@ -126,7 +139,8 @@ module outlet_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% must be single element ID
         integer, pointer :: FlowDirection, CurveID, OutletType
-        real(8), pointer :: Flowrate, Depth, EffectiveHeadDelta, qCoeff, qExpon
+        real(8), pointer :: Flowrate, Depth, CurrentSetting, EffectiveHeadDelta, qCoeff, qExpon
+        logical, pointer :: hasFlapGate
         real(8) :: CoeffOrifice
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
@@ -135,22 +149,34 @@ module outlet_elements
         CurveID            => elemSI(eIdx,esi_Outlet_CurveID)
         Depth              => elemR(eIdx,er_Depth)
         Flowrate           => elemR(eIdx,er_Flowrate) 
+        CurrentSetting     => elemR(eIdx,er_Setting) 
         qCoeff             => elemSR(eIdx,esr_Outlet_Coefficient)
         qExpon             => elemSR(eIdx,esr_Outlet_Exponent)
         EffectiveHeadDelta => elemSR(eIdx,esr_Outlet_EffectiveHeadDelta)
+        hasFlapGate        => elemYN(eIdx,eYN_hasFlapGate)
         !%-----------------------------------------------------------------------------
+ 
+        if (hasFlapGate .and. (FlowDirection < zeroR)) then
+            Depth = zeroR
+            Flowrate = zeroR
+        else
+            select case (OutletType)
+                case (func_head_outlet, func_depth_outlet) 
+                    Depth = EffectiveHeadDelta
+                    Flowrate = CurrentSetting * real(FlowDirection,8) * qCoeff * (effectiveHeadDelta ** qExpon)
+                case (tabl_head_outlet, tabl_depth_outlet)
 
-        if ((OutletType == func_head_outlet) .or. (OutletType == func_depth_outlet)) then
-            Depth = EffectiveHeadDelta
-            Flowrate = real(FlowDirection,8) * qCoeff * EffectiveHeadDelta ** qExpon
+                    Depth = EffectiveHeadDelta
+                    call util_curve_lookup_singular(CurveID, er_Depth, er_Flowrate, &
+                        curve_outlet_depth, curve_outlet_flowrate,1)
+                    Flowrate = Flowrate * CurrentSetting * real(FlowDirection,8)
 
-        elseif ((OutletType == tabl_head_outlet) .or. (OutletType == tabl_depth_outlet)) then
-
-            Depth = EffectiveHeadDelta
-            call util_curve_lookup_singular(CurveID, er_Depth, er_Flowrate, &
-                curve_outlet_depth, curve_outlet_flowrate,1)
-            Flowrate = Flowrate * real(FlowDirection,8)
-        endif
+                case default
+                    print *, 'CODE ERROR outlet type unknown for # ', OutletType
+                    print *, 'which has key ',trim(reverseKey(OutletType))
+                    stop 7824
+            end select
+        end if
 
     end subroutine outlet_flow
 !%

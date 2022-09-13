@@ -959,9 +959,9 @@ contains
 
             case (lOutlet)
                 !% get geometry data for link outlets
-                print *, 'CODE ERROR:  an outlet link in the SWMM input file was found.'
-                print *, 'This feature is not yet available in SWMM5+'
-                call util_crashpoint(4409872)
+                ! print *, 'CODE ERROR:  an outlet link in the SWMM input file was found.'
+                ! print *, 'This feature is not yet available in SWMM5+'
+                ! call util_crashpoint(4409872)
                 call init_IC_get_outlet_geometry (thisLink)
 
             case default
@@ -2153,10 +2153,6 @@ contains
         !% pointer to specific outlet type
         specificOutletType => link%I(thisLink,li_link_sub_type)
         curveID            => link%I(thisLink,li_curve_id)
-
-        print *, 'Outlet links have not been tested in SWMM5+'
-        print *, 'Note that an Outlet link is NOT the same as an Outfall node!'
-        call util_crashpoint(5509734)
 
         do ii = 1,N_elem(this_image())
             if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then

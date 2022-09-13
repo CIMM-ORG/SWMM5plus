@@ -1391,8 +1391,6 @@ contains
                     end select
 
                 case (API_OUTLET)
-                    print *, 'READING IN AN OUTLET LINK, WHICH HAS NOT BEEN TESTED'
-                    call util_crashpoint(55098723)
                     select case (attr)
                         case (api_linkf_type)
                             link_value = lOutlet
