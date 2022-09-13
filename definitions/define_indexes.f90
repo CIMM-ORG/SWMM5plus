@@ -66,7 +66,8 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
-        enumerator :: lr_BottomDepth   
+        enumerator :: lr_BottomDepth 
+        enumerator :: lr_BottomRadius  
         enumerator :: lr_BreadthScale
         enumerator :: lr_TopWidth
         enumerator :: lr_ElementLength
@@ -554,6 +555,7 @@ module define_indexes
         enumerator :: epg_CC_semi_circular_nonsurcharged            !% CC semi circular conduits that are not surcharged
         enumerator :: epg_CC_semi_elliptical_nonsurcharged          !% CC semi elliptical conduits that are not surcharged
         enumerator :: epg_CC_egg_shaped_nonsurcharged               !% CC egg shaped conduits that are not surcharged
+        enumerator :: epg_CC_mod_basket_nonsurcharged               !% CC modifiec basket conduits that are not surcharged
         enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JM_impliedStorage_nonsurcharged           !% JM with artificial storage
@@ -855,6 +857,19 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Basket_Handle = esgr_Basket_Handle_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for mod_basket conduit
+    enum, bind(c)
+         enumerator ::  esgr_Mod_Basket_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Mod_Basket_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Mod_Basket_Ytop             !% height of top circular arc
+         enumerator ::  esgr_Mod_Basket_Rtop             !% radius of top circular arc
+         enumerator ::  esgr_Mod_Basket_Atop             !% area of top circular arc
+         enumerator ::  esgr_Mod_Basket_ThetaTop         !% angle of top circular arc
+         enumerator ::  esgr_Mod_Basket_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Mod_Basket = esgr_Mod_Basket_lastplusone-1
+
     !% Define the column indexes for elemGSR(:,:) for Egg_Shaped_conduit
     enum, bind(c)
          enumerator ::  esgr_Egg_Shaped_BreadthMax = 1   !% breadth max for basket handle geometry
@@ -944,6 +959,7 @@ module define_indexes
                             Ncol_elemSGR_Catenary,      &
                             Ncol_elemSGR_Gothic,        &
                             Ncol_elemSGR_Semi_Circular, &
+                            Ncol_elemSGR_Mod_Basket,    &
                             Ncol_elemSGR_Semi_Elliptical)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types

@@ -163,24 +163,25 @@ enum api_linkf_attributes {
   linkf_xsect_wMax,         // 82 *
   linkf_xsect_yBot,         // 83 *
   linkf_xsect_yFull,        // 84 *
-  linkf_transectid,          // 85
-  linkf_forcemain_coef       // 86
+  linkf_xsect_rBot,         // 85
+  linkf_transectid,          // 86
+  linkf_forcemain_coef       // 87
 };
 // skip 2 numbers for index start and end flags
-// end flag                  // 87
-// start flag                // 88
+// end flag                  // 88
+// start flag                // 89
 // these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 89,       // 89
-  transectf_yFull,         // 90
-  transectf_aFull,         // 91
-  transectf_rFull,         // 92
-  transectf_wMax,          // 93
-  transectf_ywMax,         // 94
-  transectf_sMax,          // 95
-  transectf_aMax,          // 96
-  transectf_lengthFactor,  // 97
-  transectf_roughness      // 98
+  transectf_ID = 90,       // 90
+  transectf_yFull,         // 91
+  transectf_aFull,         // 92
+  transectf_rFull,         // 93
+  transectf_wMax,          // 94
+  transectf_ywMax,         // 95
+  transectf_sMax,          // 96
+  transectf_aMax,          // 97
+  transectf_lengthFactor,  // 98
+  transectf_roughness      // 99
 };
 
 // API vars are those necessary for external applications

@@ -581,23 +581,24 @@ module define_api_keys
         enumerator :: api_linkf_xsect_wMax   ! 82
         enumerator :: api_linkf_xsect_yBot   ! 83
         enumerator :: api_linkf_xsect_yFull  ! 84
-        enumerator :: api_linkf_transectidx  ! 85
-        enumerator :: api_linkf_forcemain_coef ! 86
-        enumerator :: api_linkf_end          ! 87  ! must be end of the ...linkf... xsect attributes
+        enumerator :: api_linkf_xsect_rBot   ! 85
+        enumerator :: api_linkf_transectidx  ! 86
+        enumerator :: api_linkf_forcemain_coef ! 87
+        enumerator :: api_linkf_end          ! 88  ! must be end of the ...linkf... xsect attributes
         !% --- transect data
-        enumerator :: api_transectf_start   ! 88
-        enumerator :: api_transectf_ID      ! 89
-        enumerator :: api_transectf_yFull   ! 90
-        enumerator :: api_transectf_aFull   ! 91
-        enumerator :: api_transectf_rFull   ! 92
-        enumerator :: api_transectf_wMax    ! 93
-        enumerator :: api_transectf_ywMax   ! 94
-        enumerator :: api_transectf_sMax    ! 95
-        enumerator :: api_transectf_aMax    ! 96
-        enumerator :: api_transectf_lengthFactor    ! 97
-        enumerator :: api_transectf_roughness       ! 98
-        enumerator :: api_transectf_end             ! 99
-        enumerator :: api_keyslastplusone   ! 100
+        enumerator :: api_transectf_start   ! 89
+        enumerator :: api_transectf_ID      ! 90
+        enumerator :: api_transectf_yFull   ! 91
+        enumerator :: api_transectf_aFull   ! 92
+        enumerator :: api_transectf_rFull   ! 93
+        enumerator :: api_transectf_wMax    ! 94
+        enumerator :: api_transectf_ywMax   ! 95
+        enumerator :: api_transectf_sMax    ! 96
+        enumerator :: api_transectf_aMax    ! 97
+        enumerator :: api_transectf_lengthFactor    ! 98
+        enumerator :: api_transectf_roughness       ! 99
+        enumerator :: api_transectf_end             ! 100
+        enumerator :: api_keyslastplusone   ! 101
     end enum
 
     ! !% API link attributes

@@ -675,6 +675,8 @@ contains
                 ! print *, 'link_FullDepth          ', link%R(ii,lr_FullDepth)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
                 ! print *, 'link_BottomDepth        ', link%R(ii,lr_BottomDepth)
+            link%R(ii,lr_BottomRadius)        = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
+                ! print *, 'lr_BottomRadius        ', link%R(ii,lr_BottomRadius)
             link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
                 ! print *, 'link_InletOffset        ', link%R(ii,lr_InletOffset)
             link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)

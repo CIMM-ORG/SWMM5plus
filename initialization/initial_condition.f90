@@ -1464,7 +1464,62 @@ contains
                     elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
                                                     elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
+        
+        case (lMod_basket)
 
+                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_geometryType)                            = mod_basket
+                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
+                    elemSGR(:,esgr_Mod_Basket_BreadthMax)               = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Mod_Basket_Rtop)                     = link%R(thisLink,lr_BottomRadius)
+                    elemSGR(:,esgr_Mod_Basket_ThetaTop)                 = twoR * asin(elemSGR(:,esgr_Mod_Basket_BreadthMax) / twoR / elemSGR(:,esgr_Mod_Basket_Rtop) )
+                    elemSGR(:,esgr_Mod_Basket_Ytop)                     = elemSGR(:,esgr_Mod_Basket_Rtop) * (oneR - cos(elemSGR(:,esgr_Mod_Basket_ThetaTop) / twoR))
+                    elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)            = elemR(:,er_FullDepth) - elemSGR(:,esgr_Mod_Basket_Ytop)
+                    elemSGR(:,esgr_Mod_Basket_Atop)                     = (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) / (twoR * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
+                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop))))
+                    elemR(:,er_FullArea)                                = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax) &
+                                                                        + elemSGR(:,esgr_Mod_Basket_Atop)                       
+                    where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Mod_Basket_YatMaxBreadth))
+                            elemR(:,er_Area) = elemR(:,er_Depth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
+                        elsewhere
+                            !% find empty top circular area
+                            !% -- find the height of the empty area
+                            elemR(:,er_Temp01) = elemR(:,er_FullDepth) - elemR(:,er_Depth)
+                            !% -- find the theta of the empty area 
+                            elemR(:,er_Temp02) = twoR * acos(oneR - elemR(:,er_Temp01) / elemSGR(:,esgr_Mod_Basket_Rtop))
+                            !% -- now find the empty area
+                            elemR(:,er_Temp03) = (onehalfR * elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemR(:,er_Temp02) - sin(elemR(:,er_Temp02)))
+                            !% -- finally find the area by removing the empty area from Afull
+                            elemR(:,er_Area)   = elemR(:,er_FullArea) - elemR(:,er_Temp03)
+                        end where   
+                        elemR(:,er_SlotDepth) = zeroR              
+                    elsewhere   
+                        !% --- Preissmann Slot
+                        elemR(:,er_Area)      = elemR(:,er_FullArea)
+                        elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
+                        elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                        elemYN(:,eYN_isSlot)  = .true.
+                    endwhere
+
+                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_FullHydDepth)  = elemR(:,er_Depth)
+
+                    elemR(:,er_FullPerimeter) = twoR * elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) + elemSGR(:,esgr_Mod_Basket_BreadthMax) &
+                                              + elemSGR(:,esgr_Mod_Basket_ThetaTop) * elemSGR(:,esgr_Mod_Basket_Rtop)
+                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Mod_Basket_BreadthMax)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
+                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                endwhere
+                
         case (lBasket_handle)
 
             do ii = 1,N_elem(this_image())

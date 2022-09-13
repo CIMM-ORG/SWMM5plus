@@ -1725,6 +1725,10 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_xsect_yFull : 
             *value = FTTOM(Link[link_idx].xsect.yFull);
             break;
+        
+        case linkf_xsect_rBot : 
+            *value = FTTOM(Link[link_idx].xsect.rBot);
+            break;
 
         case linkf_transectid :
             *value = Link[link_idx].xsect.transect;
