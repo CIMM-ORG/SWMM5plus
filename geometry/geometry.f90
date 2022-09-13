@@ -14,6 +14,7 @@ module geometry
     use circular_conduit
     use egg_shaped_conduit
     use filled_circular_conduit
+    use gothic_conduit
     use horse_shoe_conduit
     use irregular_channel
     use parabolic_channel
@@ -645,6 +646,15 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (gothic)                                    
+                                    area(tB)     = gothic_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = gothic_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = gothic_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= gothic_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= gothic_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
@@ -903,6 +913,13 @@ module geometry
             call catenary_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --  GOTHIC
+        thisCol => col_elemPGx(epg_CC_gothic_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call gothic_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !call util_CLprint('after circular') 
 
         !% --- IRREGULAR
@@ -1136,9 +1153,7 @@ module geometry
         case (horseshoe)
             outvalue = horse_shoe_area_from_depth_singular (idx, indepth)
         case (gothic)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = gothic_area_from_depth_singular (idx, indepth)
         case (catenary)
             outvalue = catenary_area_from_depth_singular (idx, indepth)
         case (semi_elliptical)
@@ -1272,6 +1287,13 @@ module geometry
             call catenary_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- GOTHIC
+        Npack => npack_elemPGx(epg_CC_gothic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic_nonsurcharged)
+            call gothic_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1347,9 +1369,7 @@ module geometry
         case (horseshoe)
             outvalue = horse_shoe_topwidth_from_depth_singular (idx, indepth)
         case (gothic)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = gothic_topwidth_from_depth_singular (idx, indepth)
         case (catenary)
             outvalue = catenary_topwidth_from_depth_singular (idx, indepth)
         case (semi_elliptical)
@@ -1484,6 +1504,13 @@ module geometry
             call catenary_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- GOTHIC
+        Npack => npack_elemPGx(epg_CC_gothic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic_nonsurcharged)
+            call gothic_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         !%     note this requires first using the table lookup for hydraulic radius
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
@@ -1562,9 +1589,7 @@ module geometry
         case (horseshoe)
             outvalue = horse_shoe_perimeter_from_depth_singular (idx, indepth)
         case (gothic)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = gothic_perimeter_from_depth_singular (idx, indepth)
         case (catenary)
             outvalue = catenary_perimeter_from_depth_singular (idx, indepth)
         case (semi_elliptical)
@@ -1700,6 +1725,13 @@ module geometry
             call catenary_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- GOTHIC
+        Npack => npack_elemPGx(epg_CC_gothic_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic_nonsurcharged)
+            call gothic_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular_nonsurcharged)
         if (Npack > 0) then
@@ -1787,9 +1819,8 @@ module geometry
             temp1    = horse_shoe_topwidth_from_depth_singular    (idx, indepth)
             outvalue = horse_shoe_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (gothic)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = gothic_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = gothic_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (catenary)
             temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
             outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)

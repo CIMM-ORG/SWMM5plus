@@ -1786,19 +1786,9 @@ contains
                     end select
 
                 case (API_GOTHIC)
-                    print *, 'CODE ERROR: API_GOTHIC geometry not handled yet'
-                    call util_crashpoint(33382)
                     select case (attr)
                         case (api_linkf_geometry)
-                        case (api_linkf_xsect_wMax)
-                        case (api_linkf_xsect_yFull)
-                        case default
-                    end select
-
-                case (API_CATENARY)
-                    select case (attr)
-                        case (api_linkf_geometry)
-                            link_value = lBasket_handle
+                            link_value = lGothic
                         case (api_linkf_xsect_wMax)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
@@ -1810,7 +1800,30 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% gothic geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
+                    end select
+
+                case (API_CATENARY)
+                    select case (attr)
+                        case (api_linkf_geometry)
+                            link_value = lCatenary
+                        case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case default
+                            !% catenary geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
