@@ -1501,7 +1501,6 @@ contains
                         elemR(:,er_Depth)     = elemR(:,er_FullDepth)
                         elemYN(:,eYN_isSlot)  = .true.
                     endwhere
-
                     elemR(:,er_Area_N0)       = elemR(:,er_Area)
                     elemR(:,er_Area_N1)       = elemR(:,er_Area)
                     elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
@@ -1516,8 +1515,8 @@ contains
                                               + elemSGR(:,esgr_Mod_Basket_ThetaTop) * elemSGR(:,esgr_Mod_Basket_Rtop)
                     elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Mod_Basket_BreadthMax)
                     elemR(:,er_AreaBelowBreadthMax)   = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
+                                                      + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
                 
         case (lBasket_handle)

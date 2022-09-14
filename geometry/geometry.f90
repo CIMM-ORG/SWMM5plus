@@ -10,6 +10,7 @@ module geometry
     use triangular_channel
     use rectangular_triangular_conduit
     use basket_handle_conduit
+    use mod_basket_conduit
     use catenary_conduit
     use egg_shaped_conduit
     use circular_conduit
@@ -657,6 +658,15 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (mod_basket)                                    
+                                    area(tB)     = mod_basket_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = mod_basket_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = mod_basket_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= mod_basket_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= mod_basket_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (semi_elliptical)                                    
                                     area(tB)     = semi_elliptical_area_from_depth_singular        (tB,depth(tB))
                                     topwidth(tB) = semi_elliptical_topwidth_from_depth_singular    (tB,depth(tB))
@@ -947,6 +957,13 @@ module geometry
             call gothic_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --  MODIFIED BASKET HANDLE
+        thisCol => col_elemPGx(epg_CC_mod_basket_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !% --  SEMI-ELLIPTICAL
         thisCol => col_elemPGx(epg_CC_semi_elliptical_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
@@ -1159,9 +1176,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (mod_basket)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = mod_basket_area_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
         case (circular )
@@ -1331,6 +1346,13 @@ module geometry
             call gothic_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- MODIFIED BASKET HANDLE
+        Npack => npack_elemPGx(epg_CC_mod_basket_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_mod_basket_nonsurcharged)
+            call mod_basket_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- SEMI-ELLIPTICAL
         Npack => npack_elemPGx(epg_CC_semi_elliptical_nonsurcharged)
         if (Npack > 0) then
@@ -1385,9 +1407,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (mod_basket)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = mod_basket_topwidth_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
         case (circular )
@@ -1558,6 +1578,13 @@ module geometry
             call gothic_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- MODIFIED BASKET HANDLE
+        Npack => npack_elemPGx(epg_CC_mod_basket_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_mod_basket_nonsurcharged)
+            call mod_basket_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- SEMI-ELLIPTICAL
         Npack => npack_elemPGx(epg_CC_semi_elliptical_nonsurcharged)
         if (Npack > 0) then
@@ -1615,9 +1642,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (mod_basket)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = mod_basket_perimeter_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
         case (circular )
@@ -1789,6 +1814,13 @@ module geometry
             call gothic_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- MODIFIED BASKET HANDLE
+        Npack => npack_elemPGx(epg_CC_mod_basket_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_mod_basket_nonsurcharged)
+            call mod_basket_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- SEMI-ELLIPTICAL
         Npack => npack_elemPGx(epg_CC_semi_elliptical_nonsurcharged)
         if (Npack > 0) then
@@ -1845,9 +1877,8 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (mod_basket)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = mod_basket_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = mod_basket_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (irregular)
             !% --- get the area and topwidth, then compute the hydraulic depth
             temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)

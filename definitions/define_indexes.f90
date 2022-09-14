@@ -438,6 +438,7 @@ module define_indexes
         enumerator :: eYN_isSlot                        !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
+        enumerator :: eYN_Temp01                        !% temporary logical space
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemYN = eYN_lastplusone-1
