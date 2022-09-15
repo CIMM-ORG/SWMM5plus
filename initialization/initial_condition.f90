@@ -1475,8 +1475,8 @@ contains
                     elemSGR(:,esgr_Mod_Basket_ThetaTop)                 = twoR * asin(elemSGR(:,esgr_Mod_Basket_BreadthMax) / twoR / elemSGR(:,esgr_Mod_Basket_Rtop) )
                     elemSGR(:,esgr_Mod_Basket_Ytop)                     = elemSGR(:,esgr_Mod_Basket_Rtop) * (oneR - cos(elemSGR(:,esgr_Mod_Basket_ThetaTop) / twoR))
                     elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)            = elemR(:,er_FullDepth) - elemSGR(:,esgr_Mod_Basket_Ytop)
-                    elemSGR(:,esgr_Mod_Basket_Atop)                     = (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) / (twoR * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
-                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop))))
+                    elemSGR(:,esgr_Mod_Basket_Atop)                     = onehalfR * (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
+                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop)))
                     elemR(:,er_FullArea)                                = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax) &
                                                                         + elemSGR(:,esgr_Mod_Basket_Atop)                       
                     where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
@@ -1485,7 +1485,7 @@ contains
                         elsewhere
                             !% find empty top circular area
                             !% -- find the height of the empty area
-                            elemR(:,er_Temp01) = elemR(:,er_FullDepth) - elemR(:,er_Depth)
+                            elemR(:,er_Temp01) = max(elemR(:,er_FullDepth) - elemR(:,er_Depth), zeroR)
                             !% -- find the theta of the empty area 
                             elemR(:,er_Temp02) = twoR * acos(oneR - elemR(:,er_Temp01) / elemSGR(:,esgr_Mod_Basket_Rtop))
                             !% -- now find the empty area
