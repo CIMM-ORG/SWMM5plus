@@ -408,7 +408,10 @@ contains
         ! call util_CLprint('At end of initialization')
 
         ! print *, setting%Output%Report%useHD5F
-        ! stop 4409872
+
+        !print *, setting%Output%DataOut%isSlotDepthOut
+        !print *, setting%Solver%PreissmannSlot%Method, StaticSlot, DynamicSlot
+        !stop 4409872
 
         !%------------------------------------------------------------------- 
         !% Closing
@@ -2280,8 +2283,8 @@ contains
             write(*,'(A)') '** '
             ifound = .true.
         end if
-        if (.not. setting%Solver%PreissmannSlot) then
-            write(*,'(A)') '** setting.Solver.PreissmannSlot = false, which has not been fully tested.'
+        if (.not. setting%Solver%PreissmannSlot%useSlotTF) then
+            write(*,'(A)') '** setting.Solver.PreissmannSlot.useSlotTF = false, which has not been fully tested.'
             write(*,'(A)') '** Unknown problems will occur in surcharged conditions. '
             write(*,'(A)') '** '
             ifound = .true.

@@ -423,7 +423,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
-        enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE if non-surcharged 
+        enumerator :: eYN_isACsurcharged                  !% TRUE is a surcharged conduit, FALSE if non-surcharged 
         enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
@@ -432,7 +432,7 @@ module define_indexes
         enumerator :: eYN_isDummy
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
-        enumerator :: eYN_isSlot                        !% TRUE if Preissmann slot is present for this cell
+        enumerator :: eYN_isPSsurcharged                        !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_lastplusone !% must be last enum item
@@ -452,24 +452,24 @@ module define_indexes
         enumerator :: ep_AC = 1                     !% all AC elements
         enumerator :: ep_ALLtm                      !% all ETM, AC elements
         enumerator :: ep_CC_AC                      !% all CC elements that are AC
-        enumerator :: ep_CC_AC_surcharged           !% all CC elements that are AC
+        enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
         enumerator :: ep_CC_ALLtm                   !% all CC elements that are ETM or AC
-        enumerator :: ep_CC_ALLtm_surcharged        !% all CC elements that are AC and surcharged
+        enumerator :: ep_CC_ALLtm_ACsurcharged      !% all CC elements that are AC and surcharged
         enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
-        enumerator :: ep_CC_ETM_surcharged          !% CC elements that are ETM and surcharged
+        enumerator :: ep_CC_ETM_PSsurcharged        !% CC elements that are ETM and surcharged
         enumerator :: ep_CC_H_ETM                   !% all CC elements that are ETM for H
         enumerator :: ep_CC_Q_AC                    !% all CC elements that are AC for Q
         enumerator :: ep_CC_Q_ETM                   !% all CC elements that are ETM for Q
-        enumerator :: ep_CCJB_AC_surcharged         !% all CC and JB elements that are AC
+        enumerator :: ep_CCJB_ACsurcharged          !% all CC and JB elements that are AC
         enumerator :: ep_CCJB_ALLtm                 !% all CC and JB elements that ar any TM
         enumerator :: ep_CCJB_AC                    !% all CC and JB elements that are AC
-        enumerator :: ep_CCJB_ALLtm_surcharged      !% all CC and JB elements that are AC and surcharged
+        enumerator :: ep_CCJB_ALLtm_ACsurcharged      !% all CC and JB elements that are AC and surcharged
         enumerator :: ep_CCJB_eETM_i_fAC            !% Any CC or JB element that is ETM and has an AC face.
         enumerator :: ep_CCJB_ETM                   !% CC and JB elements that are ETM
-        enumerator :: ep_CCJB_ETM_surcharged        !% CC and JB elements that are ETM and surcharged
+        enumerator :: ep_CCJB_ETM_PSsurcharged        !% CC and JB elements that are ETM and surcharged
         enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
         enumerator :: ep_CCJM_H_ETM                 !% CC and JM elements that are ETM for H
-        enumerator :: ep_CC_isclosed                !% CC elements that have er_Setting = 0.0 indicating closed off
+        enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
         enumerator :: ep_Diag                       !% diagnostic elements (static)
         enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
@@ -479,9 +479,9 @@ module define_indexes
         enumerator :: ep_JB_AC                      !% junction branches using AC method
         enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
         enumerator :: ep_JB_ETM                     !% junction branches using ETM method
-        enumerator :: ep_NonSurcharged_AC           !% all surcharged with AC
-        enumerator :: ep_NonSurcharged_ALLtm        !% all time march nonsurcharged
-        enumerator :: ep_NonSurcharged_ETM          !% all surcharged with ETM
+        enumerator :: ep_AC_ACnonSurcharged         !% all surcharged with AC
+        enumerator :: ep_ALLtm_NonSurcharged        !% all time march nonsurcharged (neither PS nor AC surcharge)
+        enumerator :: ep_ETM_PSnonSurcharged        !% all surcharged with ETM
         !enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
         !enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
         enumerator :: ep_SmallDepth_CC_ALLtm
@@ -496,18 +496,20 @@ module define_indexes
         enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
         enumerator :: ep_ZeroDepth_JM_ETM
         enumerator :: ep_ZeroDepth_JM_AC
-        enumerator :: ep_Surcharged_AC              !% all surcharged with AC
-        enumerator :: ep_Surcharged_ALLtm           !% all time march surcharged
-        enumerator :: ep_Surcharged_ETM             !% all surcharged with ETM
-        enumerator :: ep_CCJM_H_AC_surcharged       !% all CCJM surcharged for H and AC solution
+        enumerator :: ep_ACsurcharged              !% all surcharged with AC
+        enumerator :: ep_ALLtmSurcharged           !% all time march surcharged
+        enumerator :: ep_PSsurcharged             !% all surcharged with ETM
+        enumerator :: ep_CCJM_H_ACsurcharged       !% all CCJM surcharged for H and AC solution
         enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
         enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
-        enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
+        enumerator :: ep_JB_Downstream            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
+        enumerator :: ep_CC_Open_Elements           !% all CC elements that are open channel
         enumerator :: ep_CC_Closed_Elements         !% all closed CC elements 
-        enumerator :: ep_JM_Closed_Elements         !% all closed CC elements
-        enumerator :: ep_Closed_JB_Elements         !% all closed JB elements   
+        !enumerator :: ep_JM_Closed_Elements         !% all closed JM elements
+        enumerator :: ep_JB_Closed_Elements         !% all closed JB elements 
+        enumerator :: ep_JB_Open_Elements           !% all open-channel JB elements  
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
         enumerator :: ep_CC_NOTzerodepth            !% all Conduits that have time-marching and are above zero depth
@@ -516,10 +518,10 @@ module define_indexes
         enumerator :: ep_CCJM_NOTsmalldepth         !% alternate elements for CFL computation 
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_FM_HW_all                  !% all Hazen-Williams Force Main elements
-        enumerator :: ep_FM_HW_PS_isSurcharged      !% all Hazen-Williams Force Main elements Preissmann Slot method that are surcharged
+        enumerator :: ep_FM_HW_PSsurcharged      !% all Hazen-Williams Force Main elements Preissmann Slot method that are surcharged
         !enumerator :: ep_FM_HW_PS_NonSurcharged     !% all Hazen-Williams Force Main elements with Preissmann Slot that are not surcharged
-        enumerator :: ep_FM_dw_PS_isSurcharged      !% all Darcy-Weisbach Force Main elements Preissmann Slot method that are surcharged
-        enumerator :: ep_FM_dW_PS_NonSurcharged     !% all Darcy-Weisbach Force Main elements with Preissmann Slot that are not surcharged
+        enumerator :: ep_FM_dw_PSsurcharged      !% all Darcy-Weisbach Force Main elements Preissmann Slot method that are surcharged
+        enumerator :: ep_FM_dw_PSnonSurcharged     !% all Darcy-Weisbach Force Main elements with Preissmann Slot that are not surcharged
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemP = ep_lastplusone-1
@@ -536,21 +538,21 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CC_rectangular_nonsurcharged = 1          !% CC rectangular channels that are not surcharged
-        enumerator :: epg_CC_rectangular_closed_nonsurcharged       !% CC rectangular conduits that are not surcharged
-        enumerator :: epg_CC_rectangular_triangular_nonsurcharged   !% CC rectangular_triangular that are not surcharged
-        enumerator :: epg_CC_trapezoidal_nonsurcharged              !% CC trapezoidal channels that are not surcharged
-        enumerator :: epg_CC_triangular_nonsurcharged               !% CC triangular channels that are not surcharged
-        enumerator :: epg_CC_irregular_nonsurcharged                !% CC irregular channels that are not surcharged
-        enumerator :: epg_CC_circular_nonsurcharged                 !% CC circular conduits that are not surcharged
-        enumerator :: epg_CC_parabolic_nonsurcharged                !% CC parabolic channels that are not surcharged
-        enumerator :: epg_CC_basket_handle_nonsurcharged            !% CC basket handle conduits that are not surcharged
-        enumerator :: epg_CC_horse_shoe_nonsurcharged               !% CC horse shoe conduits that are not surcharged
-        enumerator :: epg_CC_filled_circular_nonsurcharged          !% CC filled circular conduits that are not surcharged
-        enumerator :: epg_CC_egg_shaped_nonsurcharged               !% CC egg shaped conduits that are not surcharged
-        enumerator :: epg_JM_functionalStorage_nonsurcharged        !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabularStorage_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
-        enumerator :: epg_JM_impliedStorage_nonsurcharged           !% JM with artificial storage
+        enumerator :: epg_CC_rectangular = 1          !% CC rectangular channels that are not surcharged
+        enumerator :: epg_CC_rectangular_closed       !% CC rectangular conduits that are not surcharged
+        enumerator :: epg_CC_rectangular_triangular   !% CC rectangular_triangular that are not surcharged
+        enumerator :: epg_CC_trapezoidal              !% CC trapezoidal channels that are not surcharged
+        enumerator :: epg_CC_triangular               !% CC triangular channels that are not surcharged
+        enumerator :: epg_CC_irregular                !% CC irregular channels that are not surcharged
+        enumerator :: epg_CC_circular                 !% CC circular conduits that are not surcharged
+        enumerator :: epg_CC_parabolic                !% CC parabolic channels that are not surcharged
+        enumerator :: epg_CC_basket_handle            !% CC basket handle conduits that are not surcharged
+        enumerator :: epg_CC_horse_shoe               !% CC horse shoe conduits that are not surcharged
+        enumerator :: epg_CC_filled_circular          !% CC filled circular conduits that are not surcharged
+        enumerator :: epg_CC_egg_shaped               !% CC egg shaped conduits that are not surcharged
+        enumerator :: epg_JM_functionalStorage        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabularStorage           !% JM tabular geometry relationship nonsurcharges
+        enumerator :: epg_JM_impliedStorage           !% JM with artificial storage
         enumerator :: epg_JB_rectangular                            !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                            !% all trapezoidal junction branches
         enumerator :: epg_JB_triangular                             !% all triangular junction branches
@@ -661,7 +663,7 @@ module define_indexes
     enum, bind(c)
         enumerator ::  esr_JunctionMain_PondedArea = 1
         enumerator ::  esr_JunctionMain_PondedVolume
-        enumerator ::  esr_JunctionMain_MaxSurchargeHead
+        enumerator ::  esr_JunctionMain_SurchargeExtraDepth
         enumerator ::  esr_JunctionBranch_Kfactor
         enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
@@ -1141,7 +1143,7 @@ module define_indexes
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
-        enumerator :: fYN_isSlot
+        enumerator :: fYN_isPSsurcharged
         enumerator :: fYN_isDownstreamJbFace
         enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed

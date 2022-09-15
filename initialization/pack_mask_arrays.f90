@@ -126,7 +126,6 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
-        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -163,7 +162,6 @@ contains
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
         !--------------------------------------------------------------------------
-        !if (crashYN) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -284,37 +282,11 @@ contains
 ! PRIVATE
 !==========================================================================
 !
-    ! subroutine mask_faces_whole_array_static()
-    !     !--------------------------------------------------------------------------
-    !     !% find all the faces except boundary and null faces
-    !     !--------------------------------------------------------------------------
-    !     integer, pointer :: mcol
-    !     character(64) :: subroutine_name = 'mask_faces_whole_array_static'
-    !     !--------------------------------------------------------------------------
-    !     !if (crashYN) return
-    !     if (setting%Debug%File%pack_mask_arrays) &
-    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    !     mcol => col_faceM(fm_all)
-
-    !     faceM(:,mcol) = ( &
-    !         (faceI(:,fi_BCtype) == doesnotexist) &
-    !         .and. &
-    !         (.not. faceYN(:,fYN_isnull))  &
-    !         .and. &
-    !         (.not. faceYN(:,fYN_isSharedFace)) &
-    !         )
-
-    !     if (setting%Debug%File%pack_mask_arrays) &
-    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine mask_faces_whole_array_static
-!
-!==========================================================================
-!==========================================================================
-!
     subroutine pack_geometry_alltm_elements()
         !--------------------------------------------------------------------------
         !% packed arrays for geometry types in elemPGalltm
+        !% Note that these CANNOT include surcharging as they
+        !% are static arrays
         !--------------------------------------------------------------------------
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
@@ -326,7 +298,7 @@ contains
         eIdx => elemI(:,ei_Lidx)
 
         !% --- rectangular channels 
-        ptype => col_elemPGalltm(epg_CC_rectangular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_rectangular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -334,8 +306,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == rectangular) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -350,8 +320,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == rectangular) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -361,7 +329,7 @@ contains
         end if
 
         !% --- rectangular conduits 
-        ptype => col_elemPGalltm(epg_CC_rectangular_closed_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_rectangular_closed)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -369,8 +337,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == rectangular_closed) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -385,8 +351,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == rectangular_closed) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -396,14 +360,12 @@ contains
         end if
 
         !% --- trapezoidal channels 
-        ptype => col_elemPGalltm(epg_CC_trapezoidal_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_trapezoidal)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -416,8 +378,6 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -427,14 +387,12 @@ contains
         end if
 
         !% --- triangular channels 
-        ptype => col_elemPGalltm(epg_CC_triangular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_triangular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == triangular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -447,8 +405,6 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == triangular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -458,14 +414,12 @@ contains
         end if
 
         !% --- rectangular triangular channels 
-        ptype => col_elemPGalltm(epg_CC_rectangular_triangular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_rectangular_triangular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == rect_triang) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -478,8 +432,6 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == rect_triang) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -489,14 +441,12 @@ contains
         end if
 
         !% --- circular conduits 
-        ptype => col_elemPGalltm(epg_CC_circular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_circular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -509,8 +459,6 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -520,14 +468,12 @@ contains
         end if
 
         !% --- filled circular conduits 
-        ptype => col_elemPGalltm(epg_CC_filled_circular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_filled_circular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == filled_circular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -540,8 +486,6 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == filled_circular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -551,14 +495,12 @@ contains
         end if
 
         !% --- irregular channels
-        ptype => col_elemPGalltm(epg_CC_irregular_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_irregular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == irregular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -571,8 +513,6 @@ contains
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == irregular) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -582,7 +522,7 @@ contains
         end if
 
         !% --- parabolic channels 
-        ptype => col_elemPGalltm(epg_CC_parabolic_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_parabolic)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -590,8 +530,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == parabolic) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -606,8 +544,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == parabolic) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -617,7 +553,7 @@ contains
         end if
 
         !% --- Basket Handle conduits
-        ptype => col_elemPGalltm(epg_CC_basket_handle_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_basket_handle)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -625,8 +561,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == basket_handle) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -641,8 +575,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == basket_handle) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -652,7 +584,7 @@ contains
         end if
 
         !% --- Egg shaped conduits
-        ptype => col_elemPGalltm(epg_CC_egg_shaped_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_egg_shaped)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -660,8 +592,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == eggshaped) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -676,8 +606,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == eggshaped) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -687,7 +615,7 @@ contains
         end if
 
         !% --- Horse Shoe conduits
-        ptype => col_elemPGalltm(epg_CC_horse_shoe_nonsurcharged)
+        ptype => col_elemPGalltm(epg_CC_horse_shoe)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -695,8 +623,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == horseshoe) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -711,8 +637,6 @@ contains
                 ( &
                     (elemI(:,ei_geometryType) == horseshoe) &
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -723,7 +647,7 @@ contains
 
 
         !% --- junction main with functional geometry relationship
-        ptype => col_elemPGalltm(epg_JM_functionalStorage_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_functionalStorage)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -731,8 +655,6 @@ contains
                 ) &
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -747,8 +669,6 @@ contains
                 ) &
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -758,7 +678,7 @@ contains
         end if
 
         !% --- junction main with tabular geometry relationship
-        ptype => col_elemPGalltm(epg_JM_tabularStorage_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_tabularStorage)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -766,8 +686,6 @@ contains
                 ) &
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -783,8 +701,6 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
-                .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
                     .or. &
@@ -793,7 +709,7 @@ contains
         end if
 
         !% --- junction main with artificial storage relationship -- for ALL tm
-        ptype => col_elemPGalltm(epg_JM_impliedStorage_nonsurcharged)
+        ptype => col_elemPGalltm(epg_JM_impliedStorage)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 ( &
@@ -801,8 +717,6 @@ contains
                 ) &
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -818,8 +732,6 @@ contains
                 ) &
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
-                .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_HeqType) == time_march) &
@@ -849,7 +761,7 @@ contains
         eIdx => elemI(:,ei_Lidx)
 
         !% rectangular channels 
-        ptype => col_elemPGac(epg_CC_rectangular_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_rectangular)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -858,7 +770,7 @@ contains
                     (elemI(:,ei_geometryType) == rectangular) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -871,14 +783,14 @@ contains
                     (elemI(:,ei_geometryType) == rectangular) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% rectangular conduits 
-        ptype => col_elemPGac(epg_CC_rectangular_closed_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_rectangular_closed)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -887,7 +799,7 @@ contains
                     (elemI(:,ei_geometryType) == rectangular_closed) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -900,21 +812,21 @@ contains
                     (elemI(:,ei_geometryType) == rectangular_closed) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% trapezoidal channels 
-        ptype => col_elemPGac(epg_CC_trapezoidal_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_trapezoidal)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -925,21 +837,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% triangular channels 
-        ptype => col_elemPGac(epg_CC_triangular_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_triangular)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == triangular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -950,14 +862,14 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == triangular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
        !% irregular channels 
-        ptype => col_elemPGac(epg_CC_irregular_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_irregular)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -978,7 +890,7 @@ contains
         end if
 
         !% parabolic channels 
-        ptype => col_elemPGac(epg_CC_parabolic_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_parabolic)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -987,7 +899,7 @@ contains
                     (elemI(:,ei_geometryType) == parabolic) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1000,7 +912,7 @@ contains
                     (elemI(:,ei_geometryType) == parabolic) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1008,7 +920,7 @@ contains
 
         
         !% Basket Handle conduits 
-        ptype => col_elemPGac(epg_CC_basket_handle_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_basket_handle)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -1017,7 +929,7 @@ contains
                     (elemI(:,ei_geometryType) == basket_handle) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1030,14 +942,14 @@ contains
                     (elemI(:,ei_geometryType) == basket_handle) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% Egg shaped conduits 
-        ptype => col_elemPGac(epg_CC_egg_shaped_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_egg_shaped)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -1046,7 +958,7 @@ contains
                     (elemI(:,ei_geometryType) == eggshaped) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1059,14 +971,14 @@ contains
                     (elemI(:,ei_geometryType) == eggshaped) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% Egg shaped conduits 
-        ptype => col_elemPGac(epg_CC_horse_shoe_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_horse_shoe)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -1075,7 +987,7 @@ contains
                     (elemI(:,ei_geometryType) == horseshoe) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1088,7 +1000,7 @@ contains
                     (elemI(:,ei_geometryType) == horseshoe) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1096,14 +1008,14 @@ contains
 
         
         !% rectangular triangular channels 
-        ptype => col_elemPGac(epg_CC_rectangular_triangular_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_rectangular_triangular)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == rect_triang) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1114,21 +1026,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == rect_triang) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% circular conduits 
-        ptype => col_elemPGac(epg_CC_circular_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_circular)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1139,21 +1051,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% filled circular conduits 
-        ptype => col_elemPGac(epg_CC_filled_circular_nonsurcharged)
+        ptype => col_elemPGac(epg_CC_filled_circular)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == filled_circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1164,14 +1076,14 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == filled_circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_functionalStorage_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_functionalStorage)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -1180,7 +1092,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1193,14 +1105,14 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% junction main with functional geometry relationship
-        ptype => col_elemPGac(epg_JM_tabularStorage_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_tabularStorage)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -1209,7 +1121,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
@@ -1222,14 +1134,14 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
         end if
 
         !% junction main with artificial storage relationship -- for AC
-        ptype => col_elemPGac(epg_JM_impliedStorage_nonsurcharged)
+        ptype => col_elemPGac(epg_JM_impliedStorage)
         npack => npack_elemPGac(ptype)
         npack = count( &
                 ( &
@@ -1238,7 +1150,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == AC) &
                 )
@@ -1252,7 +1164,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == AC) &
                 )
@@ -1279,7 +1191,7 @@ contains
         eIdx => elemI(:,ei_Lidx)
 
         !% --- rectangular channels nonsurcharged
-        ptype => col_elemPGetm(epg_CC_rectangular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_rectangular)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -1288,7 +1200,7 @@ contains
                     (elemI(:,ei_geometryType) == rectangular) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1301,7 +1213,7 @@ contains
                     (elemI(:,ei_geometryType) == rectangular) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1309,7 +1221,7 @@ contains
 
 
         !% --- rectangular conduits nonsurcharged
-        ptype => col_elemPGetm(epg_CC_rectangular_closed_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_rectangular_closed)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -1318,7 +1230,7 @@ contains
                     (elemI(:,ei_geometryType) == rectangular_closed) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1331,21 +1243,21 @@ contains
                     (elemI(:,ei_geometryType) == rectangular_closed) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- trapezoidal channels, conduits nonsurcharged
-        ptype => col_elemPGetm(epg_CC_trapezoidal_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_trapezoidal)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1356,21 +1268,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- triangular channels, conduits nonsurcharged
-        ptype => col_elemPGetm(epg_CC_triangular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_triangular)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == triangular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1381,21 +1293,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == triangular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- rectangular triangular channels, conduits 
-        ptype => col_elemPGetm(epg_CC_rectangular_triangular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_rectangular_triangular)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == rect_triang) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1406,21 +1318,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == rect_triang) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- circular conduits, channels
-        ptype => col_elemPGetm(epg_CC_circular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_circular)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1431,21 +1343,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- filled circular conduits, channels
-        ptype => col_elemPGetm(epg_CC_filled_circular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_filled_circular)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
                 (elemI(:,ei_geometryType) == filled_circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1456,21 +1368,21 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == filled_circular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- irregular channels nonsurcharged
-        ptype => col_elemPGetm(epg_CC_irregular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_irregular)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == irregular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1481,14 +1393,14 @@ contains
                 .and. &
                 (elemI(:,ei_geometryType) == irregular) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- parabolic channels nonsurcharged
-        ptype => col_elemPGetm(epg_CC_parabolic_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_parabolic)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
@@ -1497,7 +1409,7 @@ contains
                     (elemI(:,ei_geometryType) == parabolic) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1510,14 +1422,14 @@ contains
                     (elemI(:,ei_geometryType) == parabolic) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% Basket Handle conduits 
-        ptype => col_elemPGetm(epg_CC_basket_handle_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_basket_handle)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -1526,7 +1438,7 @@ contains
                     (elemI(:,ei_geometryType) == basket_handle) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1539,14 +1451,14 @@ contains
                     (elemI(:,ei_geometryType) == basket_handle) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% Egg shaped conduits 
-        ptype => col_elemPGetm(epg_CC_egg_shaped_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_egg_shaped)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -1555,7 +1467,7 @@ contains
                     (elemI(:,ei_geometryType) == eggshaped) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1568,14 +1480,14 @@ contains
                     (elemI(:,ei_geometryType) == eggshaped) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% Horse Shoe conduits 
-        ptype => col_elemPGetm(epg_CC_horse_shoe_nonsurcharged)
+        ptype => col_elemPGetm(epg_CC_horse_shoe)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
@@ -1584,7 +1496,7 @@ contains
                     (elemI(:,ei_geometryType) == horseshoe) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1597,7 +1509,7 @@ contains
                     (elemI(:,ei_geometryType) == horseshoe) &
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged))&
+                (.not. elemYN(:,eYN_isACsurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -1605,7 +1517,7 @@ contains
 
 
         !% --- junction main with functional geometry relationship, nonsurcharged
-        ptype => col_elemPGetm(epg_JM_functionalStorage_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_functionalStorage)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -1614,7 +1526,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -1627,14 +1539,14 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
         !% --- junction main with functional geometry relationship, nonsurcharged
-        ptype => col_elemPGetm(epg_JM_tabularStorage_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_tabularStorage)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -1643,7 +1555,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -1656,7 +1568,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -1664,7 +1576,7 @@ contains
 
 
         !% --- junction main with artificial storage relationship -- for ETM, nonsurcharged
-        ptype => col_elemPGetm(epg_JM_impliedStorage_nonsurcharged)
+        ptype => col_elemPGetm(epg_JM_impliedStorage)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -1673,7 +1585,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -1687,7 +1599,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -1877,9 +1789,9 @@ contains
                 )
         end if
 
-        !% ep_JB_DownStreamJB
+        !% ep_JB_Downstream
         !% - all downstream JB elements
-        ptype => col_elemP(ep_JB_DownStreamJB)
+        ptype => col_elemP(ep_JB_Downstream)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -1914,6 +1826,124 @@ contains
                 (elemYN(:,eYN_isElementDownstreamOfJB)) &
                 ))
         endif
+
+        !% ep_CC_Open_Elements
+        !% --- all the open channel time-marching elements
+        ptype => col_elemP(ep_CC_Open_Elements)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == trapezoidal) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == triangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == power_function) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_triang) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_round) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == irregular) &
+                ) &
+            )
+        if (npack > 0) then 
+            elemP(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == trapezoidal) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == triangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == power_function) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_triang) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_round) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == irregular) &
+                ) &
+            )
+        end if
+
+        !% ep_JB_Open_Elements
+        !% --- all the open channel junction branch
+        ptype => col_elemP(ep_JB_Open_Elements)
+        npack => npack_elemP(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JB) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == trapezoidal) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == triangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == power_function) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_triang) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_round) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == irregular) &
+                ) &
+            )
+        if (npack > 0) then 
+            elemP(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JB) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == rectangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == trapezoidal) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == triangular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == parabolic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == power_function) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_triang) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rect_round) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == irregular) &
+                ) &
+            )
+        end if
 
         !% ep_CC_Closed_Elements
         !% - all the closed time-marching elements
@@ -1999,49 +2029,52 @@ contains
                     .or. &
                     (elemI(:,ei_geometryType) == custom) &
                    ! .or. &
-                   ! (elemI(:,ei_geometryType) == force_main) & !!% 20220905brh removed as force_main is not a geometry type
+                   ! (elemI(:,ei_geometryType) == force_main) & !!% 20220905brh removed as force_main is not a geometry type in SWMM5+
                 ) )
         end if
 
-        !% ep_JM_Closed_Elements
-        !% - all the closed JM elements
-        ptype => col_elemP(ep_JM_Closed_Elements)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                ( &
-                    (elemI(:,ei_elementType) == JM) &
-                ) &
-                .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ) &
-                .and. &
-                ( &
-                    elemYN(:,eYN_canSurcharge) &
-                ) )
+        ! !% ep_JM_Closed_Elements
+        ! !% - all the closed JM elements
+        ! ptype => col_elemP(ep_JM_Closed_Elements)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         ( &
+        !             (elemI(:,ei_elementType) == JM) &
+        !         ) &
+        !         .and. &
+        !         ( &
+        !             (elemI(:,ei_HeqType) == time_march) &
+        !             .or. &
+        !             (elemI(:,ei_QeqType) == time_march) &
+        !         ) &
+        !         .and. &
+        !         ( &
+        !             elemYN(:,eYN_canSurcharge) &
+        !         ) )
 
-        if (npack > 0) then
-            elemP(1:npack, ptype) = pack(eIdx, &
-                ( &
-                    (elemI(:,ei_elementType) == JM) &
-                ) &
-                .and. &
-                ( &
-                    (elemI(:,ei_HeqType) == time_march) &
-                    .or. &
-                    (elemI(:,ei_QeqType) == time_march) &
-                ) &
-                .and. &
-                ( &
-                    elemYN(:,eYN_canSurcharge) &
-                ) )
-        end if
+        ! if (npack > 0) then
+        !     elemP(1:npack, ptype) = pack(eIdx, &
+        !         ( &
+        !             (elemI(:,ei_elementType) == JM) &
+        !         ) &
+        !         .and. &
+        !         ( &
+        !             (elemI(:,ei_HeqType) == time_march) &
+        !             .or. &
+        !             (elemI(:,ei_QeqType) == time_march) &
+        !         ) &
+        !         .and. &
+        !         ( &
+        !             elemYN(:,eYN_canSurcharge) &
+        !         ) )
+        ! end if
 
-        !% ep_Closed_JB_Elements
+        !print *, npack ,' here packed elements'
+        !stop 498734
+
+        !% ep_JB_Closed_Elements
         !% - all the closed time-marching elements
-        ptype => col_elemP(ep_Closed_JB_Elements)
+        ptype => col_elemP(ep_JB_Closed_Elements)
         npack => npack_elemP(ptype)
         npack = count( &
                 ( &
@@ -2294,9 +2327,9 @@ contains
         end if
 
         !print *, 'CC_AC_surcharged'
-        !% ep_CC_AC_surcharged ================================================
+        !% ep_CC_ACsurcharged ================================================
         !% - all channel conduit elements elements that are AC and surcharged
-        ptype => col_elemP(ep_CC_AC_surcharged)
+        ptype => col_elemP(ep_CC_ACsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2306,7 +2339,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (  &
@@ -2315,13 +2348,13 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         end if
 
         !print *, 'CCJB_AC_surcharged'
-        !% ep_CCJB_AC_surcharged ================================================
+        !% ep_CCJB_ACsurcharged ================================================
         !% - all channel conduit or junction branch elements elements that are AC and surcharged
-        ptype => col_elemP(ep_CCJB_AC_surcharged)
+        ptype => col_elemP(ep_CCJB_ACsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2333,7 +2366,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (  &
@@ -2344,13 +2377,13 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         end if
 
         !print *, 'CC_ALLtm_surcharged'
-        !% ep_CC_ALLtm_surcharged ================================================
+        !% ep_CC_ALLtm_ACsurcharged ================================================
         !% - all channel conduit elements with any time march and surcharged
-        ptype => col_elemP(ep_CC_ALLtm_surcharged)
+        ptype => col_elemP(ep_CC_ALLtm_ACsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2364,7 +2397,7 @@ contains
                     (elemI(:,ei_tmType) == ETM)  &
                 ) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 ( &
@@ -2377,7 +2410,7 @@ contains
                     (elemI(:,ei_tmType) == ETM)  &
                 ) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         end if
 
         ! print *, ' '
@@ -2386,13 +2419,13 @@ contains
         ! print *, elemP(1:npack,ptype)
         ! print *, ' '
         ! print *, 'is_surcharged'
-        ! print *, elemYN(elemP(1:npack,ptype),eYN_isSurcharged)
+        ! print *, elemYN(elemP(1:npack,ptype),eYN_isACsurcharged)
         ! print *, ' '
 
         !print *, 'CCJB_ALLtm_surcharged'
-        !% ep_CCJB_ALLtm_surcharged ================================================
+        !% ep_CCJB_ALLtm_ACsurcharged ================================================
         !% - all channel conduit or junction branch elements with any time march and surcharged
-        ptype => col_elemP(ep_CCJB_ALLtm_surcharged)
+        ptype => col_elemP(ep_CCJB_ALLtm_ACsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2408,7 +2441,7 @@ contains
                     (elemI(:,ei_tmType) == ETM)  &
                 ) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 ( &
@@ -2423,7 +2456,7 @@ contains
                     (elemI(:,ei_tmType) == ETM)  &
                 ) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)))
+                (elemYN(:,eYN_isACsurcharged)))
         end if
 
         !% ep_CCJB_eETM_i_fAC ================================================
@@ -2479,9 +2512,9 @@ contains
         end if
 
         !print *, 'CC_ETM_surcharged'
-        !% ep_CC_ETM_surcharged ================================================
-        !% - all channel conduit or junction branch that are ETM and surcharged
-        ptype => col_elemP(ep_CC_ETM_surcharged)
+        !% ep_CC_ETM_PSsurcharged ================================================
+        !% - all channel conduit or junction branch that are ETM and PS surcharged
+        ptype => col_elemP(ep_CC_ETM_PSsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2491,7 +2524,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isPSsurcharged)) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx, &
@@ -2501,14 +2534,14 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isPSsurcharged)) &
                 )
         end if
 
         !print *, 'CCJB_ETM_surcharged'
-        !% ep_CCJB_ETM_surcharged ================================================
+        !% ep_CCJB_ETM_PSsurcharged ================================================
         !% - all channel conduit or junction branch that are ETM and surcharged
-        ptype => col_elemP(ep_CCJB_ETM_surcharged)
+        ptype => col_elemP(ep_CCJB_ETM_PSsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2520,7 +2553,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isPSsurcharged)) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx, &
@@ -2532,7 +2565,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 .and. &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isPSsurcharged)) &
                 )
         end if
 
@@ -2553,7 +2586,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx, &
@@ -2567,7 +2600,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 .and. &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 )
         end if
 
@@ -2686,30 +2719,32 @@ contains
         end if
 
         !print *, 'NonSurcharged_AC'
-        !% ep_NonSurcharged_AC ================================================
+        !% ep_AC_ACnonSurcharged ================================================
         !% - all AC elements that are not surcharged
-        ptype => col_elemP(ep_NonSurcharged_AC)
+        ptype => col_elemP(ep_AC_ACnonSurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
         end if
 
         !print *,'NonSurcharged_ALLtm'
-        !% ep_NonSurcharged_ALLtm ================================================
+        !% ep_ALLtm_NonSurcharged ================================================
         !% -- elements with any time march that are not surcharged
-        ptype => col_elemP(ep_NonSurcharged_ALLtm)
+        ptype => col_elemP(ep_ALLtm_NonSurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
+                .and. &
+                (.not. elemYN(:,eYN_isPSsurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_tmType) == AC) &
@@ -2719,7 +2754,9 @@ contains
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isACsurcharged)) &
+                .and. &
+                (.not. elemYN(:,eYN_isPSsurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_tmType) == AC) &
@@ -2729,19 +2766,19 @@ contains
         end if
 
         !print *, 'NonSurcharged_ETM'
-        !% ep_NonSurcharged_ETM ================================================
+        !% ep_ETM_PSnonSurcharged ================================================
         !% -- elements with ETM time march that are not surcharged 
-        ptype => col_elemP(ep_NonSurcharged_ETM)
+        ptype => col_elemP(ep_ETM_PSnonSurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isPSsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
-                (.not. elemYN(:,eYN_isSurcharged)) &
+                (.not. elemYN(:,eYN_isPSsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
         end if
@@ -2749,31 +2786,31 @@ contains
        
 
         !print *,'Surcharged_AC'
-        !% ep_Surcharged_AC ================================================
+        !% ep_ACsurcharged ================================================
         !% - all AC elements that are surcharged
-        ptype => col_elemP(ep_Surcharged_AC)
+        ptype => col_elemP(ep_ACsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
         end if
 
         !print *, 'Surcharged_ALLtm'
-        !% ep_Surcharged_ALLtm ================================================
+        !% ep_ALLtmSurcharged ================================================
         !% - all elements of any time march that are surcharged
-        ptype => col_elemP(ep_Surcharged_ALLtm)
+        ptype => col_elemP(ep_ALLtmSurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_tmType) == AC) &
@@ -2783,7 +2820,7 @@ contains
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isACsurcharged)) &
                 .and. &
                 ( &
                     (elemI(:,ei_tmType) == AC) &
@@ -2793,27 +2830,27 @@ contains
         end if
 
         !print *, 'Surcharged_ETM'
-        !% ep_Surcharged_ETM ================================================
+        !% ep_PSsurcharged ================================================
         !% - all ETM elements that are surcharged
-        ptype => col_elemP(ep_Surcharged_ETM)
+        ptype => col_elemP(ep_PSsurcharged)
         npack => npack_elemP(ptype)
 
         npack = count( &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isPSsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemYN(:,eYN_isSurcharged)) &
+                (elemYN(:,eYN_isPSsurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
         end if
 
         !print *, 'CC closed elements'
-        !% ep_CC_isclosed =====================================================
+        !% ep_CC_isClosedSetting =====================================================
         !% --- all CC elements that are closed by elemR(:,er_Setting) = 0.0
-        ptype => col_elemP(ep_CC_isclosed)
+        ptype => col_elemP(ep_CC_isClosedSetting)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2830,9 +2867,9 @@ contains
 
         if (setting%Solver%ForceMain%UseForceMainTF) then
             !% print *, 'ForceMain Hazen-Williams Preissmann Slot Surcharged elements
-            !% ep_FM_HW_PS_isSurcharged
+            !% ep_FM_HW_PSsurcharged
             !% --- all force main (CC) elements that are full pipe and HW roughness method
-            ptype => col_elemP(ep_FM_HW_PS_isSurcharged)
+            ptype => col_elemP(ep_FM_HW_PSsurcharged)
             npack => npack_elemP(ptype)
 
             npack = count(                                            &
@@ -2875,9 +2912,9 @@ contains
             ! end if
 
             !% print *, 'ForceMain Darcy-Weisbach Preissmann Slot Surcharged elements
-            !% ep_FM_dw_PS_isSurcharged
+            !% ep_FM_dw_PSsurcharged
             !% --- all force main (CC) elements that are full pipe and DW roughness method
-            ptype => col_elemP(ep_FM_dw_PS_isSurcharged)
+            ptype => col_elemP(ep_FM_dw_PSsurcharged)
             npack => npack_elemP(ptype)
 
             npack = count(                                             &
@@ -2897,9 +2934,9 @@ contains
             end if
 
             !% print *, 'ForceMain Darcy-Weisbach Preissmann Slot open-channel (unsubmerged) elements
-            !% ep_FM_dw_PS_NonSurcharged
+            !% ep_FM_dw_PSnonSurcharged
             !% --- all force main (CC) elements that are full pipe using DW roughness method
-            ptype => col_elemP(ep_FM_dw_PS_NonSurcharged)
+            ptype => col_elemP(ep_FM_dw_PSnonSurcharged)
             npack => npack_elemP(ptype)
 
             npack = count(                                                &

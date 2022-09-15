@@ -37,15 +37,15 @@
             "isWaveSpeedOut"    : false
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 0.01
-    },
     "SmallDepth" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.1
     },
     "Solver" : {
-        "MomentumSourceMethod" : "T00"
-    },
+        "MomentumSourceMethod" : "T00",
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot",
+            "TargetCelerity" : 0.01
+        }
+    }
 }

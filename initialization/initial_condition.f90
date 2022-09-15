@@ -1343,7 +1343,7 @@ contains
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isSlot)  = .true.
+                    elemYN(:,eYN_isPSsurcharged)  = .true.
                 endwhere  
 
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -1406,7 +1406,7 @@ contains
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isSlot)  = .true.
+                    elemYN(:,eYN_isPSsurcharged)  = .true.
                 endwhere            
                 
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -1441,7 +1441,7 @@ contains
                         elemR(:,er_Area)      = elemR(:,er_FullArea)
                         elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                         elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                        elemYN(:,eYN_isSlot)  = .true.
+                        elemYN(:,eYN_isPSsurcharged)  = .true.
                     endwhere
 
                     elemR(:,er_Area_N0)       = elemR(:,er_Area)
@@ -1486,7 +1486,7 @@ contains
                         elemR(ii,er_Area)      = elemR(ii,er_FullArea)
                         elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
                         elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
                     end if
                     elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
@@ -1527,7 +1527,7 @@ contains
                         elemR(ii,er_Area)      = elemR(ii,er_FullArea)
                         elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
                         elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
                     end if
                     elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
@@ -1568,7 +1568,7 @@ contains
                         elemR(ii,er_Area)      = elemR(ii,er_FullArea)
                         elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
                         elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
                     end if
                     elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
@@ -1632,7 +1632,7 @@ contains
                         elemR(ii,er_Area)      = elemR(ii,er_FullArea)
                         elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
                         elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
                     end if
                     elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
@@ -2486,7 +2486,7 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !print *, 'inside ',trim(subroutine_name)
+        print *, 'inside ',trim(subroutine_name)
 
         !%................................................................
         !% Junction main
@@ -2505,12 +2505,13 @@ contains
         !% set the type of junction main
         if (node%YN(thisJunctionNode,nYN_has_storage)) then
             if (node%I(thisJunctionNode,ni_curve_ID) .eq. 0) then
+                !% --- functional storage
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
                 elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)
-
             else
+                !% --- tabular storage
                 elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
                 elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
             end if
@@ -2522,7 +2523,7 @@ contains
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
 
-        !% junction main depth and head from initial conditions
+        !% --- junction main depth and head from initial conditions
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
@@ -2536,17 +2537,40 @@ contains
         end if
         elemSR(JMidx,esr_JunctionMain_PondedVolume) = zeroR
 
+        !% --- all JM "can" surcharge, but are limited by their SurchargeExtraDepth
+        !%     which might be 0 (effectively preventing any surcharge)
+        elemYN(JMidx,eYN_canSurcharge) = .true.
+
+        !% --- handle surcharge depth if provided in node data
         if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) > zeroR) then
             !% --- Piezometric head for maximum surcharge at Junction
-            elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead) = node%R(thisJunctionNode,nr_SurchargeExtraDepth) + elemR(JMidx,er_FullDepth)
-            elemYN(JMidx,eYN_canSurcharge) = .true.
+            elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)      &
+                = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
         else 
-            elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead) = elemR(JMidx,er_FullDepth)
-            elemYN(JMidx,eYN_canSurcharge) = .false.
+            !% --- for storage nodes without extra surcharge depth, check
+            !%     for a default surcharge depth.
+            !%     NOTE: this code is needed because EPA-SWMM does not allow
+            !%     storage nodes to surcharge, hence it does not provide an
+            !%     input of Ysur for the surcharge height. SWMM5+ allows 
+            !%     a storage node to surcharge, but there needs to be a 
+            !%     future extension to provide Ysur.  As an intermediate step
+            !%     we use a default "StorageSurchargeExtraDepth" as the Ysur that
+            !%     is the max surcharge at a Storage node.
+            if ((node%YN(thisJunctionNode,nYN_has_storage)) .and. &
+                (setting%Junction%StorageSurchargeExtraDepth > zeroR) ) then
+                elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) &
+                    = setting%Junction%StorageSurchargeExtraDepth 
+            else
+                !% --- if NOT a storage node or if IS a storage node
+                !%     but the setting%Junction%StorageSurchargeExtraDepth = 0.0
+                !%     then the junction cannot surcharge.
+                elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
+            end if
         end if    
 
+
         ! print *, 'JMidx',JMidx
-        ! print *, elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead)
+        ! print *, elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)
         ! print *, elemSR(JMidx,esr_JunctionMain_PondedArea)
         ! print *, elemYN(JMidx,eYN_canSurcharge)
         ! print *, ' '
@@ -2674,7 +2698,6 @@ contains
             else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
                 faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
             end if
-
 
             !% --- Set the geometry from the adjacent elements on connected images
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
@@ -3472,7 +3495,7 @@ contains
             !         print *, indx, trim(reverseKey(elemI(indx,ei_elementType)))
             !         print *, elemSGR(indx,esgr_Circular_Diameter), elemSGR(indx,esgr_Circular_Radius)
             !         print *, elemSGR(indx, esgr_Circular_YoverYfull), elemSGR(indx,esgr_Circular_AoverAfull)
-            !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
+            !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular), epg_CC_circular)
             !         elemR(indx,er_Volume) = 1.0d6 * elemR(indx,er_Volume)
             !         print *, 'after depth',elemR(indx,er_Depth)
             !         print *, 'after volume',elemR(indx,er_Length) * circular_area_from_depth_singular (indx) 
@@ -3488,7 +3511,7 @@ contains
             ! end do
             ! elemR(tPack(1:npack),er_Volume) = smallvolume(tPack(ii))
             ! print *, 'before', elemR(tPack(1:npack),er_Depth)
-            ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
+            ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular), epg_CC_circular)
             ! print *, 'after ', elemR(tPack(1:npack),er_Depth)
 
         !stop 
@@ -3541,16 +3564,16 @@ contains
         !% Declarations:
             integer :: ii
             integer, pointer    :: SlotMethod
-            real(8), pointer    :: TargetPCelerity, grav, PreissmannAlpha
+            real(8), pointer    :: TargetPCelerity, grav, Alpha
             character(64) :: subroutine_name = 'init_IC_slot'
         !%-----------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
-        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
-        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
-        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
+        SlotMethod          => setting%Solver%PreissmannSlot%Method
+        TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+        Alpha               => setting%Solver%PreissmannSlot%Alpha
         grav                => setting%Constant%gravity
 
         !% initialize slots
@@ -3571,7 +3594,7 @@ contains
 
                 elemR(1:size(elemR,1)-1,er_Preissmann_Number) = oneR
 
-                where (elemYN(:,eYN_isSlot))
+                where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
@@ -3580,9 +3603,9 @@ contains
 
             case (DynamicSlot)
 
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
 
-                where (elemYN(:,eYN_isSlot))
+                where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)

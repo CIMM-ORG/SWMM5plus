@@ -5,6 +5,20 @@
         "Long"  : "Trajkovic_CaseA3_dx0.2",
         "Short" : "TA3_dx0.2"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 1.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0,
+            "FullDepthMultiplier" : 0.00001
+        }
+    },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
@@ -91,39 +105,11 @@
             "Dt" : 600.0
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 50.0,
-        "PreissmannAlpha" : 2.00
-    },
-    "VariableDT" : {
-        "ApplyYN" : true,
-        "CFL_hi_max" : 0.3,
-        "CFL_target" : 0.2,
-        "CFL_lo_max" : 0.1,
-        "increaseFactor" : 1.2,
-        "NstepsForCheck" : 10
-    },
     "SmallDepth" : {
         "DepthCutoff" : 0.00001,
         "ManningsN" : 0.1
     },
-    "Adjust" : {
-        "Flowrate" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape",
-            "Coef" : 1.0,
-            "SmallDepthMultiplier" : 1.0
-        },
-        "Head" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0,
-            "FullDepthMultiplier" : 0.00001
-        }
-    },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
@@ -132,6 +118,19 @@
         "ReferenceHead"     : 0.0,
         "ManningsN" : {
             "useDynamicManningsN" : false
+        },
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot",
+            "TargetCelerity" : 50.0,
+            "Alpha" : 2.00
         }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.3,
+        "CFL_target" : 0.2,
+        "CFL_lo_max" : 0.1,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10
     }       
 }

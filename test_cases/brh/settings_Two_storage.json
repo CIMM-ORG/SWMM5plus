@@ -5,6 +5,20 @@
         "Long"  : "VasconcelosTPA",
         "Short" : "TPA"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 1.0
+        },
+        "Head" : {
+            "ApplyYN" : false,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0,
+            "FullDepthMultiplier" : 0.5
+        }
+    },
     "Discretization" : {
         "AdustLinkLengthForJunctionBranchYN" : false,
         "ElemShortingFactor" : 0.33,
@@ -80,7 +94,27 @@
         "stopAfterSpinUp"           : false,
         "SpinUpDays"                : 10.0
     },
-
+    "SmallDepth" : {
+        "DepthCutoff" : 0.00001,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0,
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
+            "alpha"               : 100.0
+        },
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot",
+            "TargetCelerity" : 10.00,
+            "Alpha" : 2.0
+        }
+    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -96,11 +130,6 @@
             "Dt" : 600.0
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 10.00,
-        "PreissmannAlpha" : 2.0
-    },
     "VariableDT" : {
         "ApplyYN" : true,
         "CFL_hi_max" : 0.6,
@@ -108,36 +137,5 @@
         "CFL_lo_max" : 0.4,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
-    },
-    "SmallDepth" : {
-        "DepthCutoff" : 0.00001,
-        "ManningsN" : 0.1
-    },
-    "Adjust" : {
-        "Flowrate" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape",
-            "Coef" : 1.0,
-            "SmallDepthMultiplier" : 1.0
-        },
-        "Head" : {
-            "ApplyYN" : false,
-            "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0,
-            "FullDepthMultiplier" : 0.5
-        }
-    },
-    "Solver" : {
-        "PreissmannSlot" : true,
-        "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
-        "SolverSelect" : "ETM",
-        "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0,
-        "ManningsN" : {
-            "useDynamicManningsN" : false,
-            "alpha"               : 100.0
-        }
     }
 }

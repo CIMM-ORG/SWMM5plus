@@ -77,7 +77,7 @@ module adjust
             integer, pointer :: ptype, npack, thisP(:), dFace(:)
         !%------------------------------------------------------------------
         !% Aliases:    
-            ptype => col_elemP(ep_CC_isclosed)
+            ptype => col_elemP(ep_CC_isClosedSetting)
             npack => npack_elemP(ptype)
             dFace => elemI(:,ei_Mface_dL)
         !%------------------------------------------------------------------    
@@ -85,7 +85,7 @@ module adjust
             if (npack < 1) return
         !%------------------------------------------------------------------ 
         !% --- elements that are closed (er_Setting = 0.0)        
-        thisP => elemP(1:npack,ep_CC_isclosed)
+        thisP => elemP(1:npack,ep_CC_isClosedSetting)
 
         !% --- force flows and velocities to zero
         faceR(dface(thisP), fr_Flowrate)              = zeroR
@@ -1253,13 +1253,13 @@ module adjust
         !% Aliases:
             select case (whichTM)
             case (ALLtm)
-                thisCol => col_elemP(ep_CC_ALLtm_surcharged)
+                thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
                 print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
                 call util_crashpoint(9587934)
             case (ETM)
                 thisCol => col_elemP(ep_CC_Closed_Elements)
             case (AC)
-                thisCol => col_elemP(ep_CC_AC_surcharged)
+                thisCol => col_elemP(ep_CC_ACsurcharged)
                 print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
                 call util_crashpoint(558723)
             case default
@@ -1291,7 +1291,7 @@ module adjust
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
             Zbottom    => elemR(:,er_Zbottom)
-            isSlot     => elemYN(:,eYN_isSlot)  !% Preissman slot
+            isSlot     => elemYN(:,eYN_isPSsurcharged)  !% Preissman slot
 
             ! print *, ' '
             ! print *, 'in ADJUST ------------', thisCol
@@ -1299,7 +1299,7 @@ module adjust
             ! print *, thisP
             ! print *, ' '
             ! print *, 'is surcharged'
-            ! print *, elemYN(thisP,eYN_isSurcharged)
+            ! print *, elemYN(thisP,eYN_isACsurcharged)
             ! print *, ' '
 
             multiplier => setting%Adjust%Head%FullDepthMultiplier

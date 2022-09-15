@@ -50,7 +50,6 @@
         "ManningsN" : 0.1
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "MomentumSourceMethod" : "T10"
     },
     "VariableDT" : {

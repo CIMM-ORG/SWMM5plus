@@ -5,6 +5,19 @@
         "Long"  : "Rect_triag_test",
         "Short" : "Rect_triag_test"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
+        },
+        "Head" : {
+            "ApplyYN" : false,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0
+        }
+    },
     "Discretization" : {
         "LinkShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
@@ -82,7 +95,23 @@
         "stopAfterSpinUp"           : false,
         "SpinUpDays"                : 10.0
     },
-
+    "SmallDepth" : {
+        "DepthCutoff" : 0.00001,
+        "ManningsN" : 0.1
+    },
+   "Solver" : {
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0,
+        "PreissmannSlot" : {
+            "Method" : "DynamicSlot",
+            "TargetCelerity" : 2.0,
+            "Alpha" : 1.0
+        }
+    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -98,11 +127,6 @@
             "Dt" : 600.0
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 2.0,
-        "PreissmannAlpha" : 1.0
-    },
     "VariableDT" : {
         "ApplyYN" : true,
         "CFL_hi_max" : 0.7,
@@ -110,23 +134,6 @@
         "CFL_lo_max" : 0.3,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
-    },
-    "SmallDepth" : {
-        "DepthCutoff" : 0.00001,
-        "ManningsN" : 0.1
-    },
-    "Adjust" : {
-        "Flowrate" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape",
-            "Coef" : 1.0,
-            "SmallDepthMultiplier" : 3.0
-        },
-        "Head" : {
-            "ApplyYN" : false,
-            "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0
-        }
     },
     "Debug" : {
         "File" : {
@@ -183,14 +190,5 @@
         },
         "SetupYN"  : true,
         "OutputYN" : true
-    },
-    "Solver" : {
-        "PreissmannSlot" : true,
-        "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
-        "SolverSelect" : "ETM",
-        "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
     }
 }

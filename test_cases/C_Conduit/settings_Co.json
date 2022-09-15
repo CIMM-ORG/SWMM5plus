@@ -90,7 +90,6 @@
         }
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
@@ -112,11 +111,11 @@
             "Default_DarcyWeisbach_roughness_mm" : 0.36,
             "Default_ManningsN"     : 0.03,
             "minimum_slope"         : 1e-3
+        },
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot", 
+            "TargetCelerity" : 10.0
         }
-    },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot", 
-        "TargetPreissmannCelerity" : 10.0
     },
     "VariableDT" : {
         "ApplyYN" : true,

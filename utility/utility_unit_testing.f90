@@ -385,16 +385,16 @@ contains
          print *, "elemP(:,ep_CC_Q_ETM) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_CCJB_AC_surcharged) indexes
+      !% checking elemP(:,ep_CCJB_ACsurcharged) indexes
 
 
-      min_val = minval(elemP(:,ep_CCJB_AC_surcharged)) - 1
-      max_val = maxval(elemP(:,ep_CCJB_AC_surcharged))
+      min_val = minval(elemP(:,ep_CCJB_ACsurcharged)) - 1
+      max_val = maxval(elemP(:,ep_CCJB_ACsurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_CCJB_AC_surcharged),mask=elemP(:,ep_CCJB_AC_surcharged)>min_val)
+         min_val = minval(elemP(:,ep_CCJB_ACsurcharged),mask=elemP(:,ep_CCJB_ACsurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -403,13 +403,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CCJB_AC_surcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJB_ACsurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_CCJB_AC_surcharged)) then
-         print *, "ERROR:::: elemP(:,ep_CCJB_AC_surcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_CCJB_ACsurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_CCJB_ACsurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_CCJB_AC_surcharged) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJB_ACsurcharged) is unique. This_image ::", this_image()
       end if
 
       !% checking elemP(:,ep_CCJB_ALLtm) indexes
@@ -466,15 +466,15 @@ contains
          print *, "elemP(:,ep_CCJB_AC) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_CCJB_ALLtm_surcharged) indexes
+      !% checking elemP(:,ep_CCJB_ALLtm_ACsurcharged) indexes
 
-      min_val = minval(elemP(:,ep_CCJB_ALLtm_surcharged)) - 1
-      max_val = maxval(elemP(:,ep_CCJB_ALLtm_surcharged))
+      min_val = minval(elemP(:,ep_CCJB_ALLtm_ACsurcharged)) - 1
+      max_val = maxval(elemP(:,ep_CCJB_ALLtm_ACsurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_CCJB_ALLtm_surcharged),mask=elemP(:,ep_CCJB_ALLtm_surcharged)>min_val)
+         min_val = minval(elemP(:,ep_CCJB_ALLtm_ACsurcharged),mask=elemP(:,ep_CCJB_ALLtm_ACsurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -483,13 +483,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CCJB_ALLtm_surcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJB_ALLtm_ACsurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_CCJB_ALLtm_surcharged)) then
-         print *, "ERROR:::: elemP(:,ep_CCJB_ALLtm_surcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_CCJB_ALLtm_ACsurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_CCJB_ALLtm_ACsurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_CCJB_ALLtm_surcharged) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJB_ALLtm_ACsurcharged) is unique. This_image ::", this_image()
       end if
 
 
@@ -682,16 +682,16 @@ contains
          print *, "elemP(:,ep_JB_ETM) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_NonSurcharged_AC) indexes
+      !% checking elemP(:,ep_AC_ACnonSurcharged) indexes
 
 
-      min_val = minval(elemP(:,ep_NonSurcharged_AC)) - 1
-      max_val = maxval(elemP(:,ep_NonSurcharged_AC))
+      min_val = minval(elemP(:,ep_AC_ACnonSurcharged)) - 1
+      max_val = maxval(elemP(:,ep_AC_ACnonSurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_NonSurcharged_AC),mask=elemP(:,ep_NonSurcharged_AC)>min_val)
+         min_val = minval(elemP(:,ep_AC_ACnonSurcharged),mask=elemP(:,ep_AC_ACnonSurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -700,24 +700,24 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_NonSurcharged_AC) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_AC_ACnonSurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_NonSurcharged_AC)) then
-         print *, "ERROR:::: elemP(:,ep_NonSurcharged_AC) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_AC_ACnonSurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_AC_ACnonSurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_NonSurcharged_AC) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_AC_ACnonSurcharged) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_NonSurcharged_ALLtm) indexes
+      !% checking elemP(:,ep_ALLtm_NonSurcharged) indexes
 
-      min_val = minval(elemP(:,ep_NonSurcharged_ALLtm)) - 1
-      max_val = maxval(elemP(:,ep_NonSurcharged_ALLtm))
+      min_val = minval(elemP(:,ep_ALLtm_NonSurcharged)) - 1
+      max_val = maxval(elemP(:,ep_ALLtm_NonSurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_NonSurcharged_ALLtm),mask=elemP(:,ep_NonSurcharged_ALLtm)>min_val)
+         min_val = minval(elemP(:,ep_ALLtm_NonSurcharged),mask=elemP(:,ep_ALLtm_NonSurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -726,25 +726,25 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_NonSurcharged_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_ALLtm_NonSurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_NonSurcharged_Alltm)) then
-         print *, "ERROR:::: elemP(:,ep_NonSurcharged_ALLtm) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_ALLtm_NonSurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_ALLtm_NonSurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_NonSurcharged_ALLtm) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_ALLtm_NonSurcharged) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_NonSurcharged_ETM) indexes
+      !% checking elemP(:,ep_ETM_PSnonSurcharged) indexes
 
 
-      min_val = minval(elemP(:,ep_NonSurcharged_ETM)) - 1
-      max_val = maxval(elemP(:,ep_NonSurcharged_ETM))
+      min_val = minval(elemP(:,ep_ETM_PSnonSurcharged)) - 1
+      max_val = maxval(elemP(:,ep_ETM_PSnonSurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_NonSurcharged_ETM),mask=elemP(:,ep_NonSurcharged_ETM)>min_val)
+         min_val = minval(elemP(:,ep_ETM_PSnonSurcharged),mask=elemP(:,ep_ETM_PSnonSurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -753,13 +753,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_NonSurcharged_ETM) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_ETM_PSnonSurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_NonSurcharged_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_NonSurcharged_ETM) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_ETM_PSnonSurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_ETM_PSnonSurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_NonSurcharged_ETM) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_ETM_PSnonSurcharged) is unique. This_image ::", this_image()
       end if
 
 
@@ -844,16 +844,16 @@ contains
       ! end if
 
 
-      !% checking elemP(:,ep_Surcharged_AC) indexes
+      !% checking elemP(:,ep_ACsurcharged) indexes
 
 
-      min_val = minval(elemP(:,ep_Surcharged_AC)) - 1
-      max_val = maxval(elemP(:,ep_Surcharged_AC))
+      min_val = minval(elemP(:,ep_ACsurcharged)) - 1
+      max_val = maxval(elemP(:,ep_ACsurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_Surcharged_AC),mask=elemP(:,ep_Surcharged_AC)>min_val)
+         min_val = minval(elemP(:,ep_ACsurcharged),mask=elemP(:,ep_ACsurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -862,25 +862,25 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_Surcharged_AC) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_ACsurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_Surcharged_AC)) then
-         print *, "ERROR:::: elemP(:,ep_Surcharged_AC) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_ACsurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_ACsurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_Surcharged_AC) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_ACsurcharged) is unique. This_image ::", this_image()
       end if
 
 
-      !% checking elemP(:,ep_Surcharged_ALLtm) indexes
+      !% checking elemP(:,ep_ALLtmSurcharged) indexes
 
-      min_val = minval(elemP(:,ep_Surcharged_ALLtm)) - 1
-      max_val = maxval(elemP(:,ep_Surcharged_ALLtm))
+      min_val = minval(elemP(:,ep_ALLtmSurcharged)) - 1
+      max_val = maxval(elemP(:,ep_ALLtmSurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_Surcharged_ALLtm),mask=elemP(:,ep_Surcharged_ALLtm)>min_val)
+         min_val = minval(elemP(:,ep_ALLtmSurcharged),mask=elemP(:,ep_ALLtmSurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -889,26 +889,26 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_Surcharged_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_ALLtmSurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= N_elem(this_image())) then
-         print *, "ERROR:::: elemP(:,ep_Surcharged_ALLtm) is not unique. This_image ::", this_image()
+         print *, "ERROR:::: elemP(:,ep_ALLtmSurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_Surcharged_ALLtm) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_ALLtmSurcharged) is unique. This_image ::", this_image()
       end if
 
 
-      !% checking elemP(:,ep_Surcharged_ETM) indexes
+      !% checking elemP(:,ep_PSsurcharged) indexes
 
 
-      min_val = minval(elemP(:,ep_Surcharged_ETM)) - 1
-      max_val = maxval(elemP(:,ep_Surcharged_ETM))
+      min_val = minval(elemP(:,ep_PSsurcharged)) - 1
+      max_val = maxval(elemP(:,ep_PSsurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_Surcharged_ETM),mask=elemP(:,ep_Surcharged_ETM)>min_val)
+         min_val = minval(elemP(:,ep_PSsurcharged),mask=elemP(:,ep_PSsurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -917,25 +917,25 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_Surcharged_ETM) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_PSsurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_Surcharged_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_Surcharged_ETM) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_PSsurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_PSsurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_Surcharged_ETM) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_PSsurcharged) is unique. This_image ::", this_image()
       end if
 
 
-      !% checking elemP(:,ep_CCJM_H_AC_surcharged) indexes
+      !% checking elemP(:,ep_CCJM_H_ACsurcharged) indexes
 
-      min_val = minval(elemP(:,ep_CCJM_H_AC_surcharged)) - 1
-      max_val = maxval(elemP(:,ep_CCJM_H_AC_surcharged))
+      min_val = minval(elemP(:,ep_CCJM_H_ACsurcharged)) - 1
+      max_val = maxval(elemP(:,ep_CCJM_H_ACsurcharged))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_CCJM_H_AC_surcharged),mask=elemP(:,ep_CCJM_H_AC_surcharged)>min_val)
+         min_val = minval(elemP(:,ep_CCJM_H_ACsurcharged),mask=elemP(:,ep_CCJM_H_ACsurcharged)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -943,13 +943,13 @@ contains
       end if
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CCJM_H_AC_surcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJM_H_ACsurcharged) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_CCJM_H_AC_surcharged)) then
-         print *, "ERROR:::: elemP(:,ep_CCJM_H_AC_surcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_CCJM_H_ACsurcharged)) then
+         print *, "ERROR:::: elemP(:,ep_CCJM_H_ACsurcharged) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_CCJM_H_AC_surcharged) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJM_H_ACsurcharged) is unique. This_image ::", this_image()
       end if
 
       !% checking elemP(:,ep_CCJM_H_AC) indexes
@@ -1004,17 +1004,17 @@ contains
          print *, "elemP(:,ep_CCJB_eAC_i_fETM) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemPGalltm(:,epg_CC_rectangular_nonsurcharged) indexes
+      !% checking elemPGalltm(:,epg_CC_rectangular) indexes
 
 
-      min_val = minval(elemPGalltm(:,epg_CC_rectangular_nonsurcharged)) - 1
-      max_val = maxval(elemPGalltm(:,epg_CC_rectangular_nonsurcharged))
+      min_val = minval(elemPGalltm(:,epg_CC_rectangular)) - 1
+      max_val = maxval(elemPGalltm(:,epg_CC_rectangular))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemPGalltm(:,epg_CC_rectangular_nonsurcharged),&
-              mask=elemPGalltm(:,epg_CC_rectangular_nonsurcharged)>min_val)
+         min_val = minval(elemPGalltm(:,epg_CC_rectangular),&
+              mask=elemPGalltm(:,epg_CC_rectangular)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1023,25 +1023,25 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGalltm(:,epg_CC_rectangular_nonsurcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemPGalltm(:,epg_CC_rectangular) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGalltm(epg_CC_rectangular_nonsurcharged)) then
-         print *, "ERROR:::: elemPGalltm(:,epg_CC_rectangular_nonsurcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemPGalltm(epg_CC_rectangular)) then
+         print *, "ERROR:::: elemPGalltm(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemPGalltm(:,epg_CC_rectangular_nonsurcharged) is unique. This_image ::", this_image()
+         print *, "elemPGalltm(:,epg_CC_rectangular) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged) indexes
+      !% checking elemPGalltm(:,epg_CC_trapezoidal) indexes
 
-      min_val = minval(elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged)) - 1
-      max_val = maxval(elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged))
+      min_val = minval(elemPGalltm(:,epg_CC_trapezoidal)) - 1
+      max_val = maxval(elemPGalltm(:,epg_CC_trapezoidal))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged),&
-              mask=elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged)>min_val)
+         min_val = minval(elemPGalltm(:,epg_CC_trapezoidal),&
+              mask=elemPGalltm(:,epg_CC_trapezoidal)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1050,13 +1050,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemPGalltm(:,epg_CC_trapezoidal) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGalltm(epg_CC_trapezoidal_nonsurcharged)) then
-         print *, "ERROR:::: elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemPGalltm(epg_CC_trapezoidal)) then
+         print *, "ERROR:::: elemPGalltm(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemPGalltm(:,epg_CC_trapezoidal_nonsurcharged) is unique. This_image ::", this_image()
+         print *, "elemPGalltm(:,epg_CC_trapezoidal) is unique. This_image ::", this_image()
       end if
 
 
@@ -1118,17 +1118,17 @@ contains
 
       !% --------------------------------------------------------------------------------------------------------------
 
-      !% checking elemPGetm(:,epg_CC_rectangular_nonsurcharged) indexes
+      !% checking elemPGetm(:,epg_CC_rectangular) indexes
 
 
-      min_val = minval(elemPGetm(:,epg_CC_rectangular_nonsurcharged)) - 1
-      max_val = maxval(elemPGetm(:,epg_CC_rectangular_nonsurcharged))
+      min_val = minval(elemPGetm(:,epg_CC_rectangular)) - 1
+      max_val = maxval(elemPGetm(:,epg_CC_rectangular))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemPGetm(:,epg_CC_rectangular_nonsurcharged),&
-              mask=elemPGetm(:,epg_CC_rectangular_nonsurcharged)>min_val)
+         min_val = minval(elemPGetm(:,epg_CC_rectangular),&
+              mask=elemPGetm(:,epg_CC_rectangular)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1136,25 +1136,25 @@ contains
       end if
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGetm(:,epg_CC_rectangular_nonsurcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemPGetm(:,epg_CC_rectangular) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGetm(epg_CC_rectangular_nonsurcharged)) then
-         print *, "ERROR:::: elemPGetm(:,epg_CC_rectangular_nonsurcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemPGetm(epg_CC_rectangular)) then
+         print *, "ERROR:::: elemPGetm(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemPGetm(:,epg_CC_rectangular_nonsurcharged) is unique. This_image ::", this_image()
+         print *, "elemPGetm(:,epg_CC_rectangular) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemPGetm(:,epg_CC_trapezoidal_nonsurcharged) indexes
+      !% checking elemPGetm(:,epg_CC_trapezoidal) indexes
 
-      min_val = minval(elemPGetm(:,epg_CC_trapezoidal_nonsurcharged)) - 1
-      max_val = maxval(elemPGetm(:,epg_CC_trapezoidal_nonsurcharged))
+      min_val = minval(elemPGetm(:,epg_CC_trapezoidal)) - 1
+      max_val = maxval(elemPGetm(:,epg_CC_trapezoidal))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemPGetm(:,epg_CC_trapezoidal_nonsurcharged), &
-              mask=elemPGetm(:,epg_CC_trapezoidal_nonsurcharged)>min_val)
+         min_val = minval(elemPGetm(:,epg_CC_trapezoidal), &
+              mask=elemPGetm(:,epg_CC_trapezoidal)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1162,13 +1162,13 @@ contains
       end if
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGetm(:,epg_CC_trapezoidal_nonsurcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemPGetm(:,epg_CC_trapezoidal) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGetm(epg_CC_trapezoidal_nonsurcharged)) then
-         print *, "ERROR:::: elemPGetm(:,epg_CC_trapezoidal_nonsurcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemPGetm(epg_CC_trapezoidal)) then
+         print *, "ERROR:::: elemPGetm(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemPGetm(:,epg_CC_trapezoidal_nonsurcharged) is unique. This_image ::", this_image()
+         print *, "elemPGetm(:,epg_CC_trapezoidal) is unique. This_image ::", this_image()
       end if
 
 
@@ -1232,14 +1232,14 @@ contains
       !% checking elemPGac(:,epg_CCJM_rectangular_nonsurcharged) indexes
 
 
-      min_val = minval(elemPGac(:,epg_CC_rectangular_nonsurcharged)) - 1
-      max_val = maxval(elemPGac(:,epg_CC_rectangular_nonsurcharged))
+      min_val = minval(elemPGac(:,epg_CC_rectangular)) - 1
+      max_val = maxval(elemPGac(:,epg_CC_rectangular))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemPGac(:,epg_CC_rectangular_nonsurcharged),&
-              mask=elemPGac(:,epg_CC_rectangular_nonsurcharged)>min_val)
+         min_val = minval(elemPGac(:,epg_CC_rectangular),&
+              mask=elemPGac(:,epg_CC_rectangular)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1248,25 +1248,25 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGac(:,epg_CC_rectangular_nonsurcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemPGac(:,epg_CC_rectangular) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGac(epg_CC_rectangular_nonsurcharged)) then
-         print *, "ERROR:::: elemPGac(:,epg_CC_rectangular_nonsurcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemPGac(epg_CC_rectangular)) then
+         print *, "ERROR:::: elemPGac(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemPGac(:,epg_CC_rectangular_nonsurcharged) is unique. This_image ::", this_image()
+         print *, "elemPGac(:,epg_CC_rectangular) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemPGac(:,epg_CC_trapezoidal_nonsurcharged) indexes
+      !% checking elemPGac(:,epg_CC_trapezoidal) indexes
 
-      min_val = minval(elemPGac(:,epg_CC_trapezoidal_nonsurcharged)) - 1
-      max_val = maxval(elemPGac(:,epg_CC_trapezoidal_nonsurcharged))
+      min_val = minval(elemPGac(:,epg_CC_trapezoidal)) - 1
+      max_val = maxval(elemPGac(:,epg_CC_trapezoidal))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemPGac(:,epg_CC_trapezoidal_nonsurcharged), &
-              mask=elemPGac(:,epg_CC_trapezoidal_nonsurcharged)>min_val)
+         min_val = minval(elemPGac(:,epg_CC_trapezoidal), &
+              mask=elemPGac(:,epg_CC_trapezoidal)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1275,13 +1275,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGac(:,epg_CC_trapezoidal_nonsurcharged) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemPGac(:,epg_CC_trapezoidal) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGac(epg_CC_trapezoidal_nonsurcharged)) then
-         print *, "ERROR:::: elemPGac(:,epg_CC_trapezoidal_nonsurcharged) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemPGac(epg_CC_trapezoidal)) then
+         print *, "ERROR:::: elemPGac(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemPGac(:,epg_CC_trapezoidal_nonsurcharged) is unique. This_image ::", this_image()
+         print *, "elemPGac(:,epg_CC_trapezoidal) is unique. This_image ::", this_image()
       end if
 
 

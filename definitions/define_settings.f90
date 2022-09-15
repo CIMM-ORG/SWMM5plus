@@ -150,6 +150,7 @@ module define_settings
         logical :: isVelocityOut            = .true.
         logical :: isVolumeOut              = .true.
         logical :: isVolumeConsOut          = .true.
+        logical :: isVolumeOverflowOut      = .true.
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
@@ -216,6 +217,22 @@ module define_settings
         real(8) :: Maximum = 10.0d0 ! m/s
     end type LimiterVelocityType
 
+    !% setting%Solver%ManningsN
+    type ManningsNtype
+        logical :: useDynamicManningsN = .false. !% TRUE is not working
+        real(8) :: alpha = 1.0d0
+        real(8) :: beta  = 1.0d0
+    end type ManningsNtype
+
+    !% setting%PreissmannSlot
+    type PreissmannSlotType
+        logical :: useSlotTF = .true.
+        !% Allowable values: DynamicSlot, StaticSlot
+        integer :: Method = DynamicSlot
+        real(8) :: TargetCelerity = 3.0d0
+        real(8) :: Alpha = 2.0d0
+    end type PreissmannSlotType
+
     !% setting%Output%Report
     type ReportType
         logical :: useSWMMinpYN = .true.
@@ -228,13 +245,6 @@ module define_settings
         integer :: ThisStep                  !% NOT A USER SETTING
         integer :: TimeUnits = InHours
     end type ReportType
-
-    !% setting%Solver%ManningsN
-    type ManningsNtype
-        logical :: useDynamicManningsN = .false. !% TRUE is not working
-        real(8) :: alpha = 1.0d0
-        real(8) :: beta  = 1.0d0
-    end type ManningsNtype
 
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
@@ -506,6 +516,7 @@ module define_settings
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
         !rm 20220207brh real(8) :: HeadCoef     = 1.0d0   !% junction branch head coef for diagnostic junction (must be > 0)
         real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        real(8) :: StorageSurchargeExtraDepth  = 0.d0  !% default surcharge depth forr ALL storage (not regular junctions)
     end type JunctionType
 
     ! setting%Limiter
@@ -562,14 +573,6 @@ module define_settings
         integer :: PartitioningMethod = BQuick
     endtype PartitioningType
 
-    !% setting%PreissmannSlot
-    type PreissmannSlotType
-        !% Allowable values: DynamicSlot
-        integer :: PreissmannSlotMethod = DynamicSlot
-        real(8) :: TargetPreissmannCelerity = 3.0d0
-        real(8) :: PreissmannAlpha = 2.0d0
-    end type PreissmannSlotType
-
     !% setting%Profile
     type ProfileType
         logical :: useYN = .false.
@@ -598,7 +601,7 @@ module define_settings
 
     ! setting%Solver
     type SolverType
-        logical :: PreissmannSlot = .true.
+        !logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
         integer :: MomentumSourceMethod = T10
         integer :: SolverSelect = ETM
@@ -609,8 +612,9 @@ module define_settings
         real(8) :: MaxZbottom = zeroR                   !% NOT A USER SETTING
         real(8) :: MinZbottom = zeroR                   !% NOT A USER SETTING
         real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]  !% NOT A USER SETTING
-        type(ManningsNtype) :: ManningsN
         type(ForceMainType) :: ForceMain
+        type(ManningsNtype) :: ManningsN
+        type(PreissmannSlotType) :: PreissmannSlot
     end type SolverType
 
     type TestCaseType  !% NOT WORKING YET
@@ -1260,6 +1264,11 @@ contains
         ! if (found) setting%Junction%CFLlimit = real_value
         ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
 
+        !%                       Junction.StorageSurchargeExtraDepth
+        call json%get('Junction.StorageSurchargeExtraDepth', real_value, found)
+        if (found) setting%Junction%StorageSurchargeExtraDepth = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.StorageSurchargeExtraDepth not found'
+
         !%                       Junction.FunStorageN
         call json%get('Junction.FunStorageN', integer_value, found)
         if (found) setting%Junction%FunStorageN = integer_value
@@ -1622,34 +1631,6 @@ contains
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Partitioning.PartitioningMethod not found'
   
-    !% PreissmannSlot. =====================================================================
-        !%                       PreissmannSlotMethod
-        call json%get('PreissmannSlot.PreissmannSlotMethod', c, found)
-        if (found) then 
-            call util_lower_case(c)
-            if (c == 'staticslot') then
-                setting%PreissmannSlot%PreissmannSlotMethod = StaticSlot
-            else if (c == 'dynamicslot') then
-                setting%PreissmannSlot%PreissmannSlotMethod = DynamicSlot
-            else
-                write(*,"(A)") 'Error - json file - setting.PreissmannSlot%PreissmannSlotMethod of ',trim(c)
-                write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... StaticSlot, DynamicSlot'
-                stop 22496
-            end if
-        end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
-
-        !%                      TargetPreissmannCelerity
-        call json%get('PreissmannSlot.TargetPreissmannCelerity', real_value, found)
-        if (found) setting%PreissmannSlot%TargetPreissmannCelerity = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.TargetPreissmannCelerity not found'
-
-        !%                      PreissmannAlpha
-        call json%get('PreissmannSlot.PreissmannAlpha', real_value, found)
-        if (found) setting%PreissmannSlot%PreissmannAlpha = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannAlpha not found'
-
     !% Profile. =====================================================================
         !%                       Profile.useYN
         call json%get('Profile.useYN', logical_value, found)
@@ -1700,11 +1681,7 @@ contains
         
 
     !% Solver. =====================================================================
-        !%                       Solver.PreissmannSlot
-        call json%get('Solver.PreissmannSlot', logical_value, found)
-        if (found) setting%Solver%PreissmannSlot = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot not found'
-
+       
         !%                       Solver.SubtractReferenceHead
         call json%get('Solver.SubtractReferenceHead', logical_value, found)
         if (found) setting%Solver%SubtractReferenceHead = logical_value
@@ -1859,6 +1836,39 @@ contains
         call json%get('Solver.ForceMain.minimum_slope', real_value, found)
         if (found)  setting%Solver%ForceMain%minimum_slope = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.minimum_slope not found'
+
+    !% Solver.PreissmannSlot. =====================================================================
+         !%                       Solver.PreissmannSlot.useSlotTF
+        call json%get('Solver.PreissmannSlot.useSlotTF', logical_value, found)
+        if (found) setting%Solver%PreissmannSlot%useSlotTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.useSlotTF not found'
+
+        !%                       Solver.PreissmannSlot.SlotMethod
+        call json%get('Solver.PreissmannSlot.Method', c, found)
+        if (found) then 
+            call util_lower_case(c)
+            if (c == 'staticslot') then
+                setting%Solver%PreissmannSlot%Method = StaticSlot
+            else if (c == 'dynamicslot') then
+                setting%Solver%PreissmannSlot%Method = DynamicSlot
+            else
+                write(*,"(A)") 'Error - json file - setting.Solver.PreissmannSlot%Method of ',trim(c)
+                write(*,"(A)") '..is not in allowed options of:'
+                write(*,"(A)") '... StaticSlot, DynamicSlot'
+                stop 22496
+            end if
+        end if
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.SlotMethod not found'
+
+        !%                      Solver.PreissmannSlot.TargetCelerity
+        call json%get('Solver.PreissmannSlot.TargetCelerity', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%TargetCelerity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.TargetCelerity not found'
+
+        !%                      Alpha
+        call json%get('Solver.PreissmannSlot.Alpha', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%Alpha = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.Alpha not found'
 
 
     !% TestCase.  =====================================================================

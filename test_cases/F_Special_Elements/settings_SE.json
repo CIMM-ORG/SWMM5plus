@@ -145,7 +145,6 @@
         "OutputYN" : true
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",

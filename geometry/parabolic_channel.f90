@@ -32,28 +32,37 @@ module parabolic_channel
 !%==========================================================================
 !%
     subroutine parabolic_depth_from_volume (elemPGx, Npack, thisCol)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels (or non-surcharged parabolic conduits)
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point
         !% This will be done after the head is computed.
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), volume(:), length(:), breadth(:), fulldepth(:), rbot(:)
-        !%-----------------------------------------------------------------------------
-        thisP   => elemPGx(1:Npack,thisCol) 
-        depth   => elemR(:,er_Depth)
-        volume  => elemR(:,er_Volume)
-        length  => elemR(:,er_Length)
-        fulldepth => elemR(:,er_FullDepth)
-        breadth => elemSGR(:,esgr_Parabolic_Breadth)
-        rbot => elemSGR(:, esgr_Parabolic_Radius)
-        !%-----------------------------------------------------------------------------  
-
-        depth(thisP) = ( threeR/fourR * (volume(thisP)/length(thisP)) / rbot(thisP) ) ** twothirdR
+        !%--------------------------------------------------------------------
+        !% Declarations
+            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, pointer :: thisP(:)
+            real(8), pointer :: depth(:), volume(:), length(:), breadth(:)
+            real(8), pointer :: fulldepth(:), fullvolume(:), rbot(:)
+        !%-------------------------------------------------------------------
+            if (Npack < 1) return
+        !%-------------------------------------------------------------------
+            thisP      => elemPGx(1:Npack,thisCol) 
+            depth      => elemR(:,er_Depth)
+            volume     => elemR(:,er_Volume)
+            length     => elemR(:,er_Length)
+            fulldepth  => elemR(:,er_FullDepth)
+            fullvolume => elemR(:,er_FullVolume)
+            breadth    => elemSGR(:,esgr_Parabolic_Breadth)
+            rbot       => elemSGR(:, esgr_Parabolic_Radius)
+        !%-------------------------------------------------------------------- 
+        where (volume(thisP) >= fullvolume(thisP))
+            depth(thisP) = fulldepth(thisP)
+        elsewhere
+            depth(thisP) = ( threeR/fourR * (volume(thisP)/length(thisP)) &
+                         / rbot(thisP) ) ** twothirdR
+        endwhere
     end subroutine parabolic_depth_from_volume
     !%  
 !%==========================================================================

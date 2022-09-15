@@ -40,7 +40,7 @@ module weir_elements
         if (setting%Debug%File%weir_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        isSurcharged => elemYN(eIdx,eYN_isSurcharged)
+        isSurcharged => elemYN(eIdx,eYN_isACsurcharged)
 
         !% --- set the Setting for the fractional open
         ! call weir_set_setting (eIdx)  !% ss20220701 -- weir setting is already being set in control_update_setting subroutine
@@ -133,7 +133,7 @@ module weir_elements
         Zcrest                => elemSR(eIdx,esr_Weir_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
         CanSurcharge          => elemYN(eIdx,eYN_canSurcharge)
-        IsSurcharged          => elemYN(eIdx,eYN_isSurcharged)
+        IsSurcharged          => elemYN(eIdx,eYN_isACsurcharged)
         CurrentSetting        => elemR(eIdx,er_Setting)
         
         !% setting default surcharge condition as false
@@ -457,7 +457,7 @@ module weir_elements
         Zcrest                  => elemSR(eIdx,esr_Weir_Zcrest)
         Zcrown                  => elemSR(eIdx,esr_Weir_Zcrown)
         
-        IsSurcharged => elemYN(eIdx,eYN_isSurcharged)
+        IsSurcharged => elemYN(eIdx,eYN_isACsurcharged)
         !%-----------------------------------------------------------------------------     
         !% find depth on weir
         if (Head <= Zcrest) then

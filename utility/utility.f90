@@ -201,7 +201,7 @@ module utility
 
         ! print *, 'small depth ',elemYN(iet,eYN_isSmallDepth)
         ! print *, 'zero depth  ',elemYN(iet,eYN_isZeroDepth)
-        ! print *, 'is slot',elemYN(iet,eYN_isSLot)
+        ! print *, 'is slot',elemYN(iet,eYN_isPSsurcharged)
 
         ! write(*,"(A,10f12.5)") 'H face                ',faceR(elemI(iet(1),ei_Mface_dL),fr_Head_d), &
         !                                                 faceR(elemI(iet(2),ei_Mface_dL),fr_Head_u), &

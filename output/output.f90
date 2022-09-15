@@ -480,6 +480,7 @@ contains
         if (setting%Output%DataOut%isVelocityOut)                N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeOut)                  N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeConsOut)              N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumeOverflowOut)          N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannNumberOut)        N_OutTypeElem =  N_OutTypeElem + 1
@@ -619,6 +620,14 @@ contains
             ii = ii+1
             output_types_elemR(ii) = er_VolumeConservation
             output_typenames_elemR(ii) = 'VolumeConservation'
+            output_typeUnits_elemR(ii) = 'm^3'
+            output_typeProcessing_elemR(ii) = SumElements
+        end if
+        !% --- volume overflow in this step
+        if (setting%Output%DataOut%isVolumeOverflowOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_VolumeOverFlow
+            output_typenames_elemR(ii) = 'VolumeOverflow'
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
         end if
