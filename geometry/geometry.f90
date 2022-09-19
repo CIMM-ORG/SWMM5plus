@@ -9,6 +9,7 @@ module geometry
     use trapezoidal_channel
     use triangular_channel
     use rectangular_triangular_conduit
+    use arch_conduit
     use basket_handle_conduit
     use mod_basket_conduit
     use catenary_conduit
@@ -622,6 +623,15 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (arch)                                    
+                                    area(tB)     = arch_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = arch_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = arch_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= arch_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= arch_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (eggshaped)                                    
                                     area(tB)     = egg_shaped_area_from_depth_singular        (tB,depth(tB))
                                     topwidth(tB) = egg_shaped_topwidth_from_depth_singular    (tB,depth(tB))
@@ -929,6 +939,13 @@ module geometry
             call basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --  ARCH
+        thisCol => col_elemPGx(epg_CC_arch_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call arch_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !% --  EGG_SHAPED
         thisCol => col_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
@@ -1194,9 +1211,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (arch)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = arch_area_from_depth_singular (idx, indepth)
         case (eggshaped)
             outvalue = egg_shaped_area_from_depth_singular (idx, indepth)
         case (horseshoe)
@@ -1318,6 +1333,13 @@ module geometry
             call basket_handle_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- ARCH
+        Npack => npack_elemPGx(epg_CC_arch_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_arch_nonsurcharged)
+            call arch_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         if (Npack > 0) then
@@ -1425,9 +1447,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (arch)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = arch_topwidth_from_depth_singular (idx, indepth)
         case (eggshaped)
             outvalue = egg_shaped_topwidth_from_depth_singular (idx, indepth)
         case (horseshoe)
@@ -1550,6 +1570,13 @@ module geometry
             call basket_handle_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- ARCH
+        Npack => npack_elemPGx(epg_CC_arch_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_arch_nonsurcharged)
+            call arch_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         if (Npack > 0) then
@@ -1660,9 +1687,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (arch)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = arch_perimeter_from_depth_singular (idx, indepth)
         case (eggshaped)
             outvalue = egg_shaped_perimeter_from_depth_singular (idx, indepth)
         case (horseshoe)
@@ -1786,6 +1811,13 @@ module geometry
             call basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- ARCH
+        Npack => npack_elemPGx(epg_CC_arch_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_arch_nonsurcharged)
+            call arch_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         if (Npack > 0) then
@@ -1903,9 +1935,9 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (arch)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = arch_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = arch_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (eggshaped)
             temp1    = egg_shaped_topwidth_from_depth_singular    (idx, indepth)
             outvalue = egg_shaped_hyddepth_from_topwidth_singular (idx,temp1,indepth)

@@ -20,6 +20,7 @@ module initial_condition
     use face
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
+    use arch_conduit
     use circular_conduit
     use basket_handle_conduit
     use catenary_conduit
@@ -1027,12 +1028,12 @@ contains
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)
                     elemR(:,er_FullDepth)               = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
                     elemR(:,er_FullHydDepth)            = link%R(thisLink,lr_FullDepth) 
+                    elemR(:,er_FullArea)                = link%R(thisLink,lr_FullArea)
 
                     !% --- dependent on full depth
                     elemR(:,er_FullPerimeter)           = twoR * link%R(thisLink,lr_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth) !% 20220406brh
                     elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)                = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
 
                     !% --- dependent on full area
                     elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
@@ -1248,6 +1249,7 @@ contains
                     elemSGR(:,esgr_Parabolic_Radius)    = elemSGR(:,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
                     elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Parabolic_Breadth)
                     elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullArea)                = link%R(thisLink,lr_FullArea)
                     elemR(:,er_FullHydDepth)            = (twoR/threeR) * link%R(thisLink,lr_FullDepth) 
 
                     !% --- dependent on full depth
@@ -1259,7 +1261,6 @@ contains
 
                     elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)                = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_FullDepth) *  sqrt(elemR(:, er_FullDepth))
                     !% --- dependent on full area
                     elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
@@ -1325,12 +1326,13 @@ contains
                 elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
                 
                 elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_FullArea)              = link%R(thisLink,lr_FullArea)
                 elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                 elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_ell_max)               = (  (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
                                                         + elemR(:,er_AreaBelowBreadthMax )                                     &
                                                     ) / elemR(:,er_BreadthMax) 
-                elemR(:,er_FullArea)              = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
+
                 elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth) 
                 elemR(:,er_FullPerimeter)         = twoR * elemR(:,er_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth)
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
@@ -1387,9 +1389,9 @@ contains
                 elemSGR(:,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
                 elemSGR(:,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
                 elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_FullArea)              = link%R(thisLink,lr_FullArea)
                 elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
-                elemR(:,er_FullArea)              = pi * elemSGR(:,esgr_Circular_Radius) ** twoR
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth)
                 elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
@@ -1428,6 +1430,7 @@ contains
                     elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
                     elemSGR(:,esgr_Rectangular_Triangular_BottomArea)   = onehalfR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) * elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)                                                
                     elemR(:,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullArea)     = link%R(thisLink,lr_FullArea)
 
                     where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
                         where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
@@ -1452,8 +1455,6 @@ contains
                     elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
                     elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)      = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) &
-                                                + (elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) * (elemR(:,er_FullDepth)-elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) )) 
                     elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
                     elemR(:,er_FullHydDepth)  = elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) / twoR + (elemR(:,er_FullDepth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
 
@@ -1470,15 +1471,14 @@ contains
                 where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_geometryType)                            = mod_basket
                     elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
                     elemSGR(:,esgr_Mod_Basket_BreadthMax)               = link%R(thisLink,lr_BreadthScale)
                     elemSGR(:,esgr_Mod_Basket_Rtop)                     = link%R(thisLink,lr_BottomRadius)
                     elemSGR(:,esgr_Mod_Basket_ThetaTop)                 = twoR * asin(elemSGR(:,esgr_Mod_Basket_BreadthMax) / twoR / elemSGR(:,esgr_Mod_Basket_Rtop) )
                     elemSGR(:,esgr_Mod_Basket_Ytop)                     = elemSGR(:,esgr_Mod_Basket_Rtop) * (oneR - cos(elemSGR(:,esgr_Mod_Basket_ThetaTop) / twoR))
                     elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)            = elemR(:,er_FullDepth) - elemSGR(:,esgr_Mod_Basket_Ytop)
                     elemSGR(:,esgr_Mod_Basket_Atop)                     = onehalfR * (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
-                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop)))
-                    elemR(:,er_FullArea)                                = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax) &
-                                                                        + elemSGR(:,esgr_Mod_Basket_Atop)                       
+                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop)))                      
                     where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
                         where (elemR(:,er_Depth) <= elemSGR(:,esgr_Mod_Basket_YatMaxBreadth))
                             elemR(:,er_Area) = elemR(:,er_Depth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
@@ -1518,7 +1518,7 @@ contains
                     elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
                                                       + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
-                
+
         case (lBasket_handle)
 
             do ii = 1,N_elem(this_image())
@@ -1527,7 +1527,7 @@ contains
                     elemI(ii,ei_geometryType) = basket_handle
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.7862 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
                     !% elemSGR data
                     elemSGR(ii,esgr_Basket_Handle_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Basket_Handle_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1553,8 +1553,49 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Basket_Handle_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.2464 * elemR(ii,er_FullDepth) )
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     elemR(ii,er_AreaBelowBreadthMax) = basket_handle_area_from_depth_singular (ii, elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+
+        case (lArch)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = arch
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Arch_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Arch_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Arch_YatMaxBreadth) = 0.28 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                    else
+                        !% --- Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isSlot)  = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Arch_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Arch_BreadthMax)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
+                    elemR(ii,er_AreaBelowBreadthMax) = arch_area_from_depth_singular (ii, elemSGR(ii,esgr_Arch_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
                 end if
@@ -1568,7 +1609,8 @@ contains
                     elemI(ii,ei_geometryType) = eggshaped
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.5105 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     !% elemSGR data
                     elemSGR(ii,esgr_Egg_Shaped_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Egg_Shaped_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1594,7 +1636,6 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Egg_Shaped_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.1931 * elemR(ii,er_FullDepth) )
                     elemR(ii,er_AreaBelowBreadthMax) = egg_shaped_area_from_depth_singular (ii, elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
@@ -1609,7 +1650,8 @@ contains
                     elemI(ii,ei_geometryType) = horseshoe
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.8293 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     !% elemSGR data
                     elemSGR(ii,esgr_Horse_Shoe_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Horse_Shoe_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1635,7 +1677,6 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horse_Shoe_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.1931 * elemR(ii,er_FullDepth))
                     elemR(ii,er_AreaBelowBreadthMax) = horse_shoe_area_from_depth_singular (ii, elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
@@ -1650,7 +1691,8 @@ contains
                     elemI(ii,ei_geometryType) = catenary
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.70277 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     !% elemSGR data
                     elemSGR(ii,esgr_Catenary_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Catenary_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1676,7 +1718,6 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Catenary_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.23172 * elemR(ii,er_FullDepth))
                     elemR(ii,er_AreaBelowBreadthMax) = catenary_area_from_depth_singular (ii, elemSGR(ii,esgr_catenary_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
@@ -1691,7 +1732,8 @@ contains
                     elemI(ii,ei_geometryType) = gothic
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.6554 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     !% elemSGR data
                     elemSGR(ii,esgr_Gothic_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Gothic_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1717,7 +1759,6 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Gothic_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.2269 * elemR(ii,er_FullDepth))
                     elemR(ii,er_AreaBelowBreadthMax) = gothic_area_from_depth_singular (ii, elemSGR(ii,esgr_Gothic_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
@@ -1733,7 +1774,8 @@ contains
                     elemI(ii,ei_geometryType) = semi_elliptical
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 0.785 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     !% elemSGR data
                     elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Semi_Elliptical_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1759,7 +1801,6 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.242 * elemR(ii,er_FullDepth))
                     elemR(ii,er_AreaBelowBreadthMax) = semi_elliptical_area_from_depth_singular (ii, elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
@@ -1775,7 +1816,8 @@ contains
                     elemI(ii,ei_geometryType) = semi_circular
                     !% elemR data                                            
                     elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = 1.2697 * elemR(ii,er_FullDepth) * elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / link%R(thisLink,lr_FullHydRadius) 
                     !% elemSGR data
                     elemSGR(ii,esgr_Semi_Circular_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
                     elemSGR(ii,esgr_Semi_Circular_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
@@ -1801,7 +1843,6 @@ contains
                     elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
                     elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Semi_Circular_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (0.2946 * elemR(ii,er_FullDepth))
                     elemR(ii,er_AreaBelowBreadthMax) = semi_circular_area_from_depth_singular (ii, elemSGR(ii,esgr_Semi_Circular_YatMaxBreadth))
                     elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
@@ -2920,7 +2961,8 @@ contains
             select case  (elemI(JBidx,ei_geometryType))
 
             case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rectangular_closed, filled_circular, &
-                  semi_circular, circular, semi_elliptical, catenary, basket_handle, horseshoe, gothic, eggshaped, irregular)
+                  arch, semi_circular, circular, semi_elliptical, catenary, basket_handle, horseshoe, gothic, eggshaped, &
+                  irregular)
                 !% --- Copy all the geometry specific data from the adjacent element cell
                 !%     Note that because irregular transect tables are not yet initialized, the
                 !%     Area and Volume here will be junk for an irregular cross-section and will need to be
@@ -3050,6 +3092,12 @@ contains
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Basket_Handle_BreadthMax)/twoR) )
+                
+                case (lArch)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                    * elemR(  JBidx,er_Length)                                   &
+                                    * (elemSGR(JBidx,esgr_Arch_BreadthMax)/twoR) )
 
                 case (lEggshaped)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
@@ -3705,6 +3753,15 @@ contains
             tPack(1:npack) = pack(eIdx,geoType == basket_handle)
             !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
             smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Basket_Handle_BreadthMax) * depthCutoff * length
+        end if
+
+        !% ---  arch conduit
+        tPack = zeroI
+        npack = count(geoType == arch)
+        if (npack > 0) then
+            tPack(1:npack) = pack(eIdx,geoType == arch)
+            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
+            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Arch_BreadthMax) * depthCutoff * length
         end if
         
         !% ---  horse shoe conduit

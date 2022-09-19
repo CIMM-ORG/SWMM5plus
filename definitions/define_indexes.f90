@@ -66,6 +66,8 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
+        enumerator :: lr_FullArea
+        enumerator :: lr_FullHydRadius
         enumerator :: lr_BottomDepth 
         enumerator :: lr_BottomRadius  
         enumerator :: lr_BreadthScale
@@ -552,6 +554,7 @@ module define_indexes
         enumerator :: epg_CC_horse_shoe_nonsurcharged               !% CC horse shoe conduits that are not surcharged
         enumerator :: epg_CC_catenary_nonsurcharged                 !% CC catenary conduits that are not surcharged
         enumerator :: epg_CC_gothic_nonsurcharged                   !% CC gothic conduits that are not surcharged
+        enumerator :: epg_CC_arch_nonsurcharged                     !% CC arch conduits that are not surcharged
         enumerator :: epg_CC_filled_circular_nonsurcharged          !% CC filled circular conduits that are not surcharged
         enumerator :: epg_CC_semi_circular_nonsurcharged            !% CC semi circular conduits that are not surcharged
         enumerator :: epg_CC_semi_elliptical_nonsurcharged          !% CC semi elliptical conduits that are not surcharged
@@ -941,6 +944,18 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Semi_Elliptical = esgr_Semi_Elliptical_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for Arch shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Arch_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Arch_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Arch_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Arch_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Arch_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Arch_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Arch = esgr_Arch_lastplusone-1
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
@@ -961,6 +976,7 @@ module define_indexes
                             Ncol_elemSGR_Gothic,        &
                             Ncol_elemSGR_Semi_Circular, &
                             Ncol_elemSGR_Mod_Basket,    &
+                            Ncol_elemSGR_Arch,          &
                             Ncol_elemSGR_Semi_Elliptical)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types

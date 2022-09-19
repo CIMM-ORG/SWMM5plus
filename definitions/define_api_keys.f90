@@ -581,24 +581,26 @@ module define_api_keys
         enumerator :: api_linkf_xsect_wMax   ! 82
         enumerator :: api_linkf_xsect_yBot   ! 83
         enumerator :: api_linkf_xsect_yFull  ! 84
-        enumerator :: api_linkf_xsect_rBot   ! 85
-        enumerator :: api_linkf_transectidx  ! 86
-        enumerator :: api_linkf_forcemain_coef ! 87
-        enumerator :: api_linkf_end          ! 88  ! must be end of the ...linkf... xsect attributes
+        enumerator :: api_linkf_xsect_aFull  ! 85
+        enumerator :: api_linkf_xsect_rFull  ! 86
+        enumerator :: api_linkf_xsect_rBot   ! 87
+        enumerator :: api_linkf_transectidx  ! 89
+        enumerator :: api_linkf_forcemain_coef ! 89
+        enumerator :: api_linkf_end          ! 90  ! must be end of the ...linkf... xsect attributes
         !% --- transect data
-        enumerator :: api_transectf_start   ! 89
-        enumerator :: api_transectf_ID      ! 90
-        enumerator :: api_transectf_yFull   ! 91
-        enumerator :: api_transectf_aFull   ! 92
-        enumerator :: api_transectf_rFull   ! 93
-        enumerator :: api_transectf_wMax    ! 94
-        enumerator :: api_transectf_ywMax   ! 95
-        enumerator :: api_transectf_sMax    ! 96
-        enumerator :: api_transectf_aMax    ! 97
-        enumerator :: api_transectf_lengthFactor    ! 98
-        enumerator :: api_transectf_roughness       ! 99
-        enumerator :: api_transectf_end             ! 100
-        enumerator :: api_keyslastplusone   ! 101
+        enumerator :: api_transectf_start   ! 91
+        enumerator :: api_transectf_ID      ! 92
+        enumerator :: api_transectf_yFull   ! 93
+        enumerator :: api_transectf_aFull   ! 94
+        enumerator :: api_transectf_rFull   ! 95
+        enumerator :: api_transectf_wMax    ! 96
+        enumerator :: api_transectf_ywMax   ! 97
+        enumerator :: api_transectf_sMax    ! 98
+        enumerator :: api_transectf_aMax    ! 99
+        enumerator :: api_transectf_lengthFactor    ! 100
+        enumerator :: api_transectf_roughness       ! 101
+        enumerator :: api_transectf_end             ! 102
+        enumerator :: api_keyslastplusone   ! 103
     end enum
 
     ! !% API link attributes
