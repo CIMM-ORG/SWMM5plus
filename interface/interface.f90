@@ -1834,23 +1834,73 @@ contains
                     end select
 
                 case (API_HORIZ_ELLIPSE)
-                    print *, 'CODE ERROR: API_HORIZ_ELLIPSE geometry not handled yet'
-                    call util_crashpoint(993782)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lHoriz_ellipse
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_VERT_ELLIPSE)
-                    print *, 'CODE ERROR: API_VERT_ELLIPSE geometry not handled yet'
-                    call util_crashpoint(11847)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lVert_ellipse
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_ARCH)

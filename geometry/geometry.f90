@@ -19,6 +19,8 @@ module geometry
     use filled_circular_conduit
     use semi_elliptical_conduit
     use gothic_conduit
+    use horiz_ellipse_conduit
+    use vert_ellipse_conduit
     use horse_shoe_conduit
     use irregular_channel
     use parabolic_channel
@@ -632,6 +634,24 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (horiz_ellipse)                                    
+                                    area(tB)     = horiz_ellipse_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = horiz_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = horiz_ellipse_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= horiz_ellipse_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= horiz_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (vert_ellipse)                                    
+                                    area(tB)     = vert_ellipse_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = vert_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = vert_ellipse_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= vert_ellipse_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= vert_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (eggshaped)                                    
                                     area(tB)     = egg_shaped_area_from_depth_singular        (tB,depth(tB))
                                     topwidth(tB) = egg_shaped_topwidth_from_depth_singular    (tB,depth(tB))
@@ -946,6 +966,20 @@ module geometry
             call arch_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --  Horizontal Ellipse
+        thisCol => col_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call horiz_ellipse_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  Vertical Ellipse
+        thisCol => col_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call vert_ellipse_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !% --  EGG_SHAPED
         thisCol => col_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
@@ -1203,13 +1237,9 @@ module geometry
         case (rectangular_closed)
             outvalue = rectangular_closed_area_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = horiz_ellipse_area_from_depth_singular (idx, indepth)
         case (vert_ellipse)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = vert_ellipse_area_from_depth_singular (idx, indepth)
         case (arch)
             outvalue = arch_area_from_depth_singular (idx, indepth)
         case (eggshaped)
@@ -1340,6 +1370,20 @@ module geometry
             call arch_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- HORIZONTAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+            call horiz_ellipse_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- VERTICAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+            call vert_ellipse_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         if (Npack > 0) then
@@ -1439,13 +1483,9 @@ module geometry
         case (rectangular_closed)
             outvalue = rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = horiz_ellipse_topwidth_from_depth_singular (idx, indepth)
         case (vert_ellipse)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = vert_ellipse_topwidth_from_depth_singular (idx, indepth)
         case (arch)
             outvalue = arch_topwidth_from_depth_singular (idx, indepth)
         case (eggshaped)
@@ -1577,6 +1617,20 @@ module geometry
             call arch_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- HORIZONTAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+            call horiz_ellipse_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- VERTICAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+            call vert_ellipse_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         if (Npack > 0) then
@@ -1679,13 +1733,9 @@ module geometry
         case (rectangular_closed)
             outvalue = rectangular_closed_perimeter_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = horiz_ellipse_perimeter_from_depth_singular (idx, indepth)
         case (vert_ellipse)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = vert_ellipse_perimeter_from_depth_singular (idx, indepth)
         case (arch)
             outvalue = arch_perimeter_from_depth_singular (idx, indepth)
         case (eggshaped)
@@ -1818,6 +1868,20 @@ module geometry
             call arch_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- HORIZONTAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_horiz_ellipse_nonsurcharged)
+            call horiz_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- VERTICAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_vert_ellipse_nonsurcharged)
+            call vert_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped_nonsurcharged)
         if (Npack > 0) then
@@ -1927,13 +1991,13 @@ module geometry
         case (rectangular_closed)
             outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
         case (horiz_ellipse)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = horiz_ellipse_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = horiz_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (vert_ellipse)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = vert_ellipse_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = vert_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (arch)
             !% --- get the topwidth and use that to compute the hydraulic depth
             temp1    = arch_topwidth_from_depth_singular    (idx, indepth)

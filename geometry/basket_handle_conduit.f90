@@ -178,7 +178,8 @@ module basket_handle_conduit
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
-        real(8), pointer :: fulldepth(:), perimeter(:), area(:), fullperimeter(:)
+        real(8), pointer :: fulldepth(:), perimeter(:), area(:)
+        real(8), pointer :: fullperimeter(:), fullhydradius(:)
         !%-----------------------------------------------------------------------------
         !!if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
@@ -189,6 +190,7 @@ module basket_handle_conduit
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
         fullperimeter => elemR(:,er_FullPerimeter)
+        fullhydradius => elemR(:,er_FullHydRadius)
         !%-----------------------------------------------------------------------------
 
         !% calculate normalized depth
@@ -199,7 +201,7 @@ module basket_handle_conduit
         call xsect_table_lookup &
             (hydRadius, YoverYfull, RBasketHandle, thisP)  
 
-        hydRadius(thisP) = 0.2464 * fulldepth(thisP) * hydRadius(thisP)
+        hydRadius(thisP) = fullhydradius(thisP) * hydRadius(thisP)
 
         !% finally get the perimeter by dividing area by hydRadius
         perimeter(thisP) = min (area(thisP) / hydRadius(thisP), fullperimeter(thisP))
@@ -220,7 +222,7 @@ module basket_handle_conduit
         !% Declarations:
             integer, intent(in) :: idx
             real(8), intent(in) :: indepth
-            real(8), pointer :: fulldepth, fullarea, fullperimeter
+            real(8), pointer :: fulldepth, fullarea, fullperimeter, fullhydradius
             real(8) :: hydRadius, YoverYfull, area
 
         !%------------------------------------------------------------------
@@ -228,6 +230,7 @@ module basket_handle_conduit
             fulldepth     => elemR(idx,er_FullDepth)
             fullarea      => elemR(idx,er_FullArea)
             fullperimeter => elemR(idx,er_FullPerimeter)
+            fullhydradius => elemR(idx,er_FullHydRadius)
         !%------------------------------------------------------------------
         YoverYfull = indepth / fulldepth
 
@@ -238,7 +241,7 @@ module basket_handle_conduit
         hydradius =  xsect_table_lookup_singular (YoverYfull, RBasketHandle)  !% 20220506 brh
 
         !% --- unnormalize
-        hydRadius = 0.2464 * fulldepth * hydradius
+        hydRadius = fullhydradius * hydradius
         area      = area * fullArea
 
         !% --- get the perimeter by dividing area by hydRadius
@@ -355,10 +358,11 @@ module basket_handle_conduit
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
         !%-----------------------------------------------------------------------------
-        fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        fulldepth     => elemR(:,er_FullDepth)
+        fullhydradius => elemR(:,er_FullHydRadius)
+        YoverYfull    => elemSGR(:,esgr_Basket_Handle_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
@@ -366,7 +370,7 @@ module basket_handle_conduit
 
         !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Rmax (fullDepth/4)
-        outvalue = 0.2464 * fulldepth(indx) * &
+        outvalue = fullhydradius(indx) * &
                 xsect_table_lookup_singular (YoverYfull(indx), RBasketHandle)
 
     end function basket_handle_hydradius_from_depth_singular

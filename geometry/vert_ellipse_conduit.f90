@@ -1,4 +1,4 @@
-module arch_conduit
+module vert_ellipse_conduit
 
     use define_settings, only: setting
     use define_globals
@@ -12,22 +12,22 @@ module arch_conduit
 
     !%-----------------------------------------------------------------------------
     !% Description:
-    !% arch conduit geometry
+    !% vert_ellipse conduit geometry
     !%
 
     private
 
-    public :: arch_depth_from_volume
-    public :: arch_area_from_depth_singular
-    public :: arch_topwidth_from_depth
-    public :: arch_topwidth_from_depth_singular
-    public :: arch_perimeter_from_depth
-    public :: arch_perimeter_from_depth_singular
-    public :: arch_perimeter_from_hydradius_singular
-    public :: arch_hyddepth_from_topwidth
-    public :: arch_hyddepth_from_topwidth_singular
-    public :: arch_hydradius_from_depth_singular
-    public :: arch_normaldepth_from_sectionfactor_singular
+    public :: vert_ellipse_depth_from_volume
+    public :: vert_ellipse_area_from_depth_singular
+    public :: vert_ellipse_topwidth_from_depth
+    public :: vert_ellipse_topwidth_from_depth_singular
+    public :: vert_ellipse_perimeter_from_depth
+    public :: vert_ellipse_perimeter_from_depth_singular
+    public :: vert_ellipse_perimeter_from_hydradius_singular
+    public :: vert_ellipse_hyddepth_from_topwidth
+    public :: vert_ellipse_hyddepth_from_topwidth_singular
+    public :: vert_ellipse_hydradius_from_depth_singular
+    public :: vert_ellipse_normaldepth_from_sectionfactor_singular
 
 
 
@@ -37,10 +37,10 @@ module arch_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine arch_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine vert_ellipse_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on conduits (or non-surcharged arch conduits)
+        !% Only applies on conduits (or non-surcharged vert_ellipse conduits)
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point
@@ -57,28 +57,28 @@ module arch_conduit
         length     => elemR(:,er_Length)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Arch_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Arch_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Vert_Ellipse_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Vert_Ellipse_YoverYfull)
         !%-----------------------------------------------------------------------------
         !% --- compute the relative volume
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
       
         !% retrive the normalized Y/Yfull from the lookup table
         call xsect_table_lookup &
-            (YoverYfull, AoverAfull, YArch, thisP)  
+            (YoverYfull, AoverAfull, YVertEllip, thisP)  
 
         !% finally get the depth by multiplying the normalized depth with full depth
         depth(thisP) = YoverYfull(thisP) * fulldepth(thisP)
 
-    end subroutine arch_depth_from_volume
+    end subroutine vert_ellipse_depth_from_volume
 !%
 !%==========================================================================      
 !%==========================================================================
 !%
-    real(8) function arch_area_from_depth_singular (indx, depth) result (outvalue)
+    real(8) function vert_ellipse_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes area from known depth for arch cross section of a single element
+        !% Computes area from known depth for vert_ellipse cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
@@ -89,29 +89,29 @@ module arch_conduit
         !!if (crashYN) return
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Arch_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Arch_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Vert_Ellipse_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Vert_Ellipse_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), AArch)
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), AVertEllip)
 
         !% finally get the area by multiplying the normalized area with full area
         outvalue = AoverAfull(indx) * fullArea(indx)
 
-    end function arch_area_from_depth_singular
+    end function vert_ellipse_area_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine arch_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine vert_ellipse_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth from a known depth in a arch conduit
+        !% Computes the topwidth from a known depth in a vert_ellipse conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
@@ -122,7 +122,7 @@ module arch_conduit
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Arch_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Vert_Ellipse_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% Calculate normalized depth
@@ -131,55 +131,54 @@ module arch_conduit
         !% retrive the normalized T/Tmax from the lookup table
         !% T/Tmax value is temporarily saved in the topwidth column
         call xsect_table_lookup &
-            (topwidth, YoverYfull, TArch, thisP) 
+            (topwidth, YoverYfull, TVertEllip, thisP) 
 
         !% finally get the topwidth by multiplying the T/Tmax with full depth
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
 
-    end subroutine arch_topwidth_from_depth
+    end subroutine vert_ellipse_topwidth_from_depth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function arch_topwidth_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function vert_ellipse_topwidth_from_depth_singular (indx,depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth for a arch cross section of a single element
+        !% Computes the topwidth for a vert_ellipse cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
         real(8), pointer    ::  YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Arch_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Vert_Ellipse_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Tmax (fullDepth for arch cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TArch) 
+        !% and then myltiplying it with Tmax (fullDepth for vert_ellipse cross-section)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TVertEllip) 
 
         !% if topwidth <= zero, set it to zerovalue
         outvalue = max(outvalue, setting%ZeroValue%Topwidth)
 
-    end function arch_topwidth_from_depth_singular
+    end function vert_ellipse_topwidth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine arch_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine vert_ellipse_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the perimeter from a known depth in a arch conduit
+        !% Computes the perimeter from a known depth in a vert_ellipse conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
-        real(8), pointer :: fulldepth(:), perimeter(:), area(:) 
-        real(8), pointer :: fullperimeter(:), fullHydRadius(:)
+        real(8), pointer :: fulldepth(:), perimeter(:), area(:), fullperimeter(:), fullhydradius(:)
         !%-----------------------------------------------------------------------------
         !!if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
@@ -188,9 +187,9 @@ module arch_conduit
         hydRadius  => elemR(:,er_HydRadius)
         perimeter  => elemR(:,er_Perimeter)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Arch_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Vert_Ellipse_YoverYfull)
         fullperimeter => elemR(:,er_FullPerimeter)
-        fullHydRadius => elemR(:,er_FullHydRadius)
+        fullhydradius => elemR(:,er_FullHydRadius)
         !%-----------------------------------------------------------------------------
 
         !% calculate normalized depth
@@ -199,24 +198,24 @@ module arch_conduit
         !% retrive the normalized R/Rmax from the lookup table
         !% R/Rmax value is temporarily saved in the hydRadius column
         call xsect_table_lookup &
-            (hydRadius, YoverYfull, RArch, thisP)  
+            (hydRadius, YoverYfull, RVertEllip, thisP)  
 
-        hydRadius(thisP) = fullHydRadius(thisP) * hydRadius(thisP)
+        hydRadius(thisP) = fullhydradius(thisP) * hydRadius(thisP)
 
         !% finally get the perimeter by dividing area by hydRadius
         perimeter(thisP) = min (area(thisP) / hydRadius(thisP), fullperimeter(thisP))
 
         !% HACK: perimeter correction is needed when the pipe is empty.
-    end subroutine arch_perimeter_from_depth
+    end subroutine vert_ellipse_perimeter_from_depth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function arch_perimeter_from_depth_singular &
+    real(8) function vert_ellipse_perimeter_from_depth_singular &
         (idx, indepth) result(outvalue)
         !%------------------------------------------------------------------
         !% Description:
-        !% Computes the arch conduit perimeter for the given depth on
+        !% Computes the vert_ellipse conduit perimeter for the given depth on
         !% the element idx
         !%------------------------------------------------------------------
         !% Declarations:
@@ -235,10 +234,10 @@ module arch_conduit
         YoverYfull = indepth / fulldepth
 
         !% --- retrieve normalized A/Amax for this depth from lookup table
-        area = xsect_table_lookup_singular (YoverYfull, AArch)
+        area = xsect_table_lookup_singular (YoverYfull, AVertEllip)
 
         !% --- retrive the normalized R/Rmax for this depth from the lookup table
-        hydradius =  xsect_table_lookup_singular (YoverYfull, RArch)  !% 20220506 brh
+        hydradius =  xsect_table_lookup_singular (YoverYfull, RVertEllip)  !% 20220506 brh
 
         !% --- unnormalize
         hydRadius = fullhydradius * hydradius
@@ -247,16 +246,16 @@ module arch_conduit
         !% --- get the perimeter by dividing area by hydRadius
         outvalue = min(area / hydRadius, fullperimeter)
 
-    end function arch_perimeter_from_depth_singular
+    end function vert_ellipse_perimeter_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function arch_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
+    real(8) function vert_ellipse_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes wetted perimeter from known depth for a arch cross section of
+        !% Computes wetted perimeter from known depth for a vert_ellipse cross section of
         !% a single element
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
@@ -272,16 +271,16 @@ module arch_conduit
 
         !% HACK: perimeter correction is needed when the pipe is empty
 
-    end function arch_perimeter_from_hydradius_singular
+    end function vert_ellipse_perimeter_from_hydradius_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine arch_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    subroutine vert_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a arch conduit
+        !% Computes the hydraulic (average) depth from a known depth in a vert_ellipse conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
@@ -299,7 +298,7 @@ module arch_conduit
         !%--------------------------------------------------
 
         !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in arch cross section for both
+        !% topwidth can be zero in vert_ellipse cross section for both
         !% full and empty condition.
 
         !% when conduit is empty
@@ -312,16 +311,16 @@ module arch_conduit
             hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
         endwhere
 
-    end subroutine arch_hyddepth_from_topwidth
+    end subroutine vert_ellipse_hyddepth_from_topwidth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function arch_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
+    real(8) function vert_ellipse_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for arch cross section of
+        !% Computes hydraulic depth from known depth for vert_ellipse cross section of
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
@@ -333,7 +332,7 @@ module arch_conduit
         !%--------------------------------------------------
 
         !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in arch cross section for both
+        !% topwidth can be zero in vert_ellipse cross section for both
         !% full and empty condition.
 
         !% when conduit is empty
@@ -344,25 +343,25 @@ module arch_conduit
             outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
         endif
 
-    end function arch_hyddepth_from_topwidth_singular
+    end function vert_ellipse_hyddepth_from_topwidth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function arch_hydradius_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function vert_ellipse_hydradius_from_depth_singular (indx,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic radius from known depth for a arch cross section of
+        !% Computes hydraulic radius from known depth for a vert_ellipse cross section of
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullHydRadius(:)
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
         !%-----------------------------------------------------------------------------
         fulldepth     => elemR(:,er_FullDepth)
-        fullHydRadius => elemR(:,er_FullHydRadius)
-        YoverYfull    => elemSGR(:,esgr_Arch_YoverYfull)
+        fullhydradius => elemR(:,er_FullHydRadius)
+        YoverYfull    => elemSGR(:,esgr_Vert_Ellipse_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
@@ -370,15 +369,15 @@ module arch_conduit
 
         !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Rmax (fullDepth/4)
-        outvalue = fullHydRadius(indx) * &
-                xsect_table_lookup_singular (YoverYfull(indx), RArch)
+        outvalue = fullhydradius(indx) * &
+                xsect_table_lookup_singular (YoverYfull(indx), RVertEllip)
 
-    end function arch_hydradius_from_depth_singular
+    end function vert_ellipse_hydradius_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function arch_normaldepth_from_sectionfactor_singular &
+    real(8) function vert_ellipse_normaldepth_from_sectionfactor_singular &
          (SFidx, inSF) result (outvalue)
         !%------------------------------------------------------------------
         !% Description
@@ -403,7 +402,7 @@ module arch_conduit
         !% --- unnormalize the depth for the output
         outvalue = outvalue * elemR(eIdx,er_FullDepth)
 
-    end function arch_normaldepth_from_sectionfactor_singular
+    end function vert_ellipse_normaldepth_from_sectionfactor_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -420,4 +419,4 @@ module arch_conduit
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================
-end module arch_conduit
+end module vert_ellipse_conduit
