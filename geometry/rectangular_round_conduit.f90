@@ -259,7 +259,7 @@ module rect_round_conduit
 
             where(depth(thisP) >= fullDepth(thisP))
                 !% if the depth exceeds the full depth, the top part will contribute
-                !% to overall wetted perimeter
+                !% to overall wetted perimeter 
                 perimeter(thisP) = perimeter(thisP) + breadth(thisP)
             end where
 
