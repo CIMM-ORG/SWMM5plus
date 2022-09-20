@@ -55,38 +55,34 @@ N3                4.3762     0          1          0          0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-O4                0.0        FIXED         1.0            YES                       
+O4                0         FREE                         YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1                N1                N2                1000       0.03       0          0          4.6981     0         
-C2                N2                N3                1000       0.03       0          0          4.6981     0         
-C3                N3                O4                1000       0.03       0          0          4.6981     0         
+C1                N1                N2                1000       0.03       0          0          2.6981     0         
+C2                N2                N3                1000       0.03       0          0          2.6981     0         
+C3                N3                O4                1000       0.03       0          0          2.6981     0         
 
 [XSECTIONS]
-;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;Link           Shape        Geom1           Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1                RECT_OPEN    2                3          0          0          1                    
-C2                RECT_OPEN    2                3          0          0          1                    
-C3                RECT_OPEN    2                3          0          0          1         
+C1                GOTHIC      4             0           0          0           1                   
+C2                GOTHIC      4             0           0          0           1                   
+C3                GOTHIC      4             0           0          0           1 
+                  
 
 [LOSSES]
 ;; Conduit      Kentry      Kexit       Kavg        Flap       Seepage
 ;;---------   ----------   -------    --------     -------    -----------
-C1                0.0       0.0         0.0          NO        0.0
-C2                0.0       0.0         0.0          NO        100.0
-C3                0.0       0.0         0.0          NO        0.0
+C1                0.0       0.0         0.0          NO         0.0
+C2                0.0       0.0         0.0          NO         0.0
+C3                0.0       0.0         0.0          NO         0.0
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-N1                FLOW             ""               FLOW     1.0      1.0      4.6981   
-
-[ADJUSTMENTS]
-;; Type         01     02     03     04     05     06     07     08     09     10     11     12
-;;---------   -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
-CONDUCTIVITY   1.0    1.0     1.0    1.0   1.0    1.0    1.0    1.0     1.0    1.0    1.0   1.0
+N1                FLOW             ""               FLOW     1.0      1.0      2.6981   
 
 [REPORT]
 ;;Reporting Options

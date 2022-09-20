@@ -119,10 +119,6 @@ module diagnostic_elements
 
             case (pump)
                 call pump_toplevel (thisP(ii))
-                !print *, 'CODE ERROR: Pump has not yet been developed'
-                !print *, 'which has key ',trim(reverseKey(thisType))
-                !call util_crashpoint(564321)
-                !return
 
             case (outlet)
                 call outlet_toplevel (thisP(ii))

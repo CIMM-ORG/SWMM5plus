@@ -378,6 +378,10 @@ module define_settings
     type AdjustType
         type(AdjustFlowrateType)   :: Flowrate
         type(AdjustHeadType)       :: Head
+        real(8), dimension(12)     :: Temperature   !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Evaporation   !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Rainfall      !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] not use setting
     end type AdjustType
 
     ! setting%BC
@@ -501,7 +505,7 @@ module define_settings
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
         !rm 20220207brh real(8) :: HeadCoef     = 1.0d0   !% junction branch head coef for diagnostic junction (must be > 0)
-        !rm real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
     end type JunctionType
 
     ! setting%Limiter
@@ -617,6 +621,7 @@ module define_settings
     !% storage for data read from SWMM input file
     !% NOT USER SETTINGS
     type SWMMinputType
+        logical :: AllowPonding
         integer :: ForceMainEquation
         integer :: N_control = zeroI
         integer :: N_curve = zeroI
@@ -1267,9 +1272,9 @@ contains
         ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.HeeadCoef not found'
 
         !%                       Junction.kFactor
-        ! call json%get('Junction.kFactor', real_value, found)
-        ! if (found) setting%Junction%kFactor = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
+        call json%get('Junction.kFactor', real_value, found)
+        if (found) setting%Junction%kFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
 
    
     !% Limiter. =====================================================================

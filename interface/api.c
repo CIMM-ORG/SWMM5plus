@@ -855,7 +855,11 @@ int DLLEXPORT api_get_nodef_attribute(
 
         case nodef_fullDepth  :
             *value = FTTOM(Node[node_idx].fullDepth);
-            break;      
+            break;  
+
+        case nodef_surDepth :
+            *value = FTTOM(Node[node_idx].surDepth);
+            break;        
 
         case nodef_initDepth  :
             switch (Node[node_idx].type) {
@@ -1083,8 +1087,13 @@ int DLLEXPORT api_get_nodef_attribute(
             break;
 
         case nodef_overflow  :
+            // THIS SHOULD NOT BE NEEDED
             *value = CFTOCM(Node[node_idx].overflow);
             break;     
+
+        case nodef_pondedarea :
+            *value = FT2TOM2(Node[node_idx].pondedArea);
+            break;
 
         case nodef_rptFlag  :
             if (Node[node_idx].rptFlag)
@@ -1500,6 +1509,26 @@ int DLLEXPORT api_get_linkf_attribute(
                     *value = 0;
             }
             break;
+        
+        case linkf_weir_road_width :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = FTTOM(Weir[Link[link_idx].subIndex].roadWidth);
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
+        
+        case linkf_weir_road_surface :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].roadSurface;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
 
         case linkf_curveid :
             switch (Link[link_idx].type) {
@@ -1636,6 +1665,11 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = Link[link_idx].cLossAvg;
             break;
 
+        case linkf_seepRate :
+            *value = FTTOM(Link[link_idx].seepRate);
+            //printf("\n ****** seep rate  %e \n ", FTTOM(Link[link_idx].seepRate));
+            break;
+
         case linkf_commonBreak :
             // placeholder with no action
             *value = 0;
@@ -1692,7 +1726,15 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = FTTOM(Link[link_idx].xsect.yFull);
             break;
         
-        case linkf_xsect_rBot :
+        case linkf_xsect_aFull : 
+            *value = FT2TOM2(Link[link_idx].xsect.aFull);
+            break;
+        
+        case linkf_xsect_rFull : 
+            *value = FTTOM(Link[link_idx].xsect.rFull);
+            break;
+        
+        case linkf_xsect_rBot : 
             *value = FTTOM(Link[link_idx].xsect.rBot);
             break;
 
@@ -1860,6 +1902,31 @@ int DLLEXPORT api_get_linkf_attribute(
     //     *value = API_NULL_VALUE_I;
     // }    
     return 0;
+}
+
+
+//===============================================================================
+int DLLEXPORT api_get_adjustments(
+    int adj_len, double* adjTemperature, double* adjEvaporation, 
+    double* adjRainfall, double* adjConductivity)
+//===============================================================================
+{
+    int error;
+    int ii;
+
+    error = check_api_is_initialized("api_get_adjustments");
+    if (error) return error;
+
+    for(ii=0; ii< adj_len; ii++)
+    {
+        adjTemperature[ii]  = Adjust.temp[ii];
+        adjEvaporation[ii]  = Adjust.evap[ii];
+        adjRainfall[ii]     = Adjust.rain[ii];
+        adjConductivity[ii] = Adjust.hydcon[ii];
+    }
+
+    return 0;
+
 }
 
 //===============================================================================

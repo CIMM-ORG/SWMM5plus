@@ -175,16 +175,19 @@ for x in all_dset_names:
         swmmF_link_Y = z[1:,2]
         # extract the timestamp
         time = z[1:,0]
-
+        array_len_Q = len(swmmC_link_Q)
+        array_len_Y = len(swmmC_link_Y)
         # print link flowrate and depth data
-        rsme_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q) / np.sqrt(len(swmmC_link_Q))
-        rsme_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y) / np.sqrt(len(swmmC_link_Y))
+
+
+        rsme_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
+        rsme_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
         print(' ')
         print('-------------------------------------------------------------------------------')
         print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
         if print_timeseries:
             link_col_headers = ["Time (hrs.)","SWMM-C Q (cms)", "SWMM5+ Q (cms)", "SWMM-C Y (m)", "SWMM5+ Y (m)"]
-            link_merged_array = np.array([time,swmmC_link_Q, swmmF_link_Q, swmmC_link_Y, swmmF_link_Y]).T
+            link_merged_array = np.array([time[:array_len_Q],swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
             link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
             print(' ') 
             print(link_table)
@@ -199,17 +202,17 @@ for x in all_dset_names:
         swmmC_link_Q_l2 = np.linalg.norm(swmmC_link_Q)
         swmmC_link_Q_linf = np.linalg.norm(swmmC_link_Q,inf)
         # calculate L1,L2,Linf norms for the swmm_plus link flowrates
-        swmmF_link_Q_l1 = np.linalg.norm(swmmF_link_Q,1)
-        swmmF_link_Q_l2 = np.linalg.norm(swmmF_link_Q)
-        swmmF_link_Q_linf = np.linalg.norm(swmmF_link_Q,inf)
+        swmmF_link_Q_l1 = np.linalg.norm(swmmF_link_Q[:array_len_Q],1)
+        swmmF_link_Q_l2 = np.linalg.norm(swmmF_link_Q[:array_len_Q])
+        swmmF_link_Q_linf = np.linalg.norm(swmmF_link_Q[:array_len_Q],inf)
         # calculate L1,L2,Linf norms for the swmm_c link depths
         swmmC_link_Y_l1 = np.linalg.norm(swmmC_link_Y,1)
         swmmC_link_Y_l2 = np.linalg.norm(swmmC_link_Y)
         swmmC_link_Y_linf = np.linalg.norm(swmmC_link_Y,inf)
         # calculate L1,L2,Linf norms for the swmm_plus link flowrate
-        swmmF_link_Y_l1 = np.linalg.norm(swmmF_link_Y,1)
-        swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y)
-        swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y,inf)
+        swmmF_link_Y_l1 = np.linalg.norm(swmmF_link_Y[:array_len_Y],1)
+        swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y[:array_len_Y])
+        swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y[:array_len_Y],inf)
 
         #check if the L1, L2, Linf norms are within a given range and if not append to list of errors
         if(abs(swmmC_link_Q_l1 - swmmF_link_Q_l1) > tol):
@@ -242,14 +245,17 @@ for x in all_dset_names:
         # extract the timestamp
         time = z[1:,0]
 
-        rsme_node_Y = np.linalg.norm(swmmC_node_H - swmmF_node_H) / np.sqrt(len(swmmC_node_H))
+        array_len_H = len(swmmC_node_H)
+        
+
+        rsme_node_Y = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
         print(' ')
         print('-------------------------------------------------------------------------------')
         print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
         # print node depth data
         if print_timeseries:
             node_col_headers = ["Time (hrs.)", "SWMMC H (m)", "SWMM5+ H (m)"]
-            node_merged_array = np.array([time,swmmC_node_H, swmmF_node_H]).T
+            node_merged_array = np.array([time[:array_len_H],swmmC_node_H, swmmF_node_H[:array_len_H]]).T
             node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
             print(' ')
             print(node_table)
@@ -263,9 +269,9 @@ for x in all_dset_names:
         swmmC_node_Y_linf = np.linalg.norm(swmmC_node_H,inf)
 
         # calculate L1,L2,Linf norms for the swmm_plus output
-        swmmF_node_Y_l1 = np.linalg.norm(swmmF_node_H,1)
-        swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H)
-        swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H,inf)
+        swmmF_node_Y_l1 = np.linalg.norm(swmmF_node_H[:array_len_H],1)
+        swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H[:array_len_H])
+        swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H[:array_len_H],inf)
 
         # check if the L1, L2, Linf norms are within a given range and if not append to list of errors
         if(abs(swmmC_node_Y_l1 - swmmF_node_Y_l1) > tol):

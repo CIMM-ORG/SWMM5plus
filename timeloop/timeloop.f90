@@ -521,20 +521,58 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             integer, pointer :: npack, thisP(:), thisBC(:)
-            real(8), pointer :: Qlateral(:)
+            real(8), pointer :: Qlateral(:), SeepRate(:), BreadthMax(:)
+            real(8), pointer :: TopWidth(:), Area(:), AreaBelowBreadthMax(:)
+            real(8), pointer :: Length(:)
+            real(8) :: thisEpochTime, confac
+            integer :: year, month, day
         !%------------------------------------------------------------------
         !% Aliases:
-            Qlateral => elemR(:,er_FlowrateLateral)
+            Qlateral            => elemR(:,er_FlowrateLateral)
+            SeepRate            => elemR(:,er_SeepRate)
+            BreadthMax          => elemR(:,er_BreadthMax)
+            TopWidth            => elemR(:,er_TopWidth)
+            Area                => elemR(:,er_Area)
+            AreaBelowBreadthMax => elemR(:,er_AreaBelowBreadthMax)
+            Length              => elemR(:,er_Length)
+
             npack    => npack_elemP(ep_BClat)
             thisP    => elemP(1:npack,ep_BClat)
             thisBC   => BC%P%BClat
         !%------------------------------------------------------------------
-        !% set lateral to zero
+        !% set lateral to zero for all cells
         Qlateral(:) = zeroR 
 
-        !% --- add lateral inflow BC to lateral inflow accumulator
-        !%     note that thisP and thisBC must be the same size or there is something wrong       
-        Qlateral(thisP) = Qlateral(thisP) + BC%flowR(thisBC,br_value) 
+        !% --- if ep_BClat exist add lateral inflow BC to lateral inflow accumulator
+        !%     note that thisP and thisBC must be the same size or there is something wrong  
+        if (npack > 0) then    
+            Qlateral(thisP) = Qlateral(thisP) + BC%flowR(thisBC,br_value) 
+        end if
+
+        !% --- find the Adjust.Conductivity multiplier for the current month
+        thisEpochTime = util_datetime_secs_to_epoch(setting%Time%Now)
+        call util_datetime_decodedate(thisEpochTime, year, month, day)
+        confac = setting%Adjust%Conductivity(month)
+
+        !% --- Subtract the seepage rate for all conduit and channel cells
+        !%     Convert m/s seep to m^3/s flux by multiplying by topwidth and length
+        !%     Note that Topwidth is either the actual topwidth or the maximum value if the present
+        !%     cross-sectional area is greater than the area below the depth of maximum breadth
+        !%     (i.e., we are using the maximum hydraulic cross section)
+        !%     Note that in comparison between SWMM5+ and EPA-SWMM the average flowrate
+        !%     in the SWMM5+ set of elements will be higher than the EPA-SWMM value for
+        !%     a single link because the latter is giving the flow rate at the end of the
+        !%     link after all the seepage is removed (i.e, what is expected in the last elem
+        !%     of the link.)
+        npack => npack_elemP(ep_CC_NOTzerodepth)
+        thisP => elemP(1:npack,ep_CC_NOTzerodepth)
+        where (Area(thisP) > AreaBelowBreadthMax(thisP))
+            Qlateral(thisP) = Qlateral(thisP) - confac * SeepRate(thisP) * BreadthMax(thisP) * Length(thisP)
+        elsewhere
+            Qlateral(thisP) = Qlateral(thisP) - confac * SeepRate(thisP) * TopWidth(thisP)   * Length(thisP)
+        endwhere
+
+        !% --- HACK TODO: need seepage for storage elements 20220907 brh
 
     end subroutine tl_lateral_inflow
 !%

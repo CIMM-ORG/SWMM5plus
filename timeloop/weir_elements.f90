@@ -5,6 +5,7 @@ module weir_elements
     use define_indexes
     use define_settings, only: setting
     use common_elements
+    use roadway_weir_elements
     use adjust
     use utility, only: util_CLprint
     use utility_crash, only: util_crashpoint
@@ -32,7 +33,6 @@ module weir_elements
         !% Computes diagnostic flow and head delta across a weir.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
-        logical, pointer :: isSurcharged
         
         character(64) :: subroutine_name = 'weir_toplevel'
         !%-----------------------------------------------------------------------------
@@ -40,7 +40,6 @@ module weir_elements
         if (setting%Debug%File%weir_elements) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        isSurcharged => elemYN(eIdx,eYN_isSurcharged)
 
         !% --- set the Setting for the fractional open
         ! call weir_set_setting (eIdx)  !% ss20220701 -- weir setting is already being set in control_update_setting subroutine
@@ -48,16 +47,9 @@ module weir_elements
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
             (eIdx, esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection)
-
-        !% find effective head difference accross weir element
-        call weir_effective_head_delta (eIdx)
         
-        !% find flow on weir element
-        if (isSurcharged) then
-            call weir_surcharge_flow (eIdx)
-        else
-            call weir_flow (eIdx, esr_Weir_EffectiveHeadDelta, .true., .true.)
-        endif
+        !% find flow through weirs
+        call weir_flow (eidx) 
         
         !% update weir geometry from head
         call weir_geometry_update (eIdx)
@@ -80,16 +72,18 @@ module weir_elements
         !%------------------------------------------------------------------
         !% Declarations:
         integer, intent(in) :: eIdx
-
+        integer, pointer :: SpecificWeirType
         real(8), pointer :: FullDepth, EffectiveFullDepth
         real(8), pointer :: CurrentSetting, TargetSetting
         !%------------------------------------------------------------------
-
+        SpecificWeirType   => elemSI(eIdx,esi_Weir_SpecificType)
         FullDepth          => elemSR(eIdx,esr_Weir_FullDepth)
         EffectiveFullDepth => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
         CurrentSetting     => elemR(eIdx,er_Setting)
         TargetSetting      => elemR(eIdx,er_TargetSetting)
 
+        !% roadway weir does not have any setting
+        if (SpecificWeirType == roadway_weir) return
         !% --- instantaneous adjustment
         CurrentSetting = TargetSetting 
 
@@ -176,6 +170,55 @@ module weir_elements
 !%========================================================================== 
 !%==========================================================================    
 !%  
+    subroutine weir_flow (eIdx)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%      find the flow in weir elements
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: eIdx !% must be single element ID
+        integer, pointer    :: SpecificWeirType
+        logical, pointer    :: isSurcharged
+
+        character(64) :: subroutine_name = 'weir_flow'
+        !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%weir_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------------------
+        SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
+        isSurcharged     => elemYN(eIdx,eYN_isSurcharged)
+
+        select case (SpecificWeirType)
+            case (transverse_weir,side_flow,trapezoidal_weir,vnotch_weir)
+
+                !% find effective head difference accross weir element
+                call weir_effective_head_delta (eIdx)
+
+                !% find flow on weir element
+                if (isSurcharged) then
+                    call weir_surcharge_flow (eIdx)
+                else
+                    call weir_non_surcharge_flow (eIdx, esr_Weir_EffectiveHeadDelta, .true., .true.)
+                endif
+
+            case (roadway_weir)
+
+                call roadway_weir_flow (eIdx)
+
+            case default
+                print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
+                print *, 'which has key ',trim(reverseKey(specificWeirType))
+                stop 565984
+        end select
+        
+        if (setting%Debug%File%weir_elements)  &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------------------
+        isSurcharged => elemYN(eIdx,eYN_isSurcharged)
+    end subroutine weir_flow
+!%
+!%==========================================================================
+!%==========================================================================   
+!%
      subroutine weir_surcharge_flow (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -199,7 +242,7 @@ module weir_elements
         grav               => setting%Constant%gravity
         !%-----------------------------------------------------------------------------
         ! get the flowrate for effective full depth without submergence correction
-        call weir_flow(eIdx, esr_Weir_EffectiveFullDepth, .false., .false.)
+        call weir_non_surcharge_flow(eIdx, esr_Weir_EffectiveFullDepth, .false., .false.)
 
         ! equivalent orifice flow coefficient for surcharge flow
         CoeffOrifice = Flowrate / sqrt(EffectiveFullDepth/twoR)
@@ -222,7 +265,7 @@ module weir_elements
 !%========================================================================== 
 !%==========================================================================    
 !%  
-    subroutine weir_flow (eIdx, inCol, ApplySubmergenceCorrection, ApplyHeadlossCorrection)
+    subroutine weir_non_surcharge_flow (eIdx, inCol, ApplySubmergenceCorrection, ApplyHeadlossCorrection)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes flow for standard weir types
@@ -410,7 +453,7 @@ module weir_elements
                 stop 848555
         end Select
 
-    end subroutine weir_flow
+    end subroutine weir_non_surcharge_flow
 !%
 !%========================================================================== 
 !%==========================================================================    
@@ -474,7 +517,7 @@ module weir_elements
         
         !% set geometry variables for weir types
         select case (SpecificWeirType) 
-            case (transverse_weir,side_flow)
+            case (transverse_weir,side_flow, roadway_weir)
                 Area      = RectangularBreadth * zY - RectangularBreadth * z
                 Volume    = Area * Length  !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth

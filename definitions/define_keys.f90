@@ -240,6 +240,10 @@
         enumerator :: NotForceMain
         enumerator :: HazenWilliams
         enumerator :: DarcyWeisbach
+        !% Keys for roadway weir
+        enumerator :: Paved
+        enumerator :: Gravel
+        enumerator :: NoRoadSurface
         !% last items for bookkeeping
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone
@@ -454,6 +458,9 @@
         reverseKey(NotForceMain) = 'NotForceMain'
         reverseKey(HazenWilliams) = 'HazenWilliams'
         reverseKey(DarcyWeisbach) = 'DarcyWeisbach'
+        reverseKey(Paved)  = 'Paved'
+        reverseKey(Gravel) = 'Gravel'
+        reverseKey(NoRoadSurface) = 'NoRoadSurface'
         reverseKey(undefinedKey)     = 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 
@@ -544,6 +551,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(func_head_outlet)) , func_head_outlet
         write(*,'(A," = ",i4)') trim(reverseKey(FunctionalStorage)) , FunctionalStorage
         write(*,'(A," = ",i4)') trim(reverseKey(gothic)) , gothic
+        write(*,'(A," = ",i4)') trim(reverseKey(Gravel)) , Gravel
         write(*,'(A," = ",i4)') trim(reverseKey(HazenWilliams)), HazenWilliams
         write(*,'(A," = ",i4)') trim(reverseKey(horseshoe)) , horseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(horiz_ellipse)) , horiz_ellipse
@@ -617,10 +625,12 @@
         write(*,'(A," = ",i4)') trim(reverseKey(NodeElemOut)) , NodeElemOut
         write(*,'(A," = ",i4)') trim(reverseKey(NodeFaceOut)) , NodeFaceOut
         write(*,'(A," = ",i4)') trim(reverseKey(notused)) , notused
+        write(*,'(A," = ",i4)') trim(reverseKey(NoRoadSurface)) , NoRoadSurface
         write(*,'(A," = ",i4)') trim(reverseKey(nStorage)) , nStorage
         write(*,'(A," = ",i4)') trim(reverseKey(orifice)) , orifice
         write(*,'(A," = ",i4)') trim(reverseKey(outlet)) , outlet
         write(*,'(A," = ",i4)') trim(reverseKey(parabolic)) , parabolic
+        write(*,'(A," = ",i4)') trim(reverseKey(Paved)) , Paved
         write(*,'(A," = ",i4)') trim(reverseKey(power_function)) , power_function
         write(*,'(A," = ",i4)') trim(reverseKey(pump)) , pump
         write(*,'(A," = ",i4)') trim(reverseKey(Pump1Curve)) , Pump1Curve

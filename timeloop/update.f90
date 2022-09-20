@@ -46,7 +46,7 @@ module update
         !%------------------------------------------------------------------
         !%
             ! call util_CLprint ('in update before geometry toplevel')
-        
+
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 

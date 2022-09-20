@@ -126,5 +126,21 @@
         "decreaseFactor" : 0.8,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
+    },
+    "Debug" : {
+        "FileGroup" : {
+            "all" : false,
+            "definitions" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "initialization" : false,
+            "interface" : false,
+            "output" : false,
+            "timeloop" : false,
+            "utility" : false
+        },
+        "SetupYN"  : true,
+        "OutputYN" : true
     }
+    
 }

@@ -1,4 +1,4 @@
-module basket_handle_conduit
+module semi_elliptical_conduit
 
     use define_settings, only: setting
     use define_globals
@@ -12,22 +12,22 @@ module basket_handle_conduit
 
     !%-----------------------------------------------------------------------------
     !% Description:
-    !% basket_handle conduit geometry
+    !% semi_elliptical conduit geometry
     !%
 
     private
 
-    public :: basket_handle_depth_from_volume
-    public :: basket_handle_area_from_depth_singular
-    public :: basket_handle_topwidth_from_depth
-    public :: basket_handle_topwidth_from_depth_singular
-    public :: basket_handle_perimeter_from_depth
-    public :: basket_handle_perimeter_from_depth_singular
-    public :: basket_handle_perimeter_from_hydradius_singular
-    public :: basket_handle_hyddepth_from_topwidth
-    public :: basket_handle_hyddepth_from_topwidth_singular
-    public :: basket_handle_hydradius_from_depth_singular
-    public :: basket_handle_normaldepth_from_sectionfactor_singular
+    public :: semi_elliptical_depth_from_volume
+    public :: semi_elliptical_area_from_depth_singular
+    public :: semi_elliptical_topwidth_from_depth
+    public :: semi_elliptical_topwidth_from_depth_singular
+    public :: semi_elliptical_perimeter_from_depth
+    public :: semi_elliptical_perimeter_from_depth_singular
+    public :: semi_elliptical_perimeter_from_hydradius_singular
+    public :: semi_elliptical_hyddepth_from_topwidth
+    public :: semi_elliptical_hyddepth_from_topwidth_singular
+    public :: semi_elliptical_hydradius_from_depth_singular
+    public :: semi_elliptical_normaldepth_from_sectionfactor_singular
 
 
 
@@ -37,10 +37,10 @@ module basket_handle_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine semi_elliptical_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on conduits (or non-surcharged basket_handle conduits)
+        !% Only applies on conduits (or non-surcharged semi_elliptical conduits)
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point
@@ -57,28 +57,28 @@ module basket_handle_conduit
         length     => elemR(:,er_Length)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Basket_Handle_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Semi_Elliptical_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
         !%-----------------------------------------------------------------------------
         !% --- compute the relative volume
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
       
         !% retrive the normalized Y/Yfull from the lookup table
         call xsect_table_lookup &
-            (YoverYfull, AoverAfull, YBasketHandle, thisP)  
+            (YoverYfull, AoverAfull, YSemiEllip, thisP)  
 
         !% finally get the depth by multiplying the normalized depth with full depth
         depth(thisP) = YoverYfull(thisP) * fulldepth(thisP)
 
-    end subroutine basket_handle_depth_from_volume
+    end subroutine semi_elliptical_depth_from_volume
 !%
 !%==========================================================================      
 !%==========================================================================
 !%
-    real(8) function basket_handle_area_from_depth_singular (indx, depth) result (outvalue)
+    real(8) function semi_elliptical_area_from_depth_singular (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes area from known depth for basket_handle cross section of a single element
+        !% Computes area from known depth for semi_elliptical cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
@@ -89,29 +89,29 @@ module basket_handle_conduit
         !!if (crashYN) return
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Basket_Handle_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Semi_Elliptical_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ABasketHandle)
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ASemiEllip)
 
         !% finally get the area by multiplying the normalized area with full area
         outvalue = AoverAfull(indx) * fullArea(indx)
 
-    end function basket_handle_area_from_depth_singular
+    end function semi_elliptical_area_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine basket_handle_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine semi_elliptical_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth from a known depth in a basket_handle conduit
+        !% Computes the topwidth from a known depth in a semi_elliptical conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
@@ -122,7 +122,7 @@ module basket_handle_conduit
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% Calculate normalized depth
@@ -131,55 +131,55 @@ module basket_handle_conduit
         !% retrive the normalized T/Tmax from the lookup table
         !% T/Tmax value is temporarily saved in the topwidth column
         call xsect_table_lookup &
-            (topwidth, YoverYfull, TBasketHandle, thisP) 
+            (topwidth, YoverYfull, TSemiEllip, thisP) 
 
         !% finally get the topwidth by multiplying the T/Tmax with full depth
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
 
-    end subroutine basket_handle_topwidth_from_depth
+    end subroutine semi_elliptical_topwidth_from_depth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_topwidth_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function semi_elliptical_topwidth_from_depth_singular (indx,depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth for a basket_handle cross section of a single element
+        !% Computes the topwidth for a semi_elliptical cross section of a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
         real(8), pointer    ::  YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
         !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth / fulldepth(indx)
 
         !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Tmax (fullDepth for basket_handle cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TBasketHandle) 
+        !% and then myltiplying it with Tmax (fullDepth for semi_elliptical cross-section)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TSemiEllip) 
 
         !% if topwidth <= zero, set it to zerovalue
         outvalue = max(outvalue, setting%ZeroValue%Topwidth)
 
-    end function basket_handle_topwidth_from_depth_singular
+    end function semi_elliptical_topwidth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine basket_handle_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine semi_elliptical_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the perimeter from a known depth in a basket_handle conduit
+        !% Computes the perimeter from a known depth in a semi_elliptical conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
-        real(8), pointer :: fulldepth(:), perimeter(:), area(:)
-        real(8), pointer :: fullperimeter(:), fullhydradius(:)
+        real(8), pointer :: depth(:), hydRadius(:), fullperimeter(:) 
+        real(8), pointer :: fullDepth(:), fullArea(:), perimeter(:), area(:) 
+        real(8), pointer :: AoverAfull(:), SoverSfull(:), YoverYfull(:), Sfactor(:)
         !%-----------------------------------------------------------------------------
         !!if (crashYN) return
         thisP      => elemPGx(1:Npack,thisCol)
@@ -187,76 +187,93 @@ module basket_handle_conduit
         area       => elemR(:,er_Area)
         hydRadius  => elemR(:,er_HydRadius)
         perimeter  => elemR(:,er_Perimeter)
-        fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        fullDepth  => elemR(:,er_FullDepth)
+        fullArea   => elemR(:,er_FullArea)
+        Sfactor    => elemR(:,er_Temp01)
+        AoverAfull => elemSGR(:,esgr_Semi_Elliptical_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
+        SoverSfull => elemSGR(:,esgr_Semi_Elliptical_SoverSfull)
         fullperimeter => elemR(:,er_FullPerimeter)
-        fullhydradius => elemR(:,er_FullHydRadius)
         !%-----------------------------------------------------------------------------
 
         !% calculate normalized depth
         YoverYfull(thisP) = depth(thisP) / fulldepth(thisP)
 
-        !% retrive the normalized R/Rmax from the lookup table
-        !% R/Rmax value is temporarily saved in the hydRadius column
+        !% setp 1: A/Afull from Y/Yfull
         call xsect_table_lookup &
-            (hydRadius, YoverYfull, RBasketHandle, thisP)  
+            (AoverAfull, YoverYfull, ASemiEllip, thisP)
 
-        hydRadius(thisP) = fullhydradius(thisP) * hydRadius(thisP)
+        area(thisP) = AoverAfull(thisP) * fullArea(thisP)
+
+        !% step 2: find S/Sfull from A/Afull
+        call xsect_table_lookup &
+            (SoverSfull, AoverAfull, SSemiEllip, thisP)
+
+        !% find the section factor 
+        !% sF_full = Afull * (rFull) ^ (2/3)
+        !% rFull   = 0.242 * yFull
+        !% sF = sF_full * sF/sF_full
+        Sfactor(thisP) = (fullArea(thisP) * (0.242 * fullDepth(thisP)) ** twoThirdR) &
+                       * SoverSfull(thisP)
+
+        !% retrive hyrdaulic radius from section factor
+        hydRadius(thisP) = (Sfactor(thisP) / area(thisP)) ** threehalfR
 
         !% finally get the perimeter by dividing area by hydRadius
         perimeter(thisP) = min (area(thisP) / hydRadius(thisP), fullperimeter(thisP))
 
         !% HACK: perimeter correction is needed when the pipe is empty.
-    end subroutine basket_handle_perimeter_from_depth
+    end subroutine semi_elliptical_perimeter_from_depth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_perimeter_from_depth_singular &
+    real(8) function semi_elliptical_perimeter_from_depth_singular &
         (idx, indepth) result(outvalue)
         !%------------------------------------------------------------------
         !% Description:
-        !% Computes the basket_handle conduit perimeter for the given depth on
+        !% Computes the semi_elliptical conduit perimeter for the given depth on
         !% the element idx
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: idx
             real(8), intent(in) :: indepth
-            real(8), pointer :: fulldepth, fullarea, fullperimeter, fullhydradius
-            real(8) :: hydRadius, YoverYfull, area
+            real(8), pointer :: fulldepth, fullarea, fullperimeter
+            real(8) :: hydRadius, YoverYfull, AoverAfull, area, sf
 
         !%------------------------------------------------------------------
         !% Aliases
             fulldepth     => elemR(idx,er_FullDepth)
             fullarea      => elemR(idx,er_FullArea)
             fullperimeter => elemR(idx,er_FullPerimeter)
-            fullhydradius => elemR(idx,er_FullHydRadius)
         !%------------------------------------------------------------------
         YoverYfull = indepth / fulldepth
 
-        !% --- retrieve normalized A/Amax for this depth from lookup table
-        area = xsect_table_lookup_singular (YoverYfull, ABasketHandle)
+        !% --- retrieve normalized area for this depth from lookup table
+        AoverAfull = xsect_table_lookup_singular (YoverYfull, ASemiEllip)
 
-        !% --- retrive the normalized R/Rmax for this depth from the lookup table
-        hydradius =  xsect_table_lookup_singular (YoverYfull, RBasketHandle)  !% 20220506 brh
+        !% --- retrieve normalized sectionfactor for this depth from lookup table
+        sf = xsect_table_lookup_singular (AoverAfull, SSemiEllip)
 
         !% --- unnormalize
-        hydRadius = fullhydradius * hydradius
-        area      = area * fullArea
+        sF = (fullArea * (0.242 * fullDepth) ** twoThirdR) * sf
+        area = AoverAfull * fullarea
+        !% retrive hyrdaulic radius from section factor
+        hydRadius = (sF / area) ** threehalfR
 
         !% --- get the perimeter by dividing area by hydRadius
         outvalue = min(area / hydRadius, fullperimeter)
 
-    end function basket_handle_perimeter_from_depth_singular
+    end function semi_elliptical_perimeter_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
+    real(8) function semi_elliptical_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes wetted perimeter from known depth for a basket_handle cross section of
+        !% Computes wetted perimeter from known depth for a semi_elliptical cross section of
         !% a single element
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
@@ -272,16 +289,16 @@ module basket_handle_conduit
 
         !% HACK: perimeter correction is needed when the pipe is empty
 
-    end function basket_handle_perimeter_from_hydradius_singular
+    end function semi_elliptical_perimeter_from_hydradius_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    subroutine semi_elliptical_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a basket_handle conduit
+        !% Computes the hydraulic (average) depth from a known depth in a semi_elliptical conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
@@ -299,7 +316,7 @@ module basket_handle_conduit
         !%--------------------------------------------------
 
         !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in basket_handle cross section for both
+        !% topwidth can be zero in semi_elliptical cross section for both
         !% full and empty condition.
 
         !% when conduit is empty
@@ -312,16 +329,16 @@ module basket_handle_conduit
             hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
         endwhere
 
-    end subroutine basket_handle_hyddepth_from_topwidth
+    end subroutine semi_elliptical_hyddepth_from_topwidth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
+    real(8) function semi_elliptical_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for basket_handle cross section of
+        !% Computes hydraulic depth from known depth for semi_elliptical cross section of
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
@@ -333,7 +350,7 @@ module basket_handle_conduit
         !%--------------------------------------------------
 
         !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in basket_handle cross section for both
+        !% topwidth can be zero in semi_elliptical cross section for both
         !% full and empty condition.
 
         !% when conduit is empty
@@ -344,41 +361,47 @@ module basket_handle_conduit
             outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
         endif
 
-    end function basket_handle_hyddepth_from_topwidth_singular
+    end function semi_elliptical_hyddepth_from_topwidth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_hydradius_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function semi_elliptical_hydradius_from_depth_singular (indx,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic radius from known depth for a basket_handle cross section of
+        !% Computes hydraulic radius from known depth for a semi_elliptical cross section of
         !% a single element
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
+        real(8), pointer    :: YoverYfull(:), fulldepth(:), fullarea(:)
+        real(8) :: area, sF
         !%-----------------------------------------------------------------------------
-        fulldepth     => elemR(:,er_FullDepth)
-        fullhydradius => elemR(:,er_FullHydRadius)
-        YoverYfull    => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        fulldepth  => elemR(:,er_FullDepth)
+        fullarea   => elemR(:,er_FullArea)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
         !%-----------------------------------------------------------------------------
-
         !% find Y/Yfull
         YoverYfull(indx) = depth / fulldepth(indx)
 
-        !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Rmax (fullDepth/4)
-        outvalue = fullhydradius(indx) * &
-                xsect_table_lookup_singular (YoverYfull(indx), RBasketHandle)
+        !%  find the normalized area
+        area =  xsect_table_lookup_singular (YoverYfull(indx), ASemiEllip)
+        !%  find normalized sectionfactor for this depth from lookup table
+        sf = xsect_table_lookup_singular (area, SSemiEllip)
+        !%  unnormalize
+        sF = (fullarea(indx) * (0.242 * fullDepth(indx)) ** twoThirdR) * sF
+        area = area * fullarea(indx)
 
-    end function basket_handle_hydradius_from_depth_singular
+        !% retrive hyrdaulic radius from section factor
+        outvalue = (sF / area) ** threehalfR
+
+    end function semi_elliptical_hydradius_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_normaldepth_from_sectionfactor_singular &
+    real(8) function semi_elliptical_normaldepth_from_sectionfactor_singular &
          (SFidx, inSF) result (outvalue)
         !%------------------------------------------------------------------
         !% Description
@@ -403,7 +426,7 @@ module basket_handle_conduit
         !% --- unnormalize the depth for the output
         outvalue = outvalue * elemR(eIdx,er_FullDepth)
 
-    end function basket_handle_normaldepth_from_sectionfactor_singular
+    end function semi_elliptical_normaldepth_from_sectionfactor_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -420,4 +443,4 @@ module basket_handle_conduit
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================
-end module basket_handle_conduit
+end module semi_elliptical_conduit
