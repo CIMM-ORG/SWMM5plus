@@ -157,7 +157,8 @@ enum api_linkf_attributes {
   linkf_xsect_yBot,         // 78 *
   linkf_xsect_yFull,        // 79 *
   linkf_transectid,          // 80
-  linkf_forcemain_coef       // 81
+  linkf_forcemain_coef,       // 81
+  linkf_xsect_rBot
 };
 // skip 2 numbers for index start and end flags
 // these are identical to transect values in define_api_keys.f90

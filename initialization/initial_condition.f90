@@ -1581,6 +1581,63 @@ contains
                 end if
             end do
 
+        case (lRect_round)
+
+                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_geometryType)                            = rect_round
+                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
+                    elemSGR(:,esgr_Rectangular_Round_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Rectangular_Round_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
+                    elemSGR(:, esgr_Rectangular_Round_BottomRadius) = link%R(thisLink,lr_BottomRadius)
+                    elemSGR(:,esgr_Rectangular_Round_BottomArea)   = onehalfR * elemSGR(:, esgr_Rectangular_Round_BottomRadius) * elemSGR(:, esgr_Rectangular_Round_BottomRadius) &
+                    * (twoR * acos(oneR - elemSGR(:,esgr_Rectangular_Round_BottomDepth)/elemSGR(:, esgr_Rectangular_Round_BottomRadius)) - sin(twoR * acos(oneR - elemSGR(:,esgr_Rectangular_Round_BottomDepth)/elemSGR(:, esgr_Rectangular_Round_BottomRadius))))
+    !                 theta1 = 2.0*acos(1.0 - y/xsect->rBot);
+                        ! theta1 = twoR * acos(oneR - elemSGR(:,esgr_Rectangular_Round_BottomDepth)/elemSGR(:, esgr_Rectangular_Round_BottomRadius))
+    ! return 0.5 * xsect->rBot * xsect->rBot * (theta1 - sin(theta1));
+                    
+
+                    where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Round_BottomDepth))
+                            ! Finding theta
+                            elemR(:, er_Temp01) = twoR * acos(oneR - elemR(:,er_Depth)/elemSGR(:, esgr_Rectangular_Round_BottomRadius))
+                            elemR(:,er_Area) = onehalfR * (elemSGR(:, esgr_Rectangular_Round_BottomRadius) ** twoR) &
+                            * (elemR(:, er_Temp01) - sin(elemR(:, er_Temp01)))
+                        elsewhere
+                            elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Round_BottomArea) + (elemR(:,er_Depth) - elemSGR(:,esgr_Rectangular_Round_BottomDepth)) * &
+                                                elemSGR(:,esgr_Rectangular_Round_TopBreadth) 
+                        end where   
+                        elemR(:,er_SlotDepth) = zeroR              
+                    elsewhere   
+                        !% --- Preissmann Slot
+                        elemR(:,er_Area)      = elemR(:,er_FullArea)
+                        elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
+                        elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                        elemYN(:,eYN_isSlot)  = .true.
+                    endwhere
+
+                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)      = elemSGR(:,esgr_Rectangular_Round_BottomArea) &
+                                                + (elemSGR(:, esgr_Rectangular_Round_TopBreadth) * (elemR(:,er_FullDepth)- elemSGR(:,esgr_Rectangular_Round_BottomDepth) )) 
+                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_FullHydDepth)  = ((onehalfR * elemSGR(:, esgr_Rectangular_Round_BottomRadius) * elemSGR(:, esgr_Rectangular_Round_BottomRadius) &
+                    * (twoR * acos(oneR - elemSGR(:,esgr_Rectangular_Round_BottomDepth)/elemSGR(:, esgr_Rectangular_Round_BottomRadius)) - sin(twoR * acos(oneR - elemSGR(:,esgr_Rectangular_Round_BottomDepth)/elemSGR(:, esgr_Rectangular_Round_BottomRadius))))) / twoR*elemSGR(:, esgr_Rectangular_Round_BottomRadius)) + (elemR(:,er_FullDepth) - elemSGR(:,esgr_Rectangular_Round_BottomDepth))
+
+                    elemR(:,er_FullPerimeter) = twoR * elemSGR(:, esgr_Rectangular_Round_BottomRadius) * asin(elemSGR(:, esgr_Rectangular_Round_TopBreadth)) + twoR * (elemR(:, er_FullArea) - elemSGR(:, esgr_Rectangular_Round_BottomArea))/elemSGR(:, esgr_Rectangular_Round_TopBreadth) &
+                    + (oneR - 0.98)*elemSGR(:, esgr_Rectangular_Round_TopBreadth)/0.02
+
+                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Round_TopBreadth)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+                endwhere
+
         case (lIrregular)
             print *, 'In ', trim(subroutine_name)
             print *, 'USER ERROR: Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'

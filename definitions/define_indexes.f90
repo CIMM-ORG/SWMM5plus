@@ -65,7 +65,8 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
-        enumerator :: lr_BottomDepth   
+        enumerator :: lr_BottomDepth 
+        enumerator :: lr_BottomRadius  
         enumerator :: lr_BreadthScale
         enumerator :: lr_TopWidth
         enumerator :: lr_ElementLength
@@ -535,6 +536,7 @@ module define_indexes
         enumerator :: epg_CC_rectangular_nonsurcharged = 1          !% CC rectangular channels that are not surcharged
         enumerator :: epg_CC_rectangular_closed_nonsurcharged       !% CC rectangular conduits that are not surcharged
         enumerator :: epg_CC_rectangular_triangular_nonsurcharged   !% CC rectangular_triangular that are not surcharged
+        enumerator :: epg_CC_rectangular_round_nonsurcharged
         enumerator :: epg_CC_trapezoidal_nonsurcharged              !% CC trapezoidal channels that are not surcharged
         enumerator :: epg_CC_triangular_nonsurcharged               !% CC triangular channels that are not surcharged
         enumerator :: epg_CC_irregular_nonsurcharged                !% CC irregular channels that are not surcharged
@@ -808,7 +810,18 @@ module define_indexes
          enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Circular_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Parabolic_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Rectangular round channel
+    enum, bind(c)
+         enumerator ::  esgr_Rectangular_Round_TopBreadth = 1    !% breadth for parabolic geometry
+         enumerator ::  esgr_Rectangular_Round_BottomRadius     !% radius of bottom circular section
+         enumerator ::  esgr_Rectangular_Round_BottomDepth     !% depth of the circular section
+         enumerator ::  esgr_Rectangular_Round_BottomArea      !% area of the circular section
+         enumerator ::  esgr_Rectangular_Round_lastplusone !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Rectangular_Round =  esgr_Parabolic_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for basket_handle_conduit
     enum, bind(c)
@@ -855,6 +868,7 @@ module define_indexes
                             Ncol_elemSGR_Trapezoidal,   &
                             Ncol_elemSGR_Rectangular_Triangular, &
                             Ncol_elemSGR_Parabolic,     &
+                            Ncol_elemSGR_Rectangular_Round, &
                             Ncol_elemSGR_Basket_Handle, &
                             Ncol_elemSGR_Egg_Shaped,    &
                             Ncol_elemSGR_Horse_Shoe)

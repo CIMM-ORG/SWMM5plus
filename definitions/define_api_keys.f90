@@ -575,6 +575,7 @@ module define_api_keys
         enumerator :: api_linkf_geometry     ! 76
         enumerator :: api_linkf_xsect_wMax   ! 77
         enumerator :: api_linkf_xsect_yBot   ! 78
+        enumerator :: api_linkf_xsect_rBot
         enumerator :: api_linkf_xsect_yFull  ! 79
         enumerator :: api_linkf_transectidx  ! 80
         enumerator :: api_linkf_forcemain_coef ! 81

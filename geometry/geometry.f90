@@ -9,6 +9,7 @@ module geometry
     use trapezoidal_channel
     use triangular_channel
     use rectangular_triangular_conduit
+    use rectangular_round_conduit
     use circular_conduit
     use basket_handle_conduit
     use egg_shaped_conduit
