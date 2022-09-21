@@ -293,9 +293,11 @@ module orifice_elements
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         FlowDirection         => elemSI(eIdx,esi_Orifice_FlowDirection)
+        CriticalHead          => elemSR(eIdx,esr_Orifice_CriticalHead)
         DischargeCoeff        => elemSR(eIdx,esr_Orifice_DischargeCoeff)
         EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         EffectiveFullArea     => elemSR(eIdx,esr_Orifice_EffectiveFullArea)
+        FractionCritDepth     => elemSR(eIdx,esr_Orifice_FractionCriticalDepth)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
         Flowrate              => elemR(eIdx,er_Flowrate)
         WeirExponent          => Setting%Orifice%TransverseWeirExponent
