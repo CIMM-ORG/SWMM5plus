@@ -1483,6 +1483,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_R17'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
                             !% circular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -1506,7 +1518,19 @@ contains
                             !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                            thisposition = trim(subroutine_name)//'_R17'
+                            thisposition = trim(subroutine_name)//'_R16'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S16'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T16'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yBot) 
                             call load_api_procedure("api_get_linkf_attribute")
@@ -1538,6 +1562,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_G07'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_H06'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_I06'
+                            call print_api_error(error, thisposition)
                         case default
                             !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -1562,6 +1598,18 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_I09'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_J09'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_K09'
                             call print_api_error(error, thisposition)
                         case default
                             !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
@@ -1588,6 +1636,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_K11'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_L11'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_M11'
+                            call print_api_error(error, thisposition)
                         case default
                             !% trapezoidal geometry does not have certain geometric features (i.e. top-width) 
                             if (isInt) then
@@ -1613,6 +1673,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_N13'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_O13'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_P13'
+                            call print_api_error(error, thisposition)
                         case default
                             !% triangular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -1637,6 +1709,18 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_P15'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_Q15'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_R15'
                             call print_api_error(error, thisposition)
                         case default
                             !% parabolic geometry does not have certain geometric features (i.e. bottom width) 
@@ -1671,10 +1755,22 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_U19'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V19'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yBot)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
-                            thisposition = trim(subroutine_name)//'_T19'
+                            thisposition = trim(subroutine_name)//'_W19'
                             call print_api_error(error, thisposition)
                         case default
                             !% rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
@@ -1687,13 +1783,49 @@ contains
                     end select
 
                 case (API_RECT_ROUND)
-                    print *, 'CODE ERROR: API_RECT_ROUND geometry not handled yet'
-                    call util_crashpoint(2298744)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lRect_round
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_S18'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yBot) 
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
+                            !% thus, set that link%R column to nullvalueR
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_MOD_BASKET)
@@ -1715,6 +1847,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rBot, link_value)
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
                             !% Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
                             !% thus, set that link%R column to nullvalueR
@@ -1726,33 +1870,108 @@ contains
                     end select
 
                 case (API_HORIZ_ELLIPSE)
-                    print *, 'CODE ERROR: API_HORIZ_ELLIPSE geometry not handled yet'
-                    call util_crashpoint(993782)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lHoriz_ellipse
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_VERT_ELLIPSE)
-                    print *, 'CODE ERROR: API_VERT_ELLIPSE geometry not handled yet'
-                    call util_crashpoint(11847)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lVert_ellipse
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_ARCH)
-                    print *, 'CODE ERROR :API_ARCH geometry not handled yet'
-                    call util_crashpoint(598273)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lArch
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_EGGSHAPED)
@@ -1768,6 +1987,18 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
                             !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
@@ -1793,6 +2024,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
                             !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -1815,6 +2058,18 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
                             !% gothic geometry does not have certain geometric features (i.e. bottom width) 
@@ -1839,6 +2094,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
                             !% catenary geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -1861,6 +2128,18 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
                             !% catenary geometry does not have certain geometric features (i.e. bottom width) 
@@ -1885,6 +2164,18 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
                         case default
                             !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -1907,6 +2198,18 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                            thisposition = trim(subroutine_name)//'_S17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
                             !% basket handle geometry does not have certain geometric features (i.e. bottom width) 

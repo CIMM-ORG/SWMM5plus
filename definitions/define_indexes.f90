@@ -66,6 +66,8 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
+        enumerator :: lr_FullArea
+        enumerator :: lr_FullHydRadius
         enumerator :: lr_BottomDepth 
         enumerator :: lr_BottomRadius  
         enumerator :: lr_BreadthScale
@@ -345,6 +347,7 @@ module define_indexes
         enumerator :: er_FullArea                   !% cross-sectional area of a full conduit (static)
         enumerator :: er_FullDepth                  !% maximum possible flow depth in full conduit (static)
         enumerator :: er_FullHydDepth               !% hydraulic (average) depth of full conduit (static)
+        enumerator :: er_FullHydRadius              !% hydraulic (average) radius of full conduit (static)
         enumerator :: er_FullPerimeter              !% wetted perimeter of full conduit (static)
         enumerator :: er_FullVolume                 !% Volume of a full conduit (static)
         enumerator :: er_GammaC                     !% gamma continuity source term for AC solver
@@ -549,20 +552,26 @@ module define_indexes
         enumerator :: epg_CC_trapezoidal              !% CC trapezoidal channels 
         enumerator :: epg_CC_triangular               !% CC triangular channels 
         enumerator :: epg_CC_parabolic                !% CC parabolic channels 
+        enumerator :: epg_CC_power_function           !% CC power function channels
         enumerator :: epg_CC_irregular                !% CC irregular channels 
         !% --- closed conduits
         enumerator :: epg_CC_rectangular_closed       !% CC rectangular conduits
+        enumerator :: epg_CC_rectangular_round        !% CC rectangular-round conduits
         enumerator :: epg_CC_rectangular_triangular   !% CC rectangular-triangular conduit
         enumerator :: epg_CC_circular                 !% CC circular conduits 
         enumerator :: epg_CC_semi_circular            !% CC semi-circular conduits
         enumerator :: epg_CC_filled_circular          !% CC filled circular conduits
+        enumerator :: epg_CC_arch                     !% CC arch conduits
         enumerator :: epg_CC_basket_handle            !% CC basket-handle conduits
         enumerator :: epg_CC_catenary                 !% CC catenary conduits 
         enumerator :: epg_CC_egg_shaped               !% CC egg shaped conduits 
         enumerator :: epg_CC_gothic                   !% CC gothic conduits
         enumerator :: epg_CC_horse_shoe               !% CC horse shoe conduits 
+        enumerator :: epg_CC_horiz_ellipse            !% CC horizontal ellipse conduits
         enumerator :: epg_CC_mod_basket               !% CC modified basked conduits
         enumerator :: epg_CC_semi_elliptical          !% CC semi-elliptical conduits
+        enumerator :: epg_CC_vert_ellipse             !% CC vertical elliptical conduits
+        !% --- junctions
         enumerator :: epg_JM_functionalStorage        !% JM functional geometry relationship 
         enumerator :: epg_JM_tabularStorage           !% JM tabular geometry relationship 
         enumerator :: epg_JM_impliedStorage           !% JM with artificial storage
@@ -847,7 +856,20 @@ module define_indexes
          enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Circular_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Parabolic_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Rectangular round channel
+    enum, bind(c)
+         enumerator ::  esgr_Rectangular_Round_BreadthMax = 1    !% breadth for parabolic geometry
+         enumerator ::  esgr_Rectangular_Round_YatMaxBreadth     !% depth at maximum breadth
+         enumerator ::  esgr_Rectangular_Round_Ybot              !% depth of bottom circular section
+         enumerator ::  esgr_Rectangular_Round_Rbot              !% radius of the circular section
+         enumerator ::  esgr_Rectangular_Round_Abot              !% area of the circular section
+         enumerator ::  esgr_Rectangular_Round_ThetaBot          !% angle of the circular section
+         enumerator ::  esgr_Rectangular_Round_lastplusone       !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Rectangular_Round =  esgr_Parabolic_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for basket_handle_conduit
     enum, bind(c)
@@ -943,6 +965,42 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Semi_Elliptical = esgr_Semi_Elliptical_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for Arch shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Arch_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Arch_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Arch_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Arch_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Arch_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Arch_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Arch = esgr_Arch_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for HOrizontal ellipse shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Horiz_Ellipse_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Horiz_Ellipse_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Horiz_Ellipse_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Horiz_Ellipse_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Horiz_Ellipse_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Horiz_Ellipse_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Horiz_Ellipse = esgr_Horiz_Ellipse_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for HOrizontal ellipse shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Vert_Ellipse_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Vert_Ellipse_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Vert_Ellipse_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Vert_Ellipse_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Vert_Ellipse_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Vert_Ellipse_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Vert_Ellipse = esgr_Vert_Ellipse_lastplusone-1
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
@@ -956,6 +1014,7 @@ module define_indexes
                             Ncol_elemSGR_Rectangular_Triangular, &
                             Ncol_elemSGR_Filled_Circular,        &
                             Ncol_elemSGR_Parabolic,     &
+                            Ncol_elemSGR_Rectangular_Round, &
                             Ncol_elemSGR_Basket_Handle, &
                             Ncol_elemSGR_Egg_Shaped,    &
                             Ncol_elemSGR_Horse_Shoe,    &
@@ -963,6 +1022,9 @@ module define_indexes
                             Ncol_elemSGR_Gothic,        &
                             Ncol_elemSGR_Semi_Circular, &
                             Ncol_elemSGR_Mod_Basket,    &
+                            Ncol_elemSGR_Arch,          &
+                            Ncol_elemSGR_Horiz_Ellipse, &
+                            Ncol_elemSGR_Vert_Ellipse,  &
                             Ncol_elemSGR_Semi_Elliptical)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types

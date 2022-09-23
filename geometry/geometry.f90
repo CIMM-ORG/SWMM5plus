@@ -10,6 +10,8 @@ module geometry
     use trapezoidal_channel
     use triangular_channel
     use rectangular_triangular_conduit
+    use rectangular_round_conduit
+    use arch_conduit
     use basket_handle_conduit
     use mod_basket_conduit
     use catenary_conduit
@@ -19,6 +21,8 @@ module geometry
     use filled_circular_conduit
     use semi_elliptical_conduit
     use gothic_conduit
+    use horiz_ellipse_conduit
+    use vert_ellipse_conduit
     use horse_shoe_conduit
     use irregular_channel
     use parabolic_channel
@@ -136,7 +140,7 @@ module geometry
             end select
             call util_crashstop(49872)
         !%--------------------------------------------------------------------
-            ! call util_CLprint ('in geometry at top==========================================')  
+            !  call util_CLprint ('in geometry at top==========================================')  
 
         !% STATUS: at this point we know volume and velocity on all elements
         !% from RK2 solution
@@ -294,7 +298,7 @@ module geometry
 
         !% --- compute hyddepth
         !%     Note: hyddepth for JM is undefined in this subroutine
-        call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+        call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! call util_CLprint ('in geometry after hyddepth_from_depth')   
 
@@ -326,7 +330,7 @@ module geometry
         !%     without surcharge is assigned in geo_assign_JB
         call slot_JB_computation (thisColP_JM)
         
-            !call util_CLprint ('in geometry after slot_JB_computation') 
+            ! call util_CLprint ('in geometry after slot_JB_computation') 
 
         !% Set JM values that are not otherwise defined
         !% HydDepth and ell. Note that topwidth, hydradius, perimeter are undefined.
@@ -340,7 +344,7 @@ module geometry
         !     call geo_dHdA (ep_AC_ACnonSurcharged)
         ! end if
 
-            !call util_CLprint ('in geometry at end') 
+            ! call util_CLprint ('in geometry at end') 
 
         !% --- check for crashpoint and stop here
         call util_crashstop(322983)
@@ -537,27 +541,18 @@ module geometry
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------    
-        !% cycle through different geometries
+        !% cycle through different geometries  
+                
+        !% --- open channels ------------------------------------------        
 
-        ! call util_CLprint('start of geo depth from volume')        
-
-        !% --- RECTANGULAR CC
+        !% --- RECTANGULAR CHANNEL
         thisCol => col_elemPGx(epg_CC_rectangular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
-        end if
+        end if    
 
-        !% --- RECTANGULAR CLOSED
-        thisCol => col_elemPGx(epg_CC_rectangular_closed)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
-        end if
-
-        ! call util_CLprint('after rectangular') 
-
-        !% --- TRAPEZOIDAL CC
+        !% --- TRAPEZOIDAL CHANNEL
         thisCol => col_elemPGx(epg_CC_trapezoidal)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
@@ -566,27 +561,11 @@ module geometry
 
         ! call util_CLprint('after trapezoidal') 
 
-        !% --- TRIANGULAR CC
+        !% --- TRIANGULAR CHANNEL
         thisCol => col_elemPGx(epg_CC_triangular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call triangular_depth_from_volume (elemPGx, Npack, thisCol)
-        end if
-
-        ! call util_CLprint('after triangular') 
-
-        !% --- CIRCULAR CC
-        thisCol => col_elemPGx(epg_CC_circular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call circular_depth_from_volume (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- FILLED CIRCULAR CC
-        thisCol => col_elemPGx(epg_CC_filled_circular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% -- PARABOLIC
@@ -596,18 +575,85 @@ module geometry
             call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !% -- RECT_TRIANG
+       !% -- POWER FUNCTION
+        thisCol => col_elemPGx(epg_CC_power_function)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
+            call util_crashpoint(5559872)
+            !call power_function_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        thisCol => col_elemPGx(epg_CC_irregular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- CLOSED CONDUITS  ---------------------------------------
+
+        !% --- RECTANGULAR CLOSED CONDUIT
+        thisCol => col_elemPGx(epg_CC_rectangular_closed)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- RECTANGULAR ROUND CONDUIT
+        thisCol => col_elemPGx(epg_CC_rectangular_round)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rect_round_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECTANGULAR TRIANGULAR
         thisCol => col_elemPGx(epg_CC_rectangular_triangular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --- CIRCULAR CONDUIT
+        thisCol => col_elemPGx(epg_CC_circular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call circular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        ! % --- SEMI-CIRCULAR CONDUIT
+        thisCol => col_elemPGx(epg_CC_semi_circular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call semi_circular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- FILLED CIRCULAR CONDUIT
+        thisCol => col_elemPGx(epg_CC_filled_circular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  ARCH CONDUIT
+        thisCol => col_elemPGx(epg_CC_arch)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call arch_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+ 
         !% --  BASKET_HANDLE
         thisCol => col_elemPGx(epg_CC_basket_handle)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  CATENARY
+        thisCol => col_elemPGx(epg_CC_catenary)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call catenary_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% --  EGG_SHAPED
@@ -617,6 +663,13 @@ module geometry
             call egg_shaped_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
+        !% --  GOTHIC
+        thisCol => col_elemPGx(epg_CC_gothic)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call gothic_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !% --  HORSE_SHOE
         thisCol => col_elemPGx(epg_CC_horse_shoe)
         Npack   => npack_elemPGx(thisCol)
@@ -624,46 +677,57 @@ module geometry
             call horse_shoe_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after circular') 
-
-        !% --- IRREGULAR
-        thisCol => col_elemPGx(epg_CC_irregular)
+        !% --  HORIZONTAL ELLIPSE
+        thisCol => col_elemPGx(epg_CC_horiz_ellipse)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
+            call horiz_ellipse_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
-        ! call util_CLprint('after irregular') 
-        !% HACK Needs additional geometries
+        !% --  MODIFIED BASKET HANDLE
+        thisCol => col_elemPGx(epg_CC_mod_basket)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  SEMI ELLIPTICAL
+        thisCol => col_elemPGx(epg_CC_semi_elliptical)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call semi_elliptical_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  VERTICAL ELLIPSE
+        thisCol => col_elemPGx(epg_CC_vert_ellipse)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call vert_ellipse_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- JUNCTIONS ---------------------------------------------------- 
 
         !% JM with functional geometry
         thisCol => col_elemPGx(epg_JM_functionalStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
-            !call storage_implied_length(elemPGx, Npack, thisCol)
         end if
 
-        ! call util_CLprint('after functional storage') 
-
-        !% JM with tabular geomtery
+        !% JM with tabular geometry
         thisCol => col_elemPGx(epg_JM_tabularStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
-            !call storage_implied_length(elemPGx, Npack, thisCol)
         end if
 
-        !call util_CLprint('after tabular storage') 
-
-        !% JM with implied storage (note that length is already defined)
+        !% JM with implied storage 
         thisCol => col_elemPGx(epg_JM_impliedStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
         end if
-        
-        !call util_CLprint('after implied storage') 
+  
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%geometry) &
@@ -1008,12 +1072,48 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (rect_round)                                    
+                                    area(tB)     = rect_round_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = rect_round_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = rect_round_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= rect_round_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= rect_round_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (basket_handle)                                    
                                     area(tB)     = basket_handle_area_from_depth_singular        (tB,depth(tB))
                                     topwidth(tB) = basket_handle_topwidth_from_depth_singular    (tB,depth(tB))
                                     hydDepth(tB) = basket_handle_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
                                     perimeter(tB)= basket_handle_perimeter_from_depth_singular   (tB,depth(tB))
                                     hydRadius(tB)= basket_handle_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (arch)                                    
+                                    area(tB)     = arch_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = arch_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = arch_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= arch_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= arch_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (horiz_ellipse)                                    
+                                    area(tB)     = horiz_ellipse_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = horiz_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = horiz_ellipse_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= horiz_ellipse_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= horiz_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (vert_ellipse)                                    
+                                    area(tB)     = vert_ellipse_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = vert_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = vert_ellipse_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= vert_ellipse_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= vert_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
@@ -1244,18 +1344,14 @@ module geometry
                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% cycle through different geometries
+
+        !% --- OPEN CHANNELS ----------------------------
+
         !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_closed)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_closed)
-            call rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- TRAPEZOIDAL
@@ -1270,6 +1366,52 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular)
             call triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic)
+            call parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- POWER FUNCTION
+        Npack => npack_elemPGx(epg_CC_power_function)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_power_function)
+            print *, 'POWER FUNCTION CROSS SECTION NOT COMPLETED'
+            call util_crashpoint(5223987)
+            !call power_function_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        Npack => npack_elemPGx(epg_CC_irregular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular)
+            call irregular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- CLOSED CONDUITS -----------------------------------------------
+
+        !% --- RECTANGULAR CLOSED
+        Npack => npack_elemPGx(epg_CC_rectangular_closed)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_closed)
+            call rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  RECTANGULAR ROUND
+        Npack   => npack_elemPGx(epg_CC_rectangular_round)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_round)
+            call rect_round_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+        
+        !% -- RECTANGULAR TRIANGULAR
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
+            call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- CIRCULAR
@@ -1293,18 +1435,11 @@ module geometry
             call filled_circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% -- PARABOLIC
-        Npack => npack_elemPGx(epg_CC_parabolic)
+        !% --  ARCH
+        thisCol => col_elemPGx(epg_CC_arch)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_parabolic)
-            call parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- RECT_TRIANG
-        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
-            call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call arch_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% -- BASKET_HANDLE
@@ -1314,11 +1449,25 @@ module geometry
             call basket_handle_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- CATENARY
+        Npack => npack_elemPGx(epg_CC_catenary)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary)
+            call catenary_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_egg_shaped)
             call egg_shaped_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- GOTHIC
+        Npack => npack_elemPGx(epg_CC_gothic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic)
+            call gothic_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% -- HORSE_SHOE
@@ -1328,18 +1477,11 @@ module geometry
             call horse_shoe_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% -- CATENARY
-        Npack => npack_elemPGx(epg_CC_catenary)
+        !% --  HORIZONTAL ELLIPSE
+        thisCol => col_elemPGx(epg_CC_horiz_ellipse)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_catenary)
-            call catenary_topwidth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- GOTHIC
-        Npack => npack_elemPGx(epg_CC_gothic)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_gothic)
-            call gothic_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call horiz_ellipse_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% -- MODIFIED BASKET HANDLE
@@ -1354,13 +1496,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_semi_elliptical)
             call semi_elliptical_topwidth_from_depth (elemPGx, Npack, thisCol)
-        end if
+        end if        
 
-        !% --- IRREGULAR
-        Npack => npack_elemPGx(epg_CC_irregular)
+        !% --  VERTICAL ELLIPSE
+        thisCol => col_elemPGx(epg_CC_vert_ellipse)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_irregular)
-            call irregular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call vert_ellipse_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% HACK -- DO WE NEED TOPWIDTH FOR TABULAR, FUNCTIONAL, IMPLIED STORAGE?
@@ -1392,18 +1534,13 @@ module geometry
         !%-------------------------------------------------------------------
         !% cycle through different geometries
 
+        !% --- OPEN CHANNELS -------------------------------
+
         !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular)
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_closed)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_closed)
-            call rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- TRAPEZOIDAL
@@ -1420,6 +1557,54 @@ module geometry
             call triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% --- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic)
+            call parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- POWER FUNCTION
+        Npack => npack_elemPGx(epg_CC_power_function)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_power_function)
+            print *, 'POWER FUNCTION CROSS SECTION NOT COMPLETED'
+            call util_crashpoint(54987)
+            !call power_function_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        !%     note this requires first using the table lookup for hydraulic radius
+        Npack => npack_elemPGx(epg_CC_irregular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular)
+            call irregular_hydradius_from_depth (elemPGx, Npack, thisCol)
+            call irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- CLOSED CONDUITS ---------------------------------
+
+        !% --- RECTANGULAR CLOSED
+        Npack => npack_elemPGx(epg_CC_rectangular_closed)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_closed)
+            call rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+        
+        !% --  RECTANGULAR ROUND
+        Npack   => npack_elemPGx(epg_CC_rectangular_round)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_round)
+            call rect_round_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECTANGULAR TRIANGULAR
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
+            call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+    
         !% --- CIRCULAR
         Npack => npack_elemPGx(epg_CC_circular)
         if (Npack > 0) then
@@ -1441,39 +1626,18 @@ module geometry
             call filled_circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% --- PARABOLIC
-        Npack => npack_elemPGx(epg_CC_parabolic)
+       !% --- ARCH
+        Npack => npack_elemPGx(epg_CC_arch)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_parabolic)
-            call parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- RECT_TRIANG
-        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
-            call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_arch)
+            call arch_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% -- BASKET_HANDLE
-        thisCol => col_elemPGx(epg_CC_basket_handle)
-        Npack   => npack_elemPGx(thisCol)
+        Npack   => npack_elemPGx(epg_CC_basket_handle)
         if (Npack > 0) then
-            call basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- EGG_SHAPED
-        Npack => npack_elemPGx(epg_CC_egg_shaped)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_egg_shaped)
-            call egg_shaped_perimeter_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- HORSE_SHOE
-        Npack => npack_elemPGx(epg_CC_horse_shoe)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_horse_shoe)
-            call horse_shoe_perimeter_from_depth (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_basket_handle)
+            call basket_handle_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% -- CATENARY
@@ -1483,11 +1647,32 @@ module geometry
             call catenary_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- EGG_SHAPED
+        Npack => npack_elemPGx(epg_CC_egg_shaped)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_egg_shaped)
+            call egg_shaped_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- GOTHIC
         Npack => npack_elemPGx(epg_CC_gothic)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_gothic)
             call gothic_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- HORSE_SHOE
+        Npack => npack_elemPGx(epg_CC_horse_shoe)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_horse_shoe)
+            call horse_shoe_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- HORIZONTAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_horiz_ellipse)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_horiz_ellipse)
+            call horiz_ellipse_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% -- MODIFIED BASKET HANDLE
@@ -1504,13 +1689,11 @@ module geometry
             call semi_elliptical_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
-        !% --- IRREGULAR
-        !%     note this requires first using the table lookup for hydraulic radius
-        Npack => npack_elemPGx(epg_CC_irregular)
+        !% -- VERTICAL ELLIPSE
+        Npack   => npack_elemPGx(epg_CC_vert_ellipse)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_irregular)
-            call irregular_hydradius_from_depth (elemPGx, Npack, thisCol)
-            call irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_vert_ellipse)
+            call vert_ellipse_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% HACK -- DO WE NEED TOPWIDTH FOR TABULAR, FUNCTIONAL, IMPLIED STORAGE?
@@ -1523,7 +1706,7 @@ module geometry
 !%==========================================================================  
 !%==========================================================================
 !%
-    subroutine geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
         !%-------------------------------------------------------------------
         !% Description:
         !% Note that hyddepth is the average depth, which is only area/topwidth
@@ -1542,18 +1725,13 @@ module geometry
         !%-------------------------------------------------------------------
         !% cycle through different geometries
 
+        !% --- OPEN CHANNELS ----------------------------------
+
         !% --- RECTANGULAR
         Npack => npack_elemPGx(epg_CC_rectangular)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular)
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_closed)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_closed)
-            call rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- TRAPEZOIDAL
@@ -1568,6 +1746,53 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular)
             call triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- PARABOLIC
+        Npack => npack_elemPGx(epg_CC_parabolic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_parabolic)
+            call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- POWER FUNCTION
+        Npack => npack_elemPGx(epg_CC_power_function)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_power_function)
+            print *, 'POWER FUNCTION CROSS SECTION NOT COMPLETED'
+            call util_crashpoint(5288987)
+            !call power_function_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- IRREGULAR
+        Npack => npack_elemPGx(epg_CC_irregular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_irregular)
+            call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
+        end if
+
+
+        !% --- CLOSED CONDUITS -------------------------------------
+
+        !% --- RECTANGULAR CLOSED
+        Npack => npack_elemPGx(epg_CC_rectangular_closed)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_closed)
+            call rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- RECTANGULAR ROUND
+        Npack => npack_elemPGx(epg_CC_rectangular_round)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_round)
+            call rect_round_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECTANGULAR TRIANGULAR
+        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
+            call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- CIRCULAR
@@ -1591,18 +1816,11 @@ module geometry
             call filled_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
-        !% --- PARABOLIC
-        Npack => npack_elemPGx(epg_CC_parabolic)
+        !% -- ARCH
+        Npack => npack_elemPGx(epg_CC_arch)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_parabolic)
-            call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- RECT_TRIANG
-        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
-            call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_arch)
+            call arch_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
         !% -- BASKET_HANDLE
@@ -1612,11 +1830,25 @@ module geometry
             call basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% --  CATENARY
+        Npack   => npack_elemPGx(epg_CC_catenary)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary)
+            call catenary_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% -- EGG_SHAPED
         Npack => npack_elemPGx(epg_CC_egg_shaped)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_egg_shaped)
             call egg_shaped_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  GOTHIC
+        Npack   => npack_elemPGx(epg_CC_gothic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic)
+            call gothic_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
         !% -- HORSE_SHOE
@@ -1626,47 +1858,40 @@ module geometry
             call horse_shoe_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
-        !% --  CATENARY
-        thisCol => col_elemPGx(epg_CC_catenary)
-        Npack   => npack_elemPGx(thisCol)
+        !% -- HORIZONTAL ELLIPSE
+        Npack => npack_elemPGx(epg_CC_horiz_ellipse)
         if (Npack > 0) then
-            call catenary_depth_from_volume (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  GOTHIC
-        thisCol => col_elemPGx(epg_CC_gothic)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call gothic_depth_from_volume (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_horiz_ellipse)
+            call horiz_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
         !% --  MODIFIED BASKET HANDLE
-        thisCol => col_elemPGx(epg_CC_mod_basket)
-        Npack   => npack_elemPGx(thisCol)
+        Npack   => npack_elemPGx(epg_CC_mod_basket)
         if (Npack > 0) then
-            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_mod_basket)
+            call mod_basket_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
         !% --  SEMI-ELLIPTICAL
-        thisCol => col_elemPGx(epg_CC_semi_elliptical)
-        Npack   => npack_elemPGx(thisCol)
+        Npack   => npack_elemPGx(epg_CC_semi_elliptical)
         if (Npack > 0) then
-            call semi_elliptical_depth_from_volume (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_semi_elliptical)
+            call semi_elliptical_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
-        !% --- IRREGULAR
-        Npack => npack_elemPGx(epg_CC_irregular)
+        !% --  VERTICAL ELLIPSE
+        Npack   => npack_elemPGx(epg_CC_vert_ellipse)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_irregular)
-            call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
+            thisCol => col_elemPGx(epg_CC_vert_ellipse)
+            call vert_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
-        !% DOES NOT HANDLE JM ELEMENTS
+        !% HACK -- DOES NOT HANDLE JM ELEMENTS (storage, junctions)
 
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_hyddepth_from_depth
+    end subroutine geo_hyddepth_from_depth_or_topwidth
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1931,7 +2156,7 @@ module geometry
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         select case (elemI(idx,ei_geometryType))
-            
+        !% ----open channels    
         case (rectangular)
             outvalue = rectangular_area_from_depth_singular (idx, indepth)
         case (trapezoidal)
@@ -1944,48 +2169,43 @@ module geometry
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
-        case (rect_triang)
-            outvalue = rectangular_triangular_area_from_depth_singular (idx, indepth)
-        case (rect_round )
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
-        case (mod_basket)
-            outvalue = mod_basket_area_from_depth_singular (idx, indepth)
         case (irregular)
-            outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
-        case (circular )
-            outvalue = circular_area_from_depth_singular (idx, indepth)
-        case (filled_circular)
-            outvalue = filled_circular_area_from_depth_singular (idx, indepth)
+            outvalue = irregular_geometry_from_depth_singular &
+                (idx,tt_area, indepth, setting%ZeroValue%Depth)
+
+        !% --- closed conduits    
         case (rectangular_closed)
             outvalue = rectangular_closed_area_from_depth_singular (idx, indepth)
-        case (horiz_ellipse)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
-        case (vert_ellipse)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
-        case (arch)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
-        case (eggshaped)
-            outvalue = egg_shaped_area_from_depth_singular (idx, indepth)
-        case (horseshoe)
-            outvalue = horse_shoe_area_from_depth_singular (idx, indepth)
-        case (gothic)
-            outvalue = gothic_area_from_depth_singular (idx, indepth)
-        case (catenary)
-            outvalue = catenary_area_from_depth_singular (idx, indepth)
-        case (semi_elliptical)
-            outvalue = semi_elliptical_area_from_depth_singular (idx, indepth)
-        case (basket_handle)
-            outvalue = basket_handle_area_from_depth_singular (idx, indepth)
+        case (rect_round )
+            outvalue = rect_round_area_from_depth_singular (idx, indepth)
+        case (rect_triang)
+            outvalue = rectangular_triangular_area_from_depth_singular (idx, indepth)
+        case (circular )
+            outvalue = circular_area_from_depth_singular (idx, indepth)
         case (semi_circular)
             outvalue = semi_circular_area_from_depth_singular (idx, indepth)
+        case (filled_circular)
+            outvalue = filled_circular_area_from_depth_singular (idx, indepth)
+        case (arch)
+            outvalue = arch_area_from_depth_singular (idx, indepth)
+        case (basket_handle)
+            outvalue = basket_handle_area_from_depth_singular (idx, indepth)
+        case (catenary)
+            outvalue = catenary_area_from_depth_singular (idx, indepth)
+        case (eggshaped)
+            outvalue = egg_shaped_area_from_depth_singular (idx, indepth)
+        case (gothic)
+            outvalue = gothic_area_from_depth_singular (idx, indepth)
+        case (horseshoe)
+            outvalue = horse_shoe_area_from_depth_singular (idx, indepth)
+        case (horiz_ellipse)
+            outvalue = horiz_ellipse_area_from_depth_singular (idx, indepth)
+        case (mod_basket)
+            outvalue = mod_basket_area_from_depth_singular (idx, indepth)
+        case (semi_elliptical)
+            outvalue = semi_elliptical_area_from_depth_singular (idx, indepth)
+        case (vert_ellipse)
+            outvalue = vert_ellipse_area_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -2003,7 +2223,7 @@ module geometry
            
     end function geo_area_from_depth_singular
 !%
-!%==========================================================================      
+!%==========================================================================    
 !%==========================================================================
 !%
     real(8) function geo_topwidth_from_depth_singular &
@@ -2020,6 +2240,7 @@ module geometry
         !%------------------------------------------------------------------
         select case (elemI(idx,ei_geometryType))
             
+        !% --- OPEN CHANNELS    
         case (rectangular)
             outvalue = rectangular_topwidth_from_depth_singular  (idx, indepth)
         case (trapezoidal)
@@ -2032,48 +2253,45 @@ module geometry
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
+        case (irregular)
+            outvalue = irregular_geometry_from_depth_singular &
+                (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
+
+        !% -----CLOSED CONDUITS ---------------------------------------------
+
+        case (rectangular_closed)
+                outvalue = rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
         case (rect_triang)
             outvalue = rectangular_triangular_topwidth_from_depth_singular  (idx, indepth)
-        case (rect_round )
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
-        case (mod_basket)
-            outvalue = mod_basket_topwidth_from_depth_singular (idx, indepth)
-        case (irregular)
-            outvalue = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
+        case (rect_round)
+            outvalue = rect_round_topwidth_from_depth_singular (idx, indepth)
         case (circular )
             outvalue = circular_topwidth_from_depth_singular  (idx, indepth)
-        case (filled_circular)
-            outvalue = filled_circular_topwidth_from_depth_singular  (idx, indepth)
-        case (rectangular_closed)
-            outvalue = rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
-        case (horiz_ellipse)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
-        case (vert_ellipse)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
-        case (arch)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
-        case (eggshaped)
-            outvalue = egg_shaped_topwidth_from_depth_singular (idx, indepth)
-        case (horseshoe)
-            outvalue = horse_shoe_topwidth_from_depth_singular (idx, indepth)
-        case (gothic)
-            outvalue = gothic_topwidth_from_depth_singular (idx, indepth)
-        case (catenary)
-            outvalue = catenary_topwidth_from_depth_singular (idx, indepth)
-        case (semi_elliptical)
-            outvalue = semi_elliptical_topwidth_from_depth_singular (idx, indepth)
-        case (basket_handle)
-            outvalue = basket_handle_topwidth_from_depth_singular (idx, indepth)
         case (semi_circular)
             outvalue = semi_circular_topwidth_from_depth_singular (idx, indepth)
+        case (filled_circular)
+            outvalue = filled_circular_topwidth_from_depth_singular  (idx, indepth)
+        case (arch)
+            outvalue = arch_topwidth_from_depth_singular (idx, indepth)
+        case (basket_handle)
+            outvalue = basket_handle_topwidth_from_depth_singular (idx, indepth)
+        case (catenary)
+            outvalue = catenary_topwidth_from_depth_singular (idx, indepth)
+        case (eggshaped)
+            outvalue = egg_shaped_topwidth_from_depth_singular (idx, indepth)
+        case (gothic)
+            outvalue = gothic_topwidth_from_depth_singular (idx, indepth)
+        case (horseshoe)
+            outvalue = horse_shoe_topwidth_from_depth_singular (idx, indepth)
+        case (horiz_ellipse)
+            outvalue = horiz_ellipse_topwidth_from_depth_singular (idx, indepth)
+        case (mod_basket)
+            outvalue = mod_basket_topwidth_from_depth_singular (idx, indepth)
+        case (semi_elliptical)
+            outvalue = semi_elliptical_topwidth_from_depth_singular (idx, indepth)        
+        case (vert_ellipse)
+            outvalue = vert_ellipse_topwidth_from_depth_singular (idx, indepth)
+        
         case (custom)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -2108,6 +2326,7 @@ module geometry
         !%------------------------------------------------------------------
         select case (elemI(idx,ei_geometryType))
             
+        !% ---- OPEN CHANNELS    
         case (rectangular)
             outvalue = rectangular_perimeter_from_depth_singular (idx, indepth)
         case (trapezoidal)
@@ -2120,48 +2339,46 @@ module geometry
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
-        case (rect_triang)
-            outvalue = rectangular_triangular_perimeter_from_depth_singular (idx, indepth)
-        case (rect_round )
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
-        case (mod_basket)
-            outvalue = mod_basket_perimeter_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
+
+        !% --- CLOSED CONDUITS   
+        case (rectangular_closed)
+            outvalue = rectangular_closed_perimeter_from_depth_singular (idx, indepth) 
+        case (rect_round )
+            outvalue = rect_round_perimeter_from_depth_singular (idx, indepth)
+        case (rect_triang)
+            outvalue = rectangular_triangular_perimeter_from_depth_singular (idx, indepth)
         case (circular )
             outvalue = circular_perimeter_from_depth_singular (idx, indepth)
-        case (filled_circular)
-            outvalue = filled_circular_perimeter_from_depth_singular (idx, indepth)
-        case (rectangular_closed)
-            outvalue = rectangular_closed_perimeter_from_depth_singular (idx, indepth)
-        case (horiz_ellipse)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
-        case (vert_ellipse)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
-        case (arch)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
-        case (eggshaped)
-            outvalue = egg_shaped_perimeter_from_depth_singular (idx, indepth)
-        case (horseshoe)
-            outvalue = horse_shoe_perimeter_from_depth_singular (idx, indepth)
-        case (gothic)
-            outvalue = gothic_perimeter_from_depth_singular (idx, indepth)
-        case (catenary)
-            outvalue = catenary_perimeter_from_depth_singular (idx, indepth)
-        case (semi_elliptical)
-            outvalue = semi_elliptical_perimeter_from_depth_singular (idx, indepth)
-        case (basket_handle)
-            outvalue = basket_handle_perimeter_from_depth_singular (idx, indepth)
         case (semi_circular)
             outvalue = semi_circular_perimeter_from_depth_singular (idx, indepth)
+        case (filled_circular)
+            outvalue = filled_circular_perimeter_from_depth_singular (idx, indepth)
+        case (arch)
+            outvalue = arch_perimeter_from_depth_singular (idx, indepth)
+        case (basket_handle)
+            outvalue = basket_handle_perimeter_from_depth_singular (idx, indepth)
+        case (catenary)
+            outvalue = catenary_perimeter_from_depth_singular (idx, indepth)
+        case (eggshaped)
+            outvalue = egg_shaped_perimeter_from_depth_singular (idx, indepth)
+        case (gothic)
+            outvalue = gothic_perimeter_from_depth_singular (idx, indepth)
+        case (horseshoe)
+            outvalue = horse_shoe_perimeter_from_depth_singular (idx, indepth)
+        case (horiz_ellipse)
+            !print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            !print *, 'has not been implemented in ',trim(subroutine_name)
+            !call util_crashpoint(338234)
+            outvalue = horiz_ellipse_perimeter_from_depth_singular (idx, indepth)
+        case (mod_basket)
+            outvalue = mod_basket_perimeter_from_depth_singular (idx, indepth)
+        case (semi_elliptical)
+            outvalue = semi_elliptical_perimeter_from_depth_singular (idx, indepth)
+        case (vert_ellipse)
+            outvalue = vert_ellipse_perimeter_from_depth_singular (idx, indepth)
+        
         case (custom)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -2197,6 +2414,7 @@ module geometry
         !%------------------------------------------------------------------
         select case (elemI(idx,ei_geometryType))
             
+        !% --- OPEN CHANNELS -----------------------------   
         case (rectangular)
             outvalue = indepth
         case (trapezoidal)
@@ -2209,65 +2427,67 @@ module geometry
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
-        case (rect_triang)
-            outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
-        case (rect_round )
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
-        case (mod_basket)
-            temp1    = mod_basket_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = mod_basket_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (irregular)
             !% --- get the area and topwidth, then compute the hydraulic depth
             temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)
             temp2 = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
-            outvalue = temp1 / temp2
+            outvalue = temp1 / temp2    
+
+        !% --- CLOSED CONDUITS --------------------------------------    
+        case (rectangular_closed)
+            outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
+        case (rect_round )
+            temp1    = rect_round_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = rect_round_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (rect_triang)
+            outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
         case (circular )
             !% --- get the topwidth and use that to compute the hydraulic depth
             temp1    = circular_topwidth_from_depth_singular    (idx, indepth)
             outvalue = circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (semi_circular)
+            temp1    = semi_circular_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = semi_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (filled_circular)
             !% --- get the topwidth and use that to compute the hydraulic depth
             temp1    = filled_circular_topwidth_from_depth_singular    (idx, indepth)
             outvalue = filled_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (rectangular_closed)
-            outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
-        case (horiz_ellipse)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
-        case (vert_ellipse)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
         case (arch)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
-        case (eggshaped)
-            temp1    = egg_shaped_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = egg_shaped_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (horseshoe)
             !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = horse_shoe_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = horse_shoe_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (gothic)
-            temp1    = gothic_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = gothic_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (catenary)
-            temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (semi_elliptical)
-            temp1    = semi_elliptical_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = semi_elliptical_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+            temp1    = arch_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = arch_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (basket_handle)
             !% --- get the topwidth and use that to compute the hydraulic depth
             temp1    = basket_handle_topwidth_from_depth_singular    (idx, indepth)
             outvalue = basket_handle_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (semi_circular)
-            temp1    = semi_circular_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = semi_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (catenary)
+            temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (eggshaped)
+            temp1    = egg_shaped_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = egg_shaped_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (gothic)
+            temp1    = gothic_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = gothic_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (horseshoe)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = horse_shoe_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = horse_shoe_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (horiz_ellipse)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = horiz_ellipse_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = horiz_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (mod_basket)
+            temp1    = mod_basket_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = mod_basket_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (semi_elliptical)
+            temp1    = semi_elliptical_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = semi_elliptical_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        case (vert_ellipse)
+            !% --- get the topwidth and use that to compute the hydraulic depth
+            temp1    = vert_ellipse_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = vert_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        
         case (custom)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)

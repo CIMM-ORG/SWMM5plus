@@ -1726,6 +1726,14 @@ int DLLEXPORT api_get_linkf_attribute(
             *value = FTTOM(Link[link_idx].xsect.yFull);
             break;
         
+        case linkf_xsect_aFull : 
+            *value = FT2TOM2(Link[link_idx].xsect.aFull);
+            break;
+        
+        case linkf_xsect_rFull : 
+            *value = FTTOM(Link[link_idx].xsect.rFull);
+            break;
+        
         case linkf_xsect_rBot : 
             *value = FTTOM(Link[link_idx].xsect.rBot);
             break;

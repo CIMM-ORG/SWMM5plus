@@ -70,7 +70,7 @@ module mod_basket_conduit
         AoverAfull(thisP) = zeroR 
         !% bottom rectangular section
         where(volume(thisP) <= (fullArea(thisP) - topArea(thisP)) * length(thisP))
-            depth(thisP) = sqrt(volume(thisP) / (length(thisP) * breadth(thisP)))
+            depth(thisP) = volume(thisP) / (length(thisP) * breadth(thisP))
             topSection(thisP) = .false.
         !% top circular part
         elsewhere
@@ -253,6 +253,7 @@ module mod_basket_conduit
         !%-----------------------------------------------------------------------------
         thisP       => elemPGx(1:Npack,thisCol)  
         perimeter   => elemR(:,er_Perimeter)
+        depth       => elemR(:,er_Depth)
         fullDepth   => elemR(:,er_FullDepth)
         yBreadthMax => elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)
         breadth     => elemSGR(:,esgr_Mod_Basket_BreadthMax)

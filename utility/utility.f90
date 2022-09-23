@@ -84,6 +84,8 @@ module utility
         write(*,"(A,i7,A, f12.5, A, f12.5)") 'step = ',setting%Time%Step,'; dt = ',setting%Time%Hydraulics%Dt,'; time = ',setting%Time%Now/3600.d0, ' hours'
         print *, '   ' 
 
+        
+
         ! do ii=1,size(elemI,1)
         !     print *, ii, elemI(ii,ei_elementType), ' ',trim(reverseKey(elemI(ii,ei_elementType)))
         ! end do
@@ -95,23 +97,25 @@ module utility
          jj=21 !% jm
          kk=23 !% jb dn
          mm=32 !% dn
-         write(*,"(A,10f12.5)") 'volume        ', elemR(nn,er_Volume),     elemR(ii,er_Volume),     elemR(jj,er_Volume),     elemR(kk,er_Volume),     elemR(mm,er_Volume)
-         write(*,"(A,10f12.5)") 'full volume   ', elemR(nn,er_FullVolume), elemR(ii,er_FullVolume), elemR(jj,er_FullVolume), elemR(kk,er_FullVolume), elemR(mm,er_FullVolume)
-         write(*,"(A,10f12.5)") 'slot volume   ', elemR(nn,er_SlotVolume), elemR(ii,er_SlotVolume), elemR(jj,er_SlotVolume), elemR(kk,er_SlotVolume),  elemR(mm,er_SlotVolume)
-         print *, ' '
-         !write(*,"(A,10f12.5)") 'velocity      ', elemR(nn,er_Velocity),   elemR(ii,er_Velocity),   elemR(jj,er_Velocity),   elemR(kk,er_Velocity),   elemR(mm,er_Velocity)
-         write(*,"(A,10f12.5)") 'Q             ', elemR(nn,er_Flowrate),   elemR(ii,er_Flowrate),   elemR(jj,er_Flowrate),   elemR(kk,er_Flowrate),   elemR(mm,er_Flowrate)
-         write(*,"(A,10f12.5)") 'Q Cons ', faceR(fup(nn),fr_Flowrate_Conservative),   faceR(fup(ii),fr_Flowrate_Conservative),   elemR(jj,er_Flowrate),  &
-                                           faceR(fdn(kk),fr_Flowrate_Conservative),   faceR(fdn(mm),fr_Flowrate_Conservative)
+        !  write(*,"(A,10f12.5)") 'volume        ', elemR(nn,er_Volume),     elemR(ii,er_Volume),     elemR(jj,er_Volume),     elemR(kk,er_Volume),     elemR(mm,er_Volume)
+        !  write(*,"(A,10f12.5)") 'full volume   ', elemR(nn,er_FullVolume), elemR(ii,er_FullVolume), elemR(jj,er_FullVolume), elemR(kk,er_FullVolume), elemR(mm,er_FullVolume)
+        !  write(*,"(A,10f12.5)") 'slot volume   ', elemR(nn,er_SlotVolume), elemR(ii,er_SlotVolume), elemR(jj,er_SlotVolume), elemR(kk,er_SlotVolume),  elemR(mm,er_SlotVolume)
+        !  print *, ' '
+        !  !write(*,"(A,10f12.5)") 'velocity      ', elemR(nn,er_Velocity),   elemR(ii,er_Velocity),   elemR(jj,er_Velocity),   elemR(kk,er_Velocity),   elemR(mm,er_Velocity)
+        !  write(*,"(A,10f12.5)") 'Q             ', elemR(nn,er_Flowrate),   elemR(ii,er_Flowrate),   elemR(jj,er_Flowrate),   elemR(kk,er_Flowrate),   elemR(mm,er_Flowrate)
+        !  write(*,"(A,10f12.5)") 'Q Cons ', faceR(fup(nn),fr_Flowrate_Conservative),   faceR(fup(ii),fr_Flowrate_Conservative),   elemR(jj,er_Flowrate),  &
+        !                                    faceR(fdn(kk),fr_Flowrate_Conservative),   faceR(fdn(mm),fr_Flowrate_Conservative)
          
-         print *, ' '
-         write(*,"(A,10f12.5)") 'Head          ', elemR(nn,er_Head),                               elemR(ii,er_Head),                              elemR(jj,er_Head), &
-                                                  elemR(kk,er_Head),                              elemR(mm,er_Head)
-         write(*,"(A,10f12.5)") 'Z crown          ', elemR(nn,er_Zcrown),                               elemR(ii,er_Zcrown),                              elemR(jj,er_Zcrown), &
-                                                     elemR(kk,er_Zcrown),                              elemR(mm,er_Zcrown)
-          write(*,"(A,10f12.5)") 'Z Crown       ', elemR(nn,er_FullDepth) + elemR(nn,er_Zbottom),       elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom),       elemR(jj,er_FullDepth) + elemR(jj,er_Zbottom), &
-                                                  elemR(kk,er_FullDepth) + elemR(kk,er_Zbottom),       elemR(mm,er_FullDepth) + elemR(mm,er_Zbottom)
+        !  print *, ' '
+        !  write(*,"(A,10f12.5)") 'Head          ', elemR(nn,er_Head),                               elemR(ii,er_Head),                              elemR(jj,er_Head), &
+        !                                           elemR(kk,er_Head),                              elemR(mm,er_Head)
+        !  write(*,"(A,10f12.5)") 'Z crown          ', elemR(nn,er_Zcrown),                               elemR(ii,er_Zcrown),                              elemR(jj,er_Zcrown), &
+        !                                              elemR(kk,er_Zcrown),                              elemR(mm,er_Zcrown)
+        !   write(*,"(A,10f12.5)") 'Z Crown       ', elemR(nn,er_FullDepth) + elemR(nn,er_Zbottom),       elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom),       elemR(jj,er_FullDepth) + elemR(jj,er_Zbottom), &
+        !                                           elemR(kk,er_FullDepth) + elemR(kk,er_Zbottom),       elemR(mm,er_FullDepth) + elemR(mm,er_Zbottom)
 
+         print *, ' '
+           write(*,"(A,10f12.5)") 'Depth         ', elemR(nn,er_Depth),  elemR(ii,er_Depth),  elemR(jj,er_Depth),  elemR(kk,er_Depth),  elemR(mm,er_Depth)
          print *, ' '
            write(*,"(A,10f12.5)") 'slot Depth    ', elemR(nn,er_SlotDepth),  elemR(ii,er_SlotDepth),  elemR(jj,er_SlotDepth),  elemR(kk,er_SlotDepth),  elemR(mm,er_SlotDepth)
         !stop 293874
