@@ -99,7 +99,6 @@
         "SpinUpDays"                : 10.0
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",

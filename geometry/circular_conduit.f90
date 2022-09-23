@@ -41,7 +41,7 @@ module circular_conduit
     subroutine circular_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on conduits (or non-surcharged circular conduits)
+        !% Only applies on conduits 
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point

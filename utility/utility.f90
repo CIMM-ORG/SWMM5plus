@@ -18,7 +18,14 @@ module utility
 
     private
 
+    public :: util_CLprint
     public :: util_print_programheader
+
+
+    public :: util_syncwrite
+    
+    public :: util_setting_constraints
+    
     public :: util_count_node_types
     public :: util_sign_with_ones
     public :: util_sign_with_ones_or_zero
@@ -33,8 +40,7 @@ module utility
     public :: util_find_neighbors_of_CC_element
     public :: util_find_neighbors_of_JM_element
 
-    public :: util_CLprint
-    public :: util_syncwrite
+  
 
     public :: util_unique_rank
 
@@ -53,8 +59,9 @@ module utility
         !%------------------------------------------------------------------
         !% Declarations:
             character (len = *), intent(in) :: inputstring
-            integer :: ii, nn, fD, eD, jj, thisCol, faceCol
+            integer :: ii, jj, kk, nn, mm, fD, eD, thisCol, faceCol
             integer, pointer :: fup(:), fdn(:), eup(:), edn(:)
+            integer, pointer :: thisP(:), Npack
             real(8), pointer :: dt, oneVec(:), grav
             real(8) :: hr, aa, bb, cc
 
@@ -71,24 +78,84 @@ module utility
             grav => setting%Constant%gravity
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
-
-        ! do ii=1,N_elem(1)
-        !     if (elemR(ii,er_Length) < 150.d0) then
-        !         print *, ii, elemR(ii,er_Length)
-        !     end if
-        ! end do
-
-        stop 309874
-
-        if (setting%Time%Now < 440.d0*60.d0*60.d0) then
-            return
-        end if
          
         print *, ' '
         write(*,"(A)") trim(inputstring)
-        write(*,"(A,i7,A, f12.5, A, f12.5)") 'step = ',setting%Time%Step,'; dt = ',setting%Time%Hydraulics%Dt,'; time = ',setting%Time%Now/3600.d0
+        write(*,"(A,i7,A, f12.5, A, f12.5)") 'step = ',setting%Time%Step,'; dt = ',setting%Time%Hydraulics%Dt,'; time = ',setting%Time%Now/3600.d0, ' hours'
         print *, '   ' 
 
+        
+
+        ! do ii=1,size(elemI,1)
+        !     print *, ii, elemI(ii,ei_elementType), ' ',trim(reverseKey(elemI(ii,ei_elementType)))
+        ! end do
+
+        ! stop 293874
+
+         nn=10 ! upstream
+         ii=22 !% jb up
+         jj=21 !% jm
+         kk=23 !% jb dn
+         mm=32 !% dn
+        !  write(*,"(A,10f12.5)") 'volume        ', elemR(nn,er_Volume),     elemR(ii,er_Volume),     elemR(jj,er_Volume),     elemR(kk,er_Volume),     elemR(mm,er_Volume)
+        !  write(*,"(A,10f12.5)") 'full volume   ', elemR(nn,er_FullVolume), elemR(ii,er_FullVolume), elemR(jj,er_FullVolume), elemR(kk,er_FullVolume), elemR(mm,er_FullVolume)
+        !  write(*,"(A,10f12.5)") 'slot volume   ', elemR(nn,er_SlotVolume), elemR(ii,er_SlotVolume), elemR(jj,er_SlotVolume), elemR(kk,er_SlotVolume),  elemR(mm,er_SlotVolume)
+        !  print *, ' '
+        !  !write(*,"(A,10f12.5)") 'velocity      ', elemR(nn,er_Velocity),   elemR(ii,er_Velocity),   elemR(jj,er_Velocity),   elemR(kk,er_Velocity),   elemR(mm,er_Velocity)
+        !  write(*,"(A,10f12.5)") 'Q             ', elemR(nn,er_Flowrate),   elemR(ii,er_Flowrate),   elemR(jj,er_Flowrate),   elemR(kk,er_Flowrate),   elemR(mm,er_Flowrate)
+        !  write(*,"(A,10f12.5)") 'Q Cons ', faceR(fup(nn),fr_Flowrate_Conservative),   faceR(fup(ii),fr_Flowrate_Conservative),   elemR(jj,er_Flowrate),  &
+        !                                    faceR(fdn(kk),fr_Flowrate_Conservative),   faceR(fdn(mm),fr_Flowrate_Conservative)
+         
+        !  print *, ' '
+        !  write(*,"(A,10f12.5)") 'Head          ', elemR(nn,er_Head),                               elemR(ii,er_Head),                              elemR(jj,er_Head), &
+        !                                           elemR(kk,er_Head),                              elemR(mm,er_Head)
+        !  write(*,"(A,10f12.5)") 'Z crown          ', elemR(nn,er_Zcrown),                               elemR(ii,er_Zcrown),                              elemR(jj,er_Zcrown), &
+        !                                              elemR(kk,er_Zcrown),                              elemR(mm,er_Zcrown)
+        !   write(*,"(A,10f12.5)") 'Z Crown       ', elemR(nn,er_FullDepth) + elemR(nn,er_Zbottom),       elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom),       elemR(jj,er_FullDepth) + elemR(jj,er_Zbottom), &
+        !                                           elemR(kk,er_FullDepth) + elemR(kk,er_Zbottom),       elemR(mm,er_FullDepth) + elemR(mm,er_Zbottom)
+
+         print *, ' '
+           write(*,"(A,10f12.5)") 'Depth         ', elemR(nn,er_Depth),  elemR(ii,er_Depth),  elemR(jj,er_Depth),  elemR(kk,er_Depth),  elemR(mm,er_Depth)
+         print *, ' '
+           write(*,"(A,10f12.5)") 'slot Depth    ', elemR(nn,er_SlotDepth),  elemR(ii,er_SlotDepth),  elemR(jj,er_SlotDepth),  elemR(kk,er_SlotDepth),  elemR(mm,er_SlotDepth)
+        !stop 293874
+           !  write(*,"(A,10f12.5)") 'slot volume   ', elemR(ii  ,er_SlotVolume), elemR(ii+1,er_SlotVolume), elemR(jj,er_SlotVolume)
+        !  write(*,"(A,10f12.5)") 'volume        ', elemR(ii  ,er_Volume), elemR(ii+1,er_Volume), elemR(jj,er_Volume)
+        !  write(*,"(A,10f12.5)") 'full volume   ', elemR(ii  ,er_FullVolume), elemR(ii+1,er_FullVolume), elemR(jj,er_FullVolume)
+        !  write(*,"(A,10f12.5)") 'volume - slot ', elemR(ii  ,er_Volume)-elemR(ii  ,er_SlotVolume),&
+        !                                           elemR(ii+1,er_Volume)-elemR(ii+1,er_SlotVolume),&
+        !                                           elemR(jj  ,er_Volume)-elemR(jj  ,er_SlotVolume)
+
+        ! print *, ' '
+        ! write(*,"(A,10f12.5)") 'slot depth     ', elemR(ii  ,er_SlotDepth), elemR(ii+1,er_SlotDepth), elemR(jj,er_SlotDepth)
+        ! write(*,"(A,10f12.5)") 'slot+depth+zbo ', elemR(ii  ,er_SlotDepth) + elemR(ii  ,er_FullDepth) + elemR(ii  ,er_Zbottom),&
+        !                                           elemR(ii+1,er_SlotDepth) + elemR(ii+1,er_FullDepth) + elemR(ii+1,er_Zbottom),&
+        !                                           elemR(jj  ,er_SlotDepth) + elemR(jj  ,er_FullDepth) + elemR(jj  ,er_Zbottom)
+        ! write(*,"(A,10f12.5)") 'head           ', elemR(ii  ,er_Head), elemR(ii+1,er_Head), elemR(jj,er_Head)   
+        
+        ! print *, ' '
+        ! write(*,"(A,10f12.5)") 'slot width     ', elemR(ii  ,er_SlotWidth), elemR(ii+1,er_SlotWidth), elemR(jj,er_SlotWidth)
+
+        ! print *, ''
+        ! write(*,"(A,10f12.5)") 'slot implied d ', elemR(ii  ,er_SlotVolume)/(elemR(ii  ,er_SlotWidth) * elemR(ii  ,er_Length)),&
+        !                                           elemR(ii+1,er_SlotVolume)/(elemR(ii+1,er_SlotWidth) * elemR(ii+1,er_Length)),&
+        !                                           elemR(jj  ,er_SlotVolume)/(elemR(jj  ,er_SlotWidth) * elemR(jj  ,er_Length))
+
+
+        ! print *, 'volume   ',elemR(ii,er_Volume), elemR(ii,er_FullVolume)
+        ! print *, 'slot     ',elemR(ii,er_SlotVolume), elemR(ii,er_SlotDepth)
+        ! print *, 'overflow ',elemR(ii,er_VolumeOverflow),elemR(ii,er_VolumeOverFlowTotal)
+        ! print *, elemR(ii,er_Head) - elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_FullDepth)
+       
+        ! if (elemR(ii,er_Depth) > elemR(ii,er_FullDepth)) then 
+        !     print *, 'depth problem ', elemR(ii,er_Depth), elemR(ii,er_FullDepth)
+        !     stop 2987346
+        ! end if
+
+        !stop 2098374
+        ! print *, 'Depth'
+        ! print *, elemR(:,er_Depth)
+        
         ! !% --- NAN CHECK
         !     thisCol = er_Velocity
         !     faceCol = fr_Velocity_d
@@ -201,7 +268,7 @@ module utility
 
         ! print *, 'small depth ',elemYN(iet,eYN_isSmallDepth)
         ! print *, 'zero depth  ',elemYN(iet,eYN_isZeroDepth)
-        ! print *, 'is slot',elemYN(iet,eYN_isSLot)
+        ! print *, 'is slot',elemYN(iet,eYN_isPSsurcharged)
 
         ! write(*,"(A,10f12.5)") 'H face                ',faceR(elemI(iet(1),ei_Mface_dL),fr_Head_d), &
         !                                                 faceR(elemI(iet(2),ei_Mface_dL),fr_Head_u), &
@@ -273,21 +340,21 @@ module utility
         !                                           elemR(iet(4),er_Velocity), &
         !                                           elemR(iet(5),er_Velocity)          
 
-        write(*,"(A,10e12.3)") 'Q lat        ',elemR(iet(1),er_FlowrateLateral), &
-                                                  elemR(iet(2),er_FlowrateLateral), &
-                                                  elemR(iet(3),er_FlowrateLateral), &
-                                                  elemR(iet(4),er_FlowrateLateral), &
-                                                  elemR(iet(5),er_FlowrateLateral), &
-                                                  elemR(iet(6),er_FlowrateLateral), &
-                                                  elemR(iet(7),er_FlowrateLateral)
+        ! write(*,"(A,10e12.3)") 'Q lat        ',elemR(iet(1),er_FlowrateLateral), &
+        !                                           elemR(iet(2),er_FlowrateLateral), &
+        !                                           elemR(iet(3),er_FlowrateLateral), &
+        !                                           elemR(iet(4),er_FlowrateLateral), &
+        !                                           elemR(iet(5),er_FlowrateLateral), &
+        !                                           elemR(iet(6),er_FlowrateLateral), &
+        !                                           elemR(iet(7),er_FlowrateLateral)
 
-        write(*,"(A,10e12.3)") 'Q elem       ',elemR(iet(1),er_Flowrate), &
-                                                  elemR(iet(2),er_Flowrate), &
-                                                  elemR(iet(3),er_Flowrate), &
-                                                  elemR(iet(4),er_Flowrate), &
-                                                  elemR(iet(5),er_Flowrate), &
-                                                  elemR(iet(6),er_Flowrate), &
-                                                  elemR(iet(7),er_Flowrate)
+        ! write(*,"(A,10e12.3)") 'Q elem       ',elemR(iet(1),er_Flowrate), &
+        !                                           elemR(iet(2),er_Flowrate), &
+        !                                           elemR(iet(3),er_Flowrate), &
+        !                                           elemR(iet(4),er_Flowrate), &
+        !                                           elemR(iet(5),er_Flowrate), &
+        !                                           elemR(iet(6),er_Flowrate), &
+        !                                           elemR(iet(7),er_Flowrate)
 
         ! write(*,"(A,10e12.3)") 'Q Net             ',faceR(elemI(iet(1),ei_Mface_uL),fr_Flowrate_Conservative) - faceR(elemI(iet(1),ei_Mface_dL),fr_Flowrate_Conservative), &
         !                                            faceR(elemI(iet(2),ei_Mface_uL),fr_Flowrate_Conservative) - faceR(elemI(iet(2),ei_Mface_dL),fr_Flowrate_Conservative), &
@@ -309,49 +376,49 @@ module utility
         !                                                 faceR(ift(5),fr_Flowrate_Conservative), &
         !                                                 faceR(ift(6),fr_Flowrate_Conservative)   
                                            
-        write(*,"(A,10e12.3)") 'Q face ', &
-                                                faceR(ift(1),fr_Flowrate), &
-                                                faceR(ift(2),fr_Flowrate), &
-                                                faceR(ift(3),fr_Flowrate), &
-                                                faceR(ift(4),fr_Flowrate), &
-                                                faceR(ift(5),fr_Flowrate), &
-                                                faceR(ift(6),fr_Flowrate), &
-                                                faceR(ift(7),fr_Flowrate), &
-                                                faceR(ift(8),fr_Flowrate)                                          
+        ! write(*,"(A,10e12.3)") 'Q face ', &
+        !                                         faceR(ift(1),fr_Flowrate), &
+        !                                         faceR(ift(2),fr_Flowrate), &
+        !                                         faceR(ift(3),fr_Flowrate), &
+        !                                         faceR(ift(4),fr_Flowrate), &
+        !                                         faceR(ift(5),fr_Flowrate), &
+        !                                         faceR(ift(6),fr_Flowrate), &
+        !                                         faceR(ift(7),fr_Flowrate), &
+        !                                         faceR(ift(8),fr_Flowrate)                                          
 
-        write(*,"(A,10f12.4)") 'H elem       ',elemR(iet(1),er_Head), &
-                                            elemR(iet(2),er_Head), &
-                                            elemR(iet(3),er_Head), &
-                                            elemR(iet(4),er_Head), &
-                                            elemR(iet(5),er_Head), &
-                                            elemR(iet(6),er_Head), &                                      
-                                            elemR(iet(7),er_Head)    
+        ! write(*,"(A,10f12.4)") 'H elem       ',elemR(iet(1),er_Head), &
+        !                                     elemR(iet(2),er_Head), &
+        !                                     elemR(iet(3),er_Head), &
+        !                                     elemR(iet(4),er_Head), &
+        !                                     elemR(iet(5),er_Head), &
+        !                                     elemR(iet(6),er_Head), &                                      
+        !                                     elemR(iet(7),er_Head)    
                                             
-        write(*,"(A,10f12.4)") 'H face ', &
-                                            faceR(ift(1),fr_Head_u), &
-                                            faceR(ift(2),fr_Head_u), &
-                                            faceR(ift(3),fr_Head_u), &
-                                            faceR(ift(4),fr_Head_u), &
-                                            faceR(ift(5),fr_Head_u), &
-                                            faceR(ift(6),fr_Head_u), &
-                                            faceR(ift(7),fr_Head_u), &
-                                            faceR(ift(8),fr_Head_u)   
+        ! write(*,"(A,10f12.4)") 'H face ', &
+        !                                     faceR(ift(1),fr_Head_u), &
+        !                                     faceR(ift(2),fr_Head_u), &
+        !                                     faceR(ift(3),fr_Head_u), &
+        !                                     faceR(ift(4),fr_Head_u), &
+        !                                     faceR(ift(5),fr_Head_u), &
+        !                                     faceR(ift(6),fr_Head_u), &
+        !                                     faceR(ift(7),fr_Head_u), &
+        !                                     faceR(ift(8),fr_Head_u)   
                                             
-        write(*,"(A,10e12.3)") 'IWuQ         ',elemR(iet(1),er_InterpWeight_uQ), &
-                                            elemR(iet(2),er_InterpWeight_uQ), &
-                                            elemR(iet(3),er_InterpWeight_uQ), &
-                                            elemR(iet(4),er_InterpWeight_uQ), &
-                                            elemR(iet(5),er_InterpWeight_uQ), &
-                                            elemR(iet(6),er_InterpWeight_uQ), &                                      
-                                            elemR(iet(7),er_InterpWeight_uQ)   
+        ! write(*,"(A,10e12.3)") 'IWuQ         ',elemR(iet(1),er_InterpWeight_uQ), &
+        !                                     elemR(iet(2),er_InterpWeight_uQ), &
+        !                                     elemR(iet(3),er_InterpWeight_uQ), &
+        !                                     elemR(iet(4),er_InterpWeight_uQ), &
+        !                                     elemR(iet(5),er_InterpWeight_uQ), &
+        !                                     elemR(iet(6),er_InterpWeight_uQ), &                                      
+        !                                     elemR(iet(7),er_InterpWeight_uQ)   
 
-        write(*,"(A,10e12.3)") 'IWdQ         ',elemR(iet(1),er_InterpWeight_dQ), &
-                                            elemR(iet(2),er_InterpWeight_dQ), &
-                                            elemR(iet(3),er_InterpWeight_dQ), &
-                                            elemR(iet(4),er_InterpWeight_dQ), &
-                                            elemR(iet(5),er_InterpWeight_dQ), &
-                                            elemR(iet(6),er_InterpWeight_dQ), &                                      
-                                            elemR(iet(7),er_InterpWeight_dQ)                                                                              
+        ! write(*,"(A,10e12.3)") 'IWdQ         ',elemR(iet(1),er_InterpWeight_dQ), &
+        !                                     elemR(iet(2),er_InterpWeight_dQ), &
+        !                                     elemR(iet(3),er_InterpWeight_dQ), &
+        !                                     elemR(iet(4),er_InterpWeight_dQ), &
+        !                                     elemR(iet(5),er_InterpWeight_dQ), &
+        !                                     elemR(iet(6),er_InterpWeight_dQ), &                                      
+        !                                     elemR(iet(7),er_InterpWeight_dQ)                                                                              
         
         ! write(*,"(A,3f12.5,2A,2f12.5)") 'Hface U    ',  &
         !                                     faceR(ift(1),fr_Head_u), &
@@ -392,7 +459,7 @@ module utility
         !                                     elemR(iet(8),er_Volume)/ elemR(iet(8),er_FullVolume)                                      
 
 
-!% vasconcelos at 5 m
+        !% vasconcelos at 5 m
 
         ! write(*,"(A,10f12.5)") 'H elem          ',elemR(iet(1),er_Head), &
         !                                     elemR(iet(2),er_Head), &
@@ -452,7 +519,7 @@ module utility
         !                                     elemR(iet(10),er_Volume)/ elemR(iet(10),er_FullVolume)    
 
 
-!% vasconcelos at 1 m
+        !% vasconcelos at 1 m
         ! write(*,"(A,12f10.4)") 'H elem          ',elemR(iet(1),er_Head), &
         !                                     elemR(iet(2),er_Head), &
         !                                     elemR(iet(3),er_Head), &
@@ -653,6 +720,31 @@ module utility
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine util_setting_constraints()
+        !% -----------------------------------------------------------------
+        !% Description:
+        !% provides hard-coded constraints on values for the setting
+        !% structure
+        !% -----------------------------------------------------------------
+
+        if (setting%Junction%InfiniteExtraDepthValue .le. zeroR) then 
+            print *, 'USER CONFIGURATION ERROR'
+            print *, 'setting%Junction%InfiniteExtraDepthValue <= 0.0 is not allowed'
+            call util_crashpoint(559872)
+        end if
+
+        ! if (setting%Junction%StorageSurchargeExtraDepth < zeroR) then 
+        !     print *, 'USER CONFIGURATION ERROR'
+        !     print *, 'setting%Junction%StorageSurchargeExtraDepth < 0.0 is not allowed'
+        !     call util_crashpoint(5598721)
+        ! end if
+
+
+    end subroutine util_setting_constraints
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -771,7 +863,8 @@ module utility
         !% Description:
         !% Computes/stores the cumulative mass conservation for each CC and JM
         !% element that is NOT small volume or zero depth
-        !% HACK -- JM not completed
+        !% Note that this should only be called at a place in the code where
+        !% the elem(:,er_Volume) reflects the total volume (i.e., full + slot)
         !% HACK -- need a separate volume cons for the small/zero losses
         !%------------------------------------------------------------------
         !% Declarations:
@@ -793,7 +886,6 @@ module utility
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow) 
-            VolSlot => elemR(:,er_SlotVolume)
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -802,9 +894,6 @@ module utility
         !% --- for the CC elements
         npack   => npack_elemP(thisColCC)
 
-        ! print *
-        ! print *, 'in here at top'
-        !print *, 'aaa ',elemR(48,er_VolumeOverFlow)
 
         if (npack > 0) then
             thisP => elemP(1:npack,thisColCC)
@@ -862,8 +951,24 @@ module utility
             ! print *, 'eCons ',eCons(47)
             ! print *, ' '
 
+            ! print *, ' '
+            ! print *, ' top ===='
+            ! print *, 'econs                  ', eCons(21)
+            ! print *, 'vol in                 ',dt * fQ(fup(22))
+            ! print *, 'vol out                ',dt * fQ(fdn(23))
+            ! print *, 'volume in - volume out ',dt * (fQ(fup(22))- fQ(fdn(23)))
+            ! print *, 'vol change             ',VolNew(21) - VolOld(21)
+            ! print *, 'residual without slot  ',dt * (fQ(fup(22))- fQ(fdn(23))) - (VolNew(21) - VolOld(21))
+            ! print *, 'vol over               ',VolOver(21)
+            ! print *, ' '
+           
+
             eCons(thisP) = eCons(thisP) + dt * eQlat(thisP) &
-                    - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP) + VolSlot(thisP)
+                    - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
+
+            ! print *, 'after ====='
+            ! print *, 'econs      ', eCons(21)
+            ! print *, ' '
 
             ! do ii=1,npack
             !     if (thisP(ii) == 47) then
@@ -887,6 +992,17 @@ module utility
                              - VolOver(thisP+ii  ) * real(BranchExists(thisP+ii  ),8)          &
                              - VolOver(thisP+ii+1) * real(BranchExists(thisP+ii+1),8)                              
             end do
+
+            ! print *, ' '
+            ! print *, ' in conservation check'
+            ! print *, 'econs      ', eCons(21)
+            ! print *, 'vol in     ',dt * fQ(fup(22))
+            ! print *, 'vol out    ',dt * fQ(fdn(23))
+            ! print *, 'vol change ',VolNew(21) - VolOld(21)
+            ! print *, 'vol over   ',VolOver(21)
+            ! print *, 'vol slot   ',VolSlot(21)
+            ! print *, 'econs      ',eCons(21)
+            ! print *, ' '
             
             ! print *, 'zzz ', eCons(47)
 

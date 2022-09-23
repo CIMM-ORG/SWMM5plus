@@ -6,6 +6,7 @@
         "Short" : "test"
     },
     "Discretization" : {
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -49,12 +50,13 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isManningsNout" : false,
+            "isManningsNout"    : false,
             "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : false,
+            "isSlotDepthOut"    : true,
             "isTopWidthOut"     : false,
             "isVelocityOut"     : true,
             "isVolumeOut"       : true,
+            "isVolumeOverflowOut" : true,
             "isWaveSpeedOut"    : false
         },
         "Report" : {
@@ -73,6 +75,15 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
+    "Solver" : {
+        "MomentumSourceMethod" : "T10",
+        "PreissmannSlot" : {
+            "useSlotTF"      : true,
+            "Method"     : "StaticSlot",
+            "TargetCelerity" : 3.0,
+            "Alpha"          : 2.0
+        },
+    },    
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""

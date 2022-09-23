@@ -92,7 +92,6 @@
         "ManningsN" : 0.2
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : true,
         "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",

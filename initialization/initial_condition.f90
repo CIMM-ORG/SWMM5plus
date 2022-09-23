@@ -107,6 +107,10 @@ contains
         elemR(:,er_Kconduit_MinorLoss) = zeroR
         elemR(:,er_SeepRate)           = zeroR
 
+        !% --- initialize overflow
+        elemR(:,er_VolumeOverFlow) = zeroR
+        elemR(:,er_VolumeOverFlowTotal) = zeroR
+
 
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
@@ -161,7 +165,7 @@ contains
         !% --- set up all the static packs and masks
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
-
+  
             ! call util_CLprint ('initial_condition after pack_mask_arrays_all')
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
@@ -246,12 +250,11 @@ contains
         call init_IC_branch_dummy_values ()
 
             ! call util_CLprint ('initial_condition after IC_branch_dummy_values')
-  
+
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
 
-        ! stop 23123
             ! call util_CLprint ('initial_condition after update_auxiliary_variables')
 
         !% --- initialize old head 
@@ -915,10 +918,6 @@ contains
 !    
 !==========================================================================
 !==========================================================================
-!      
-!    
-!==========================================================================
-!==========================================================================
 !
     subroutine init_IC_get_geometry_from_linkdata (thisLink)
         !--------------------------------------------------------------------------
@@ -1343,15 +1342,19 @@ contains
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
                 
-                !% 20220714brh  HACK -- needs review
                 where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                    !% --- not surcharged
                     elemR(:,er_Area)      = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)   
-                    elemR(:,er_SlotDepth) = zeroR                    
+                    elemR(:,er_SlotDepth) = zeroR 
+                    elemYN(:,eYN_isPSsurcharged)  = .false. 
+                    elemYN(:,eYN_isSurcharged)    = .false.                  
                 elsewhere   
+                    !% --- surcharged with Preissmann Slot
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isSlot)  = .true.
+                    elemYN(:,eYN_isPSsurcharged)  = .true.
+                    elemYN(:,eYN_isSurcharged)    = .true.
                 endwhere  
 
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -1360,7 +1363,116 @@ contains
                 elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
             endwhere
-            
+       
+        case (lRect_round)
+
+            where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                elemI(:,ei_geometryType)                       = rect_round
+                !% elemR data
+                elemR(:,er_FullDepth)                          = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_FullArea)                           = link%R(thisLink,lr_FullArea)
+                elemR(:,er_FullHydRadius)                      = link%R(thisLink,lr_FullHydRadius)
+                !% elemSGR data
+                elemSGR(:,esgr_Rectangular_Round_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
+                elemSGR(:,esgr_Rectangular_Round_Ybot)         = link%R(thisLink,lr_BottomDepth)
+                elemSGR(:,esgr_Rectangular_Round_Rbot)         = link%R(thisLink,lr_BottomRadius)
+                elemSGR(:,esgr_Rectangular_Round_ThetaBot)     = twoR * asin(elemSGR(:,esgr_Rectangular_Round_BreadthMax) / twoR & 
+                                                               / elemSGR(:,esgr_Rectangular_Round_Rbot))
+                elemSGR(:,esgr_Rectangular_Round_Abot)         = onehalfR * (elemSGR(:,esgr_Rectangular_Round_Rbot) ** twoR) & 
+                                                               * (elemSGR(:,esgr_Rectangular_Round_ThetaBot) - sin(elemSGR(:,esgr_Rectangular_Round_ThetaBot)))
+                elemSGR(:,esgr_Rectangular_Round_YatMaxBreadth)= elemR(:,er_FullDepth)
+
+                where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                    !% --- not surcharged
+                    where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Round_Ybot))
+                        !% find theta first
+                        elemR(:,er_Temp01) = twoR * acos(oneR - elemR(:,er_Depth) / elemSGR(:,esgr_Rectangular_Round_Rbot))  
+                        elemR(:,er_Area)   = onehalfR * (elemSGR(:,esgr_Rectangular_Round_Rbot) ** twoR) &
+                                           * (elemR(:,er_Temp01) - sin(elemR(:,er_Temp01)))
+                    elsewhere
+                        elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Round_Abot) + (elemR(:,er_Depth) &
+                                         - elemSGR(:,esgr_Rectangular_Round_Ybot)) * elemSGR(:,esgr_Rectangular_Round_BreadthMax) 
+                    end where   
+                    elemR(:,er_SlotDepth) = zeroR   
+                    elemYN(:,eYN_isPSsurcharged)  = .false. 
+                    elemYN(:,eYN_isSurcharged)    = .false.               
+                elsewhere   
+                    !% --- surcharged with Preissmann Slot
+                    elemR(:,er_Area)      = elemR(:,er_FullArea)
+                    elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
+                    elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                    elemYN(:,eYN_isPSsurcharged)  = .true.
+                    elemYN(:,eYN_isSurcharged)    = .true.
+                endwhere
+
+                elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth) 
+                elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_FullHydDepth)  = elemR(:,er_FullDepth)
+                elemR(:,er_FullPerimeter) = elemR(:,er_FullArea) / elemR(:,er_FullHydRadius)
+                elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Round_BreadthMax)
+                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
+                                                  + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+            endwhere
+
+        case (lRect_triang)
+
+            where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                elemI(:,ei_geometryType)                            = rect_triang
+                elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
+                elemR(:,er_FullHydRadius)                           = link%R(thisLink,lr_FullHydRadius)
+
+                elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
+                elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
+                elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+                elemSGR(:,esgr_Rectangular_Triangular_BottomArea)   = onehalfR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) * elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)                                                
+                
+
+                where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                    !% --- not surcharged
+                    where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+                        elemR(:,er_Area) = elemR(:,er_Depth) * elemR(:,er_Depth) * elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
+                    elsewhere
+                        elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) + (elemR(:,er_Depth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)) * &
+                                            elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
+                    end where   
+                    elemR(:,er_SlotDepth) = zeroR    
+                    elemYN(:,eYN_isPSsurcharged)  = .false. 
+                    elemYN(:,eYN_isSurcharged)    = .false.           
+                elsewhere   
+                    !% --- surcharged with Preissmann Slot
+                    elemR(:,er_Area)      = elemR(:,er_FullArea)
+                    elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
+                    elemR(:,er_Depth)     = elemR(:,er_FullDepth)
+                    elemYN(:,eYN_isPSsurcharged)  = .true.
+                    elemYN(:,eYN_isSurcharged)    = .true.
+                endwhere
+
+                elemR(:,er_Area_N0)       = elemR(:,er_Area)
+                elemR(:,er_Area_N1)       = elemR(:,er_Area)
+                elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
+                elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_FullHydDepth)  = elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) / twoR + (elemR(:,er_FullDepth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
+
+                elemR(:,er_FullPerimeter) = twoR * sqrt( ((elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) ** twoR) / fourR) + (elemR(:,esgr_Rectangular_Triangular_BottomDepth) ** twoR) ) &
+                                          + twoR * (elemR(:,er_FullDepth) - elemR(:,esgr_Rectangular_Triangular_BottomDepth)) + elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
+                elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
+                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
+                                                elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
+            endwhere
+    
         case (lCircular,lForce_main) 
 
             !% --- Get data for force main
@@ -1406,16 +1518,20 @@ contains
 
                 !% 20220714brh  HACK -- needs review
                 where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
+                    !% --- not surcharged
                     elemR(:,er_Area)                  = (elemSGR(:,esgr_Circular_Radius) **2) * &
                                 (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))) - &
                                 sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )    
-                    elemR(:,er_SlotDepth) = zeroR              
+                    elemR(:,er_SlotDepth) = zeroR    
+                    elemYN(:,eYN_isPSsurcharged)  = .false. 
+                    elemYN(:,eYN_isSurcharged)    = .false.              
                 elsewhere   
-                    !% --- Preissmann Slot
+                    !% --- surcharged with Preissmann Slot
                     elemR(:,er_Area)      = elemR(:,er_FullArea)
                     elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                     elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isSlot)  = .true.
+                    elemYN(:,eYN_isPSsurcharged)  = .true.
+                    elemYN(:,eYN_isSurcharged)    = .true. 
                 endwhere            
                 
                 elemR(:,er_Area_N0)               = elemR(:,er_Area)
@@ -1426,496 +1542,6 @@ contains
                 elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
                                                     elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
             end where
-        
-        case (lRect_triang)
-
-                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    elemI(:,ei_geometryType)                            = rect_triang
-                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
-                    elemR(:,er_FullHydRadius)                           = link%R(thisLink,lr_FullHydRadius)
-
-                    elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
-                    elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
-                    elemSGR(:,esgr_Rectangular_Triangular_BottomArea)   = onehalfR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) * elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)                                                
-                    
-
-                    where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
-                            elemR(:,er_Area) = elemR(:,er_Depth) * elemR(:,er_Depth) * elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
-                        elsewhere
-                            elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) + (elemR(:,er_Depth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)) * &
-                                                elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
-                        end where   
-                        elemR(:,er_SlotDepth) = zeroR              
-                    elsewhere   
-                        !% --- Preissmann Slot
-                        elemR(:,er_Area)      = elemR(:,er_FullArea)
-                        elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                        elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                        elemYN(:,eYN_isSlot)  = .true.
-                    endwhere
-
-                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_FullHydDepth)  = elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) / twoR + (elemR(:,er_FullDepth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
-
-                    elemR(:,er_FullPerimeter) = twoR * sqrt( ((elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) ** twoR) / fourR) + (elemR(:,esgr_Rectangular_Triangular_BottomDepth) ** twoR) ) &
-                                              + twoR * (elemR(:,er_FullDepth) - elemR(:,esgr_Rectangular_Triangular_BottomDepth)) + elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
-                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
-                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
-                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-                endwhere
-        
-        case (lMod_basket)
-
-                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    elemI(:,ei_geometryType)                            = mod_basket
-                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
-                    elemR(:,er_FullHydRadius)                           = link%R(thisLink,lr_FullHydRadius)
-                    elemSGR(:,esgr_Mod_Basket_BreadthMax)               = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,esgr_Mod_Basket_Rtop)                     = link%R(thisLink,lr_BottomRadius)
-                    elemSGR(:,esgr_Mod_Basket_ThetaTop)                 = twoR * asin(elemSGR(:,esgr_Mod_Basket_BreadthMax) / twoR / elemSGR(:,esgr_Mod_Basket_Rtop) )
-                    elemSGR(:,esgr_Mod_Basket_Ytop)                     = elemSGR(:,esgr_Mod_Basket_Rtop) * (oneR - cos(elemSGR(:,esgr_Mod_Basket_ThetaTop) / twoR))
-                    elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)            = elemR(:,er_FullDepth) - elemSGR(:,esgr_Mod_Basket_Ytop)
-                    elemSGR(:,esgr_Mod_Basket_Atop)                     = onehalfR * (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
-                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop)))                      
-                    where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Mod_Basket_YatMaxBreadth))
-                            elemR(:,er_Area) = elemR(:,er_Depth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                        elsewhere
-                            !% find empty top circular area
-                            !% -- find the height of the empty area
-                            elemR(:,er_Temp01) = max(elemR(:,er_FullDepth) - elemR(:,er_Depth), zeroR)
-                            !% -- find the theta of the empty area 
-                            elemR(:,er_Temp02) = twoR * acos(oneR - elemR(:,er_Temp01) / elemSGR(:,esgr_Mod_Basket_Rtop))
-                            !% -- now find the empty area
-                            elemR(:,er_Temp03) = (onehalfR * elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemR(:,er_Temp02) - sin(elemR(:,er_Temp02)))
-                            !% -- finally find the area by removing the empty area from Afull
-                            elemR(:,er_Area)   = elemR(:,er_FullArea) - elemR(:,er_Temp03)
-                        end where   
-                        elemR(:,er_SlotDepth) = zeroR              
-                    elsewhere   
-                        !% --- Preissmann Slot
-                        elemR(:,er_Area)      = elemR(:,er_FullArea)
-                        elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                        elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                        elemYN(:,eYN_isSlot)  = .true.
-                    endwhere
-                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_FullHydDepth)  = elemR(:,er_Depth)
-                    elemR(:,er_FullPerimeter) = twoR * elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) + elemSGR(:,esgr_Mod_Basket_BreadthMax) &
-                                              + elemSGR(:,esgr_Mod_Basket_ThetaTop) * elemSGR(:,esgr_Mod_Basket_Rtop)
-                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                    elemR(:,er_AreaBelowBreadthMax)   = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
-                                                      + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-                endwhere
-
-        case (lBasket_handle)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = basket_handle
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Basket_Handle_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Basket_Handle_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) = 0.2 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Basket_Handle_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = basket_handle_area_from_depth_singular (ii, elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-
-        case (lArch)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = arch
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Arch_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Arch_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Arch_YatMaxBreadth) = 0.28 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Arch_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Arch_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_AreaBelowBreadthMax) = arch_area_from_depth_singular (ii, elemSGR(ii,esgr_Arch_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-        
-        case (lHoriz_ellipse)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = horiz_ellipse
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Horiz_Ellipse_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Horiz_Ellipse_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth) = 0.48 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horiz_Ellipse_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_AreaBelowBreadthMax) = horiz_ellipse_area_from_depth_singular (ii, elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-
-        case (lVert_ellipse)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = vert_ellipse
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Vert_Ellipse_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Vert_Ellipse_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth) = 0.48 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Vert_Ellipse_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_AreaBelowBreadthMax) = vert_ellipse_area_from_depth_singular (ii, elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-        
-        case (lEggshaped)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = eggshaped
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Egg_Shaped_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Egg_Shaped_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth) = 0.64 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = egg_shaped_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Egg_Shaped_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = egg_shaped_area_from_depth_singular (ii, elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-
-        case (lHorseshoe)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = horseshoe
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Horse_Shoe_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Horse_Shoe_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth) = 0.5 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = horse_shoe_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horse_Shoe_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = horse_shoe_area_from_depth_singular (ii, elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-        
-        case (lCatenary)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = catenary
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Catenary_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Catenary_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Catenary_YatMaxBreadth) = 0.25 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = catenary_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Catenary_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Catenary_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = catenary_area_from_depth_singular (ii, elemSGR(ii,esgr_catenary_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-
-        case (lGothic)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = gothic
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Gothic_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Gothic_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Gothic_YatMaxBreadth) = 0.45 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = gothic_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Gothic_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Gothic_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = gothic_area_from_depth_singular (ii, elemSGR(ii,esgr_Gothic_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
-
-                end if
-            end do
-
-        case (lSemi_elliptical)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = semi_elliptical
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius) 
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Semi_Elliptical_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth) = 0.15 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        elemR(ii,er_Area) = semi_elliptical_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                    else
-                        !% --- Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = semi_elliptical_area_from_depth_singular (ii, elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
-
-                end if
-            end do
         
         case (lSemi_circular)
 
@@ -1934,14 +1560,18 @@ contains
                     elemSGR(ii,esgr_Semi_Circular_YatMaxBreadth) = 0.15 * elemR(ii,er_FullDepth)
                     !% elemR data
                     if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
                         elemR(ii,er_Area) = semi_circular_area_from_depth_singular (ii, elemR(ii,er_Depth))
                         elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
                     else
-                        !% --- Preissmann Slot
+                        !% --- surcharged with Preissmann Slot
                         elemR(ii,er_Area)      = elemR(ii,er_FullArea)
                         elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
                         elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
                     end if
                     elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
@@ -1960,7 +1590,7 @@ contains
 
                 end if
             end do
-        
+          
         case (lFilled_circular)
 
             do ii = 1,N_elem(this_image())
@@ -2000,14 +1630,18 @@ contains
                     
                     !% Check for slot
                     if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
                         elemR(ii,er_Area)      = filled_circular_area_from_depth_singular (ii, elemR(ii,er_Depth))
                         elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
                     else
-                        !% --- Preissmann Slot
+                        !% --- surcharged with Preissmann Slot
                         elemR(ii,er_Area)      = elemR(ii,er_FullArea)
                         elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
                         elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isSlot)  = .true.
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
                     end if
                     elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
@@ -2022,58 +1656,492 @@ contains
                 end if
             end do
 
-        case (lRect_round)
+        case (lArch)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = arch
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Arch_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Arch_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Arch_YatMaxBreadth) = 0.28 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.    
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Arch_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Arch_BreadthMax)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
+                    elemR(ii,er_AreaBelowBreadthMax) = arch_area_from_depth_singular (ii, elemSGR(ii,esgr_Arch_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+
+        case (lBasket_handle)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = basket_handle
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Basket_Handle_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Basket_Handle_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) = 0.2 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Basket_Handle_BreadthMax)
+                    elemR(ii,er_AreaBelowBreadthMax) = basket_handle_area_from_depth_singular (ii, elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+       
+        case (lCatenary)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = catenary
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+                    
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Catenary_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Catenary_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Catenary_YatMaxBreadth) = 0.25 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = catenary_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Catenary_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Catenary_BreadthMax)
+                    elemR(ii,er_AreaBelowBreadthMax) = catenary_area_from_depth_singular (ii, elemSGR(ii,esgr_catenary_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+            
+        case (lEggshaped)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = eggshaped
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+                    
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Egg_Shaped_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Egg_Shaped_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth) = 0.64 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = egg_shaped_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Egg_Shaped_BreadthMax)
+                    elemR(ii,er_AreaBelowBreadthMax) = egg_shaped_area_from_depth_singular (ii, elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+        
+        case (lGothic)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = gothic
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Gothic_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Gothic_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Gothic_YatMaxBreadth) = 0.45 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = gothic_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Gothic_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Gothic_BreadthMax)
+                    elemR(ii,er_AreaBelowBreadthMax) = gothic_area_from_depth_singular (ii, elemSGR(ii,esgr_Gothic_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
+
+                end if
+            end do
+
+        case (lHorseshoe)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = horseshoe
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+                    
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Horse_Shoe_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Horse_Shoe_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth) = 0.5 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = horse_shoe_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horse_Shoe_BreadthMax)
+                    elemR(ii,er_AreaBelowBreadthMax) = horse_shoe_area_from_depth_singular (ii, elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+
+        case (lHoriz_ellipse)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = horiz_ellipse
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Horiz_Ellipse_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Horiz_Ellipse_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth) = 0.48 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(:,eYN_isPSsurcharged)  = .false. 
+                        elemYN(:,eYN_isSurcharged)    = .false.    
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horiz_Ellipse_BreadthMax)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
+                    elemR(ii,er_AreaBelowBreadthMax) = horiz_ellipse_area_from_depth_singular (ii, elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+
+        case (lMod_basket)
 
                 where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    elemI(:,ei_geometryType)                       = rect_round
-                    !% elemR data
-                    elemR(:,er_FullDepth)                          = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullArea)                           = link%R(thisLink,lr_FullArea)
-                    elemR(:,er_FullHydRadius)                      = link%R(thisLink,lr_FullHydRadius)
-                    !% elemSGR data
-                    elemSGR(:,esgr_Rectangular_Round_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,esgr_Rectangular_Round_Ybot)         = link%R(thisLink,lr_BottomDepth)
-                    elemSGR(:,esgr_Rectangular_Round_Rbot)         = link%R(thisLink,lr_BottomRadius)
-                    elemSGR(:,esgr_Rectangular_Round_ThetaBot)     = twoR * asin(elemSGR(:,esgr_Rectangular_Round_BreadthMax) / twoR & 
-                                                                   / elemSGR(:,esgr_Rectangular_Round_Rbot))
-                    elemSGR(:,esgr_Rectangular_Round_Abot)         = onehalfR * (elemSGR(:,esgr_Rectangular_Round_Rbot) ** twoR) & 
-                                                                   * (elemSGR(:,esgr_Rectangular_Round_ThetaBot) - sin(elemSGR(:,esgr_Rectangular_Round_ThetaBot)))
-                    elemSGR(:,esgr_Rectangular_Round_YatMaxBreadth)= elemR(:,er_FullDepth)
-
+                    elemI(:,ei_geometryType)                            = mod_basket
+                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
+                    elemR(:,er_FullHydRadius)                           = link%R(thisLink,lr_FullHydRadius)
+                    elemSGR(:,esgr_Mod_Basket_BreadthMax)               = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Mod_Basket_Rtop)                     = link%R(thisLink,lr_BottomRadius)
+                    elemSGR(:,esgr_Mod_Basket_ThetaTop)                 = twoR * asin(elemSGR(:,esgr_Mod_Basket_BreadthMax) / twoR / elemSGR(:,esgr_Mod_Basket_Rtop) )
+                    elemSGR(:,esgr_Mod_Basket_Ytop)                     = elemSGR(:,esgr_Mod_Basket_Rtop) * (oneR - cos(elemSGR(:,esgr_Mod_Basket_ThetaTop) / twoR))
+                    elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)            = elemR(:,er_FullDepth) - elemSGR(:,esgr_Mod_Basket_Ytop)
+                    elemSGR(:,esgr_Mod_Basket_Atop)                     = onehalfR * (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
+                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop)))                      
                     where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Round_Ybot))
-                            !% find theta first
-                            elemR(:,er_Temp01) = twoR * acos(oneR - elemR(:,er_Depth) / elemSGR(:,esgr_Rectangular_Round_Rbot))  
-                            elemR(:,er_Area)   = onehalfR * (elemSGR(:,esgr_Rectangular_Round_Rbot) ** twoR) &
-                                               * (elemR(:,er_Temp01) - sin(elemR(:,er_Temp01)))
+                        !% --- not surcharged
+                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Mod_Basket_YatMaxBreadth))
+                            elemR(:,er_Area) = elemR(:,er_Depth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
+                            elemR(:,er_SlotDepth) = zeroR
+                            elemYN(:,eYN_isPSsurcharged)  = .false. 
+                            elemYN(:,eYN_isSurcharged)    = .false.    
                         elsewhere
-                            elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Round_Abot) + (elemR(:,er_Depth) &
-                                             - elemSGR(:,esgr_Rectangular_Round_Ybot)) * elemSGR(:,esgr_Rectangular_Round_BreadthMax) 
+                            !% find empty top circular area
+                            !% -- find the height of the empty area
+                            elemR(:,er_Temp01) = max(elemR(:,er_FullDepth) - elemR(:,er_Depth), zeroR)
+                            !% -- find the theta of the empty area 
+                            elemR(:,er_Temp02) = twoR * acos(oneR - elemR(:,er_Temp01) / elemSGR(:,esgr_Mod_Basket_Rtop))
+                            !% -- now find the empty area
+                            elemR(:,er_Temp03) = (onehalfR * elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemR(:,er_Temp02) - sin(elemR(:,er_Temp02)))
+                            !% -- finally find the area by removing the empty area from Afull
+                            elemR(:,er_Area)   = elemR(:,er_FullArea) - elemR(:,er_Temp03)
                         end where   
-                        elemR(:,er_SlotDepth) = zeroR              
+                        elemR(:,er_SlotDepth) = zeroR     
+                        elemYN(:,eYN_isPSsurcharged)  = .false. 
+                        elemYN(:,eYN_isSurcharged)    = .false.          
                     elsewhere   
-                        !% --- Preissmann Slot
+                        !% --- surcharged with Preissmann Slot
                         elemR(:,er_Area)      = elemR(:,er_FullArea)
                         elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
                         elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                        elemYN(:,eYN_isSlot)  = .true.
+                        elemYN(:,eYN_isPSsurcharged)  = .true.
+                        elemYN(:,eYN_isSurcharged)    = .true.
                     endwhere
-
                     elemR(:,er_Area_N0)       = elemR(:,er_Area)
                     elemR(:,er_Area_N1)       = elemR(:,er_Area)
                     elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
                     elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth) 
+                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_FullHydDepth)  = elemR(:,er_FullDepth)
-                    elemR(:,er_FullPerimeter) = elemR(:,er_FullArea) / elemR(:,er_FullHydRadius)
-                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-                    elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
+                    elemR(:,er_FullHydDepth)  = elemR(:,er_Depth)
+                    elemR(:,er_FullPerimeter) = twoR * elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) + elemSGR(:,esgr_Mod_Basket_BreadthMax) &
+                                              + elemSGR(:,esgr_Mod_Basket_ThetaTop) * elemSGR(:,esgr_Mod_Basket_Rtop)
+                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Mod_Basket_BreadthMax)
+                    elemR(:,er_AreaBelowBreadthMax)   = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
                     elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
                                                       + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
                 endwhere
+
+        case (lVert_ellipse)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = vert_ellipse
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Vert_Ellipse_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Vert_Ellipse_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth) = 0.48 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false. 
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Vert_Ellipse_BreadthMax)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
+                    elemR(ii,er_AreaBelowBreadthMax) = vert_ellipse_area_from_depth_singular (ii, elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                end if
+            end do
+
+        case (lSemi_elliptical)
+
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
+                    !% elemI data
+                    elemI(ii,ei_geometryType) = semi_elliptical
+                    !% elemR data                                            
+                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
+                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius) 
+                    
+                    !% elemSGR data
+                    elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
+                    elemSGR(ii,esgr_Semi_Elliptical_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
+                    elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth) = 0.15 * elemR(ii,er_FullDepth)
+                    !% elemR data
+                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
+                        !% --- not surcharged
+                        elemR(ii,er_Area) = semi_elliptical_area_from_depth_singular (ii, elemR(ii,er_Depth))
+                        elemR(ii,er_SlotDepth) = zeroR
+                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
+                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    else
+                        !% --- surcharged with Preissmann Slot
+                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
+                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
+                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
+                        elemYN(ii,eYN_isPSsurcharged)  = .true.
+                        elemYN(ii,eYN_isSurcharged)    = .true.
+                    end if
+                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
+                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
+                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
+                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)
+                    elemR(ii,er_AreaBelowBreadthMax) = semi_elliptical_area_from_depth_singular (ii, elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth))
+                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
+                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
+
+                end if
+            end do
+        
+ 
 
         case (lIrregular)
             print *, 'In ', trim(subroutine_name)
@@ -2945,12 +3013,13 @@ contains
         !% set the type of junction main
         if (node%YN(thisJunctionNode,nYN_has_storage)) then
             if (node%I(thisJunctionNode,ni_curve_ID) .eq. 0) then
+                !% --- functional storage
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
                 elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)
-
             else
+                !% --- tabular storage
                 elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
                 elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
             end if
@@ -2962,11 +3031,15 @@ contains
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
 
-        !% junction main depth and head from initial conditions
+        !% --- junction main depth and head from initial conditions
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
         elemR(JMidx,er_ell_max)   = node%R(thisJunctionNode,nr_FullDepth)
+        elemR(JMidx,er_Zcrown)    = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
+        
+        !% --- overflow volume accumulator
+        elemR(JMidx,er_VolumeOverFlowTotal) = zeroR
 
         !% --- ponded area is stored in elemSR array
         if (setting%SWMMinput%AllowPonding) then
@@ -2974,19 +3047,54 @@ contains
         else
             elemSR(JMidx,esr_JunctionMain_PondedArea) = zeroR
         end if
-        elemSR(JMidx,esr_JunctionMain_PondedVolume) = zeroR
+        elemR(JMidx,er_VolumePonded) = zeroR
 
+        !% --- all JM "can" surcharge, but are limited by their SurchargeExtraDepth
+        !%     which might be 0 (effectively preventing any surcharge)
+        elemYN(JMidx,eYN_canSurcharge) = .true.
+
+        !% --- handle surcharge depth if provided in node data
         if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) > zeroR) then
+            !% --- check for initialization
+            if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) == nullvalueR) then 
+                print *, 'ERROR: Surcharge Extra Depth at a junction not initialized'
+                print *, 'This should not happen! Likely problem forinitialization code'
+                call util_crashpoint(8838723)
+            end if
             !% --- Piezometric head for maximum surcharge at Junction
-            elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead) = node%R(thisJunctionNode,nr_SurchargeExtraDepth) + elemR(JMidx,er_FullDepth)
-            elemYN(JMidx,eYN_canSurcharge) = .true.
+            elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)      &
+                = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
         else 
-            elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead) = elemR(JMidx,er_FullDepth)
-            elemYN(JMidx,eYN_canSurcharge) = .false.
+            elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
+
+            !% --- THE StorageSurchargeExtraDepth IS NOT YET IMPLEMENTED!
+            !%     It requires computation of elemR(:,er_FullArea) in initial_conditions
+            !%     for tabular and functional storage
+            !% --- for storage nodes without extra surcharge depth, check
+            !%     for a default surcharge depth.
+            !%     NOTE: this code is needed because EPA-SWMM does not allow
+            !%     storage nodes to surcharge, hence it does not provide an
+            !%     input of Extra Surcharge Depth. SWMM5+ allows 
+            !%     a storage node to surcharge, but there needs to be a 
+            !%     future extension to provide the value for each storage node.  
+            !%     As an intermediate step we use a default "StorageSurchargeExtraDepth" 
+            !%     a the max surcharge at a Storage node.
+            ! if ((node%YN(thisJunctionNode,nYN_has_storage)) .and. &
+            !     (setting%Junction%StorageSurchargeExtraDepth > zeroR) ) then
+            !     !% --- use the default extra surcharge depth    
+            !     elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) &
+            !         = setting%Junction%StorageSurchargeExtraDepth 
+            ! else
+            !     !% --- if NOT a storage node or if IS a storage node
+            !     !%     but the setting%Junction%StorageSurchargeExtraDepth = 0.0
+            !     !%     then the junction cannot surcharge.
+            !     elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
+            ! end if
         end if    
 
+
         ! print *, 'JMidx',JMidx
-        ! print *, elemSR(JMidx,esr_JunctionMain_MaxSurchargeHead)
+        ! print *, elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)
         ! print *, elemSR(JMidx,esr_JunctionMain_PondedArea)
         ! print *, elemYN(JMidx,eYN_canSurcharge)
         ! print *, ' '
@@ -3002,9 +3110,9 @@ contains
 
         !% REPLACED THIS WITH STUFF ABOVE 20220907brh
         ! !% find if the node can surcharge
-        ! if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
+        ! if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) .ne. nullValueR) then
         !     elemYN(JMidx,eYN_canSurcharge)  = .true.
-        !     elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeDepth)
+        !     elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
         !     ! elemI(JMidx,ei_geometryType)    = rectangular_closed
         ! else
         !     elemYN(JMidx,eYN_canSurcharge)  = .false.
@@ -3115,10 +3223,36 @@ contains
                 faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
             end if
 
-
-            !% --- Set the geometry from the adjacent elements on connected images
+            !% --- Set the geometry from the adjacent elements
+            !%     Must evaluate across connected images
+            !%     JB inherits geometry type from connected branch
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
-            elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
+
+            !% --- Ability to surcharge is set by JM
+            !%     Note that JB (if surcharged) isn't subject to the max surcharge depth 
+            !%     of its JM. That is, a JB, if allowed to surcharge can surcharge to any
+            !%     level, but typically won't be much about the JM since the JM head
+            !%     drives the JB head.
+            !%     Note that this might be perceived as a logic problem: a branch 
+            !%     inherits geometry of the adjacent element,
+            !%     which allows "surcharge" to exist on a branch that is considered
+            !%     an open channel. This occurs when a channel is draining into
+            !%     a closed junction. In this case we think of the JB as
+            !%     having the flow characteristics of the adjacent channel, but
+            !%     the head is inherited from the JM. Thus, a JB can have open
+            !%     channel flow characteristics but a head based on the associated
+            !%     closed JM.
+            if (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) > zeroR) then 
+                !% --- where JM is allowed to surcharge
+                elemYN(JBidx,eYN_canSurcharge) = .true.
+            else 
+                !% --- where JM surcharge is limited to zero
+                elemYN(JBidx,eYN_canSurcharge) = .false.
+            end if
+
+            !% --- OLD APPROACH (20220922) using surcharge based on connected element
+            !elemYN(JBidx,eYN_canSurcharge)      = elemYN(Aidx,eYN_canSurcharge)[Ci]
+
 
             ! print *, 'JBidx',JBidx, elemI(JBidx,ei_geometryType), trim(reverseKey(elemI(JBidx,ei_geometryType)))
             ! print *, 'Aidx ',Aidx,  elemI(Aidx,ei_geometryType),  trim(reverseKey(elemI(Aidx,ei_geometryType)))
@@ -3215,12 +3349,21 @@ contains
             !%     as if it is a rectangular box of Storage_Plane_Area x Depth
             elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
 
+            !% --- Full area is the sum of the branch full area
+            !%     PRESENTLY ONLY AVAILABLE FOR IMPLIED STORAGE 
+            !%     NEEDED FOR FUNCTIONAL AND TABULAR IF PREISSMANN SLOT
+            !%     SURCHARGE ON FUNCTIONAL OR TABULAR IS DESIRED
+            elemR(JMidx,er_FullArea) = zeroR
+
             do ii=1,max_branch_per_node
                 JBidx = JMidx + ii
                 if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
 
                 BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
                 JBgeometryType => link%I(BranchIdx,li_geometry)
+
+                !% -- get the full area by summation of full area branches
+                elemR(JMidx,er_FullArea) = elemR(JMidx,er_FullArea) + init_IC_get_branch_fullarea(JBidx)
 
                 select case (JBgeometryType)
                 case (lRectangular,lRectangular_closed)
@@ -3351,6 +3494,8 @@ contains
             elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plane_Area) &
                                                     /   elemR(JMidx,er_Length)
 
+        
+
             ! !% Volume depends on plane area and depth
             ! elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)                                        
             ! elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
@@ -3405,9 +3550,33 @@ contains
         elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
         elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
 
+        !% HACK Consider computing the Full Area for storage by taking
+        !%   FullDepth * sqrt(FullVolume/FullDepth) 
+        !%   which would be simply sqrt(FullVolume * FullDepth)
+        !%   This would allow the preissmann slot to be set for surcharged
+        !%   on storage elements.
+
+        !stop 2397840
+
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_junction_data   
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function init_IC_get_branch_fullarea (JBidx) result(outvalue)  
+        !%------------------------------------------------------------------
+        !% Description
+        !% gets the full area for a branch if it exists
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: JBidx
+        !%------------------------------------------------------------------
+            outvalue = (real(elemSI( JBidx,esi_JunctionBranch_Exists),8) &
+                       * elemR(  JBidx,er_FullArea)) 
+
+    end function init_IC_get_branch_fullarea
 !%
 !%==========================================================================
 !%==========================================================================
@@ -4033,7 +4202,7 @@ contains
             !         print *, indx, trim(reverseKey(elemI(indx,ei_elementType)))
             !         print *, elemSGR(indx,esgr_Circular_Diameter), elemSGR(indx,esgr_Circular_Radius)
             !         print *, elemSGR(indx, esgr_Circular_YoverYfull), elemSGR(indx,esgr_Circular_AoverAfull)
-            !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
+            !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular), epg_CC_circular)
             !         elemR(indx,er_Volume) = 1.0d6 * elemR(indx,er_Volume)
             !         print *, 'after depth',elemR(indx,er_Depth)
             !         print *, 'after volume',elemR(indx,er_Length) * circular_area_from_depth_singular (indx) 
@@ -4049,7 +4218,7 @@ contains
             ! end do
             ! elemR(tPack(1:npack),er_Volume) = smallvolume(tPack(ii))
             ! print *, 'before', elemR(tPack(1:npack),er_Depth)
-            ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular_nonsurcharged), epg_CC_circular_nonsurcharged)
+            ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular), epg_CC_circular)
             ! print *, 'after ', elemR(tPack(1:npack),er_Depth)
 
         !stop 
@@ -4102,16 +4271,16 @@ contains
         !% Declarations:
             integer :: ii
             integer, pointer    :: SlotMethod
-            real(8), pointer    :: TargetPCelerity, grav, PreissmannAlpha
+            real(8), pointer    :: TargetPCelerity, grav, Alpha
             character(64) :: subroutine_name = 'init_IC_slot'
         !%-----------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
-        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
-        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
-        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
+        SlotMethod          => setting%Solver%PreissmannSlot%Method
+        TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+        Alpha               => setting%Solver%PreissmannSlot%Alpha
         grav                => setting%Constant%gravity
 
         !% initialize slots
@@ -4132,7 +4301,7 @@ contains
 
                 elemR(1:size(elemR,1)-1,er_Preissmann_Number) = oneR
 
-                where (elemYN(:,eYN_isSlot))
+                where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
@@ -4141,9 +4310,9 @@ contains
 
             case (DynamicSlot)
 
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (PreissmannAlpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
 
-                where (elemYN(:,eYN_isSlot))
+                where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)

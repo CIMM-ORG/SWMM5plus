@@ -213,7 +213,6 @@ module weir_elements
         if (setting%Debug%File%weir_elements)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        isSurcharged => elemYN(eIdx,eYN_isSurcharged)
     end subroutine weir_flow
 !%
 !%==========================================================================

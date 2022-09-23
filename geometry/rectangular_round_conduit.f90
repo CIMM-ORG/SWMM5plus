@@ -1,4 +1,4 @@
-module rect_round_conduit
+module rectangular_round_conduit
 
     use define_settings, only: setting
     use define_globals
@@ -431,4 +431,4 @@ module rect_round_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-end module rect_round_conduit
+end module rectangular_round_conduit

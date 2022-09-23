@@ -49,8 +49,12 @@
         "ManningsN" : 0.1
     },
     "Solver" : {
-        "PreissmannSlot" : true,
-        "MomentumSourceMethod" : "T00"
+        "MomentumSourceMethod" : "T00",
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot",
+            "TargetCelerity" : 15.00,
+            "Alpha"          : 2.00 
+        }
     },    
     "VariableDT" : {
         "ApplyYN" : true,
@@ -62,10 +66,5 @@
         "increaseFactor" : 2.0,
         "NstepsForCheck" : 5,
         "InitialDt"      : 1.0
-    },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 15.00,
-        "PreissmannAlpha"          : 2.00 
     }
 }

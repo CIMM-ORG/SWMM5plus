@@ -157,8 +157,8 @@
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 0.01
+        "Method" : "DynamicSlot",
+        "TargetCelerity" : 0.01
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -175,7 +175,6 @@
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",
-        "PreissmannSlot" : false,
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9

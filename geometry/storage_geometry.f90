@@ -38,11 +38,11 @@ module storage_geometry
     subroutine storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on JM that has storage (or non-surcharged trapezoidal conduits)
+        !% Only applies on JM that has storage by functional depth
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP, curveID
-        real(8), pointer :: depth, volume
+        real(8), pointer :: depth, fulldepth, volume
         real(8), pointer :: aConst, aCoeff, aExpon, bb, cc
         real(8) :: aa
         integer :: ii
@@ -50,13 +50,14 @@ module storage_geometry
 
         !% HACK: Find out a way to code this without do loop
         do ii = 1, Npack
-            thisP   => elemPGx(ii,thisCol) 
-            depth   => elemR(thisP,er_Depth)
-            volume  => elemR(thisP,er_Volume)
-            aConst  => elemSR(thisP,esr_Storage_Constant)
-            aCoeff  => elemSR(thisP,esr_Storage_Coefficient)
-            aExpon  => elemSR(thisP,esr_Storage_Exponent)
-            curveID => elemSI(thisP,esi_JunctionMain_Curve_ID)
+            thisP     => elemPGx(ii,thisCol) 
+            depth     => elemR(thisP,er_Depth)
+            fulldepth => elemR(thisP,er_FullDepth)
+            volume    => elemR(thisP,er_Volume)
+            aConst    => elemSR(thisP,esr_Storage_Constant)
+            aCoeff    => elemSR(thisP,esr_Storage_Coefficient)
+            aExpon    => elemSR(thisP,esr_Storage_Exponent)
+            curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
 
 
         ! print *, 'in storage functional depth from volume'
@@ -91,7 +92,10 @@ module storage_geometry
                 end if
             endif
 
-            ! print *, volume
+            !print *, thisP, volume, depth
+
+            !% --- limit depth to the full depth of the element
+            depth = min(depth,fulldepth)
 
         end do
 
@@ -107,7 +111,7 @@ module storage_geometry
         !%-----------------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP, curveID
-            real(8), pointer :: depth, volume
+            real(8), pointer :: depth, fulldepth, volume
             real(8), pointer :: aConst, aCoeff, aExpon
             integer :: ii
         !%-----------------------------------------------------------------------------
@@ -118,14 +122,19 @@ module storage_geometry
         
         !% HACK: Find out a way to code this without do loop
         do ii = 1, Npack
-            thisP   => elemPGx(ii,thisCol) 
-            depth   => elemR(thisP,er_Depth)
-            volume  => elemR(thisP,er_Volume)
-            curveID => elemSI(thisP,esi_JunctionMain_Curve_ID)
+            thisP     => elemPGx(ii,thisCol) 
+            depth     => elemR(thisP,er_Depth)
+            fulldepth => elemR(thisP,er_FullDepth)
+            volume    => elemR(thisP,er_Volume)
+            curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
 
             !% interpolate from the curve
             call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
                 curve_storage_depth,1)
+
+            !% --- limit depth to the full depth of the element
+            depth = min(depth,fulldepth)
+
         end do
 
     end subroutine storage_tabular_depth_from_volume
@@ -142,16 +151,20 @@ module storage_geometry
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP(:)
-            real(8), pointer :: depth(:), pArea(:), volume(:)
+            real(8), pointer :: depth(:), fulldepth(:), pArea(:), volume(:)
         !%-------------------------------------------------------------------
         !% Aliases
-            thisP  => elemPGx(1:Npack,thisCol)
-            depth  => elemR(:,er_Depth)
-            pArea  => elemSR(:,esr_Storage_Plane_Area)
-            volume => elemR(:,er_Volume)
+            thisP     => elemPGx(1:Npack,thisCol)
+            depth     => elemR(:,er_Depth)
+            fulldepth => elemR(:,er_FullDepth)
+            pArea     => elemSR(:,esr_Storage_Plane_Area)
+            volume    => elemR(:,er_Volume)
         !%-------------------------------------------------------------------
 
         depth(thisP) = volume(thisP) / pArea(thisP)
+
+        !% --- limit depth to the full depth of the element
+        depth(thisP) = min(depth(thisP),fulldepth(thisP))
 
         !print *, 'INSTORAGE ',volume(thisP)
        
@@ -186,6 +199,7 @@ module storage_geometry
                     (area(ii) + area(ii-1))
             end if
         end do 
+
 
     end subroutine storage_integrate_area_vs_depth_curve
 !%  

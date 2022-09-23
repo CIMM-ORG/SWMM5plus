@@ -91,7 +91,9 @@
         "inp_file" : ""
     },
     "Junction" : {
-        "FunStorageN" : 10
+        "FunStorageN" : 10,
+        "kFactor"     : 0.0,
+        "InfiniteExtraDepthValue"    : 1000.0
     },
     "Limiter" : {
         "NormalDepthInfinite" : 1000.0,
@@ -146,6 +148,8 @@
             "isVelocityOut"           : true,
             "isVolumeOut"             : true,
             "isVolumeConsOut"         : false,
+            "isVolumeOverflowOut"     : false,
+            "isVolumePondedOut"       : false,
             "isWaveSpeedOut"          : false,
             "isPreissmannCelerityOut" : false,
             "isPreissmannNumberOut"   : false
@@ -164,11 +168,6 @@
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 3.0,
-        "PreissmannAlpha"          : 2.0
-    },
     "Profile" : {
         "useYN" : false
     },
@@ -185,18 +184,12 @@
         "ManningsN" : 0.1
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
         "ReferenceHead"     : 0.0,
-        "ManningsN" : {
-            "useDynamicManningsN" : false,
-            "alpha"               : 1.0,
-            "beta"                : 1.0
-        },
         "ForceMain" : {
             "UseForceMainTF"        : true,
             "UseSWMMinputMethodTF"  : true,
@@ -207,6 +200,17 @@
             "Default_DarcyWeisbach_roughness_mm" : 0.36,
             "Default_ManningsN"     : 0.03,
             "minimum_slope"         : 1e-3
+        },
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
+            "alpha"               : 1.0,
+            "beta"                : 1.0
+        },
+        "PreissmannSlot" : {
+            "useSlotTF"      : true,
+            "Method"         : "DynamicSlot",
+            "TargetCelerity" : 3.0,
+            "Alpha"          : 2.0
         }
     },
     "TestCase" : {

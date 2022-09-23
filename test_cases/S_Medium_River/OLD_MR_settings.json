@@ -154,10 +154,6 @@
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 0.01
-    },
     "Simulation" : {
         "useHydrology" : true,
         "useHydraulics" : true,
@@ -169,11 +165,14 @@
         "MinimumArea" : 0.005,
         "MinimumHydRadius" : 0.009,
         "MinimumPerimeter" : 0.52,
-        "MinimumTopwidth" : 0.5
+        "MinimumTopwidth" : 0.5,
+        "PreissmannSlot" : {
+            "Method" : "DynamicSlot",
+            "TargetCelerity" : 0.01
+        }
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",
-        "PreissmannSlot" : false,
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9

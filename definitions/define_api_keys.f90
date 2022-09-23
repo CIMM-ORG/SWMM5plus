@@ -679,7 +679,11 @@ module define_api_keys
         enumerator :: api_weekend
         enumerator :: api_daily
         enumerator :: api_hourly
+        
     end enum
+    !% --- for no pattern in resolution: 
+    !%     this matches default in api_get_nodef_attribute for nodef_extInflow_basePat_type
+    integer, parameter :: api_nopattern = -1 
 
     contains   
     !%==========================================================================

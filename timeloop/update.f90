@@ -118,22 +118,22 @@ module update
              if (setting%Debug%File%update)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine update_auxiliary_variables
-    !%
+!%
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================
-!%
+
     subroutine update_element_flowrate (thisCol)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, intent(in) :: thisCol
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:), Qmax(:)
         character(64) :: subroutine_name = 'update_element_flowrate'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
@@ -296,9 +296,9 @@ module update
         w_uP      => elemR(:,er_InterpWeight_uP)
         w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
-        isSlot    => elemYN(:,eYN_isSlot)  !% Preissmann
+        isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
 
-        fSlot    => faceYN(:,fYN_isSlot)  !% Preissmann
+        fSlot    => faceYN(:,fYN_isPSsurcharged)  !% Preissmann
         fUp      => elemI(:,ei_Mface_uL)
         fDn      => elemI(:,ei_Mface_dL)
 
@@ -315,11 +315,15 @@ module update
         !% multiplier of the AC method for the wavespeed
         select case (whichTM)
             case (ALLtm)
-                thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
+                !thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                print *, 'CODE ERROR: ALLtm not complete'
+                call util_crashpoint(5598723) 
             case (ETM)
                 thisCol_ClosedElems =>  col_elemP(ep_CC_Closed_Elements)
             case (AC)
-                thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
+                !thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                print *, 'CODE ERROR: AC not complete'
+                call util_crashpoint(55987233) 
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -440,7 +444,7 @@ module update
             w_dH      => elemR(:,er_InterpWeight_dH)
             w_uP      => elemR(:,er_InterpWeight_uP)
             w_dP      => elemR(:,er_InterpWeight_dP)
-            isSlot    => elemYN(:,eYN_isSlot)  !% Preissmann
+            isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
         !%------------------------------------------------------------------
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
@@ -538,7 +542,7 @@ module update
     !     !%-----------------------------------------------------------------------------
 
     !     !% replace the interpolation weights for downstream JB
-    !     thisColP_dsJB  => col_elemP(ep_JB_DownStreamJB)
+    !     thisColP_dsJB  => col_elemP(ep_JB_Downstream)
     !     Npack1         => npack_elemP(thisColP_dsJB)
 
     !     if (Npack1 > 0) then
@@ -548,8 +552,8 @@ module update
     !         w_dH(thisP1) = oneR
     !     end if
 
-    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJbAdjacent)
-    !     Npack2            => npack_elemP(ep_CC_DownstreamJbAdjacent)
+    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJBadjacent)
+    !     Npack2            => npack_elemP(ep_CC_DownstreamJBadjacent)
 
     !     !% replace the interpolation weights for elements downstream of dn JB
     !     if (Npack2 > 0) then
