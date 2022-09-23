@@ -230,6 +230,9 @@ module geometry
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell_from_head (thisColP_all)
 
+        !% correct the head by adding zbottom and modified hydraulic depth
+        call geo_head_from_ell (thisColP_all)
+
             ! call util_CLprint ('in geometry before slot_adjustments') 
 
         !% make adjustments for slots on closed elements only for ETM
@@ -2193,6 +2196,40 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
+   subroutine geo_head_from_ell (thisColP)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% computes the value of "ell" -- the modified hydraulic depth
+        !% used as a length scale in AC method
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisColP
+        integer, pointer :: thisP(:), Npack
+        real(8), pointer :: ell(:), head(:), zbottom(:)
+        character(64) :: subroutine_name = 'geo_head_from_ell'
+        !%-----------------------------------------------------------------------------
+        !if (crashYN) return
+        if (setting%Debug%File%geometry) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        Npack   => npack_elemP(thisColP)
+        ell     => elemR(:,er_ell)
+        head    => elemR(:,er_Head)
+        zbottom => elemR(:,er_Zbottom)
+        !%-----------------------------------------------------------------------------
+
+        if (Npack > 0) then
+            thisP       => elemP(1:Npack,thisColP)        
+            head(thisP) = zbottom(thisP) + ell(thisP)
+        end if
+
+        if (setting%Debug%File%geometry) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine geo_head_from_ell 
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+
     subroutine geo_dHdA (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -2237,7 +2274,7 @@ module geometry
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), dSlotDepth(:)
         real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:)
         real(8), pointer    :: head(:), fullVolume(:), fullArea(:), fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:), SlotHydRad(:)
+        real(8), pointer    :: Overflow(:), zcrown(:), ellMax(:), SlotHydRad(:)
         logical, pointer    :: isSlot(:)
 
         character(64) :: subroutine_name = 'geo_CC_slot_adjustments'
@@ -2263,7 +2300,7 @@ module geometry
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRad => elemR(:,er_SlotHydRadius)
         volume     => elemR(:,er_Volume)
-        zbottom    => elemR(:,er_Zbottom)
+        zcrown     => elemR(:,er_Zcrown)
         isSlot     => elemYN(:,eYN_isSlot)
 
         !% pointer to necessary settings struct
@@ -2290,7 +2327,8 @@ module geometry
                         volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
                         ! area(thisP)      = area(thisP)    + SlotArea(thisP)
                         SlotDepth(thisP) = max(SlotDepth(thisP) + dSlotDepth(thisP), zeroR) !% HACK: TESTING STUFF
-                        head(thisP)      = max(head(thisP)  + SlotDepth(thisP), zbottom(thisP))
+                        head(thisP)      = head(thisP)  + SlotDepth(thisP)
+                        ell(thisP)       = ellMax(thisP)
                         Overflow(thisP)  = zeroR
                     elsewhere
                         SlotDepth(thisP)  = zeroR

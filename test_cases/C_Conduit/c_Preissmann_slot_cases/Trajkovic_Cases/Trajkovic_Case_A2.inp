@@ -71,8 +71,8 @@ DRY_ONLY         NO
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
-2                2                3                SIDE         0          0.76        NO      0.001          
-4                4                5                SIDE         0          0.76        NO      0.001   
+2                2                3                SIDE         0          0.74        NO       0.0007          
+4                4                5                SIDE         0          0.74        NO       0.0007    
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -88,12 +88,12 @@ DRY_ONLY         NO
 ;;Control Rules
 
 RULE R1
-IF SIMULATION TIME > 00:00:00
+IF SIMULATION TIME >= 00:00:00
 THEN ORIFICE 2 SETTING = 0.14
 
 RULE R2
-IF SIMULATION TIME > 00:02:00
-AND SIMULATION TIME < 00:02:30
+IF SIMULATION TIME >= 00:02:00
+AND SIMULATION TIME <= 00:02:30
 THEN ORIFICE 4 SETTING = 0.0
 
 RULE R3

@@ -53,7 +53,7 @@ module orifice_elements
 
         !print *, 'calling orifice_effective_head_delta'
         !% find effective head on orifice element
-         call orifice_effective_head_delta (eIdx)
+        call orifice_effective_head_delta (eIdx)
 
         !% find flow on orifice element
         call orifice_flow (eIdx)

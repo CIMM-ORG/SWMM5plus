@@ -1401,7 +1401,7 @@ contains
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
                 elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth)
                 elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
-                elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Circular_Diameter)
+                elemR(:,er_BreadthMax)            = elemR(:,er_FullDepth)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR
 
                 !% 20220714brh  HACK -- needs review
