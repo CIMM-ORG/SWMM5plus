@@ -6,7 +6,6 @@
         "Short" : "test"
     },
     "Discretization" : {
-        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -37,10 +36,10 @@
     "Output" : {
         "Verbose" : true,
         "Warning" : true,
-        "StoredLevels" : 100,
+        "StoredLevels" : 10000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 500
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -50,14 +49,14 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isManningsNout"    : false,
+            "isManningsNout"    : true,
             "isSlotWidthOut"    : false,
-            "isSlotDepthOut"    : true,
+            "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
             "isVelocityOut"     : true,
             "isVolumeOut"       : true,
-            "isVolumeOverflowOut" : true,
-            "isWaveSpeedOut"    : false
+            "isWaveSpeedOut"    : true,
+            "isPreissmannCelerityOut"   : true
         },
         "Report" : {
             "useSWMMinpYN" :true,
@@ -75,15 +74,6 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
-    "Solver" : {
-        "MomentumSourceMethod" : "T10",
-        "PreissmannSlot" : {
-            "useSlotTF"      : true,
-            "Method"     : "StaticSlot",
-            "TargetCelerity" : 3.0,
-            "Alpha"          : 2.0
-        },
-    },    
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -98,5 +88,43 @@
         "Hydrology" : {
             "Dt" : 600.0
         }
+    },
+    "Solver" : {
+        "PreissmannSlot" : true,
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T00",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0,
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
+            "alpha"               : 1.0,
+            "beta"                : 1.0
+        },
+        "ForceMain" : {
+            "UseForceMainTF"        : false,
+            "UseSWMMinputMethodTF"  : true,
+            "FMallClosedConduitsTF" : false,
+            "errorCheck_RoughnessTF"     : true,
+            "Default_method"        : "HazenWilliams",
+            "Default_HazenWilliams_coef" : 120.0,
+            "Default_DarcyWeisbach_roughness_mm" : 0.36,
+            "Default_ManningsN"     : 0.03,
+            "minimum_slope"         : 1e-3
+        }
+    },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "StaticSlot", 
+        "TargetPreissmannCelerity" : 10.0
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.3,
+        "decreaseFactor" : 0.8,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10
     }
 }

@@ -45,7 +45,6 @@ module update
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%------------------------------------------------------------------
         !%
-
             ! call util_CLprint ('in update before geometry toplevel')
 
         !% --- update the head (non-surcharged) and geometry
@@ -316,11 +315,15 @@ module update
         !% multiplier of the AC method for the wavespeed
         select case (whichTM)
             case (ALLtm)
-                thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                !thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                print *, 'CODE ERROR: ALLtm not complete'
+                call util_crashpoint(5598723) 
             case (ETM)
                 thisCol_ClosedElems =>  col_elemP(ep_CC_Closed_Elements)
             case (AC)
-                thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                !thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                print *, 'CODE ERROR: AC not complete'
+                call util_crashpoint(55987233) 
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -549,8 +552,8 @@ module update
     !         w_dH(thisP1) = oneR
     !     end if
 
-    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJbAdjacent)
-    !     Npack2            => npack_elemP(ep_CC_DownstreamJbAdjacent)
+    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJBadjacent)
+    !     Npack2            => npack_elemP(ep_CC_DownstreamJBadjacent)
 
     !     !% replace the interpolation weights for elements downstream of dn JB
     !     if (Npack2 > 0) then

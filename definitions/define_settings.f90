@@ -151,6 +151,7 @@ module define_settings
         logical :: isVolumeOut              = .true.
         logical :: isVolumeConsOut          = .true.
         logical :: isVolumeOverflowOut      = .true.
+        logical :: isVolumePondedOut        = .false.
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
@@ -516,7 +517,9 @@ module define_settings
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
         !rm 20220207brh real(8) :: HeadCoef     = 1.0d0   !% junction branch head coef for diagnostic junction (must be > 0)
         real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
-        real(8) :: StorageSurchargeExtraDepth  = 0.d0  !% default surcharge depth forr ALL storage (not regular junctions)
+        !% NOTE StorageSurchargeExtraDepth can only be used if elemR(:,er_FullArea) is computed for storage
+        !real(8) :: StorageSurchargeExtraDepth  = 0.d0  !% default surcharge depth for ALL storage (not regular junctions)
+        real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
     end type JunctionType
 
     ! setting%Limiter
@@ -1265,9 +1268,9 @@ contains
         ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
 
         !%                       Junction.StorageSurchargeExtraDepth
-        call json%get('Junction.StorageSurchargeExtraDepth', real_value, found)
-        if (found) setting%Junction%StorageSurchargeExtraDepth = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.StorageSurchargeExtraDepth not found'
+        ! call json%get('Junction.StorageSurchargeExtraDepth', real_value, found)
+        ! if (found) setting%Junction%StorageSurchargeExtraDepth = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.StorageSurchargeExtraDepth not found'
 
         !%                       Junction.FunStorageN
         call json%get('Junction.FunStorageN', integer_value, found)
@@ -1285,7 +1288,11 @@ contains
         if (found) setting%Junction%kFactor = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
 
-   
+        !%                       Junction.InfiniteExtraDepthValue
+        call json%get('Junction.InfiniteExtraDepthValue', real_value, found)
+        if (found) setting%Junction%InfiniteExtraDepthValue = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.InfiniteExtraDepthValue not found'
+
     !% Limiter. =====================================================================
         !rm 20220207brh
         ! !%                       Limiter.ArraySize.TemporalInflows

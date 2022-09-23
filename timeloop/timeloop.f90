@@ -156,6 +156,7 @@ contains
             logical, intent(in)    :: inSpinUpYN
             real(8), pointer :: nextHydrologyTime, nextHydraulicsTime, nextControlRuleTime
             real(8), pointer :: lastHydrologyTime, lastHydraulicsTime, lastControlRuleTime, dtTol
+            character(64)    :: subroutine_name = "tl_initialize_loop"    
         !%------------------------------------------------------------------
         !% Aliases  
             nextControlRuleTime => setting%Time%ControlRule%NextTime
@@ -185,6 +186,8 @@ contains
             !% set a large dummy time for hydrology if not used
             nextHydrologyTime  = setting%Time%End + onethousandR * dtTol
         end if
+
+        !    call util_CLprint('in tl_initialize')
 
         !% get the initial dt and the next hydraulics time
         if (setting%Simulation%useHydraulics) then
@@ -297,6 +300,7 @@ contains
                     !% --- perform hydraulic routing
                     call tl_hydraulics()
 
+                    !call util_CLprint ('in time_loop after tl_hydraulics')
     
                     !% --- close the clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -803,6 +807,11 @@ contains
             minCFL = setting%Eps%Velocity * oldDT / setting%Discretization%NominalElemLength
         end if
 
+            ! print *, ' '
+            ! print *, 'in ',trim(subroutine_name)
+            ! print *, matchHydrologyStep, useHydrology, inSpinUpYN
+            ! print *, ' '
+
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
             !%     step to match the next hydrology time
@@ -883,6 +892,7 @@ contains
             !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
             thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,oldDT)
 
+                ! print *, ' '
                 ! print *, 'baseline CFL, minCFL, this step: '
                 ! print *, thisCFL, minCFL, stepNow
 
@@ -1103,34 +1113,36 @@ contains
 !%==========================================================================
 !%    
     subroutine tl_solver_select()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% For ETM_AC dual method, this sets the elemI(:,ei_tmType) to the type of solver
         !% needed depending on the volume and the volume cutoffs.
         !% Should only be called if setting%Solver%SolverSelect == ETM_AC
-        !%-----------------------------------------------------------------------------
-        integer :: thisCol
-        integer, pointer :: Npack, tmType(:), thisP(:)
-        real(8), pointer :: sfup, sfdn
-        real(8), pointer :: volume(:), FullVolume(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_solver_select'
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Delcarations
+            integer :: thisCol
+            integer, pointer :: Npack, tmType(:), thisP(:)
+            real(8), pointer :: sfup, sfdn
+            real(8), pointer :: volume(:), FullVolume(:)
+            character(64) :: subroutine_name = 'tl_solver_select'
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Solver%SolverSelect .ne. ETM_AC) return
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+        !% Aliases:       
+            thiscol = ep_ALLtm
+            Npack => npack_elemP(thisCol)
+            thisP => elemP(1:Npack,thisCol)
 
-        thiscol = ep_ALLtm
-        Npack => npack_elemP(thisCol)
-        thisP => elemP(1:Npack,thisCol)
+            tmType     => elemI(:,ei_tmType)
+            volume     => elemR(:,er_Volume)
+            FullVolume => elemR(:,er_FullVolume)
 
-        tmType     => elemI(:,ei_tmType)
-        volume     => elemR(:,er_Volume)
-        FullVolume => elemR(:,er_FullVolume)
-
-        sfup => setting%Solver%SwitchFractionUp
-        sfdn => setting%Solver%SwitchFractionDn
-        !%-----------------------------------------------------------------------------
+            sfup => setting%Solver%SwitchFractionUp
+            sfdn => setting%Solver%SwitchFractionDn
+        !%-------------------------------------------------------------------
         !% Look for ETM elements that are above the cutoff for going to AC and set
         !% these to AC
         where ( ( (volume(thisP) / FullVolume(thisP) ) > sfup ) .and. (tmType(thisP) == ETM) )
@@ -1143,8 +1155,9 @@ contains
             tmType(thisP) = ETM
         endwhere
 
-        if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+            if (setting%Debug%File%timeloop) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_solver_select
 !%
 !%==========================================================================
@@ -1317,46 +1330,57 @@ contains
             thisDT => dt
         end if
 
-        ! print *, ' '
-        ! print *, 'in tl_get_max_cfl, Npack = ', Npack
+            ! print *, ' '
+            ! print *, 'in tl_get_max_cfl, Npack = ', Npack
 
-        ! print *, 'thisP ',thisP
-        ! print *, 'Velocity  ', velocity(thisP)
-        ! print *, 'WaveSpeed ', wavespeed(thisP)
-        ! !print *, 'Preiss C  ', PCelerity(thisP)
-        ! print *, ' '
-        ! print *, 'max values'
-        ! print *, maxval(velocity(thisP)), maxval(wavespeed(thisP)) !, maxval(PCelerity(thisP))
+            ! print *, 'thisP ',thisP
+            ! print *, 'Velocity  ', velocity(thisP)
+            ! print *, 'WaveSpeed ', wavespeed(thisP)
+            ! !print *, 'Preiss C  ', PCelerity(thisP)
+            ! print *, ' '
+            ! print *, 'max values'
+            ! print *, maxval(velocity(thisP)), maxval(wavespeed(thisP)) !, maxval(PCelerity(thisP))
 
-        ! write(*,"(A,10f12.5)") 'Vcfl ' , velocity(iet) * thisDT / length(iet)
-        ! write(*,"(A,10f12.5)") 'Hcfl ' , wavespeed(iet) * thisDT / length(iet)
-        ! write(*,"(A,10f12.5)") 'Ccfl ' , PCelerity(iet) * thisDT / length(iet)
-        ! print * ,' '
-        ! print *, 'thisP '
-        ! print *, thisP
-        ! write(*,"(A,10f12.5)") 'Vcfl ' , velocity(thisP) * thisDT / length(thisP)
-        ! write(*,"(A,10f12.5)") 'Hcfl ' , wavespeed(thisP) * thisDT / length(thisP)
-        ! print *, thisDT
-        ! print *, length(thisP)
-        ! print *, wavespeed(thisP)
-        !write(*,"(A,10f12.5)") 'Ccfl ' , PCelerity(thisP) * thisDT / length(thisP)
+            ! write(*,"(A,30f12.5)") 'Vcfl ' , velocity(iet) * thisDT / length(iet)
+            ! write(*,"(A,30f12.5)") 'Hcfl ' , wavespeed(iet) * thisDT / length(iet)
+            ! write(*,"(A,30f12.5)") 'Ccfl ' , PCelerity(iet) * thisDT / length(iet)
+            ! print * ,' '
+            ! print *, 'thisP '
+            ! print *, thisP
+            ! write(*,"(A,30f12.5)") 'Vcfl ' , velocity(thisP) * thisDT / length(thisP)
+            ! write(*,"(A,30f12.5)") 'Hcfl ' , wavespeed(thisP) * thisDT / length(thisP)
+            ! print *, 'thisDT = ',thisDT
+            ! print *, length(thisP)
+            ! print *, wavespeed(thisP)
+            ! write(*,"(A,30f12.5)") 'Ccfl ' , PCelerity(thisP) * thisDT / length(thisP)
 
+        !% --- set the outvalue
         if (Npack > 0) then 
-            outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                            maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
-            ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
+            if (setting%Solver%PreissmannSlot%useSlotTF) then
+                !% --- choose between maximum of the advective+wavespeed CFL or the 
+                !%     Preissmann Slot celerity
+                outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
+                                maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
+            else 
+                outvalue = maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP))
+            end if
+            !print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
         else
             outvalue = zeroR
         end if
-        ! print *, 'outvalue CFL in tl_get_max_cfl',outvalue
-        ! print *, ' '
 
-        ! print *, ' '
-        ! print *, 'in tl_get_max_cfl'
-        ! !print *, length(thisP)
-        ! !print *, abs(wavespeed(iet(1))) * thisDT / length(iet(1))
-        ! print *, outvalue
-        ! print *, ' '
+
+            ! print *, 'outvalue CFL in tl_get_max_cfl',outvalue
+            ! print *, ' '
+
+            ! print *, ' '
+            ! print *, 'in tl_get_max_cfl'
+            ! print *, length(thisP)
+            ! print *, abs(wavespeed(iet(1))) * thisDT / length(iet(1))
+            ! print *, outvalue
+            ! print *, ' '
+
+            !stop 298734
 
     end function tl_get_max_cfl    
 !%

@@ -1391,8 +1391,6 @@ contains
                     end select
 
                 case (API_OUTLET)
-                    print *, 'READING IN AN OUTLET LINK, WHICH HAS NOT BEEN TESTED'
-                    call util_crashpoint(55098723)
                     select case (attr)
                         case (api_linkf_type)
                             link_value = lOutlet
@@ -1699,13 +1697,32 @@ contains
                     end select
 
                 case (API_MOD_BASKET)
-                    print *, 'CODE ERROR: API_MOD_BASKET geometry not handled yet'
-                    call util_crashpoint(83789)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lMod_basket
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_S18'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T19'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
+                            !% thus, set that link%R column to nullvalueR
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_HORIZ_ELLIPSE)
@@ -1786,33 +1803,72 @@ contains
                     end select
 
                 case (API_GOTHIC)
-                    print *, 'CODE ERROR: API_GOTHIC geometry not handled yet'
-                    call util_crashpoint(33382)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lGothic
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% gothic geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_CATENARY)
-                    print *, 'CODE ERROR: API_CATENARY geometry not handled yet'
-                    call util_crashpoint(387833)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lCatenary
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% catenary geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_SEMIELLIPTICAL)
-                    print *, 'CODE ERROR: API_SEMIELLIPTICAL geometry not handled yet'
-                    call util_crashpoint(87574)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lSemi_elliptical
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% catenary geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_BASKETHANDLE)
@@ -1839,13 +1895,26 @@ contains
                     end select
 
                 case (API_SEMICIRCULAR)
-                    print *, 'CODE ERROR: API_SEMICIRCULAR geometry not handled yet'
-                    call util_crashpoint(199173)
                     select case (attr)
                         case (api_linkf_geometry)
+                            link_value = lSemi_circular
                         case (api_linkf_xsect_wMax)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
+                            thisposition = trim(subroutine_name)//'_U16'
+                            call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
+                            thisposition = trim(subroutine_name)//'_V17'
+                            call print_api_error(error, thisposition)
                         case default
+                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            if (isInt) then
+                                link_value = nullvalueI
+                            else
+                                link_value = nullvalueR
+                            end if
                     end select
 
                 case (API_IRREGULAR)
@@ -2350,7 +2419,8 @@ contains
 
         if (node%YN(node_idx, nYN_has_inflow)) then ! Upstream/Lateral BC
 
-            resolution = 0
+            !resolution = 0
+            resolution = api_nopattern
 
             if (node%YN(node_idx, nYN_has_extInflow)) then
 
@@ -2359,32 +2429,37 @@ contains
                 !write(*,*), p0
                 !write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
-                if (p0 == api_hourly_pattern) then
+                select case (p0)
+                case (api_hourly_pattern)
                     print *, 'CODE NEEDS TESTING: extInflow hourly patterns not tested'
                     call util_crashpoint(2240871)
                     resolution = api_hourly
-                else if (p0 == api_weekend_pattern) then
+                case (api_weekend_pattern) 
                     print *, 'CODE NEEDS TESTING: extInflow weekend patterns not tested'
                     call util_crashpoint(2240872)
                     resolution = api_weekend
-                else if (p0 == api_daily_pattern) then
+                case (api_daily_pattern)
                     print *, 'CODE NEEDS TESTING: extInflow daily patterns not tested'
                     call util_crashpoint(2240873)
                     resolution = api_daily
-                else if (p0 == api_monthly_pattern) then
+                case (api_monthly_pattern)
                     print *, 'CODE NEEDS TESTING: extInflow monthly patterns not tested'
                     call util_crashpoint(2240874)
                     !write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
                     baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
-                else
+                case (api_nopattern)
+                    !% --- no pattern invoked
+                case default
                     !write(*,*) '--- no external inflow timeseries pattern for node ',node_idx
-                    !write(*,*) '****** unexpected else in ',trim(subroutine_name), ' at 9873094'
-                    !write(*,*), '   p0 read is ',p0
-                    !write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
+                    write(*,*) 'CODE ERROR unexpected case in ',trim(subroutine_name)
+                    write(*,*), '  pattern resolution is ',p0
+                    write(*,*), '  allowed are ',api_hourly, api_weekend, api_daily, api_monthly, api_nopattern
+                    write(*,*), ' see define_api_keys.f90 for api_monthly, etc.'
+                    call util_crashpoint(552873)
                     !write(*,*), '   skipping error condition!'
                     !write(*,*) '******'  
-                end if
+                end select
             else
                 !write(*,*) '--- no external inflows to node ',node_idx
             end if
@@ -2426,8 +2501,8 @@ contains
                     resolution = max(api_monthly, resolution)
                 else
                     write(*,*) '***** unexpected else in ',trim(subroutine_name), 'at 3987044'
-                    write(*,*), '   p0 read is ',p0
-                    write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
+                    write(*,*), '   dwf resolution  read are ',p1, p2, p3, p4
+                    write(*,*), '   allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
                     write(*,*), '   skipping error condition!'
                     write(*,*) '******'
                     !stop 
@@ -2510,10 +2585,15 @@ contains
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
 
-        if (nres >= 0) then
+        ! print *, ' '
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'Pattern resolution ',nres
+        ! print *, ' '
+        !if (nres >= 0) then !% 20220920 this seems irrelevant
+
             !% --- get the next time for pattern resolution
             !%     Note that nres=0 returns nullvalueR
-            tnextp = util_datetime_get_next_time(tnow, nres)
+            tnextp = util_datetime_get_next_time(tnow, nres) 
 
             if (node%YN(nidx, nYN_has_extInflow)) then
                 !% --- for external inflows (file), get the timeseries index
@@ -2555,7 +2635,6 @@ contains
                         print *, ' '
                         
                         call util_crashpoint(2098734)
-                        !stop 2098734
                     end if
                 else
                     !% --- if no external file, use the end time
@@ -2569,12 +2648,12 @@ contains
             !%     the time associated with the pattern.
             !%     HACK -- NEED TO CHECK PATTERN OPERATION
             tnext = min(tnext, tnextp)
-        else
-            !% --- HACK - if pattern resolution < 0 then set output tnext to the end time.
-            !% SHOULD THIS BE A FAILURE POINT?
-            tnext = setting%Time%End
-            call util_crashpoint(2390483)
-        end if
+        ! else
+        !     !% --- HACK - if pattern resolution < 0 then set output tnext to the end time.
+        !     !% SHOULD THIS BE A FAILURE POINT?
+        !     tnext = setting%Time%End
+        !     call util_crashpoint(2390483)
+        ! end if
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

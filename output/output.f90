@@ -273,7 +273,7 @@ contains
                     isElemOut(ii) = .false.
                 end if
             case (JB)
-                !% --- no output on junction branches
+                !% --- no element output on junction branches (uses nodes)
                 !% HACK to output JB
                 if (isNodeOut(tnode)) then
                     isElemOut(ii) = .true.
@@ -481,6 +481,7 @@ contains
         if (setting%Output%DataOut%isVolumeOut)                  N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeConsOut)              N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeOverflowOut)          N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumePondedOut)             N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannNumberOut)        N_OutTypeElem =  N_OutTypeElem + 1
@@ -631,6 +632,14 @@ contains
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
         end if
+        !% --- volume ponded (present accumulation)
+        if (setting%Output%DataOut%isVolumePondedOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_VolumePonded
+            output_typenames_elemR(ii) = 'VolumePonded'
+            output_typeUnits_elemR(ii) = 'm^3'
+            output_typeProcessing_elemR(ii) = SumElements
+        end if
         !% --- WaveSpeed
         if (setting%Output%DataOut%isWaveSpeedOut) then
             ii = ii+1
@@ -744,6 +753,12 @@ contains
         !% --- there are 2 velocities at a face
         if (setting%Output%DataOut%isVelocityOut)       N_OutTypeFace =  N_OutTypeFace + 2
 
+        !% --- VolumeOverflow does not exist at a face
+        !if (setting%Output%DataOut%isVolumeOverflowOut) N_OutTypeFace =  N_OutTypeFace + 1
+
+        !% --- VolumePonded does not exist at a face
+        !if (setting%Output%DataOut%isVolumePondedOut)   N_OutTypeFace =  N_OutTypeFace + 1
+
         !% --- Volume does not exist at a face
         !if (setting%Output%DataOut%isVolumeOut)         N_OutTypeFace =  N_OutTypeFace + 1
 
@@ -789,6 +804,9 @@ contains
             output_typeProcessing_faceR(ii) = SingleValue
         end if
         !% --- Conservative Fluxes
+        !%     HACK -- because the output is based on SWMM nodes
+        !%     we CANNOT output the faces in between elements in
+        !%     a single link.
         if (setting%Output%DataOut%isFluxConsOut) then
             ii = ii+1
             output_types_faceR(ii) = fr_Flowrate_Conservative
@@ -1140,6 +1158,11 @@ contains
 
         Lasti = 0 !% counter of the last element or face that has been stored
         do ii = 1,num_images()
+
+            !% HACK -- this only handles faces that are defined as nodes
+            !%         Thus, we CANNOT output the faces in between elements
+            !%         in a single link, so we cannot output the true
+            !%         conservative flux!
 
             if (.not. setting%Output%FacesExist_byImage(ii)) cycle
 

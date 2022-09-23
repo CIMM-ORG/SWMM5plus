@@ -46,6 +46,7 @@ module preissmann_slot
         !% Declarations
             integer, intent(in) :: whichTM, colP_CC_PS, colP_JM_PS
             integer, pointer    :: thisPackCol, Npack
+            character(64)       :: subroutine_name = 'slot_toplevel'
         !%------------------------------------------------------------------
         !% Preliminaries
             !% --- exit if not using PS
@@ -53,6 +54,7 @@ module preissmann_slot
             !% --- compute Preissmann slot for conduits only if ETM solver is used
             if (.not. ((whichTM .eq. ETM) .or. (whichTM .eq. ALLtm))) return
         !%------------------------------------------------------------------
+
         !%    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
@@ -97,7 +99,7 @@ module preissmann_slot
         !% Aliases
             thisP        => elemP(1:Npack,thisColP_JM)
             PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
-            PondedVolume => elemSR(:,esr_JunctionMain_PondedVolume)
+            PondedVolume =>  elemR(:,er_VolumePonded)
             PondedHead   =>  elemR(:,er_Temp01)
             Head         =>  elemR(:,er_Head)
             SlotDepth    =>  elemR(:,er_SlotDepth)
@@ -133,12 +135,13 @@ module preissmann_slot
             Npack => npack_elemP(thisColP_JM)
             if (Npack < 1) return
         !%------------------------------------------------------------------
-        !% Aliases
+        !% Aliases:
+            thisP        => elemP(1:Npack,thisColP_JM)
             PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
-            PondedVolume => elemSR(:,esr_JunctionMain_PondedVolume)
-            PondedHead   =>  elemR(:,er_Temp01)
-            Head         =>  elemR(:,er_Head)
-            SlotDepth    =>  elemR(:,er_SlotDepth)
+            PondedVolume => elemR (:,er_VolumePonded)
+            PondedHead   => elemR (:,er_Temp01)
+            Head         => elemR (:,er_Head)
+            SlotDepth    => elemR (:,er_SlotDepth)
         !%------------------------------------------------------------------
         if (setting%SWMMinput%AllowPonding) then 
             PondedHead(thisP) = PondedVolume(thisP) / PondedArea(thisP)
@@ -255,11 +258,13 @@ module preissmann_slot
             if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases
-            thisP => elemP(1:Npack,thisColP_JM)
+            thisP  => elemP(1:Npack,thisColP_JM)
             volume => elemR(:,er_Volume)
             depth  => elemR(:,er_Depth)
             ell    => elemR(:,er_ell)
             ellMax => elemR(:,er_ell_max) 
+            SlotVolume => elemR(:,er_SlotVolume)
+            SlotDepth  => elemR(:,er_SlotDepth)
         !%------------------------------------------------------------------
 
         call slot_JM_head_PSadd (thisColP_JM)
@@ -267,7 +272,6 @@ module preissmann_slot
         volume(thisp) = volume(thisP) + SlotVolume(thisP)
         depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
         ell(thisP)    = ellMax(thisP)
-
 
     end subroutine slot_JM_adjustments
 !%
@@ -288,7 +292,7 @@ module preissmann_slot
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ell(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), ellMax(:)
             real(8), pointer :: overflow(:), grav, TargetPCelerity, Alpha
-            logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:)
+            logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:), isSurcharge(:), canSurcharge(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
             integer :: tB, ii, kk
         !%------------------------------------------------------------------
@@ -299,7 +303,7 @@ module preissmann_slot
             if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases
-            thisP        => elemP(1:Npack,thisColP_JM)
+            thisP         => elemP(1:Npack,thisColP_JM)
             area          => elemR(:,er_Area)
             depth         => elemR(:,er_Depth)
             head          => elemR(:,er_Head)
@@ -315,6 +319,7 @@ module preissmann_slot
             fUp           => elemI(:,ei_Mface_uL)
             fDn           => elemI(:,ei_Mface_dL)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            canSurcharge  => elemYN(:,eYN_canSurcharge)
             grav          => setting%Constant%gravity
         !% Slot Aliases
             PNumber    => elemR(:,er_Preissmann_Number)
@@ -324,6 +329,7 @@ module preissmann_slot
             SlotDepth  => elemR(:,er_SlotDepth)
             SlotArea   => elemR(:,er_SlotArea)
             fPNumber   => faceR(:,fr_Preissmann_Number)
+            isSurcharge=> elemYN(:,eYN_isSurcharged)
             isSlot     => elemYN(:,eYN_isPSsurcharged)
             isDnJB     => elemYN(:,eYN_isDownstreamJB)
             fSlot      => faceYN(:,fYN_isPSsurcharged)
@@ -338,9 +344,11 @@ module preissmann_slot
             ! handle the upstream branches
             do kk=1,max_branch_per_node,2
                 tB = tM + kk  !% JB branch ID
+                
                 if (BranchExists(tB)==1) then
                     !% initialize slot
                     isSlot(tB)     = .false.
+                    isSurcharge(tB)= .false.
                     SlotDepth(tB)  = zeroR
                     SlotArea(tB)   = zeroR
                     SlotWidth(tB)  = zeroR
@@ -352,18 +360,13 @@ module preissmann_slot
 
                     !% assuming a slot if the head is above the crown
                     !% or the upstream CC is in a slot
-                    if (head(tB) .gt. zcrown(tB)) then
+                    if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
                         isSlot(tB)     = .true.
                         fSlot(fUp(tB)) = .true.
+                        isSurcharge(tB)= .true.
                         PNumber(tB)    = fPNumber(fUp(tB))
                         PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-
-                !% ERROR? the JB depth has already been limited to the full depth
-                !% but the elem(:,er_Head) for JB should have the correct surcharged
-                !% value.
-
-                        SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)   
-
+                        SlotDepth(tB)  = max(head(tB) - zcrown(tB), zeroR)   
                         SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
                                             fullArea(tB)) / (TargetPCelerity ** twoR)
                         SlotVolume(tB) = SlotArea(tB) * length(tB)
@@ -373,6 +376,10 @@ module preissmann_slot
                         !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
                         depth(tB)  = depth(tB)   + SlotDepth(tB)
                         Overflow(tB) = zeroR  !% defined as zero (no oveflow from JB)
+                    else 
+                        !% --- excess head at JB in an open channel represents
+                        !%     head from ponding of JM, so do not adjust.
+                        !%     Volume and depth are retained at full levels
                     end if  
                 end if
             end do
@@ -382,27 +389,23 @@ module preissmann_slot
                 if (BranchExists(tB)==1) then
                     !% initialize slot
                     isSlot(tB)     = .false.
+                    isSurcharge(tB)= .false.
                     SlotDepth(tB)  = zeroR
                     SlotArea(tB)   = zeroR
                     SlotWidth(tB)  = zeroR
                     SlotVolume(tB) = zeroR
                     PCelerity(tB)  = zeroR
 
-                    !% HACK -- may want to define explicitly each JB
-                    !% as either closed/open  20220915 brh
-
                     !% assuming a slot if the head is above the crown
                     !% or the downstream CC is in a slot
-                    if (head(tB) .gt. zcrown(tB)) then
+                    if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
                         isSlot(tB)     = .true.
+                        isSurcharge(tB)= .true.
                         fSlot(fDn(tB)) = .true.
                         PNumber(tB)    = fPNumber(fDn(tB))
                         PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
 
-                !% ERROR? the JB depth has already been limited to the full depth
-                !% but the elem(:,er_Head) for JB should have the correct surcharged
-                !% value.
-                        SlotDepth(tB)  = max(depth(tB) - fulldepth(tB), zeroR)    
+                        SlotDepth(tB)  = max(head(tB) - zcrown(tB), zeroR)    
 
                         SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
                                             fullArea(tB)) / (TargetPCelerity ** twoR)
@@ -413,6 +416,10 @@ module preissmann_slot
                         !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
                         depth(tB)  = depth(tB)   + SlotDepth(tB)
                         Overflow(tB) = zeroR !% defined as zero (no overflow from JB)
+                    else 
+                        !% --- excess head at JB in an open channel represents
+                        !%     head from ponding of JM, so do not adjust level.
+                        !%     Volume and depth are retained at full levels
                     end if
                 end if
             end do
@@ -440,7 +447,7 @@ module preissmann_slot
             real(8), pointer    :: dSlotVol(:), dSlotArea(:), dSlotDepth(:), oldSlotVOl(:), volume(:) 
             real(8), pointer    :: velocity(:), fPNumber(:)
             real(8), pointer    :: TargetPCelerity, grav, Dt, Alpha, cfl
-            logical, pointer    :: isSlot(:), isfSlot(:)
+            logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:)
             character(64) :: subroutine_name = "slot_CC_ETM"
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -473,6 +480,7 @@ module preissmann_slot
             velocity   => elemR(:,er_velocity)
             temp       => elemR(:,er_Temp01)
             !% --- pointer to elemYN column
+            isSurcharge=> elemYN(:,eYN_isSurcharged)
             isSlot     => elemYN(:,eYN_isPSsurcharged)
             isfSlot    => faceYN(:,fYN_isPSsurcharged)
             !% --- pointers to elemI columns
@@ -481,9 +489,9 @@ module preissmann_slot
             !% --- pointer to faceR column
             fPNumber   => faceR(:,fr_Preissmann_Number)
             !% --- pointer to necessary settings struct
-            SlotMethod          => setting%PreissmannSlot%Method
-            TargetPCelerity     => setting%PreissmannSlot%TargetCelerity
-            Alpha               => setting%PreissmannSlot%Alpha
+            SlotMethod          => setting%Solver%PreissmannSlot%Method
+            TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+            Alpha               => setting%Solver%PreissmannSlot%Alpha
             cfl                 => setting%VariableDT%CFL_target
             grav                => setting%Constant%gravity
             Dt                  => setting%Time%Hydraulics%Dt
@@ -493,6 +501,7 @@ module preissmann_slot
         SlotArea(thisP)     = zeroR
         PCelerity(thisP)    = zeroR
         isSlot(thisP)       = .false.
+        isSurcharge(thisP)  = .false.
         isfSlot(fUp(thisP)) = .false.
         isfSlot(fDn(thisP)) = .false.
 
@@ -500,6 +509,9 @@ module preissmann_slot
         select case (SlotMethod)
             !% --- for a static slot, the preissmann number will always be one.
             case (StaticSlot)
+                ! print *, ' '
+                ! print *, 'in static slot'
+                ! print *, ' '
                 !% --- initialize static slot
                 PNumber(thisP)    = oneR  !% static slot requirement
                 SlotWidth(thisP)  = zeroR
@@ -511,14 +523,25 @@ module preissmann_slot
                     SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                     isfSlot(fUp(thisP)) = .true.
                     isfSlot(fDn(thisP)) = .true.
-                    isSlot(thisP)     = .true.
+                    isSlot(thisP)       = .true.
+                    isSurcharge(thisP)  = .true.
                     PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
                     SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
                     SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 end where
+
+                ! print *, ' '
+                ! print *, 'volume ',SlotVolume(51)
+                ! print *, 'Length ',length(51)
+                ! print *, 'Area   ',SlotArea(51)
+                ! print *, 'Width  ',SlotWidth(51)
+                ! print *, 'Depth  ',SlotDepth(51)
+                ! print *, 'V      ',SlotDepth(51)* SlotWidth(51) * length(51)
+                ! print *, ' '
             
             !% --- for dynamic slot, preissmann number is adjusted
             case (DynamicSlot)
+
                 !% --- initialize dynamic slot
                 oldSlotVol(thisP) = SlotVolume(thisP)
                 dSlotVol          = zeroR
@@ -534,6 +557,7 @@ module preissmann_slot
                     isfSlot(fUp(thisP)) = .true.
                     isfSlot(fDn(thisP)) = .true.
                     isSlot(thisP)       = .true.
+                    isSurcharge(thisP)  = .true.
                     !% smooth out preissmann number
                     ! PNumber = max(onehalfR * (fPNumber(fUP(thisP)) + fPNumber(fDn(thisP))), oneR)
                     !% find the preissmann celerity
@@ -599,7 +623,7 @@ module preissmann_slot
             real(8), pointer    :: SlotArea(:), SlotWidth(:), maxSlotDepth(:)
             real(8), pointer    :: VolumeExtra(:), VolumePonded(:), VolumeOverflow(:)
             real(8), pointer    :: TargetPCelerity, cfl, grav, Alpha, Dt
-            logical, pointer    :: isSlot(:)
+            logical, pointer    :: isSlot(:), isSurcharge(:)
             integer :: ii
 
             character(64) :: subroutine_name = 'slot_JM_ETM'
@@ -623,11 +647,12 @@ module preissmann_slot
             SlotWidth  => elemR(:,er_SlotWidth)
             volume     => elemR(:,er_Volume)
             maxSlotDepth   => elemSR(:,esr_JunctionMain_SurchargeExtraDepth)
-            VolumePonded   => elemSR(:,esr_JunctionMain_PondedVolume)
+            VolumePonded   => elemR(:,er_VolumePonded)
             VolumeExtra    => elemR(:,er_Temp01)
             VolumeOverflow => elemR(:,er_VolumeOverFlow)
             !% --- pointer to elemYN column
-            isSlot     => elemYN(:,eYN_isPSsurcharged)
+            isSlot         => elemYN(:,eYN_isPSsurcharged)
+            isSurcharge    => elemYN(:,eYN_isSurcharged)
             !% --- pointer to necessary settings struct
             SlotMethod          => setting%Solver%PreissmannSlot%Method
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
@@ -644,6 +669,10 @@ module preissmann_slot
         !% --- HACK JM are always static slot. should test using JB average PNumber
         !%     for a dynamic slot
 
+        ! print *, ' '
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, ' '
+
                 !% initialize static slot
                 PNumber(thisP)    = oneR  !% required for static slot
                 SlotVolume(thisP) = zeroR
@@ -653,6 +682,7 @@ module preissmann_slot
                 SlotWidth(thisP)  = zeroR
                 VolumeExtra(thisP)= zeroR
                 isSlot(thisP)     = .false.
+                isSurcharge(thisP)= .false.
                 !% --- find the slot volume/ area/ and the faces that are surcharged
 
                 !% --- initialize extra volume to zero so that non-surcharged JM will
@@ -667,13 +697,13 @@ module preissmann_slot
                 !% --- compute baseline slot properties 
                 !%     allows SlotDepth greater than maximum allowed
                 where (volume(thisP) >= fullVolume(thisP))
-                    isSlot(thisP)     = .true.
+                    isSlot(thisP)      = .true.
+                    isSurcharge(thisP) = .true.
                     SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
                     SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                     PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-                    SlotDepth(thisP)  = SlotArea(thisP)  * (PCelerity(thisP) ** twoR)  &
-                                         / (grav * (fullArea(thisP)))
-                    SlotWidth(thisP)  = SlotArea(thisP) / SlotDepth(thisP)
+                    SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                    SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                     !% --- difference between SlotDepth and maximum is the "extra" volume
                     !%     If negative, this is volume that could be filled by ponding
                     !%     If positive, this is volume that is added to ponding or lost 
@@ -681,6 +711,20 @@ module preissmann_slot
                     VolumeExtra(thisP) =  (SlotDepth(thisP) - maxSlotDepth(thisP)) &
                                          * SlotWidth(thisP) * length(thisP)
                 end where
+
+                ! print *, 'thisP       ',thisP
+                ! print *, 'isSlot      ',isSlot(thisP)
+                ! print *, 'SlotVol     ',SlotVolume(thisP)
+                ! print *, 'SlotArea    ',SlotArea(thisP)
+                ! print *, 'PCelerity   ',PCelerity(thisP)
+                ! print *, 'SlotDepth   ',SlotDepth(thisP)
+                ! print *, 'SlotWidth   ',SlotWidth(thisP)
+                ! print *, 'VolumeExtra ',VolumeExtra(thisP)
+                ! print *, 'fullArea    ',fullArea(thisP)
+
+                ! stop 4987032
+                ! print *, 'in slot upper'
+                ! print *, SlotDepth(21), maxSlotDepth(21), VolumeExtra(21)
 
                 !% --- if ponding is not allowed, there is no possibility of ponding inflow
                 !%     so VolumeExtra must be positive or zero
@@ -705,6 +749,9 @@ module preissmann_slot
                     !%     so they are not affected. A negative volume extra is
                     !%     adding water to the slot.
                     SlotVolume(thisP) = SlotVolume(thisP) - VolumeExtra(thisP)
+                    !% --- prevent truncation error values from causing a negative
+                    !%     slot volume.
+                    SlotVolume(thisP) = max(SlotVolume(thisP),zeroR)
                     SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                     PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
                     SlotDepth(thisP)  = SlotArea(thisP)  * (PCelerity(thisP) ** twoR)  &
@@ -722,7 +769,8 @@ module preissmann_slot
                     VolumeOverflow(thisP) = VolumeExtra(thisP)
                 end if
 
-            
+                ! print *, 'in slot'
+                ! print *, SlotVolume(21), SlotDepth(21), VolumeExtra(21)
             
         !     !% for dynamic slot, preissmann number is adjusted
         !     case (DynamicSlot)

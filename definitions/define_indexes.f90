@@ -48,6 +48,7 @@ module define_indexes
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         !enumerator :: li_num_phantom_links   ! Number of phantom links associated 
         enumerator :: li_weir_EndContractions ! (0,1) to indicate contraction
+        enumerator :: li_RoadSurface           ! roadsurface type for roadway weir
         enumerator :: li_curve_id            ! curve id if the link is associated with any curve
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
@@ -65,7 +66,8 @@ module define_indexes
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
-        enumerator :: lr_BottomDepth   
+        enumerator :: lr_BottomDepth 
+        enumerator :: lr_BottomRadius  
         enumerator :: lr_BreadthScale
         enumerator :: lr_TopWidth
         enumerator :: lr_ElementLength
@@ -87,6 +89,7 @@ module define_indexes
         enumerator :: lr_SideSlope             ! for weirs only
         enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_RoadWidth             ! road width for roadway weir
         enumerator :: lr_initSetting           ! initial pump speed setting 
         enumerator :: lr_yOn                   ! startup depth for pumps   
         enumerator :: lr_yOff                  ! shutoff depth for pumps   
@@ -322,7 +325,7 @@ module define_indexes
         enumerator :: er_Area_N0                    !% cross-sectional flow area (time N)
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
-        enumerator :: er_Beta                       !% bottom slope / roughness, so that Q/beta = section factor
+        !enumerator :: er_Beta                       !% bottom slope / roughness, so that Q/beta = section factor
         enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
@@ -405,6 +408,7 @@ module define_indexes
         enumerator :: er_VolumeLastAC               !% volume at start of last AC step
         enumerator :: er_VolumeOverFlow             !% volume lost for overflow in this time step.  20220124brh
         enumerator :: er_VolumeOverFlowTotal        !% total volume lost to overflow       20220124brh 
+        enumerator :: er_VolumePonded               !% total volume in ponding
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_WaveSpeed                  !% wave speed in element
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
@@ -423,7 +427,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
-        enumerator :: eYN_isACsurcharged                  !% TRUE is a surcharged conduit, FALSE if non-surcharged 
+        enumerator :: eYN_isSurcharged                 !% TRUE is a surcharged closed conduit, FALSE if non-surcharged 
         enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
@@ -435,6 +439,7 @@ module define_indexes
         enumerator :: eYN_isPSsurcharged                        !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
+        enumerator :: eYN_Temp01                        !% temporary logical space
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemYN = eYN_lastplusone-1
@@ -450,24 +455,24 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: ep_AC = 1                     !% all AC elements
-        enumerator :: ep_ALLtm                      !% all ETM, AC elements
+        enumerator :: ep_ALLtm                      !% all ETM, AC elements 
         enumerator :: ep_CC_AC                      !% all CC elements that are AC
-        enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
+        !enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
         enumerator :: ep_CC_ALLtm                   !% all CC elements that are ETM or AC
-        enumerator :: ep_CC_ALLtm_ACsurcharged      !% all CC elements that are AC and surcharged
+        !enumerator :: ep_CC_ALLtm_ACsurcharged      !% all CC elements that are AC and surcharged
         enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
-        enumerator :: ep_CC_ETM_PSsurcharged        !% CC elements that are ETM and surcharged
+        !enumerator :: ep_CC_ETM_PSsurcharged        !% CC elements that are ETM and surcharged
         enumerator :: ep_CC_H_ETM                   !% all CC elements that are ETM for H
         enumerator :: ep_CC_Q_AC                    !% all CC elements that are AC for Q
         enumerator :: ep_CC_Q_ETM                   !% all CC elements that are ETM for Q
-        enumerator :: ep_CCJB_ACsurcharged          !% all CC and JB elements that are AC
-        enumerator :: ep_CCJB_ALLtm                 !% all CC and JB elements that ar any TM
-        enumerator :: ep_CCJB_AC                    !% all CC and JB elements that are AC
-        enumerator :: ep_CCJB_ALLtm_ACsurcharged      !% all CC and JB elements that are AC and surcharged
+        !enumerator :: ep_CCJB_ACsurcharged          !% all CC and JB elements that are AC
+        !enumerator :: ep_CCJB_ALLtm                 !% all CC and JB elements that ar any TM
+        !enumerator :: ep_CCJB_AC                    !% all CC and JB elements that are AC
+        !enumerator :: ep_CCJB_ALLtm_ACsurcharged      !% all CC and JB elements that are AC and surcharged
         enumerator :: ep_CCJB_eETM_i_fAC            !% Any CC or JB element that is ETM and has an AC face.
-        enumerator :: ep_CCJB_ETM                   !% CC and JB elements that are ETM
-        enumerator :: ep_CCJB_ETM_PSsurcharged        !% CC and JB elements that are ETM and surcharged
-        enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
+        !enumerator :: ep_CCJB_ETM                   !% CC and JB elements that are ETM
+        !enumerator :: ep_CCJB_ETM_PSsurcharged        !% CC and JB elements that are ETM and surcharged
+        !enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
         enumerator :: ep_CCJM_H_ETM                 !% CC and JM elements that are ETM for H
         enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
         enumerator :: ep_Diag                       !% diagnostic elements (static)
@@ -476,35 +481,35 @@ module define_indexes
         enumerator :: ep_JM_AC                      !% junction mains using AC method
         enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
         enumerator :: ep_JM_ETM                     !% junction mains using ETM method
-        enumerator :: ep_JB_AC                      !% junction branches using AC method
-        enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
-        enumerator :: ep_JB_ETM                     !% junction branches using ETM method
-        enumerator :: ep_AC_ACnonSurcharged         !% all surcharged with AC
-        enumerator :: ep_ALLtm_NonSurcharged        !% all time march nonsurcharged (neither PS nor AC surcharge)
-        enumerator :: ep_ETM_PSnonSurcharged        !% all surcharged with ETM
+        !enumerator :: ep_JB_AC                      !% junction branches using AC method
+        !enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
+        !enumerator :: ep_JB_ETM                     !% junction branches using ETM method
+        !enumerator :: ep_AC_ACnonSurcharged         !% all surcharged with AC
+        !enumerator :: ep_ALLtm_NonSurcharged        !% all time march nonsurcharged (neither PS nor AC surcharge)
+        !enumerator :: ep_ETM_PSnonSurcharged        !% all surcharged with ETM
         !enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
         !enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
-        enumerator :: ep_SmallDepth_CC_ALLtm
+        !enumerator :: ep_SmallDepth_CC_ALLtm
         enumerator :: ep_SmallDepth_CC_ETM
-        enumerator :: ep_SmallDepth_CC_AC
-        enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
+        !enumerator :: ep_SmallDepth_CC_AC
+        !enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
         enumerator :: ep_SmallDepth_JM_ETM    !% 20220122brh
-        enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
-        enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
+        !enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
+        !enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
         enumerator :: ep_ZeroDepth_CC_ETM
-        enumerator :: ep_ZeroDepth_CC_AC
-        enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
+        !enumerator :: ep_ZeroDepth_CC_AC
+        !enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
         enumerator :: ep_ZeroDepth_JM_ETM
-        enumerator :: ep_ZeroDepth_JM_AC
-        enumerator :: ep_ACsurcharged              !% all surcharged with AC
-        enumerator :: ep_ALLtmSurcharged           !% all time march surcharged
-        enumerator :: ep_PSsurcharged             !% all surcharged with ETM
-        enumerator :: ep_CCJM_H_ACsurcharged       !% all CCJM surcharged for H and AC solution
-        enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
-        enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
+        !enumerator :: ep_ZeroDepth_JM_AC
+        !enumerator :: ep_ACsurcharged              !% all surcharged with AC
+        !enumerator :: ep_ALLtmSurcharged           !% all time march surcharged
+        !enumerator :: ep_PSsurcharged             !% all surcharged with ETM
+        !enumerator :: ep_CCJM_H_ACsurcharged       !% all CCJM surcharged for H and AC solution
+        !enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
+        !enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
         enumerator :: ep_JB_Downstream            !% all the downstream JB elements 
-        enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
+        enumerator :: ep_CC_DownstreamJBadjacent    !% all CC element downstream of a JB 
         enumerator :: ep_CC_Open_Elements           !% all CC elements that are open channel
         enumerator :: ep_CC_Closed_Elements         !% all closed CC elements 
         !enumerator :: ep_JM_Closed_Elements         !% all closed JM elements
@@ -535,28 +540,32 @@ module define_indexes
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
     !% and elemPGac(:,:) arrays
     !% These are the packed arrays of geometry
+    !% Note the same columns are used in the three different arrays
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CC_rectangular = 1          !% CC rectangular channels that are not surcharged
-        enumerator :: epg_CC_rectangular_closed       !% CC rectangular conduits that are not surcharged
-        enumerator :: epg_CC_rectangular_triangular   !% CC rectangular_triangular that are not surcharged
-        enumerator :: epg_CC_trapezoidal              !% CC trapezoidal channels that are not surcharged
-        enumerator :: epg_CC_triangular               !% CC triangular channels that are not surcharged
-        enumerator :: epg_CC_irregular                !% CC irregular channels that are not surcharged
-        enumerator :: epg_CC_circular                 !% CC circular conduits that are not surcharged
-        enumerator :: epg_CC_parabolic                !% CC parabolic channels that are not surcharged
-        enumerator :: epg_CC_basket_handle            !% CC basket handle conduits that are not surcharged
-        enumerator :: epg_CC_horse_shoe               !% CC horse shoe conduits that are not surcharged
-        enumerator :: epg_CC_filled_circular          !% CC filled circular conduits that are not surcharged
-        enumerator :: epg_CC_egg_shaped               !% CC egg shaped conduits that are not surcharged
-        enumerator :: epg_JM_functionalStorage        !% JM functional geometry relationship nonsurcharges
-        enumerator :: epg_JM_tabularStorage           !% JM tabular geometry relationship nonsurcharges
+        !% --- open channels
+        enumerator :: epg_CC_rectangular = 1          !% CC rectangular channels 
+        enumerator :: epg_CC_trapezoidal              !% CC trapezoidal channels 
+        enumerator :: epg_CC_triangular               !% CC triangular channels 
+        enumerator :: epg_CC_parabolic                !% CC parabolic channels 
+        enumerator :: epg_CC_irregular                !% CC irregular channels 
+        !% --- closed conduits
+        enumerator :: epg_CC_rectangular_closed       !% CC rectangular conduits
+        enumerator :: epg_CC_rectangular_triangular   !% CC rectangular-triangular conduit
+        enumerator :: epg_CC_circular                 !% CC circular conduits 
+        enumerator :: epg_CC_semi_circular            !% CC semi-circular conduits
+        enumerator :: epg_CC_filled_circular          !% CC filled circular conduits
+        enumerator :: epg_CC_basket_handle            !% CC basket-handle conduits
+        enumerator :: epg_CC_catenary                 !% CC catenary conduits 
+        enumerator :: epg_CC_egg_shaped               !% CC egg shaped conduits 
+        enumerator :: epg_CC_gothic                   !% CC gothic conduits
+        enumerator :: epg_CC_horse_shoe               !% CC horse shoe conduits 
+        enumerator :: epg_CC_mod_basket               !% CC modified basked conduits
+        enumerator :: epg_CC_semi_elliptical          !% CC semi-elliptical conduits
+        enumerator :: epg_JM_functionalStorage        !% JM functional geometry relationship 
+        enumerator :: epg_JM_tabularStorage           !% JM tabular geometry relationship 
         enumerator :: epg_JM_impliedStorage           !% JM with artificial storage
-        enumerator :: epg_JB_rectangular                            !% all rectangular junction branches
-        enumerator :: epg_JB_trapezoidal                            !% all trapezoidal junction branches
-        enumerator :: epg_JB_triangular                             !% all triangular junction branches
-        enumerator :: epg_JB_circular                               !% all circular junction branches
         enumerator :: epg_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
@@ -593,6 +602,7 @@ module define_indexes
         enumerator :: esi_Weir_FlowDirection            !% weir flow direction (-1, +1)
         enumerator :: esi_Weir_SpecificType             !% KEY specific weir type
         enumerator :: esi_Weir_GeometryType             !% KEY specific weir geometry type
+        enumerator :: esi_Weir_RoadSurface              !% road surface type for roadway weir
         enumerator :: esi_Weir_lastplusone !% must be last enum item
     end enum
 
@@ -662,7 +672,7 @@ module define_indexes
     !% Note that esr_JunctionMain, esr_JunctionBranch and esr_Storage share the same column sets.
     enum, bind(c)
         enumerator ::  esr_JunctionMain_PondedArea = 1
-        enumerator ::  esr_JunctionMain_PondedVolume
+        !enumerator ::  esr_JunctionMain_PondedVolume
         enumerator ::  esr_JunctionMain_SurchargeExtraDepth
         enumerator ::  esr_JunctionBranch_Kfactor
         enumerator ::  esr_Storage_Constant
@@ -687,6 +697,7 @@ module define_indexes
         enumerator ::  esr_Weir_TrapezoidalLeftSlope    !% trapezoidal weir left slope
         enumerator ::  esr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  esr_Weir_TriangularSideSlope     !% triangular weir side slope
+        enumerator ::  esr_Wier_RoadWidth               !% road width for roadway weir
         enumerator ::  esr_Weir_Zcrown                  !% weir crown elevation
         enumerator ::  esr_Weir_Zcrest                  !% weir crest elevation
         enumerator ::  esr_Weir_lastplusone !% must be last enum item
@@ -847,7 +858,20 @@ module define_indexes
          enumerator ::  esgr_Basket_Handle_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Basket_Handle =  esgr_Basket_Handle_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Basket_Handle = esgr_Basket_Handle_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for mod_basket conduit
+    enum, bind(c)
+         enumerator ::  esgr_Mod_Basket_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Mod_Basket_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Mod_Basket_Ytop             !% height of top circular arc
+         enumerator ::  esgr_Mod_Basket_Rtop             !% radius of top circular arc
+         enumerator ::  esgr_Mod_Basket_Atop             !% area of top circular arc
+         enumerator ::  esgr_Mod_Basket_ThetaTop         !% angle of top circular arc
+         enumerator ::  esgr_Mod_Basket_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Mod_Basket = esgr_Mod_Basket_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for Egg_Shaped_conduit
     enum, bind(c)
@@ -858,7 +882,7 @@ module define_indexes
          enumerator ::  esgr_Egg_Shaped_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Egg_Shaped=  esgr_Egg_Shaped_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Egg_Shaped = esgr_Egg_Shaped_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for Horse Shoe shaped conduits
     enum, bind(c)
@@ -869,7 +893,55 @@ module define_indexes
          enumerator ::  esgr_Horse_Shoe_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Horse_Shoe=  esgr_Horse_Shoe_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Horse_Shoe = esgr_Horse_Shoe_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Catenary shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Catenary_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Catenary_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Catenary_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Catenary_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Catenary_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Catenary_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Catenary = esgr_Catenary_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Gothic shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Gothic_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Gothic_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Gothic_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Gothic_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Gothic_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Gothic_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Gothic = esgr_Gothic_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Semi-Circular shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Semi_Circular_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Semi_Circular_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Semi_Circular_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Semi_Circular = esgr_Semi_Circular_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Semi-Circular shaped conduits
+    enum, bind(c)
+         enumerator ::  esgr_Semi_Elliptical_BreadthMax = 1   !% breadth max for basket handle geometry
+         enumerator ::  esgr_Semi_Elliptical_YatMaxBreadth    !% depth at maximum breadth
+         enumerator ::  esgr_Semi_Elliptical_AoverAfull       !% Y/Yfull for basket handle geometry
+         enumerator ::  esgr_Semi_Elliptical_YoverYfull       !% A/Afull for basket handle geometry
+         enumerator ::  esgr_Semi_Elliptical_SoverSfull       !% S/Sfull for basket handle geometry
+         enumerator ::  esgr_Semi_Elliptical_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Semi_Elliptical = esgr_Semi_Elliptical_lastplusone-1
 
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
@@ -882,11 +954,16 @@ module define_indexes
                             Ncol_elemSGR_Circular,      &
                             Ncol_elemSGR_Trapezoidal,   &
                             Ncol_elemSGR_Rectangular_Triangular, &
+                            Ncol_elemSGR_Filled_Circular,        &
                             Ncol_elemSGR_Parabolic,     &
                             Ncol_elemSGR_Basket_Handle, &
                             Ncol_elemSGR_Egg_Shaped,    &
                             Ncol_elemSGR_Horse_Shoe,    &
-                            Ncol_elemSGR_Filled_Circular)
+                            Ncol_elemSGR_Catenary,      &
+                            Ncol_elemSGR_Gothic,        &
+                            Ncol_elemSGR_Semi_Circular, &
+                            Ncol_elemSGR_Mod_Basket,    &
+                            Ncol_elemSGR_Semi_Elliptical)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or

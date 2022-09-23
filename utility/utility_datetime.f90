@@ -1,10 +1,11 @@
 module utility_datetime
 
     use define_settings, only: setting
-    use define_api_keys, only: api_daily, &
-                               api_hourly, &
-                               api_weekend, &
-                               api_monthly
+    use define_api_keys
+    ! , only: api_daily, &
+    !                            api_hourly, &
+    !                            api_weekend, &
+    !                            api_monthly
     use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR, &
         sixtyR, twentyfourR
     use utility_crash, only: util_crashpoint
@@ -45,24 +46,27 @@ module utility_datetime
         epochTime = util_datetime_secs_to_epoch(secsTime)
         if (resolution_type == api_daily) then
             nextSecsTime = util_datetime_get_next_day(epochTime)
+            nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
         else if (resolution_type == api_hourly) then
             nextSecsTime = util_datetime_get_next_hour(epochTime)
+            nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
         else if (resolution_type == api_monthly) then
             nextSecsTime = util_datetime_get_next_month(epochTime)
+            nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
         else if (resolution_type == api_weekend) then
             nextSecsTime = util_datetime_get_next_weekendday_hour(epochTime)
-        else if (resolution_type == 0) then
+            nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
+        else if (resolution_type == api_nopattern) then
             nextSecsTime = nullvalueR
             !print *, 'in util_datetime', nextSecsTime
         else
             nextSecsTime = nullvalueR
-            print *, "Resolution type not supported, use..."
-            print *, "...(1) monthly, (2) daily, (3) hourly, (4) weekend"
+            print *, 'USER CONFIGURATION ERROR'
+            print *, 'resolution type index is ',resolution_type
+            print *, 'which is not supported, use...'
+            print *, '...(1) monthly, (2) weekend, (3) daily, (4) hourly, (-1) nopattern'
+            print *, api_monthly, api_weekend, api_daily, api_hourly, api_nopattern
             call util_crashpoint(329873)
-        end if
-
-        if ((resolution_type .gt. 0) .and. (resolution_type .le. 4)) then
-            nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
         end if
 
         if (setting%Debug%File%utility_datetime) &

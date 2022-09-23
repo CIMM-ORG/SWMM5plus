@@ -185,7 +185,7 @@ module define_globals
     integer, allocatable, target :: N_unique_face(:)
     !% output elements on each image
     integer, allocatable, target :: N_OutElem(:)[:]
-    !% output nodes on each image
+    !% output faces on each image
     integer, allocatable, target :: N_OutFace(:)[:]
     !% number of control action and monitoring points in system (identical on each image)
     integer,  target :: N_ActionPoint

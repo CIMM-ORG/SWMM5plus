@@ -99,7 +99,7 @@ module jump
         Nfaces => N_face(image)
         !%-----------------------------------------------------------------------------
         Fr           => elemR(:,er_FroudeNumber)
-        isSurcharged => elemYN(:,eYN_isACsurcharged)
+        isSurcharged => elemYN(:,eYN_isSurcharged)
         !%-----------------------------------------------------------------------------
         isInterior   => faceYN(1:Nfaces,fYN_isInteriorFace)
         eup          => faceI(1:Nfaces,fi_Melem_uL)

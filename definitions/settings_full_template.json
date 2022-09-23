@@ -92,7 +92,8 @@
     },
     "Junction" : {
         "FunStorageN" : 10,
-        "StorageSurchargeExtraDepth" : 0.0
+        "kFactor"     : 0.0,
+        "InfiniteExtraDepthValue"    : 1000.0
     },
     "Limiter" : {
         "NormalDepthInfinite" : 1000.0,
@@ -148,6 +149,7 @@
             "isVolumeOut"             : true,
             "isVolumeConsOut"         : false,
             "isVolumeOverflowOut"     : false,
+            "isVolumePondedOut"       : false,
             "isWaveSpeedOut"          : false,
             "isPreissmannCelerityOut" : false,
             "isPreissmannNumberOut"   : false

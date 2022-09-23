@@ -141,6 +141,9 @@ contains
             !% continue without profiler    
         end if
 
+        !% --- set constraints on the setting% structure
+        call util_setting_constraints ()
+
         !% --- initialize the coarrays that depend on number of images
         !%     and not on number of links/nodes, elements or faces.
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
@@ -409,9 +412,9 @@ contains
 
         ! print *, setting%Output%Report%useHD5F
 
-        !print *, setting%Output%DataOut%isSlotDepthOut
-        !print *, setting%Solver%PreissmannSlot%Method, StaticSlot, DynamicSlot
-        !stop 4409872
+        ! print *, setting%Output%DataOut%isSlotDepthOut
+        ! print *, setting%Solver%PreissmannSlot%Method, StaticSlot, DynamicSlot
+        ! stop 4409872
 
         !%------------------------------------------------------------------- 
         !% Closing
@@ -579,9 +582,10 @@ contains
         !%   Keeping the same order is important to be able to locate node/link data
         !%   by label and not by index, reusing EPA-SWMM functionalities.
         !%-----------------------------------------------------------------------------
-        !% Declarations
-            integer       :: ii, total_n_links
-            character(64) :: subroutine_name = 'init_linknode_arrays'
+        !% Declarations   
+            integer          :: ii, total_n_links
+            integer, pointer :: linkUp, linkDn
+            character(64)    :: subroutine_name = 'init_linknode_arrays'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
             !if (crashYN) return
@@ -595,15 +599,13 @@ contains
                 !return
             end if
         !%-----------------------------------------------------------------------------
-        !% Allocate storage for link & node tables
+        !% --- Allocate storage for link & node tables
         call util_allocate_linknode()
 
-        !% Set default for all link and node keys
+        !% --- Set default for all link and node keys
         call util_key_default_linknode()
 
-        !% set defaults for all KEY types in link%I
-
-        !link%I(:,li_num_phantom_links) = 0
+        !% --- initialize numbre of links for each node to zero
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
@@ -651,10 +653,16 @@ contains
             !% --- the ''parent'' link is the input EPA-SWMM link, which may be broken up by partitioning
             link%I(ii,li_parent_link) = ii
 
-            !% --- set link ID for the nodes upstream and downstream of thisLink (ii)
+            !% --- increment the connection counter for the node downstream
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
+            !% --- set the maps for the downstream node to upstream link (ni_Mlink_u#)
+            !%     NOTE: this makes use of the ordering of the ni_Mlink_u# in define_indexes
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
+
+            !% --- increment the connection counter for the node upstream
             node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
+            !% --- set the maps for the upstream node to the downstream link (ni_Mlink_d#)
+            !%     NOTE: this makes use of the ordering of the ni_Mlink_d# in define_indexes
             node%I(link%I(ii,li_Mnode_u), ni_idx_base2 + node%I(link%I(ii,li_Mnode_u), ni_N_link_d)) = ii
 
             !% --- set the approach used for computing the initial depth
@@ -678,6 +686,8 @@ contains
                 ! print *, 'link_FullDepth          ', link%R(ii,lr_FullDepth)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
                 ! print *, 'link_BottomDepth        ', link%R(ii,lr_BottomDepth)
+            link%R(ii,lr_BottomRadius)        = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
+                ! print *, 'lr_BottomRadius        ', link%R(ii,lr_BottomRadius)
             link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
                 ! print *, 'link_InletOffset        ', link%R(ii,lr_InletOffset)
             link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
@@ -716,6 +726,7 @@ contains
     
             !% --- special element attributes
             link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_RoadSurface)         = interface_get_linkf_attribute(ii, api_linkf_weir_road_surface,    .true.)
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -723,6 +734,8 @@ contains
             link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
             link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
             link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
+            link%R(ii,lr_RoadWidth)           = interface_get_linkf_attribute(ii, api_linkf_weir_road_width,      .false.)
+
             if (interface_get_linkf_attribute(ii, api_linkf_hasFlapGate,.true.) == 1) then
                 link%YN(ii,lYN_hasFlapGate)   = .true.
             else
@@ -743,6 +756,26 @@ contains
                 link%I(ii,li_link_type) = lChannel
             end if
 
+            if (link%I(ii,li_link_type) == lWeir) then
+                !% --- set road surface types
+                if (link%I(ii,li_RoadSurface) == API_NOSURFACE) then
+                    link%I(ii,li_RoadSurface) = NoRoadSurface
+                else if (link%I(ii,li_RoadSurface) == API_PAVED) then
+                    link%I(ii,li_RoadSurface) = Paved
+                else if (link%I(ii,li_RoadSurface) == API_GRAVEL) then
+                    link%I(ii,li_RoadSurface) = Gravel
+                else
+                    if (this_image() == 1) then
+                        write(*,*) 'FATAL ERROR IN INPUT FILE'
+                        write(*,"(A,i4,A)") 'One of the Roadway weir does not have a proper road surface tupe'
+                        write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
+                    end if
+                    call util_crashpoint(548976)
+                end if
+            else
+                link%I(ii,li_RoadSurface) = nullValueI
+            end if
+            
             ! !% HACK CODE FOR TESTING:
             ! !% for filled circular cross-sections, swmm always sets inlet and outlet offsets
             ! !% for the bottom filled elevation. For now, I am removing those for testing
@@ -790,47 +823,6 @@ contains
             !write(*,*)
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
-            !%
-            !% --- handle special types of nodes
-            if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
-                !write(*,*) '... is outfall type'
-                node%I(ii, ni_node_type) = nBCdn
-
-                !% --- check for a flap gate on an outfall
-                if (interface_get_nodef_attribute(ii, api_nodef_hasFlapGate) == 1) then
-                    node%YN(ii, nYN_hasFlapGate) = .true.
-                else
-                    node%YN(ii, nYN_hasFlapGate) = .false.
-                end if
-
-            else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
-                !write(*,*) '... is storage type'
-                node%I(ii, ni_node_type) = nJm
-                node%YN(ii, nYN_has_storage) = .true.
-            else 
-                !% --- classify by number of links connected
-                select case (total_n_links)
-                case (oneI)
-                    ! write(*,*) '... is 1 junction is an upstream BC'
-                    node%I(ii, ni_node_type) = nJ1
-                case (twoI)
-                    ! write(*,*) '... is 2 junction type'        
-                    node%I(ii, ni_node_type) = nJ2
-                case default 
-                    ! write(*,*) '... is 3+ junction type'
-                    node%I(ii, ni_node_type) = nJm
-                end select
-            end if 
-
-            !% exception: nJ2 strictly has one upstream and one downstream link
-            !% other cases where a nJ2 has only two upstream or two downstream 
-            !% links will be considered as a nJm
-            if ((node%I(ii, ni_node_type) == nJ2) .and. &
-                ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
-                 (node%I(ii,ni_N_link_d) > oneI))) then
-                    ! write(*,*) '... switching to a 2 links nJm junction type'
-                    node%I(ii, ni_node_type) = nJm
-            end if
 
             !write(*,*) 'call api_nodef_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
@@ -841,17 +833,6 @@ contains
             node%YN(ii, nYN_has_dwfInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_dwfInflow) == 1)
             !write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
             !write(*,*)
-
-            !% --- set up the inflows
-            if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
-                !% set inflow to true for any node type
-                node%YN(ii, nYN_has_inflow) = .true.
-                !% change the node type of an nJ1 with inflow to nBCup
-                if (node%I(ii, ni_node_type) == nJ1) node%I(ii, ni_node_type) = nBCup
-                !if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
-                !    node%I(ii, ni_node_type) = nBCup
-                !end if
-            end if
 
             !write(*,*) 'call api_nodef_initDepth'
             node%R(ii,nr_InitialDepth)      = interface_get_nodef_attribute(ii, api_nodef_initDepth)
@@ -892,11 +873,7 @@ contains
             !write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
             !write(*,*)
 
-            !write(*,*) 'call interface_get_BC_resolution'
-            node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
-            !write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
-            !write(*,*)  
-
+          
             !% --- ponded area
             if (setting%SWMMinput%AllowPonding) then
                 node%R(ii,nr_PondedArea) = interface_get_nodef_attribute(ii, api_nodef_PondedArea)
@@ -908,8 +885,191 @@ contains
             node%YN(ii,nYN_isOutput)          = (interface_get_nodef_attribute(ii, api_nodef_rptFlag) == 1)
             !write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
             !write(*,*)
+          
+            !%
+            !% --- Assign node types nJm, nJ1, nJ2, nBCdn,
+            if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
+                !write(*,*) '... is outfall type'
+                node%I(ii, ni_node_type) = nBCdn
 
+                !% --- check for a flap gate on an outfall
+                if (interface_get_nodef_attribute(ii, api_nodef_hasFlapGate) == 1) then
+                    node%YN(ii, nYN_hasFlapGate) = .true.
+                else
+                    node%YN(ii, nYN_hasFlapGate) = .false.
+                end if
+
+            else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
+                !write(*,*) '... is storage type'
+                node%I(ii, ni_node_type) = nJm
+                node%YN(ii, nYN_has_storage) = .true.
+            else 
+                !% --- classify by number of links connected
+                select case (total_n_links)
+                case (oneI)
+                    ! write(*,*) '... is 1 junction is an upstream BC'
+                    node%I(ii, ni_node_type) = nJ1
+                case (twoI)
+                    ! write(*,*) '... is 2 junction type'        
+                    node%I(ii, ni_node_type) = nJ2
+                case default 
+                    ! write(*,*) '... is 3+ junction type'
+                    node%I(ii, ni_node_type) = nJm
+                end select
+            end if 
+
+            ! print *, ' at AAA '
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+            
+            !% nJ2 strictly has one upstream and one downstream link
+            !% other cases where an nJ2 has only (i) two upstream and no downstream links,
+            !% or (ii) two downstream and no upstream links, will both be considered as a nJm
+            if ((node%I(ii, ni_node_type) == nJ2) .and. &
+                ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
+                 (node%I(ii,ni_N_link_d) > oneI))) then
+                    !% ... switching to a 2 link nJm junction type'
+                    node%I(ii, ni_node_type) = nJm
+            end if
+
+            ! print *, ' at BBB '
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            !% ==========================================================================
+            !% --- Discrimination between 2-element junctions that are nJ2
+            !%     and those that are classed nJm. Note that all defined STORAGE 
+            !%     junctions are already set to nJm, so this only applies to junctions 
+            !%     defined in SWMM input file without explicit storage
+            !%  
+            !%     The following "or" conditions must be met for an nJ2:
+            !%     1. either side is an open-channel element AND ponding_Area = 0 AND
+            !%        the SurchargeExtraDepth = 0
+            !%     2. both sides are NOT open channel AND the junction extra
+            !%        surcharge depth == Junction.InfiniteExtraDepthValue
+            !%     In addition, the offsets of connected links must be zero, unless
+            !%     the connected link is a weir or orifice (their offset has a different
+            !%     meaning.)
+            !%     Key point is that nJ2 cannot have overflow or ponding, so if
+            !%     at least one side is open channel and ponding area = 0 and the
+            !%     surcharge extra depth = 0 it is treated as open channel 
+            !%     (i.e., overflow occurs in the adjacent channel element) so
+            !%     it can be nJ2.  If both sides are closed types (conduit, weir,
+            !%     i.e., not open channel) then the junction must also be
+            !%     be closed; thus if a value (other than InfiniteExtraDepthValue)
+            !%     is provided for the extra surcharge, then the junction must be treated
+            !%     as an nJm rather than nJ2. That is, sett the Surcharge Extra Depth
+            !%     to the InfiniteExtraDepthValue implies a non-vented connection that
+            !%     can be treated as a face.
+            !%     In general, existence of non-zero offsets require an nJm unless 
+            !%     the offset is associated with a weir or orifice
+            if (node%I(ii, ni_node_type) == nJ2) then
+                !% --- aliases for the upstream and downstream links. These should
+                !%     be guaranteed to be in the u1 and d1 positions
+                linkUp => node%I(ii,ni_Mlink_u1)
+                linkDn => node%I(ii,ni_Mlink_d1)
+                
+                !% --- special channels and conduits that allow nJ2
+                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)    &
+                        .or.                                           &
+                        (link%I(linkDn,li_link_type) .eq. lChannel)    &
+                      )                                                &
+                      .and.                                            &
+                      (node%R(ii,nr_PondedArea) == zeroR)              &
+                      .and.                                            &
+                      (node%R(ii,nr_SurchargeExtraDepth) == zeroR)     & 
+                    ) then
+                    !% nJ2 OPEN CHANNEL FACE
+                    !% --- if either link is an open channel AND the ponded area
+                    !%     is zero then the junction is an nJ2 face where any
+                    !%     overflow is handled by adjacent channel. Otherwise 
+                    !%     reverts to nJm element with its own overflow/ponding. 
+                    !%     Note that if ponding is OFF but the ponded area
+                    !%     is defined, then the element is treated as nJm with
+                    !%     overflow above the Surcharge Extra Depth
+
+                    !% --- no action: retain nJ2
+
+                elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)      &
+                         .and.                                            &
+                         (link%I(linkDn,li_link_type) .ne. lChannel)      &
+                         .and.                                            &
+                         (node%R(ii,nr_SurchargeExtraDepth)               &
+                          == setting%Junction%InfiniteExtraDepthValue) ) then
+                        !% nJ2 CLOSED CONDUIT FACE
+                        !% --- if both links are NOT open channel AND the SurchargeExtraDepth
+                        !%     is equal to the InfiniteExtraDepthValue, then this is retained 
+                        !%     as an nJ2 (unvented) face. Otherwise switched to a vented nJM element.
+                        !%     Offsets conditions on clus
+                        
+                        !% --- no action: retain nJ2
+                else
+                    !% --- switch to nJm
+                    node%I(ii, ni_node_type) = nJm
+                end if
+
+                ! print *, ' at CCC'
+                ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            end if
+            !% --- further check on offsets for any nJ2 that passed the prior
+            !%     restrictions. In general, we have an nJm if there are 
+            !%     any offsets, except if the offset is a weir or orifice.
+            if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
+                 (link%R(linkUp,lr_OutletOffset) .ne. zeroR) ) then
+                !% --- offsets are OK for upstream weir or orifice links  
+                if (  (link%I(linkUp,li_link_type) .eq. lWeir)       &
+                       .or.                                          &
+                      (link%I(linkUp,li_link_type) .eq. lOrifice)    &
+                    ) then    
+                    !% --- retain nJ2
+                else
+                    !% --- switch to nJm
+                    node%I(ii, ni_node_type) = nJm
+                end if
+            end if
+
+            ! print *, ' at EEE'
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
+                 (link%R(linkDn,lr_InletOffset) .ne. zeroR) ) then
+                !% --- offsets are OK for upstream weir or orifice links  
+                if (  (link%I(linkDn,li_link_type) .eq. lWeir)       &
+                       .or.                                          &
+                      (link%I(linkDn,li_link_type) .eq. lOrifice)    &
+                    ) then    
+                    !% --- retain nJ2
+                else
+                    !% --- switch to nJm
+                    node%I(ii, ni_node_type) = nJm
+                end if
+            end if
+            !% ==========================================================================
+            
+            ! print *, ' at FFF'
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            !% --- set up the inflows (must be after nJ1, nJ2 are set)
+            if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
+                !% set inflow to true for any node type
+                node%YN(ii, nYN_has_inflow) = .true.
+                !% change the node type of an nJ1 with inflow to nBCup
+                if (node%I(ii, ni_node_type) == nJ1) node%I(ii, ni_node_type) = nBCup
+                !if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
+                !    node%I(ii, ni_node_type) = nBCup
+                !end if
+            end if
+
+            !write(*,*) 'call interface_get_BC_resolution'
+            !% --- note this MUST be called after inflows are set
+            node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
+            !write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
+            !write(*,*)  
+
+            ! print *, ' at GGG'
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
         end do
+
+       ! stop 409874
 
         !% --- Store the Link/Node names
         call interface_update_linknode_names()
@@ -980,7 +1140,6 @@ contains
     end subroutine init_linknode_arrays
 !%
 !%==========================================================================
-
 !%==========================================================================
 !%
     ! subroutine init_conmon_from_links ()

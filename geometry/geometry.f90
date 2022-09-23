@@ -10,10 +10,15 @@ module geometry
     use trapezoidal_channel
     use triangular_channel
     use rectangular_triangular_conduit
-    use circular_conduit
-    use filled_circular_conduit
     use basket_handle_conduit
+    use mod_basket_conduit
+    use catenary_conduit
     use egg_shaped_conduit
+    use circular_conduit
+    use semi_circular_conduit
+    use filled_circular_conduit
+    use semi_elliptical_conduit
+    use gothic_conduit
     use horse_shoe_conduit
     use irregular_channel
     use parabolic_channel
@@ -100,7 +105,7 @@ module geometry
                     col_elemPGx            => col_elemPGetm(:)
                     thisColP_CC            => col_elemP(ep_CC_ETM)
                     thisColP_JM            => col_elemP(ep_JM_ETM)
-                    thisColP_JB            => col_elemP(ep_JB_ETM)
+                    !thisColP_JB            => col_elemP(ep_JB_ETM)
                     !thisColP_surcharged    => col_elemP(ep_PSsurcharged)
                     !thisColP_NonSurcharged => col_elemP(ep_ETM_PSnonSurcharged)
                     thisColP_all_TM        => col_elemP(ep_ETM)
@@ -131,7 +136,7 @@ module geometry
             end select
             call util_crashstop(49872)
         !%--------------------------------------------------------------------
-            ! call util_CLprint ('in geometry at top')  
+            ! call util_CLprint ('in geometry at top==========================================')  
 
         !% STATUS: at this point we know volume and velocity on all elements
         !% from RK2 solution
@@ -140,6 +145,8 @@ module geometry
         !%     This affects JM that have previous ponding but now have volumes
         !%     below the full volume
         call geo_ponding_inflow (thisColP_JM)   
+
+            ! call util_CLprint ('in geometry after ponding inflow') 
            
         !% --- set the Preissmann Slot data    
         !%     also adds to ponded volume or computes overflow volume for JM (only)
@@ -147,6 +154,8 @@ module geometry
         !%     The Element Volume in JM is adjusted for any overflow or ponding
         !%     (but not for the slot)
         call slot_toplevel (whichTM, thisColP_Closed_CC, thisColP_JM)
+
+            ! call util_CLprint ('in geometry after slot toplevel') 
 
         !% STATUS: The Preissmann Slot values have been assigned for all CC and JM
         !% Overflow and Ponding have been assigned for JM (only). 
@@ -165,21 +174,22 @@ module geometry
         !call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
         call adjust_limit_by_zerovalues &
             (er_Volume, setting%ZeroValue%Volume, thisColP_all_TM, .true.)
-            ! call util_CLprint ('in geometry before geo_depth_from_volume') 
+
+            ! call util_CLprint ('in geometry after limit_by_zerovalues (volume)') 
 
         !% --- compute the depth on all elements of CC JM based on geometry.
         !%     This call returns the full depth of a closed conduit without adding 
         !%     Preissmann Slot depth.
         call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues (2)') 
+            ! call util_CLprint ('in geometry after depth_from_volume') 
 
         !% --- reset all zero or near-zero depths in aa CC and JM
         !call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
 
-            ! call util_CLprint ('in geometry before geo_head_from_depth') 
+            ! call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
 
         !% --- compute the head on all elements of CC and JM
         !%     This sets head consistent with depth computed in geo_depth_from_volume
@@ -187,7 +197,7 @@ module geometry
         !%     include surcharge effects
         call geo_head_from_depth (thisColP_all_TM)
  
-            ! call util_CLprint ('in geometry before geo_overflow_openchannels')
+            ! call util_CLprint ('in geometry after head_from_depth')
         
         !% --- Compute the overflow lost for CC open channels above
         !%     their maximum volume (no ponding allowed from open CC). 
@@ -195,10 +205,14 @@ module geometry
         !%     in slot_JM_ETM.
         call geo_overflow_openchannels (thisColP_Open_CC)
 
+            ! call util_CLprint ('in geometry after overflow_openchannels')
+
         !% --- limit the volume in closed element (CC, JM) to the full volume
         !%     Note the excess volume has already been stored in the Preissman Slot
         call geo_volumelimit_closed (thisColP_Closed_CC)
         call geo_volumelimit_closed (thisColP_JM)
+
+            ! call util_CLprint ('in geometry after volumelimit_closed')
 
         !% REMOVED 20220909 brh
         !% --- limit volume for incipient surcharge. This is done after depth is computed
@@ -222,22 +236,26 @@ module geometry
         !%     This is needed before JB are computed
         call slot_JM_head_PSadd (thisColP_JM)
 
-            ! call util_CLprint ('in geometry before geo_assign_JB') 
+            ! call util_CLprint ('in geometry after JM_head_PSadd') 
            
         !% assign the non-volume geometry on junction branches JB based on JM head
         !% Values limited by full volume. Volume assigned is area * length
         call geo_assign_JB (whichTM, thisColP_JM)
+
+            ! call util_CLprint ('in geometry after assign_JB') 
 
         !% --- further limiting the JB volume by full is probably not needed,
         !%     but might be useful if there's a numerical precision issues
         !%     with JB volume assigned by area * length.
         call geo_volumelimit_closed (thisColP_Closed_JB)
 
+            ! call util_CLprint ('in geometry after volumelimit_closed') 
+
         !% --- we need to remove the PS and ponding from the JM cells so that we can easily
         !%     compute other geometry without full JM causing problems
         call slot_JM_head_PSremove (thisColP_JM)
 
-            ! call util_CLprint ('in geometry before geo_area_from_volume')  
+            ! call util_CLprint ('in geometry after JM_head_PSremove')  
 
         !% STATUS: at this point we have all geometry on CC, JM, JB that is
         !% limited by the full volume values. The CC and JM have slot values stored
@@ -247,76 +265,84 @@ module geometry
         !%     note that JB areas are already assigned 
         call geo_area_from_volume (thisColP_all_TM)
 
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry after area_from_volume') 
 
         !% --- reset all zero or near-zero areas in CC and JM
         call adjust_limit_by_zerovalues &
              (er_Area, setting%ZeroValue%Area, thisColP_all_TM, .false.)
 
-            ! call util_CLprint ('in geometry before topwidth_from_depth')   
+            ! call util_CLprint ('in geometry after adjust_limit_by_zeroValues area')   
 
         !% --- compute topwidth from depth for all CC
         !%     Note: Topwidth for JM is undefined in this subroutine
         call geo_topwidth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry before adjust_limit_by_zerovalues') 
+            ! call util_CLprint ('in geometry after topwidth_from_depth') 
 
         !% --- reset all zero or near-zero topwidth in CC 
         !%     but do not change the eYN(:,eYN_isZeroDepth) mask
         call adjust_limit_by_zerovalues &
              (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_CC, .false.)
 
-            ! call util_CLprint ('in geometry before perimeter_from_depth') 
+            ! call util_CLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
 
         !% --- compute perimeter from maximum depth for all CC
         !%     Note: perimeter for JM is undefined in this subroutine
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry before hyddepth_from_depth') 
+            ! call util_CLprint ('in geometry after perimeter from depth') 
 
         !% --- compute hyddepth
         !%     Note: hyddepth for JM is undefined in this subroutine
         call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry before hydradius_from_area_perimeter')   
+            ! call util_CLprint ('in geometry after hyddepth_from_depth')   
 
         !% --- compute hydradius
         !%     Note: cannot be used for JM unless perimeter is defined prior.
         call geo_hydradius_from_area_perimeter (thisColP_CC)
 
-            ! call util_CLprint ('in geometry before ell_from_head') 
+            ! call util_CLprint ('in geometry after hydradius_from_area_perimeter') 
 
         !% --- the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         !%     Note: ell for JM is undefined in this subroutine
         call geo_ell_from_head (thisColP_CC)
 
-            ! call util_CLprint ('in geometry before slot_adjustments') 
+            ! call util_CLprint ('in geometry after ell_from_head') 
 
         !% --- make adjustments for slots on closed elements only
         !%     These add slot values to volume, depth, head
         call slot_CC_adjustments (thisColP_Closed_CC)
+
+            ! call util_CLprint ('in geometry after slot_CC_adustments') 
+
         call slot_JM_adjustments (thisColP_JM)
+
+            ! call util_CLprint ('in geometry after slot_JM_adjustments') 
+
         !% --- compute the SlotDepth, SlotArea, SlotVolume and update
         !%     elem volume and depth for JB. Note elem head on JB either with or
         !%     without surcharge is assigned in geo_assign_JB
         call slot_JB_computation (thisColP_JM)
         
-            ! call util_CLprint ('in geometry before JM_values') 
+            !call util_CLprint ('in geometry after slot_JB_computation') 
 
         !% Set JM values that are not otherwise defined
         !% HydDepth and ell. Note that topwidth, hydradius, perimeter are undefined.
         call geo_JM_values ()
 
-            ! call util_CLprint ('in geometry before dHdA') 
+            ! call util_CLprint ('in geometry after JM_values') 
 
-        !% compute the dHdA that are only for AC nonsurcharged
-        if (whichTM .ne. ETM) then
-            call geo_dHdA (ep_AC_ACnonSurcharged)
-        end if
+        !% HOLD UNTIL AC RE-VISITED
+        ! !% compute the dHdA that are only for AC nonsurcharged
+        ! if (whichTM .ne. ETM) then
+        !     call geo_dHdA (ep_AC_ACnonSurcharged)
+        ! end if
 
-            ! call util_CLprint ('in geometry at end') 
+            !call util_CLprint ('in geometry at end') 
 
+        !% --- check for crashpoint and stop here
         call util_crashstop(322983)
 
         if (setting%Debug%File%geometry) &
@@ -474,11 +500,11 @@ module geometry
             if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases:
-            thisp => elemP(1:Npack,thisColP_JM)
-            vPond   => elemSR(:,esr_JunctionMain_PondedVolume)
-            volume  => elemR (:,er_Volume)
-            vFull   => elemR (:,er_FullVolume)
-            vInflow => elemR (:,er_Temp01)
+            thisp       => elemP(1:Npack,thisColP_JM)
+            vPond       => elemR(:,er_VolumePonded)
+            volume      => elemR(:,er_Volume)
+            vFull       => elemR(:,er_FullVolume)
+            vInflow     => elemR(:,er_Temp01)
         !%------------------------------------------------------------------
         !% --- volume available in the JM    
         vInflow(thisP) = vFull(thisP) - volume(thisP)
@@ -636,7 +662,7 @@ module geometry
         if (Npack > 0) then
             call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
         end if
-
+        
         !call util_CLprint('after implied storage') 
         !%-------------------------------------------------------------------
         !% Closing
@@ -650,7 +676,7 @@ module geometry
     subroutine geo_head_from_depth (thisColP)
         !%------------------------------------------------------------------
         !% Description:
-        !% Computes head from depth for non-surcharged elements of CC, JM
+        !% Computes head from depth for elements of CC, JM
         !%------------------------------------------------------------------
             integer, intent(in) :: thisColP
             integer, pointer :: Npack, thisP(:)
@@ -1009,6 +1035,42 @@ module geometry
                                     ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
                                 
+                                case (catenary)                                    
+                                    area(tB)     = catenary_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = catenary_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = catenary_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= catenary_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= catenary_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (gothic)                                    
+                                    area(tB)     = gothic_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = gothic_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = gothic_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= gothic_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= gothic_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (mod_basket)                                    
+                                    area(tB)     = mod_basket_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = mod_basket_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = mod_basket_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= mod_basket_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= mod_basket_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (semi_elliptical)                                    
+                                    area(tB)     = semi_elliptical_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = semi_elliptical_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = semi_elliptical_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= semi_elliptical_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= semi_elliptical_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
                                 case (trapezoidal)
                                     area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
                                     topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
@@ -1027,6 +1089,15 @@ module geometry
                                     hydRadius(tB)= circular_hydradius_from_depth_singular     (tB,depth(tB))
                                     perimeter(tB)= circular_perimeter_from_hydradius_singular (tB,hydRadius(tB))
                                     ell(tB)      = geo_ell_singular (tB) 
+                                    dHdA(tB)     = oneR / topwidth(tB)
+                                
+                                case (semi_circular)                                    
+                                    area(tB)     = semi_circular_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = semi_circular_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydDepth(tB) = semi_circular_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
+                                    perimeter(tB)= semi_circular_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= semi_circular_hydradius_from_depth_singular   (tB,depth(tB))
+                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
                                     dHdA(tB)     = oneR / topwidth(tB)
 
                                     ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
@@ -1208,6 +1279,13 @@ module geometry
             call circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- SEMI-CIRCULAR
+        Npack => npack_elemPGx(epg_CC_semi_circular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_circular)
+            call semi_circular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- FILLED CIRCULAR
         Npack => npack_elemPGx(epg_CC_filled_circular)
         if (Npack > 0) then
@@ -1248,6 +1326,34 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_horse_shoe)
             call horse_shoe_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- CATENARY
+        Npack => npack_elemPGx(epg_CC_catenary)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary)
+            call catenary_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- GOTHIC
+        Npack => npack_elemPGx(epg_CC_gothic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic)
+            call gothic_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- MODIFIED BASKET HANDLE
+        Npack => npack_elemPGx(epg_CC_mod_basket)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_mod_basket)
+            call mod_basket_topwidth_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- SEMI-ELLIPTICAL
+        Npack => npack_elemPGx(epg_CC_semi_elliptical)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_elliptical)
+            call semi_elliptical_topwidth_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- IRREGULAR
@@ -1321,6 +1427,13 @@ module geometry
             call circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- SEMI-CIRCULAR
+        Npack => npack_elemPGx(epg_CC_semi_circular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_circular)
+            call semi_circular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- FILLED CIRCULAR
         Npack => npack_elemPGx(epg_CC_filled_circular)
         if (Npack > 0) then
@@ -1343,10 +1456,10 @@ module geometry
         end if
 
         !% -- BASKET_HANDLE
-        Npack => npack_elemPGx(epg_CC_basket_handle)
+        thisCol => col_elemPGx(epg_CC_basket_handle)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_basket_handle)
-            call basket_handle_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call basket_handle_depth_from_volume (elemPGx, Npack, thisCol)
         end if
 
         !% -- EGG_SHAPED
@@ -1361,6 +1474,34 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_horse_shoe)
             call horse_shoe_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- CATENARY
+        Npack => npack_elemPGx(epg_CC_catenary)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_catenary)
+            call catenary_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- GOTHIC
+        Npack => npack_elemPGx(epg_CC_gothic)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_gothic)
+            call gothic_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- MODIFIED BASKET HANDLE
+        Npack => npack_elemPGx(epg_CC_mod_basket)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_mod_basket)
+            call mod_basket_perimeter_from_depth (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- SEMI-ELLIPTICAL
+        Npack => npack_elemPGx(epg_CC_semi_elliptical)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_elliptical)
+            call semi_elliptical_perimeter_from_depth (elemPGx, Npack, thisCol)
         end if
 
         !% --- IRREGULAR
@@ -1436,6 +1577,13 @@ module geometry
             call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% -- SEMI-CIRCULAR
+        Npack => npack_elemPGx(epg_CC_semi_circular)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CC_semi_circular)
+            call semi_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        end if
+
         !% --- FILLED CIRCULAR
         Npack => npack_elemPGx(epg_CC_filled_circular)
         if (Npack > 0) then
@@ -1478,6 +1626,34 @@ module geometry
             call horse_shoe_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         end if
 
+        !% --  CATENARY
+        thisCol => col_elemPGx(epg_CC_catenary)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call catenary_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  GOTHIC
+        thisCol => col_elemPGx(epg_CC_gothic)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call gothic_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  MODIFIED BASKET HANDLE
+        thisCol => col_elemPGx(epg_CC_mod_basket)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  SEMI-ELLIPTICAL
+        thisCol => col_elemPGx(epg_CC_semi_elliptical)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call semi_elliptical_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
         !% --- IRREGULAR
         Npack => npack_elemPGx(epg_CC_irregular)
         if (Npack > 0) then
@@ -1485,6 +1661,7 @@ module geometry
             call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
         end if
 
+        !% DOES NOT HANDLE JM ELEMENTS
 
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
@@ -1661,27 +1838,27 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer :: Npack ,thisP(:)
 
-        character(64) :: subroutine_name = 'geo_surcharged'
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        Npack => npack_elemP(thisColP)
-        !%-------------------------------------------------
-        if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! character(64) :: subroutine_name = 'geo_surcharged'
+        ! !%-----------------------------------------------------------------------------
+        ! !!if (crashYN) return
+        ! Npack => npack_elemP(thisColP)
+        ! !%-------------------------------------------------
+        ! if (setting%Debug%File%geometry) &
+        !     write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP)
-            elemR(thisP,er_Volume)    = elemR(thisP,er_FullVolume)
-            elemR(thisP,er_Area)      = elemR(thisP,er_FullArea)
-            elemR(thisP,er_Depth)     = elemR(thisP,er_FullDepth)
-            elemR(thisP,er_Perimeter) = elemR(thisP,er_FullPerimeter)
-            elemR(thisP,er_HydDepth)  = elemR(thisP,er_FullHydDepth)
-            elemR(thisP,er_HydRadius) = elemR(thisP,er_FullArea) / elemR(thisP,er_FullPerimeter)
-            elemR(thisP,er_Topwidth)  = setting%ZeroValue%Topwidth
-        end if
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack,thisColP)
+        !     elemR(thisP,er_Volume)    = elemR(thisP,er_FullVolume)
+        !     elemR(thisP,er_Area)      = elemR(thisP,er_FullArea)
+        !     elemR(thisP,er_Depth)     = elemR(thisP,er_FullDepth)
+        !     elemR(thisP,er_Perimeter) = elemR(thisP,er_FullPerimeter)
+        !     elemR(thisP,er_HydDepth)  = elemR(thisP,er_FullHydDepth)
+        !     elemR(thisP,er_HydRadius) = elemR(thisP,er_FullArea) / elemR(thisP,er_FullPerimeter)
+        !     elemR(thisP,er_Topwidth)  = setting%ZeroValue%Topwidth
+        ! end if
 
-        if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%geometry) &
+        !     write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end subroutine geo_ACsurcharged
 !%
 !%==========================================================================
@@ -1712,7 +1889,7 @@ module geometry
     !         geovalue   => elemR(:,geocol)
     !         fullvalue  => elemR(:,fullcol)
     !         overflow   => elemR(:,er_VolumeOverFlow)  !% 20220124brh
-    !         ponding    => elemSR(:,esr_JuctionMain_PondedVolume)
+    !         ponding    => elemR(:,er_VolumePonded)
     !     !%-------------------------------------------------------------------
 
     !         ! print *, 'in ',trim(subroutine_name),elemR(49,er_VolumeOverFlow)
@@ -1774,9 +1951,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(33234)
         case (mod_basket)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = mod_basket_area_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
         case (circular )
@@ -1802,23 +1977,15 @@ module geometry
         case (horseshoe)
             outvalue = horse_shoe_area_from_depth_singular (idx, indepth)
         case (gothic)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = gothic_area_from_depth_singular (idx, indepth)
         case (catenary)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = catenary_area_from_depth_singular (idx, indepth)
         case (semi_elliptical)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = semi_elliptical_area_from_depth_singular (idx, indepth)
         case (basket_handle)
             outvalue = basket_handle_area_from_depth_singular (idx, indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            outvalue = semi_circular_area_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1836,7 +2003,7 @@ module geometry
            
     end function geo_area_from_depth_singular
 !%
-!%==========================================================================    
+!%==========================================================================      
 !%==========================================================================
 !%
     real(8) function geo_topwidth_from_depth_singular &
@@ -1872,9 +2039,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         case (mod_basket)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = mod_basket_topwidth_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
         case (circular )
@@ -1900,23 +2065,15 @@ module geometry
         case (horseshoe)
             outvalue = horse_shoe_topwidth_from_depth_singular (idx, indepth)
         case (gothic)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = gothic_topwidth_from_depth_singular (idx, indepth)
         case (catenary)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = catenary_topwidth_from_depth_singular (idx, indepth)
         case (semi_elliptical)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = semi_elliptical_topwidth_from_depth_singular (idx, indepth)
         case (basket_handle)
             outvalue = basket_handle_topwidth_from_depth_singular (idx, indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(4498734)
+            outvalue = semi_circular_topwidth_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -1970,9 +2127,7 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (mod_basket)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = mod_basket_perimeter_from_depth_singular (idx, indepth)
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular (idx,tt_area, indepth, setting%ZeroValue%Depth)
         case (circular )
@@ -1998,23 +2153,15 @@ module geometry
         case (horseshoe)
             outvalue = horse_shoe_perimeter_from_depth_singular (idx, indepth)
         case (gothic)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = gothic_perimeter_from_depth_singular (idx, indepth)
         case (catenary)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = catenary_perimeter_from_depth_singular (idx, indepth)
         case (semi_elliptical)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = semi_elliptical_perimeter_from_depth_singular (idx, indepth)
         case (basket_handle)
             outvalue = basket_handle_perimeter_from_depth_singular (idx, indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(338234)
+            outvalue = semi_circular_perimeter_from_depth_singular (idx, indepth)
         case (custom)
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
@@ -2069,9 +2216,8 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(449734)
         case (mod_basket)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = mod_basket_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = mod_basket_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (irregular)
             !% --- get the area and topwidth, then compute the hydraulic depth
             temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)
@@ -2107,25 +2253,21 @@ module geometry
             temp1    = horse_shoe_topwidth_from_depth_singular    (idx, indepth)
             outvalue = horse_shoe_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (gothic)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = gothic_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = gothic_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (catenary)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (semi_elliptical)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = semi_elliptical_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = semi_elliptical_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (basket_handle)
             !% --- get the topwidth and use that to compute the hydraulic depth
             temp1    = basket_handle_topwidth_from_depth_singular    (idx, indepth)
             outvalue = basket_handle_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (semi_circular)
-            print *, 'CODE ERROR: hyddepth code for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
+            temp1    = semi_circular_topwidth_from_depth_singular    (idx, indepth)
+            outvalue = semi_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
         case (custom)
             print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)

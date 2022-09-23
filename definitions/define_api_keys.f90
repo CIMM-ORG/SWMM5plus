@@ -474,12 +474,12 @@ module define_api_keys
     !     enumerator :: API_NODE_HEAD
     ! end enum
 
-    ! !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
-    ! enum, bind(c)
-    !     enumerator :: API_TIMEPATTERN = 6
-    !     enumerator :: API_CURVE
-    !     enumerator :: API_TSERIES
-    ! end enum
+    !% SWMM roadway weir road surface type
+    enum, bind(c)
+        enumerator :: API_NOSURFACE = 0
+        enumerator :: API_PAVED
+        enumerator :: API_GRAVEL
+    end enum
 
     !% brh20211208s -- this looks like obsolete code
     !% API VARS
@@ -553,50 +553,52 @@ module define_api_keys
         enumerator :: api_linkf_right_slope              ! 57  
         enumerator :: api_linkf_weir_end_contractions    ! 58
         enumerator :: api_linkf_weir_side_slope          ! 59
-        enumerator :: api_linkf_curveid                  ! 60
-        enumerator :: api_linkf_discharge_coeff1         ! 61
-        enumerator :: api_linkf_discharge_coeff2         ! 62
-        enumerator :: api_linkf_initSetting              ! 63
-        enumerator :: api_linkf_yOn                      ! 64
-        enumerator :: api_linkf_yOff                     ! 65
-        enumerator :: api_linkf_conduit_roughness        ! 66
-        enumerator :: api_linkf_conduit_length           ! 67
-        enumerator :: api_linkf_rptFlag                  ! 68
-        enumerator :: api_linkf_hasFlapGate              ! 69
-        enumerator :: api_linkf_cLossInlet               ! 70
-        enumerator :: api_linkf_cLossOutlet              ! 71
-        enumerator :: api_linkf_cLossAvg                 ! 72
-        enumerator :: api_linkf_seepRate                 ! 73
-        enumerator :: api_linkf_commonBreak              ! 74  ! must be end of common  ...linkf... types
+        enumerator :: api_linkf_weir_road_width          ! 60
+        enumerator :: api_linkf_weir_road_surface        ! 61
+        enumerator :: api_linkf_curveid                  ! 62
+        enumerator :: api_linkf_discharge_coeff1         ! 63
+        enumerator :: api_linkf_discharge_coeff2         ! 64
+        enumerator :: api_linkf_initSetting              ! 65
+        enumerator :: api_linkf_yOn                      ! 66
+        enumerator :: api_linkf_yOff                     ! 67
+        enumerator :: api_linkf_conduit_roughness        ! 68
+        enumerator :: api_linkf_conduit_length           ! 69
+        enumerator :: api_linkf_rptFlag                  ! 70
+        enumerator :: api_linkf_hasFlapGate              ! 71
+        enumerator :: api_linkf_cLossInlet               ! 72
+        enumerator :: api_linkf_cLossOutlet              ! 73
+        enumerator :: api_linkf_cLossAvg                 ! 74
+        enumerator :: api_linkf_seepRate                 ! 75
+        enumerator :: api_linkf_commonBreak              ! 76  ! must be end of common  ...linkf... types
 
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 75  ! must match linkf_type in api.h
-        enumerator :: api_linkf_sub_type     ! 76
-        enumerator :: api_linkf_typeBreak    ! 77  ! must be end of ...linkf... special types
+        enumerator :: api_linkf_type         ! 77  ! must match linkf_type in api.h
+        enumerator :: api_linkf_sub_type     ! 78
+        enumerator :: api_linkf_typeBreak    ! 79  ! must be end of ...linkf... special types
         ! --- xsect attributes for linkf
-        enumerator :: api_linkf_xsect_type   ! 78
-        enumerator :: api_linkf_geometry     ! 79
-        enumerator :: api_linkf_xsect_wMax   ! 80
-        enumerator :: api_linkf_xsect_yBot   ! 81
-        enumerator :: api_linkf_xsect_yFull  ! 82
-        enumerator :: api_linkf_transectidx  ! 83
-        enumerator :: api_linkf_forcemain_coef ! 84
-        enumerator :: api_linkf_end          ! 85  ! must be end of the ...linkf... xsect attributes
+        enumerator :: api_linkf_xsect_type   ! 80
+        enumerator :: api_linkf_geometry     ! 81
+        enumerator :: api_linkf_xsect_wMax   ! 82
+        enumerator :: api_linkf_xsect_yBot   ! 83
+        enumerator :: api_linkf_xsect_yFull  ! 84
+        enumerator :: api_linkf_xsect_rBot   ! 85
+        enumerator :: api_linkf_transectidx  ! 86
+        enumerator :: api_linkf_forcemain_coef ! 87
+        enumerator :: api_linkf_end          ! 88  ! must be end of the ...linkf... xsect attributes
         !% --- transect data
-        enumerator :: api_transectf_start   ! 86
-        enumerator :: api_transectf_ID      ! 87
-        enumerator :: api_transectf_yFull   ! 88
-        enumerator :: api_transectf_aFull   ! 89
-        enumerator :: api_transectf_rFull   ! 90
-        enumerator :: api_transectf_wMax    ! 91
-        enumerator :: api_transectf_ywMax   ! 92
-        enumerator :: api_transectf_sMax    ! 93
-        enumerator :: api_transectf_aMax    ! 94
-        enumerator :: api_transectf_lengthFactor    ! 95
-        enumerator :: api_transectf_roughness       ! 96
-        enumerator :: api_transectf_end             ! 97
-
-        enumerator :: api_keyslastplusone  ! 98
+        enumerator :: api_transectf_start   ! 89
+        enumerator :: api_transectf_ID      ! 90
+        enumerator :: api_transectf_yFull   ! 91
+        enumerator :: api_transectf_aFull   ! 92
+        enumerator :: api_transectf_rFull   ! 93
+        enumerator :: api_transectf_wMax    ! 94
+        enumerator :: api_transectf_ywMax   ! 95
+        enumerator :: api_transectf_sMax    ! 96
+        enumerator :: api_transectf_aMax    ! 97
+        enumerator :: api_transectf_lengthFactor    ! 98
+        enumerator :: api_transectf_roughness       ! 99
+        enumerator :: api_transectf_end             ! 100
+        enumerator :: api_keyslastplusone   ! 101
     end enum
 
     ! !% API link attributes
@@ -675,7 +677,11 @@ module define_api_keys
         enumerator :: api_weekend
         enumerator :: api_daily
         enumerator :: api_hourly
+        
     end enum
+    !% --- for no pattern in resolution: 
+    !%     this matches default in api_get_nodef_attribute for nodef_extInflow_basePat_type
+    integer, parameter :: api_nopattern = -1 
 
     contains   
     !%==========================================================================

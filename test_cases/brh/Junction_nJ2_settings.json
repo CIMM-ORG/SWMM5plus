@@ -1,0 +1,88 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "Junction test nJ2 01",
+        "Short" : "junction_nJ2_01"
+    },
+    "Discretization" : {
+        "AdustLinkLengthForJunctionBranchYN" : false,
+        "JunctionBranchLengthFactor" : 0.33,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "NominalElemLength" : 100.00
+    },
+    "Junction" : {
+        "InfiniteExtraDepthValue"    : 1000.0
+    },
+    "Output" : {
+        "UseFileNameFile" : false,
+        "Verbose" : true,
+        "Warning" : true,
+        "StoredLevels" : 100,
+        "StoredFileNames" : 100,
+        "CommandLine" : {
+            "quietYN" : false,
+            "interval" : 10
+        },
+        "DataOut" :{
+            "isAreaOut"               : true,
+            "isDepthOut"              : true,
+            "isFlowrateOut"           : true,
+            "isFluxConsOut"           : true,
+            "isFroudeNumberOut"       : false,
+            "isHeadOut"               : true,
+            "isHydRadiusOut"          : false,
+            "isPerimeterOut"          : false,
+            "isManningsNout"          : false,
+            "isSlotWidthOut"          : false,
+            "isSlotDepthOut"          : true,
+            "isTopWidthOut"           : false,
+            "isVelocityOut"           : true,
+            "isVolumeOut"             : true,
+            "isVolumeConsOut"         : true,
+            "isVolumeOverflowOut"     : true,
+            "isVolumePondedOut"       : true,
+            "isWaveSpeedOut"          : false,
+            "isPreissmannCelerityOut" : false,
+            "isPreissmannNumberOut"   : false
+        },
+        "Report" : {
+            "useSWMMinpYN" : true,
+            "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
+            "suppress_MultiLevel_Output" : false,
+            "TimeUnits" : "Hours"
+        }
+    },
+    "Profile" : {
+        "useYN" : false
+    },
+    "Simulation" : {
+        "stopAfterInitializationYN" : false
+    },
+    "SmallDepth" : {
+        "DepthCutoff" : 0.03,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "MomentumSourceMethod" : "T10",
+        "PreissmannSlot" : {
+            "Method"         : "StaticSlot",
+            "TargetCelerity" : 3.0,
+            "Alpha"          : 2.0
+        }
+    },
+    "VariableDT" : {
+        "ApplyYN" : true,
+        "limitByBC_YN" : true,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.4,
+        "increaseFactor" : 1.2,
+        "InitialDt"      : 1.0,
+        "NstepsForCheck" : 10  
+    }
+}

@@ -44,13 +44,16 @@ module runge_kutta2
             !if (crashYN) return
             if (setting%Debug%File%runge_kutta2) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            !% --- set the time-marching type for this routine
+            whichTM = ETM
+            !% --- reset the overflow counter for this time level
+            elemR(:,er_VolumeOverFlow) = zeroR        
         !%-----------------------------------------------------------------
         !% Aliases
         !%-----------------------------------------------------------------
-        whichTM = ETM
 
-        !% --- reset the overflow counter
-        elemR(:,er_VolumeOverFlow) = zeroR
+        ! print *, ' '
+        ! call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -63,11 +66,6 @@ module runge_kutta2
 
         !% --- compute Force Main Manning's N for non-submerged FM elements
         if (setting%Solver%ForceMain%UseForceMainTF) call rk2_ForceMain_ManningsN ()
-
-            !print *, ' '
-            ! call util_CLprint ('======= AAA  start of RK2 ==============================')
-            !print *, ' '
-        !print *, elemR(1,er_ManningsN_Dynamic)
 
         !% --- RK2 solution step -- single time advance step for CC and JM
         istep=1
@@ -173,8 +171,8 @@ module runge_kutta2
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
         
-        ! call util_CLprint ('ZZZ  after accumulate overflow step 2')
-
+            !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
+            !  print *, '==================================================='
         
 
         !%-----------------------------------------------------------------
@@ -445,45 +443,45 @@ module runge_kutta2
         integer, intent(in) :: istep
         integer, pointer ::  thisMaskCol, thisPackCol, Npack
         logical :: isreset
-        !%-----------------------------------------------------------------------------
-        !%
-        !if (crashYN) return
-        !% Compute net flowrates for channels, conduits and special elements
-        thisPackCol => col_elemP(ep_CC_AC)
-        Npack => npack_elemP(thisPackCol)
-        if (Npack > 0) then
-            call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
-        end if
+        ! !%-----------------------------------------------------------------------------
+        ! !%
+        ! !if (crashYN) return
+        ! !% Compute net flowrates for channels, conduits and special elements
+        ! thisPackCol => col_elemP(ep_CC_AC)
+        ! Npack => npack_elemP(thisPackCol)
+        ! if (Npack > 0) then
+        !     call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
+        ! end if
 
-        !% compute net flowrates for junction mains
-        thisPackCol => col_elemP(ep_JM_AC)
-        Npack => npack_elemP(thisPackCol)
-        if (Npack > 0) then
-            call ll_continuity_netflowrate_JM (er_SourceContinuity, thisPackCol, Npack)
-        end if
+        ! !% compute net flowrates for junction mains
+        ! thisPackCol => col_elemP(ep_JM_AC)
+        ! Npack => npack_elemP(thisPackCol)
+        ! if (Npack > 0) then
+        !     call ll_continuity_netflowrate_JM (er_SourceContinuity, thisPackCol, Npack)
+        ! end if
 
-        thisPackCol => col_elemP(ep_CCJM_H_AC_open)
-        Npack => npack_elemP(thisPackCol)
-        if (Npack > 0) then
-            !% unique continuity source terms for AC open channel
-            call ll_continuity_add_source_CCJM_AC_open (er_SourceContinuity, thisPackCol, Npack)
-            !% unique continuity gamma terms for AC open channel
-            call ll_continuity_add_gamma_CCJM_AC_open (er_GammaC, thisPackCol, Npack)
-            !% solve for volume in AC open step
-            call ll_continuity_volume_CCJM_AC_open (er_Volume, thisPackCol, Npack, istep)
-        end if
+        ! thisPackCol => col_elemP(ep_CCJM_H_AC_open)
+        ! Npack => npack_elemP(thisPackCol)
+        ! if (Npack > 0) then
+        !     !% unique continuity source terms for AC open channel
+        !     call ll_continuity_add_source_CCJM_AC_open (er_SourceContinuity, thisPackCol, Npack)
+        !     !% unique continuity gamma terms for AC open channel
+        !     call ll_continuity_add_gamma_CCJM_AC_open (er_GammaC, thisPackCol, Npack)
+        !     !% solve for volume in AC open step
+        !     call ll_continuity_volume_CCJM_AC_open (er_Volume, thisPackCol, Npack, istep)
+        ! end if
 
-        thisPackCol => col_elemP(ep_CCJM_H_ACsurcharged)
-        Npack => npack_elemP(thisPackCol)
-        if (Npack > 0) then
-            !% unique continuity source terms for AC surcharged channel head
-            call ll_continuity_add_source_CCJM_AC_surcharged (er_SourceContinuity, thisPackCol, Npack)
-            !% solve for head in AC surcharged step
-            call ll_continuity_head_CCJM_AC_surcharged (er_Head, thisPackCol, Npack, istep)
-        end if
+        ! thisPackCol => col_elemP(ep_CCJM_H_ACsurcharged)
+        ! Npack => npack_elemP(thisPackCol)
+        ! if (Npack > 0) then
+        !     !% unique continuity source terms for AC surcharged channel head
+        !     call ll_continuity_add_source_CCJM_AC_surcharged (er_SourceContinuity, thisPackCol, Npack)
+        !     !% solve for head in AC surcharged step
+        !     call ll_continuity_head_CCJM_AC_surcharged (er_Head, thisPackCol, Npack, istep)
+        ! end if
 
-        !% adjust near-zero elements
-        call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_AC), .true.)
+        ! !% adjust near-zero elements
+        ! call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_AC), .true.)
 
     end subroutine rk2_continuity_step_AC
 !%
@@ -673,28 +671,28 @@ module runge_kutta2
 !%
     subroutine rk2_interpolate_to_halfstep_AC ()
         !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Finds AC and Diag elements at time n+1/2 that are adjacent to fETM
-        !% Makes temporary store of data for Q, H, V at n+1(*)
-        !% overwrites the Q, H, V location with an interpolation to n+1/1.
-        !%-----------------------------------------------------------------------------
-        integer, pointer :: thisCol, Npack
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        !%
-        thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
-        Npack => npack_elemP(thisCol)
+    !     !% Description:
+    !     !% Finds AC and Diag elements at time n+1/2 that are adjacent to fETM
+    !     !% Makes temporary store of data for Q, H, V at n+1(*)
+    !     !% overwrites the Q, H, V location with an interpolation to n+1/1.
+    !     !%-----------------------------------------------------------------------------
+    !     integer, pointer :: thisCol, Npack
+    !     !%-----------------------------------------------------------------------------
+    !     !if (crashYN) return
+    !     !%
+    !     thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
+    !     Npack => npack_elemP(thisCol)
 
-        if (Npack > 0) then
-            !% temporary storage of n+1 data
-            call ll_store_in_temporary (thisCol, Npack)
+    !     if (Npack > 0) then
+    !         !% temporary storage of n+1 data
+    !         call ll_store_in_temporary (thisCol, Npack)
 
-            !% interpolation to half step
-            call ll_interpolate_values (thisCol, Npack)
+    !         !% interpolation to half step
+    !         call ll_interpolate_values (thisCol, Npack)
 
-            !% update aux for interpolated variables
-      !     call update_auxiliary_variables_byPack (thisPackCol, Npack)
-        end if
+    !         !% update aux for interpolated variables
+    !   !     call update_auxiliary_variables_byPack (thisPackCol, Npack)
+    !     end if
 
     end subroutine rk2_interpolate_to_halfstep_AC
 !%
@@ -709,18 +707,18 @@ module runge_kutta2
         !% restsores data of Q, H, V at n+1/2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
-        Npack => npack_elemP(thisCol)
+    !     !%-----------------------------------------------------------------------------
+    !     !if (crashYN) return
+    !     thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
+    !     Npack => npack_elemP(thisCol)
 
-        if (Npack > 0) then
-            !% temporary storage of n+1 data
-            call ll_restore_from_temporary (thisCol, Npack)
+    !     if (Npack > 0) then
+    !         !% temporary storage of n+1 data
+    !         call ll_restore_from_temporary (thisCol, Npack)
 
-            !% update aux for restored data
-     !       call update_auxiliary_variables_byPack (thisPackCol, Npack)
-        end if
+    !         !% update aux for restored data
+    !  !       call update_auxiliary_variables_byPack (thisPackCol, Npack)
+    !     end if
 
     end subroutine rk2_restore_to_fullstep_AC
 !%

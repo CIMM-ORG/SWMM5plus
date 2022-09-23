@@ -515,9 +515,13 @@ module adjust
             case (ALLtm)
                 select case (whichType)
                 case (CC)
-                    thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
+                    !thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
+                    print *, 'CODE ERROR: AC Not implemented'
+                    call util_crashpoint(329874)
                 case (JM)
-                    thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
+                    !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
+                    print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6698723)
                 case default
                     print *, 'CODE ERROR -- unexpected case default'
                     !stop 
@@ -539,9 +543,13 @@ module adjust
             case (AC)
                 select case (whichType)
                 case (CC)
-                    thisCol => col_elemP(ep_ZeroDepth_CC_AC)
+                    !thisCol => col_elemP(ep_ZeroDepth_CC_AC)
+                    print *, 'CODE ERROR: AC Not implemented'
+                    call util_crashpoint(229843)
                 case (JM)
-                    thisCol => col_elemP(ep_ZeroDepth_JM_AC)
+                    !thisCol => col_elemP(ep_ZeroDepth_JM_AC)
+                    print *, 'CODE ERROR: AC Not implemented'
+                    call util_crashpoint(6698723)
                 case default
                     print *, 'CODE ERROR -- unexpected case default'
                     !stop 
@@ -615,11 +623,15 @@ module adjust
         !% Preliminaries:   
             select case (whichTM)
             case (ALLtm)
-                thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
+                !thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(66987253)
             case (ETM)
                 thisCol => col_elemP(ep_SmallDepth_CC_ETM)
             case (AC)
-                thisCol => col_elemP(ep_SmallDepth_CC_AC)
+                !thisCol => col_elemP(ep_SmallDepth_CC_AC)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6698723)
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                    print *, 'which has key ',trim(reverseKey(whichTM))
@@ -768,11 +780,15 @@ module adjust
         !% Preliminaries:
             select case (whichTM)
             case (ALLtm)
-                thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
+                !thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(1048366)
             case (ETM)
                 thisCol => col_elemP(ep_ZeroDepth_CC_ETM)
             case (AC)
-                thisCol => col_elemP(ep_ZeroDepth_CC_AC)
+                !thisCol => col_elemP(ep_ZeroDepth_CC_AC)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(823453)
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -841,11 +857,15 @@ module adjust
         !% Preliminaries:
             select case (whichTM)
             case (ALLtm)
-                thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
+                !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6698723)
             case (ETM)
                 thisCol => col_elemP(ep_ZeroDepth_JM_ETM)
             case (AC)
-                thisCol => col_elemP(ep_ZeroDepth_JM_AC)
+                !thisCol => col_elemP(ep_ZeroDepth_JM_AC)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(64438723)
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -958,14 +978,18 @@ module adjust
         !% Preliminaries:
             select case (whichTM)
             case (ALLtm)
-                thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
-                thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
+                !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
+                !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6634112)
             case (ETM)
                 thisCol   => col_elemP(ep_SmallDepth_CC_ETM)
                 thisColJM => col_elemP(ep_SmallDepth_JM_ETM) 
             case (AC)
-                thisCol   => col_elemP(ep_SmallDepth_CC_AC)
-                thisColJM => col_elemP(ep_SmallDepth_JM_AC)
+                !thisCol   => col_elemP(ep_SmallDepth_CC_AC)
+                !thisColJM => col_elemP(ep_SmallDepth_JM_AC)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6634723)
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -1253,13 +1277,13 @@ module adjust
         !% Aliases:
             select case (whichTM)
             case (ALLtm)
-                thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
+                !thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
                 print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
                 call util_crashpoint(9587934)
             case (ETM)
                 thisCol => col_elemP(ep_CC_Closed_Elements)
             case (AC)
-                thisCol => col_elemP(ep_CC_ACsurcharged)
+                !thisCol => col_elemP(ep_CC_ACsurcharged)
                 print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
                 call util_crashpoint(558723)
             case default
@@ -1292,15 +1316,6 @@ module adjust
             Vvalue     => elemR(:,er_Temp01)
             Zbottom    => elemR(:,er_Zbottom)
             isSlot     => elemYN(:,eYN_isPSsurcharged)  !% Preissman slot
-
-            ! print *, ' '
-            ! print *, 'in ADJUST ------------', thisCol
-            ! print *, 'thisP'
-            ! print *, thisP
-            ! print *, ' '
-            ! print *, 'is surcharged'
-            ! print *, elemYN(thisP,eYN_isACsurcharged)
-            ! print *, ' '
 
             multiplier => setting%Adjust%Head%FullDepthMultiplier
 
