@@ -13,7 +13,7 @@
             "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : true,
+            "ApplyYN" : false,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0,
             "FullDepthMultiplier" : 0.00001

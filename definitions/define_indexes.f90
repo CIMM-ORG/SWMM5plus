@@ -376,6 +376,7 @@ module define_indexes
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Preissmann_Number          !% Preissmann number
+        enumerator :: er_Pressure_Head              !% Pressure head 
         enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
         enumerator :: er_ManningsN_Dynamic          !% total ManningsN roughness, including dynamic adjustment (experimental)
         enumerator :: er_SeepRate                   !% Local seepage rate in m/s

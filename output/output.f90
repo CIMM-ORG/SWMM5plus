@@ -471,6 +471,7 @@ contains
         if (setting%Output%DataOut%isFluxConsOut)                N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isFroudeNumberOut)            N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isHeadOut)                    N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isPressureHeadOut)            N_OutTypeElem =  N_OutTypeElem + 1 
         if (setting%Output%DataOut%isHydRadiusOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPerimeterOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isManningsNout)               N_OutTypeElem =  N_OutTypeElem + 1
@@ -481,7 +482,7 @@ contains
         if (setting%Output%DataOut%isVolumeOut)                  N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeConsOut)              N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isVolumeOverflowOut)          N_OutTypeElem =  N_OutTypeElem + 1
-        if (setting%Output%DataOut%isVolumePondedOut)             N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isVolumePondedOut)            N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannNumberOut)        N_OutTypeElem =  N_OutTypeElem + 1
@@ -548,6 +549,15 @@ contains
             ii = ii+1
             output_types_elemR(ii) = er_Head
             output_typenames_elemR(ii) = 'PiezometricHead'
+            output_typeUnits_elemR(ii) = 'm'
+            output_typeProcessing_elemR(ii) = AverageElements
+            setting%Output%ElemHeadIndex = ii
+        end if
+        !% --- Pressure Head
+        if (setting%Output%DataOut%isPressureHeadOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Pressure_Head
+            output_typenames_elemR(ii) = 'PressureHead'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
             setting%Output%ElemHeadIndex = ii
