@@ -770,9 +770,6 @@ module geometry
         !% set the pressure head to piezometric head
         !% this will be fixed later for CC and JB elements
         presshead(thisP) = head(thisP)
- 
-        ! print *, 'thisP in geo_head_from_depth'
-        ! print *, thisP
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

@@ -547,15 +547,6 @@ module preissmann_slot
                     SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
                     SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 end where
-
-                ! print *, ' '
-                ! print *, 'volume ',SlotVolume(51)
-                ! print *, 'Length ',length(51)
-                ! print *, 'Area   ',SlotArea(51)
-                ! print *, 'Width  ',SlotWidth(51)
-                ! print *, 'Depth  ',SlotDepth(51)
-                ! print *, 'V      ',SlotDepth(51)* SlotWidth(51) * length(51)
-                ! print *, ' '
             
             !% --- for dynamic slot, preissmann number is adjusted
             case (DynamicSlot)
