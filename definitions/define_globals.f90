@@ -89,8 +89,10 @@ module define_globals
     !integer :: iet(5) = (/ 8698, 8700, 8710, 3874, 3875 /)
     !integer :: ift(4) = (/           8824, 4026, 4027, 4028 /)
 
-    integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
-    integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
+    ! integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
+    ! integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
+
+    integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
     integer(kind=8) :: irecCount = 0
 
@@ -260,6 +262,7 @@ module define_globals
     !% element output types
     integer, allocatable, target           :: output_types_elemR(:)
     integer, allocatable, target           :: output_typeProcessing_elemR(:)
+    integer, allocatable, target           :: output_typeMultiplyByBarrels_elemR(:)
     character(len=64), allocatable, target :: output_typeNames_elemR(:)
     character(len=16), allocatable         :: output_typeUnits_elemR(:)
     character(len=64), allocatable, target :: output_typeNames_withTime_elemR(:)
@@ -269,6 +272,7 @@ module define_globals
     !% face output types
     integer, allocatable, target           :: output_types_faceR(:)
     integer, allocatable, target           :: output_typeProcessing_faceR(:)
+    integer, allocatable, target           :: output_typeMultiplyByBarrels_faceR(:)
     character(len=64), allocatable, target :: output_typeNames_faceR(:)
     character(len=16), allocatable         :: output_typeUnits_faceR(:)
     character(len=64), allocatable, target :: output_typeNames_withTime_faceR(:)

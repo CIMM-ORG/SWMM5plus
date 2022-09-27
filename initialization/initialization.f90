@@ -605,20 +605,22 @@ contains
         !% --- Set default for all link and node keys
         call util_key_default_linknode()
 
-        !% --- initialize numbre of links for each node to zero
+        !% --- initialize number of links for each node to zero
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
+        !% --- set default for extra surcharge depth
+        node%R(:,nr_SurchargeExtraDepth) = setting%Junction%InfiniteExtraDepthValue 
 
         !% -----------------------
         !% --- LINK DATA
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
-            ! print *, ' '
-            ! print *, '================================================='
-            ! print *, 'AAA in ',trim(subroutine_name), ii
-            ! print *, api_linkf_geometry
-            ! print *, trim(reverseKey_api(api_linkf_geometry))
+            print *, ' '
+            print *, '================================================='
+            print *, 'AAA in ',trim(subroutine_name), ii
+            print *, api_linkf_geometry
+            print *, trim(reverseKey_api(api_linkf_geometry))
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
@@ -629,10 +631,10 @@ contains
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
                 ! print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
-
-            ! print *, 'BBB in ',trim(subroutine_name)
-            ! print *, ii, link%I(ii,li_geometry), trim(reverseKey(link%I(ii,li_geometry)))
-
+            link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
+                print *, 'link_barrels   ', link%I(ii,li_barrels)  
+            link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_xsect_culvertCode, .true.)
+                print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
                 !% --- for standard channel/conduits where upstream is 
@@ -1142,58 +1144,6 @@ contains
         ! stop 2098734    
 
     end subroutine init_linknode_arrays
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine init_conmon_from_links ()
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% allocates and initializes the storage for control and monitoring
-    !     !% arrays. Requires that the number of con/mon points needed for each
-    !     !% image is set in the N_conmon array
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer :: cmIdx, ii
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-    !     if (N_ConMon(this_image()) < 1) return  !% no control/monitoring points
-
-       
-
-    !     call util_allocate_conmon ()
-
-    !     !% --- set a counter for the control/monitoring points
-    !     cmIdx = 0
-
-    !     !% --- cycle through link array to find all the control points
-    !     do ii = 1, setting%SWMMinput%N_link
-    !         !% --- look for type 1 pumps
-    !         if (link%I(ii,li_link_sub_type) == lType1Pump) then
-    !             !% --- increment the counter for this control index
-    !             cmIdx = cmIdx + 1
-    !             !% --- error checking if the number of expected c/m points is exceeded
-    !             if (cmIdx > N_ConMon(this_image())) then
-    !                 print *, 'CODE ERROR: mismatch in control points'
-    !                 call util_crashpoint(778723)
-    !             end if
-    !             !% --- set the c/m index
-    !             conmonI(cmIdx,cmi_idx) = cmIdx
-    !             !% --- Type 1 pumps connect to a node
-    !             conmonYN(cmIdx,cmYN_isLink) = .false.
-    !             !% --- get the index of the upstream node that is the control point
-    !             conmonI(cmIdx,cmi_linknode_idx) = link%I(ii,li_Mnode_u)
-    !         end if
-
-    !         !% HACK NEED ALGORITHMS FOR OTHER CONTROL POINTS
-            
-    !     end do
-
-
-
-
-    ! end subroutine init_conmon_from_links   
 !%
 !%==========================================================================
 !%==========================================================================

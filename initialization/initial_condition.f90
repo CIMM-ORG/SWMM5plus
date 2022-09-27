@@ -111,6 +111,10 @@ contains
         elemR(:,er_VolumeOverFlow) = zeroR
         elemR(:,er_VolumeOverFlowTotal) = zeroR
 
+        !% --- initialize barrels
+        setting%Output%BarrelsExist = .false. !% will be set to true if barrels > 1 detected
+        elemI(:,ei_barrels) = oneR
+
 
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
@@ -406,6 +410,8 @@ contains
             !% necessary pointers
             thisLink    => packed_link_idx(ii)
 
+            call init_IC_get_barrels_from_linkdata(thisLink)
+
             call init_IC_get_depth (thisLink)
 
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
@@ -416,11 +422,9 @@ contains
 
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
-            call init_IC_get_ForceMain_from_linkdata (thisLink)       
+            call init_IC_get_ForceMain_from_linkdata (thisLink)      
 
-            !%brh20211215 this stuff moved to init_IC_derived_data as it
-            !% does not need to be done on a link-by-link basis.
-            !call init_IC_get_channel_conduit_velocity (thisLink) 
+            call init_IC_get_culvert_from_linkdata(thisLink)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
                 if (mod(ii,1000) == 0) then
@@ -442,6 +446,46 @@ contains
     end subroutine init_IC_from_linkdata
 !
 !==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_get_barrels_from_linkdata (thisLink)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% Sets the number of barrels (default is one)
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)  :: thisLink
+            integer, pointer     :: firstE, lastE, fdn(:), fup(:), eBarrels(:)
+            integer, pointer     :: fBarrels(:)
+            character(64) :: subroutine_name = 'init_IC_get_barrels_from_linkdata'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+        !%-----------------------------------------------------------------
+        !% Aliases
+            firstE      => link%I(thisLink,li_first_elem_idx)
+            lastE       => link%I(thisLink,li_last_elem_idx)
+            fdn         => elemI(:,ei_Mface_dL)
+            fup         => elemI(:,ei_Mface_uL)
+            eBarrels    => elemI(:,ei_barrels)
+            fBarrels    => faceI(:,fi_barrels)
+        !%-----------------------------------------------------------------
+        
+        !% --- for elements
+        eBarrels(firstE:lastE) = link%I(thisLink,li_barrels)
+
+        !print *, 'n barrels ', eBarrels(firstE)
+
+        !% --- for faces
+        fBarrels(fup(firstE))       = eBarrels(firstE)
+        fBarrels(fdn(firstE:lastE)) = eBarrels(firstE:lastE)
+
+        !% --- note that default for setting%Output%BarrelsExist is false, so
+        !%     only need a single multi-barrel to make this true.
+        if (any(eBarrels(firstE:lastE) > 1)) setting%Output%BarrelsExist = .true.
+
+    end subroutine init_IC_get_barrels_from_linkdata
+!%
+!%==========================================================================
 !==========================================================================
 !
     subroutine init_IC_get_depth (thisLink)
@@ -625,9 +669,9 @@ contains
         !--------------------------------------------------------------------------   
         !% --- handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-            elemR(:,er_Flowrate)           = link%R(thisLink,lr_FlowrateInitial)
-            elemR(:,er_Flowrate_N0)        = link%R(thisLink,lr_FlowrateInitial)
-            elemR(:,er_Flowrate_N1)        = link%R(thisLink,lr_FlowrateInitial)
+            elemR(:,er_Flowrate)           = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
+            elemR(:,er_Flowrate_N0)        = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
+            elemR(:,er_Flowrate_N1)        = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
             elemR(:,er_ManningsN)          = link%R(thisLink,lr_Roughness)
             !% --- distribute minor losses uniformly over all the elements in thi link
             elemR(:,er_Kconduit_MinorLoss) = link%R(thisLink,lr_Kconduit_MinorLoss) / (real(lastelem - firstelem + oneI,8))
@@ -915,10 +959,37 @@ contains
         end if
 
     end subroutine init_IC_set_forcemain_elements
-!    
-!==========================================================================
-!==========================================================================
-!
+!%    
+!%==========================================================================  
+
+!%==========================================================================
+!%
+    subroutine init_IC_get_culvert_from_linkdata (thisLink)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% Sets up the culvert
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)  :: thisLink
+            integer, pointer     :: firstE, lastE
+            character(64) :: subroutine_name = 'init_IC_get_culvert_from_linkdata'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+        !%-----------------------------------------------------------------
+        !% Aliases
+            firstE      => link%I(thisLink,li_first_elem_idx)
+            lastE       => link%I(thisLink,li_last_elem_idx)
+        !%-----------------------------------------------------------------
+
+        elemI(firstE:lastE,ei_culvertCode) = link%I(thisLink,li_culvertCode)
+
+        print *, 'culvert code ', elemI(firstE,ei_culvertCode)
+        
+    end subroutine init_IC_get_culvert_from_linkdata
+!%
+!%==========================================================================    
+!%==========================================================================
+!%
     subroutine init_IC_get_geometry_from_linkdata (thisLink)
         !--------------------------------------------------------------------------
         !% get the geometry data from links
@@ -2859,51 +2930,6 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!%    
-    ! subroutine init_IC_get_channel_conduit_velocity (thisLink, ePack, npack)
-    !     !% brh 20211216 obsolete -- replaced with init_IC_derived_values()
-    !     !%-----------------------------------------------------------------
-    !     !% Description:
-    !     !% get the velocity of channel and conduits
-    !     !% and sell all other velocity to zero
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: thisLink
-    !         integer, pointer    :: specificWeirType
-    !         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
-    !     !%------------------------------------------------------------------
-    !     !% Preliminaries:
-    !         !if (crashYN) return
-    !         if (setting%Debug%File%initial_condition) &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    !     !%------------------------------------------------------------------
-
-    !     !% HACK: this might not be right
-    !     where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-    !             (elemR(:,er_area)               .gt. zeroR ) .and. &
-    !             (elemI(:,ei_elementType)        == CC      ) )
-
-    !         elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
-    !         elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
-    !         elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
-
-    !     elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
-    !                 (elemR(:,er_area)               .le. zeroR ) .and. &
-    !                 (elemI(:,ei_elementType)        == CC    ) )
-
-    !         elemR(:,er_Velocity)    = zeroR
-    !         elemR(:,er_Velocity_N0) = zeroR
-    !         elemR(:,er_Velocity_N1) = zeroR
-
-    !     endwhere
-
-    !     if (setting%Debug%File%initial_condition) &
-    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    ! end subroutine init_IC_get_channel_conduit_velocity
-!%
-!%==========================================================================
-!%==========================================================================
 !%
     subroutine init_IC_for_nJm_from_nodedata ()
         !--------------------------------------------------------------------------
@@ -3103,6 +3129,9 @@ contains
         elemR(JMidx,er_Flowrate)     = zeroR
         elemR(JMidx,er_Velocity)     = zeroR
 
+        !% JM elements always have a single barrel
+        elemI(JMidx,ei_barrels)      = oneR
+
         !% wave speed is the gravity wave speed for the depth
         elemR(JMidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JMidx,er_Depth))
         elemR(JMidx,er_FroudeNumber) = zeroR
@@ -3227,6 +3256,9 @@ contains
             !%     Must evaluate across connected images
             !%     JB inherits geometry type from connected branch
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
+
+            !% --- branch has same number of barrels as the connected element
+            elemI(JBidx,ei_barrels)             = elemI(Aidx,ei_barrels)[Ci]
 
             !% --- Ability to surcharge is set by JM
             !%     Note that JB (if surcharged) isn't subject to the max surcharge depth 
@@ -5122,7 +5154,6 @@ contains
     end subroutine init_uniformtabledata_Uvalue
 !%
 !%==========================================================================
-
 !%==========================================================================
 !%
     subroutine init_IC_bottom_slope ()
@@ -5155,49 +5186,6 @@ contains
 
         !%------------------------------------------------------------------
     end subroutine init_IC_bottom_slope    
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine init_IC_beta ()
-    !     !%------------------------------------------------------------------ 
-    !     !% Description:
-    !     !% computes the beta = S0/n for all elements
-    !     !%------------------------------------------------------------------
-    !         integer, pointer :: npack, thisP(:)
-    !         integer          :: thisCol, thisLoc(1)
-    !         real(8), pointer :: slope(:), roughness(:), beta(:)
-    !         real(8) :: minRoughness
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         thisCol = ep_CC_ALLtm
-    !         npack   => npack_elemP(thisCol)
-    !         if (npack < 1) return
-    !         thisP     => elemP(1:npack,thisCol)
-    !         slope     => elemR(:,er_BottomSlope)
-    !         roughness => elemR(:,er_ManningsN)
-    !         beta      => elemR(:,er_Beta)
-    !     !%------------------------------------------------------------------
-    !     !% check for minimum value of roughness
-    !     minRoughness = minval(roughness(thisP))
-        
-    !     if (minRoughness .le. zeroR) then
-    !         thisLoc = minloc(roughness(thisP))
-    !         print *, 'CONFIGURATION ERROR: Roughness equal to or less than zero found'
-    !         print *, 'Roughness must always be greater than zero'
-    !         print *, 'location in elem array ',thisP(thisLoc)
-    !         print *, 'associated with SWMM link   ',elemI(thisP(thisLoc),ei_link_Gidx_SWMM)
-    !         print *, 'or with SWMM node           ',elemI(thisP(thisLoc),ei_node_Gidx_SWMM)
-    !         call util_crashpoint(6209873)
-    !     end if
-        
-    !     !% --- beta is always +, no matter what direction the slope.
-    !     beta(thisP) =  abs(slope(thisP)) / roughness (thisP)
-
-    !     !% note that minimum slope is already set.
-    
-    !     !%------------------------------------------------------------------
-    ! end subroutine init_IC_beta  
 !%
 !%==========================================================================
 !%==========================================================================

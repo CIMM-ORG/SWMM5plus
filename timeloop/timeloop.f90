@@ -492,6 +492,7 @@ contains
             !% ETM with Preissmann slot for surcharge
             call rk2_toplevel_ETM()
             
+                ! print *, 'out of rk2_toplevel_ETM'
                 !outstring = '    tl_hydraulics 222 '
                 !call util_syncwrite
 
@@ -506,6 +507,8 @@ contains
         end select    
 
         call util_accumulate_volume_conservation () 
+
+        ! print *, 'end of ',trim(subroutine_name)
 
         !%-------------------------------------------------------------------
         !% closing
@@ -524,7 +527,7 @@ contains
         !% lateral inflows from subcatchments are added.
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, pointer :: npack, thisP(:), thisBC(:)
+            integer, pointer :: npack, thisP(:), thisBC(:), nBarrels(:)
             real(8), pointer :: Qlateral(:), SeepRate(:), BreadthMax(:)
             real(8), pointer :: TopWidth(:), Area(:), AreaBelowBreadthMax(:)
             real(8), pointer :: Length(:)
@@ -539,6 +542,7 @@ contains
             Area                => elemR(:,er_Area)
             AreaBelowBreadthMax => elemR(:,er_AreaBelowBreadthMax)
             Length              => elemR(:,er_Length)
+            nBarrels            => elemI(:,ei_barrels)
 
             npack    => npack_elemP(ep_BClat)
             thisP    => elemP(1:npack,ep_BClat)
@@ -549,8 +553,10 @@ contains
 
         !% --- if ep_BClat exist add lateral inflow BC to lateral inflow accumulator
         !%     note that thisP and thisBC must be the same size or there is something wrong  
+        !%     For multi-barrel elements, divide lateral inflow evenly between barrels
         if (npack > 0) then    
-            Qlateral(thisP) = Qlateral(thisP) + BC%flowR(thisBC,br_value) 
+            Qlateral(thisP) = Qlateral(thisP) &
+                + BC%flowR(thisBC,br_value) / real(nBarrels(thisP),8)
         end if
 
         !% --- find the Adjust.Conductivity multiplier for the current month
@@ -588,24 +594,27 @@ contains
         !% Description:
         !% gets the subcatchment inflows and adds to the hydraulics lateral
         !% inflow. Must be done AFTER the hydraulics lateral inflows are set
+        !% Note: divide the inflow over the barrels in a multi-barrel element
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, pointer :: sImage(:), eIdx(:)
+            integer, pointer :: sImage(:), eIdx(:), nBarrels(:)
             real(8), pointer :: Qrate(:), Qlateral(:)
             integer :: mm
         !%------------------------------------------------------------------
         !% Aliases
-            sImage => subcatchI(:,si_runoff_P_image)
-            eIdx   => subcatchI(:,si_runoff_elemIdx)
+            sImage    => subcatchI(:,si_runoff_P_image)
+            eIdx      => subcatchI(:,si_runoff_elemIdx)
             !% --- using the full runoff rate for this period
-            Qrate => subcatchR(:,sr_RunoffRate_baseline)
+            Qrate    => subcatchR(:,sr_RunoffRate_baseline)
             Qlateral => elemR(:,er_FlowrateLateral)
+            nBarrels => elemI(:,ei_barrels)
         !%------------------------------------------------------------------
         do mm = 1,setting%SWMMinput%N_subcatch
             !% --- only if this image holds this node
             !print *, mm, eIdx(mm), Qlateral(eIdx(mm)), Qrate(mm)
             if (this_image() .eq. sImage(mm)) then
-                Qlateral(eIdx(mm)) = Qlateral(eIdx(mm)) + Qrate(mm)
+                Qlateral(eIdx(mm)) = Qlateral(eIdx(mm)) &
+                     + Qrate(mm) / real(nBarrels(mm),8)
             end if
         end do
 

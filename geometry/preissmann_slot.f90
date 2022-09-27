@@ -54,7 +54,7 @@ module preissmann_slot
             !% --- compute Preissmann slot for conduits only if ETM solver is used
             if (.not. ((whichTM .eq. ETM) .or. (whichTM .eq. ALLtm))) return
         !%------------------------------------------------------------------
-
+            ! print *, 'at start of Slot_topleve'
         !%    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
@@ -64,6 +64,8 @@ module preissmann_slot
             call slot_CC_ETM (thisPackCol, Npack)
         end if
 
+            ! print *, 'after slot_CC_ETM '
+
         !% --- Handle Preissmann Slot for all JM elements
         !%    (although SurchargeExtraDepth=0 is effectively open)
         thisPackCol => col_elemP(colP_JM_PS)
@@ -71,6 +73,8 @@ module preissmann_slot
         if (Npack > 0) then
             call slot_JM_ETM (thisPackCol, Npack)
         end if
+
+            ! print *, 'after slot_JM_ETM'
   
     end subroutine slot_toplevel
 !%
@@ -281,6 +285,8 @@ module preissmann_slot
         !% Slot computation for Junction Branches
         !% This both computes the slot values and also adjusts the volume
         !% and depth. The head for JB was already set to
+        !% Note that overflow/ponding from JB is not allowed, so this does
+        !% not consider the number of barrels.
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: thisColP_JM
@@ -434,6 +440,9 @@ module preissmann_slot
         !%------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for conduits in ETM methods
+        !% 
+        !% Note that conduits are not allowed to overflow/pond, so there
+        !% is no need to consider the number of barrels.
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisCol, Npack
@@ -610,6 +619,9 @@ module preissmann_slot
         !% Compute Preissmann slot for closed JM's in ETM methods
         !% Note this does NOT change the volume stored except in the case
         !% ponding or overflow
+        !%
+        !% NOTE: as this is JM only, which have exactly 1 barrel, there
+        !% is no need to multiply overflow/ponding by number of barrels.
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisCol, Npack
@@ -759,6 +771,7 @@ module preissmann_slot
                     volume(thisP)     = volume(thisP) - VolumeExtra(thisP)
                 end where
 
+                !% --- note, nBarrels not needed because JM always has 1 barrel
                 if (setting%SWMMinput%AllowPonding) then 
                     VolumePonded(thisP)   = VolumePonded(thisP)   + VolumeExtra(thisP)
                 else

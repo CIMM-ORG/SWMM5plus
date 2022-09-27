@@ -783,7 +783,7 @@ module geometry
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisColP_Open_CC !% must be open channels
-            integer, pointer    :: Npack, thisP(:)
+            integer, pointer    :: Npack, thisP(:), nBarrels(:)
             real(8), pointer    :: volume(:), fullvolume(:), overflow(:)
             real(8), pointer    :: temp(:)
         !%------------------------------------------------------------------
@@ -797,13 +797,15 @@ module geometry
             fullvolume => elemR(:,er_FullVolume)
             overflow   => elemR(:,er_VolumeOverFlow) 
             temp       => elemR(:,er_Temp01)
+            nBarrels   => elemI(:,ei_barrels)
         !%------------------------------------------------------------------
 
         !% --- compute the potential overflow
         temp(thisP) = volume(thisP) - fullvolume(thisP)
         where (temp(thisP) > zeroR)
             !% --- overflow is cumulative within the time step
-            overflow(thisP) = overflow(thisP) + temp(thisP) 
+            !%     accounts for multiple barrels
+            overflow(thisP) = overflow(thisP) * real(nBarrels(thisP),8) + temp(thisP) 
             !% --- set volume to full
             volume(thisP)   = fullvolume(thisP)
         endwhere

@@ -92,17 +92,17 @@ module utility
 
         ! stop 293874
 
-         nn=10 ! upstream
-         ii=22 !% jb up
-         jj=21 !% jm
-         kk=23 !% jb dn
-         mm=32 !% dn
+        !  nn=10 ! upstream
+        !  ii=22 !% jb up
+        !  jj=21 !% jm
+        !  kk=23 !% jb dn
+        !  mm=32 !% dn
         !  write(*,"(A,10f12.5)") 'volume        ', elemR(nn,er_Volume),     elemR(ii,er_Volume),     elemR(jj,er_Volume),     elemR(kk,er_Volume),     elemR(mm,er_Volume)
         !  write(*,"(A,10f12.5)") 'full volume   ', elemR(nn,er_FullVolume), elemR(ii,er_FullVolume), elemR(jj,er_FullVolume), elemR(kk,er_FullVolume), elemR(mm,er_FullVolume)
         !  write(*,"(A,10f12.5)") 'slot volume   ', elemR(nn,er_SlotVolume), elemR(ii,er_SlotVolume), elemR(jj,er_SlotVolume), elemR(kk,er_SlotVolume),  elemR(mm,er_SlotVolume)
         !  print *, ' '
         !  !write(*,"(A,10f12.5)") 'velocity      ', elemR(nn,er_Velocity),   elemR(ii,er_Velocity),   elemR(jj,er_Velocity),   elemR(kk,er_Velocity),   elemR(mm,er_Velocity)
-        !  write(*,"(A,10f12.5)") 'Q             ', elemR(nn,er_Flowrate),   elemR(ii,er_Flowrate),   elemR(jj,er_Flowrate),   elemR(kk,er_Flowrate),   elemR(mm,er_Flowrate)
+         !  write(*,"(A,10f12.5)") 'Q             ', elemR(nn,er_Flowrate),   elemR(ii,er_Flowrate),   elemR(jj,er_Flowrate),   elemR(kk,er_Flowrate),   elemR(mm,er_Flowrate)
         !  write(*,"(A,10f12.5)") 'Q Cons ', faceR(fup(nn),fr_Flowrate_Conservative),   faceR(fup(ii),fr_Flowrate_Conservative),   elemR(jj,er_Flowrate),  &
         !                                    faceR(fdn(kk),fr_Flowrate_Conservative),   faceR(fdn(mm),fr_Flowrate_Conservative)
          
@@ -114,10 +114,10 @@ module utility
         !   write(*,"(A,10f12.5)") 'Z Crown       ', elemR(nn,er_FullDepth) + elemR(nn,er_Zbottom),       elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom),       elemR(jj,er_FullDepth) + elemR(jj,er_Zbottom), &
         !                                           elemR(kk,er_FullDepth) + elemR(kk,er_Zbottom),       elemR(mm,er_FullDepth) + elemR(mm,er_Zbottom)
 
-         print *, ' '
-           write(*,"(A,10f12.5)") 'Depth         ', elemR(nn,er_Depth),  elemR(ii,er_Depth),  elemR(jj,er_Depth),  elemR(kk,er_Depth),  elemR(mm,er_Depth)
-         print *, ' '
-           write(*,"(A,10f12.5)") 'slot Depth    ', elemR(nn,er_SlotDepth),  elemR(ii,er_SlotDepth),  elemR(jj,er_SlotDepth),  elemR(kk,er_SlotDepth),  elemR(mm,er_SlotDepth)
+        !  print *, ' '
+        !    write(*,"(A,10f12.5)") 'Depth         ', elemR(nn,er_Depth),  elemR(ii,er_Depth),  elemR(jj,er_Depth),  elemR(kk,er_Depth),  elemR(mm,er_Depth)
+        !  print *, ' '
+        !    write(*,"(A,10f12.5)") 'slot Depth    ', elemR(nn,er_SlotDepth),  elemR(ii,er_SlotDepth),  elemR(jj,er_SlotDepth),  elemR(kk,er_SlotDepth),  elemR(mm,er_SlotDepth)
         !stop 293874
            !  write(*,"(A,10f12.5)") 'slot volume   ', elemR(ii  ,er_SlotVolume), elemR(ii+1,er_SlotVolume), elemR(jj,er_SlotVolume)
         !  write(*,"(A,10f12.5)") 'volume        ', elemR(ii  ,er_Volume), elemR(ii+1,er_Volume), elemR(jj,er_Volume)
@@ -348,13 +348,31 @@ module utility
         !                                           elemR(iet(6),er_FlowrateLateral), &
         !                                           elemR(iet(7),er_FlowrateLateral)
 
-        ! write(*,"(A,10e12.3)") 'Q elem       ',elemR(iet(1),er_Flowrate), &
-        !                                           elemR(iet(2),er_Flowrate), &
-        !                                           elemR(iet(3),er_Flowrate), &
-        !                                           elemR(iet(4),er_Flowrate), &
-        !                                           elemR(iet(5),er_Flowrate), &
-        !                                           elemR(iet(6),er_Flowrate), &
-        !                                           elemR(iet(7),er_Flowrate)
+        write(*,"(A,12f10.3)") 'Q elem  ',elemR(iet(1),er_Flowrate), &
+                                                  elemR(iet(2),er_Flowrate), &
+                                                  elemR(iet(3),er_Flowrate), &
+                                                  elemR(iet(4),er_Flowrate), &
+                                                  elemR(iet(5),er_Flowrate), &
+                                                  elemR(iet(6),er_Flowrate), &
+                                                  elemR(iet(7),er_Flowrate), &
+                                                  elemR(iet(8),er_Flowrate), &
+                                                  elemR(iet(9),er_Flowrate), &
+                                                  elemR(iet(10),er_Flowrate), &
+                                                  elemR(iet(11),er_Flowrate), &
+                                                  elemR(iet(12),er_Flowrate)
+
+        write(*,"(A,12f10.3)") 'D elem  ',elemR(iet(1),er_Depth), &
+                                                  elemR(iet(2),er_Depth), &
+                                                  elemR(iet(3),er_Depth), &
+                                                  elemR(iet(4),er_Depth), &
+                                                  elemR(iet(5),er_Depth), &
+                                                  elemR(iet(6),er_Depth), &
+                                                  elemR(iet(7),er_Depth), &
+                                                  elemR(iet(8),er_Depth), &
+                                                  elemR(iet(9),er_Depth), &
+                                                  elemR(iet(10),er_Depth), &
+                                                  elemR(iet(11),er_Depth), &
+                                                  elemR(iet(12),er_Depth)
 
         ! write(*,"(A,10e12.3)") 'Q Net             ',faceR(elemI(iet(1),ei_Mface_uL),fr_Flowrate_Conservative) - faceR(elemI(iet(1),ei_Mface_dL),fr_Flowrate_Conservative), &
         !                                            faceR(elemI(iet(2),ei_Mface_uL),fr_Flowrate_Conservative) - faceR(elemI(iet(2),ei_Mface_dL),fr_Flowrate_Conservative), &
@@ -871,7 +889,7 @@ module utility
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
             real(8), pointer :: VolOver(:), VolSlot(:)
             integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
-            integer, pointer :: fdn(:), fup(:), BranchExists(:)
+            integer, pointer :: fdn(:), fup(:), BranchExists(:), fBarrels(:)
             integer :: ii,kk
             real(8) :: netQ
         !%------------------------------------------------------------------
@@ -881,11 +899,14 @@ module utility
             thisColCC => col_elemP(ep_CC_ALLtm)
             thisColJM => col_elemP(ep_JM_ALLtm)
             fQ      => faceR(:,fr_Flowrate_Conservative)
+            fBarrels=> faceI(:,fi_barrels)
             eCons   => elemR(:,er_VolumeConservation)
             eQLat   => elemR(:,er_FlowrateLateral)
+            !nBarrels=> elemI(:,ei_barrels)
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
-            VolOver => elemR(:,er_VolumeOverFlow) 
+            VolOver => elemR(:,er_VolumeOverFlow)
+            VolSlot => elemR(:,er_SlotVolume) 
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -967,7 +988,7 @@ module utility
                     - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
 
             ! print *, 'after ====='
-            ! print *, 'econs      ', eCons(21)
+            ! print *, 'econs      ', thisP, eCons(thisP)
             ! print *, ' '
 
             ! do ii=1,npack
@@ -986,47 +1007,50 @@ module utility
             ! print *, dt * (fQ(fup(48)) + fQ(fup(50)) - fQ(fdn(49)) )
 
             do ii=1,max_branch_per_node,2
-                eCons(thisP) = eCons(thisP)                                                    &
-                             + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii))     &
-                                    - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) ) &
-                             - VolOver(thisP+ii  ) * real(BranchExists(thisP+ii  ),8)          &
-                             - VolOver(thisP+ii+1) * real(BranchExists(thisP+ii+1),8)                              
+                eCons(thisP) = eCons(thisP)                                                                                        &
+                             + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(fBarrels(fup(thisP+ii  )),8)   &
+                                    - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8) )  !&
+                            !  - VolOver(thisP+ii  ) * real(BranchExists(thisP+ii  ),8)                                              !&
+                            !  - VolOver(thisP+ii+1) * real(BranchExists(thisP+ii+1),8)                              
             end do
 
             ! print *, ' '
             ! print *, ' in conservation check'
-            ! print *, 'econs      ', eCons(21)
-            ! print *, 'vol in     ',dt * fQ(fup(22))
-            ! print *, 'vol out    ',dt * fQ(fdn(23))
-            ! print *, 'vol change ',VolNew(21) - VolOld(21)
-            ! print *, 'vol over   ',VolOver(21)
-            ! print *, 'vol slot   ',VolSlot(21)
-            ! print *, 'econs      ',eCons(21)
+            ! print *, 'econs      ', eCons(41)
+            ! print *, 'vol in     ',dt * fQ(fup(42)) * real(fBarrels(fup(42)),8)
+            ! print *, 'vol out    ',dt * fQ(fdn(43)) * real(fBarrels(fdn(43)),8)
+            ! print *, 'vol Lat    ',dt * eQlat(41)
+            ! print *, 'vol change ',VolNew(41) - VolOld(41)
+            ! print *, 'vol over   ',VolOver(41)
+            ! print *, 'vol slot   ',VolSlot(41)
             ! print *, ' '
-            
-            ! print *, 'zzz ', eCons(47)
+
 
             do ii = 1,size(thisP)
                 if (abs(eCons(thisP(ii))) > 1.0e-4) then
                     print *, ' '
                     print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
-                    print *, 'is zero =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
+                    print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
                     print *,  'volume overflow ', VolOver(thisP(ii))
                     print *,  'net cons ',eCons(thisP(ii))
                     do kk = 1,max_branch_per_node,2
-                        print *, 'branch Q',kk,   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)   &
-                                           ,kk+1, fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8) 
+                        print *, 'branch Q up',kk,   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(thisP(ii)+kk  ),8)
+                        print *, 'branch Q dn',kk+1, fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(thisP(ii)+kk+1),8)
                     end do
                     do kk = 1,max_branch_per_node,2
-                        print *, 'branch VolOver',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)   &
-                                                 ,thisP(ii)+kk+1, VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
+                        print *, 'branch VolOver up',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)
+                        print *, 'branch VolOver dn',thisP(ii)+kk+1, VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
                     end do
-                    print *, ' vol ', VolNew(thisP(ii)), VolOld(thisP(ii)), VolSlot(thisP(ii))
+                    print *, 'thisP ii ',thisP(ii)
+                    print *, 'VolNew   ',VolNew(thisP(ii))
+                    print *, 'VolOld   ',VolOld(thisP(ii))
+                    print *, 'VolSlot  ',VolSlot(thisP(ii))
+                    print *, ' vol '  , VolNew(thisP(ii)),  VolOld(thisP(ii)),   VolSlot(thisP(ii))
                     print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii))) + VolSlot(thisP(ii))
                     netQ = eQlat(thisP(ii))
                     do kk = 1,max_branch_per_node,2
-                        netQ = netQ + fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8)  &
-                                     -fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8)
+                        netQ = netQ + fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8) * real(fBarrels(thisP(ii)+kk  ),8) &
+                                     -fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8) * real(fBarrels(thisP(ii)+kk+1),8)
                     end do
                     !print *, ' netQ ',netQ
                     print *, ' netVol ', netQ * dt
