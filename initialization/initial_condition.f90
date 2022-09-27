@@ -1511,7 +1511,7 @@ contains
                 elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
                 elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
-                elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth)
+                elemR(:,er_FullHydDepth)          = onefourthR * setting%constant%pi * elemSGR(:,esgr_Circular_Diameter)
                 elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
                 elemR(:,er_BreadthMax)            = elemR(:,er_FullDepth)
                 elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR

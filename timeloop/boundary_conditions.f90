@@ -748,9 +748,13 @@ contains
                 !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
                 !%     the domain determines the outfall height, which can set up an instability
                 if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
-                    print *, 'CONFIGURATION ERROR: a FREE OUTFALL must have flap gate set to YES'
                     print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                    call util_crashpoint(566823)
+                    write(*,*) '***************************************************************'
+                    write(*,*) '** WARNING -- a FREE OUTFALL must have flap gate to prevent, **'
+                    write(*,*) '**    back water flow. Thus, flap gate has been set to YES   **'
+                    write(*,*) '***************************************************************'
+                    BC%headYN(ii,bYN_hasFlapGate) = .true.
+                    ! call util_crashpoint(566823)
                 end if
 
                 if (elemI(eIdx,ei_elementType) == CC) then

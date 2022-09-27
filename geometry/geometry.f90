@@ -314,7 +314,7 @@ module geometry
         call geo_ell_from_head (thisColP_CC)
 
         !% --- compute pressure head from the modified hydraulic depth
-        call geo_pressure_head_from_ell (thisColP_CC)
+        call geo_pressure_head_from_hyddepth (thisColP_CC)
 
             ! call util_CLprint ('in geometry after ell_from_head') 
 
@@ -1926,16 +1926,16 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-   subroutine geo_pressure_head_from_ell (thisColP)
+   subroutine geo_pressure_head_from_hyddepth (thisColP)
         !%------------------------------------------------------------------
         !% Description:
         !% calculates the pressure head
         !%------------------------------------------------------------------
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
-        real(8), pointer :: pressurehead(:), ell(:), zbottom(:)
+        real(8), pointer :: pressurehead(:), hyddepth(:), zbottom(:)
 
-        character(64) :: subroutine_name = 'geo_pressure_head_from_ell'
+        character(64) :: subroutine_name = 'geo_pressure_head_from_hyddepth'
         !%------------------------------------------------------------------
         !% Preliminaries
             Npack     => npack_elemP(thisColP)
@@ -1946,16 +1946,16 @@ module geometry
         !% Aliases:
             thisP        => elemP(1:Npack,thisColP)
             pressurehead => elemR(:,er_Pressure_Head)
-            ell          => elemR(:,er_ell)
+            hyddepth     => elemR(:,er_HydDepth)
             zbottom      => elemR(:,er_Zbottom)
         !%------------------------------------------------------------------
             
-        pressurehead(thisP) = zbottom(thisP) + ell(thisP)
+        pressurehead(thisP) = zbottom(thisP) + hyddepth(thisP)
 
         !%------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_pressure_head_from_ell 
+    end subroutine geo_pressure_head_from_hyddepth 
 !%
 !%==========================================================================  
 !%==========================================================================
