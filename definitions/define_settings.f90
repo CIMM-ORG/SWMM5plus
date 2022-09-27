@@ -141,6 +141,7 @@ module define_settings
         logical :: isFluxConsOut            = .true.
         logical :: isFroudeNumberOut        = .false.
         logical :: isHeadOut                = .true.
+        logical :: isPressureHeadOut        = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
         logical :: isManningsNout           = .false.

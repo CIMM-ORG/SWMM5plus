@@ -167,7 +167,7 @@ module preissmann_slot
         integer, intent(in) :: thisColP_closed_CC
         integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), dSlotDepth(:)
-        real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:)
+        real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:), pressHead(:)
         real(8), pointer    :: head(:), fullVolume(:), fullArea(:), fullDepth(:)
         real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:), SlotHydRad(:)
         logical, pointer    :: isSlot(:)
@@ -195,7 +195,7 @@ module preissmann_slot
             fullvolume => elemR(:,er_FullVolume)
             fullArea   => elemR(:,er_FullArea)
             head       => elemR(:,er_Head)
-            !Overflow   => elemR(:,er_VolumeOverFlow) !% handled elsewhere
+            pressHead  => elemR(:,er_Pressure_Head)
             SlotWidth  => elemR(:,er_SlotWidth)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
@@ -213,10 +213,11 @@ module preissmann_slot
         select case (SlotMethod)
             case (StaticSlot)
                 where (isSlot(thisP)) 
-                    volume(thisP) = volume(thisP)  + SlotVolume(thisP)
+                    volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
                     ! area(thisP)   = area(thisP)    + SlotArea(thisP) !% KEEP AREA BASED ON CONDUIT
-                    depth(thisP)  = depth(thisP)   + SlotDepth(thisP)
-                    head(thisP)   = head(thisP)    + SlotDepth(thisP)
+                    depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
+                    head(thisP)      = head(thisP)      + SlotDepth(thisP)
+                    pressHead(thisP) = pressHead(thisP) + SlotDepth(thisP)
                 end where 
 
             case (DynamicSlot)
@@ -224,8 +225,9 @@ module preissmann_slot
                     volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
                     ! area(thisP)      = area(thisP)    + SlotArea(thisP)  !% KEEP AREA BASED ON CONDUIT
                     SlotDepth(thisP) = max(SlotDepth(thisP) + dSlotDepth(thisP), zeroR) 
-                    depth(thisP)     = depth(thisP)   + SlotDepth(thisP)
+                    depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
                     head(thisP)      = max(head(thisP)  + SlotDepth(thisP), zbottom(thisP))
+                    pressHead(thisP) = pressHead(thisP) + SlotDepth(thisP)
                 elsewhere
                     SlotDepth(thisP)  = zeroR
                     ! SlotVolume(thisP) = zeroR
@@ -249,21 +251,27 @@ module preissmann_slot
         !% Declarations:
             integer, intent(in) :: thisColP_JM
             integer, pointer    :: Npack, thisP(:)
-            real(8), pointer    :: volume(:), depth(:), ell(:), ellMax(:)
-            real(8), pointer    :: SlotVolume(:), SlotDepth(:)
+            real(8), pointer    :: volume(:), depth(:), ell(:), ellMax(:), head(:)
+            real(8), pointer    :: pressHead(:), SlotVolume(:), SlotDepth(:)
+
+            character(64) :: subroutine_name = 'slot_JM_adjustments'
         !%------------------------------------------------------------------
         !% Preliminaries:
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
             Npack => npack_elemP(thisColP_JM)
             if (Npack < 1) return
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
             thisP  => elemP(1:Npack,thisColP_JM)
             volume => elemR(:,er_Volume)
             depth  => elemR(:,er_Depth)
+            head   => elemR(:,er_Head)
             ell    => elemR(:,er_ell)
             ellMax => elemR(:,er_ell_max) 
+            pressHead  => elemR(:,er_Pressure_Head)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
         !%------------------------------------------------------------------
@@ -272,8 +280,11 @@ module preissmann_slot
 
         volume(thisp) = volume(thisP) + SlotVolume(thisP)
         depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
+        pressHead(thisP) = head(thisP) + SlotDepth(thisP)
         ell(thisP)    = ellMax(thisP)
 
+        if (setting%Debug%File%geometry) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine slot_JM_adjustments
 !%
 !%==========================================================================    
@@ -294,16 +305,20 @@ module preissmann_slot
             real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ell(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), ellMax(:)
-            real(8), pointer :: overflow(:), grav, TargetPCelerity, Alpha
+            real(8), pointer :: pressHead(:), overflow(:), grav, TargetPCelerity, Alpha
             logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:), isSurcharge(:), canSurcharge(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
             integer :: tB, ii, kk
+
+            character(64) :: subroutine_name = 'slot_JB_computation'
         !%------------------------------------------------------------------
         !% Preliminaries:
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
             Npack => npack_elemP(thisColP_JM)
             if (Npack < 1) return
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
             thisP         => elemP(1:Npack,thisColP_JM)
@@ -314,6 +329,7 @@ module preissmann_slot
             fullArea      => elemR(:,er_FullArea)
             fullDepth     => elemR(:,er_FullDepth)
             overflow      => elemR(:,er_VolumeOverFlow)
+            pressHead     => elemR(:,er_Pressure_Head)
             volume        => elemR(:,er_Volume)
             zcrown        => elemR(:,er_Zcrown)
             zbottom       => elemR(:,er_Zbottom)
@@ -378,6 +394,7 @@ module preissmann_slot
                         volume(tB) = volume(tB)  + SlotVolume(tB)
                         !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
                         depth(tB)  = depth(tB)   + SlotDepth(tB)
+                        pressHead(tB) = pressHead(tB) + SlotDepth(tB)
                         Overflow(tB) = zeroR  !% defined as zero (no oveflow from JB)
                     else 
                         !% --- excess head at JB in an open channel represents
@@ -418,6 +435,7 @@ module preissmann_slot
                         volume(tB) = volume(tB)  + SlotVolume(tB)
                         !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
                         depth(tB)  = depth(tB)   + SlotDepth(tB)
+                        pressHead(tB) = pressHead(tB) + SlotDepth(tB)
                         Overflow(tB) = zeroR !% defined as zero (no overflow from JB)
                     else 
                         !% --- excess head at JB in an open channel represents
@@ -430,6 +448,8 @@ module preissmann_slot
                   
         !%------------------------------------------------------------------
         !% Closing
+        if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine slot_JB_computation
 !%
 !%==========================================================================
@@ -536,15 +556,6 @@ module preissmann_slot
                     SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
                     SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 end where
-
-                ! print *, ' '
-                ! print *, 'volume ',SlotVolume(51)
-                ! print *, 'Length ',length(51)
-                ! print *, 'Area   ',SlotArea(51)
-                ! print *, 'Width  ',SlotWidth(51)
-                ! print *, 'Depth  ',SlotDepth(51)
-                ! print *, 'V      ',SlotDepth(51)* SlotWidth(51) * length(51)
-                ! print *, ' '
             
             !% --- for dynamic slot, preissmann number is adjusted
             case (DynamicSlot)
