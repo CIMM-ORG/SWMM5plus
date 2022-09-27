@@ -135,68 +135,6 @@ contains
 !%==========================================================================    
 !%==========================================================================
 !%
-!    subroutine output_COMMON_nodes_selection ()
-        !% brh 20211207 -- obsolete
-        !% Now using the api_node_rptFlag to initialize
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Gets the nodes that are output from the SWMM.inp file
-        !% Stores T/F in the YN in the node%YN(:,nYN_isOutput) column
-        !%-----------------------------------------------------------------------------
-         !   integer :: ii
-        !%-----------------------------------------------------------------------------
-        !% HACK -- presently only handles ALL
-        !node%YN(1:N_node,nYN_isOutput) = .true.
-
-        !print *, 'printing the node output'
-        !do ii = 1,N_node
-        !    print *, ii, node%YN(ii,nYN_isOutput)
-        !end do
-
-        !print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE NODE IS OUTPUT'
-        !node%YN(1:N_node,nYN_isOutput) = .false.
-
-        !node%YN(1,nYN_isOutput)  = .true.
-        !node%YN(2,nYN_isOutput)  = .true.
-        !node%YN(3,nYN_isOutput)  = .true.
-        !node%YN(4,nYN_isOutput)  = .true.
-
-!    end subroutine output_COMMON_nodes_selection
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-!   subroutine output_COMMON_links_selection ()
-        !% brh 20211207 -- obsolete
-        !% Now using the api_link_rptFlag to initialize
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Gets the links that are output from the SWMM.inp file
-        !% Stores T/F in the YN in the link%YN(:,lYN_isOutput) column
-        !%-----------------------------------------------------------------------------
-        ! integer :: ii
-        !%-----------------------------------------------------------------------------
-        !% HACK -- presently only handles ALL
-        !link%YN(1:N_link,lYN_isOutput) = .true.
-
-        !print *, 'printing the link output'
-        !do ii = 1,N_link
-        !    print *, ii, link%YN(ii,lYN_isOutput)
-        !end do
-
-        !print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE LINK IS OUTPUT'
-
-        !link%YN(1:N_link,lYN_isOutput) = .false.
-
-        !link%YN(1,lYN_isOutput)  = .true.
-        ! link%YN(2,lYN_isOutput)  = .true.
-        ! link%YN(3,lYN_isOutput)  = .true.
-
-!    end subroutine output_COMMON_links_selection
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine outputML_element_selection ()
         !%------------------------------------------------------------------
         !% Description:
@@ -511,6 +449,7 @@ contains
             output_typenames_elemR(ii) = 'Area'
             output_typeUnits_elemR(ii) = 'm^2'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI
         end if
         !% --- Depth
         if (setting%Output%DataOut%isDepthOut) then
@@ -519,6 +458,7 @@ contains
             output_typenames_elemR(ii) = 'Depth'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- Flow rate
         if (setting%Output%DataOut%isFlowrateOut) then
@@ -527,6 +467,7 @@ contains
             output_typenames_elemR(ii) = 'Flowrate'
             output_typeUnits_elemR(ii) = 'm^3/s'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI
         end if
         !% --- Conservative Flux rates, on elements this is the lateral flows
         if (setting%Output%DataOut%isFluxConsOut) then
@@ -535,6 +476,7 @@ contains
             output_typenames_elemR(ii) = 'FlowrateLateral'
             output_typeUnits_elemR(ii) = 'm^3/s'
             output_typeProcessing_elemR(ii) = SumElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI
         end if
         !% --- Froude Number
         if (setting%Output%DataOut%isFroudeNumberOut) then
@@ -543,6 +485,7 @@ contains
             output_typenames_elemR(ii) = 'FroudeNumber'
             output_typeUnits_elemR(ii) = 'unitless'
             output_typeProcessing_elemR(ii) = MaximumValue
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- Head
         if (setting%Output%DataOut%isHeadOut) then
@@ -551,6 +494,7 @@ contains
             output_typenames_elemR(ii) = 'PiezometricHead'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
             setting%Output%ElemHeadIndex = ii
         end if
         !% --- Pressure Head
@@ -569,6 +513,7 @@ contains
             output_typenames_elemR(ii) = 'HydraulicRadius'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI !% note Rh is invalid for multi-barrel!
         end if
         !% --- Perimeter
         if (setting%Output%DataOut%isPerimeterOut) then
@@ -577,6 +522,7 @@ contains
             output_typenames_elemR(ii) = 'WettedPerimeter'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI
         end if
         !% --- Manning's n Roughness (changed by Force Main)
         if (setting%Output%DataOut%isManningsNout) then
@@ -585,6 +531,7 @@ contains
             output_typenames_elemR(ii) = 'ManningsN'
             output_typeUnits_elemR(ii) = 's/m^(1/3)'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- SlotWidth
         if (setting%Output%DataOut%isSlotWidthOut) then
@@ -593,6 +540,7 @@ contains
             output_typenames_elemR(ii) = 'PreissmannSlotWidth'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- SlotDepth
         if (setting%Output%DataOut%isSlotDepthOut) then
@@ -601,6 +549,7 @@ contains
             output_typenames_elemR(ii) = 'PreissmannSlotDepth'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- TopWidth
         if (setting%Output%DataOut%isTopWidthOut) then
@@ -609,6 +558,7 @@ contains
             output_typenames_elemR(ii) = 'FreeSurfaceTopWidth'
             output_typeUnits_elemR(ii) = 'm'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI
         end if
         !% --- Velocity
         if (setting%Output%DataOut%isVelocityOut) then
@@ -617,6 +567,7 @@ contains
             output_typenames_elemR(ii) = 'Velocity'
             output_typeUnits_elemR(ii) = 'm/s'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- Volume
         if (setting%Output%DataOut%isVolumeOut) then
@@ -625,6 +576,7 @@ contains
             output_typenames_elemR(ii) = 'Volume'
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI
         end if
         !% --- Cumulative volume conservation
         if (setting%Output%DataOut%isVolumeConsOut) then
@@ -633,6 +585,7 @@ contains
             output_typenames_elemR(ii) = 'VolumeConservation'
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- volume overflow in this step
         if (setting%Output%DataOut%isVolumeOverflowOut) then
@@ -641,6 +594,7 @@ contains
             output_typenames_elemR(ii) = 'VolumeOverflow'
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- volume ponded (present accumulation)
         if (setting%Output%DataOut%isVolumePondedOut) then
@@ -649,6 +603,7 @@ contains
             output_typenames_elemR(ii) = 'VolumePonded'
             output_typeUnits_elemR(ii) = 'm^3'
             output_typeProcessing_elemR(ii) = SumElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         !% --- WaveSpeed
         if (setting%Output%DataOut%isWaveSpeedOut) then
@@ -657,6 +612,7 @@ contains
             output_typenames_elemR(ii) = 'EffectiveWaveSpeed'
             output_typeUnits_elemR(ii) = 'm/s'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
 
         !% --- Preissmann Celerity
@@ -666,6 +622,7 @@ contains
             output_typenames_elemR(ii) = 'PreissmannCelerity'
             output_typeUnits_elemR(ii) = 'm/s'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
 
         !% --- Preissmann Number
@@ -675,9 +632,9 @@ contains
             output_typenames_elemR(ii) = 'PreissmannNumber'
             output_typeUnits_elemR(ii) = ' '
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
 
-        
         !% -- store 'time' for use in output
         output_typeNames_withTime_elemR(2:ii+1) = output_typeNames_elemR(:)
         output_typeNames_withTime_elemR(1) = 'Time'
@@ -799,11 +756,13 @@ contains
             output_typeNames_faceR(ii) = 'AreaUpstream'
             output_typeUnits_faceR(ii) = 'm^2'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
             ii = ii+1
             output_types_faceR(ii) = fr_Area_d
             output_typeNames_faceR(ii) = 'AreaDownstream'
             output_typeUnits_faceR(ii) = 'm^2'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
         end if
         !% --- Flowrate
         if (setting%Output%DataOut%isFlowrateOut) then
@@ -812,6 +771,7 @@ contains
             output_typeNames_faceR(ii) = 'Flowrate'
             output_typeUnits_faceR(ii) = 'm^3/s'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
         end if
         !% --- Conservative Fluxes
         !%     HACK -- because the output is based on SWMM nodes
@@ -823,6 +783,7 @@ contains
             output_typeNames_faceR(ii) = 'FlowrateConservative'
             output_typeUnits_faceR(ii) = 'm^3/s'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
         end if
         !% --- Head
         if (setting%Output%DataOut%isHeadOut) then
@@ -832,12 +793,14 @@ contains
             output_typeUnits_faceR(ii) = 'm'
             output_typeProcessing_faceR(ii) = SingleValue
             setting%Output%FaceUpHeadIndex = ii
+            output_typeMultiplyByBarrels_faceR(ii) = zeroI
             ii = ii+1
             output_types_faceR(ii) = fr_Head_d
             output_typeNames_faceR(ii) = 'PiezometricHeadDownstream'
             output_typeUnits_faceR(ii) = 'm'
             output_typeProcessing_faceR(ii) = SingleValue
             setting%Output%FaceDnHeadIndex = ii
+            output_typeMultiplyByBarrels_faceR(ii) = zeroI
         end if
         !% --- TopWidth
         if (setting%Output%DataOut%isTopWidthOut) then
@@ -846,11 +809,13 @@ contains
             output_typeNames_faceR(ii) = 'FreeSurfaceTopWidthUpstream'
             output_typeUnits_faceR(ii) = 'm'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
             ii = ii+1
             output_types_faceR(ii) = fr_TopWidth_d
             output_typeNames_faceR(ii) = 'FreeSurfaceTopWidthDownstream'
             output_typeUnits_faceR(ii) = 'm'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
         end if
         !% -- Velocity
         if (setting%Output%DataOut%isVelocityOut) then
@@ -859,11 +824,13 @@ contains
             output_typeNames_faceR(ii) = 'VelocityUpstream'
             output_typeUnits_faceR(ii) = 'm/s'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = zeroI
             ii = ii+1
             output_types_faceR(ii) = fr_Velocity_d
             output_typeNames_faceR(ii) = 'VelocityDownstream'
             output_typeUnits_faceR(ii) = 'm/s'
             output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = zeroI
         end if
 
         !% --- store 'time' for use in output
@@ -943,14 +910,25 @@ contains
                 thisP => elemP(1:Npack,ep_Output_Elements)
                 !% --- set of output types
                 thisType => output_types_elemR(:)
-                !% --- vector store
-                elemOutR(1:Npack,:,thisLevel) = elemR(thisP,thisType)
+
+                if (setting%Output%BarrelsExist) then 
+                    !% --- for multiple barrels, cycle through types
+                    !%     only multiply for barrels on select types
+                    do ii=1,size(thisType)
+                        elemOutR(1:Npack,ii,thisLevel) = elemR(thisP,thisType(ii)) &
+                        * real((oneI + (elemI(thisP,ei_barrels)-oneI) * output_typeMultiplyByBarrels_elemR(ii)),8) 
+                    end do
+                else 
+                    !% --- vector store
+                    elemOutR(1:Npack,:,thisLevel) = elemR(thisP,thisType)
+                end if
+
                 !% --- correct head to report in same reference base as the *.inp file
                 if (setting%Solver%SubtractReferenceHead) then
                     if (setting%Output%ElemHeadIndex > 0) then
                         elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
-                    = elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
-                    + setting%Solver%ReferenceHead
+                      = elemOutR(1:Npack,setting%Output%ElemHeadIndex,thisLevel)  &
+                      + setting%Solver%ReferenceHead
                     end if
                 end if
 
@@ -983,8 +961,19 @@ contains
                 thisP => faceP(1:Npack,fp_Output_Faces)
                 !% --- set of output types
                 thisType => output_types_faceR(:)
-                !% --- vector store
-                faceOutR(1:Npack,:,thisLevel) = faceR(thisP,thisType)
+
+                if (setting%Output%BarrelsExist) then 
+                    !% --- for multiple barrels, cycle through types
+                    !%     only multiply for barrels on select types
+                    do ii=1,size(thisType)
+                        faceOutR(1:Npack,ii,thisLevel) = faceR(thisP,thisType(ii))                         &
+                        * real((oneI + ((faceI(thisP,fi_barrels)-oneI) * output_typeMultiplyByBarrels_faceR(ii))),8) 
+                    end do
+                else 
+                    !% --- vector store
+                    faceOutR(1:Npack,:,thisLevel) = faceR(thisP,thisType) !&
+                end if
+                    !+ real(((faceI(thisP,fi_barrels)-oneI) * output_typeMultiplyByBarrels_faceR(thisP)),8)
                 !% --- correct head to report in same reference base as the *.inp file
                 if (setting%Solver%SubtractReferenceHead) then
                     if (setting%Output%FaceUpHeadIndex > 0) then

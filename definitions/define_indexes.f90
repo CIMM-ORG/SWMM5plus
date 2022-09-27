@@ -37,6 +37,8 @@ module define_indexes
         enumerator :: li_link_sub_type       ! KEY link subtype (i.e. vnotch weir, side orifice, etc.)
         enumerator :: li_link_direction      ! link direction
         enumerator :: li_geometry            ! KEY link geometry type
+        enumerator :: li_barrels             ! KEY link # of barrels
+        enumerator :: li_culvertCode         ! KEY culvert code for conduit
         !enumerator :: li_roughness_type obsolete 20220708brh
         enumerator :: li_N_element           ! Number of elements in this link
         enumerator :: li_Mnode_u             ! map to upstream node connecting to link
@@ -295,6 +297,8 @@ module define_indexes
          !enumerator :: ei_main_idx_for_branch       !% idx of JM for a JB branch
          enumerator :: ei_elementType               !% KEY general element type  (static)
          enumerator :: ei_geometryType              !% KEY cross-sectional geometry type  (static)
+         enumerator :: ei_barrels                   !% Integer number of barrels
+         enumerator :: ei_culvertCode               !% KEY culvert code
          enumerator :: ei_HeqType                   !% KEY type of head equation (static)
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)
@@ -409,6 +413,7 @@ module define_indexes
         enumerator :: er_Volume                     !% volume (latest)
         enumerator :: er_Volume_N0                  !% volume (time N)
         enumerator :: er_Volume_N1                  !% volume (time N-1)
+        enumerator :: er_VolumeConservation         !% cumulative volume conservation
         enumerator :: er_VolumeLastAC               !% volume at start of last AC step
         enumerator :: er_VolumeOverFlow             !% volume lost for overflow in this time step.  20220124brh
         enumerator :: er_VolumeOverFlowTotal        !% total volume lost to overflow       20220124brh 
@@ -418,7 +423,7 @@ module define_indexes
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
         enumerator :: er_ZbreadthMax                !% elevation at maximum breadth
         enumerator :: er_Zcrown                     !% inside crown elevation of closed conduit (static)
-        enumerator :: er_VolumeConservation         !% cumulative volume conservation
+        
         enumerator :: er_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemR = er_lastplusone-1
@@ -1217,6 +1222,7 @@ module define_indexes
         enumerator ::  fi_Lidx = 1                  !% local array index (row)
         enumerator ::  fi_Gidx                      !% global (unique) index
         enumerator ::  fi_BCtype                    !% KEY type of BC on face
+        enumerator ::  fi_barrels                   !% number of barrels for the face
         enumerator ::  fi_jump_type                 !% KEY Type of hydraulic jump
         enumerator ::  fi_Melem_uL                  !% map to element upstream (local index)
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)

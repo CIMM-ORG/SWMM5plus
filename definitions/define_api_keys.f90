@@ -563,30 +563,32 @@ module define_api_keys
         enumerator :: api_linkf_yOff                     ! 67
         enumerator :: api_linkf_conduit_roughness        ! 68
         enumerator :: api_linkf_conduit_length           ! 69
-        enumerator :: api_linkf_rptFlag                  ! 70
-        enumerator :: api_linkf_hasFlapGate              ! 71
-        enumerator :: api_linkf_cLossInlet               ! 72
-        enumerator :: api_linkf_cLossOutlet              ! 73
-        enumerator :: api_linkf_cLossAvg                 ! 74
-        enumerator :: api_linkf_seepRate                 ! 75
-        enumerator :: api_linkf_commonBreak              ! 76  ! must be end of common  ...linkf... types
+        enumerator :: api_linkf_conduit_barrels          ! 70
+        enumerator :: api_linkf_rptFlag                  ! 71
+        enumerator :: api_linkf_hasFlapGate              ! 72
+        enumerator :: api_linkf_cLossInlet               ! 73
+        enumerator :: api_linkf_cLossOutlet              ! 74
+        enumerator :: api_linkf_cLossAvg                 ! 75
+        enumerator :: api_linkf_seepRate                 ! 76
+        enumerator :: api_linkf_commonBreak              ! 77  ! must be end of common  ...linkf... types
 
         ! --- special elements attributes
-        enumerator :: api_linkf_type         ! 77  ! must match linkf_type in api.h
-        enumerator :: api_linkf_sub_type     ! 78
-        enumerator :: api_linkf_typeBreak    ! 79  ! must be end of ...linkf... special types
+        enumerator :: api_linkf_type              ! 78  ! must match linkf_type in api.h
+        enumerator :: api_linkf_sub_type          ! 79
+        enumerator :: api_linkf_typeBreak         ! 80  ! must be end of ...linkf... special types
         ! --- xsect attributes for linkf
-        enumerator :: api_linkf_xsect_type   ! 80
-        enumerator :: api_linkf_geometry     ! 81
-        enumerator :: api_linkf_xsect_wMax   ! 82
-        enumerator :: api_linkf_xsect_yBot   ! 83
-        enumerator :: api_linkf_xsect_yFull  ! 84
-        enumerator :: api_linkf_xsect_aFull  ! 85
-        enumerator :: api_linkf_xsect_rFull  ! 86
-        enumerator :: api_linkf_xsect_rBot   ! 87
-        enumerator :: api_linkf_transectidx  ! 89
-        enumerator :: api_linkf_forcemain_coef ! 89
-        enumerator :: api_linkf_end          ! 90  ! must be end of the ...linkf... xsect attributes
+        enumerator :: api_linkf_xsect_type        ! 81
+        enumerator :: api_linkf_geometry          ! 82
+        enumerator :: api_linkf_xsect_wMax        ! 83
+        enumerator :: api_linkf_xsect_yBot        ! 84
+        enumerator :: api_linkf_xsect_yFull       ! 85
+        enumerator :: api_linkf_xsect_aFull       ! 86
+        enumerator :: api_linkf_xsect_rFull       ! 87
+        enumerator :: api_linkf_xsect_rBot        ! 88
+        enumerator :: api_linkf_xsect_culvertCode ! 89
+        enumerator :: api_linkf_transectidx       ! 90
+        enumerator :: api_linkf_forcemain_coef    ! 91
+        enumerator :: api_linkf_end               ! 92  ! must be end of the ...linkf... xsect attributes
         !% --- transect data
         enumerator :: api_transectf_start   ! 91
         enumerator :: api_transectf_ID      ! 92
@@ -602,52 +604,6 @@ module define_api_keys
         enumerator :: api_transectf_end             ! 102
         enumerator :: api_keyslastplusone   ! 103
     end enum
-
-    ! !% API link attributes
-    ! enum, bind(c)
-    !     enumerator :: api_linkf_ID = 1
-    !     enumerator :: api_linkf_subIndex  ! 2
-    !     enumerator :: api_linkf_direction ! 3
-    !     enumerator :: api_linkf_node1     ! 4
-    !     enumerator :: api_linkf_node2     ! 5
-    !     enumerator :: api_linkf_offset1   ! 6
-    !     enumerator :: api_linkf_offset2   ! 7
-    !     enumerator :: api_linkf_q0        ! 8
-    !     enumerator :: api_linkf_flow      ! 9
-    !     enumerator :: api_linkf_depth     ! 10
-    !     enumerator :: api_linkf_volume    ! 11
-    !     enumerator :: api_linkf_froude    ! 12
-    !     enumerator :: api_linkf_setting   ! 13
-    !     enumerator :: api_linkf_left_slope       ! 14
-    !     enumerator :: api_linkf_right_slope      ! 15  
-    !     enumerator :: api_linkf_weir_end_contractions ! 16
-    !     enumerator :: api_linkf_weir_side_slope   ! 17
-    !     enumerator :: api_linkf_curveid      ! 18
-    !     enumerator :: api_linkf_discharge_coeff1  ! 19
-    !     enumerator :: api_linkf_discharge_coeff2  ! 20
-    !     enumerator :: api_linkf_initSetting       ! 21
-    !     enumerator :: api_linkf_yOn               ! 22
-    !     enumerator :: api_linkf_yOff              ! 23
-    !     enumerator :: api_linkf_conduit_roughness ! 24
-    !     enumerator :: api_linkf_conduit_length    ! 25
-    !     !% brh20211207s
-    !     enumerator :: api_linkf_commonBreak      ! 26  ! must be end of common types
-    !     !% brh20211207e
-    !     ! --- special elements attributes
-    !     enumerator :: api_linkf_type         ! 27
-    !     enumerator :: api_linkf_sub_type     ! 28
-    !     enumerator :: api_linkf_typeBreak    ! 29  ! must be end of special types
-    !     ! --- xsect attributes 
-    !     enumerator :: api_linkf_xsect_type   ! 30
-    !     enumerator :: api_linkf_geometry     ! 31
-    !     enumerator :: api_linkf_xsect_wMax   ! 32
-    !     enumerator :: api_linkf_xsect_yBot   ! 33
-    !     enumerator :: api_linkf_xsect_yFull  ! 34
-    !     enumerator :: api_linkf_transectidx  ! 35
-    !     enumerator :: api_linkf_totalEnd     ! 36  ! must be end of the enum
-
-    ! end enum
-
 
     !% API table attributes
     enum, bind(c)
@@ -770,6 +726,7 @@ module define_api_keys
             reverseKey_api(api_linkf_yOff) = 'api_linkf_yOff'
             reverseKey_api(api_linkf_conduit_roughness) = 'api_linkf_conduit_roughness'
             reverseKey_api(api_linkf_conduit_length) = 'api_linkf_conduit_length'
+            reverseKey_api(api_linkf_conduit_barrels) = 'api_linkf_conduit_barrels'
             reverseKey_api(api_linkf_rptFlag) = 'api_linkf_rptFlag'
             reverseKey_api(api_linkf_hasFlapGate) = 'api_linkf_hasFlapGate'
             reverseKey_api(api_linkf_cLossInlet) = 'api_linkf_cLossInlet'
@@ -787,6 +744,10 @@ module define_api_keys
             reverseKey_api(api_linkf_xsect_wMax) = 'api_linkf_xsect_wMax'
             reverseKey_api(api_linkf_xsect_yBot) = 'api_linkf_xsect_yBot'
             reverseKey_api(api_linkf_xsect_yFull) = 'api_linkf_xsect_yFull'
+            reverseKey_api(api_linkf_xsect_aFull) = 'api_linkf_xsect_aFull'
+            reverseKey_api(api_linkf_xsect_rFull) = 'api_linkf_xsect_rFull'
+            reverseKey_api(api_linkf_xsect_rBot) = 'api_linkf_xsect_rBot'
+            reverseKey_api(api_linkf_xsect_culvertCode) = 'api_linkf_xsect_culvertCode'
             reverseKey_api(api_linkf_transectidx) = 'api_linkf_transectidx'
             reverseKey_api(api_linkf_forcemain_coef) = 'api_linkf_forcemain_coef'
             reverseKey_api(api_linkf_end) = 'api_linkf_end'

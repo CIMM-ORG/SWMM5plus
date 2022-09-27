@@ -554,6 +554,7 @@ module define_settings
         logical, allocatable :: FacesExist_byImage(:)[:]     !% NOT A USER SETTING
         logical :: ElementsExist_global                      !% NOT A USER SETTING 
         logical :: FacesExist_global                         !% NOT A USER SETTING  
+        logical :: BarrelsExist = .false.                    !% NOT A USER SETTING
         logical :: Verbose = .true.
         logical :: Warning = .true.
         integer :: LastLevel = 0                             !% NOT A USER SETTING

@@ -52,8 +52,8 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-        ! print *, ' '
-        ! call util_CLprint ('======= AAA  start of RK2 ==============================')
+        print *, ' '
+        call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -171,8 +171,8 @@ module runge_kutta2
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
         
-            !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
-            !  print *, '==================================================='
+             call util_CLprint ('ZZZ  after accumulate overflow step 2')
+             print *, '==================================================='
         
 
         !%-----------------------------------------------------------------
@@ -634,7 +634,7 @@ module runge_kutta2
             call ll_extrapolate_values (thisCol, Npack)
 
             !% update aux for extrapolated variables
-    !        call update_auxiliary_variables_byPack (thisCol, Npack)
+        !        call update_auxiliary_variables_byPack (thisCol, Npack)
         end if
 
     end subroutine rk2_extrapolate_to_fullstep_ETM
@@ -671,28 +671,28 @@ module runge_kutta2
 !%
     subroutine rk2_interpolate_to_halfstep_AC ()
         !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% Finds AC and Diag elements at time n+1/2 that are adjacent to fETM
-    !     !% Makes temporary store of data for Q, H, V at n+1(*)
-    !     !% overwrites the Q, H, V location with an interpolation to n+1/1.
-    !     !%-----------------------------------------------------------------------------
-    !     integer, pointer :: thisCol, Npack
-    !     !%-----------------------------------------------------------------------------
-    !     !if (crashYN) return
-    !     !%
-    !     thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
-    !     Npack => npack_elemP(thisCol)
+        !     !% Description:
+        !     !% Finds AC and Diag elements at time n+1/2 that are adjacent to fETM
+        !     !% Makes temporary store of data for Q, H, V at n+1(*)
+        !     !% overwrites the Q, H, V location with an interpolation to n+1/1.
+        !     !%-----------------------------------------------------------------------------
+        !     integer, pointer :: thisCol, Npack
+        !     !%-----------------------------------------------------------------------------
+        !     !if (crashYN) return
+        !     !%
+        !     thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
+        !     Npack => npack_elemP(thisCol)
 
-    !     if (Npack > 0) then
-    !         !% temporary storage of n+1 data
-    !         call ll_store_in_temporary (thisCol, Npack)
+        !     if (Npack > 0) then
+        !         !% temporary storage of n+1 data
+        !         call ll_store_in_temporary (thisCol, Npack)
 
-    !         !% interpolation to half step
-    !         call ll_interpolate_values (thisCol, Npack)
+        !         !% interpolation to half step
+        !         call ll_interpolate_values (thisCol, Npack)
 
-    !         !% update aux for interpolated variables
-    !   !     call update_auxiliary_variables_byPack (thisPackCol, Npack)
-    !     end if
+        !         !% update aux for interpolated variables
+        !   !     call update_auxiliary_variables_byPack (thisPackCol, Npack)
+        !     end if
 
     end subroutine rk2_interpolate_to_halfstep_AC
 !%
@@ -707,18 +707,18 @@ module runge_kutta2
         !% restsores data of Q, H, V at n+1/2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
-    !     !%-----------------------------------------------------------------------------
-    !     !if (crashYN) return
-    !     thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
-    !     Npack => npack_elemP(thisCol)
+        !     !%-----------------------------------------------------------------------------
+        !     !if (crashYN) return
+        !     thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
+        !     Npack => npack_elemP(thisCol)
 
-    !     if (Npack > 0) then
-    !         !% temporary storage of n+1 data
-    !         call ll_restore_from_temporary (thisCol, Npack)
+        !     if (Npack > 0) then
+        !         !% temporary storage of n+1 data
+        !         call ll_restore_from_temporary (thisCol, Npack)
 
-    !         !% update aux for restored data
-    !  !       call update_auxiliary_variables_byPack (thisPackCol, Npack)
-    !     end if
+        !         !% update aux for restored data
+        !  !       call update_auxiliary_variables_byPack (thisPackCol, Npack)
+        !     end if
 
     end subroutine rk2_restore_to_fullstep_AC
 !%
@@ -733,7 +733,7 @@ module runge_kutta2
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: whichTM
-            integer, pointer    :: NpackE, NpackF, NpackJ
+            integer, pointer    :: NpackE, NpackF, NpackJ, nBarrel(:)
             integer, pointer    :: thisColE,   thisColF, thisColJ, isbranch(:)
             integer, pointer    :: thisP(:), thisF(:), thisJ(:), fup(:), fdn(:)
             real(8), pointer    :: fQcons(:), fQ(:)
@@ -756,6 +756,7 @@ module runge_kutta2
             NpackE => npack_elemP(thisColE)
             NpackF => npack_faceP(thisColF)
             NpackJ => npack_elemP(thisColJ)
+            nBarrel=> elemI(:,ei_barrels)
             fup    => elemI(:,ei_Mface_uL)
             fdn    => elemI(:,ei_Mface_dL)
             fQcons => faceR(:,fr_Flowrate_Conservative)
@@ -774,8 +775,8 @@ module runge_kutta2
         if (NpackJ > 0) then
             thisJ  => elemP(1:NpackJ,thisColJ)
             do ii=1,max_branch_per_node,2
-                fQcons(fup(thisJ+ii  )) = fQ(fup(thisJ+ii  )) * real(isbranch(thisJ+ii  ),8)
-                fQcons(fdn(thisJ+ii+1)) = fQ(fdn(thisJ+ii+1)) * real(isbranch(thisJ+ii+1),8)
+                fQcons(fup(thisJ+ii  )) = fQ(fup(thisJ+ii  )) * real(isbranch(thisJ+ii  ),8) * real(nBarrel(thisP+ii  ),8)
+                fQcons(fdn(thisJ+ii+1)) = fQ(fdn(thisJ+ii+1)) * real(isbranch(thisJ+ii+1),8) * real(nBarrel(thisP+ii+1),8)
             end do
         end if
     

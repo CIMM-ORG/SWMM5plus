@@ -100,7 +100,7 @@ contains
         call util_allocate_check (allocation_status, emsg, 'monitorPassR')
         setting%Output%FacesExist_byImage = .false.
 
-    !%------------------------------------------------------------------ 
+        !%------------------------------------------------------------------ 
     end subroutine util_allocate_secondary_coarrays
 !%    
 !%==========================================================================
@@ -457,29 +457,6 @@ contains
             allocate(phantom_link_tracker(size(link%I, oneI)))
         end if
     end subroutine util_allocate_partitioning_arrays
-!
-!==========================================================================
-!==========================================================================
-!!% MOVED TO UTILITY DEALLOCATE
-    ! subroutine util_deallocate_partitioning_arrays()
-
-    !     if (allocated(adjacent_links)) deallocate(adjacent_links)
-    !     if (allocated(elem_per_image)) deallocate(elem_per_image)
-    !     if (allocated(image_full)) deallocate(image_full)
-
-    !     !% If BIPquick is being used for Partitioning, allocate additional arrays
-    !     if (setting%Partitioning%PartitioningMethod == BQuick) then
-    !         deallocate(B_nodeI)
-    !         deallocate(B_nodeR)
-    !         deallocate(totalweight_visited_nodes)
-    !         deallocate(partitioned_nodes)
-    !         deallocate(partitioned_links)
-    !         deallocate(weight_range)
-    !         deallocate(accounted_for_links)
-    !         deallocate(phantom_link_tracker)
-    !     end if
-
-    ! end subroutine util_deallocate_partitioning_arrays
 !
 !==========================================================================
 !==========================================================================
@@ -844,6 +821,11 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_typeProcessing_elemR')
         output_typeProcessing_elemR(:) = nullvalueI
 
+        !% --- allocate the output type logical for whether this output is multiplied by number of barrels
+        allocate(output_typeMultiplyByBarrels_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeMultiplyByBarrels_elemR')
+        output_typeMultiplyByBarrels_elemR(:) = zeroI
+
         !% --- allocate the output typeNames
         allocate(output_typeNames_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'output_typeNames_elemR')
@@ -907,6 +889,11 @@ contains
         allocate(output_typeProcessing_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'output_typeProcessing_faceR')
         output_typeProcessing_faceR(:) = nullvalueI
+
+        !% --- allocate the output logical for whether this output is multiplied by number of barrels
+        allocate(output_typeMultiplyByBarrels_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeMultiplyByBarrels_faceR')
+        output_typeMultiplyByBarrels_faceR(:) = zeroI
 
         !% --- allocate the output typeNames for faces
         allocate(output_typeNames_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
