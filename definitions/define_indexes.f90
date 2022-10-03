@@ -484,6 +484,9 @@ module define_indexes
         !enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
         enumerator :: ep_CCJM_H_ETM                 !% CC and JM elements that are ETM for H
         enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
+        enumerator :: ep_culvert_inlet              !% all CC elements that are also culvert inlets
+        enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
+        enumerator :: ep_culvert_inout              !% all CC elements that are both culvert inlet and outlet
         enumerator :: ep_Diag                       !% diagnostic elements (static)
         enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
@@ -597,6 +600,25 @@ module define_indexes
     !% These are the full arrays if special integer data
     !%-------------------------------------------------------------------------
 
+    !% --- CULVERT
+    enum, bind(c)
+        !% define the column indexes for the elemSi(:,:)  culvert
+        enumerator :: esi_Culvert_inout = 1       !% type key for inlet, outlet in/out
+        enumerator :: esi_Culvert_lastplusone     !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_Culvert = esi_Culvert_lastplusone-1
+    
+    !% --- FORCE MAIN
+    enum, bind(c)
+        !% define the column indexes for the elemSi(:,:) force main elements
+        enumerator :: esi_ForceMain_method = 1       !% type key  HazenWilliams or DarcyWeisbach
+        !enumerator :: esi_ForceMain_isSubmerged    !% 0 = no, 1 = yes
+        enumerator :: esi_ForceMain_lastplusone    !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_ForceMain = esi_ForceMain_lastplusone-1
+
+
+    !% --- JUNCTION
     enum, bind(c)
         !% define the column indexes for elemSI(:,:) junction branch elements
         !% Note that esi_JunctionMain, esi_JunctionBranch, and (if needed) esi_Storage will
@@ -632,11 +654,6 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSI_orifice = esi_Orifice_lastplusone-1
 
-    enum, bind(c)
-        enumerator :: esi_Culvert_Code = 1         !% SWMM culvert code
-        enumerator :: esi_Culvert_lastplusone      !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSI_culvert = esi_Culvert_lastplusone-1
 
     enum, bind(c)
         !% define the column indexes for elemSi(:,:) outlet elements
@@ -658,22 +675,17 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSI_Pump = esi_Pump_lastplusone-1
 
-    enum, bind(c)
-        !% define the column indexes for the elemSi(:,:) force main elements
-        enumerator :: esi_ForceMain_method = 1       !% type key  HazenWilliams or DarcyWeisbach
-        !enumerator :: esi_ForceMain_isSubmerged    !% 0 = no, 1 = yes
-        enumerator :: esi_ForceMain_lastplusone    !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSI_ForceMain = esi_ForceMain_lastplusone-1
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
-                            Ncol_elemSI_junction, &
-                            Ncol_elemSI_orifice, &
-                            Ncol_elemSI_weir, &
-                            Ncol_elemSI_outlet, &
+                            Ncol_elemSI_Culvert,    &
+                            Ncol_elemSI_ForceMain, &
+                            Ncol_elemSI_Junction, &
+                            Ncol_elemSI_Orifice, &
+                            Ncol_elemSI_Outlet, &
                             Ncol_elemSI_Pump,  &
-                            Ncol_elemSI_ForceMain)
+                            Ncol_elemSI_Weir &                            
+                            )
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSr(:,:) arrays
@@ -691,6 +703,30 @@ module define_indexes
 
     !% define the column indexes for elemSR(:,:) for geometry that has not yet been confirmed and assigned:
     !% Note that esr_JunctionMain, esr_JunctionBranch and esr_Storage share the same column sets.
+
+    !% --- CULVERT
+    enum, bind(c)
+        enumerator :: esr_Culvert_Form = 1                 !% Form from EPA=SWMM culvert.c
+        enumerator :: esr_Culvert_K                       
+        enumerator :: esr_Culvert_M 
+        enumerator :: esr_Culvert_C
+        enumerator :: esr_Culvert_Y
+        enumerator :: esr_Culvert_lastplusone             !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Culvert = esr_Culvert_lastplusone-1
+
+    !% --- FORCE MAIN 
+    !%     This implies that Storage, Pump, Weir, Orifice, Outlet cannot also be Force Main
+    !%     HACK -- if Storage needs to be defined as force main, then the coef will need to
+    !%     be moved to the elemR array.
+    enum, bind(c)
+        enumerator :: esr_ForceMain_Coef = 1               !% Hazen-Williams C or Darcy-Weisbach epsilon
+        enumerator :: esr_ForceMain_FrictionFactor         !% Darcy-Weisbach friction factor
+        enumerator :: esr_ForceMain_lastplusone            !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_ForceMain = esr_ForceMain_lastplusone-1
+   
+    !% --- JUNCTION MAIN and STORAGE
     enum, bind(c)
         enumerator ::  esr_JunctionMain_PondedArea = 1
         !enumerator ::  esr_JunctionMain_PondedVolume
@@ -702,9 +738,53 @@ module define_indexes
         enumerator ::  esr_Storage_Plane_Area
         enumerator ::  esr_Storage_lastplusone !% must be last enum item
     end enum
+    integer, parameter :: Ncol_elemSR_Junction = esr_Storage_lastplusone-1
 
-    integer, parameter :: Ncol_elemSR_Storage = esr_Storage_lastplusone-1
+    !% --- ORIFICE
+    enum, bind(c)
+        enumerator ::  esr_Orifice_CriticalDepth = 1        !% critical depth bellow which the orifice acts like an weir
+        enumerator ::  esr_Orifice_CriticalHead             !% critical head for weir flow through an orifice
+        enumerator ::  esr_Orifice_FractionCriticalDepth    !% critical depth fracttion to distinct between weir and orifice flow
+        enumerator ::  esr_Orifice_DischargeCoeff           !% discharge coefficient orifice
+        enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
+        enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
+        enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
+        enumerator ::  esr_Orifice_EffectiveFullArea        !% effective full depth after control intervention
+        enumerator ::  esr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
+        enumerator ::  esr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
+        enumerator ::  esr_Orifice_Orate                    !% orifice time to operate (close the gate)
+        enumerator ::  esr_Orifice_RectangularBreadth       !% rectangular orifice breadth
+        enumerator ::  esr_Orifice_Zcrown                   !% orifice "crown" elevation - highest edge of orifice
+        enumerator ::  esr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice
+        enumerator ::  esr_Orifice_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Orifice = esr_Orifice_lastplusone-1
 
+    !% --- OUTLET
+    enum, bind(c)
+        enumerator ::  esr_Outlet_DischargeCoeff = 1       !% discharge coefficient outlet
+        enumerator ::  esr_Outlet_EffectiveHeadDelta       !% effective head delta across outlet
+        enumerator ::  esr_Outlet_NominalDownstreamHead    !% nominal downstream head for outlet
+        enumerator ::  esr_Outlet_Exponent                 !% exponent for outlet dishcharge relation
+        enumerator ::  esr_Outlet_Coefficient              !% power for outlet dishcharge relation
+        enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
+        enumerator ::  esr_Outlet_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Outlet = esr_Outlet_lastplusone-1
+
+    !% --- PUMP
+    enum, bind(c)
+        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across outlet
+        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
+        enumerator ::  esr_Pump_yOn                        !% pump startup depth
+        enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
+        enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
+        enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
+        enumerator ::  esr_Pump_lastplusone                !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Pump = esr_Pump_lastplusone-1
+
+    !% --- WEIR
     enum, bind(c)
         enumerator ::  esr_Weir_Rectangular = 1         !% discharge coefficient for the rectangular portion
         enumerator ::  esr_Weir_Triangular              !% discharge coefficient for triangular weir part
@@ -725,76 +805,18 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSR_Weir = esr_Weir_lastplusone-1
 
-    enum, bind(c)
-        enumerator ::  esr_Orifice_CriticalDepth = 1        !% critical depth bellow which the orifice acts like an weir
-        enumerator ::  esr_Orifice_CriticalHead             !% critical head for weir flow through an orifice
-        enumerator ::  esr_Orifice_FractionCriticalDepth    !% critical depth fracttion to distinct between weir and orifice flow
-        enumerator ::  esr_Orifice_DischargeCoeff           !% discharge coefficient orifice
-        enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
-        enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
-        enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
-        enumerator ::  esr_Orifice_EffectiveFullArea        !% effective full depth after control intervention
-        enumerator ::  esr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
-        enumerator ::  esr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
-        enumerator ::  esr_Orifice_Orate                    !% orifice time to operate (close the gate)
-        enumerator ::  esr_Orifice_RectangularBreadth       !% rectangular orifice breadth
-        enumerator ::  esr_Orifice_Zcrown                   !% orifice "crown" elevation - highest edge of orifice
-        enumerator ::  esr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice
-        enumerator ::  esr_Orifice_lastplusone !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSR_Orifice = esr_Orifice_lastplusone-1
-
-    enum, bind(c)
-        enumerator :: esr_Culvert_Form = 1                 !% Form from EPA=SWMM culvert.c
-        enumerator :: esr_Culvert_K                       
-        enumerator :: esr_Culvert_M 
-        enumerator :: esr_Culvert_C
-        enumerator :: esr_Culvert_Y
-        enumerator :: esr_Culvert_lastplusone             !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSR_Culvert = esr_Culvert_lastplusone-1
-
-    enum, bind(c)
-        enumerator ::  esr_Outlet_DischargeCoeff = 1       !% discharge coefficient outlet
-        enumerator ::  esr_Outlet_EffectiveHeadDelta       !% effective head delta across outlet
-        enumerator ::  esr_Outlet_NominalDownstreamHead    !% nominal downstream head for outlet
-        enumerator ::  esr_Outlet_Exponent                 !% exponent for outlet dishcharge relation
-        enumerator ::  esr_Outlet_Coefficient              !% power for outlet dishcharge relation
-        enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
-        enumerator ::  esr_Outlet_lastplusone !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSR_Outlet = esr_Outlet_lastplusone-1
-
-    enum, bind(c)
-        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across outlet
-        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
-        enumerator ::  esr_Pump_yOn                        !% pump startup depth
-        enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
-        enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
-        enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
-        enumerator ::  esr_Pump_lastplusone                !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSR_Pump = esr_Pump_lastplusone-1
-
-    !% --- Force main in elemSR array 
-    !%     This implies that Storage, Pump, Weir, Orifice, Outlet cannot also be Force Main
-    !%     HACK -- if Storage needs to be defined as force main, then the coef will need to
-    !%     be moved to the elemR array.
-    enum, bind(c)
-        enumerator :: esr_ForceMain_Coef = 1               !% Hazen-Williams C or Darcy-Weisbach epsilon
-        enumerator :: esr_ForceMain_FrictionFactor         !% Darcy-Weisbach friction factor
-        enumerator :: esr_ForceMain_lastplusone            !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSR_ForceMain = esr_ForceMain_lastplusone-1
+    
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
-                            Ncol_elemSR_Storage,        &
-                            Ncol_elemSR_Weir,           &
+                            Ncol_elemSR_Culvert,        &
+                            Ncol_elemSR_ForceMain,      &
+                            Ncol_elemSR_Junction,        &
                             Ncol_elemSR_Orifice,        &
                             Ncol_elemSR_Outlet,         &
                             Ncol_elemSR_Pump,           &
-                            Ncol_elemSR_ForceMain) !, &
+                            Ncol_elemSR_Weir           &
+                            ) !, &
                             ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements

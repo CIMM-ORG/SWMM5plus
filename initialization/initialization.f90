@@ -155,9 +155,6 @@ contains
         call interface_init ()
         call util_crashstop(43974)
 
-        !% --- set up the culvert parameters array
-        call culvert_parameter_values ()
-
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
@@ -248,6 +245,10 @@ contains
         if (setting%Output%Verbose) print *, "begin initializing simulation controls"
         call init_simulation_controls() 
 
+        !% --- initialize culverts
+        if (setting%Output%Verbose) print *, "begin initializing culverts"
+        call init_culvert()
+
         !% --- HYDROLOGY
         if (setting%Simulation%useHydrology) then 
             if (setting%SWMMinput%N_subcatch > 0) then
@@ -300,7 +301,9 @@ contains
         end if    
         call init_report()
         
-        !% --- INITIAL CONDITIONS
+        !%=======================================================================
+        !%---INITIAL CONDITIONS
+        !%=======================================================================
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC"
         !call util_CLprint ('before init_IC_toplevel')
         call init_IC_toplevel ()       
@@ -661,7 +664,7 @@ contains
                 !print *, 'link_barrels   ', link%I(ii,li_barrels)  
                 !print *, ii, 'api_linkf_xsect_culvertCode ',api_linkf_xsect_culvertCode
             link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_xsect_culvertCode, .true.)
-                !print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
+                print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
                 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -2124,9 +2127,13 @@ contains
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
-        allocate(N_elem(num_images()))
-        allocate(N_face(num_images()))
-        allocate(N_unique_face(num_images()))
+        !% --- moved to util_allocate_scalar_for_images 20221003
+        ! allocate(N_elem(num_images()))
+        ! allocate(N_face(num_images()))
+        ! allocate(N_unique_face(num_images()))
+        ! allocate(N_culvert(num_images()))
+
+        call util_allocate_scalar_for_images ()
 
 
         do ii=1, num_images()
@@ -2627,6 +2634,60 @@ contains
         end if
 
     end subroutine init_ForceMain_setting
+!% 
+!%==========================================================================
+!%==========================================================================
+!%   
+    subroutine init_culvert ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Inialize culvert parameters and numbers.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: ii
+            integer, pointer :: thisLink
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        N_culvert(this_image()) = zeroI
+
+        !print *, 'calling '
+        !% --- set up the culvert parameters array
+        call culvert_parameter_values ()
+
+        !% --- cycle through to find culverts and set the elemSI(:,esi_Culvert_inout) key
+        !%     also count the number of culvert inlets
+        ! do ii=1,N_elem(this_image())
+        !     print *, ii
+        !     thisLink => elemI(ii,ei_link_Gidx_BIPquick)
+        !     !% --- cycle if no culvert
+        !     if (link%I(thisLink,li_culvertCode) == 0) cycle
+
+        !     !% --- look for inlet and outlet elements of culvert
+        !     if ((link%I(thisLink,li_first_elem_idx) == ii) .and. &
+        !         (link%I(thisLink,li_last_elem_idx)  == ii)       ) then
+        !         !% --- both inlet and outlet on single element
+        !         elemSI(ii,esi_Culvert_inout) = Culvert_InOut
+        !         !% --- increment the counter on this image
+        !         N_culvert(this_image()) =  N_culvert(this_image()) + 1
+
+        !     elseif (link%I(thisLink,li_first_elem_idx) == ii) then
+        !         !% --- upstream culvert inlet
+        !         elemSI(ii,esi_Culvert_inout) = Culvert_Inlet
+        !         !% --- increment the counter on this image
+        !         N_culvert(this_image()) =  N_culvert(this_image()) + 1
+
+        !     elseif (link%I(thisLink,li_last_elem_idx) == ii) then
+        !         !% --- downstream culvert outlet
+        !         elemSI(ii,esi_Culvert_inout) = Culvert_Outlet
+        !         !% --- DO NOT INCREMENT COUNTER FOR OUTLET!
+        !     else 
+        !         !% --- interior culvert element; no action
+        !     end if
+        ! end do
+
+        !stop 293874
+
+    end subroutine init_culvert
 !% 
 !%==========================================================================
 !%==========================================================================

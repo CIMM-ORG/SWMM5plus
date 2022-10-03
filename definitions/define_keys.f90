@@ -165,6 +165,10 @@
         enumerator :: BCH_fixed            !% outfall stage set to a fixed value
         enumerator :: BCH_tidal            !% outfall stage given by a table of tide elevation versus time of day
         enumerator :: BCH_tseries          !% outfall stage supplied from a time series of elevations
+        !% Culvert in/out types
+        enumerator :: Culvert_Inlet        !% inlet-only element
+        enumerator :: Culvert_Outlet       !% outlet-only element
+        enumerator :: Culvert_InOut        !% single element culvert
         !% face jump types
         enumerator :: jump_none             !% type of hydraulic jump
         enumerator :: jump_from_upstream    !% type of hydraulic jump

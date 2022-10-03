@@ -26,6 +26,7 @@ module utility_allocate
     character(len=99) ::              emsg
 
     ! public members
+    public :: util_allocate_scalar_for_images
     public :: util_allocate_secondary_coarrays
     public :: util_allocate_linknode
     public :: util_allocate_monitor_points
@@ -57,6 +58,23 @@ contains
 !%
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine util_allocate_scalar_for_images ()    
+        !%------------------------------------------------------------------
+        !% Description
+        !% allocates coarrays that appear as scalars on an image
+        !% These are NOT coarrays, but are indexed off the present image
+        !%------------------------------------------------------------------
+
+        allocate(N_elem(num_images()))
+        allocate(N_face(num_images()))
+        allocate(N_unique_face(num_images()))
+        allocate(N_culvert(num_images()))
+
+    end subroutine util_allocate_scalar_for_images
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_secondary_coarrays ()

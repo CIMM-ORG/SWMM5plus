@@ -203,9 +203,11 @@ module define_globals
     !% number of control action and monitoring points in system (identical on each image)
     integer,  target :: N_ActionPoint
     integer,  target :: N_MonitorPoint
+    !% number of culverts on an image
+    integer, allocatable, target :: N_culvert(:)
 
     !% --- packed array of columns from elemR used in conmonR
-    integer, allocatable, target :: cmR_eR_col(:)
+    !integer, allocatable, target :: cmR_eR_col(:)  OBSOLETE 20221003
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]       !% coarray for elements

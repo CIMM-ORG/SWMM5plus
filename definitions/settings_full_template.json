@@ -66,6 +66,9 @@
         "energy_correction_factor" : 1.0,
         "water_temprature" : 20.0
     },
+    "Culvert" : {
+        "UseCulvertsTF" : true
+    },
     "Discretization" : {
         "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,

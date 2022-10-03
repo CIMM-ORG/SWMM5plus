@@ -440,6 +440,10 @@ module define_settings
         real(8) :: PercentVelocityAtLimit  !% percentage of cells at velocity limit that causes crash
     end type CrashType
 
+    type CulvertType
+        logical :: UseCulvertsTF = .true.   !% false allows culverts to be treated as conduits
+    end type CulvertType
+
     !% setting%Debug
     !% THESE WILL BE OBSOLETE
     type DebugType
@@ -616,9 +620,9 @@ module define_settings
         real(8) :: AverageZbottom = zeroR               !% NOT A USER SETTING
         real(8) :: MaxZbottom = zeroR                   !% NOT A USER SETTING
         real(8) :: MinZbottom = zeroR                   !% NOT A USER SETTING
-        real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]  !% NOT A USER SETTING
-        type(ForceMainType) :: ForceMain
-        type(ManningsNtype) :: ManningsN
+        real(8), dimension(2)    :: crk2 = [0.5d0, 1.0d0]  !% NOT A USER SETTING
+        type(ForceMainType)      :: ForceMain
+        type(ManningsNtype)      :: ManningsN
         type(PreissmannSlotType) :: PreissmannSlot
     end type SolverType
 
@@ -721,6 +725,7 @@ module define_settings
         type(ConstantType)       :: Constant ! Constants
         type(ControlType)        :: Control  ! Control data structure
         type(CrashType)          :: Crash    !% conditions where code is considered crashin
+        type(CulvertType)        :: Culvert  
         type(DebugType)          :: Debug
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
@@ -1135,6 +1140,14 @@ contains
     !% Crash =====================================================================
         !%                       Crash. are set by code    
 
+
+    !% Culvert =====================================================================
+    !%                          Culvert.UseCulvertsTF
+        call json%get('Culvert.UseCulvertsTF',logical_value, found)
+        if (found) setting%Culvert%UseCulvertsTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Culvert.UseCulvertsTF not found'
+
+        
     !% Discretization. =====================================================================
         !% -- Nominal element length adjustment
         !%                      Discretization.AdustLinkLengthForJunctionBranchYN

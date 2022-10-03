@@ -2510,7 +2510,7 @@ contains
                 )
         end if
 
-!       % --- Gothic conduits -----------------------------------------------
+        !% --- Gothic conduits -----------------------------------------------
         ptype => col_elemPGetm(epg_CC_gothic)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -2570,7 +2570,7 @@ contains
                 )
         end if
 
-    !% --- Modified-basket conduits ---------------------------
+        !% --- Modified-basket conduits ---------------------------
         ptype => col_elemPGetm(epg_CC_mod_basket)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -3243,10 +3243,11 @@ contains
                 ) )
         end if
 
+        !% ep_FM_HW_all
+        !% --- all force main (CC) elements that HW roughness method
         if (setting%Solver%ForceMain%UseForceMainTF) then
             !% print *, 'ForceMain Hazen-Williams ALL elements
-            !% ep_FM_HW_all
-            !% --- all force main (CC) elements that HW roughness method
+            
             ptype => col_elemP(ep_FM_HW_all)
             npack => npack_elemP(ptype)
 
@@ -3262,6 +3263,57 @@ contains
                     (elemSI(:,eSI_ForceMain_method) == HazenWilliams) )
             end if
         end if
+
+        !% ep_culvert_inlet
+        ptype => col_elemP(ep_culvert_inlet)
+        npack => npack_elemP(Ptype)
+        if ( (setting%Culvert%UseCulvertsTF) .and. (N_culvert(this_image()) > 0) ) then
+            npack = count( &
+                (elemSI(:,esi_Culvert_inout)  == Culvert_Inlet) &
+                )
+            if (npack > 0) then 
+                elemP(1:npack,ptype) = pack(eIdx, &
+                (elemSI(:,esi_Culvert_inout)  == Culvert_Inlet) &
+                )
+            end if
+        else
+            !% --- set the npack to zero
+            npack = 0
+        end if
+
+        !% ep_culvert_outlet
+        ptype => col_elemP(ep_culvert_outlet)
+        npack => npack_elemP(Ptype)
+        if ( (setting%Culvert%UseCulvertsTF) .and. (N_culvert(this_image()) > 0) ) then
+            npack = count( &
+                (elemSI(:,esi_Culvert_inout)  == Culvert_Outlet) &
+                )
+            if (npack > 0) then 
+                elemP(1:npack,ptype) = pack(eIdx, &
+                (elemSI(:,esi_Culvert_inout)  == Culvert_Outlet) &
+                )
+            end if
+        else
+            !% --- set the npack to zero
+            npack = 0
+        end if
+
+        !% ep_culvert_inout
+        ptype => col_elemP(ep_culvert_inout)
+        npack => npack_elemP(Ptype)
+        if ( (setting%Culvert%UseCulvertsTF) .and. (N_culvert(this_image()) > 0) ) then
+            npack = count( &
+                (elemSI(:,esi_Culvert_inout)  == Culvert_InOut) &
+                )
+            if (npack > 0) then 
+                elemP(1:npack,ptype) = pack(eIdx, &
+                (elemSI(:,esi_Culvert_inout)  == Culvert_InOut) &
+                )
+            end if
+        else
+            !% --- set the npack to zero
+            npack = 0
+        end if 
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

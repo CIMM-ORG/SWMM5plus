@@ -67,7 +67,10 @@ module runge_kutta2
         !% --- compute Force Main Manning's N for non-submerged FM elements
         if (setting%Solver%ForceMain%UseForceMainTF) call rk2_ForceMain_ManningsN ()
 
-        !% --- RK2 solution step -- single time advance step for CC and JM
+        !% --- RK2 solution step -- single time advance step
+        !%     CC advanced for continuity and momentum
+        !%     JM advanced for continuity
+        !%     JB determined from adjacent values.
         istep=1
         call rk2_step_ETM (istep)
 
@@ -120,6 +123,9 @@ module runge_kutta2
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
+        !%     CC advanced for continuity and momentum
+        !%     JM advanced for continuity
+        !%     JB determined from adjacent values.
 
         istep=2
         call rk2_step_ETM (istep)
@@ -317,12 +323,15 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Performs a single rk2 step for ETM
+        !% continuity on CC and JM
+        !% momentum on CC
+        !% velocity/flowrate on JB
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: istep
         integer :: tmType
         !%-----------------------------------------------------------------------------
         !%
-        !% perform the continuity step of the rk2 for ETM
+        !% perform the continuity step of the rk2 for ETM CC and JM
         call rk2_continuity_step_ETM(istep)
 
             ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
@@ -492,6 +501,7 @@ module runge_kutta2
         !%------------------------------------------------------------------
         !% Description:
         !% perform the momentum step of the rk2 for ETM (or ETM part of ETMAC)
+        !% Computed on CC elements and velocity/flowrate for JB
         !%-------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: istep
