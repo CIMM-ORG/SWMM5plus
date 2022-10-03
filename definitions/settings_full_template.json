@@ -55,11 +55,11 @@
     },
     "BC" : {
         "TimeSlotsStored" : 10,
-        "disableInterpolationYN": false,
+        "disableInterpolationYN": false
     },
     "CaseName" : {
         "Long"  : "test",
-        "Short" : "test",
+        "Short" : "test"
     },
     "Constant" : {
         "gravity" : 9.81,

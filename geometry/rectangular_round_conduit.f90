@@ -403,6 +403,7 @@ module rectangular_round_conduit
         !%-----------------------------------------------------------------------------
         fullDepth   => elemR(:,er_FullDepth)
         breadth     => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
+        aBot        => elemSGR(:,esgr_Rectangular_Round_Abot)
         yBot        => elemSGR(:,esgr_Rectangular_Round_Ybot)
         rBot        => elemSGR(:,esgr_Rectangular_Round_Rbot)  
         !%-----------------------------------------------------------------------------
