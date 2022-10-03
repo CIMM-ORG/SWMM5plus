@@ -5,6 +5,32 @@ cmake_minimum_required(VERSION 3.16.0)
 project(SWMM5Plus VERSION 0.0.1)
 enable_language (Fortran)
 
+
+find_package (Python3 COMPONENTS Interpreter)
+function(check_dependencies module)
+execute_process(COMMAND pip show ${module}
+    OUTPUT_QUIET   
+    ERROR_QUIET 
+    RESULT_VARIABLE EXIT_CODE_PIPSHOW
+    
+    )
+if (NOT ${EXIT_CODE_PIPSHOW} EQUAL 0)
+    message(WARNING "\nTesting unavailable\nMissing Python module '${module}'\nPlease run python_dependencies.sh\n")
+endif()
+endfunction()
+
+check_dependencies(swmmtoolbox)
+
+
+
+
+
+
+# if(NOT _swmmtoolbox_status)
+#     set(PY_${module_upper} ${_swmmtoolbox_location} CACHE STRING 
+#         "Location of Python module ${module}")
+# endif(NOT _swmmtoolbox_status)
+
 if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     message(FATAL_ERROR "Intel Fortran compiler not found. Found ${CMAKE_Fortran_COMPILER_ID} instead. Run:
     \n$ source path/to/intel/oneapi/setvars.sh
@@ -44,7 +70,7 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared -fcommon")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl -lz")
 
-set(FETCHCONTENT_QUIET "OFF")
+set(FETCHCONTENT_QUIET "ON")
 
 set(BUILD_COARRAY_NUM_IMAGES 1 CACHE STRING "Set up the number of processors to use for parallel SWMM5+.")
 set(BUILD_HDF5 "/hdf5/hdf5-1.12.1/hdf5")
@@ -101,7 +127,7 @@ endif()
 if (HDF5_FOUND)
     message(WARNING "HDF5 found in ${BUILD_HDF5}")
 else ()
-    message(WARNING "HDF5 not found, will download and build with required options.\n If HDF5 is already installed point to root directory by running:\n
+    message(WARNING "HDF5 not found, will download and build with required options.\n If HDF5 is already installed, point to its root directory by running:\n
 $ export HDF5_DIR=path/to/hdf5/")
     FetchContent_Populate(hdf5)
     ExternalProject_Add(hdf5
@@ -195,9 +221,9 @@ target_link_libraries(SWMM PUBLIC
 )
 add_dependencies(SWMM hdf5)
 
-if (DEFINED ENV{FOR_COARRAY_NUM_IMAGES})
-    message(WARNING "Environment variable FOR_COARRAY_NUM_IMAGES is set. Compiler will ignore CMake settings for -coarray-num-images. If unsure, run the following before using CMake \n$ unset FOR_COARRAY_NUM_IMAGES")
-endif()
+# if (DEFINED ENV{FOR_COARRAY_NUM_IMAGES})
+#     message(WARNING "Environment variable FOR_COARRAY_NUM_IMAGES is set. Compiler will ignore CMake settings for -coarray-num-images. If unsure, run the following before using CMake \n$ unset FOR_COARRAY_NUM_IMAGES")
+# endif()
 
 
 #Testing
