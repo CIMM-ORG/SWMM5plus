@@ -66,7 +66,7 @@ module define_globals
 
     !% to capture L1 (central) at 1 m nominal
 
-    integer :: iet(7) = (/15,16,17,18,19,20,21/)
+   !integer :: iet(7) = (/15,16,17,18,19,20,21/)
 
     !% for Vasconcelos at 0.1 m nominal
     ! integer :: iet(12) = (/    308,     225,    166,    309,    5,  1,  3,   12,    82,    154,    156, 155  /)
@@ -75,6 +75,24 @@ module define_globals
    ! integer :: iet(7) = (/ 16,17, 18, 19, 20, 21, 22 /)
 
     !integer :: iet(7) = (/ 68, 69, 70, 71, 72, 73, 74 /)
+
+    !%
+    !integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    !integer :: ift(6) = (/91, 92, 93, 94, 95, 96/)
+
+    ! !% for Vasconcelos_TPA
+    ! integer :: iet(5) = (/ 90, 91, 92, 93, 94 /)
+    ! integer :: ift(6) = (/88, 89, 90, 91, 92, 93/)
+
+    !% for lavaca
+    !%                      JM    JB     CC   CC    CC
+    !integer :: iet(5) = (/ 8698, 8700, 8710, 3874, 3875 /)
+    !integer :: ift(4) = (/           8824, 4026, 4027, 4028 /)
+
+    ! integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
+    ! integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
+
+    integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
     integer(kind=8) :: irecCount = 0
 
@@ -169,7 +187,7 @@ module define_globals
     integer, allocatable, target :: N_unique_face(:)
     !% output elements on each image
     integer, allocatable, target :: N_OutElem(:)[:]
-    !% output nodes on each image
+    !% output faces on each image
     integer, allocatable, target :: N_OutFace(:)[:]
     !% number of control action and monitoring points in system (identical on each image)
     integer,  target :: N_ActionPoint
@@ -244,6 +262,7 @@ module define_globals
     !% element output types
     integer, allocatable, target           :: output_types_elemR(:)
     integer, allocatable, target           :: output_typeProcessing_elemR(:)
+    integer, allocatable, target           :: output_typeMultiplyByBarrels_elemR(:)
     character(len=64), allocatable, target :: output_typeNames_elemR(:)
     character(len=16), allocatable         :: output_typeUnits_elemR(:)
     character(len=64), allocatable, target :: output_typeNames_withTime_elemR(:)
@@ -253,6 +272,7 @@ module define_globals
     !% face output types
     integer, allocatable, target           :: output_types_faceR(:)
     integer, allocatable, target           :: output_typeProcessing_faceR(:)
+    integer, allocatable, target           :: output_typeMultiplyByBarrels_faceR(:)
     character(len=64), allocatable, target :: output_typeNames_faceR(:)
     character(len=16), allocatable         :: output_typeUnits_faceR(:)
     character(len=64), allocatable, target :: output_typeNames_withTime_faceR(:)
@@ -334,6 +354,7 @@ module define_globals
     real(8), parameter :: eightR = 8.d0
     real(8), parameter :: nineR = 9.d0
     real(8), parameter :: tenR = 10.d0
+    real(8), parameter :: sixteenR = 16.d0
     real(8), parameter :: twentyR = 20.d0
     real(8), parameter :: twentyfourR = 24.d0
     real(8), parameter :: sixtyR = 60.d0

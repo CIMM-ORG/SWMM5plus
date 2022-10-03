@@ -156,16 +156,6 @@ contains
 
         delta = oneR / (nItems - oneR)
 
-        ! if ((this_image() == 7) .and. (setting%Time%Step > 39418)) then
-        !     print *, '                               delta ', delta
-        !     print *, '               normalizedInput/delta'
-        !     !print *, normalizedInput(thisP) / delta
-        !     do ii=1,size(thisP)
-        !         print *, ii, normalizedInput(thisP(ii)) / delta
-        !         print *, ii, int(normalizedInput(thisP(ii)) / delta)
-        !     end do
-        ! end if
-
         !% --- Find the integer (lower) position in the table for interpolation
         !%     Note that fortran int() always gets the integer smaller than the value
         where (normalizedInput(thisP) / delta + oneR < real(nItems,8))
@@ -202,9 +192,6 @@ contains
                      *(   onehalfR * table(position(thisP)     )                             &
                         -            table(position(thisP)+oneI)                             &
                         + onehalfR * table(position(thisP)+twoI) ) )
-                    !%(inoutArray(thisP) + (inoutArray(thisP) - delta) * &
-                    !%(inoutArray(thisP) - twoI * delta) / (delta*delta) *         &
-                    !%(table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
         endwhere
 
         !% reset the temporary values to nullvalue

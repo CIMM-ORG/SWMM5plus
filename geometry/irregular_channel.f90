@@ -42,6 +42,8 @@ contains
             real(8), pointer :: depth(:), fulldepth(:), volume(:), fullvolume(:)
             real(8), pointer :: thisTable(:,:), normInput(:)
         !%------------------------------------------------------------------
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
         !% Aliases
             thisP      => elemPGx(1:Npack,thisCol)
             depth      => elemR(:,er_Depth)
@@ -64,6 +66,10 @@ contains
 
         !% --- convert to physical depth
         depth(thisP) = depth(thisP) * transectR(tidx(thisP),tr_depthFull)
+
+        where (depth(thisP) > fulldepth(thisP))
+            depth(thisP) = fulldepth(thisP)
+        end where
 
         !%------------------------------------------------------------------
         !% Closing

@@ -9,7 +9,7 @@
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 100.00
     },
     "Limiter" : {
         "BC" : {
@@ -27,10 +27,6 @@
         "Velocity" : {
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
-        },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
         },
         "Dt" : {
             "UseLimitMinYN" : true,
@@ -53,7 +49,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout"    : true,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -94,17 +90,32 @@
         }
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
+        "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0
-    },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot", 
-        "TargetPreissmannCelerity" : 80.0
+        "ReferenceHead"     : 0.0,
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
+            "alpha"               : 1.0,
+            "beta"                : 1.0
+        },
+        "ForceMain" : {
+            "UseForceMainTF"        : false,
+            "UseSWMMinputMethodTF"  : true,
+            "FMallClosedConduitsTF" : false,
+            "errorCheck_RoughnessTF"     : true,
+            "Default_method"        : "HazenWilliams",
+            "Default_HazenWilliams_coef" : 120.0,
+            "Default_DarcyWeisbach_roughness_mm" : 0.36,
+            "Default_ManningsN"     : 0.03,
+            "minimum_slope"         : 1e-3
+        },
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot", 
+            "TargetCelerity" : 10.0
+        }
     },
     "VariableDT" : {
         "ApplyYN" : true,
@@ -114,5 +125,21 @@
         "decreaseFactor" : 0.8,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
+    },
+    "Debug" : {
+        "FileGroup" : {
+            "all" : false,
+            "definitions" : false,
+            "finalization" : false,
+            "geometry" : false,
+            "initialization" : false,
+            "interface" : false,
+            "output" : false,
+            "timeloop" : false,
+            "utility" : false
+        },
+        "SetupYN"  : true,
+        "OutputYN" : true
     }
+    
 }

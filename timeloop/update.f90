@@ -46,7 +46,7 @@ module update
         !%------------------------------------------------------------------
         !%
             ! call util_CLprint ('in update before geometry toplevel')
-        
+
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
@@ -85,9 +85,6 @@ module update
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
-        !% --- compute the element section factor for CC
-      !  call update_SectionFactor_element (thisCol_CC)
-
             !  call util_CLprint ('in update before CC interpweights in update')
 
         !% --- compute the wave speeds
@@ -112,7 +109,7 @@ module update
         !% --- not needed 20220716brh
         !% --- flow values on an BC outlet face 20220714brh
         !%     required so that an inflow to a zero or small depth will not be lost
-       ! call update_BCoutlet_flowrate ()
+        ! call update_BCoutlet_flowrate ()
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -121,21 +118,22 @@ module update
              if (setting%Debug%File%update)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine update_auxiliary_variables
-    !%
+!%
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================
-!%
+
     subroutine update_element_flowrate (thisCol)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, intent(in) :: thisCol
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:), Qmax(:)
-        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'update_element_flowrate'
+        !%------------------------------------------------------------------
         !if (crashYN) return
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
@@ -143,6 +141,10 @@ module update
         Qmax     => elemR(:,er_FlowrateLimit)
         !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisCol)
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, flowrate(139), area(139), velocity(139)
+
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
@@ -153,7 +155,10 @@ module update
             end where
 
         end if
+
+        ! print *, flowrate(139), area(139), velocity(139)
         ! print*, flowrate(thisP), 'flowrate(thisP)'
+
     end subroutine update_element_flowrate
 !%
 !%==========================================================================
@@ -230,40 +235,6 @@ module update
 !%==========================================================================
 !%==========================================================================
 !%
-  !  subroutine update_SectionFactor_element (thisCol)
-        !%------------------------------------------------------------------
-        !% Description
-        !% Computes the SectionFactor = Qn/S0 that is used for normal
-        !% depth computations
-        !%------------------------------------------------------------------
-        !% Declarations
-         !   integer, intent(in) :: thisCol
-        !     integer, pointer    :: Npack, thisP(:)
-        !     real(8), pointer    :: SectionFactor(:), SectionFactorMax(:)
-        !     real(8), pointer    :: Flowrate(:), Roughness(:), BottomSlope(:)
-        ! !%------------------------------------------------------------------
-        ! !% Aliases   
-        !     Npack => npack_elemP(thisCol)
-        !     !SectionFactor    => elemR(:,er_SectionFactor)
-        !     Flowrate         => elemR(:,er_Flowrate)
-        !     Roughness        => elemR(:,er_Roughness)
-        !     BottomSlope      => elemR(:,er_BottomSlope)
-        !     SectionFactorMax => elemR(:,er_SectionFactor_Max)
-        !%------------------------------------------------------------------     
-        ! if (Npack > 0) then
-        !     thisP => elemP(1:Npack,thisCol)
-        !     where (BottomSlope(thisP) > zeroR)
-        !         SectionFactor(thisP) = abs(Flowrate(thisP) * Roughness(thisP) / BottomSlope(thisP))
-        !     elsewhere
-        !         SectionFactor(thisP) = SectionFactorMax(thisP)
-        !     end where
-        ! end if
-
- !   end subroutine update_SectionFactor_element
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine update_wavespeed_element(thisCol)
         !%------------------------------------------------------------------
         !% Description
@@ -325,15 +296,15 @@ module update
         w_uP      => elemR(:,er_InterpWeight_uP)
         w_dP      => elemR(:,er_InterpWeight_dP)
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
-        isSlot    => elemYN(:,eYN_isSlot)
+        isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
 
-        fSlot    => faceYN(:,fYN_isSlot)
+        fSlot    => faceYN(:,fYN_isPSsurcharged)  !% Preissmann
         fUp      => elemI(:,ei_Mface_uL)
         fDn      => elemI(:,ei_Mface_dL)
 
         PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotVolume => elemR(:,er_SlotVolume)
-        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume) !% Preissmann
+        SlotWidth  => elemR(:,er_SlotWidth)  !% Preissmann
         fullArea   => elemR(:,er_FullArea)
         grav       => setting%constant%gravity
 
@@ -344,11 +315,15 @@ module update
         !% multiplier of the AC method for the wavespeed
         select case (whichTM)
             case (ALLtm)
-                thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
+                !thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                print *, 'CODE ERROR: ALLtm not complete'
+                call util_crashpoint(5598723) 
             case (ETM)
                 thisCol_ClosedElems =>  col_elemP(ep_CC_Closed_Elements)
             case (AC)
-                thisCol_AC          =>  col_elemP(ep_Surcharged_AC)
+                !thisCol_AC          =>  col_elemP(ep_ACsurcharged)
+                print *, 'CODE ERROR: AC not complete'
+                call util_crashpoint(55987233) 
             case default
                 print *, 'CODE ERROR: time march type unknown for # ', whichTM
                 print *, 'which has key ',trim(reverseKey(whichTM))
@@ -376,6 +351,7 @@ module update
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
         elsewhere (isSlot(thisP))
+            !% --- Preissmann slot
             w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 23022022 
             w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 23022022 
         end where
@@ -416,16 +392,20 @@ module update
         !% adjust upstream interpolation weights for downstream flow in presence of lateral inflows
         !% so that upstream interpolation is used
         !% HACK -- this probably could use an approach with some kind of ad hoc blend -- needs work
-        where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
-            w_uQ(thisP) =  setting%Limiter%InterpWeight%Maximum
-            w_uG(thisP) =  setting%Limiter%InterpWeight%Maximum
-        endwhere
 
-        ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
-        where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
-            w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
-            w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
-        endwhere
+        !% 20220817brh REMOVING LATERAL RESET AS IT IS CAUSING OSCILLATIONS IN HIGH INSTREAM FLOW CONDITIONS
+        !% MAY NEED TO PUT IT BACK IN FOR CASES WHERE LATERAL FLOWRATE IS LARGER THAN DOWNSTREAM FLOW
+
+        ! where ( (velocity(thisP) > zeroR) .and. (Qlateral(thisP) > zeroR) )
+        !     w_uQ(thisP) =  setting%Limiter%InterpWeight%Maximum
+        !     w_uG(thisP) =  setting%Limiter%InterpWeight%Maximum
+        ! endwhere
+
+        ! ! !% adjust downstream interpolation weights for upstream flow in presence of lateral inflow
+        ! where ( (velocity(thisP) < zeroR) .and. (Qlateral(thisP) > zeroR) )
+        !     w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+        !     w_dG(thisP) = setting%Limiter%InterpWeight%Maximum
+        ! endwhere
 
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -464,10 +444,9 @@ module update
             w_dH      => elemR(:,er_InterpWeight_dH)
             w_uP      => elemR(:,er_InterpWeight_uP)
             w_dP      => elemR(:,er_InterpWeight_dP)
-            isSlot    => elemYN(:,eYN_isSlot)
+            isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
         !%------------------------------------------------------------------
         !% cycle through the branches to compute weights
-        !print *, 'here in JB update '
         do ii=1,max_branch_per_node
             wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
 
@@ -475,15 +454,10 @@ module update
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
             elsewhere
+                !% --- Preissmann slot
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
                 w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
             endwhere
-            
-
-            ! if (setting%Time%Now/3600.0 > 388.0) then
-            !     write(*,"(A,10f16.9)") 'interp before', w_dQ(ietU1(1)), w_uQ(ietU1(2))
-            !     print *, 'depth, wavespeed JB ',depth(ietU1(2)),wavespeed(ietU1(2))
-            ! end if
 
             !% apply limiters to timescales
             where (w_uQ(thisP+ii) < zeroR)
@@ -505,10 +479,6 @@ module update
             where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
                 w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
             endwhere
-
-            ! if (setting%Time%Now/3600.0 > 388.0) then
-            !     write(*,"(A,10f16.9)") 'interp after ', w_dQ(ietU1(1)), w_uQ(ietU1(2))
-            ! end if
 
             !% set the geometry interp the same as flow interp
             w_uG(thisP+ii) = w_uQ(thisP+ii)
@@ -572,7 +542,7 @@ module update
     !     !%-----------------------------------------------------------------------------
 
     !     !% replace the interpolation weights for downstream JB
-    !     thisColP_dsJB  => col_elemP(ep_JB_DownStreamJB)
+    !     thisColP_dsJB  => col_elemP(ep_JB_Downstream)
     !     Npack1         => npack_elemP(thisColP_dsJB)
 
     !     if (Npack1 > 0) then
@@ -582,8 +552,8 @@ module update
     !         w_dH(thisP1) = oneR
     !     end if
 
-    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJbAdjacent)
-    !     Npack2            => npack_elemP(ep_CC_DownstreamJbAdjacent)
+    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJBadjacent)
+    !     Npack2            => npack_elemP(ep_CC_DownstreamJBadjacent)
 
     !     !% replace the interpolation weights for elements downstream of dn JB
     !     if (Npack2 > 0) then

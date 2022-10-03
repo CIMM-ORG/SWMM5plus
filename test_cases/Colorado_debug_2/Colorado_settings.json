@@ -5,7 +5,16 @@
         "Long"  : "Brazos_without_InitialCondition_Trapezoidal_Geometry",
         "Short" : "Colorado_subset_2_wo_IC"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
+        }
+    },    
     "Discretization" : {
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -27,10 +36,6 @@
         "Velocity" : {
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
-        },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
         },
         "Dt" : {
             "UseLimitMinYN" : true,
@@ -54,7 +59,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout" : true,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -77,14 +82,19 @@
     "Simulation" : {
         "useHydrology" : false,
         "useHydraulics" : true,
-        "useSpinUp" : true,
+        "useSpinUp" : false,
         "stopAfterSpinUp" : false,
         "SpinUpDays" : 60
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T00",
-        "ReferenceHead"     : 0.0
+        "ReferenceHead"     : 0.0,
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
+            "alpha"               : 1.0,
+            "beta"                : 100.0
+        }
     },
     "TestCase" : {
         "UseTestCaseYN" : false,

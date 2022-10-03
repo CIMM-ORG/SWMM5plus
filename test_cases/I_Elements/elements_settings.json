@@ -78,7 +78,6 @@
         "force_folder_creationYN"  : true
     },
     "Junction" : {
-        "kFactor"  : 0.0,
         "FunStorageN" : 10
     },
     "Limiter" : {
@@ -101,10 +100,6 @@
         "Velocity" : {
             "Maximum" : 10.0,
             "UseLimitMaxYN" : true
-        },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
         },
         "Dt" : {
             "Minimum"     : 1e-4,
@@ -138,10 +133,6 @@
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 0.01
-    },
     "Simulation" : {
         "useHydrology" : true,
         "useHydraulics" : true,
@@ -157,10 +148,13 @@
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",
-        "PreissmannSlot" : false,
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9
+        "SwitchFractionUp" : 0.9,
+        "PreissmannSlot" : {
+            "Method" : "DynamicSlot",
+            "TargetCelerity" : 0.01
+        }
     },
     "TestCase" : {
         "UseTestCaseYN" : false,

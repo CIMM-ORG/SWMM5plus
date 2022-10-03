@@ -34,7 +34,7 @@ module trapezoidal_channel
     subroutine trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on open channels (or non-surcharged trapezoidal conduits)
+        !% Only applies on open channels 
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point

@@ -49,7 +49,8 @@
         "Head" : {
             "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
-            "Coef" : 0.5
+            "Coef" : 1.0,
+            "FullDepthMultiplier" : 1.0
         }
     },
     "BC" : {
@@ -62,10 +63,11 @@
     },
     "Constant" : {
         "gravity" : 9.81,
-        "energy_correction_factor" : 1.0
+        "energy_correction_factor" : 1.0,
+        "water_temprature" : 20.0
     },
     "Discretization" : {
-        "AdjustLinkLengthYN" : false,
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -73,21 +75,25 @@
     },
     "Eps" : {
         "FroudeJump" : 0.1,
-        "Velocity"   : 1e-6
+        "Velocity"   : 1e-6,
+        "Head"       : 1e-6,
+        "TimeStep"   : 1e-6
     },
     "File" : {
-        "UseCommandLineFoldersYN" : true,
+        "UseCommandLineFoldersYN"  : true,
         "force_folder_creationYN"  : true,
         "base_folder" : "",
         "library_folder" : "",
         "output_folder" : "",
         "output_temp_subfolder" : "",
         "project_folder" : "",
+        "setting_file" : "",
         "inp_file" : ""
     },
     "Junction" : {
         "FunStorageN" : 10,
-        "kFactor"  : 0.0
+        "kFactor"     : 0.0,
+        "InfiniteExtraDepthValue"    : 1000.0
     },
     "Limiter" : {
         "NormalDepthInfinite" : 1000.0,
@@ -99,17 +105,17 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
-            "Minimum"     : 1e-4
+            "Minimum"     : 1e-4,
+            "UseLimitMaxYN" : true,
+            "Maximum"       : 86400.0
         }
     },
     "Link" : {
-        "DefaultInitDepthType" : "Linear" 
+        "DefaultInitDepthType"     : "Linear", 
+        "OpenChannelLimitDepthYN"  : false,
+        "OpenChannelFullDepth"     :  20
     },    
     "Orifice" : {
         "SharpCrestedWeirCoefficient" : 0.414,
@@ -127,21 +133,26 @@
             "interval" : 10
         },
         "DataOut" :{
-            "isAreaOut"             : true,
-            "isDepthOut"            : true,
-            "isFlowrateOut"         : true,
-            "isFluxConsOut"         : true,
-            "isFroudeNumberOut"     : false,
-            "isHeadOut"             : true,
-            "isHydRadiusOut"        : false,
-            "isPerimeterOut"        : false,
-            "isRoughnessDynamicOut" : false,
-            "isSlotWidthOut"        : false,
-            "isSlotDepthOut"        : false,
-            "isTopWidthOut"         : false,
-            "isVelocityOut"         : true,
-            "isVolumeOut"           : true,
-            "isWaveSpeedOut"        : false
+            "isAreaOut"               : true,
+            "isDepthOut"              : true,
+            "isFlowrateOut"           : true,
+            "isFluxConsOut"           : true,
+            "isFroudeNumberOut"       : false,
+            "isHeadOut"               : true,
+            "isHydRadiusOut"          : false,
+            "isPerimeterOut"          : false,
+            "isManningsNout"          : false,
+            "isSlotWidthOut"          : false,
+            "isSlotDepthOut"          : false,
+            "isTopWidthOut"           : false,
+            "isVelocityOut"           : true,
+            "isVolumeOut"             : true,
+            "isVolumeConsOut"         : false,
+            "isVolumeOverflowOut"     : false,
+            "isVolumePondedOut"       : false,
+            "isWaveSpeedOut"          : false,
+            "isPreissmannCelerityOut" : false,
+            "isPreissmannNumberOut"   : false
         },
         "Report" : {
             "useSWMMinpYN" : true,
@@ -157,10 +168,6 @@
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 0.01
-    },
     "Profile" : {
         "useYN" : false
     },
@@ -168,27 +175,43 @@
         "stopAfterInitializationYN" : false,
         "useHydrology"              : true,
         "useHydraulics"             : true,
-        "useSpinUp"                 : true,
+        "useSpinUp"                 : false,
         "stopAfterSpinUp"           : false,
         "SpinUpDays"                : 10.0
     },
     "SmallDepth" : {
-        "DepthCutoff" : 0.01,
+        "DepthCutoff" : 0.03,
         "ManningsN" : 0.1
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : false,
         "MomentumSourceMethod" : "T10",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
         "ReferenceHead"     : 0.0,
-        "Roughness" : {
-            "useDynamicRoughness" : true,
-            "alpha"               : 100.0
+        "ForceMain" : {
+            "UseForceMainTF"        : true,
+            "UseSWMMinputMethodTF"  : true,
+            "FMallClosedConduitsTF" : false,
+            "errorCheck_RoughnessTF"     : true,
+            "Default_method"        : "HazenWilliams",
+            "Default_HazenWilliams_coef" : 120.0,
+            "Default_DarcyWeisbach_roughness_mm" : 0.36,
+            "Default_ManningsN"     : 0.03,
+            "minimum_slope"         : 1e-3
+        },
+        "ManningsN" : {
+            "useDynamicManningsN" : false,
+            "alpha"               : 1.0,
+            "beta"                : 1.0
+        },
+        "PreissmannSlot" : {
+            "useSlotTF"      : true,
+            "Method"         : "DynamicSlot",
+            "TargetCelerity" : 3.0,
+            "Alpha"          : 2.0
         }
-
     },
     "TestCase" : {
         "UseTestCaseYN" : false,
@@ -198,8 +221,6 @@
         "useSWMMinpYN" : true,
         "matchHydrologyStep" : true,
         "DtTol" : 1e-1,
-        "StartEpoch" : 0.0,
-        "EndEpoch"   : 1000.0,
         "Hydraulics" : {
             "Dt" : 10.0
         },
@@ -239,18 +260,16 @@
         "CFL_hi_max" : 0.5,
         "CFL_target" : 0.4,
         "CFL_lo_max" : 0.2,
-        "CFL_inflow_max" : 0.2,
+        "CFL_inflow_max" : 0.4,
         "increaseFactor" : 1.2,
-        "NstepsForCheck" : 10,
-        "InitialDt"      : 1.0
+        "InitialDt"      : 1.0,
+        "NstepsForCheck" : 10
     },
     "ZeroValue" : {
         "UseZeroValues" : true,
-        "Area" : 1e-6,
-        "Depth" : 1e-4,
+        "Depth" : 1e-3,
         "Slope" : 1e-6,
-        "Topwidth" : 1e-4,
-        "Volume" : 1e-6
+        "Velocity" : 1e-3
     },
     "Debug" : {
         "File" : {

@@ -32,27 +32,33 @@ module triangular_channel
 !%==========================================================================
 !%
     subroutine triangular_depth_from_volume (elemPGx, Npack, thisCol)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
-        !% Only applies on open channels (or non-surcharged triangular conduits)
+        !% Only applies on open channels 
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !% NOTE: this does NOT limit the depth by surcharge height at this point
         !% This will be done after the head is computed.
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), volume(:), length(:), breadth(:), sideslope(:)
-        !%-----------------------------------------------------------------------------
-        thisP   => elemPGx(1:Npack,thisCol) 
-        depth   => elemR(:,er_Depth)
-        volume  => elemR(:,er_Volume)
-        length  => elemR(:,er_Length)
-        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
-        sideslope => elemSGR(:,esgr_Triangular_Slope)
+        !%------------------------------------------------------------------
+            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, pointer :: thisP(:)
+            real(8), pointer :: depth(:), volume(:), length(:), breadth(:)
+            real(8), pointer :: sideslope(:), fullvolume(:), fulldepth(:)
+        !%-----------------------------------------------------------------
+        thisP      => elemPGx(1:Npack,thisCol) 
+        depth      => elemR(:,er_Depth)
+        volume     => elemR(:,er_Volume)
+        length     => elemR(:,er_Length)
+        fulldepth  => elemR(:,er_FullDepth)
+        fullvolume => elemR(:,er_FullVolume)
+        breadth    => elemSGR(:,esgr_Triangular_TopBreadth)
+        sideslope  => elemSGR(:,esgr_Triangular_Slope)
         !%-----------------------------------------------------------------------------  
-
-        depth(thisP) = sqrt((volume(thisP)/length(thisP)) / sideslope(thisP))
+        where (volume(thisP) >= fullvolume(thisP))
+            depth(thisP) = fulldepth(thisP)
+        elsewhere
+            depth(thisP) = sqrt((volume(thisP) / length(thisP)) / sideslope(thisP))
+        endwhere
 
     end subroutine triangular_depth_from_volume
     !%  
@@ -145,15 +151,15 @@ module triangular_channel
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: breadth(:), depth(:), perimeter(:)
+        real(8), pointer :: slope(:), depth(:), perimeter(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
-        breadth   => elemSGR(:,esgr_Triangular_TopBreadth)
+        slope     => elemSGR(:,esgr_Triangular_Slope)
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
         !%-----------------------------------------------------------------------------
 
-        perimeter(thisP) = twoR * sqrt(((breadth(thisP) ** twoR) / fourR) + (depth(thisP) ** twoR))
+        perimeter(thisP) = twoR * depth(thisP) * sqrt(oneR + slope(thisP) ** twoR)
 
     end subroutine triangular_perimeter_from_depth
 !%    
@@ -170,12 +176,12 @@ module triangular_channel
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
         real(8), intent(in) :: depth
-        real(8), pointer    :: breadth(:)
+        real(8), pointer    :: slope(:)
         !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Triangular_TopBreadth)
+        slope => elemSGR(:,esgr_Triangular_Slope)
         !%-----------------------------------------------------------------------------
         
-        outvalue = twoR * sqrt(((breadth(indx) ** twoR) / fourR) + (depth ** twoR))
+        outvalue = twoR * depth * sqrt(1 + slope(indx) ** twoR)
 
     end function triangular_perimeter_from_depth_singular
 !%    

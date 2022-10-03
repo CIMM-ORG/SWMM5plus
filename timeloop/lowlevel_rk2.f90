@@ -31,11 +31,13 @@ module lowlevel_rk2
     public :: ll_momentum_Ksource_CC
     public :: ll_momentum_source_CC
     public :: ll_momentum_lateral_source_CC
-    public :: ll_momentum_gamma_CC
+    public :: ll_momentum_gammaCM_CC
+    public :: ll_momentum_gammaFM_CC
     public :: ll_momentum_solve_CC
     public :: ll_momentum_velocity_CC
     public :: ll_momentum_add_gamma_CC_AC
     public :: ll_momentum_add_source_CC_AC
+    public :: ll_minorloss_friction_gamma_CC
     public :: ll_enforce_flapgate_CC
     public :: ll_store_in_temporary
     public :: ll_restore_from_temporary
@@ -43,8 +45,11 @@ module lowlevel_rk2
     public :: ll_interpolate_values
     public :: ll_flowrate_and_velocity_JB
     !public :: ll_momentum_solve_JB
-    public :: ll_slot_computation_ETM
-    public :: ll_get_dynamic_roughness
+    ! public :: ll_CC_slot_computation_ETM
+    ! public :: ll_JM_slot_computation_ETM
+    public :: ll_get_dynamic_ManningsN
+    public :: ll_ForceMain_equivalent_manningsN
+    public :: ll_ForceMain_dw_friction
 
     contains
 !%==========================================================================
@@ -87,6 +92,7 @@ module lowlevel_rk2
             integer, intent(in) :: outCol, thisCol, Npack
             real(8), pointer :: branchQ(:), eQlat(:), fQ(:)
             integer, pointer :: thisP(:), isbranch(:), fup(:), fdn(:)
+            integer, pointer :: nBarrel(:)
             integer :: ii, jj
         !%------------------------------------------------------------------
         !% Aliases
@@ -97,6 +103,7 @@ module lowlevel_rk2
             fQ       => faceR(:,fr_Flowrate)
             fup      => elemI(:,ei_Mface_uL)
             fdn      => elemI(:,ei_Mface_dL)
+            nBarrel  => elemI(:,ei_barrels)
         !%------------------------------------------------------------------
         !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
         !% downstream branches
@@ -109,18 +116,19 @@ module lowlevel_rk2
         !     print *, fQ(fdn(iet(1)+ii+1)), real(isbranch(iet(1)+ii+1),8)
         ! end do
 
-        !% approach using branch Q
+        !% --- testing approach using branch Q
         ! do ii = 1,max_branch_per_node,2
         !     elemR(thisP,outCol) = elemR(thisP,outCol)                 &
         !         + real(isbranch(thisP+ii  ),8) * branchQ(thisP+ii  )  &
         !         - real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
         ! end do
 
-        !% approach using face Q up/dn of branch (mass conservative)
+        !% --- using face Q up/dn of branch (mass conservative)
+        !%     multiply Q by number of barrels of branch
         do ii = 1,max_branch_per_node,2
             elemR(thisP,outCol) = elemR(thisP,outCol) &
-                + real(isbranch(thisP+ii  ),8) * fQ(fup(thisP+ii)) &
-                - real(isbranch(thisP+ii+1),8) * fQ(fdn(thisP+ii+1))
+                + real(isbranch(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(nBarrel(thisP+ii  ),8)  &
+                - real(isbranch(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(nBarrel(thisP+ii+1),8) 
         end do
 
         ! if (this_image() == 2) then
@@ -588,43 +596,256 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_momentum_gamma_CC (outCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
+    subroutine ll_momentum_gammaCM_CC (outCol, thisCol, Npack)
+        !%------------------------------------------------------------------
         !% Description:
-        !% Common Gamma for momentum on channels and conduits for  ETM
+        !% Common Gamma for momentum on channels and conduits 
+        !% using the Chezy-Manning roughness approach.
         !% Computes the common part of the Gamma term, which
         !% is the implict friction used in both AC and ETM
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol, thisCol, Npack
-        real(8), pointer :: velocity(:), mn(:), rh(:), oneVec(:), grav
-        integer, pointer :: thisP(:)
-        character(64) :: subroutine_name = 'll_momentum_gamma_CC'
-        !%------------------------------------------------------------------------------
-        thisP    => elemP(1:Npack,thisCol)
-        velocity => elemR(:,er_velocity)
-        if (.not. setting%Solver%Roughness%useDynamicRoughness) then
-            mn       => elemR(:,er_Roughness)
-        else
-            mn       => elemR(:,er_Roughness_Dynamic)
-        end if
-        rh       => elemR(:,er_HydRadius)
-        oneVec   => elemR(:,er_ones)
-        grav => setting%constant%gravity
-        !%------------------------------------------------------------------------------
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: outCol, thisCol, Npack
+            real(8), pointer :: velocity(:), mn(:), rh(:),  grav
+            integer, pointer :: thisP(:)
+            character(64) :: subroutine_name = 'll_momentum_gammaCM_CC'
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            velocity => elemR(:,er_velocity)
+            rh       => elemR(:,er_HydRadius)
+            grav     => setting%constant%gravity
+            if (.not. setting%Solver%ManningsN%useDynamicManningsN) then
+                mn   => elemR(:,er_ManningsN)
+            else
+                mn   => elemR(:,er_ManningsN_Dynamic)
+            end if
+            
+        !%---------------------------------------------------------------------
 
-        elemR(thisP,outCol) = &
-                sign(oneVec(thisP), velocity(thisP)) &
-                * grav * (mn(thisP)**twoR) * velocity(thisP)  &
-                / &
-                ( rh(thisP)**fourthirdsR )
-
-    !    print *, 'in ll_momentum_gamma_CC'
-    !    print *, elemR(iet(4),outCol)      
+        !% ---- standard Manning's n approach
+        elemR(thisP,outCol) =                                       &
+                grav * (mn(thisP)**twoR) * abs(velocity(thisP))     &
+                /                                                   &
+                ( rh(thisP)**fourthirdsR )                         
+    
+        !    print *, 'in ll_momentum_gamma_CC'
+        !    print *, elemR(thisP,outCol)
+        !    print *, ' '
+        !    print *, '============================'
+        !    print *, elemR(139,outCol)      
+        !    print *, rh(139), mn(139),velocity(139)
+        !    print *, elemR(139,er_ManningsN), elemR(139,er_ManningsN_Dynamic)
+        !    print *, setting%Solver%ManningsN%useDynamicManningsN
 
                 ! print *, 'in ', trim(subroutine_name)
                 ! print *, mn(thisP)
 
-    end subroutine ll_momentum_gamma_CC
+    end subroutine ll_momentum_gammaCM_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_momentum_gammaFM_CC (outCol, thisCol, Npack, FMmethod)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the gamma term in momentum for Force Main roughness
+        !% for surcharged pipes.
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: outCol, thisCol, Npack, FMmethod
+            real(8), pointer   :: grav, velocity(:), AFull(:), Pfull(:)
+            real(8), pointer   :: FMcoef(:), DWf(:)
+            integer, pointer   :: thisP(:)
+            real(8), parameter :: HZfactor = 1.351d0
+            real(8), parameter :: HZexpU   = 0.852d0
+            real(8), parameter :: HZexpD1  = 1.852d0
+            real(8), parameter :: HZexpD2  = 1.1667d0
+            character(64) :: subroutine_name = 'll_momentum_gammaFM_CC'
+        !%------------------------------------------------------------------
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            velocity => elemR(:,er_velocity)
+            Afull    => elemR(:,er_FullArea)
+            Pfull    => elemR(:,er_FullPerimeter)
+            FMcoef   => elemSR(:,esr_ForceMain_Coef)
+            DWf      => elemSR(:,esr_ForceMain_FrictionFactor)
+            grav => setting%constant%gravity
+        !%------------------------------------------------------------------
+
+        select case (FMmethod)
+        case (HazenWilliams)
+            elemR(thisP,outCol) =                                            &
+                (HZfactor * grav * abs(velocity(thisP))**(HZexpU))           &
+                / ( (FMcoef(thisP)**HZexpD1) * ((Afull(thisP) / Pfull(thisP))**HZexpD2) )
+        case (DarcyWeisbach)
+            elemR(thisP,outCol) = &
+                (DWf(thisP) * abs(velocity(thisP)) ) &
+                / ( eightR * Afull(thisP)/Pfull(thisP)  )
+        case default
+            print *, 'CODE ERROR: unexpected case default'
+            call util_crashpoint(5592283)
+        end select
+               
+        !%------------------------------------------------------------------
+    end subroutine ll_momentum_gammaFM_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_minorloss_friction_gamma_CC (inoutCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adds the minor loss term for channels and conduits to elemR(:,inoutCol)
+        !% note this term is g h_L / L = KU/2L
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: inoutCol, thisCol, Npack
+            real(8), pointer :: velocity(:), oneVec(:)
+            real(8), pointer :: Kentry(:), Kexit(:), Kconduit(:), length(:)
+            integer, pointer :: thisP(:)
+            character(64) :: subroutine_name = 'll_minorloss_friction_CC'
+        !%--------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%--------------------------------------------------------------------
+        !% Aliases
+            thisP    => elemP(1:Npack,thisCol)
+            velocity => elemR(:,er_velocity)
+            Kentry   => elemR(:,er_Kentry_MinorLoss)
+            Kexit    => elemR(:,er_Kexit_MinorLoss)
+            Kconduit => elemR(:,er_Kconduit_MinorLoss)
+            length   => elemR(:,er_Length)
+            oneVec   => elemR(:,er_ones)
+        !%------------------------------------------------------------------------------
+
+        ! print *, ' '
+        ! print *,  elemR(thisP,inoutCol)
+        ! print *, ' '
+
+        !% ---- minor loss term (without gravity, which cancels out in derivation)
+        elemR(thisP,inoutCol) = elemR(thisP,inoutCol)               &
+                + abs(velocity(thisP))                              & 
+                * (Kentry(thisP) + Kexit(thisP) + Kconduit(thisP))  &
+               /                                                    &
+               (twoR * length(thisP)) 
+
+        ! !print *, elemR(thisP,inoutCol)
+        ! print *, elemR(thisP,inoutCol)
+        ! print *, ' '
+        ! !print *, velocity(thisP)
+        ! !print *, ' '
+        ! print *, Kentry(thisP)
+        ! print *, ' '
+        ! print *, Kexit(thisP)
+        ! print *, ' '
+        ! print *, Kconduit(thisP)
+        ! print *, ' '
+        ! print *, length(thisP)
+        ! stop 298734
+
+
+    end subroutine ll_minorloss_friction_gamma_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_ForceMain_dw_friction (thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes the friction factor for Darcy-Weisbach force mains
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisCol, Npack
+            integer, pointer    :: thisP(:)
+            real(8), pointer    :: Re(:), hydradius(:), Afull(:), Pfull(:)
+            real(8), pointer    :: velocity(:), rough(:), Ffac(:), viscosity
+            real(8), parameter  :: eCoef = 1.081d0 !% roughness multiplier in SI
+            real(8), parameter  :: rCoef = 5.74d0  !% Reynolds number coef
+            real(8), parameter  :: rExpon = 0.9d0  !% Reynolds number exponent
+        !%--------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP     => elemP(1:Npack,thisCol)
+            Re        => elemR(:,er_Temp01)
+            hydradius => elemR(:,er_HydRadius)
+            Afull     => elemR(:,er_FullArea)
+            Pfull     => elemR(:,er_FullPerimeter)
+            velocity  => elemR(:,er_Velocity)
+            rough     => elemSR(:,esr_ForceMain_Coef)
+            Ffac      => elemSR(:,esr_ForceMain_FrictionFactor)
+            viscosity => setting%Constant%water_kinematic_viscosity
+        !%------------------------------------------------------------------
+        !% --- for Reynolds number, use Hydraulic Diameter = 4 * hydraulic radius
+        !%     This uses the hydraulic radius associated with the full flow area
+        !%     for consistency in the friction factor computation for equivalent 
+        !%     manning's n computed at full pipe conditions.
+        Re(thisP) = velocity(thisP) * fourR * (Afull(thisP) / Pfull(thisP)) / viscosity
+
+        !% --- compute the friction factor
+        !%     This uses the full hydraulic radius for consistency in the derivation
+        !%     of the equivalent Manning's n
+        Ffac(thisP) = onefourthR                                             &
+            / ( log10(                                                       &
+                      (eCoef * rough(thisP) / (Afull(thisP) / Pfull(thisP))) &
+                       + (rCoef / (Re(thisP)**rExpon))                       &
+                     )**2 ) 
+
+    end subroutine ll_ForceMain_dw_friction
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_ForceMain_equivalent_manningsN (thisCol, Npack, fmMethod)  
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the equivalent Mannings N used in force mains that are
+        !% not surcharged
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisCol, Npack, fmMethod
+            integer, pointer    :: thisP(:)
+            real(8), pointer    :: manningsN(:), slope(:), Afull(:), Pfull(:)
+            real(8), pointer    :: HWcoef(:), Ffactor(:)
+            real(8), pointer    :: slopeMin, grav
+            real(8), parameter  :: HWfactorD = 0.85d0
+            real(8), parameter  :: HWslopeExp = 0.04d0
+            real(8), parameter  :: HWhydradExp = 0.037d0
+            real(8), parameter  :: DWhydradExp = 0.1667d0
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP      => elemP(1:Npack,thisCol)
+            HWcoef     => elemSR(:,esr_ForceMain_Coef)
+            Ffactor    => elemSR(:,esr_ForceMain_FrictionFactor)
+            manningsN  => elemR(:,er_ManningsN)
+            Afull      => elemR(:,er_FullArea)
+            Pfull      => elemR(:,er_FullPerimeter)
+            slope      => elemR(:,er_BottomSlope)
+            slopeMin   => setting%Solver%ForceMain%minimum_slope
+            grav       => setting%Constant%gravity
+        !%------------------------------------------------------------------
+        select case (fmMethod)
+        case (HazenWilliams)
+            !% N = Rh^0.037 / (0.85 * C * S^0.04)
+            manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**HWhydradExp ) &
+                / (HWfactorD * HWcoef(thisP) * (max( slope(thisP), slopeMin )**HWslopeExp) )
+        case (DarcyWeisbach)
+            !% N = Rh^1/6  * sqrt( f / 8g )
+            manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**DWhydradExp ) &
+                * sqrt( Ffactor(thisP) / (eightR * grav) )
+        case default
+            print *, 'CODE ERROR: unexpected case default'
+            call util_crashpoint(779834)
+        end select
+
+    end subroutine ll_ForceMain_equivalent_manningsN  
 !%
 !%==========================================================================
 !%==========================================================================
@@ -663,9 +884,9 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_solve_CC'
-        ! print *, ' Msource ', Msource(iet(7))
-        ! print *, ' Gamma   ', GammaM(iet(7))
-        ! print *, ' Vprod   ',volumeLast(iet(7)) * velocityLast(iet(7))
+        ! print *, ' Msource ', Msource(139)
+        ! print *, ' Gamma   ', GammaM(139)
+        ! print *, ' Vprod   ',volumeLast(139) * velocityLast(139)
         ! print *, 'crk,delt ', crk(istep),delt
         ! print *, ' '
 
@@ -673,13 +894,10 @@ module lowlevel_rk2
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
-        ! !print *, ' M       ',elemR(780,outCol)
         ! print *, 'in ll_momentum_solve_CC'
-        ! !print *, elemR(1,outCol)
-        ! !print *, volumeLast(1) * velocityLast(1), crk(istep)* delt * Msource(1)      
-        ! print *, iet(4)
-        ! print *, volumeLast(iet(4)), velocityLast(iet(4)), Msource(iet(4))
-        ! print *, crk(istep), delt, GammaM(iet(4))  
+        ! print *, elemR(139,outCol) 
+        ! print *, volumeLast(139), velocityLast(139), Msource(139)
+        ! print *, crk(istep), delt, GammaM(139)  
 
         !stop 2098734
 
@@ -714,7 +932,6 @@ module lowlevel_rk2
         ! print*, 'in ll_momentum_velocity_CC'
         ! print*, elemR(thisP,inoutCol), 'new velocity'
     end subroutine ll_momentum_velocity_CC
-!%
 !%
 !%==========================================================================
 !%==========================================================================
@@ -937,7 +1154,7 @@ module lowlevel_rk2
         eVolume      => elemR(:,er_Volume)
         eLength      => elemR(:,er_Length)
         eRH          => elemR(:,er_HydRadius)
-        eRough       => elemR(:,er_Roughness)
+        eRough       => elemR(:,er_ManningsN)
 
         fFlow        => faceR(:,fr_Flowrate)
         !fFlowMax     => faceR(:,fr_Flowrate_Max)
@@ -1057,497 +1274,10 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-! subroutine ll_junction_branch_flowrate_and_velocity_packtest (whichTM)
-    ! OBSOLETE 20220207
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Updates the flowrate and velocity on junction branches from face values
-    !     !% obtained in the face interpolation
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: whichTM
-    !         integer, pointer :: thisColP_JM, thisCol2, nPack, npack2, thisP(:), thisZeroP(:)
-    !         integer, pointer :: fUp(:), fDn(:), BranchExists(:)
-    !         integer :: kk, ii, jj
-    !         real(8), pointer :: dHead(:), eHead(:), eFlow(:), eVol(:)
-    !         real(8), pointer :: eArea(:), eVelocity(:), fHead_d(:), fHead_u(:)
-    !         real(8), pointer :: fFlowMax(:), vMax, dt, headC, grav, epsH
-    !     !%------------------------------------------------------------------
-    !     !% Preliminaries:
-    !         select case (whichTM)
-    !         case (ALLtm)
-    !             thisColP_JM            => col_elemP(ep_JM_ALLtm)
-    !             thisCol2               => col_elemP(ep_ZeroDepth_JM_ALLtm)
-    !         case (ETM)
-    !             thisColP_JM            => col_elemP(ep_JM_ETM)
-    !             thisCol2               => col_elemP(ep_ZeroDepth_JM_ETM)
-    !         case (AC)
-    !             thisColP_JM            => col_elemP(ep_JM_AC)
-    !             thisCol2               => col_elemP(ep_ZeroDepth_JM_AC)
-    !         case default
-    !             print *, 'CODE ERROR: time march type unknown for # ', whichTM
-    !             print *, 'which has key ',trim(reverseKey(whichTM))
-    !             stop 7659
-    !         end select
-    !         Npack => npack_elemP(thisColP_JM)
-    !         if (Npack < 1) return
-    !     !%------------------------------------------------------------------
-    !     !% Aliases:
-    !         thisP     => elemP(1:Npack,thisColP_JM)
-    !         dHead     => elemR(:,er_Temp01)
-    !         eHead     => elemR(:,er_Head)
-    !         eFlow     => elemR(:,er_Flowrate)
-    !         eVol      => elemR(:,er_Volume)
-    !         eArea     => elemR(:,er_Area)
-    !         eVelocity => elemR(:,er_Velocity)
-    !         fUp       => elemI(:,ei_Mface_uL)
-    !         fDn       => elemI(:,ei_Mface_dL)
-
-    !         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
-
-    !         fHead_d  => faceR(:,fr_Head_d)
-    !         fHead_u  => faceR(:,fr_Head_u)
-    !         fFlowMax => faceR(:,fr_Flowrate_Max)
-
-    !         vMax         => setting%Limiter%Velocity%Maximum
-    !         dt           => setting%Time%Hydraulics%Dt
-    !         headC        => setting%Junction%HeadCoef
-    !         grav         => setting%constant%gravity
-    !         epsH         => setting%Eps%Head
-    !     !%------------------------------------------------------------------
-    !     !% cycle through the upper branches  
-
-    !     dHead = zeroR    
-    !     do kk=1,max_branch_per_node,2
-    !         !% head gradient from upstream to downstream
-    !         dHead(thisP+kk) = (fHead_d(fUp(thisP+kk)) - eHead(thisP+kk)) * real(BranchExists(thisP+kk),8)
-    !         !% flow based on head gradient
-    !         eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
-    !             * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
-    !         !% adjust so that inflow and outflow are limited
-    !         where     (dHead(thisP+kk) > epsH)  
-    !             !% use the smaller (positive) of the JB flow and the max flow on the face
-    !             eFlow(thisP+kk) = min(eFlow(thisP+kk), fFlowMax(fup(thisP+kk)))
-    !             !% if the minimum is negative (i.e, fFlowMax < 0), use zero
-    !             eFlow(thisP+kk) = max(eFlow(thisP+kk),zeroR)
-    !         elsewhere (dHead(thisP+kk) < epSH)
-    !             !% if outflow, limit by 1/3 of the main junction volume
-    !             eFlow(thisP+kk) = max(eFlow(thisP+kk), -eVol(thisP)/ (threeR * dt))
-    !         elsewhere
-    !             eFlow(thisP+kk) = zeroR
-    !         endwhere
-    !     end do
-
-    !     !% cycle through the lower branches
-    !     dHead = zeroR    
-    !     do kk=2,max_branch_per_node,2
-    !         !% head gradient from upstream to downstream
-    !         dHead(thisP+kk) = (eHead(thisP+kk) - fHead_u(fDn(thisP+kk))) * real(BranchExists(thisP+kk),8)
-    !         !% flow based on with head gradient
-    !         eFlow(thisP+kk) = util_sign_with_ones( dHead(thisP+kk) ) * (headC * eArea(thisP+kk)  &
-    !            * sqrt(twoR * grav * abs(dHead(thisP+kk)))) * real(BranchExists(thisP+kk),8)
-    !         !% adjust so that inflow andd outflow are limited
-    !         where     (dHead(thisP+kk) < -epsH)  !% inflow
-    !             !% use the larger (smaller negative flow rate) of the JB flow and the max flow on the face
-    !             eFlow(thisP+kk) = max(eFlow(thisP+kk), fFlowMax(fdn(thisP+kk)))
-    !             !% if the minimum is positive (outflow ) (i.e, fFlowMax > 0), use zero
-    !             eFlow(thisP+kk) = min(eFlow(thisP+kk),zeroR)
-    !         elsewhere (dHead(thisP+kk) > epSH) !% outflow
-    !             !% if outflow, limit by 1/3 of the main junction volume
-    !             eFlow(thisP+kk) = min(eFlow(thisP+kk), eVol(thisP)/ (threeR * dt))
-    !         elsewhere
-    !             eFlow(thisP+kk) = zeroR
-    !         endwhere
-    !     end do
-
-    !     !% second pack for the zero-depth JM  
-    !     npack2 => npack_elemP(thisCol2)  ! HACK -- do we need separate packfor AC, ETM and ALLtm?
-    !     if (npack2 > 0) then
-    !         thisZeroP => elemP(1:npack2,thisCol2)
-    !     end if
-
-    !     !% cycle through all the branches without reference to up or down
-    !     do kk=1,max_branch_per_node
-    !         !% fix for the zero depth JM
-    !         if (npack2 > 0) then
-    !             eFlow(thisZeroP+kk) = zeroR
-    !         end if
-
-    !         !% set the velocity
-    !         where (eArea(thisP+kk) .le. setting%ZeroValue%Area)
-    !             eVelocity(thisP+kk) = zeroR
-    !         elsewhere
-    !             eVelocity(thisP+kk) = eFlow(thisP+kk) / eArea(thisP+kk)
-    !         endwhere
-
-    !         where (abs(eVelocity(thisP+kk)) > vMax)
-    !             eVelocity(thisP+kk) = sign(0.99d0 * vMax, eVelocity(thisP+kk))
-    !         endwhere
-    !     end do
-
-    !     !% reset temp01 space
-    !     dHead = zeroR
-    
-    !     !%------------------------------------------------------------------
-    !     !% Closing:
-
-    ! end subroutine ll_junction_branch_flowrate_and_velocity_packtest
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-! subroutine ll_momentum_source_JB (thisMethod, istep)
-    ! OBSOLETE 20220207brh
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes the RK2 step for VU on the junction branches
-    !     !% Note that this MUST be called separately for AC and ETM as the low-level VU
-    !     !% algorithm uses different dt and different volumes in the computation.
-    !     !%-----------------------------------------------------------------------------
-    !     integer, intent(in) :: thisMethod, istep
-
-    !     integer, pointer :: thisColP_JM, Npack, tM
-    !     integer, pointer :: thisP(:), BranchExists(:), iFaceUp(:), iFaceDn(:)
-    !     real(8), pointer :: fHead_u(:), fHead_d(:)
-
-    !     real(8), pointer :: delt
-
-    !     integer :: ii, kk, tB,  volumeLastCol, velocityLastCol
-
-    !     real(8) :: fHead
-
-    !     !%-----------------------------------------------------------------------------
-    !     !%
-    !     BranchExists => elemSI(:,esi_JunctionBranch_Exists)
-    !     fHead_u      => faceR(:,fr_Head_u)
-    !     fHead_d      => faceR(:,fr_Head_d)
-    !     iFaceUp      => elemI(:,ei_Mface_uL)
-    !     iFaceDn      => elemI(:,ei_Mface_dL)
-
-    !     !%-----------------------------------------------------------------------------
-    !     !%
-    !     if (thisMethod == AC) then !% AC time march
-    !         thisColP_JM     => col_elemP(ep_JM_AC)
-    !         delt            => setting%ACmethod%dtau
-    !         volumeLastCol   =  er_VolumeLastAC
-    !         velocityLastCol =  er_VelocityLastAC
-    !     elseif (thisMethod == ETM) then !% real time march
-    !         thisColP_JM     => col_elemP(ep_JM_ETM)
-    !         delt            => setting%Time%Hydraulics%Dt
-    !         volumeLastCol   =  er_Volume_N0
-    !         velocityLastCol =  er_Velocity_N0
-    !     else
-    !         print *, 'error, if-else that should not be reached'
-    !         stop 38293
-    !     end if
-
-    !     Npack => npack_elemP(thisColP_JM)
-    !     if (Npack > 0) then
-    !         thisP => elemP(1:Npack,thisColP_JM)
-    !         do ii=1,Npack
-    !             tM => thisP(ii)
-    !             ! handle the upstream branches
-    !             do kk=1,max_branch_per_node,2
-    !                 tB = tM + kk
-    !                 if (BranchExists(tB)==1) then
-    !                     !% head on the upstream side of the upstream face
-    !                     fHead = fHead_u(iFaceUp(tB))
-    !                     call ll_junction_branch_VU ( &
-    !                         fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
-    !                 end if
-    !             end do
-    !             !% handle the downstream branches
-    !             do kk=2,max_branch_per_node,2
-    !                 tB = tM + kk
-    !                 if (BranchExists(tB)==1) then
-    !                     ! head on the downstream side of the downstream face
-    !                     fHead = fHead_d(iFaceDn(tB))
-
-    !                     ! elem(tB,er_SourceMoment) = ll_junction_branch_VU_test ( &
-    !                     !     elemR(tB,er_Volume), &
-    !                     !     elemR(tB,er_Velocity), &
-    !                     !     elemR(tB,er_Head),  &
-    !                     !     elemR(tB,er_length), &
-    !                     !     elemR(tB,er_WaveSpeed), &
-    !                     !     fHead, delt, kk, istep )
-                            
-    !                     call ll_junction_branch_VU (&
-    !                         fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
-    !                 end if
-    !             end do
-    !         end do
-    !     end if
-
-    ! end subroutine ll_momentum_source_JB
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-! subroutine ll_momentum_source_JB_packtest ()
-    ! OBSOLETE 20220207brh
-    !     !% to crate a packed version we need to first
-    !     !% create an elemental function for ll_junction_branch_VU
-
-    !     !% STUB ROUTINE
-
-    ! end subroutine ll_momentum_source_JB_packtest    
-!%       
-!%==========================================================================
-!%==========================================================================
-!%
-! subroutine ll_junction_branch_VU &
-    ! OBSOLETE 20220207brh
-    !     (fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% computes product of volume*velocity for a junction branch dynamic update
-    !     !% using an RK2
-    !     !% input:
-    !     !%    fHead is the head at the valid branch face (either up or down stream)
-    !     !%    delt is the RK2 time march step (ETM or AC)
-    !     !%    volumeLastCol, velocityLastCol are the columns for either AC or ETM
-    !     !%        previous velocities used as the RK2 base.
-    !     !%    tB is the branch local index
-    !     !%    kk is the row of the branch after the main
-    !     !%    istep is the step of the RK2
-    !     !%-----------------------------------------------------------------------------
-    !     integer, intent(in) :: tB, kk, istep, volumeLastCol, velocityLastCol
-    !     real(8), intent(in) :: fHead, delt
-
-    !     real(8), pointer :: eLength(:), eWaveSpeed(:), eHead(:)
-    !     real(8), pointer :: eVolume0(:), eVelocity0(:), Msource(:)
-    !     real(8), pointer :: cLim,  crk(:), grav
-
-    !     real(8) :: dC, deltaHead
-    !     !%-----------------------------------------------------------------------------
-    !     !%
-    !     Msource      => elemR(:,er_SourceMomentum)
-    !     eVolume0     => elemR(:,volumeLastCol)
-    !     eVelocity0   => elemR(:,velocityLastCol)
-    !     eLength      => elemR(:,er_Length)
-    !     eHead        => elemR(:,er_Head)
-    !     eWaveSpeed   => elemR(:,er_WaveSpeed)
-        
-    !     cLim         => setting%Junction%CFLlimit
-    !     crk          => setting%Solver%crk2
-    !     grav         => setting%constant%gravity
-
-    !     !% dynamic coefficient
-    !     dC = + grav * eVolume0(tB) &
-    !             / max(eLength(tB), (abs(eVelocity0(tB)) + abs(eWaveSpeed(tB))) / (cLim * delt))
-    !     !% head difference from downstream to upstream (d \eta /dx)*dx
-    !     deltaHead = branchsign(kk) * (eHead(tB) - fHead)
-    !     !% RK2 source
-    !     Msource(tB) = eVolume0(tB) * eVelocity0(tB) - crk(istep) * dC * deltaHead
-
-    ! end subroutine ll_junction_branch_VU
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! pure function ll_junction_branch_VU_test &
-    !     (eVol, eVel, eHead, eLength, eWaveSpeed, fHead, delt, kk, istep)
-
-    !     real(8) :: ll_junction_branch_VU_test(:)
-    !     real(8), intent(in) :: eVol(:), eVel(:), eHead(:), fHead(:), eLength(:)
-    !     real(8), intent(in) :: eWaveSpeed(:)
-    !     integer, intent(in) :: kk, istep, delt
-
-    ! ll_junction_branch_VU_test = eVol * eVel                              &
-    !     - setting%Solver%crk2(istep) * branchsign(kk) * (eHead - fHead)   &
-    !     * setting%constant%gravity * eVol                                 &
-    !     / max(eLength, ( (abs(eVel) + abs(eWaveSpeed)) / (delt * setting%Junction%CFLlimit) ) )
-
-    ! end function ll_junction_branch_VU_test
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine ll_momentum_solve_JB (whichTM)
-    !     !%-----------------------------------------------------------------------------
-    !% OBSOLETE 20220711bfh
-    !     !% Description:
-    !     !% Computes the velocity and flowrate on junction branches to finish the dynamic
-    !     !% RK2 approach. Note that this assumes the JB volume and area have been updated
-    !     !% from the JM water surface elevation in update_auxiliary_variables.
-    !     !% THE DYNAMIC APPROACH HAS BUGS 
-    !     !%-----------------------------------------------------------------------------
-    !     integer, intent(in) :: whichTM
-
-    !     integer, pointer :: thisColP_JM, Npack, tM, thisP(:), BranchExists(:)
-
-    !     real(8), pointer :: eVolume(:), eVelocity(:), eArea(:), Msource(:), eFlow(:)
-    !     real(8), pointer :: vMax
-
-    !     integer :: ii, kk, tB
-    !     !%-----------------------------------------------------------------------------
-    !     !%
-    !     select case (whichTM)
-    !     case (ALLtm)
-    !         thisColP_JM            => col_elemP(ep_JM_ALLtm)
-    !      case (ETM)
-    !         thisColP_JM            => col_elemP(ep_JM_ETM)
-    !     case (AC)
-    !         thisColP_JM            => col_elemP(ep_JM_AC)
-    !     case default
-    !         print *, 'CODE ERROR: time march type unknown for # ', whichTM
-    !         print *, 'which has key ',trim(reverseKey(whichTM))
-    !         stop 7659
-    !     end select
-
-    !     vMax            => setting%Limiter%Velocity%Maximum
-    !     BranchExists    => elemSI(:,esi_JunctionBranch_Exists)
-    !     eVolume         => elemR(:,er_Volume)
-    !     eVelocity       => elemR(:,er_Velocity)
-    !     eArea           => elemR(:,er_Area)
-    !     eFlow           => elemR(:,er_Flowrate)
-    !     Msource         => elemR(:,er_SourceMomentum)
-
-    !     Npack => npack_elemP(thisColP_JM)
-    !     if (Npack > 0) then
-    !         thisP => elemP(1:Npack,thisColP_JM)
-    !         do ii=1,Npack
-    !             tM => thisP(ii)
-    !             do kk=1,max_branch_per_node
-    !                 tB = tM + kk
-    !                 if (BranchExists(tB)==1) then
-    !                     if (eVolume(tB) <= setting%ZeroValue%Volume) then
-    !                         eVelocity(tB) = zeroR
-    !                     else
-    !                         eVelocity(tB) = Msource(tB) / eVolume(tB)
-    !                     end if
-    !                     if (abs(eVelocity(tB)) > vMax) then
-    !                         eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
-    !                     end if
-    !                     eFlow(tB) = eVelocity(tB) * eArea(tB)
-    !                 end if
-    !             end do
-    !         end do
-    !     end if
-
-    ! end subroutine ll_momentum_solve_JB
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-subroutine ll_slot_computation_ETM (thisCol, Npack)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Compute preissmann slot for conduits in ETM methods
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: thisCol, Npack
-        integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
-        real(8), pointer    :: AreaN0(:), BreadthMax(:), ellMax(:), fullarea(:)
-        real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:), SlotHydRad(:) 
-        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), volume(:), Vvalue(:) 
-        real(8), pointer    :: velocity(:), fPNumber(:), TargetPCelerity, cfl, grav, PreissmannAlpha
-        logical, pointer    :: isSlot(:), isfSlot(:)
-
-        character(64) :: subroutine_name = 'll_slot_computation_ETM'
-        !%-----------------------------------------------------------------------------
-        !% pointer packed element indexes
-        thisP => elemP(1:Npack,thisCol)
-        !% pointers to elemR columns
-        AreaN0     => elemR(:,er_Area_N0)
-        BreadthMax => elemR(:,er_BreadthMax)
-        ellMax     => elemR(:,er_ell_max)
-        fullArea   => elemR(:,er_FullArea)
-        fullVolume => elemR(:,er_FullVolume)
-        length     => elemR(:,er_Length)
-        PNumber    => elemR(:,er_Preissmann_Number)
-        PCelerity  => elemR(:,er_Preissmann_Celerity)
-        SlotWidth  => elemR(:,er_SlotWidth)
-        SlotVolume => elemR(:,er_SlotVolume)
-        SlotHydRad => elemR(:,er_SlotHydRadius)
-        SlotDepth  => elemR(:,er_SlotDepth)
-        SlotArea   => elemR(:,er_SlotArea)
-        volume     => elemR(:,er_Volume)
-        velocity   => elemR(:,er_velocity)
-        !% pointer to elemYN column
-        isSlot     => elemYN(:,eYN_isSlot)
-        isfSlot    => faceYN(:,fYN_isSlot)
-        !% pointers to elemI columns
-        fUp        => elemI(:,ei_Mface_uL)
-        fDn        => elemI(:,ei_Mface_dL)
-        !% pointer to faceR column
-        fPNumber   => faceR(:,fr_Preissmann_Number)
-        !% pointer to necessary settings struct
-        SlotMethod          => setting%PreissmannSlot%PreissmannSlotMethod
-        TargetPCelerity     => setting%PreissmannSlot%TargetPreissmannCelerity
-        PreissmannAlpha     => setting%PreissmannSlot%PreissmannAlpha
-        cfl                 => setting%VariableDT%CFL_target
-        grav                => setting%Constant%gravity
-        Vvalue              => elemR(:,er_Temp01)
-
-        !% initialize slot
-        SlotVolume(thisP) = zeroR
-        SlotArea(thisP)   = zeroR
-        SlotDepth(thisP)  = zeroR
-        SlotWidth(thisP)  = zeroR
-        PCelerity(thisP)  = zeroR
-        isSlot(thisP)     = .false.
-        isfSlot(fUp(thisP)) = .false.
-        isfSlot(fDn(thisP)) = .false.
-        
-        !% find out the slot volume/ area/ and the faces that are surcharged
-        where (volume(thisP) > fullVolume(thisP))
-            !% find the volume of the slot
-            SlotVolume(thisP) = volume(thisP) - fullvolume(thisP)
-            !% find the slot area
-            SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-            !% rest the volume to fullvolume which will affect velocity computation
-            ! volume(thisP)     = fullvolume(thisP)
-            !% set the fase slot to true
-            isfSlot(fUp(thisP)) = .true.
-            isfSlot(fDn(thisP)) = .true.
-        end where
-
-        !% Calculate the preissmann celerity with the already set preissmann number from
-        !% previous time/rk step. Also, any cell containig two slot faces will also designated
-        !% to have a slot. Which ensures a preissmann celerity in that element.
-        where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
-            !% set isSlot to true
-            isSlot(thisP)    = .true.
-            !% smooth the preissmann number from using simple face interpolation
-            PNumber(thisP) = max(onehalfR * (fPNumber(fUp(thisP)) + fPNumber(fDn(thisP))), oneR)
-            !% Preissmann Celerity
-            PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-            !% find the water height at the slot
-            SlotDepth(thisP) = (SlotArea(thisP) * (TargetPCelerity ** twoR))/(grav * (PNumber(thisP) ** twoR) * (fullArea(thisP)))
-        end where
-
-        !% Now adjust the preissmann number for the next RK-step
-        select case (SlotMethod)
-            !% for a static slot, the preissmann number will always be one.
-            case (StaticSlot)
-                PNumber(thisP) = oneR
-            !% for dynamic slot, preissmann number is adjusted
-            case (DynamicSlot)
-                where (isSlot(thisP))
-                    !% get a new decreased preissmann number for the next time step for elements having a slot
-                    PNumber(thisP) = max((PNumber(thisP) ** twoR - PNumber(thisP) + oneR)/PNumber(thisP), oneR)
-                elsewhere
-                    !% reset the preissmann number for every CC element not having a slot
-                    PNumber(thisP) =  TargetPCelerity / (PreissmannAlpha * sqrt(grav * ellMax(thisP)))
-                end where
-
-            case default
-                !% should not reach this stage
-                print*, 'In ', subroutine_name
-                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                print *, 'which has key ',trim(reverseKey(SlotMethod))
-                stop 38756
-        end select
-
-    end subroutine ll_slot_computation_ETM
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_get_dynamic_roughness (thisP, dpnorm_col) 
+    subroutine ll_get_dynamic_ManningsN (thisP, dpnorm_col) 
         !%------------------------------------------------------------------
         !% Description:
-        !% called to get the dynamic roughness for a set of points thisP(:)
+        !% called to get the dynamic ManningsN for a set of points thisP(:)
         !% the dpnorm_col is the location where the normalized pressured 
         !% delta is stored.
         !%------------------------------------------------------------------
@@ -1555,21 +1285,55 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
             integer, intent(in) :: thisP(:), dpnorm_col
             real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
             real(8), pointer    :: length(:)
-            real(8), pointer    :: alpha, dt
-            character(64) :: subroutine_name ='ll_get_dynamic_roughness'
+            real(8), pointer    :: alpha, beta, dt, pi
+            integer :: ii
+            character(64) :: subroutine_name ='ll_get_dynamic_ManningsN'
         !%------------------------------------------------------------------  
         !% Aliases
+            pi           => setting%Constant%pi
             dt           => setting%Time%Hydraulics%Dt
-            alpha        => setting%Solver%Roughness%alpha
-            mn           => elemR(:,er_Roughness)
-            dynamic_mn   => elemR(:,er_Roughness_Dynamic)
+            alpha        => setting%Solver%ManningsN%alpha
+            beta         => setting%Solver%ManningsN%beta
+            mn           => elemR(:,er_ManningsN)
+            dynamic_mn   => elemR(:,er_ManningsN_Dynamic)
             dp_norm      => elemR(:,dpnorm_col)
             length       => elemR(:,er_Length)
+            
         !%------------------------------------------------------------------
-
+            
        ! dynamic_mn(thisP) =  mn(thisP)
-        dynamic_mn(thisP) =  mn(thisP) &
-           +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+        ! dynamic_mn(thisP) =  mn(thisP) &
+        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+
+
+        dynamic_mn(thisP) = mn(thisP)                                     &
+            * (oneR  + alpha                                              &
+                * sin(                                                    &
+                      max(zeroR, onehalfR * pi                                &
+                             * min( (dp_norm(thisP))/beta, oneR )  &
+                          )                                               &
+                    )                                                     &
+                ) 
+            
+
+        print *, 'DYNAMIC MANNINGS NCANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
+        stop 1093874   
+
+        ! do ii=1,size(thisP)
+        !     if (dynamic_mn(thisP(ii)) > mn(thisP(ii))) then 
+        !         print *, thisP(ii), dynamic_mn(thisP(ii)), dp_norm(thisP(ii))
+        !         !stop 3098745
+        !     end if
+        ! end do
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, mn(139), alpha, dt
+        ! print *, dp_norm(139)
+        ! print *, exp(dp_norm(139))
+
+        ! if (dynamic_mn(50) > 0.05d0) then
+        !     print *, dynamic_mn(50)
+        ! end if
             
         !% OTHER VERSIONS EXPERIMENTED WITH 20220802
              ! dynamic_mn(thisP) =  mn(thisP) &
@@ -1578,7 +1342,7 @@ subroutine ll_slot_computation_ETM (thisCol, Npack)
            ! dynamic_mn(thisP) =  mn(thisP) &
            !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR ) 
 
-    end subroutine ll_get_dynamic_roughness
+    end subroutine ll_get_dynamic_ManningsN
 !%
 !%==========================================================================
 !%==========================================================================

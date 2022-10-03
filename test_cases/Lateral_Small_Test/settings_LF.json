@@ -40,10 +40,7 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
+
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-4
@@ -66,7 +63,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -95,7 +92,6 @@
         "ManningsN" : 0.2
     },
     "Solver" : {
-        "PreissmannSlot" : true,
         "SubtractReferenceHead" : true,
         "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",

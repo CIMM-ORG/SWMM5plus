@@ -11,7 +11,7 @@
         },
     },    
     "Discretization" : {
-        "AdjustLinkLengthYN" : true,
+        "AdustLinkLengthForJunctionBranchYN" : true,
         "NominalElemLength" : 15.00
     },
     "Output" : {
@@ -28,7 +28,7 @@
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout" : false,
             "isSlotWidthOut"    : false,
             "isSlotDepthOut"    : false,
             "isTopWidthOut"     : false,
@@ -37,15 +37,15 @@
             "isWaveSpeedOut"    : false
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "StaticSlot",
-        "TargetPreissmannCelerity" : 0.01
-    },
     "SmallDepth" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.1
     },
     "Solver" : {
-        "MomentumSourceMethod" : "T00"
-    },
+        "MomentumSourceMethod" : "T00",
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot",
+            "TargetCelerity" : 0.01
+        }
+    }
 }

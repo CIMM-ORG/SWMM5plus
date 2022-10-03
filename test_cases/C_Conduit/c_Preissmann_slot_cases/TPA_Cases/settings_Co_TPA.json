@@ -5,12 +5,31 @@
         "Long"  : "VasconcelosTPA",
         "Short" : "TPA"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 1.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0,
+            "FullDepthMultiplier" : 0.5
+        }
+    },
     "Discretization" : {
         "JunctionBranchLengthFactor" : 0.33,
-        "AdjustLinkLengthYN" : false,
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.072
+        "NominalElemLength" : 0.144
+    },
+    "Junction" : {
+        "FunStorageN" : 10,
+        "kFactor"     : 0.0,
+        "InfiniteExtraDepthValue"    : 1000.0
     },
     "Limiter" : {
         "BC" : {
@@ -29,10 +48,6 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-10
@@ -44,7 +59,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 2000
+            "interval" : 5000
         },
         "DataOut" :{
             "isAreaOut"                 : true,
@@ -54,7 +69,7 @@
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout"            : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,
@@ -70,7 +85,7 @@
             "useHD5F" : false,  
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 0.05,
+            "TimeInterval" : 0.02,
             "TimeUnits" : "Seconds"
         }
     },
@@ -85,7 +100,26 @@
         "stopAfterSpinUp"           : false,
         "SpinUpDays"                : 10.0
     },
-
+    "SmallDepth" : {
+        "DepthCutoff" : 0.00001,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "SubtractReferenceHead" : false,
+        "MomentumSourceMethod" : "T20",
+        "SolverSelect" : "ETM",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9,
+        "ReferenceHead"     : 0.0,
+        "ManningsN" : {
+            "useDynamicManningsN" : false
+        },
+        "PreissmannSlot" : {
+            "Method" : "DynamicSlot",
+            "TargetCelerity" : 200.00,
+            "Alpha" : 3.0
+        }
+    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -101,47 +135,12 @@
             "Dt" : 600.0
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 50.00,
-        "PreissmannAlpha" : 2.0
-    },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.4,
-        "CFL_lo_max" : 0.3,
+        "CFL_hi_max" : 0.60,
+        "CFL_target" : 0.55,
+        "CFL_lo_max" : 0.50,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
-    },
-    "SmallDepth" : {
-        "DepthCutoff" : 0.00001,
-        "ManningsN" : 0.1
-    },
-    "Adjust" : {
-        "Flowrate" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape",
-            "Coef" : 1.0,
-            "SmallDepthMultiplier" : 1.0
-        },
-        "Head" : {
-            "ApplyYN" : false,
-            "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0,
-            "FullDepthMultiplier" : 0.5
-        }
-    },
-    "Solver" : {
-        "PreissmannSlot" : true,
-        "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
-        "SolverSelect" : "ETM",
-        "SwitchFractionDn" : 0.8,
-        "SwitchFractionUp" : 0.9,
-        "ReferenceHead"     : 0.0,
-        "Roughness" : {
-            "useDynamicRoughness" : false
-        }
     }
 }

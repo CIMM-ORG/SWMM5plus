@@ -141,6 +141,9 @@ contains
             !% continue without profiler    
         end if
 
+        !% --- set constraints on the setting% structure
+        call util_setting_constraints ()
+
         !% --- initialize the coarrays that depend on number of images
         !%     and not on number of links/nodes, elements or faces.
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
@@ -155,6 +158,14 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
         call util_crashstop(31973)
+
+        !% --- initialize ForceMain settings (determines if FM is used)
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
+        call init_ForceMain_setting ()
+
+        !% --- initialize Adjustments from EPA SWMM input file
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin get adjustments"
+        call interface_get_adjustments ()
 
         !% --- setup the irregular transect arrays associated with SWMM-C input links
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
@@ -182,6 +193,9 @@ contains
         if (this_image() .eq. 1) then 
             call init_profiles()
         end if
+
+        !% --- set water kinematic viscosity
+        call init_viscosity()
 
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
@@ -221,7 +235,6 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
-
 
         !% --- initialize the time variables
         if (setting%Output%Verbose) print *, "begin initializing time"
@@ -396,8 +409,12 @@ contains
         !print *, this_image(), elemR(:,er_Depth)
     
         ! call util_CLprint('At end of initialization')
-        ! stop 445782
 
+        ! print *, setting%Output%Report%useHD5F
+
+        ! print *, setting%Output%DataOut%isSlotDepthOut
+        ! print *, setting%Solver%PreissmannSlot%Method, StaticSlot, DynamicSlot
+        ! stop 4409872
 
         !%------------------------------------------------------------------- 
         !% Closing
@@ -565,9 +582,10 @@ contains
         !%   Keeping the same order is important to be able to locate node/link data
         !%   by label and not by index, reusing EPA-SWMM functionalities.
         !%-----------------------------------------------------------------------------
-        !% Declarations
-            integer       :: ii, total_n_links
-            character(64) :: subroutine_name = 'init_linknode_arrays'
+        !% Declarations   
+            integer          :: ii, total_n_links
+            integer, pointer :: linkUp, linkDn
+            character(64)    :: subroutine_name = 'init_linknode_arrays'
         !%-----------------------------------------------------------------------------
         !% Preliminaries
             !if (crashYN) return
@@ -581,32 +599,42 @@ contains
                 !return
             end if
         !%-----------------------------------------------------------------------------
-        !% Allocate storage for link & node tables
+        !% --- Allocate storage for link & node tables
         call util_allocate_linknode()
 
-        !% Set default for all link and node keys
+        !% --- Set default for all link and node keys
         call util_key_default_linknode()
 
-        !% set defaults for all KEY types in link%I
-
-        !link%I(:,li_num_phantom_links) = 0
+        !% --- initialize number of links for each node to zero
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
+        !% --- set default for extra surcharge depth
+        node%R(:,nr_SurchargeExtraDepth) = setting%Junction%InfiniteExtraDepthValue 
 
         !% -----------------------
         !% --- LINK DATA
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
-            !print *, 'in ',trim(subroutine_name), ii
+            print *, ' '
+            print *, '================================================='
+            print *, 'AAA in ',trim(subroutine_name), ii
+            print *, api_linkf_geometry
+            print *, trim(reverseKey_api(api_linkf_geometry))
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
+                ! print *, 'link_direction ',link%I(ii,li_link_direction)
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
+                ! print *, 'link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
+                ! print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
-
+            link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
+                print *, 'link_barrels   ', link%I(ii,li_barrels)  
+            link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_xsect_culvertCode, .true.)
+                print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
                 !% --- for standard channel/conduits where upstream is 
@@ -627,10 +655,16 @@ contains
             !% --- the ''parent'' link is the input EPA-SWMM link, which may be broken up by partitioning
             link%I(ii,li_parent_link) = ii
 
-            !% --- set link ID for the nodes upstream and downstream of thisLink (ii)
+            !% --- increment the connection counter for the node downstream
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
+            !% --- set the maps for the downstream node to upstream link (ni_Mlink_u#)
+            !%     NOTE: this makes use of the ordering of the ni_Mlink_u# in define_indexes
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
+
+            !% --- increment the connection counter for the node upstream
             node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
+            !% --- set the maps for the upstream node to the downstream link (ni_Mlink_d#)
+            !%     NOTE: this makes use of the ordering of the ni_Mlink_d# in define_indexes
             node%I(link%I(ii,li_Mnode_u), ni_idx_base2 + node%I(link%I(ii,li_Mnode_u), ni_N_link_d)) = ii
 
             !% --- set the approach used for computing the initial depth
@@ -640,16 +674,42 @@ contains
             !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
-            link%R(ii,lr_Length)          = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-            link%R(ii,lr_BreadthScale)    = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
-            link%R(ii,lr_LeftSlope)       = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
-            link%R(ii,lr_RightSlope)      = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
-            link%R(ii,lr_Roughness)       = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
-            link%R(ii,lr_FullDepth)       = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
-            link%R(ii,lr_InletOffset)     = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
-            link%R(ii,lr_OutletOffset)    = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
-            link%R(ii,lr_FlowrateInitial) = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
-            link%R(ii,lr_FlowrateLimit)   = interface_get_linkf_attribute(ii, api_linkf_qlimit,            .false.)
+            link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
+                ! print *, 'link_Length            ',link%R(ii,lr_Length)
+            link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
+                ! print *, 'link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
+            link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
+                ! print *, 'link_LeftSlope          ', link%R(ii,lr_LeftSlope)
+            link%R(ii,lr_RightSlope)         = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
+                ! print *, 'link_RightSlope         ', link%R(ii,lr_RightSlope)
+            link%R(ii,lr_Roughness)          = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
+                ! print *, 'link_Roughness          ', link%R(ii,lr_Roughness)
+            link%R(ii,lr_FullDepth)          = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
+                ! print *, 'link_FullDepth          ', link%R(ii,lr_FullDepth)
+            link%R(ii,lr_FullArea)           = interface_get_linkf_attribute(ii, api_linkf_xsect_aFull,      .false.)
+                ! print *, 'link_FullArea          ', link%R(ii,lr_FullArea)
+            link%R(ii,lr_FullHydRadius)      = interface_get_linkf_attribute(ii, api_linkf_xsect_rFull,      .false.)
+                ! print *, 'link_FullHydRadius     ', link%R(ii,lr_FullHydRadius)
+            link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
+                ! print *, 'link_BottomDepth        ', link%R(ii,lr_BottomDepth)
+            link%R(ii,lr_BottomRadius)        = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
+                ! print *, 'lr_BottomRadius        ', link%R(ii,lr_BottomRadius)
+            link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
+                ! print *, 'link_InletOffset        ', link%R(ii,lr_InletOffset)
+            link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+                ! print *, 'link_OutletOffset       ', link%R(ii,lr_OutletOffset)
+            link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
+                ! print *, 'link_FlowrateInitial    ', link%R(ii,lr_FlowrateInitial)
+            link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
+                ! print *, 'link_FlowrateLimit      ', link%R(ii,lr_FlowrateLimit)
+            link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
+                ! print *, 'link_Kconduit_MinorLoss ', link%R(ii,lr_Kconduit_MinorLoss)
+            link%R(ii,lr_Kentry_MinorLoss)   = interface_get_linkf_attribute(ii, api_linkf_cLossInlet,       .false.)
+                ! print *, 'link_Kentry_MinorLoss   ', link%R(ii,lr_Kentry_MinorLoss)
+            link%R(ii,lr_Kexit_MinorLoss)    = interface_get_linkf_attribute(ii, api_linkf_cLossOutlet,      .false.)
+                ! print *, 'link_Kexit_MinorLoss    ', link%R(ii,lr_Kexit_MinorLoss)
+            link%R(ii,lr_SeepRate)           = interface_get_linkf_attribute(ii, api_linkf_seepRate,         .false.)
+                ! print *, 'link_SeepRate           ', link%R(ii,lr_SeepRate)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -672,6 +732,7 @@ contains
     
             !% --- special element attributes
             link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
+            link%I(ii,li_RoadSurface)         = interface_get_linkf_attribute(ii, api_linkf_weir_road_surface,    .true.)
             link%I(ii,li_curve_id)            = interface_get_linkf_attribute(ii, api_linkf_curveid,              .true.)
             link%R(ii,lr_DischargeCoeff1)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff1,     .false.)
             link%R(ii,lr_DischargeCoeff2)     = interface_get_linkf_attribute(ii, api_linkf_discharge_coeff2,     .false.)
@@ -679,12 +740,13 @@ contains
             link%R(ii,lr_yOn)                 = interface_get_linkf_attribute(ii, api_linkf_yOn,                  .false.)
             link%R(ii,lr_yOff)                = interface_get_linkf_attribute(ii, api_linkf_yOff,                 .false.)
             link%R(ii,lr_SideSlope)           = interface_get_linkf_attribute(ii, api_linkf_weir_side_slope,      .false.)
+            link%R(ii,lr_RoadWidth)           = interface_get_linkf_attribute(ii, api_linkf_weir_road_width,      .false.)
+
             if (interface_get_linkf_attribute(ii, api_linkf_hasFlapGate,.true.) == 1) then
                 link%YN(ii,lYN_hasFlapGate)   = .true.
             else
                 link%YN(ii,lYN_hasFlapGate)   = .false.
             end if
-
 
             !% --- SWMM5 does not distinguish between channel and conduit
             !%     however we need that distinction to set up the init condition
@@ -693,14 +755,40 @@ contains
                  (link%I(ii,li_geometry) == lRectangular)    .or. &
                  (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
                  (link%I(ii,li_geometry) == lTriangular)     .or. &
+                 (link%I(ii,li_geometry) == lParabolic)      .or. &
                  (link%I(ii,li_geometry) == lPower_function) .or. &
-                 (link%I(ii,li_geometry) == lRect_triang)    .or. &
-                 (link%I(ii,li_geometry) == lRect_round)     .or. &
-                 (link%I(ii,li_geometry) == lMod_basket)     .or. &
                  (link%I(ii,li_geometry) == lIrregular)) ) then
 
                 link%I(ii,li_link_type) = lChannel
             end if
+
+            if (link%I(ii,li_link_type) == lWeir) then
+                !% --- set road surface types
+                if (link%I(ii,li_RoadSurface) == API_NOSURFACE) then
+                    link%I(ii,li_RoadSurface) = NoRoadSurface
+                else if (link%I(ii,li_RoadSurface) == API_PAVED) then
+                    link%I(ii,li_RoadSurface) = Paved
+                else if (link%I(ii,li_RoadSurface) == API_GRAVEL) then
+                    link%I(ii,li_RoadSurface) = Gravel
+                else
+                    if (this_image() == 1) then
+                        write(*,*) 'FATAL ERROR IN INPUT FILE'
+                        write(*,"(A,i4,A)") 'One of the Roadway weir does not have a proper road surface tupe'
+                        write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
+                    end if
+                    call util_crashpoint(548976)
+                end if
+            else
+                link%I(ii,li_RoadSurface) = nullValueI
+            end if
+            
+            ! !% HACK CODE FOR TESTING:
+            ! !% for filled circular cross-sections, swmm always sets inlet and outlet offsets
+            ! !% for the bottom filled elevation. For now, I am removing those for testing
+            ! if (link%I(ii,li_geometry) ==  lFilled_circular) then
+            !     link%R(ii,lr_InletOffset)  = link%R(ii,lr_InletOffset) - link%R(ii,lr_BottomDepth)
+            !     link%R(ii,lr_OutletOffset) = link%R(ii,lr_OutletOffset) - link%R(ii,lr_BottomDepth) 
+            ! end if
 
             !% --- Irregular cross-sections (TRANSECTS in SWMM input file)
             if (link%I(ii,li_geometry) == lIrregular) then
@@ -741,8 +829,71 @@ contains
             !write(*,*)
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
+
+            !write(*,*) 'call api_nodef_has_extInflow'
+            node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
+            !write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
+            !write(*,*)
+
+            !write(*,*) 'call api_nodef_has_dwfInflow'
+            node%YN(ii, nYN_has_dwfInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_dwfInflow) == 1)
+            !write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
+            !write(*,*)
+
+            !write(*,*) 'call api_nodef_initDepth'
+            node%R(ii,nr_InitialDepth)      = interface_get_nodef_attribute(ii, api_nodef_initDepth)
+            !write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth), ii
+            !write(*,*)
+
+            !write(*,*) 'call api_nodef_invertElev'
+            node%R(ii,nr_Zbottom)           = interface_get_nodef_attribute(ii, api_nodef_invertElev)
+            !write(*,*) '... nr_Zbottom = ', node%R(ii,nr_Zbottom) 
+            !write(*,*)
+
+            !write(*,*) 'call api_nodef_fullDepth -- may be zero!'
+            node%R(ii,nr_FullDepth)         = interface_get_nodef_attribute(ii, api_nodef_fullDepth)
+            !write(*,*) '... nr_FullDepth = ',node%R(ii,nr_FullDepth) 
+            !write(*,*)
+
+            !% --- Total pressure head above max depth allowed for surcharge
+            !%     If 0 then node cannot surcharge.
+            node%R(ii,nr_SurchargeExtraDepth) = interface_get_nodef_attribute(ii, api_nodef_surDepth)
+
+            !write(*,*) 'call api_nodef_StorageConstant'
+            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
+            !write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
+            !write(*,*)
+
+            !write(*,*) 'call api_nodef_StorageCoeff'
+            node%R(ii,nr_StorageCoeff)      = interface_get_nodef_attribute(ii, api_nodef_StorageCoeff)
+            !write(*,*) '... nr_StorageCoeff = ',node%R(ii,nr_StorageCoeff)
+            !write(*,*)
+            
+            !write(*,*) 'call api_nodef_StorageExponent'
+            node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
+            !write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
+            !write(*,*)
+
+            !write(*,*) 'call api_nodef_StorageCurveID'
+            node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
+            !write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
+            !write(*,*)
+
+          
+            !% --- ponded area
+            if (setting%SWMMinput%AllowPonding) then
+                node%R(ii,nr_PondedArea) = interface_get_nodef_attribute(ii, api_nodef_PondedArea)
+            else
+                node%R(ii,nr_PondedArea) = zeroR
+            end if
+
+            !write(*,*) 'call api_nodef_rptFlag'
+            node%YN(ii,nYN_isOutput)          = (interface_get_nodef_attribute(ii, api_nodef_rptFlag) == 1)
+            !write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
+            !write(*,*)
+          
             !%
-            !% --- handle special types of nodes
+            !% --- Assign node types nJm, nJ1, nJ2, nBCdn,
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
                 !write(*,*) '... is outfall type'
                 node%I(ii, ni_node_type) = nBCdn
@@ -773,27 +924,137 @@ contains
                 end select
             end if 
 
-            !% exception: nJ2 strictly has one upstream and one downstream link
-            !% other cases where a nJ2 has only two upstream or two downstream 
-            !% links will be considered as a nJm
+            ! print *, ' at AAA '
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+            
+            !% nJ2 strictly has one upstream and one downstream link
+            !% other cases where an nJ2 has only (i) two upstream and no downstream links,
+            !% or (ii) two downstream and no upstream links, will both be considered as a nJm
             if ((node%I(ii, ni_node_type) == nJ2) .and. &
                 ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
                  (node%I(ii,ni_N_link_d) > oneI))) then
-                    ! write(*,*) '... switching to a 2 links nJm junction type'
+                    !% ... switching to a 2 link nJm junction type'
                     node%I(ii, ni_node_type) = nJm
             end if
 
-            !write(*,*) 'call api_nodef_has_extInflow'
-            node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
-            !write(*,*) '... nYN_has_extInflow = ',node%YN(ii, nYN_has_extInflow)
-            !write(*,*)
+            ! print *, ' at BBB '
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
 
-            !write(*,*) 'call api_nodef_has_dwfInflow'
-            node%YN(ii, nYN_has_dwfInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_dwfInflow) == 1)
-            !write(*,*) '... nYN_has_dwfInflow =', node%YN(ii,nYN_has_dwfInflow)
-            !write(*,*)
+            !% ==========================================================================
+            !% --- Discrimination between 2-element junctions that are nJ2
+            !%     and those that are classed nJm. Note that all defined STORAGE 
+            !%     junctions are already set to nJm, so this only applies to junctions 
+            !%     defined in SWMM input file without explicit storage
+            !%  
+            !%     The following "or" conditions must be met for an nJ2:
+            !%     1. either side is an open-channel element AND ponding_Area = 0 AND
+            !%        the SurchargeExtraDepth = 0
+            !%     2. both sides are NOT open channel AND the junction extra
+            !%        surcharge depth == Junction.InfiniteExtraDepthValue
+            !%     In addition, the offsets of connected links must be zero, unless
+            !%     the connected link is a weir or orifice (their offset has a different
+            !%     meaning.)
+            !%     Key point is that nJ2 cannot have overflow or ponding, so if
+            !%     at least one side is open channel and ponding area = 0 and the
+            !%     surcharge extra depth = 0 it is treated as open channel 
+            !%     (i.e., overflow occurs in the adjacent channel element) so
+            !%     it can be nJ2.  If both sides are closed types (conduit, weir,
+            !%     i.e., not open channel) then the junction must also be
+            !%     be closed; thus if a value (other than InfiniteExtraDepthValue)
+            !%     is provided for the extra surcharge, then the junction must be treated
+            !%     as an nJm rather than nJ2. That is, sett the Surcharge Extra Depth
+            !%     to the InfiniteExtraDepthValue implies a non-vented connection that
+            !%     can be treated as a face.
+            !%     In general, existence of non-zero offsets require an nJm unless 
+            !%     the offset is associated with a weir or orifice
+            if (node%I(ii, ni_node_type) == nJ2) then
+                !% --- aliases for the upstream and downstream links. These should
+                !%     be guaranteed to be in the u1 and d1 positions
+                linkUp => node%I(ii,ni_Mlink_u1)
+                linkDn => node%I(ii,ni_Mlink_d1)
+                
+                !% --- special channels and conduits that allow nJ2
+                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)    &
+                        .or.                                           &
+                        (link%I(linkDn,li_link_type) .eq. lChannel)    &
+                      )                                                &
+                      .and.                                            &
+                      (node%R(ii,nr_PondedArea) == zeroR)              &
+                      .and.                                            &
+                      (node%R(ii,nr_SurchargeExtraDepth) == zeroR)     & 
+                    ) then
+                    !% nJ2 OPEN CHANNEL FACE
+                    !% --- if either link is an open channel AND the ponded area
+                    !%     is zero then the junction is an nJ2 face where any
+                    !%     overflow is handled by adjacent channel. Otherwise 
+                    !%     reverts to nJm element with its own overflow/ponding. 
+                    !%     Note that if ponding is OFF but the ponded area
+                    !%     is defined, then the element is treated as nJm with
+                    !%     overflow above the Surcharge Extra Depth
 
-            !% --- set up the inflows
+                    !% --- no action: retain nJ2
+
+                elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)      &
+                         .and.                                            &
+                         (link%I(linkDn,li_link_type) .ne. lChannel)      &
+                         .and.                                            &
+                         (node%R(ii,nr_SurchargeExtraDepth)               &
+                          == setting%Junction%InfiniteExtraDepthValue) ) then
+                        !% nJ2 CLOSED CONDUIT FACE
+                        !% --- if both links are NOT open channel AND the SurchargeExtraDepth
+                        !%     is equal to the InfiniteExtraDepthValue, then this is retained 
+                        !%     as an nJ2 (unvented) face. Otherwise switched to a vented nJM element.
+                        !%     Offsets conditions on clus
+                        
+                        !% --- no action: retain nJ2
+                else
+                    !% --- switch to nJm
+                    node%I(ii, ni_node_type) = nJm
+                end if
+
+                ! print *, ' at CCC'
+                ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            end if
+            !% --- further check on offsets for any nJ2 that passed the prior
+            !%     restrictions. In general, we have an nJm if there are 
+            !%     any offsets, except if the offset is a weir or orifice.
+            if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
+                 (link%R(linkUp,lr_OutletOffset) .ne. zeroR) ) then
+                !% --- offsets are OK for upstream weir or orifice links  
+                if (  (link%I(linkUp,li_link_type) .eq. lWeir)       &
+                       .or.                                          &
+                      (link%I(linkUp,li_link_type) .eq. lOrifice)    &
+                    ) then    
+                    !% --- retain nJ2
+                else
+                    !% --- switch to nJm
+                    node%I(ii, ni_node_type) = nJm
+                end if
+            end if
+
+            ! print *, ' at EEE'
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
+                 (link%R(linkDn,lr_InletOffset) .ne. zeroR) ) then
+                !% --- offsets are OK for upstream weir or orifice links  
+                if (  (link%I(linkDn,li_link_type) .eq. lWeir)       &
+                       .or.                                          &
+                      (link%I(linkDn,li_link_type) .eq. lOrifice)    &
+                    ) then    
+                    !% --- retain nJ2
+                else
+                    !% --- switch to nJm
+                    node%I(ii, ni_node_type) = nJm
+                end if
+            end if
+            !% ==========================================================================
+            
+            ! print *, ' at FFF'
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+
+            !% --- set up the inflows (must be after nJ1, nJ2 are set)
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 !% set inflow to true for any node type
                 node%YN(ii, nYN_has_inflow) = .true.
@@ -804,53 +1065,17 @@ contains
                 !end if
             end if
 
-            !write(*,*) 'call api_nodef_initDepth'
-            node%R(ii,nr_InitialDepth)      = interface_get_nodef_attribute(ii, api_nodef_initDepth)
-            !write(*,*) '... nr_InitialDepth = ',node%R(ii,nr_InitialDepth), ii
-            !write(*,*)
-
-            !write(*,*) 'call api_nodef_invertElev'
-            node%R(ii,nr_Zbottom)           = interface_get_nodef_attribute(ii, api_nodef_invertElev)
-            !write(*,*) '... nr_Zbottom = ', node%R(ii,nr_Zbottom) 
-            !write(*,*)
-
-            !write(*,*) 'call api_nodef_fullDepth -- may be zero!'
-            node%R(ii,nr_FullDepth)         = interface_get_nodef_attribute(ii, api_nodef_fullDepth)
-            !write(*,*) '... nr_FullDepth = ',node%R(ii,nr_FullDepth) 
-            !write(*,*)
-
-            !write(*,*) 'call api_nodef_StorageConstant'
-            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
-            !write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
-            !write(*,*)
-
-            !write(*,*) 'call api_nodef_StorageCoeff'
-            node%R(ii,nr_StorageCoeff)      = interface_get_nodef_attribute(ii, api_nodef_StorageCoeff)
-            !write(*,*) '... nr_StorageCoeff = ',node%R(ii,nr_StorageCoeff)
-            !write(*,*)
-            
-            !write(*,*) 'call api_nodef_StorageExponent'
-            node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
-            !write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
-            !write(*,*)
-
-            !write(*,*) 'call api_nodef_StorageCurveID'
-            node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
-            !write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
-            !write(*,*)
-
             !write(*,*) 'call interface_get_BC_resolution'
+            !% --- note this MUST be called after inflows are set
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
             !write(*,*) '... ni_pattern_resolution = ',node%I(ii,ni_pattern_resolution)
             !write(*,*)  
 
-            !% brh20211207s
-            !write(*,*) 'call api_nodef_rptFlag'
-            node%YN(ii,nYN_isOutput)          = (interface_get_nodef_attribute(ii, api_nodef_rptFlag) == 1)
-            !write(*,*) '... nYN_isOutput = ',node%YN(ii,nYN_isOutput)
-            !write(*,*)
-            !% brh20211207e
+            ! print *, ' at GGG'
+            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
         end do
+
+       ! stop 409874
 
         !% --- Store the Link/Node names
         call interface_update_linknode_names()
@@ -884,7 +1109,7 @@ contains
                         print *, 'Found link length of ',link%R(ii,lr_Length)
                         print *, 'Link index is ',ii
                         print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
-                        print *, 'Either change setting.Discretization.AdjustLinkLengthYN to true, or'
+                        print *, 'Either change setting.Discretization.AdustLinkLengthForJunctionBranchYN to true, or'
                         print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
                         call util_crashpoint(447298)
                     end if
@@ -919,59 +1144,6 @@ contains
         ! stop 2098734    
 
     end subroutine init_linknode_arrays
-!%
-!%==========================================================================
-
-!%==========================================================================
-!%
-    ! subroutine init_conmon_from_links ()
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% allocates and initializes the storage for control and monitoring
-    !     !% arrays. Requires that the number of con/mon points needed for each
-    !     !% image is set in the N_conmon array
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer :: cmIdx, ii
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-    !     if (N_ConMon(this_image()) < 1) return  !% no control/monitoring points
-
-       
-
-    !     call util_allocate_conmon ()
-
-    !     !% --- set a counter for the control/monitoring points
-    !     cmIdx = 0
-
-    !     !% --- cycle through link array to find all the control points
-    !     do ii = 1, setting%SWMMinput%N_link
-    !         !% --- look for type 1 pumps
-    !         if (link%I(ii,li_link_sub_type) == lType1Pump) then
-    !             !% --- increment the counter for this control index
-    !             cmIdx = cmIdx + 1
-    !             !% --- error checking if the number of expected c/m points is exceeded
-    !             if (cmIdx > N_ConMon(this_image())) then
-    !                 print *, 'CODE ERROR: mismatch in control points'
-    !                 call util_crashpoint(778723)
-    !             end if
-    !             !% --- set the c/m index
-    !             conmonI(cmIdx,cmi_idx) = cmIdx
-    !             !% --- Type 1 pumps connect to a node
-    !             conmonYN(cmIdx,cmYN_isLink) = .false.
-    !             !% --- get the index of the upstream node that is the control point
-    !             conmonI(cmIdx,cmi_linknode_idx) = link%I(ii,li_Mnode_u)
-    !         end if
-
-    !         !% HACK NEED ALGORITHMS FOR OTHER CONTROL POINTS
-            
-    !     end do
-
-
-
-
-    ! end subroutine init_conmon_from_links   
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1056,7 +1228,7 @@ contains
             link%transectR(ii,tr_sectionFactor)     = interface_get_transectf_attribute(ii,api_transectf_sMax)
             link%transectR(ii,tr_areaAtMaxFlow)     = interface_get_transectf_attribute(ii,api_transectf_aMax)
             link%transectR(ii,tr_lengthFactor)      = interface_get_transectf_attribute(ii,api_transectf_lengthFactor)
-            link%transectR(ii,tr_roughness)         = interface_get_transectf_attribute(ii,api_transectf_roughness)
+            link%transectR(ii,tr_ManningsN)         = interface_get_transectf_attribute(ii,api_transectf_roughness)
         end do
 
         !% --- get the transect ID names from EPA-SWMM
@@ -1317,7 +1489,6 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-
     subroutine init_profiles
         character(50) :: line, name, link_names, num_links
         character(50) :: choosen_name
@@ -1478,8 +1649,6 @@ contains
 
 
     end subroutine init_profiles
-
-
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1532,7 +1701,7 @@ contains
         sync all
 
         !% Compute the amount of a conduit length that is added to a connected junction.
-        !% This modifies the conduit length itself if setting%Discretization%AdjustLinkLengthYN
+        !% This modifies the conduit length itself if setting%Discretization%AdustLinkLengthForJunctionBranchYN
         !% is true. The junction itself is setup in init_network_nJm_branch_length()
         call init_discretization_adjustlinklength()
 
@@ -1786,7 +1955,8 @@ contains
             !% use values from json file
         end if
 
-        !print *, setting%Time%EndEpoch
+        ! print *, setting%Time%EndEpoch
+        ! stop 309874
 
 
         !% Translate epoc endtime to seconds from a zero start time
@@ -1802,14 +1972,17 @@ contains
         !%     get the number of seconds.  A final application of floor() and conversion
         !%     back to real ensures we only have whole seconds
 
-        
+        ! print *, setting%Time%StartEpoch
+        ! print *, setting%Time%EndEpoch       
         ttime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday,KIND=8)
-        !print *, 'ttime ',ttime
+       ! print *, 'ttime ',ttime
         ttime = util_datetime_seconds_precision (ttime)
-        !print *, 'ttime ',ttime  
+       ! print *, 'ttime ',ttime  
         !setting%Time%End = real(floor(ttime),8)
         setting%Time%End = ttime
-        print *, 'time end ',setting%Time%End
+       ! print *, 'time end ',setting%Time%End
+
+       ! stop 2098734
 
         ! print *, ' '
         ! print *, ' '
@@ -2223,8 +2396,8 @@ contains
             write(*,'(A)') '** '
             ifound = .true.
         end if
-        if (.not. setting%Solver%PreissmannSlot) then
-            write(*,'(A)') '** setting.Solver.PreissmannSlot = false, which has not been fully tested.'
+        if (.not. setting%Solver%PreissmannSlot%useSlotTF) then
+            write(*,'(A)') '** setting.Solver.PreissmannSlot.useSlotTF = false, which has not been fully tested.'
             write(*,'(A)') '** Unknown problems will occur in surcharged conditions. '
             write(*,'(A)') '** '
             ifound = .true.
@@ -2345,7 +2518,78 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine init_viscosity ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initializes the kinematic viscosity of water
+        !% Note that temperature limits are hard-coded based on
+        !% data used in util_kinematic_viscosity_from_temperature
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), pointer :: temperature, viscosity
+        !%------------------------------------------------------------------
+        !% Aliases
+            temperature => setting%Constant%water_temperature
+            viscosity   => setting%Constant%water_kinematic_viscosity
+        !%------------------------------------------------------------------
+        if (      (temperature .ge. -8.d0) &
+            .and. (temperature .le. 70.d0)   ) then
+                viscosity = util_kinematic_viscosity_from_temperature(temperature)
+        else
+            print *, 'USER INPUT ERROR:'
+            print *, 'Water temperature outside valid range of -8C < T < 70 C'
+            print *, 'Value in setting.Constant.water_temperature is ',temperature
+            call util_crashpoint(408734)
+        end if
 
+    end subroutine init_viscosity
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_ForceMain_setting ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets the UseForceMainTF to false if no FM are found in the
+        !% SWMMinput file links. 
+        !%------------------------------------------------------------------
+        !%
+        !% --- check to see if any Force Main links exists
+        if (setting%Solver%ForceMain%UseForceMainTF) then
+            if (any(link%I(:,li_geometry) .eq. lForce_main)) then
+                !% --- maintain "true" for UseForceMainTF
+            else 
+                !% -- no force main found
+                setting%Solver%ForceMain%UseForceMainTF = .false.
+            end if
+        end if
+
+        !% --- check to see if user requests all closed conduits to be
+        !%     treated as force mains. 
+        if (setting%Solver%ForceMain%FMallClosedConduitsTF) then 
+            if (.not. setting%Solver%ForceMain%UseForceMainTF) then
+                !% --- inconsistent between using force main and
+                !%     setting all to closed conduits
+                if (this_image() == 1) then
+                    print *, 'CONFIGURATION ERROR: Inconsistency in settings.'
+                    print *, 'setting.Solver.ForceMain.UseForceMainTF is false '
+                    print *, 'setting.Solver.ForceMain.FMallClosedConduitsTF is true.'
+                    print *, 'If you want to use Force main with all closed conduits then set '
+                    print *, 'setting.Solver.ForceMain.UseForceMainTF = true '
+                    print *, 'otherwise set setting.Solver.ForceMain.FMallClosedConduits = false '
+                end if
+                call util_crashpoint(4298732)
+            end if
+        else 
+            !% --- FMallClosedConduits = false is compatible with any value of
+            !%     UseForceMainTF
+        end if
+
+    end subroutine init_ForceMain_setting
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
 !%    
 !%==========================================================================
 !% END OF MODULE

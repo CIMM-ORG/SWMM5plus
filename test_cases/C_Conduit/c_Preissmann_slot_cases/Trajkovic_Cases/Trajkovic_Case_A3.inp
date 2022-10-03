@@ -48,12 +48,12 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                0.30132    0.1        0.02       0.1        0         
-2                0.26082    0.1        0.02       0.1        0         
-3                0.26082    0.1        0.02       0.1        0         
-4                0.0378     0.1        0.02       0.1        0         
-5                0.0378     0.1        0.02       0.1        0         
-6                0          1.5        0.02       0.5        0         
+1                0.30132    1.0        0.02       1000        0         
+2                0.26082    1.0        0.02       1000        0         
+3                0.26082    1.0        0.02       1000        0         
+4                0.0378     1.0        0.02       1000        0         
+5                0.0378     1.0        0.02       1000        0         
+6                0          1.5        0.02       1000        0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
@@ -71,8 +71,8 @@ DRY_ONLY         NO
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
-2                2                3                SIDE         0          0.86        NO               
-4                4                5                SIDE         0          0.86        NO            
+2                2                3                SIDE         0          0.74        NO       0.0007          
+4                4                5                SIDE         0          0.74        NO       0.0007        
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -88,12 +88,12 @@ DRY_ONLY         NO
 ;;Control Rules
 
 RULE R1
-IF SIMULATION TIME > 00:00:00
+IF SIMULATION TIME >= 00:00:00
 THEN ORIFICE 2 SETTING = 0.14
 
 RULE R2
-IF SIMULATION TIME > 00:02:00
-AND SIMULATION TIME < 00:02:30
+IF  SIMULATION TIME >= 00:02:00
+AND SIMULATION TIME <= 00:02:30
 THEN ORIFICE 4 SETTING = 0.0
 
 RULE R3

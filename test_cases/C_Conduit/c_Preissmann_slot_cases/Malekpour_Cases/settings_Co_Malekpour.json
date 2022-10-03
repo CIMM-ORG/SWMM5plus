@@ -5,6 +5,19 @@
         "Long"  : "Malekpour_analytical_case",
         "Short" : "Mk_Case"
     },
+    "Adjust" : {
+        "Flowrate" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape",
+            "Coef" : 1.0,
+            "SmallDepthMultiplier" : 3.0
+        },
+        "Head" : {
+            "ApplyYN" : true,
+            "Approach" : "vshape_surcharge_only",
+            "Coef" : 1.0
+        }
+    },
     "Discretization" : {
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
@@ -28,10 +41,6 @@
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
         },
-        "ArraySize" : {
-            "TemporalInflows" : 10,
-            "TotalInflows" : 50
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-10
@@ -53,7 +62,7 @@
             "isHeadOut"                 : true,
             "isHydRadiusOut"            : false,
             "isPerimeterOut"            : false,
-            "isRoughnessDynamicOut" : false,
+            "isManningsNout" : false,
             "isSlotWidthOut"            : true,
             "isSlotDepthOut"            : true,
             "isTopWidthOut"             : false,
@@ -78,7 +87,16 @@
         "useHydrology" : false,
         "useHydraulics" : true
     },
-
+    "SmallDepth" : {
+        "DepthCutoff" : 0.01,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "PreissmannSlot" : {
+            "Method" : "DynamicSlot",
+            "TargetCelerity" : 20.00
+        }
+    },
     "TestCase" : {
         "UseTestCaseYN" : false,
         "TestName" : ""
@@ -94,10 +112,6 @@
             "Dt" : 600.0
         }
     },
-    "PreissmannSlot" : {
-        "PreissmannSlotMethod" : "DynamicSlot",
-        "TargetPreissmannCelerity" : 20.00
-    },
     "VariableDT" : {
         "ApplyYN" : true,
         "CFL_hi_max" : 0.7,
@@ -105,22 +119,5 @@
         "CFL_lo_max" : 0.3,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
-    },
-    "SmallDepth" : {
-        "DepthCutoff" : 0.01,
-        "ManningsN" : 0.1
-    },
-    "Adjust" : {
-        "Flowrate" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape",
-            "Coef" : 1.0,
-            "SmallDepthMultiplier" : 3.0
-        },
-        "Head" : {
-            "ApplyYN" : true,
-            "Approach" : "vshape_surcharge_only",
-            "Coef" : 1.0
-        }
     }
 }

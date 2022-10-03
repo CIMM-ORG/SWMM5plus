@@ -23,6 +23,7 @@ json-fortran
 
 # Executable
 SWMM
+swmm5_C
 
 # Directories
 interface/src
@@ -34,3 +35,4 @@ swmm5_output
 build/
 debug/
 dwflow/
+NCIMM-White-Box-Testing/
