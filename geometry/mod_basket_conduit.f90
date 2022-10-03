@@ -25,7 +25,7 @@ module mod_basket_conduit
     public :: mod_basket_perimeter_from_depth
     public :: mod_basket_perimeter_from_depth_singular
     public :: mod_basket_hyddepth_from_topwidth
-    public :: mod_basket_hyddepth_from_topwidth_singular
+    !public :: mod_basket_hyddepth_from_depth_singular
     public :: mod_basket_hydradius_from_depth_singular
 
     contains
@@ -135,39 +135,6 @@ module mod_basket_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function mod_basket_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for mod_basket cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer :: fulldepth(:), fullArea(:)
-        real(8), pointer :: yBreadthMax(:), breadth(:), rTop(:)
-        real(8) :: emptyDepth, emptyTheta, emptyArea
-        !%-----------------------------------------------------------------------------
-        fullArea    => elemR(:,er_FullArea)
-        fulldepth   => elemR(:,er_FullDepth)
-        yBreadthMax => elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) 
-        breadth     => elemSGR(:,esgr_Basket_Handle_BreadthMax)
-        rTop        => elemSGR(:,esgr_Mod_Basket_Rtop)
-        !%-----------------------------------------------------------------------------
-        
-        if(depth <= yBreadthMax(indx)) then
-            outvalue = depth * breadth(indx)
-        else
-            emptyDepth = max(fulldepth(indx) - depth, zeroR) 
-            emptyTheta = twoR * acos(oneR - emptyDepth / rTop(indx))
-            emptyArea  = onehalfR * (rTop(indx) ** twoR) * (emptyTheta - sin(emptyTheta))
-            outvalue   = fullArea(indx) - emptyArea  
-        endif
-
-    end function mod_basket_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine mod_basket_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -203,38 +170,6 @@ module mod_basket_conduit
 
     end subroutine mod_basket_topwidth_from_depth
 !%    
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function mod_basket_topwidth_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a mod_basket cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
-        real(8), intent(in) :: depth
-        real(8), pointer :: breadth(:), topwidth(:), fullDepth(:)
-        real(8), pointer :: yBreadthMax(:), rTop(:)
-        real(8) :: emptyDepth
-        !%-----------------------------------------------------------------------------
-        topwidth    => elemR(:,er_Topwidth)
-        fullDepth   => elemR(:,er_FullDepth)
-        yBreadthMax => elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)
-        breadth     => elemSGR(:,esgr_Mod_Basket_BreadthMax)
-        rTop        => elemSGR(:,esgr_Mod_Basket_Rtop) 
-        !%-----------------------------------------------------------------------------
-         
-        if (depth <= zeroR) then
-            outvalue = setting%ZeroValue%Topwidth
-        else if (depth <= yBreadthMax(indx)) then
-            outvalue = breadth(indx)
-        else
-            emptyDepth = max(fullDepth(indx) - depth, zeroR)
-            outvalue   = twoR * sqrt(emptyDepth * (twoR * rTop(indx) - emptyDepth))
-        endif
-
-    end function mod_basket_topwidth_from_depth_singular
-!%
 !%==========================================================================
 !%==========================================================================
 !%
@@ -278,10 +213,113 @@ module mod_basket_conduit
 
     end subroutine mod_basket_perimeter_from_depth
 !%    
-!%==========================================================================    
+!%==========================================================================  
 !%==========================================================================
 !%
-    real(8) function mod_basket_perimeter_from_depth_singular (indx, depth) result (outvalue)
+    subroutine mod_basket_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        !%  
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the hydraulic (average) depth from a known depth in a mod_basket channel
+        !%-----------------------------------------------------------------------------
+        integer, target, intent(in) :: elemPGx(:,:)
+        integer, intent(in) ::  Npack, thisCol
+        integer, pointer :: thisP(:)
+        real(8), pointer :: hyddepth(:), depth(:), area(:), topwidth(:), fullHydDepth(:)
+        !%-----------------------------------------------------------------------------
+        thisP       => elemPGx(1:Npack,thisCol) 
+        depth       => elemR(:,er_Depth)
+        area        => elemR(:,er_Area)
+        topwidth    => elemR(:,er_Topwidth)
+        hyddepth    => elemR(:,er_HydDepth)
+        fullHydDepth => elemR(:,er_FullHydDepth)
+        !%-----------------------------------------------------------------------------
+
+        !% when conduit is empty
+        where (depth(thisP) <= setting%ZeroValue%Depth)
+            hyddepth(thisP) = setting%ZeroValue%Depth
+
+        !% when conduit is not empty
+        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+            !% limiter for when the conduit is full
+            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+        endwhere
+
+    end subroutine mod_basket_hyddepth_from_topwidth
+!%    
+!%==========================================================================  
+
+!%==========================================================================
+!%
+    real(8) function mod_basket_area_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for mod_basket cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer :: fulldepth(:), fullArea(:)
+        real(8), pointer :: yBreadthMax(:), breadth(:), rTop(:)
+        real(8) :: emptyDepth, emptyTheta, emptyArea
+        !%-----------------------------------------------------------------------------
+        fullArea    => elemR(:,er_FullArea)
+        fulldepth   => elemR(:,er_FullDepth)
+        yBreadthMax => elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) 
+        breadth     => elemSGR(:,esgr_Basket_Handle_BreadthMax)
+        rTop        => elemSGR(:,esgr_Mod_Basket_Rtop)
+        !%-----------------------------------------------------------------------------
+        
+        if(depth <= yBreadthMax(indx)) then
+            outvalue = depth * breadth(indx)
+        else
+            emptyDepth = max(fulldepth(indx) - depth, zeroR) 
+            emptyTheta = twoR * acos(oneR - emptyDepth / rTop(indx))
+            emptyArea  = onehalfR * (rTop(indx) ** twoR) * (emptyTheta - sin(emptyTheta))
+            outvalue   = fullArea(indx) - emptyArea  
+        endif
+
+    end function mod_basket_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function mod_basket_topwidth_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a mod_basket cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx 
+        real(8), intent(in) :: depth
+        real(8), pointer :: breadth(:), topwidth(:), fullDepth(:)
+        real(8), pointer :: yBreadthMax(:), rTop(:)
+        real(8) :: emptyDepth
+        !%-----------------------------------------------------------------------------
+        topwidth    => elemR(:,er_Topwidth)
+        fullDepth   => elemR(:,er_FullDepth)
+        yBreadthMax => elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)
+        breadth     => elemSGR(:,esgr_Mod_Basket_BreadthMax)
+        rTop        => elemSGR(:,esgr_Mod_Basket_Rtop) 
+        !%-----------------------------------------------------------------------------
+         
+        if (depth <= zeroR) then
+            outvalue = setting%ZeroValue%Topwidth
+        else if (depth <= yBreadthMax(indx)) then
+            outvalue = breadth(indx)
+        else
+            emptyDepth = max(fullDepth(indx) - depth, zeroR)
+            outvalue   = twoR * sqrt(emptyDepth * (twoR * rTop(indx) - emptyDepth))
+        endif
+
+    end function mod_basket_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function mod_basket_perimeter_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -319,74 +357,45 @@ module mod_basket_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine mod_basket_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a mod_basket channel
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: hyddepth(:), depth(:), area(:), topwidth(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        thisP       => elemPGx(1:Npack,thisCol) 
-        depth       => elemR(:,er_Depth)
-        area        => elemR(:,er_Area)
-        topwidth    => elemR(:,er_Topwidth)
-        hyddepth    => elemR(:,er_HydDepth)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%-----------------------------------------------------------------------------
-
-        !% when conduit is empty
-        where (depth(thisP) <= setting%ZeroValue%Depth)
-            hyddepth(thisP) = setting%ZeroValue%Depth
-
-        !% when conduit is not empty
-        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-            !% limiter for when the conduit is full
-            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-        endwhere
-
-    end subroutine mod_basket_hyddepth_from_topwidth
-!%    
-!%==========================================================================  
-!%==========================================================================
-!%
-    real(8) function mod_basket_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
+    ! real(8) function mod_basket_hyddepth_from_depth_singular &
+    !     (indx,depth) result (outvalue)
     
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth from known depth for mod_basket cross section of 
-        !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx     
-        real(8), intent(in) :: depth, topwidth
-        real(8), pointer    :: area(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        area         => elemR(:,er_Area)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
+    !     !%  
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for mod_basket cross section of 
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------
+    !         integer, intent(in) :: indx
+    !         real(8), intent(in) :: depth
+    !         real(8), pointer    :: fullDepth, fullHydDepth
+    !     !%-----------------------------------------------------------------------------
+    !         fullDepth    => elemR(indx,er_FullDepth)
+    !         fullHydDepth => elemR(indx,er_FullHydDepth)
+    !     !%--------------------------------------------------
 
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in cross section for both
-        !% full and empty condition.
+    !     topwidth = mod_basket_topwidth_from_depth_singular (indx,depth)
+    !     area     = mod_basket_area_from_depth_singular (indx, depth)
 
-        !% when conduit is empty
-        if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Depth
-        else
-            !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
-        endif
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= fullHydDepth)
+    !         !% --- full
+    !         outvalue = fullHydDepth
+    !     else
+    !         !% --- otherwise
+    !         outvalue = area / topwidth
+    !     endif
 
-    end function mod_basket_hyddepth_from_topwidth_singular 
+
+    ! end function mod_basket_hyddepth_from_depth_singular 
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function mod_basket_hydradius_from_depth_singular (indx, depth) result (outvalue)
+    real(8) function mod_basket_hydradius_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:

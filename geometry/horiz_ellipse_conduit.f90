@@ -25,7 +25,7 @@ module horiz_ellipse_conduit
     public :: horiz_ellipse_perimeter_from_depth_singular
     public :: horiz_ellipse_perimeter_from_hydradius_singular
     public :: horiz_ellipse_hyddepth_from_topwidth
-    public :: horiz_ellipse_hyddepth_from_topwidth_singular
+    !public :: horiz_ellipse_hyddepth_from_depth_singular
     public :: horiz_ellipse_hydradius_from_depth_singular
     public :: horiz_ellipse_normaldepth_from_sectionfactor_singular
 
@@ -72,39 +72,7 @@ module horiz_ellipse_conduit
 
     end subroutine horiz_ellipse_depth_from_volume
 !%
-!%==========================================================================      
-!%==========================================================================
-!%
-    real(8) function horiz_ellipse_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for horiz_ellipse cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
-        real(8), pointer    :: fullArea(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        fullArea   => elemR(:,er_FullArea)
-        fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Horiz_Ellipse_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Horiz_Ellipse_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), AHoirzEllip)
-
-        !% finally get the area by multiplying the normalized area with full area
-        outvalue = AoverAfull(indx) * fullArea(indx)
-
-    end function horiz_ellipse_area_from_depth_singular
-!%
-!%==========================================================================
+!%==========================================================================   
 !%==========================================================================
 !%
     subroutine horiz_ellipse_topwidth_from_depth (elemPGx, Npack, thisCol)
@@ -137,34 +105,6 @@ module horiz_ellipse_conduit
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
 
     end subroutine horiz_ellipse_topwidth_from_depth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function horiz_ellipse_topwidth_from_depth_singular (indx,depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a horiz_ellipse cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Horiz_Ellipse_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Tmax (fullDepth for horiz_ellipse cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), THoirzEllip) 
-
-        !% if topwidth <= zero, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
-
-    end function horiz_ellipse_topwidth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -211,6 +151,139 @@ module horiz_ellipse_conduit
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine horiz_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the hydraulic (average) depth from a known depth in a horiz_ellipse conduit
+        !%-----------------------------------------------------------------------------
+        integer, target, intent(in) :: elemPGx(:,:)
+        integer, intent(in) ::  Npack, thisCol
+        integer, pointer    :: thisP(:)
+        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
+        real(8), pointer    :: depth(:), hyddepth(:)
+        !%-----------------------------------------------------------------------------
+        !!if (crashYN) return
+        thisP        => elemPGx(1:Npack,thisCol)
+        area         => elemR(:,er_Area)
+        topwidth     => elemR(:,er_Topwidth)
+        depth        => elemR(:,er_Depth)
+        hyddepth     => elemR(:,er_HydDepth)
+        fullHydDepth => elemR(:,er_FullHydDepth)
+        !%--------------------------------------------------
+
+        !% calculating hydraulic depth needs conditional since,
+        !% topwidth can be zero in horiz_ellipse cross section for both
+        !% full and empty condition.
+
+        !% when conduit is empty
+        where (depth(thisP) <= setting%ZeroValue%Depth)
+            hyddepth(thisP) = setting%ZeroValue%Depth
+
+        !% when conduit is not empty
+        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+            !% limiter for when the conduit is full
+            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+        endwhere
+
+    end subroutine horiz_ellipse_hyddepth_from_topwidth
+!%
+!%==========================================================================
+!% SINGULAR
+!%==========================================================================
+!%
+    real(8) function horiz_ellipse_area_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for horiz_ellipse cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
+        real(8), pointer    :: fullArea(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        !!if (crashYN) return
+        fullArea   => elemR(:,er_FullArea)
+        fulldepth  => elemR(:,er_FullDepth)
+        AoverAfull => elemSGR(:,esgr_Horiz_Ellipse_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Horiz_Ellipse_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get A/Afull from the lookup table using Y/Yfull
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), AHoirzEllip)
+
+        !% finally get the area by multiplying the normalized area with full area
+        outvalue = AoverAfull(indx) * fullArea(indx)
+
+    end function horiz_ellipse_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function horiz_ellipse_topwidth_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a horiz_ellipse cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        fulldepth  => elemR(:,er_FullDepth)
+        YoverYfull => elemSGR(:,esgr_Horiz_Ellipse_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
+        !% and then myltiplying it with Tmax (fullDepth for horiz_ellipse cross-section)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), THoirzEllip) 
+
+        !% if topwidth <= zero, set it to zerovalue
+        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
+
+    end function horiz_ellipse_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function horiz_ellipse_hydradius_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes hydraulic radius from known depth for a horiz_ellipse cross section of
+        !% a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
+        !%-----------------------------------------------------------------------------
+        fulldepth     => elemR(:,er_FullDepth)
+        fullhydradius => elemR(:,er_FullHydRadius)
+        YoverYfull    => elemSGR(:,esgr_Horiz_Ellipse_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
+        !% and then myltiplying it with Rmax (fullDepth/4)
+        outvalue = fullhydradius(indx) * &
+                xsect_table_lookup_singular (YoverYfull(indx), RHoirzEllip)
+
+    end function horiz_ellipse_hydradius_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function horiz_ellipse_perimeter_from_depth_singular &
         (idx, indepth) result(outvalue)
         !%------------------------------------------------------------------
@@ -251,7 +324,8 @@ module horiz_ellipse_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function horiz_ellipse_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
+    real(8) function horiz_ellipse_perimeter_from_hydradius_singular &
+         (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -276,105 +350,40 @@ module horiz_ellipse_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine horiz_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a horiz_ellipse conduit
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer    :: thisP(:)
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
-        real(8), pointer    :: depth(:), hyddepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        thisP        => elemPGx(1:Npack,thisCol)
-        area         => elemR(:,er_Area)
-        topwidth     => elemR(:,er_Topwidth)
-        depth        => elemR(:,er_Depth)
-        hyddepth     => elemR(:,er_HydDepth)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
+    ! real(8) function horiz_ellipse_hyddepth_from_depth_singular &
+    !     (indx,depth) result (outvalue)
+    !     !%
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for horiz_ellipse cross section of
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------
+    !         integer, intent(in) :: indx
+    !         real(8), intent(in) :: depth
+    !         real(8), pointer    :: fullDepth, fullHydDepth
+    !     !%-----------------------------------------------------------------------------
+    !         fullDepth    => elemR(indx,er_FullDepth)
+    !         fullHydDepth => elemR(indx,er_FullHydDepth)
+    !     !%--------------------------------------------------
 
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in horiz_ellipse cross section for both
-        !% full and empty condition.
+    !     topwidth = horiz_ellipse_topwidth_from_depth_singular (indx,depth)
+    !     area     = horiz_ellipse_area_from_depth_singular (indx, depth)
 
-        !% when conduit is empty
-        where (depth(thisP) <= setting%ZeroValue%Depth)
-            hyddepth(thisP) = setting%ZeroValue%Depth
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= fullHydDepth)
+    !         !% --- full
+    !         outvalue = fullHydDepth
+    !     else
+    !         !% --- otherwise
+    !         outvalue = area / topwidth
+    !     endif
 
-        !% when conduit is not empty
-        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-            !% limiter for when the conduit is full
-            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-        endwhere
-
-    end subroutine horiz_ellipse_hyddepth_from_topwidth
+    ! end function horiz_ellipse_hyddepth_from_depth_singular
 !%
 !%==========================================================================
-!%==========================================================================
-!%
-    real(8) function horiz_ellipse_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth from known depth for horiz_ellipse cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: topwidth, depth
-        real(8), pointer    :: area(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        area         => elemR(:,er_Area)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
 
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in horiz_ellipse cross section for both
-        !% full and empty condition.
-
-        !% when conduit is empty
-        if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Depth
-        else
-            !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
-        endif
-
-    end function horiz_ellipse_hyddepth_from_topwidth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function horiz_ellipse_hydradius_from_depth_singular (indx,depth) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic radius from known depth for a horiz_ellipse cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
-        !%-----------------------------------------------------------------------------
-        fulldepth     => elemR(:,er_FullDepth)
-        fullhydradius => elemR(:,er_FullHydRadius)
-        YoverYfull    => elemSGR(:,esgr_Horiz_Ellipse_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Rmax (fullDepth/4)
-        outvalue = fullhydradius(indx) * &
-                xsect_table_lookup_singular (YoverYfull(indx), RHoirzEllip)
-
-    end function horiz_ellipse_hydradius_from_depth_singular
-!%
-!%==========================================================================
 !%==========================================================================
 !%
     real(8) function horiz_ellipse_normaldepth_from_sectionfactor_singular &
@@ -404,18 +413,6 @@ module horiz_ellipse_conduit
 
     end function horiz_ellipse_normaldepth_from_sectionfactor_singular
 !%
-!%==========================================================================
-!%==========================================================================
-!% PRIVATE
-!%==========================================================================
-!%
-    !%----------------------------------------------------------------------
-    !% Description:
-    !%
-    !%----------------------------------------------------------------------
-
-    !%----------------------------------------------------------------------
-    !%
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================

@@ -22,7 +22,7 @@ module triangular_channel
     public :: triangular_perimeter_from_depth
     public :: triangular_perimeter_from_depth_singular
     public :: triangular_hyddepth_from_depth
-    public :: triangular_hyddepth_from_depth_singular
+    !public :: triangular_hyddepth_from_depth_singular
     public :: triangular_hydradius_from_depth_singular
 
     contains
@@ -211,20 +211,20 @@ module triangular_channel
 !%==========================================================================  
 !%==========================================================================
 !%
-    real(8) function triangular_hyddepth_from_depth_singular (indx,depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth from known depth for triangular cross section of 
-        !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx     
-        real(8), intent(in) :: depth
-        !%-----------------------------------------------------------------------------  
+    ! real(8) function triangular_hyddepth_from_depth_singular (indx,depth) result (outvalue)
+    !     !%  
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for triangular cross section of 
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------   
+    !     integer, intent(in) :: indx     
+    !     real(8), intent(in) :: depth
+    !     !%-----------------------------------------------------------------------------  
 
-        outvalue = depth / twoR
+    !     outvalue = depth / twoR
 
-    end function triangular_hyddepth_from_depth_singular 
+    ! end function triangular_hyddepth_from_depth_singular 
 !%    
 !%==========================================================================
 !%==========================================================================

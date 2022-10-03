@@ -961,7 +961,6 @@ contains
     end subroutine init_IC_set_forcemain_elements
 !%    
 !%==========================================================================  
-
 !%==========================================================================
 !%
     subroutine init_IC_get_culvert_from_linkdata (thisLink)
@@ -975,15 +974,38 @@ contains
             character(64) :: subroutine_name = 'init_IC_get_culvert_from_linkdata'
         !%-----------------------------------------------------------------
         !% Preliminaries
+            !% --- if no culvert, return
+            if (link%I(thisLink,li_culvertCode) == zeroI) return
         !%-----------------------------------------------------------------
         !% Aliases
             firstE      => link%I(thisLink,li_first_elem_idx)
             lastE       => link%I(thisLink,li_last_elem_idx)
         !%-----------------------------------------------------------------
 
-        elemI(firstE:lastE,ei_culvertCode) = link%I(thisLink,li_culvertCode)
+        !% --- error checking
+        if ((link%I(thisLink,li_culvertCode) < zeroR)   .or. &
+            (link%I(thisLink,li_culvertCode) > NculvertTypes) ) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Culvert Code found with value of ',link%I(thisLink,li_culvertCode)
+                print *, 'for link # ',thisLink
+                print *, 'which is the link named ',trim(link%Names(thisLink)%str)
+                print *, 'Allowable culvert codes are zero or greater and'
+                print *, 'less than ',NculvertTypes
+                call util_crashpoint(6628732)
+        end if
 
-        print *, 'culvert code ', elemI(firstE,ei_culvertCode)
+        print *, 'NOT COMPLETED IN ',trim(subroutine_name)
+        stop 209873
+        
+        ! !% if only 1 element in link
+        ! if (firstE == lastE) then
+        !     elemSI(firstE,esi_Culvert_Code) = link%I(thisLink,li_culvertCode)
+        ! else 
+        !     elemSI(firstE:)
+
+        ! end if
+
+        !print *, 'culvert code ', elemI(firstE,ei_culvertCode)
         
     end subroutine init_IC_get_culvert_from_linkdata
 !%
@@ -1050,6 +1072,7 @@ contains
 
         end select
 
+        !call geometry_table_initialize ()
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

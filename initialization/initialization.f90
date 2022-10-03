@@ -10,6 +10,7 @@ module initialization
     use interface_
     use network_define
     use partitioning
+    use culvert_elements, only: culvert_parameter_values
     use utility
     use utility_allocate
     use utility_array
@@ -153,6 +154,9 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
         call util_crashstop(43974)
+
+        !% --- set up the culvert parameters array
+        call culvert_parameter_values ()
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
@@ -359,7 +363,7 @@ contains
         call control_init_monitoring_and_action_from_EPASWMM()
         call util_crashstop(62873)
 
-        !      !% --- temporary testing
+        !% --- temporary testing
         ! print *, 'CALLING INTERFACE_TESTSTUFF'
         ! call interface_teststuff ()
 
@@ -568,12 +572,34 @@ contains
         sync all
 
     end subroutine init_timestamp
+!!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! subroutine init_geometry_tables ()
+    !     !%------------------------------------------------------------------
+    !     !% Description
+    !     !% Initializes the geometry types and geometry tables
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     !% --- allocate the space for the geometry tables
+    !     call util_allocate_geometrytable_array ()
+
+    !     !% --- create new tables from existing
+
+    !     do ii=1,size(geometryTableR,1)
+    !     end do
+      
+
+
+    ! end subroutine init_geometry_tables
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine init_linknode_arrays()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%   Retrieves data from EPA-SWMM interface and populates link and node tables
         !% Note:
@@ -581,12 +607,12 @@ contains
         !%   order in which links and nodes are allocated in EPA-SWMM data structures
         !%   Keeping the same order is important to be able to locate node/link data
         !%   by label and not by index, reusing EPA-SWMM functionalities.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Declarations   
             integer          :: ii, total_n_links
             integer, pointer :: linkUp, linkDn
             character(64)    :: subroutine_name = 'init_linknode_arrays'
-        !%-----------------------------------------------------------------------------
+        !%--------------------------------------------------------------------
         !% Preliminaries
             !if (crashYN) return
             if (setting%Debug%File%initialization) &
@@ -616,11 +642,11 @@ contains
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
-            print *, ' '
-            print *, '================================================='
-            print *, 'AAA in ',trim(subroutine_name), ii
-            print *, api_linkf_geometry
-            print *, trim(reverseKey_api(api_linkf_geometry))
+            ! print *, ' '
+            ! print *, '================================================='
+            ! print *, 'AAA in ',trim(subroutine_name), ii
+            ! print *, api_linkf_geometry
+            ! print *, trim(reverseKey_api(api_linkf_geometry))
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
@@ -632,9 +658,11 @@ contains
                 ! print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
             link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
-                print *, 'link_barrels   ', link%I(ii,li_barrels)  
+                !print *, 'link_barrels   ', link%I(ii,li_barrels)  
+                !print *, ii, 'api_linkf_xsect_culvertCode ',api_linkf_xsect_culvertCode
             link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_xsect_culvertCode, .true.)
-                print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
+                !print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
+                
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
                 !% --- for standard channel/conduits where upstream is 
@@ -821,6 +849,8 @@ contains
             end if
         end do
         
+        !stop 5908374
+
         !% -----------------------
         !% --- NODE DATA
         !% -----------------------
@@ -972,7 +1002,9 @@ contains
                 !%     be guaranteed to be in the u1 and d1 positions
                 linkUp => node%I(ii,ni_Mlink_u1)
                 linkDn => node%I(ii,ni_Mlink_d1)
-                
+
+
+
                 !% --- special channels and conduits that allow nJ2
                 if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)    &
                         .or.                                           &
@@ -986,7 +1018,7 @@ contains
                     !% nJ2 OPEN CHANNEL FACE
                     !% --- if either link is an open channel AND the ponded area
                     !%     is zero then the junction is an nJ2 face where any
-                    !%     overflow is handled by adjacent channel. Otherwise 
+                    !%     overflow is handled by adjacent channel (i.e. lost). Otherwise 
                     !%     reverts to nJm element with its own overflow/ponding. 
                     !%     Note that if ponding is OFF but the ponded area
                     !%     is defined, then the element is treated as nJm with
@@ -1010,6 +1042,15 @@ contains
                 else
                     !% --- switch to nJm
                     node%I(ii, ni_node_type) = nJm
+                end if
+
+                !% --- regardles of the above, if either link up or down is a
+                !%     multi-barrel link, then the node must be an nJm node
+                if  ( (link%I(linkUp,li_barrels) > oneI)    &
+                        .or.                                  &
+                        (link%I(linkDn,li_barrels) > oneI)    &
+                    ) then       
+                    node%I(ii, ni_node_type) = nJm   
                 end if
 
                 ! print *, ' at CCC'

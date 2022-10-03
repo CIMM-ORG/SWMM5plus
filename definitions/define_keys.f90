@@ -47,29 +47,29 @@
         enumerator :: lNodeDepth            !% outlet having functional\curve flow vs depth relationship  
         enumerator :: lNodeHead             !% outlet having functional\curve flow vs head relationship 
         !% open channel cross-sectional geometry types
+        enumerator :: lParabolic             !% parabolic open channel
+        enumerator :: lPower_function        !% power function open channel
         enumerator :: lRectangular           !% rectangular open channel
         enumerator :: lTrapezoidal           !% trapezoidal open channel
         enumerator :: lTriangular            !% triangular open channel
-        enumerator :: lParabolic             !% parabolic open channel
-        enumerator :: lPower_function        !% power function open channel
-        enumerator :: lRect_triang           !% rectangular-triangular open channel
-        enumerator :: lRect_round            !% rectangular-round open channel
-        enumerator :: lMod_basket            !% modified basket handle open channel
         enumerator :: lIrregular             !% irregular open channel
         !% closed conduit cross-sectional geometry types
-        enumerator :: lCircular              !% circular closed conduit
-        enumerator :: lFilled_circular       !% filled circular closed conduit
-        enumerator :: lRectangular_closed    !% rectangular closed conduit
-        enumerator :: lHoriz_ellipse         !% horizontal ellipse closed conduit
-        enumerator :: lVert_ellipse          !% vertical ellipse closed conduit
         enumerator :: lArch                  !% arch closed conduit
-        enumerator :: lEggshaped             !% eggshaped closed conduit
-        enumerator :: lHorseshoe             !% horseshoe closed conduit
-        enumerator :: lGothic                !% gothic closed conduit
-        enumerator :: lCatenary              !% catenary closed conduit
-        enumerator :: lSemi_elliptical       !% semi-elliptical closed conduit
         enumerator :: lBasket_handle         !% basket handle closed conduit
+        enumerator :: lCatenary              !% catenary closed conduit
+        enumerator :: lCircular              !% circular closed conduit
+        enumerator :: lEggshaped             !% eggshaped closed conduit
+        enumerator :: lFilled_circular       !% filled circular closed conduit
+        enumerator :: lGothic                !% gothic closed conduit
+        enumerator :: lHoriz_ellipse         !% horizontal ellipse closed conduit
+        enumerator :: lHorseshoe             !% horseshoe closed conduit
+        enumerator :: lMod_basket            !% modified basket handle open channel
+        enumerator :: lRectangular_closed    !% rectangular closed conduit
+        enumerator :: lRect_round            !% rectangular-round conduit
+        enumerator :: lRect_triang           !% rectangular-triangular conduit
         enumerator :: lSemi_circular         !% semi-circular closed conduit
+        enumerator :: lSemi_elliptical       !% semi-elliptical closed conduit
+        enumerator :: lVert_ellipse          !% vertical ellipse closed conduit    
         enumerator :: lCustom                !% custom closed conduit
         enumerator :: lForce_main            !% force main closed conduit
         !!% different link roughness types (OBSOLETE)
@@ -99,31 +99,31 @@
         enumerator :: dummy                 !% dummy element type
         !% SWMM5+ CC geometry types
         !% open channel cross-sectional geometry types
+        enumerator :: parabolic             !% parabolic open channel
+        enumerator :: power_function        !% power function open channel
         enumerator :: rectangular           !% rectangular open channel
         enumerator :: trapezoidal           !% trapezoidal open channel
         enumerator :: triangular            !% triangular open channel
-        enumerator :: parabolic             !% parabolic open channel
-        enumerator :: power_function        !% power function open channel
-        enumerator :: rect_triang           !% rectangular-triangular open channel
-        enumerator :: rect_round            !% rectangular-round open channel
-        enumerator :: mod_basket            !% modified basket handle open channel
         enumerator :: irregular             !% irregular open channel
         !% closed conduit cross-sectional geometry types
-        enumerator :: circular              !% circular closed conduit
-        enumerator :: filled_circular       !% filled circular closed conduit
-        enumerator :: rectangular_closed    !% rectangular closed conduit
-        enumerator :: horiz_ellipse         !% horizontal ellipse closed conduit
-        enumerator :: vert_ellipse          !% vertical ellipse closed conduit
         enumerator :: arch                  !% arch closed conduit
-        enumerator :: eggshaped             !% eggshaped closed conduit
-        enumerator :: horseshoe             !% horseshoe closed conduit
-        enumerator :: gothic                !% gothic closed conduit
-        enumerator :: catenary              !% catenary closed conduit
-        enumerator :: semi_elliptical       !% semi-elliptical closed conduit
         enumerator :: basket_handle         !% basket handle closed conduit
+        enumerator :: catenary              !% catenary closed conduit
+        enumerator :: circular              !% circular closed conduit
+        enumerator :: eggshaped             !% eggshaped closed conduit
+        enumerator :: filled_circular       !% filled circular closed conduit
+        enumerator :: gothic                !% gothic closed conduit
+        enumerator :: horiz_ellipse         !% horizontal ellipse closed conduit
+        enumerator :: horseshoe             !% horseshoe closed conduit
+        enumerator :: mod_basket            !% modified basket handle
+        enumerator :: rectangular_closed    !% rectangular closed conduit
+        enumerator :: rect_round            !% rectangular-round open conduit
+        enumerator :: rect_triang           !% rectangular-triangular conduit
         enumerator :: semi_circular         !% semi-circular closed conduit
+        enumerator :: semi_elliptical       !% semi-elliptical closed conduit
+        enumerator :: vert_ellipse          !% vertical ellipse closed conduit   
         enumerator :: custom                !% custom closed conduit
-        enumerator :: force_main            !% force main closed conduit
+        enumerator :: force_main            !% force main closed conduit !% NOT A GEOMETRY TYPE IN SWMM5+
         !% SWMM5+ CC roughness type
         !enumerator :: ManningsN             !% ID for mannings n for roughness_type
         !enumerator :: CD                    !% ID for using drag coefficient for roughness_type
@@ -244,6 +244,67 @@
         enumerator :: Paved
         enumerator :: Gravel
         enumerator :: NoRoadSurface
+        ! !% Keys for Culvert
+        !% brh 20220927 -- at this point, the culvert codes are not stored
+        !% as standard keys, but are numbers 1-57 providing the index
+        !% into the culvertValue
+        ! enumerator :: CircularConcrete_01
+        ! enumerator :: CircularConcrete_02
+        ! enumerator :: CircularConcrete_03
+        ! enumerator :: CircularCorrugatedMetalPipe_04
+        ! enumerator :: CircularCorrugatedMetalPipe_05
+        ! enumerator :: CircularCorrugatedMetalPipe_06
+        ! enumerator :: CircularPipeBeveledRingEntrance_07
+        ! enumerator :: CircularPipeBeveledRingEntrance_08
+        ! enumerator :: RectangularBoxFlaredWingwalls_09
+        ! enumerator :: RectangularBoxFlaredWingwalls_10
+        ! enumerator :: RectangularBoxFlaredWingwalls_11
+        ! enumerator :: RectangularBoxFlaredWingwalls_12
+        ! enumerator :: RectangularBoxFlaredWingwalls_13
+        ! enumerator :: RectangularBox90degHeadwall_14
+        ! enumerator :: RectangularBox90degHeadwall_15
+        ! enumerator :: RectangularBox90degHeadwall_16
+        ! enumerator :: RectangularBoxSkewedHeadwall_17
+        ! enumerator :: RectangularBoxSkewedHeadwall_18
+        ! enumerator :: RectangularBoxSkewedHeadwall_19
+        ! enumerator :: RectangularBoxSkewedHeadwall_20
+        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_21
+        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_22
+        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_23
+        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_24
+        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_25
+        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_26
+        ! enumerator :: CorrugatedMetalBox_27
+        ! enumerator :: CorrugatedMetalBox_28
+        ! enumerator :: CorrugatedMetalBox_29
+        ! enumerator :: HorizontalEllipseConcrete_30
+        ! enumerator :: HorizontalEllipseConcrete_31
+        ! enumerator :: HorizontalEllipseConcrete_32
+        ! enumerator :: VerticalEllipseConcrete_33
+        ! enumerator :: VerticalEllipseConcrete_34
+        ! enumerator :: VerticalEllipseConcrete_35
+        ! enumerator :: PipeArch18inCornerRadius_36
+        ! enumerator :: PipeArch18inCornerRadius_37
+        ! enumerator :: PipeArch18inCornerRadius_38
+        ! enumerator :: PipeArch18inCornerRadius_39
+        ! enumerator :: PipeArch18inCornerRadius_40
+        ! enumerator :: PipeArch18inCornerRadius_41
+        ! enumerator :: PipeArch31inCornerRadius_42
+        ! enumerator :: PipeArch31inCornerRadius_43
+        ! enumerator :: PipeArch31inCornerRadius_44
+        ! enumerator :: ArchCorrugatedMetal_45
+        ! enumerator :: ArchCorrugatedMetal_46
+        ! enumerator :: ArchCorrugatedMetal_47
+        ! enumerator :: CircularCulvert_48
+        ! enumerator :: CircularCulvert_49
+        ! enumerator :: EllipticalInletFace_50
+        ! enumerator :: EllipticalInletFace_51
+        ! enumerator :: EllipticalInletFace_52
+        ! enumerator :: Rectangular_53
+        ! enumerator :: RectangularConcrete_54
+        ! enumerator :: RectangularConcrete_55
+        ! enumerator :: RectangularConcrete_56
+        ! enumerator :: RectangularConcrete_57
         !% last items for bookkeeping
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone

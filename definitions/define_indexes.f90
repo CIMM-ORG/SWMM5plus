@@ -633,6 +633,12 @@ module define_indexes
     integer, parameter :: Ncol_elemSI_orifice = esi_Orifice_lastplusone-1
 
     enum, bind(c)
+        enumerator :: esi_Culvert_Code = 1         !% SWMM culvert code
+        enumerator :: esi_Culvert_lastplusone      !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_culvert = esi_Culvert_lastplusone-1
+
+    enum, bind(c)
         !% define the column indexes for elemSi(:,:) outlet elements
         enumerator :: esi_Outlet_FlowDirection = 1     !% outlet flow direction (-1, +1)
         enumerator :: esi_Outlet_SpecificType          !% KEY specific outlet type
@@ -737,6 +743,16 @@ module define_indexes
         enumerator ::  esr_Orifice_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Orifice = esr_Orifice_lastplusone-1
+
+    enum, bind(c)
+        enumerator :: esr_Culvert_Form = 1                 !% Form from EPA=SWMM culvert.c
+        enumerator :: esr_Culvert_K                       
+        enumerator :: esr_Culvert_M 
+        enumerator :: esr_Culvert_C
+        enumerator :: esr_Culvert_Y
+        enumerator :: esr_Culvert_lastplusone             !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Culvert = esr_Culvert_lastplusone-1
 
     enum, bind(c)
         enumerator ::  esr_Outlet_DischargeCoeff = 1       !% discharge coefficient outlet
@@ -1036,55 +1052,6 @@ module define_indexes
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or
     !% conduit elements
-!%
-!%==========================================================================
-!% OBSOLETE: TRANSECT WIDTH-DEPTH PAIR ELEMENTS
-!%==========================================================================
-!%  
-      ! OBSOLETE 20220616                        
-    ! !%-------------------------------------------------------------------------
-    ! !% define the column indexes for elemWDR(:,:)
-    ! !% for width-depth pairs
-    ! !%-------------------------------------------------------------------------
-
-    ! !% HACK We are trying to reduce the amount of data stored as width-depth pairs.
-    ! !% This is still experimental and under development.
-
-    ! !% The elemWDI has one row for each element that has a width-depth pair,
-    ! !% and we provide an index to the elemI/elemR/elemYN arrays that contain
-    ! !% other data about this element (e.g., Mannings n). Note that we are
-    ! !% planning elemWDR will have more rows than elemWDI because we
-    ! !% need a row for each width-depth pair. We will probably need to modify
-    ! !% this to create a fast approach.
-
-    ! !% define the column indexes for elemWDI(:,:) for width-depth pairs
-    ! enum, bind(c)
-    !     enumerator ::  ewdi_Melem_Lidx = 1      !% Map to local idx of element
-    !     enumerator ::  ewdi_elemWDRidx_F        !% Location of first row in elemWDR array for this element
-    !     enumerator ::  ewdi_elemWDRidx_L        !% Location of last row in elemWDR array for this element
-    !     enumerator ::  ewdi_N_pair              !% Number of width-depth pairs (rows in elemWDR) for this element
-    !     enumerator ::  ewdi_lastplusone !% must be last enum item
-    ! end enum
-    ! integer, target :: Ncol_elemWDI =  ewdi_lastplusone-1
-
-  
-    ! !%-------------------------------------------------------------------------
-    ! !% define the column indexes for elemWDR(:,:)
-    ! !% for width-depth pairs
-    ! !%-------------------------------------------------------------------------
-
-    ! !% HACK: This is experimental for width-depth pairs.
-    ! !% We expect to have a row for each pair, so parsing
-    ! !% the data will require use of the elemWDI array.
-
-    ! enum, bind(c)
-    !     enumerator ::  ewdr_Width = 1               !% Width at a given depth
-    !     enumerator ::  ewdr_Depth                   !% Depth at a given width
-    !     enumerator ::  ewdr_lastplusone !% must be last enum item
-    ! end enum
-    ! !% note, this must be changed to whatever the last enum element is!
-    ! integer, target :: Ncol_elemWDR =  ewdr_lastplusone-1
-
 !%
 !%==========================================================================
 !% SYSTEM CONTROL MONITORING AND ACTION ELEMENTS
@@ -1508,6 +1475,11 @@ module define_indexes
     
     integer, parameter :: Ncol_transectTable = tt_lastplusone-1
 
+!%
+!%==========================================================================
+!% UNIFORM TABLE ARRAYS (for individual elements)
+!%==========================================================================
+!%  
     !% uniformTableI column indexes
     enum, bind(c)
         enumerator :: uti_idx = 1           ! counter of uniformTableI
@@ -1541,6 +1513,22 @@ module define_indexes
     end enum
   
     integer, parameter :: Ncol_uniformTableDataR = utd_lastplusone - 1
+!%
+!%==========================================================================
+!% GEOMETRY TABLE ARRAYS (Additions to standard xsections)
+!%==========================================================================
+!%      
+!% HOLD FOR LATER USE 20220930
+    ! !% --- data types for output indexed by 3rd column in geometryTableR(:,:,:)
+    ! enum, bind(c) 
+    !     enumerator :: gtr3_Area_from_Depth = 1    !% column of output based on uniformly-distributed input
+    !     enumerator :: gtr3_Perimeter_from_Depth   !%
+    !     enumerator :: gtr3_Topwidth_from_Depth
+    !     enumerator :: gtr3_HydDepth_from_Depth
+    !     enumerator :: gtr3_HydRadius_from_Depth
+    !     enumerator :: gtr3_lastplusone
+    ! end enum
+    ! integer, parameter :: Ncol3_GeometryTableR = gtr3_lastplusone - 1
 !%
 !%==========================================================================
 !% END OF MODULE

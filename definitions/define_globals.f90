@@ -146,6 +146,17 @@ module define_globals
     real(8), allocatable, target :: uniformTableR(:,:)
     real(8), allocatable, target :: uniformTableDataR(:,:,:) 
 
+    !% HOLD FOR LATER IMPLEMENTATION 20220930
+    ! !% --- geometry unified fast lookup tables
+    ! !%     rows are elements
+    ! !%     col2 is 1:26 lookup
+    ! !%     col3 is type of lookup
+    ! real(8), allocatable, target :: geometryTableR(:,:,:)
+
+    ! !% --- Number of discrete entries in the geometry Table R
+    ! integer ::  Ncol2_GeometryTableR = 26
+
+
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
 
@@ -224,6 +235,14 @@ module define_globals
     !logical, allocatable, target :: monitorYN(:,:)   
 
     real(8), allocatable, target :: monitorPassR(:)[:]  !% monitor data to be passed between coarrays
+
+    !% Culvert parameters
+    integer, parameter :: NculvertTypes = 57
+    integer, parameter :: NculvertParams = 5
+    real(8), dimension(NculvertTypes,NculvertParams) :: culvertValue
+
+    
+
 
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]       !% coarray for faces real data

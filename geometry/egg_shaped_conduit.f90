@@ -25,7 +25,7 @@ module egg_shaped_conduit
     public :: egg_shaped_perimeter_from_depth_singular
     public :: egg_shaped_perimeter_from_hydradius_singular
     public :: egg_shaped_hyddepth_from_topwidth
-    public :: egg_shaped_hyddepth_from_topwidth_singular
+    !public :: egg_shaped_hyddepth_from_topwidth_singular
     public :: egg_shaped_hydradius_from_depth_singular
     public :: egg_shaped_normaldepth_from_sectionfactor_singular
 
@@ -72,39 +72,7 @@ module egg_shaped_conduit
 
     end subroutine egg_shaped_depth_from_volume
 !%
-!%==========================================================================      
-!%==========================================================================
-!%
-    real(8) function egg_shaped_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for egg_shaped cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
-        real(8), pointer    :: fullArea(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        fullArea   => elemR(:,er_FullArea)
-        fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Egg_Shaped_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Egg_Shaped_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), AEgg)
-
-        !% finally get the area by multiplying the normalized area with full area
-        outvalue = AoverAfull(indx) * fullArea(indx)
-
-    end function egg_shaped_area_from_depth_singular
-!%
-!%==========================================================================
+!%==========================================================================  
 !%==========================================================================
 !%
     subroutine egg_shaped_topwidth_from_depth (elemPGx, Npack, thisCol)
@@ -138,35 +106,7 @@ module egg_shaped_conduit
 
     end subroutine egg_shaped_topwidth_from_depth
 !%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function egg_shaped_topwidth_from_depth_singular (indx,depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a egg_shaped cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Egg_Shaped_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Tmax (fullDepth for egg_shaped cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TEgg) 
-
-        !% if topwidth <= zero, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
-
-    end function egg_shaped_topwidth_from_depth_singular
-!%
-!%==========================================================================
+!%========================================================================== 
 !%==========================================================================
 !%
     subroutine egg_shaped_perimeter_from_depth (elemPGx, Npack, thisCol)
@@ -210,70 +150,6 @@ module egg_shaped_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function egg_shaped_perimeter_from_depth_singular &
-        (idx, indepth) result(outvalue)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Computes the egg_shaped conduit perimeter for the given depth on
-        !% the element idx
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: idx
-            real(8), intent(in) :: indepth
-            real(8), pointer :: fulldepth, fullarea, fullperimeter
-            real(8) :: hydRadius, YoverYfull, area
-
-        !%------------------------------------------------------------------
-        !% Aliases
-            fulldepth     => elemR(idx,er_FullDepth)
-            fullarea      => elemR(idx,er_FullArea)
-            fullperimeter => elemR(idx,er_FullPerimeter)
-        !%------------------------------------------------------------------
-        YoverYfull = indepth / fulldepth
-
-        !% --- retrieve normalized A/Amax for this depth from lookup table
-        area = xsect_table_lookup_singular (YoverYfull, AEgg)
-
-        !% --- retrive the normalized R/Rmax for this depth from the lookup table
-        hydradius =  xsect_table_lookup_singular (YoverYfull, REgg)  !% 20220506 brh
-
-        !% --- unnormalize
-        hydRadius = 0.1931 * fulldepth * hydradius
-        area      = area * fullArea
-
-        !% --- get the perimeter by dividing area by hydRadius
-        outvalue = min(area / hydRadius, fullperimeter)
-
-    end function egg_shaped_perimeter_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function egg_shaped_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes wetted perimeter from known depth for a egg_shaped cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: hydradius
-        real(8), pointer ::  area(:), fullperimeter(:)
-        !%-----------------------------------------------------------------------------
-        area          => elemR(:,er_Area)
-        fullperimeter => elemR(:,er_FullPerimeter)
-        !%-----------------------------------------------------------------------------
-
-        outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
-
-        !% HACK: perimeter correction is needed when the pipe is empty
-
-    end function egg_shaped_perimeter_from_hydradius_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine egg_shaped_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
@@ -312,41 +188,73 @@ module egg_shaped_conduit
     end subroutine egg_shaped_hyddepth_from_topwidth
 !%
 !%==========================================================================
+!% SINGULAR
 !%==========================================================================
 !%
-    real(8) function egg_shaped_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
-        !%
+    real(8) function egg_shaped_area_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for egg_shaped cross section of
-        !% a single element
+        !% Computes area from known depth for egg_shaped cross section of a single element
+        !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
-        real(8), intent(in) :: topwidth, depth
-        real(8), pointer    :: area(:), fullHydDepth(:)
+        real(8), intent(in) :: depth
+        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
+        real(8), pointer    :: fullArea(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        area         => elemR(:,er_Area)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
+        !!if (crashYN) return
+        fullArea   => elemR(:,er_FullArea)
+        fulldepth  => elemR(:,er_FullDepth)
+        AoverAfull => elemSGR(:,esgr_Egg_Shaped_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Egg_Shaped_YoverYfull)
+        !%-----------------------------------------------------------------------------
 
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in egg_shaped cross section for both
-        !% full and empty condition.
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
 
-        !% when conduit is empty
-        if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Depth
-        else
-            !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
-        endif
+        !% get A/Afull from the lookup table using Y/Yfull
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), AEgg)
 
-    end function egg_shaped_hyddepth_from_topwidth_singular
+        !% finally get the area by multiplying the normalized area with full area
+        outvalue = AoverAfull(indx) * fullArea(indx)
+
+    end function egg_shaped_area_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function egg_shaped_hydradius_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function egg_shaped_topwidth_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a egg_shaped cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        fulldepth  => elemR(:,er_FullDepth)
+        YoverYfull => elemSGR(:,esgr_Egg_Shaped_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
+        !% and then myltiplying it with Tmax (fullDepth for egg_shaped cross-section)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TEgg) 
+
+        !% if topwidth <= zero, set it to zerovalue
+        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
+
+    end function egg_shaped_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function egg_shaped_hydradius_from_depth_singular &
+        (indx,depth) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -366,10 +274,111 @@ module egg_shaped_conduit
 
         !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
         !% and then myltiplying it with Rmax (fullDepth/4)
-        outvalue = 0.1931 * fulldepth(indx) * &
+        outvalue = 0.1931d0 * fulldepth(indx) * &
                 xsect_table_lookup_singular (YoverYfull(indx), REgg)
 
     end function egg_shaped_hydradius_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function egg_shaped_perimeter_from_hydradius_singular &
+         (indx,hydradius) result (outvalue)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes wetted perimeter from known depth for a egg_shaped cross section of
+        !% a single element
+        !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: hydradius
+        real(8), pointer ::  area(:), fullperimeter(:)
+        !%-----------------------------------------------------------------------------
+        area          => elemR(:,er_Area)
+        fullperimeter => elemR(:,er_FullPerimeter)
+        !%-----------------------------------------------------------------------------
+
+        outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
+
+        !% HACK: perimeter correction is needed when the pipe is empty
+
+    end function egg_shaped_perimeter_from_hydradius_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function egg_shaped_perimeter_from_depth_singular &
+        (idx, indepth) result(outvalue)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the egg_shaped conduit perimeter for the given depth on
+        !% the element idx
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: idx
+            real(8), intent(in) :: indepth
+            real(8), pointer :: fulldepth, fullarea, fullperimeter
+            real(8) :: hydRadius, YoverYfull, area
+
+        !%------------------------------------------------------------------
+        !% Aliases
+            fulldepth     => elemR(idx,er_FullDepth)
+            fullarea      => elemR(idx,er_FullArea)
+            fullperimeter => elemR(idx,er_FullPerimeter)
+        !%------------------------------------------------------------------
+        YoverYfull = indepth / fulldepth
+
+        !% --- retrieve normalized A/Amax for this depth from lookup table
+        area = xsect_table_lookup_singular (YoverYfull, AEgg)
+
+        !% --- retrive the normalized R/Rmax for this depth from the lookup table
+        hydradius =  xsect_table_lookup_singular (YoverYfull, REgg)  !% 20220506 brh
+
+        !% --- unnormalize
+        hydRadius = 0.1931d0 * fulldepth * hydradius
+        area      = area * fullArea
+
+        !% --- get the perimeter by dividing area by hydRadius
+        outvalue = min(area / hydRadius, fullperimeter)
+
+    end function egg_shaped_perimeter_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! real(8) function egg_shaped_hyddepth_from_depth_singular &
+    !     (indx,depth) result (outvalue)
+    !     !%
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for egg_shaped cross section of
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------
+    !         integer, intent(in) :: indx
+    !         real(8), intent(in) :: depth
+    !         real(8), pointer    :: fullDepth, fullHydDepth
+    !     !%-----------------------------------------------------------------------------
+    !         fullDepth    => elemR(indx,er_FullDepth)
+    !         fullHydDepth => elemR(indx,er_FullHydDepth)
+    !     !%--------------------------------------------------
+
+    !     topwidth = egg_shaped_topwidth_from_depth_singular (indx,depth)
+    !     area     = egg_shaped_area_from_depth_singular (indx, depth)
+
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= fullHydDepth)
+    !         !% --- full
+    !         outvalue = fullHydDepth
+    !     else
+    !         !% --- otherwise
+    !         outvalue = area / topwidth
+    !     endif
+
+
+    ! end function egg_shaped_hyddepth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -401,18 +410,6 @@ module egg_shaped_conduit
 
     end function egg_shaped_normaldepth_from_sectionfactor_singular
 !%
-!%==========================================================================
-!%==========================================================================
-!% PRIVATE
-!%==========================================================================
-!%
-    !%----------------------------------------------------------------------
-    !% Description:
-    !%
-    !%----------------------------------------------------------------------
-
-    !%----------------------------------------------------------------------
-    !%
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================

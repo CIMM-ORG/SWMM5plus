@@ -22,7 +22,7 @@ module rectangular_conduit
     public :: rectangular_closed_perimeter_from_depth
     public :: rectangular_closed_perimeter_from_depth_singular
     public :: rectangular_closed_hyddepth_from_depth
-    public :: rectangular_closed_hyddepth_from_depth_singular
+    !public :: rectangular_closed_hyddepth_from_depth_singular
     public :: rectangular_closed_hydradius_from_depth_singular
 
     contains
@@ -84,30 +84,6 @@ module rectangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_closed_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for rectangular cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        breadth     => elemSGR(:,esgr_Rectangular_Breadth)
-        fulldepth   => elemR(:,er_FullDepth)
-        !%-----------------------------------------------------------------------------
-        if (depth < fulldepth(indx)) then
-            outvalue = depth * breadth(indx)
-        else
-            outvalue = fulldepth(indx)
-        end if
-
-    end function rectangular_closed_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -139,24 +115,6 @@ module rectangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_closed_topwidth_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a rectangular cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
-        real(8), intent(in) :: depth
-        !%-----------------------------------------------------------------------------
-        !%  
-        outvalue = elemSGR(indx,esgr_Rectangular_Breadth)
-
-        if (depth>=elemR(indx,er_FullDepth)) outvalue = setting%ZeroValue%Topwidth
-
-    end function rectangular_closed_topwidth_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -183,34 +141,7 @@ module rectangular_conduit
 
     end subroutine rectangular_closed_perimeter_from_depth
 !%    
-!%==========================================================================    
-!%==========================================================================
-!%
-    real(8) function rectangular_closed_perimeter_from_depth_singular (indx, depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes wetted perimeter from known depth for a rectangular cross section of
-        !% a single element 
-        !%-----------------------------------------------------------------------------
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), fulldepth(:), fullPerimeter(:)
-        !%-----------------------------------------------------------------------------
-        breadth       => elemSGR(:,esgr_Rectangular_Breadth)
-        fulldepth     => elemR(:,er_FullDepth)
-        fullPerimeter => elemR(:,er_FullPerimeter)
-        !%-----------------------------------------------------------------------------
-        if (depth < fulldepth(indx)) then
-            outvalue = twoR * depth + breadth(indx)
-        else 
-            outvalue = fullPerimeter(indx)
-        end if
-
-    end function rectangular_closed_perimeter_from_depth_singular
-!%    
-!%==========================================================================
+!%==========================================================================  
 !%==========================================================================
 !%
     subroutine rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
@@ -238,29 +169,111 @@ module rectangular_conduit
     end subroutine rectangular_closed_hyddepth_from_depth
 !%    
 !%==========================================================================  
+!% SINGULAR
 !%==========================================================================
 !%
-    real(8) function rectangular_closed_hyddepth_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function rectangular_closed_area_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for rectangular cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        breadth     => elemSGR(:,esgr_Rectangular_Breadth)
+        fulldepth   => elemR(:,er_FullDepth)
+        !%-----------------------------------------------------------------------------
+        if (depth < fulldepth(indx)) then
+            outvalue = depth * breadth(indx)
+        else
+            outvalue = fulldepth(indx)
+        end if
+
+    end function rectangular_closed_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rectangular_closed_topwidth_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a rectangular cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx 
+        real(8), intent(in) :: depth
+        !%-----------------------------------------------------------------------------
+        !%  
+        outvalue = elemSGR(indx,esgr_Rectangular_Breadth)
+
+        if (depth>=elemR(indx,er_FullDepth)) outvalue = setting%ZeroValue%Topwidth
+
+    end function rectangular_closed_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rectangular_closed_perimeter_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for rectangular cross section of 
-        !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx   
-        real(8), intent(in) :: depth  
-        !%-----------------------------------------------------------------------------  
+        !% Computes wetted perimeter from known depth for a rectangular cross section of
+        !% a single element 
+        !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer ::  breadth(:), fulldepth(:), fullPerimeter(:)
+        !%-----------------------------------------------------------------------------
+        breadth       => elemSGR(:,esgr_Rectangular_Breadth)
+        fulldepth     => elemR(:,er_FullDepth)
+        fullPerimeter => elemR(:,er_FullPerimeter)
+        !%-----------------------------------------------------------------------------
+        if (depth < fulldepth(indx)) then
+            outvalue = twoR * depth + breadth(indx)
+        else 
+            outvalue = fullPerimeter(indx)
+        end if
 
-        outvalue = depth
-
-        if (depth >= elemR(indx,er_FullDepth)) outvalue = elemR(indx,er_FullDepth)
-
-    end function rectangular_closed_hyddepth_from_depth_singular 
+    end function rectangular_closed_perimeter_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_closed_hydradius_from_depth_singular (indx, depth) result (outvalue)
+    ! real(8) function rectangular_closed_hyddepth_from_depth_singular &
+    !     (indx,depth) result (outvalue)
+    !     !%  
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for rectangular cross section of 
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------   
+    !     integer, intent(in) :: indx   
+    !     real(8), intent(in) :: depth  
+    !     !%-----------------------------------------------------------------------------  
+
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= elemR(indx,er_FullDepth))
+    !         !% --- full
+    !         outvalue = elemR(indx,er_FullHydDepth)
+    !     else
+    !         outvalue = depth
+    !     end if
+
+
+    ! end function rectangular_closed_hyddepth_from_depth_singular 
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rectangular_closed_hydradius_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -282,8 +295,6 @@ module rectangular_conduit
 
     end function rectangular_closed_hydradius_from_depth_singular
 !%  
-!%==========================================================================
-!
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================

@@ -22,7 +22,7 @@ module rectangular_triangular_conduit
     public :: rectangular_triangular_perimeter_from_depth
     public :: rectangular_triangular_perimeter_from_depth_singular
     public :: rectangular_triangular_hyddepth_from_depth
-    public :: rectangular_triangular_hyddepth_from_depth_singular
+    !public :: rectangular_triangular_hyddepth_from_depth_singular
     public :: rectangular_triangular_hydradius_from_depth_singular
 
     contains
@@ -69,7 +69,8 @@ module rectangular_triangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    elemental real(8) function rectangular_triangular_area_from_depth (indx) result (outvalue)
+    elemental real(8) function rectangular_triangular_area_from_depth &
+        (indx) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for rectangular cross section
@@ -86,36 +87,6 @@ module rectangular_triangular_conduit
         endif
 
     end function rectangular_triangular_area_from_depth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function rectangular_triangular_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for rectangular_triangular cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer :: bottomDepth(:), bottomSlope(:), bottomArea(:), breadth(:)
-        !%-----------------------------------------------------------------------------
-        bottomDepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
-        bottomSlope => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
-        bottomArea  => elemSGR(:,esgr_Rectangular_Triangular_BottomArea)
-        breadth     => elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
-        !%-----------------------------------------------------------------------------
-        
-        if(depth <= bottomDepth(indx)) then
-            outvalue = depth * depth * bottomSlope(indx)
-        else
-            outvalue = bottomArea(indx) + (depth - bottomDepth(indx)) * breadth(indx)    
-        endif
-
-        if (setting%Debug%File%geometry) &
-            print *, 'area = ' , outvalue
-
-    end function rectangular_triangular_area_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -154,33 +125,6 @@ module rectangular_triangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_triangular_topwidth_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a rectangular_triangular cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
-        real(8), intent(in) :: depth
-        real(8), pointer :: bottomDepth(:), bottomSlope(:), breadth(:)
-        !%-----------------------------------------------------------------------------
-        bottomSlope => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
-        bottomDepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
-        breadth     => elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
-        !%-----------------------------------------------------------------------------
-         
-        if(depth <= bottomDepth(indx)) then
-            outvalue = twoR * bottomSlope(indx) * depth
-        else
-            outvalue = breadth(indx)
-        endif
-
-        if (setting%Debug%File%geometry) &
-            print *, 'topwidth = ' , outvalue
-    end function rectangular_triangular_topwidth_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -213,40 +157,7 @@ module rectangular_triangular_conduit
 
     end subroutine rectangular_triangular_perimeter_from_depth
 !%    
-!%==========================================================================    
-!%==========================================================================
-!%
-    real(8) function rectangular_triangular_perimeter_from_depth_singular (indx, depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes wetted perimeter from known depth for a rectangular_triangular cross section of
-        !% a single element 
-        !%-----------------------------------------------------------------------------
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer :: bottomDepth(:), bottomSlope(:), breadth(:)
-        !%-----------------------------------------------------------------------------
-        breadth     => elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
-        bottomSlope => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
-        bottomDepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
-        !%-----------------------------------------------------------------------------
-        
-        if(depth <= bottomDepth(indx)) then
-            outvalue = twoR * depth * sqrt(oneR + bottomSlope(indx) ** twoR)
-        else
-            outvalue = twoR * bottomDepth(indx) * sqrt(oneR + bottomSlope(indx) ** twoR) & !triangular section
-                        + twoR * (depth - bottomDepth(indx))                               !rectangular section
-
-        endif
-
-        if (setting%Debug%File%geometry) &
-            print *, 'perimeter = ' , outvalue
-
-    end function rectangular_triangular_perimeter_from_depth_singular
-!%    
-!%==========================================================================
+!%==========================================================================  
 !%==========================================================================
 !%
     subroutine rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
@@ -280,38 +191,157 @@ module rectangular_triangular_conduit
     end subroutine rectangular_triangular_hyddepth_from_depth
 !%    
 !%==========================================================================  
+!% SINGULAR
 !%==========================================================================
 !%
-    real(8) function rectangular_triangular_hyddepth_from_depth_singular (indx, depth) result (outvalue)
-        !%  
+    real(8) function rectangular_triangular_area_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for rectangular_triangular cross section of 
-        !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx     
-        real(8), intent(in) :: depth
-        real(8), pointer :: bottomdepth(:)
+        !% Computes area from known depth for rectangular_triangular cross section of a single element
+        !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------------------
-        bottomdepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
-        !%-----------------------------------------------------------------------------  
-
-        if(depth <= bottomdepth(indx)) then
-            outvalue = depth / twoR
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer :: bottomDepth(:), bottomSlope(:), bottomArea(:), breadth(:)
+        !%-----------------------------------------------------------------------------
+        bottomDepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
+        bottomSlope => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
+        bottomArea  => elemSGR(:,esgr_Rectangular_Triangular_BottomArea)
+        breadth     => elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
+        !%-----------------------------------------------------------------------------
+        
+        if(depth <= bottomDepth(indx)) then
+            outvalue = depth * depth * bottomSlope(indx)
         else
-            outvalue = (bottomdepth(indx) / twoR) &         !triangular section
-                     + (depth - bottomdepth(indx))          !rectangular section
+            outvalue = bottomArea(indx) + (depth - bottomDepth(indx)) * breadth(indx)    
         endif
 
         if (setting%Debug%File%geometry) &
-            print *, 'hyddepth = ' , outvalue
+           print *, 'area = ' , outvalue
 
-    end function rectangular_triangular_hyddepth_from_depth_singular 
+    end function rectangular_triangular_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rectangular_triangular_topwidth_from_depth_singular &
+         (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a rectangular_triangular cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx 
+        real(8), intent(in) :: depth
+        real(8), pointer :: bottomDepth(:), bottomSlope(:), breadth(:)
+        !%-----------------------------------------------------------------------------
+        bottomSlope => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
+        bottomDepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
+        breadth     => elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
+        !%-----------------------------------------------------------------------------
+         
+        if(depth <= bottomDepth(indx)) then
+            outvalue = twoR * bottomSlope(indx) * depth
+        else
+            outvalue = breadth(indx)
+        endif
+
+        if (setting%Debug%File%geometry) &
+            print *, 'topwidth = ' , outvalue
+    end function rectangular_triangular_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rectangular_triangular_perimeter_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%  
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes wetted perimeter from known depth for a rectangular_triangular cross section of
+        !% a single element 
+        !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer :: bottomDepth(:), bottomSlope(:), breadth(:)
+        !%-----------------------------------------------------------------------------
+        breadth     => elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
+        bottomSlope => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
+        bottomDepth => elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) 
+        !%-----------------------------------------------------------------------------
+        
+        if(depth <= bottomDepth(indx)) then
+            outvalue = twoR * depth * sqrt(oneR + bottomSlope(indx) ** twoR)
+        else
+            outvalue = twoR * bottomDepth(indx) * sqrt(oneR + bottomSlope(indx) ** twoR) & !triangular section
+                        + twoR * (depth - bottomDepth(indx))                               !rectangular section
+
+        endif
+
+        if (setting%Debug%File%geometry) &
+            print *, 'perimeter = ' , outvalue
+
+    end function rectangular_triangular_perimeter_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rectangular_triangular_hydradius_from_depth_singular (indx, depth) result (outvalue)
+    ! real(8) function rectangular_triangular_hyddepth_from_depth_singular &
+    !     (indx, depth) result (outvalue)
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for rectangular_triangular cross section of 
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------   
+    !     integer, intent(in) :: indx     
+    !     real(8), intent(in) :: depth
+    !     real(8) :: topwidth, area
+    !     !real(8), pointer :: bottomdepth, fulldepth
+    !     !%-----------------------------------------------------------------------------
+    !     !bottomdepth => elemSGR(indx,esgr_Rectangular_Triangular_BottomDepth) 
+    !     !fulldepth   => elemR(indx,er_FullDepth)
+    !     !%-----------------------------------------------------------------------------  
+
+    !     topwidth = rect_round_topwidth_from_depth_singular (indx, indepth)
+    !     area     = rect_round_area_from_depth_singular (indx, depth)
+
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= elemR(indx,er_FullDepth))
+    !         !% --- full
+    !         outvalue = elemR(indx,er_FullHydDepth)
+    !     else
+    !         outvalue = area / topwidth
+    !     endif
+        
+    !     ! if (depth <= setting%ZeroValue%Depth) then
+    !     !     !% --- empty
+    !     !     outvalue = setting%ZeroValue%Depth
+    !     ! elseif ((depth > setting%ZeroValue%Depth) .and. &
+    !     !         (depth <= bottomdepth) ) then
+    !     !     !% --- in triangular section
+    !     !     outvalue = depth / twoR
+    !     ! elseif (depth < fullDepth)
+    !     !     !% --- in rectangular section
+    !     !     outvalue = (bottomdepth / twoR) &         !triangular section
+    !     !              + (depth - bottomdepth)          !rectangular section
+    !     ! elseif (depth >= elemR(indx,er_FullDepth))
+    !     !     !% --- full
+    !     !     outvalue = elemR(indx,er_FullHydDepth)
+    !     ! endif
+            
+    !     if (setting%Debug%File%geometry) &
+    !         print *, 'hyddepth = ' , outvalue
+
+    ! end function rectangular_triangular_hyddepth_from_depth_singular 
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rectangular_triangular_hydradius_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:

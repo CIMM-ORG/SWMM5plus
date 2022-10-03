@@ -1173,7 +1173,11 @@ contains
         !%----------------------------------------------------------------------
         !% Preliminaries
             !% --- error checking
-            !print *, 'calling linkf_attribute'
+            ! print *, 'calling linkf_attribute', attr
+            ! print *, 'api_linkf_start ',api_linkf_start
+            ! print *, 'api_linkf_commonbreak', api_linkf_commonbreak
+            ! print *, 'api_linkf_typeBreak', api_linkf_typeBreak
+
             if (setting%Debug%File%interface) &
                 write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
                 "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
@@ -1494,6 +1498,12 @@ contains
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
+                            call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_culvertCode)
+                            !print *, 'call III'
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_culvertCode, link_value)
+                            thisposition = trim(subroutine_name)//'_U17'
                             call print_api_error(error, thisposition)
                         case default
                             !% circular geometry does not have certain geometric features (i.e. bottom width) 

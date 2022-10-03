@@ -22,7 +22,7 @@ module parabolic_channel
     public :: parabolic_perimeter_from_depth
     public :: parabolic_perimeter_from_depth_singular
     public :: parabolic_hyddepth_from_depth
-    public :: parabolic_hyddepth_from_depth_singular
+    !public :: parabolic_hyddepth_from_depth_singular
     public :: parabolic_hydradius_from_depth_singular
 
     contains
@@ -83,25 +83,6 @@ module parabolic_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function parabolic_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for parabolic cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  rbot(:)
-        !%-----------------------------------------------------------------------------
-        rbot => elemSGR(:, esgr_Parabolic_Radius)
-        !%-----------------------------------------------------------------------------
-        outvalue = (fourR / threeR) * rbot(indx) * depth *  sqrt(depth)
-
-    end function parabolic_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -126,25 +107,6 @@ module parabolic_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function parabolic_topwidth_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a parabolic cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  rbot(:)
-        !%-----------------------------------------------------------------------------
-        rbot => elemSGR(:, esgr_Parabolic_Radius)
-        !%-----------------------------------------------------------------------------
-
-        outvalue = twoR * rbot(indx) * sqrt(depth)
-
-    end function parabolic_topwidth_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -154,49 +116,24 @@ module parabolic_channel
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), perimeter(:), rbot(:), x(:), t(:)
+        real(8), pointer :: depth(:), perimeter(:), rbot(:), xx(:), tt(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
         rbot      => elemSGR(:,esgr_Parabolic_Radius)
-        x         => elemR(:, er_Temp02)
-        t         => elemr(:, er_Temp03)
+        xx         => elemR(:, er_Temp02)
+        tt         => elemr(:, er_Temp03)
         !%-----------------------------------------------------------------------------
-        x(thisP) = twoR * sqrt(depth(thisP)) / rbot(thisP)
-        t(thisP) = sqrt(oneR + x(thisP) * x(thisP))
+        xx(thisP) = twoR * sqrt(depth(thisP)) / rbot(thisP)
+        tt(thisP) = sqrt(oneR + xx(thisP) * xx(thisP))
         !%-----------------------------------------------------------------------------
 
-        perimeter(thisP) = onehalfR * rbot(thisP) * rbot(thisP) * (x(thisP) * t(thisP) + log(x(thisP) + t(thisP)))
+        perimeter(thisP) = onehalfR * rbot(thisP) * rbot(thisP) * (xx(thisP) * tt(thisP) + log(xx(thisP) + tt(thisP)))
 
     end subroutine parabolic_perimeter_from_depth
 !%    
-!%==========================================================================    
-!%==========================================================================
-!%
-    real(8) function parabolic_perimeter_from_depth_singular (indx, depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes wetted perimeter from known depth for a parabolic cross section of
-        !% a single element 
-        !%-----------------------------------------------------------------------------
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  rbot(:)
-        real(8) :: x, t
-        !%-----------------------------------------------------------------------------
-        rbot => elemSGR(:, esgr_Parabolic_Radius)
-        !%-----------------------------------------------------------------------------
-        x = twoR * sqrt(depth) / rbot(indx)
-        t = sqrt(oneR + x * x)
-        !%-----------------------------------------------------------------------------
-        outvalue = onehalfR * rbot(indx) * rbot(indx) * (x * t + log(x + t))
-
-    end function parabolic_perimeter_from_depth_singular
-!%    
-!%==========================================================================
+!%==========================================================================  
 !%==========================================================================
 !%
     subroutine parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
@@ -220,26 +157,86 @@ module parabolic_channel
     end subroutine parabolic_hyddepth_from_depth
 !%    
 !%==========================================================================  
+!% SINGULAR
 !%==========================================================================
 !%
-    real(8) function parabolic_hyddepth_from_depth_singular (indx,depth) result (outvalue)
+    real(8) function parabolic_area_from_depth_singular (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for parabolic cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+            integer, intent(in) :: indx
+            real(8), intent(in) :: depth
+            real(8), pointer    ::  rbot
+        !%-----------------------------------------------------------------------------
+            rbot => elemSGR(indx, esgr_Parabolic_Radius)
+        !%-----------------------------------------------------------------------------
+        outvalue = (fourR / threeR) * rbot * depth *  sqrt(depth)
+
+    end function parabolic_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function parabolic_topwidth_from_depth_singular (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a parabolic cross section of a single element
+        !%-----------------------------------------------------------------------------
+            integer, intent(in) :: indx 
+            real(8), intent(in) :: depth
+            real(8), pointer    ::  rbot
+        !%-----------------------------------------------------------------------------
+            rbot => elemSGR(indx, esgr_Parabolic_Radius)
+        !%-----------------------------------------------------------------------------
+
+        outvalue = twoR * rbot * sqrt(depth)
+
+    end function parabolic_topwidth_from_depth_singular
+!%
+!%==========================================================================  
+!%==========================================================================
+!%
+    real(8) function parabolic_perimeter_from_depth_singular (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for parabolic cross section of 
-        !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx   
-        real(8), intent(in) :: depth  
-        !%-----------------------------------------------------------------------------  
+        !% Computes wetted perimeter from known depth for a parabolic cross section of
+        !% a single element 
+        !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  rbot
+        real(8) :: xx, tt
+        !%-----------------------------------------------------------------------------
+            rbot => elemSGR(indx, esgr_Parabolic_Radius)
+        !%-----------------------------------------------------------------------------
+        xx = twoR * sqrt(depth) / rbot
+        tt = sqrt(oneR + xx * xx)
 
-        outvalue = (twoR/threeR) * depth
+        outvalue = onehalfR * rbot * rbot * (xx * tt + log(xx + tt))
 
-    end function parabolic_hyddepth_from_depth_singular
+    end function parabolic_perimeter_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
+    ! real(8) function parabolic_hyddepth_from_depth_singular (indx,depth) result (outvalue)
+    !     !%  
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for parabolic cross section of 
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------   
+    !     integer, intent(in) :: indx   
+    !     real(8), intent(in) :: depth  
+    !     !%-----------------------------------------------------------------------------  
+
+    !     outvalue = (twoR/threeR) * depth
+
+    ! end function parabolic_hyddepth_from_depth_singular
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -253,18 +250,19 @@ module parabolic_channel
         !%------------------------------------------------------------------
             integer, intent(in) :: indx
             real(8), intent(in) :: depth
-            real(8) :: x, t, area, perimeter
-            real(8), pointer :: breadth(:), fulldepth(:), rbot(:)
+            real(8) :: xx, tt, area, perimeter
+            real(8), pointer :: rbot
+            !real(8), pointer :: breadth, fulldepth, rbot
         !%------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_parabolic_Breadth)
-        fulldepth => elemR(:, er_FullDepth)
-        rbot => elemSGR(:, esgr_Parabolic_Radius)
+        !breadth   => elemSGR(indx,esgr_parabolic_Breadth)
+        !fulldepth => elemR(indx, er_FullDepth)
+        rbot      => elemSGR(indx, esgr_Parabolic_Radius)
         !%------------------------------------------------------------------
-        x = (twoR * sqrt(depth) / rbot(indx))
-        t = sqrt(oneR + (x * x))
-        area = (fourR / threeR) * rbot(indx) * depth *  sqrt(depth)
+        xx = (twoR * sqrt(depth) / rbot)
+        tt = sqrt(oneR + (xx * xx))
+        area = (fourR / threeR) * rbot * depth *  sqrt(depth)
 
-        perimeter = onehalfR * rbot(indx) * rbot(indx) * (x * t + log(x + t))
+        perimeter = onehalfR * rbot * rbot * (xx * tt + log(xx + tt))
         
         outvalue = area / perimeter
 

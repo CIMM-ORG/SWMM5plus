@@ -25,7 +25,7 @@ module basket_handle_conduit
     public :: basket_handle_perimeter_from_depth_singular
     public :: basket_handle_perimeter_from_hydradius_singular
     public :: basket_handle_hyddepth_from_topwidth
-    public :: basket_handle_hyddepth_from_topwidth_singular
+    !public :: basket_handle_hyddepth_from_topwidth_singular
     public :: basket_handle_hydradius_from_depth_singular
     public :: basket_handle_normaldepth_from_sectionfactor_singular
 
@@ -72,39 +72,7 @@ module basket_handle_conduit
 
     end subroutine basket_handle_depth_from_volume
 !%
-!%==========================================================================      
-!%==========================================================================
-!%
-    real(8) function basket_handle_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for basket_handle cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
-        real(8), pointer    :: fullArea(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        fullArea   => elemR(:,er_FullArea)
-        fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Basket_Handle_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ABasketHandle)
-
-        !% finally get the area by multiplying the normalized area with full area
-        outvalue = AoverAfull(indx) * fullArea(indx)
-
-    end function basket_handle_area_from_depth_singular
-!%
-!%==========================================================================
+!%==========================================================================  
 !%==========================================================================
 !%
     subroutine basket_handle_topwidth_from_depth (elemPGx, Npack, thisCol)
@@ -137,34 +105,6 @@ module basket_handle_conduit
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
 
     end subroutine basket_handle_topwidth_from_depth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function basket_handle_topwidth_from_depth_singular (indx,depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a basket_handle cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Tmax (fullDepth for basket_handle cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TBasketHandle) 
-
-        !% if topwidth <= zero, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
-
-    end function basket_handle_topwidth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -212,6 +152,165 @@ module basket_handle_conduit
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the hydraulic (average) depth from a known depth in a basket_handle conduit
+        !%-----------------------------------------------------------------------------
+        integer, target, intent(in) :: elemPGx(:,:)
+        integer, intent(in) ::  Npack, thisCol
+        integer, pointer    :: thisP(:)
+        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
+        real(8), pointer    :: depth(:), hyddepth(:)
+        !%-----------------------------------------------------------------------------
+        !!if (crashYN) return
+        thisP        => elemPGx(1:Npack,thisCol)
+        area         => elemR(:,er_Area)
+        topwidth     => elemR(:,er_Topwidth)
+        depth        => elemR(:,er_Depth)
+        hyddepth     => elemR(:,er_HydDepth)
+        fullHydDepth => elemR(:,er_FullHydDepth)
+        !%--------------------------------------------------
+
+        !% calculating hydraulic depth needs conditional since,
+        !% topwidth can be zero in basket_handle cross section for both
+        !% full and empty condition.
+
+        !% when conduit is empty
+        where (depth(thisP) <= setting%ZeroValue%Depth)
+            hyddepth(thisP) = setting%ZeroValue%Depth
+
+        !% when conduit is not empty
+        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+            !% limiter for when the conduit is full
+            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+        endwhere
+
+    end subroutine basket_handle_hyddepth_from_topwidth
+!%
+!%==========================================================================
+!% SINGULAR
+!%==========================================================================
+!%
+    real(8) function basket_handle_area_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for basket_handle cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
+        real(8), pointer    :: fullArea(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        !!if (crashYN) return
+        fullArea   => elemR(:,er_FullArea)
+        fulldepth  => elemR(:,er_FullDepth)
+        AoverAfull => elemSGR(:,esgr_Basket_Handle_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get A/Afull from the lookup table using Y/Yfull
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ABasketHandle)
+
+        !% finally get the area by multiplying the normalized area with full area
+        outvalue = AoverAfull(indx) * fullArea(indx)
+
+    end function basket_handle_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function basket_handle_topwidth_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a basket_handle cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        fulldepth  => elemR(:,er_FullDepth)
+        YoverYfull => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
+        !% and then myltiplying it with Tmax (fullDepth for basket_handle cross-section)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TBasketHandle) 
+
+        !% if topwidth <= zero, set it to zerovalue
+        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
+
+    end function basket_handle_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function basket_handle_hydradius_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes hydraulic radius from known depth for a basket_handle cross section of
+        !% a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
+        !%-----------------------------------------------------------------------------
+        fulldepth     => elemR(:,er_FullDepth)
+        fullhydradius => elemR(:,er_FullHydRadius)
+        YoverYfull    => elemSGR(:,esgr_Basket_Handle_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
+        !% and then myltiplying it with Rmax (fullDepth/4)
+        outvalue = fullhydradius(indx) * &
+                xsect_table_lookup_singular (YoverYfull(indx), RBasketHandle)
+
+    end function basket_handle_hydradius_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function basket_handle_perimeter_from_hydradius_singular &
+        (indx,hydradius) result (outvalue)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes wetted perimeter from known depth for a basket_handle cross section of
+        !% a single element
+        !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: hydradius
+        real(8), pointer ::  area(:), fullperimeter(:)
+        !%-----------------------------------------------------------------------------
+        area          => elemR(:,er_Area)
+        fullperimeter => elemR(:,er_FullPerimeter)
+        !%-----------------------------------------------------------------------------
+
+        outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
+
+        !% HACK: perimeter correction is needed when the pipe is empty
+
+    end function basket_handle_perimeter_from_hydradius_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function basket_handle_perimeter_from_depth_singular &
         (idx, indepth) result(outvalue)
         !%------------------------------------------------------------------
@@ -252,128 +351,38 @@ module basket_handle_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function basket_handle_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes wetted perimeter from known depth for a basket_handle cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: hydradius
-        real(8), pointer ::  area(:), fullperimeter(:)
-        !%-----------------------------------------------------------------------------
-        area          => elemR(:,er_Area)
-        fullperimeter => elemR(:,er_FullPerimeter)
-        !%-----------------------------------------------------------------------------
+    ! real(8) function basket_handle_hyddepth_from_depth_singular &
+    !      (indx,depth) result (outvalue)
+    !     !%
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for basket_handle cross section of
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------
+    !         integer, intent(in) :: indx
+    !         real(8), intent(in) :: depth
+    !         real(8), pointer    :: fullDepth, fullHydDepth
+    !         real(8)             :: topwidth, area
+    !     !%-----------------------------------------------------------------------------
+    !         fullDepth    => elemR(indx,er_FullDepth)
+    !         fullHydDepth => elemR(indx,er_FullHydDepth)
+    !     !%--------------------------------------------------
 
-        outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
+    !     topwidth = basket_handle_topwidth_from_depth_singular (indx,depth)
+    !     area     = basket_handle_area_from_depth_singular (indx, depth)
 
-        !% HACK: perimeter correction is needed when the pipe is empty
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= fullHydDepth) then
+    !         !% --- full
+    !         outvalue = fullHydDepth
+    !     else
+    !         !% --- otherwise
+    !         outvalue = area / topwidth
+    !     endif
 
-    end function basket_handle_perimeter_from_hydradius_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a basket_handle conduit
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer    :: thisP(:)
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
-        real(8), pointer    :: depth(:), hyddepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        thisP        => elemPGx(1:Npack,thisCol)
-        area         => elemR(:,er_Area)
-        topwidth     => elemR(:,er_Topwidth)
-        depth        => elemR(:,er_Depth)
-        hyddepth     => elemR(:,er_HydDepth)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
-
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in basket_handle cross section for both
-        !% full and empty condition.
-
-        !% when conduit is empty
-        where (depth(thisP) <= setting%ZeroValue%Depth)
-            hyddepth(thisP) = setting%ZeroValue%Depth
-
-        !% when conduit is not empty
-        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-            !% limiter for when the conduit is full
-            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-        endwhere
-
-    end subroutine basket_handle_hyddepth_from_topwidth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function basket_handle_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth from known depth for basket_handle cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: topwidth, depth
-        real(8), pointer    :: area(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        area         => elemR(:,er_Area)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
-
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in basket_handle cross section for both
-        !% full and empty condition.
-
-        !% when conduit is empty
-        if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Depth
-        else
-            !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
-        endif
-
-    end function basket_handle_hyddepth_from_topwidth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function basket_handle_hydradius_from_depth_singular (indx,depth) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic radius from known depth for a basket_handle cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:), fullhydradius(:)
-        !%-----------------------------------------------------------------------------
-        fulldepth     => elemR(:,er_FullDepth)
-        fullhydradius => elemR(:,er_FullHydRadius)
-        YoverYfull    => elemSGR(:,esgr_Basket_Handle_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Rmax (fullDepth/4)
-        outvalue = fullhydradius(indx) * &
-                xsect_table_lookup_singular (YoverYfull(indx), RBasketHandle)
-
-    end function basket_handle_hydradius_from_depth_singular
+    ! end function basket_handle_hyddepth_from_topwidth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -405,18 +414,7 @@ module basket_handle_conduit
 
     end function basket_handle_normaldepth_from_sectionfactor_singular
 !%
-!%==========================================================================
-!%==========================================================================
-!% PRIVATE
-!%==========================================================================
-!%
-    !%----------------------------------------------------------------------
-    !% Description:
-    !%
-    !%----------------------------------------------------------------------
 
-    !%----------------------------------------------------------------------
-    !%
 !%==========================================================================
 !% END OF MODULE
 !%+=========================================================================

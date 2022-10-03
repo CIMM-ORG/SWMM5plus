@@ -557,6 +557,13 @@ contains
         ! call util_allocate_check(allocation_status, emsg, 'faceM')
         ! faceM(:,:) = nullvalueL
 
+        !% HOLD FOR LATER IMPLEMENTATION 20220930
+        ! !% ---3D geometry table for fast look up by element
+        ! allocate(geometryTableR &
+        !          (max_caf_elem_N+N_dummy_elem, Ncol2_GeometryTableR, Ncol3_GeometryTableR), &
+        !           stat=allocation_status,errmsg=emsg)
+        ! geometryTableR(:,:,:) = nullvalueR
+
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_elemX_faceX

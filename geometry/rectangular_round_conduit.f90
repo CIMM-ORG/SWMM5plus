@@ -25,7 +25,7 @@ module rectangular_round_conduit
     public :: rect_round_perimeter_from_depth
     public :: rect_round_perimeter_from_depth_singular
     public :: rect_round_hyddepth_from_topwidth
-    public :: rect_round_hyddepth_from_topwidth_singular
+    !public :: rect_round_hyddepth_from_topwidth_singular
     public :: rect_round_hydradius_from_depth_singular
 
     contains
@@ -135,34 +135,6 @@ module rectangular_round_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rect_round_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for rectangular_round cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer :: yBot(:), rBot(:), aBot(:), breadth(:)
-        real :: theta
-        !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-        yBot    => elemSGR(:,esgr_Rectangular_Round_Ybot) 
-        aBot    => elemSGR(:,esgr_Rectangular_Round_Abot)
-        rBot    => elemSGR(:,esgr_Rectangular_Round_Rbot)
-        !%-----------------------------------------------------------------------------
-        if(depth > yBot(indx)) then
-            outvalue = aBot(indx) + (depth - yBot(indx)) * breadth(indx)
-        else
-            theta    = twoR * acos(oneR - depth / rBot(indx))
-            outvalue = onehalfR * (rBot(indx) ** twoR) * (theta - sin(theta))    
-        endif
-
-    end function rect_round_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine rect_round_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -194,35 +166,6 @@ module rectangular_round_conduit
 
     end subroutine rect_round_topwidth_from_depth
 !%    
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function rect_round_topwidth_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a rectangular_round cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
-        real(8), intent(in) :: depth
-        real(8), pointer :: breadth(:), yBot(:), rBot(:)
-        !%-----------------------------------------------------------------------------
-        yBot        => elemSGR(:,esgr_Rectangular_Round_Ybot)
-        rBot        => elemSGR(:,esgr_Rectangular_Round_Ybot) 
-        breadth     => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-        !%-----------------------------------------------------------------------------
-         
-        if (depth <= zeroR) then
-            outvalue = setting%ZeroValue%Topwidth
-        else if (depth > yBot(indx)) then
-            !% top rectangular section
-            outvalue = breadth(indx)
-        else 
-            !% bottom circular section
-            outvalue = twoR * sqrt(depth * (twoR * rBot(indx) - depth))
-        end if
-
-    end function rect_round_topwidth_from_depth_singular
-!%
 !%==========================================================================
 !%==========================================================================
 !%
@@ -271,10 +214,105 @@ module rectangular_round_conduit
 
     end subroutine rect_round_perimeter_from_depth
 !%    
-!%==========================================================================    
+!%==========================================================================   
 !%==========================================================================
 !%
-    real(8) function rect_round_perimeter_from_depth_singular (indx, depth) result (outvalue)
+    subroutine rect_round_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        !%  
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the hydraulic (average) depth from a known depth in a rectangular_round channel
+        !%-----------------------------------------------------------------------------
+        integer, target, intent(in) :: elemPGx(:,:)
+        integer, intent(in) ::  Npack, thisCol
+        integer, pointer :: thisP(:)
+        real(8), pointer :: area(:), hyddepth(:), depth(:),  topwidth(:), fullHydDepth(:)
+        !%-----------------------------------------------------------------------------
+        thisP       => elemPGx(1:Npack,thisCol) 
+        area        => elemR(:,er_Area)
+        depth       => elemR(:,er_Depth)
+        hyddepth    => elemR(:,er_HydDepth)
+        topwidth    => elemR(:,er_Topwidth)
+        fullHydDepth => elemR(:,er_FullHydDepth)
+        !%-----------------------------------------------------------------------------
+
+        !% when conduit is empty
+        where (depth(thisP) <= setting%ZeroValue%Depth)
+            hyddepth(thisP) = setting%ZeroValue%Depth
+
+        !% when conduit is not empty
+        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+            !% limiter for when the conduit is full
+            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+        endwhere
+
+    end subroutine rect_round_hyddepth_from_topwidth
+!%    
+!%==========================================================================  
+!% SINGULAR
+!%==========================================================================
+!%
+    real(8) function rect_round_area_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for rectangular_round cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer :: yBot(:), rBot(:), aBot(:), breadth(:)
+        real :: theta
+        !%-----------------------------------------------------------------------------
+        breadth => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
+        yBot    => elemSGR(:,esgr_Rectangular_Round_Ybot) 
+        aBot    => elemSGR(:,esgr_Rectangular_Round_Abot)
+        rBot    => elemSGR(:,esgr_Rectangular_Round_Rbot)
+        !%-----------------------------------------------------------------------------
+        if(depth > yBot(indx)) then
+            outvalue = aBot(indx) + (depth - yBot(indx)) * breadth(indx)
+        else
+            theta    = twoR * acos(oneR - depth / rBot(indx))
+            outvalue = onehalfR * (rBot(indx) ** twoR) * (theta - sin(theta))    
+        endif
+
+    end function rect_round_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rect_round_topwidth_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a rectangular_round cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx 
+        real(8), intent(in) :: depth
+        real(8), pointer :: breadth(:), yBot(:), rBot(:)
+        !%-----------------------------------------------------------------------------
+        yBot        => elemSGR(:,esgr_Rectangular_Round_Ybot)
+        rBot        => elemSGR(:,esgr_Rectangular_Round_Ybot) 
+        breadth     => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
+        !%-----------------------------------------------------------------------------
+         
+        if (depth <= zeroR) then
+            outvalue = setting%ZeroValue%Topwidth
+        else if (depth > yBot(indx)) then
+            !% top rectangular section
+            outvalue = breadth(indx)
+        else 
+            !% bottom circular section
+            outvalue = twoR * sqrt(depth * (twoR * rBot(indx) - depth))
+        end if
+
+    end function rect_round_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function rect_round_perimeter_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -318,73 +356,40 @@ module rectangular_round_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rect_round_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a rectangular_round channel
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: area(:), hyddepth(:), depth(:),  topwidth(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        thisP       => elemPGx(1:Npack,thisCol) 
-        area        => elemR(:,er_Area)
-        depth       => elemR(:,er_Depth)
-        hyddepth    => elemR(:,er_HydDepth)
-        topwidth    => elemR(:,er_Topwidth)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%-----------------------------------------------------------------------------
+    ! real(8) function rect_round_hyddepth_from_depth_singular &
+    !         (indx, depth) result (outvalue)
+    !     !%  
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for rectangular_round cross section of 
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------   
+    !         integer, intent(in) :: indx     
+    !         real(8), intent(in) :: depth
+    !         real(8), pointer    :: area, topwidth, fullHydDepth(:)
+    !     !%-----------------------------------------------------------------------------
+    !     !%--------------------------------------------------
 
-        !% when conduit is empty
-        where (depth(thisP) <= setting%ZeroValue%Depth)
-            hyddepth(thisP) = setting%ZeroValue%Depth
+    !     topwidth = rect_round_topwidth_from_depth_singular (indx, indepth)
+    !     area     = rect_round_area_from_depth_singular (indx, depth)
 
-        !% when conduit is not empty
-        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-            !% limiter for when the conduit is full
-            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-        endwhere
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         !% --- empty
+    !         outvalue = setting%ZeroValue%Depth
+    !     elseif (depth >= elemR(indx,er_FullDepth))
+    !         !% --- full
+    !         outvalue = elemR(indx,er_FullHydDepth)
+    !     else
+    !         outvalue = area / topwidth
+    !     endif
 
-    end subroutine rect_round_hyddepth_from_topwidth
-!%    
-!%==========================================================================  
-!%==========================================================================
-!%
-    real(8) function rect_round_hyddepth_from_topwidth_singular (indx, topwidth, depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth from known depth for rectangular_round cross section of 
-        !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx     
-        real(8), intent(in) :: depth, topwidth
-        real(8), pointer    :: area(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        area         => elemR(:,er_Area)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
-
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in cross section for both
-        !% full and empty condition.
-
-        !% when conduit is empty
-        if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Depth
-        else
-            !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
-        endif
-
-    end function rect_round_hyddepth_from_topwidth_singular 
+    ! end function rect_round_hyddepth_from_depth_singular 
 !%    
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function rect_round_hydradius_from_depth_singular (indx, depth) result (outvalue)
+    real(8) function rect_round_hydradius_from_depth_singular &
+        (indx, depth) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -429,6 +434,6 @@ module rectangular_round_conduit
     end function rect_round_hydradius_from_depth_singular
 !%    
 !%==========================================================================
+!% END MODULE
 !%==========================================================================
-!%
 end module rectangular_round_conduit

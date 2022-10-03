@@ -49,11 +49,12 @@ module geometry
     public :: geo_criticaldepth_singular
     public :: geo_normaldepth_singular
     public :: geo_topwidth_from_depth
-    public :: geo_hyddepth_from_depth_singular
+    public :: geo_hyddepth_from_area_and_topwidth_singular
     public :: geo_topwidth_from_depth_singular
     public :: geo_area_from_depth_singular
     public :: geo_perimeter_from_depth_singular
     public :: geo_ell_singular
+    !public :: geometry_table_initialize
 
     contains
 !%==========================================================================
@@ -184,7 +185,7 @@ module geometry
         !% --- compute the depth on all elements of CC JM based on geometry.
         !%     This call returns the full depth of a closed conduit without adding 
         !%     Preissmann Slot depth.
-        call geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
+        call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! call util_CLprint ('in geometry after depth_from_volume') 
 
@@ -297,8 +298,9 @@ module geometry
             ! call util_CLprint ('in geometry after perimeter from depth') 
 
         !% --- compute hyddepth
-        !%     Note: hyddepth for JM is undefined in this subroutine
-        call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
+        !call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
+        !% 20220930 replace with unified call
+        call geo_hyddepth_from_area_and_topwidth (thisColP_CC)
 
             ! call util_CLprint ('in geometry after hyddepth_from_depth')
 
@@ -336,7 +338,7 @@ module geometry
             ! call util_CLprint ('in geometry after slot_JB_computation') 
 
         !% Set JM values that are not otherwise defined
-        !% HydDepth and ell. Note that topwidth, hydradius, perimeter are undefined.
+        !% HydDepth, pressure_head, ell. Note that topwidth, hydradius, perimeter are undefined.
         call geo_JM_values ()
 
             ! call util_CLprint ('in geometry after JM_values') 
@@ -528,7 +530,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
         !%------------------------------------------------------------------
         !% Description:
         !% This solves nonsurcharged CCJMJB elements because of PGx arrays
@@ -735,7 +737,7 @@ module geometry
         !% Closing
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_depth_from_volume
+    end subroutine geo_depth_from_volume_by_type
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1041,252 +1043,179 @@ module geometry
                                 ! write(*,"(A,i5,10f12.5)") 'CCC ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             else
-                                !% not surcharged and non-negligible depth
+                                !% --- not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
-                                case (rectangular)
-                                    area(tB)     = rectangular_area_from_depth_singular      (tB, depth(tB))
-                                    topwidth(tB) = rectangular_topwidth_from_depth_singular  (tB, depth(tB))
-                                    hydDepth(tB) = rectangular_hyddepth_from_depth_singular  (tB, depth(tB))
-                                    perimeter(tB)= rectangular_perimeter_from_depth_singular (tB, depth(tB))
-                                    hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB, depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (rectangular_closed)
-                                    area(tB)     = rectangular_closed_area_from_depth_singular      (tB, depth(tB))
-                                    topwidth(tB) = rectangular_closed_topwidth_from_depth_singular  (tB, depth(tB))
-                                    hydDepth(tB) = rectangular_closed_hyddepth_from_depth_singular  (tB, depth(tB))
-                                    perimeter(tB)= rectangular_closed_perimeter_from_depth_singular (tB, depth(tB))
-                                    hydRadius(tB)= rectangular_closed_hydradius_from_depth_singular (tB, depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
-                                    dHdA(tB)     = oneR / topwidth(tB) 
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
 
-                                !    write(*,"(A,i5,10f12.5)") 'DDD ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                !% --- OPEN CHANNEL
+                                !%     typical open channels have computations for area, topwidth, perimeter
+                                !%     with standard geo_ function for hydraulic radius, hydraulic depth and ell
 
-                                case (triangular)
-                                    area(tB)     = triangular_area_from_depth_singular      (tB,depth(tB))
-                                    topwidth(tB) = triangular_topwidth_from_depth_singular  (tB,depth(tB))
-                                    hydDepth(tB) = triangular_hyddepth_from_depth_singular  (tB,depth(tB))
-                                    perimeter(tB)= triangular_perimeter_from_depth_singular (tB,depth(tB))
-                                    hydRadius(tB)= triangular_hydradius_from_depth_singular (tB,depth(tB))
-                                    ell(tB)      = geo_ell_singular (tB) 
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
+                                case (parabolic)   !% analytical
+                                    area(tB)     = parabolic_area_from_depth_singular            (tB,depth(tB))
+                                    topwidth(tB) = parabolic_topwidth_from_depth_singular        (tB,depth(tB))
+                                    perimeter(tB)= parabolic_perimeter_from_depth_singular       (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = geo_hyddepth_from_area_and_topwidth_singular  (tB,area(tB),topwidth(tB))
+ 
+                                case (power_function) !% POSSIBLY LOOKUP
+                                    print *, 'CODE ERROR power function x-section not finished'
+                                    call util_crashpoint(6298349)
 
-                                !    write(*,"(A,i5,10f12.5)") 'EEE ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
-                                    
-                                case (rect_triang)                                    
-                                    area(tB)     = rectangular_triangular_area_from_depth_singular      (tB,depth(tB))
-                                    topwidth(tB) = rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB))
-                                    hydDepth(tB) = rectangular_triangular_hyddepth_from_depth_singular  (tB,depth(tB))
-                                    perimeter(tB)= rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB))
-                                    hydRadius(tB)= rectangular_triangular_hydradius_from_depth_singular (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (rect_round)                                    
-                                    area(tB)     = rect_round_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = rect_round_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = rect_round_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= rect_round_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= rect_round_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (basket_handle)                                    
-                                    area(tB)     = basket_handle_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = basket_handle_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = basket_handle_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= basket_handle_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= basket_handle_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (arch)                                    
-                                    area(tB)     = arch_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = arch_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = arch_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= arch_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= arch_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (horiz_ellipse)                                    
-                                    area(tB)     = horiz_ellipse_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = horiz_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = horiz_ellipse_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= horiz_ellipse_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= horiz_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (vert_ellipse)                                    
-                                    area(tB)     = vert_ellipse_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = vert_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = vert_ellipse_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= vert_ellipse_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= vert_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (eggshaped)                                    
-                                    area(tB)     = egg_shaped_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = egg_shaped_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = egg_shaped_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= egg_shaped_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= egg_shaped_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (horseshoe)                                    
-                                    area(tB)     = horse_shoe_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = horse_shoe_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = horse_shoe_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= horse_shoe_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= horse_shoe_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (catenary)                                    
-                                    area(tB)     = catenary_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = catenary_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = catenary_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= catenary_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= catenary_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (gothic)                                    
-                                    area(tB)     = gothic_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = gothic_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = gothic_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= gothic_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= gothic_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (mod_basket)                                    
-                                    area(tB)     = mod_basket_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = mod_basket_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = mod_basket_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= mod_basket_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= mod_basket_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (semi_elliptical)                                    
-                                    area(tB)     = semi_elliptical_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = semi_elliptical_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = semi_elliptical_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= semi_elliptical_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= semi_elliptical_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (trapezoidal)
-                                    area(tB)     = trapezoidal_area_from_depth_singular      (tB,depth(tB))
-                                    topwidth(tB) = trapezoidal_topwidth_from_depth_singular  (tB,depth(tB))
-                                    hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular  (tB,depth(tB))
-                                    perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB,depth(tB))
-                                    hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB,depth(tB))
-                                    ell(tB)      = geo_ell_singular (tB) 
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
+                                case (rectangular) !% analytical
+                                    area(tB)     = rectangular_area_from_depth_singular          (tB,depth(tB))
+                                    topwidth(tB) = rectangular_topwidth_from_depth_singular      (tB,depth(tB))
+                                    perimeter(tB)= rectangular_perimeter_from_depth_singular     (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = depth(tB)
 
-                                !    write(*,"(A,i5,10f12.5)") 'FFF ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                case (trapezoidal) !% analytical
+                                    area(tB)     = trapezoidal_area_from_depth_singular          (tB,depth(tB))
+                                    topwidth(tB) = trapezoidal_topwidth_from_depth_singular      (tB,depth(tB))
+                                    perimeter(tB)= trapezoidal_perimeter_from_depth_singular     (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = geo_hyddepth_from_area_and_topwidth_singular  (tB,area(tB),topwidth(tB))
 
-                                case (circular)
-                                    area(tB)     = circular_area_from_depth_singular          (tB,depth(tB))
-                                    topwidth(tB) = circular_topwidth_from_depth_singular      (tB,depth(tB))
-                                    hydDepth(tB) = circular_hyddepth_from_topwidth_singular   (tB,topwidth(tB),depth(tB))
-                                    hydRadius(tB)= circular_hydradius_from_depth_singular     (tB,depth(tB))
-                                    perimeter(tB)= circular_perimeter_from_hydradius_singular (tB,hydRadius(tB))
-                                    ell(tB)      = geo_ell_singular (tB) 
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-                                
-                                case (semi_circular)                                    
-                                    area(tB)     = semi_circular_area_from_depth_singular        (tB,depth(tB))
-                                    topwidth(tB) = semi_circular_topwidth_from_depth_singular    (tB,depth(tB))
-                                    hydDepth(tB) = semi_circular_hyddepth_from_topwidth_singular (tB,topwidth(tB),depth(tB))
-                                    perimeter(tB)= semi_circular_perimeter_from_depth_singular   (tB,depth(tB))
-                                    hydRadius(tB)= semi_circular_hydradius_from_depth_singular   (tB,depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rect_triang
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
+                                case (triangular) !% analytical
+                                    area(tB)     = triangular_area_from_depth_singular            (tB,depth(tB))
+                                    topwidth(tB) = triangular_topwidth_from_depth_singular        (tB,depth(tB))
+                                    perimeter(tB)= triangular_perimeter_from_depth_singular       (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular (tB,area(tB),perimeter(tB))
+                                    ell(tB)      = geo_hyddepth_from_area_and_topwidth_singular   (tB,area(tB),topwidth(tB))
 
-                                    ! write(*,"(A,i5,10f12.5)"), 'GGG ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
-                                case (filled_circular)
-                                    area(tB)     = filled_circular_area_from_depth_singular          (tB,depth(tB))
-                                    topwidth(tB) = filled_circular_topwidth_from_depth_singular      (tB,depth(tB))
-                                    hydDepth(tB) = filled_circular_hyddepth_from_topwidth_singular   (tB,topwidth(tB),depth(tB))
-                                    hydRadius(tB)= filled_circular_hydradius_from_depth_singular     (tB,depth(tB))
-                                    perimeter(tB)= filled_circular_perimeter_from_hydradius_singular (tB,hydRadius(tB))
-                                    ell(tB)      = geo_ell_singular (tB) 
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-
-                                case (parabolic)
-                                    area(tB)     = parabolic_area_from_depth_singular      (tB, depth(tB))
-                                    topwidth(tB) = parabolic_topwidth_from_depth_singular  (tB, depth(tB))
-                                    hydDepth(tB) = parabolic_hyddepth_from_depth_singular  (tB, depth(tB))
-                                    perimeter(tB)= parabolic_perimeter_from_depth_singular (tB, depth(tB))
-                                    hydRadius(tB)= parabolic_hydradius_from_depth_singular (tB, depth(tB))
-                                    ell(tB)      = hydDepth(tB) !geo_ell_singular (tB) !BRHbugfix 20210812 simpler for rectangle
-                                    dHdA(tB)     = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
-
-                                case (irregular)
-                                    area(tB)    = irregular_geometry_from_depth_singular ( &
+                                case (irregular)  !% lookup
+                                    area(tB)     = irregular_geometry_from_depth_singular ( &
                                                         tB,tt_area, depth(tB), setting%ZeroValue%Depth)
 
                                     topwidth(tB) = irregular_geometry_from_depth_singular ( &
                                                         tB,tt_width, depth(tB), setting%ZeroValue%TopWidth)
 
+                                    !% --- note the irregular stores hyd radius rather than perimeter
                                     zeroHydRadius = setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth)
                                     hydRadius(tB) = irregular_geometry_from_depth_singular ( &
                                                         tB,tt_hydradius, depth(tB), zeroHydRadius)                
-
-                                    hydDepth(tB)  = area(tB) / topwidth(tB)     
-                                    
+                                    !% --- perimeter is derived geometry for irregular
                                     perimeter(tB) = area(tB) / hydRadius(tB)
-                                    ell(tB)       = hydDepth(tB)  !% HACK -- assumes irregular is continuously-increasing in width
-                                    dHdA(tB)      = oneR / topwidth(tB)
-                                    pressurehead(tB) = zBtm(tB) + ell(tB)
+                                    !% HACK -- assumes irregular is continuously-increasing in width
+                                    ell(tB)       = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB),topwidth(tB)) 
 
-                                !    write(*,"(A,i5,10f12.5)") 'HHH ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
-                                    ! !% get the transect by depth table 
-                                    ! thisTable => transectTableDepthR(elemI(tB,ei_transect_idx),:,:)
-                                    ! depthnorm     = depth(tB)/fulldepth(tB)
+                                !% --- CLOSED CONDUITS
+                                !%     closed conduits typically have look-up functions for area, topwidth and hydraulic
+                                !%     radius, with standard geo_functions for perimeter, hydraulic depth, and ell
+                                !%     However, where analytical functions are used, the perimeter is usually computed
+                                !%     first and hydraulic radius is a geo_ function
 
-                                    ! area(tB)      = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_area))
-                                    ! !% xsect quadratic interp for small values can produce zero
-                                    ! area(tB)      = max(area(tB), setting%ZeroValue%Area)
+                                case (arch)        !% lookup                                
+                                    area(tB)     = arch_area_from_depth_singular                 (tB,depth(tB))
+                                    topwidth(tB) = arch_topwidth_from_depth_singular             (tB,depth(tB))
+                                    hydRadius(tB)= arch_hydradius_from_depth_singular            (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+                                
+                                case (basket_handle) !% lookup                              
+                                    area(tB)     = basket_handle_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = basket_handle_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydRadius(tB)= basket_handle_hydradius_from_depth_singular   (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
 
-                                    ! topwidth(tB)  = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_width))
-                                    ! !% xsect quadratic interp for small values can produce zero
-                                    ! topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%TopWidth)
+                                case (catenary)    !% lookup                               
+                                    area(tB)     = catenary_area_from_depth_singular            (tB,depth(tB))
+                                    topwidth(tB) = catenary_topwidth_from_depth_singular        (tB,depth(tB))
+                                    hydRadius(tB)= catenary_hydradius_from_depth_singular       (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
 
-                                    ! hydRadius(tB) = xsect_table_lookup_singular (depthnorm, thisTable(:,tt_hydradius))
-                                    ! !% xsect quadratic interp for small values can produce zero
-                                    ! hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth))
-                                    
-                                    
+                                case (circular)    !% lookup
+                                    area(tB)     = circular_area_from_depth_singular             (tB,depth(tB))
+                                    topwidth(tB) = circular_topwidth_from_depth_singular         (tB,depth(tB))
+                                    hydRadius(tB)= circular_hydradius_from_depth_singular        (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+
+                                case (eggshaped)   !% lookup                           
+                                    area(tB)     = egg_shaped_area_from_depth_singular           (tB,depth(tB))
+                                    topwidth(tB) = egg_shaped_topwidth_from_depth_singular       (tB,depth(tB))
+                                    hydRadius(tB)= egg_shaped_hydradius_from_depth_singular      (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB)
+
+                                case (filled_circular)  !% lookup
+                                    area(tB)     = filled_circular_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = filled_circular_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydRadius(tB)= filled_circular_hydradius_from_depth_singular (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+
+                                case (gothic)      !% lookup                        
+                                    area(tB)     = gothic_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = gothic_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydRadius(tB)= gothic_hydradius_from_depth_singular   (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB)
+
+                                case (horiz_ellipse) !% lookup                               
+                                    area(tB)     = horiz_ellipse_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = horiz_ellipse_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydRadius(tB)= horiz_ellipse_hydradius_from_depth_singular   (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+
+                                case (horseshoe)   !% lookup                           
+                                    area(tB)     = horse_shoe_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = horse_shoe_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydRadius(tB)= horse_shoe_hydradius_from_depth_singular   (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+        
+                                case (mod_basket)   !% analytical                                 
+                                    area(tB)     = mod_basket_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = mod_basket_topwidth_from_depth_singular    (tB,depth(tB))
+                                    perimeter(tB)= mod_basket_perimeter_from_depth_singular   (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = geo_ell_singular (tB)
+
+                                case (rectangular_closed) !% analytical
+                                    area(tB)     = rectangular_closed_area_from_depth_singular      (tB, depth(tB))
+                                    topwidth(tB) = rectangular_closed_topwidth_from_depth_singular  (tB, depth(tB))
+                                    perimeter(tB)= rectangular_closed_perimeter_from_depth_singular (tB, depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = depth(tB) 
+
+                                case (rect_round)  !% analytical                                  
+                                    area(tB)     = rect_round_area_from_depth_singular           (tB,depth(tB))
+                                    topwidth(tB) = rect_round_topwidth_from_depth_singular       (tB,depth(tB))
+                                    perimeter(tB)= rect_round_perimeter_from_depth_singular      (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = geo_hyddepth_from_area_and_topwidth_singular  (tB, area(tB),topwidth(tB))
+                                   
+                                case (rect_triang) !% analytical                                   
+                                    area(tB)     = rectangular_triangular_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB))
+                                    perimeter(tB)= rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB))
+                                    hydRadius(tB)= geo_hydradius_from_area_and_perimeter_singular(tB,area(tB),perimeter(tB))
+                                    ell(tB)      = geo_hyddepth_from_area_and_topwidth_singular  (tB, area(tB),topwidth(tB))
+
+                                case (semi_circular)  !% lookup                                  
+                                    area(tB)     = semi_circular_area_from_depth_singular        (tB,depth(tB))
+                                    topwidth(tB) = semi_circular_topwidth_from_depth_singular    (tB,depth(tB))
+                                    hydRadius(tB)= semi_circular_hydradius_from_depth_singular   (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_hyddepth_from_area_and_topwidth_singular  (tB, area(tB),topwidth(tB))
+                                
+                                case (semi_elliptical) !% lookup                                   
+                                    area(tB)     = semi_elliptical_area_from_depth_singular      (tB,depth(tB))
+                                    topwidth(tB) = semi_elliptical_topwidth_from_depth_singular  (tB,depth(tB))
+                                    hydRadius(tB)= semi_elliptical_hydradius_from_depth_singular (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB) 
+                            
+                                case (vert_ellipse) !% lookup                                 
+                                    area(tB)     = vert_ellipse_area_from_depth_singular         (tB,depth(tB))
+                                    topwidth(tB) = vert_ellipse_topwidth_from_depth_singular     (tB,depth(tB))
+                                    hydRadius(tB)= vert_ellipse_hydradius_from_depth_singular    (tB,depth(tB))
+                                    perimeter(tB)= geo_perimeter_from_area_and_hydradius_singular(tB,area(tB),hydRadius(tB))
+                                    ell(tB)      = geo_ell_singular (tB)    
 
                                 case default
                                     print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
@@ -1296,9 +1225,11 @@ module geometry
                                     !return
                                     !stop 399848
                                 end select
+                                !% --- standard for all geometries
+                                hydDepth(tB) = geo_hyddepth_from_area_and_topwidth_singular(tB, area(tB),topwidth(tB))
+                                dHdA(tB)     = oneR / topwidth(tB)
+                                pressurehead(tB) = zBtm(tB) + ell(tB)
                             end if
-
-                            ! print *, 'at bottom '
 
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
@@ -1738,192 +1669,241 @@ module geometry
 !%==========================================================================  
 !%==========================================================================
 !%
-    subroutine geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_hyddepth_from_area_and_topwidth (thisColP)   
         !%-------------------------------------------------------------------
         !% Description:
-        !% Note that hyddepth is the average depth, which is only area/topwidth
-        !% for a simple open channel, and does not apply above midpoint in a
-        !% conduit
+        !% Computes Hydraulic Depth = Area/ Topwidth
+        !% Assumes depth already computed for use in zeros or full
         !%-------------------------------------------------------------------
-            integer, intent(in) :: elemPGx(:,:)
-            integer, target, intent(in) :: npack_elemPGx(:), col_elemPGx(:)
-            integer, pointer :: Npack, thisCol
+        !% Declarations
+            integer, intent(in) :: thisColP
+            integer, pointer    :: thisP(:), Npack
+            real(8), pointer    :: hyddepth(:), area(:), topwidth(:)
+            !% USE BELOW IF LIMITATIONS ARE NEEDED
+            !real(8), pointer            :: depth(:), fulldepth(:), fullhyddepth(:)
 
-            character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
+            character(64) :: subroutine_name = 'geo_hyddepth_from_area_and_topwidth'
         !%-------------------------------------------------------------------
         !% Preliminaries
+            Npack     => npack_elemP(thisColP)
+            if (Npack < 1) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
-        !% cycle through different geometries
-
-        !% --- OPEN CHANNELS ----------------------------------
-
-        !% --- RECTANGULAR
-        Npack => npack_elemPGx(epg_CC_rectangular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular)
-            call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- TRAPEZOIDAL
-        Npack => npack_elemPGx(epg_CC_trapezoidal)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_trapezoidal)
-            call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- TRIANGULAR
-        Npack => npack_elemPGx(epg_CC_triangular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_triangular)
-            call triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- PARABOLIC
-        Npack => npack_elemPGx(epg_CC_parabolic)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_parabolic)
-            call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- POWER FUNCTION
-        Npack => npack_elemPGx(epg_CC_power_function)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_power_function)
-            print *, 'POWER FUNCTION CROSS SECTION NOT COMPLETED'
-            call util_crashpoint(5288987)
-            !call power_function_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- IRREGULAR
-        Npack => npack_elemPGx(epg_CC_irregular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_irregular)
-            call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
-        end if
-
-
-        !% --- CLOSED CONDUITS -------------------------------------
-
-        !% --- RECTANGULAR CLOSED
-        Npack => npack_elemPGx(epg_CC_rectangular_closed)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_closed)
-            call rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- RECTANGULAR ROUND
-        Npack => npack_elemPGx(epg_CC_rectangular_round)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_round)
-            call rect_round_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- RECTANGULAR TRIANGULAR
-        Npack => npack_elemPGx(epg_CC_rectangular_triangular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular_triangular)
-            call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- CIRCULAR
-        Npack => npack_elemPGx(epg_CC_circular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_circular)
-            call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- SEMI-CIRCULAR
-        Npack => npack_elemPGx(epg_CC_semi_circular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_semi_circular)
-            call semi_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- FILLED CIRCULAR
-        Npack => npack_elemPGx(epg_CC_filled_circular)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_filled_circular)
-            call filled_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- ARCH
-        Npack => npack_elemPGx(epg_CC_arch)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_arch)
-            call arch_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- BASKET_HANDLE
-        Npack => npack_elemPGx(epg_CC_basket_handle)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_basket_handle)
-            call basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  CATENARY
-        Npack   => npack_elemPGx(epg_CC_catenary)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_catenary)
-            call catenary_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- EGG_SHAPED
-        Npack => npack_elemPGx(epg_CC_egg_shaped)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_egg_shaped)
-            call egg_shaped_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  GOTHIC
-        Npack   => npack_elemPGx(epg_CC_gothic)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_gothic)
-            call gothic_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- HORSE_SHOE
-        Npack => npack_elemPGx(epg_CC_horse_shoe)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_horse_shoe)
-            call horse_shoe_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- HORIZONTAL ELLIPSE
-        Npack => npack_elemPGx(epg_CC_horiz_ellipse)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_horiz_ellipse)
-            call horiz_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  MODIFIED BASKET HANDLE
-        Npack   => npack_elemPGx(epg_CC_mod_basket)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_mod_basket)
-            call mod_basket_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  SEMI-ELLIPTICAL
-        Npack   => npack_elemPGx(epg_CC_semi_elliptical)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_semi_elliptical)
-            call semi_elliptical_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  VERTICAL ELLIPSE
-        Npack   => npack_elemPGx(epg_CC_vert_ellipse)
-        if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_vert_ellipse)
-            call vert_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        end if
-
-        !% HACK -- DOES NOT HANDLE JM ELEMENTS (storage, junctions)
-
+        !% Aliases
+                thisP    => elemP(1:Npack,thisColP)
+            area         => elemR(:,er_Area)
+            topwidth     => elemR(:,er_Topwidth)
+            hyddepth     => elemR(:,er_HydDepth)
+            !% USE BELOW IF LIMITATIONS ARE NEEDED
+            ! depth        => elemR(:,er_Depth)
+            ! fulldepth    => elemR(:,er_FullDepth)
+            ! fullhyddepth => elemR(:,er_FullHydDepth)
+            
         !%-------------------------------------------------------------------
-            if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_hyddepth_from_depth_or_topwidth
+
+        hyddepth(thisP) = area(thisP) / topwidth(thisP)
+
+        !% USE BELOW IF LIMITATIONS ARE NEEDED
+        ! where (depth(thisP) .le. setting%ZeroValue%Depth)
+        !     hyddepth(thisP) = setting%ZeroValue%Depth
+        ! elsewhere  (depth(thisP) .ge. fulldepth(thisP)) 
+        !     hyddepth(thisP) = fullhyddepth(thisP)
+        ! end where
+
+
+    end subroutine geo_hyddepth_from_area_and_topwidth
+!%
+!%==========================================================================  
+!%==========================================================================
+!%
+    ! subroutine geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
+    !% OBSOLETE 20220930 brg
+    !     !%-------------------------------------------------------------------
+    !     !% Description:
+    !     !% Note that hyddepth is the average depth, which is only area/topwidth
+    !     !% for a simple open channel, and does not apply above midpoint in a
+    !     !% conduit
+    !     !%-------------------------------------------------------------------
+    !         integer, intent(in) :: elemPGx(:,:)
+    !         integer, target, intent(in) :: npack_elemPGx(:), col_elemPGx(:)
+    !         integer, pointer :: Npack, thisCol
+
+    !         character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
+    !     !%-------------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (setting%Debug%File%geometry) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%-------------------------------------------------------------------
+    !     !% cycle through different geometries
+
+    !     !% --- OPEN CHANNELS ----------------------------------
+
+    !     !% --- RECTANGULAR
+    !     Npack => npack_elemPGx(epg_CC_rectangular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_rectangular)
+    !         call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- TRAPEZOIDAL
+    !     Npack => npack_elemPGx(epg_CC_trapezoidal)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_trapezoidal)
+    !         call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- TRIANGULAR
+    !     Npack => npack_elemPGx(epg_CC_triangular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_triangular)
+    !         call triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- PARABOLIC
+    !     Npack => npack_elemPGx(epg_CC_parabolic)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_parabolic)
+    !         call parabolic_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- POWER FUNCTION
+    !     Npack => npack_elemPGx(epg_CC_power_function)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_power_function)
+    !         print *, 'POWER FUNCTION CROSS SECTION NOT COMPLETED'
+    !         call util_crashpoint(5288987)
+    !         !call power_function_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- IRREGULAR
+    !     Npack => npack_elemPGx(epg_CC_irregular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_irregular)
+    !         call irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)
+    !     end if
+
+
+    !     !% --- CLOSED CONDUITS -------------------------------------
+
+    !     !% --- RECTANGULAR CLOSED
+    !     Npack => npack_elemPGx(epg_CC_rectangular_closed)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_rectangular_closed)
+    !         call rectangular_closed_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- RECTANGULAR ROUND
+    !     Npack => npack_elemPGx(epg_CC_rectangular_round)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_rectangular_round)
+    !         call rect_round_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- RECTANGULAR TRIANGULAR
+    !     Npack => npack_elemPGx(epg_CC_rectangular_triangular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_rectangular_triangular)
+    !         call rectangular_triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- CIRCULAR
+    !     Npack => npack_elemPGx(epg_CC_circular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_circular)
+    !         call circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- SEMI-CIRCULAR
+    !     Npack => npack_elemPGx(epg_CC_semi_circular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_semi_circular)
+    !         call semi_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --- FILLED CIRCULAR
+    !     Npack => npack_elemPGx(epg_CC_filled_circular)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_filled_circular)
+    !         call filled_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- ARCH
+    !     Npack => npack_elemPGx(epg_CC_arch)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_arch)
+    !         call arch_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- BASKET_HANDLE
+    !     Npack => npack_elemPGx(epg_CC_basket_handle)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_basket_handle)
+    !         call basket_handle_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --  CATENARY
+    !     Npack   => npack_elemPGx(epg_CC_catenary)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_catenary)
+    !         call catenary_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- EGG_SHAPED
+    !     Npack => npack_elemPGx(epg_CC_egg_shaped)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_egg_shaped)
+    !         call egg_shaped_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --  GOTHIC
+    !     Npack   => npack_elemPGx(epg_CC_gothic)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_gothic)
+    !         call gothic_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- HORSE_SHOE
+    !     Npack => npack_elemPGx(epg_CC_horse_shoe)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_horse_shoe)
+    !         call horse_shoe_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% -- HORIZONTAL ELLIPSE
+    !     Npack => npack_elemPGx(epg_CC_horiz_ellipse)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_horiz_ellipse)
+    !         call horiz_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --  MODIFIED BASKET HANDLE
+    !     Npack   => npack_elemPGx(epg_CC_mod_basket)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_mod_basket)
+    !         call mod_basket_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --  SEMI-ELLIPTICAL
+    !     Npack   => npack_elemPGx(epg_CC_semi_elliptical)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_semi_elliptical)
+    !         call semi_elliptical_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% --  VERTICAL ELLIPSE
+    !     Npack   => npack_elemPGx(epg_CC_vert_ellipse)
+    !     if (Npack > 0) then
+    !         thisCol => col_elemPGx(epg_CC_vert_ellipse)
+    !         call vert_ellipse_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !     end if
+
+    !     !% HACK -- DOES NOT HANDLE JM ELEMENTS (storage, junctions)
+
+    !     !%-------------------------------------------------------------------
+    !         if (setting%Debug%File%geometry) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine geo_hyddepth_from_depth_or_topwidth
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2073,8 +2053,9 @@ module geometry
             thisP   => elemP(1:Npack,thisCol)
         !%------------------------------------------------------------------
         if (Npack > 0) then 
-            elemR(thisP,er_HydDepth) = elemR(thisP,er_Depth)
-            elemR(thisP,er_ell)      = elemR(thisP,er_Depth)
+            elemR(thisP,er_HydDepth)      = elemR(thisP,er_Depth)
+            elemR(thisP,er_ell)           = elemR(thisP,er_Depth)
+            elemR(thisP,er_Pressure_Head) = elemR(thisP,er_Depth)
         end if
         !%------------------------------------------------------------------
         !% Closing
@@ -2465,111 +2446,173 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function geo_hyddepth_from_depth_singular &
-        (idx, indepth) result (outvalue)
+    real(8) function geo_hyddepth_from_area_and_topwidth_singular &
+        (idx, area, topwidth)  result (outvalue)
         !%------------------------------------------------------------------
         !% Descriptions:
-        !% computes the hydraulic depth for a given depth of a single element
+        !% computes the hydraulic depth for area and topwidth of a single
+        !% element
         !%------------------------------------------------------------------
         !% Declarations
-            real(8), intent(in)  :: indepth
+            real(8), intent(in)  :: area, topwidth
             integer, intent(in)  :: idx
-            real(8)              :: temp1, temp2
-            character(64) :: subroutine_name = 'geo_hyddepth_from_depth_singular'
-        !%------------------------------------------------------------------
-        !%------------------------------------------------------------------
-        select case (elemI(idx,ei_geometryType))
-            
-        !% --- OPEN CHANNELS -----------------------------   
-        case (rectangular)
-            outvalue = indepth
-        case (trapezoidal)
-            outvalue = trapezoidal_hyddepth_from_depth_singular (idx, indepth)
-        case (triangular)
-            outvalue = triangular_hyddepth_from_depth_singular (idx, indepth)
-        case (parabolic)
-            outvalue = parabolic_hyddepth_from_depth_singular (idx, indepth)
-        case (power_function)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
-        case (irregular)
-            !% --- get the area and topwidth, then compute the hydraulic depth
-            temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)
-            temp2 = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
-            outvalue = temp1 / temp2    
-
-        !% --- CLOSED CONDUITS --------------------------------------    
-        case (rectangular_closed)
-            outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
-        case (rect_round )
-            temp1    = rect_round_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = rect_round_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (rect_triang)
-            outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
-        case (circular )
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = circular_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (semi_circular)
-            temp1    = semi_circular_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = semi_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (filled_circular)
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = filled_circular_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = filled_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (arch)
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = arch_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = arch_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (basket_handle)
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = basket_handle_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = basket_handle_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (catenary)
-            temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (eggshaped)
-            temp1    = egg_shaped_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = egg_shaped_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (gothic)
-            temp1    = gothic_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = gothic_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (horseshoe)
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = horse_shoe_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = horse_shoe_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (horiz_ellipse)
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = horiz_ellipse_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = horiz_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (mod_basket)
-            temp1    = mod_basket_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = mod_basket_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (semi_elliptical)
-            temp1    = semi_elliptical_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = semi_elliptical_hyddepth_from_topwidth_singular (idx,temp1,indepth)
-        case (vert_ellipse)
-            !% --- get the topwidth and use that to compute the hydraulic depth
-            temp1    = vert_ellipse_topwidth_from_depth_singular    (idx, indepth)
-            outvalue = vert_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+            !real(8)              :: temp1, temp2
+            character(64) :: subroutine_name = 'geo_hyddepth_from_area_and_topwidth_singular'
+        !%------------------------------------------------------------------   
+     
+        outvalue = area / topwidth
         
-        case (custom)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
-        case (force_main)
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'in ',trim(subroutine_name)   
-            print *, 'This should never be reached as a force_main is not a valid geometryType'  
-            call util_crashpoint(449734)
-        case default
-            print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
-            print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(449734)
-        end select
+    end function geo_hyddepth_from_area_and_topwidth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_hydradius_from_area_and_perimeter_singular &
+        (idx, area, perimeter)  result (outvalue)
+    !%------------------------------------------------------------------
+    !% Descriptions:
+    !% computes the hydraulic radius for area and perimeter of a single
+    !% element
+    !%------------------------------------------------------------------
+    !% Declarations
+        real(8), intent(in)  :: area, perimeter
+        integer, intent(in)  :: idx
+        !real(8)              :: temp1, temp2
+        character(64) :: subroutine_name = 'geo_hydradius_from_area_and_perimeter_singular'
+    !%------------------------------------------------------------------   
+ 
+    outvalue = area / perimeter
+    
+    end function geo_hydradius_from_area_and_perimeter_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_perimeter_from_area_and_hydradius_singular &
+        (idx, area, hydradius) result (outvalue)    
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the perimeter for area and hydraulic radius of a single
+        !% element
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in)  :: area, hydradius
+            integer, intent(in)  :: idx
+            character(64) :: subroutine_name = 'geo_perimeter_from_area_and_hydradius_singular'
+        !%------------------------------------------------------------------   
+    
+        outvalue = area / hydradius
+    
+    end function geo_perimeter_from_area_and_hydradius_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! real(8) function geo_hyddepth_from_depth_singular &
+    !     (idx, indepth) result (outvalue)
+    !     !% OBSOLETE 20220930 brh
+    !     !%------------------------------------------------------------------
+    !     !% Descriptions:
+    !     !% computes the hydraulic depth for a given depth of a single element
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         real(8), intent(in)  :: indepth
+    !         integer, intent(in)  :: idx
+    !         real(8)              :: temp1, temp2
+    !         character(64) :: subroutine_name = 'geo_hyddepth_from_depth_singular'
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     select case (elemI(idx,ei_geometryType))
+            
+    !     !% --- OPEN CHANNELS -----------------------------   
+    !     case (rectangular)
+    !         outvalue = indepth
+    !     case (trapezoidal)
+    !         outvalue = trapezoidal_hyddepth_from_depth_singular (idx, indepth)
+    !     case (triangular)
+    !         outvalue = triangular_hyddepth_from_depth_singular (idx, indepth)
+    !     case (parabolic)
+    !         outvalue = parabolic_hyddepth_from_depth_singular (idx, indepth)
+    !     case (power_function)
+    !         print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+    !         print *, 'has not been implemented in ',trim(subroutine_name)
+    !         call util_crashpoint(449734)
+    !     case (irregular)
+    !         !% --- get the area and topwidth, then compute the hydraulic depth
+    !         temp1 = irregular_geometry_from_depth_singular (idx,tt_area,  indepth, setting%ZeroValue%Area)
+    !         temp2 = irregular_geometry_from_depth_singular (idx,tt_width, indepth, setting%ZeroValue%TopWidth)
+    !         outvalue = temp1 / temp2    
+
+    !     !% --- CLOSED CONDUITS --------------------------------------    
+    !     case (rectangular_closed)
+    !         outvalue = rectangular_closed_hyddepth_from_depth_singular (idx, indepth)
+    !     case (rect_round )
+    !         outvalue = rect_round_hyddepth_from_depth_singular (idx,indepth)
+    !     case (rect_triang)
+    !         outvalue = rectangular_triangular_hyddepth_from_depth_singular (idx, indepth)
+    !     case (circular )
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = circular_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (semi_circular)
+    !         temp1    = semi_circular_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = semi_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (filled_circular)
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = filled_circular_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = filled_circular_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (arch)
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = arch_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = arch_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (basket_handle)
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = basket_handle_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = basket_handle_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (catenary)
+    !         temp1    = catenary_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = catenary_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (eggshaped)
+    !         temp1    = egg_shaped_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = egg_shaped_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (gothic)
+    !         temp1    = gothic_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = gothic_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (horseshoe)
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = horse_shoe_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = horse_shoe_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (horiz_ellipse)
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = horiz_ellipse_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = horiz_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (mod_basket)
+    !         temp1    = mod_basket_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = mod_basket_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (semi_elliptical)
+    !         temp1    = semi_elliptical_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = semi_elliptical_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+    !     case (vert_ellipse)
+    !         !% --- get the topwidth and use that to compute the hydraulic depth
+    !         temp1    = vert_ellipse_topwidth_from_depth_singular    (idx, indepth)
+    !         outvalue = vert_ellipse_hyddepth_from_topwidth_singular (idx,temp1,indepth)
+        
+    !     case (custom)
+    !         print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+    !         print *, 'has not been implemented in ',trim(subroutine_name)
+    !         call util_crashpoint(449734)
+    !     case (force_main)
+    !         print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+    !         print *, 'in ',trim(subroutine_name)   
+    !         print *, 'This should never be reached as a force_main is not a valid geometryType'  
+    !         call util_crashpoint(449734)
+    !     case default
+    !         print *, 'CODE ERROR: hyddepth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+    !         print *, 'has not been implemented in ',trim(subroutine_name)
+    !         call util_crashpoint(449734)
+    !     end select
            
-    end function geo_hyddepth_from_depth_singular
+    ! end function geo_hyddepth_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2608,7 +2651,226 @@ module geometry
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function geo_ell_singular
 !%
-!%==========================================================================
+!%=========================================================================
+!%=========================================================================
+!%
+    ! subroutine geometry_table_initialize ()
+    !     !%-----------------------------------------------------------------
+    !     !% Description
+    !     !% Creates element based geometry table
+    !     !%-----------------------------------------------------------------
+    !     !% Declarations:
+    !         integer :: ii
+    !         real(8), pointer :: table(:,:,:), fulldepth(:)
+    !         !% local store of uniform distribution of depth
+    !         real(8)          :: depth(Ncol2_GeometryTableR)
+    !     !%-----------------------------------------------------------------
+    !     !%-----------------------------------------------------------------
+    !     !% Aliases
+    !         table     =>  geometryTableR(:,:,:)
+    !         eDepth    => elemR(:,er_Depth)
+    !         fulldepth => elemR(:,er_FullDepth)
+    !     !%-----------------------------------------------------------------
+    !     !%-----------------------------------------------------------------
+
+    !     !% --- cycle through elements (slow)
+    !     do ii=1,N_elem(this_image())
+    !         !% --- get a uniformly distributed depth array
+    !         depth = real((/ (ii,ii=0,Ncol2_GeometryTableR-oneI) /),8)
+    !         depth = fulldepth(ii) * depth / real(Ncol2_GeometryTableR-oneI,8)
+
+    !         select case (elemI(ii,ei_geometryType))
+
+    !         case (rectangular)
+    !             !tdepth = eDepth(ii) !% temporary store
+    !             !eDepth(ii) = depth(kk) !% set the local element depth
+    !             !eDepth(ii) = tdepth !% restore the element depth
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = rectangular_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = rectangular_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = rectangular_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = rectangular_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = rectangular_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+                
+    !         case (trapezoidal)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = trapezoidal_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = trapezoidal_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = trapezoidal_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = trapezoidal_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = trapezoidal_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (triangular)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = triangular_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = triangular_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = triangular_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = triangular_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = triangular_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (parabolic)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = parabolic_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = parabolic_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = parabolic_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = parabolic_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = parabolic_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (power_function)
+    !             print *, 'CODE ERROR: POWER FUNCTION NOT COMPLETE'
+
+    !         case (irregular)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = irregular_geometry_from_depth_singular(ii,tt_area,     depth(kk),setting%ZeroValue%Area)
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = irregular_geometry_from_depth_singular(ii,tt_width,    depth(kk),setting%ZeroValue%Topwidth)
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = irregular_geometry_from_depth_singular(ii,tt_hydradius,depth(kk),setting%ZeroValue%Depth)
+    !             end do
+    !             table(ii,:,gtr_Perimeter_from_Depth) = table(ii,:,gtr_Area_from_Depth) / table(ii,:,gtr_HydRadius_from_Depth)
+    !             table(ii,:,gtr_HydDepth_from_Depth)  = table(ii,:,gtr_Area_from_Depth) / table(ii,:,gtr_Topwidth_from_Depth)
+
+    !         case (rectangular_closed)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = rectangular_closed_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = rectangular_closed_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = rectangular_closed_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = rectangular_closed_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = rectangular_closed_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (rect_round)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = rect_round_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = rect_round_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = rect_round_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = rect_round_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = rect_round_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+                
+    !         case (rect_triang)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = rectangular_triangular_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = rectangular_triangular_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = rectangular_triangular_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = rectangular_triangular_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = rectangular_triangular_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (circular)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = circular_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = circular_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = circular_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = circular_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = circular_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (semi_circular)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = semi_circular_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = semi_circular_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = semi_circular_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = semi_circular_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = semi_circular_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (filled_circular)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = filled_circular_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = filled_circular_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = filled_circular_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = filled_circular_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = filled_circular_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (arch)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = arch_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = arch_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = arch_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = arch_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = arch_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (basket_handle)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = basket_handle_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = basket_handle_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = basket_handle_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = basket_handle_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = basket_handle_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (catenary)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = catenary_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = catenary_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = catenary_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = catenary_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = catenary_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (eggshaped)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = egg_shaped_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = egg_shaped_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = egg_shaped_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = egg_shaped_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = egg_shaped_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (gothic)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = gothic_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = gothic_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = gothic_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = gothic_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = gothic_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (horseshoe)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = horse_shoe_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = horse_shoe_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = horse_shoe_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = horse_shoe_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = horse_shoe_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (horiz_ellipse)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = horiz_ellipse_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = horiz_ellipse_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = horiz_ellipse_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = horiz_ellipse_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = horiz_ellipse_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (mod_basket)
+    !             do kk = 1,Ncol2_GeometryTableR
+    !                 table(ii,kk,gtr_Area_from_Depth)      = mod_basket_area_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Topwidth_from_Depth)  = mod_basket_topwidth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_Perimeter_from_Depth) = mod_basket_perimeter_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydDepth_from_Depth)  = mod_basket_hyddepth_from_depth_singular(ii,depth(kk))
+    !                 table(ii,kk,gtr_HydRadius_from_Depth) = mod_basket_hydradius_from_depth_singular(ii,depth(kk))
+    !             end do
+
+    !         case (semi_elliptical)
+
+
+    !         case (vertical_ellipse)
+    !         case (custom)
+    !         case (force_main)
+    !         end select
+    !     end do
+
+
+    ! end subroutine geometry_table_initialize
+!%
+!%=========================================================================
 !% END OF MODULE
-!%+=========================================================================
+!%=========================================================================
 end module geometry

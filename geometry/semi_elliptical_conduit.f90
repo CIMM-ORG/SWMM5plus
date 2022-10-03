@@ -25,7 +25,7 @@ module semi_elliptical_conduit
     public :: semi_elliptical_perimeter_from_depth_singular
     public :: semi_elliptical_perimeter_from_hydradius_singular
     public :: semi_elliptical_hyddepth_from_topwidth
-    public :: semi_elliptical_hyddepth_from_topwidth_singular
+    !public :: semi_elliptical_hyddepth_from_topwidth_singular
     public :: semi_elliptical_hydradius_from_depth_singular
     public :: semi_elliptical_normaldepth_from_sectionfactor_singular
 
@@ -75,38 +75,6 @@ module semi_elliptical_conduit
 !%==========================================================================      
 !%==========================================================================
 !%
-    real(8) function semi_elliptical_area_from_depth_singular (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for semi_elliptical cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
-        real(8), pointer    :: fullArea(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        fullArea   => elemR(:,er_FullArea)
-        fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,esgr_Semi_Elliptical_AoverAfull)
-        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get A/Afull from the lookup table using Y/Yfull
-        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ASemiEllip)
-
-        !% finally get the area by multiplying the normalized area with full area
-        outvalue = AoverAfull(indx) * fullArea(indx)
-
-    end function semi_elliptical_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine semi_elliptical_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%
         !%-----------------------------------------------------------------------------
@@ -141,36 +109,7 @@ module semi_elliptical_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function semi_elliptical_topwidth_from_depth_singular (indx,depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a semi_elliptical cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
-        !%-----------------------------------------------------------------------------
-        fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
-        !%-----------------------------------------------------------------------------
-
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
-        !% and then myltiplying it with Tmax (fullDepth for semi_elliptical cross-section)
-        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TSemiEllip) 
-
-        !% if topwidth <= zero, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
-
-    end function semi_elliptical_topwidth_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine semi_elliptical_perimeter_from_depth (elemPGx, Npack, thisCol)
-        !%
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a semi_elliptical conduit
@@ -228,6 +167,145 @@ module semi_elliptical_conduit
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine semi_elliptical_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the hydraulic (average) depth from a known depth in a semi_elliptical conduit
+        !%-----------------------------------------------------------------------------
+        integer, target, intent(in) :: elemPGx(:,:)
+        integer, intent(in) ::  Npack, thisCol
+        integer, pointer    :: thisP(:)
+        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
+        real(8), pointer    :: depth(:), hyddepth(:)
+        !%-----------------------------------------------------------------------------
+        !!if (crashYN) return
+        thisP        => elemPGx(1:Npack,thisCol)
+        area         => elemR(:,er_Area)
+        topwidth     => elemR(:,er_Topwidth)
+        depth        => elemR(:,er_Depth)
+        hyddepth     => elemR(:,er_HydDepth)
+        fullHydDepth => elemR(:,er_FullHydDepth)
+        !%--------------------------------------------------
+
+        !% calculating hydraulic depth needs conditional since,
+        !% topwidth can be zero in semi_elliptical cross section for both
+        !% full and empty condition.
+
+        !% when conduit is empty
+        where (depth(thisP) <= setting%ZeroValue%Depth)
+            hyddepth(thisP) = setting%ZeroValue%Depth
+
+        !% when conduit is not empty
+        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+            !% limiter for when the conduit is full
+            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+        endwhere
+
+    end subroutine semi_elliptical_hyddepth_from_topwidth
+!%
+!%==========================================================================
+!% SINGULAR
+!%==========================================================================
+!%
+    real(8) function semi_elliptical_area_from_depth_singular &
+        (indx, depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes area from known depth for semi_elliptical cross section of a single element
+        !% The input indx is the row index in full data 2D array.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    :: AoverAfull(:), YoverYfull(:)
+        real(8), pointer    :: fullArea(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        !!if (crashYN) return
+        fullArea   => elemR(:,er_FullArea)
+        fulldepth  => elemR(:,er_FullDepth)
+        AoverAfull => elemSGR(:,esgr_Semi_Elliptical_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get A/Afull from the lookup table using Y/Yfull
+        AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ASemiEllip)
+
+        !% finally get the area by multiplying the normalized area with full area
+        outvalue = AoverAfull(indx) * fullArea(indx)
+
+    end function semi_elliptical_area_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function semi_elliptical_topwidth_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the topwidth for a semi_elliptical cross section of a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    ::  YoverYfull(:), fulldepth(:)
+        !%-----------------------------------------------------------------------------
+        fulldepth  => elemR(:,er_FullDepth)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
+        !%-----------------------------------------------------------------------------
+
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !% get topwidth by first retriving T/Tmax from the lookup table using Y/Yfull
+        !% and then myltiplying it with Tmax (fullDepth for semi_elliptical cross-section)
+        outvalue = fulldepth(indx) * xsect_table_lookup_singular (YoverYfull(indx), TSemiEllip) 
+
+        !% if topwidth <= zero, set it to zerovalue
+        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
+
+    end function semi_elliptical_topwidth_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function semi_elliptical_hydradius_from_depth_singular &
+        (indx,depth) result (outvalue)
+        !%
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes hydraulic radius from known depth for a semi_elliptical cross section of
+        !% a single element
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
+        real(8), intent(in) :: depth
+        real(8), pointer    :: YoverYfull(:), fulldepth(:), fullarea(:)
+        real(8) :: area, sF
+        !%-----------------------------------------------------------------------------
+        fulldepth  => elemR(:,er_FullDepth)
+        fullarea   => elemR(:,er_FullArea)
+        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
+        !%-----------------------------------------------------------------------------
+        !% find Y/Yfull
+        YoverYfull(indx) = depth / fulldepth(indx)
+
+        !%  find the normalized area
+        area =  xsect_table_lookup_singular (YoverYfull(indx), ASemiEllip)
+        !%  find normalized sectionfactor for this depth from lookup table
+        sf = xsect_table_lookup_singular (area, SSemiEllip)
+        !%  unnormalize
+        sF = (fullarea(indx) * (0.242 * fullDepth(indx)) ** twoThirdR) * sF
+        area = area * fullarea(indx)
+
+        !% retrive hyrdaulic radius from section factor
+        outvalue = (sF / area) ** threehalfR
+
+    end function semi_elliptical_hydradius_from_depth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function semi_elliptical_perimeter_from_depth_singular &
         (idx, indepth) result(outvalue)
         !%------------------------------------------------------------------
@@ -269,7 +347,8 @@ module semi_elliptical_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function semi_elliptical_perimeter_from_hydradius_singular (indx,hydradius) result (outvalue)
+    real(8) function semi_elliptical_perimeter_from_hydradius_singular &
+         (indx,hydradius) result (outvalue)
         !%
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -294,109 +373,35 @@ module semi_elliptical_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine semi_elliptical_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a semi_elliptical conduit
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer    :: thisP(:)
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
-        real(8), pointer    :: depth(:), hyddepth(:)
-        !%-----------------------------------------------------------------------------
-        !!if (crashYN) return
-        thisP        => elemPGx(1:Npack,thisCol)
-        area         => elemR(:,er_Area)
-        topwidth     => elemR(:,er_Topwidth)
-        depth        => elemR(:,er_Depth)
-        hyddepth     => elemR(:,er_HydDepth)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
+    ! real(8) function semi_elliptical_hyddepth_from_topwidth_singular &
+    !     (indx,topwidth,depth) result (outvalue)
+    !     !%
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth from known depth for semi_elliptical cross section of
+    !     !% a single element
+    !     !%-----------------------------------------------------------------------------
+    !     integer, intent(in) :: indx
+    !     real(8), intent(in) :: topwidth, depth
+    !     real(8), pointer    :: area(:), fullHydDepth(:)
+    !     !%-----------------------------------------------------------------------------
+    !     area         => elemR(:,er_Area)
+    !     fullHydDepth => elemR(:,er_FullHydDepth)
+    !     !%--------------------------------------------------
 
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in semi_elliptical cross section for both
-        !% full and empty condition.
+    !     !% calculating hydraulic depth needs conditional since,
+    !     !% topwidth can be zero in semi_elliptical cross section for both
+    !     !% full and empty condition.
 
-        !% when conduit is empty
-        where (depth(thisP) <= setting%ZeroValue%Depth)
-            hyddepth(thisP) = setting%ZeroValue%Depth
+    !     !% when conduit is empty
+    !     if (depth <= setting%ZeroValue%Depth) then
+    !         outvalue = setting%ZeroValue%Depth
+    !     else
+    !         !% limiter for when the conduit is full
+    !         outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
+    !     endif
 
-        !% when conduit is not empty
-        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-            !% limiter for when the conduit is full
-            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-        endwhere
-
-    end subroutine semi_elliptical_hyddepth_from_topwidth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function semi_elliptical_hyddepth_from_topwidth_singular (indx,topwidth,depth) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth from known depth for semi_elliptical cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: topwidth, depth
-        real(8), pointer    :: area(:), fullHydDepth(:)
-        !%-----------------------------------------------------------------------------
-        area         => elemR(:,er_Area)
-        fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------
-
-        !% calculating hydraulic depth needs conditional since,
-        !% topwidth can be zero in semi_elliptical cross section for both
-        !% full and empty condition.
-
-        !% when conduit is empty
-        if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Depth
-        else
-            !% limiter for when the conduit is full
-            outvalue = min(area(indx) / topwidth, fullHydDepth(indx))
-        endif
-
-    end function semi_elliptical_hyddepth_from_topwidth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function semi_elliptical_hydradius_from_depth_singular (indx,depth) result (outvalue)
-        !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic radius from known depth for a semi_elliptical cross section of
-        !% a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer    :: YoverYfull(:), fulldepth(:), fullarea(:)
-        real(8) :: area, sF
-        !%-----------------------------------------------------------------------------
-        fulldepth  => elemR(:,er_FullDepth)
-        fullarea   => elemR(:,er_FullArea)
-        YoverYfull => elemSGR(:,esgr_Semi_Elliptical_YoverYfull)
-        !%-----------------------------------------------------------------------------
-        !% find Y/Yfull
-        YoverYfull(indx) = depth / fulldepth(indx)
-
-        !%  find the normalized area
-        area =  xsect_table_lookup_singular (YoverYfull(indx), ASemiEllip)
-        !%  find normalized sectionfactor for this depth from lookup table
-        sf = xsect_table_lookup_singular (area, SSemiEllip)
-        !%  unnormalize
-        sF = (fullarea(indx) * (0.242 * fullDepth(indx)) ** twoThirdR) * sF
-        area = area * fullarea(indx)
-
-        !% retrive hyrdaulic radius from section factor
-        outvalue = (sF / area) ** threehalfR
-
-    end function semi_elliptical_hydradius_from_depth_singular
+    ! end function semi_elliptical_hyddepth_from_topwidth_singular
 !%
 !%==========================================================================
 !%==========================================================================

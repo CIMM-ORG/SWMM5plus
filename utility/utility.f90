@@ -348,31 +348,31 @@ module utility
         !                                           elemR(iet(6),er_FlowrateLateral), &
         !                                           elemR(iet(7),er_FlowrateLateral)
 
-        write(*,"(A,12f10.3)") 'Q elem  ',elemR(iet(1),er_Flowrate), &
-                                                  elemR(iet(2),er_Flowrate), &
-                                                  elemR(iet(3),er_Flowrate), &
-                                                  elemR(iet(4),er_Flowrate), &
-                                                  elemR(iet(5),er_Flowrate), &
-                                                  elemR(iet(6),er_Flowrate), &
-                                                  elemR(iet(7),er_Flowrate), &
-                                                  elemR(iet(8),er_Flowrate), &
-                                                  elemR(iet(9),er_Flowrate), &
-                                                  elemR(iet(10),er_Flowrate), &
-                                                  elemR(iet(11),er_Flowrate), &
-                                                  elemR(iet(12),er_Flowrate)
+        ! write(*,"(A,12f10.3)") 'Q elem  ',elemR(iet(1),er_Flowrate), &
+        !                                           elemR(iet(2),er_Flowrate), &
+        !                                           elemR(iet(3),er_Flowrate), &
+        !                                           elemR(iet(4),er_Flowrate), &
+        !                                           elemR(iet(5),er_Flowrate), &
+        !                                           elemR(iet(6),er_Flowrate), &
+        !                                           elemR(iet(7),er_Flowrate), &
+        !                                           elemR(iet(8),er_Flowrate), &
+        !                                           elemR(iet(9),er_Flowrate), &
+        !                                           elemR(iet(10),er_Flowrate), &
+        !                                           elemR(iet(11),er_Flowrate), &
+        !                                           elemR(iet(12),er_Flowrate)
 
-        write(*,"(A,12f10.3)") 'D elem  ',elemR(iet(1),er_Depth), &
-                                                  elemR(iet(2),er_Depth), &
-                                                  elemR(iet(3),er_Depth), &
-                                                  elemR(iet(4),er_Depth), &
-                                                  elemR(iet(5),er_Depth), &
-                                                  elemR(iet(6),er_Depth), &
-                                                  elemR(iet(7),er_Depth), &
-                                                  elemR(iet(8),er_Depth), &
-                                                  elemR(iet(9),er_Depth), &
-                                                  elemR(iet(10),er_Depth), &
-                                                  elemR(iet(11),er_Depth), &
-                                                  elemR(iet(12),er_Depth)
+        ! write(*,"(A,12f10.3)") 'D elem  ',elemR(iet(1),er_Depth), &
+        !                                           elemR(iet(2),er_Depth), &
+        !                                           elemR(iet(3),er_Depth), &
+        !                                           elemR(iet(4),er_Depth), &
+        !                                           elemR(iet(5),er_Depth), &
+        !                                           elemR(iet(6),er_Depth), &
+        !                                           elemR(iet(7),er_Depth), &
+        !                                           elemR(iet(8),er_Depth), &
+        !                                           elemR(iet(9),er_Depth), &
+        !                                           elemR(iet(10),er_Depth), &
+        !                                           elemR(iet(11),er_Depth), &
+        !                                           elemR(iet(12),er_Depth)
 
         ! write(*,"(A,10e12.3)") 'Q Net             ',faceR(elemI(iet(1),ei_Mface_uL),fr_Flowrate_Conservative) - faceR(elemI(iet(1),ei_Mface_dL),fr_Flowrate_Conservative), &
         !                                            faceR(elemI(iet(2),ei_Mface_uL),fr_Flowrate_Conservative) - faceR(elemI(iet(2),ei_Mface_dL),fr_Flowrate_Conservative), &

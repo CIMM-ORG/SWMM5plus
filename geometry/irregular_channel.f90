@@ -228,7 +228,10 @@ contains
                 (indx, table_idx, depth, zerovalue) result (outvalue)
         !%----------------------------------------------------------------------
         !% Description:
-        !%  Computes cross-sectional area for a given depth for a single element
+        !%  Computes cross-sectional geometry for a given depth for a single element (indx)
+        !%  depth is the unormalized depth of interest
+        !%  table_idx is in {tt_area, tt_width, tt_depth, tt_hydradius}
+        !%  zerovalue is the result used in place of zeros
         !%----------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx, table_idx
@@ -245,8 +248,7 @@ contains
         depthnorm     = depth/fulldepth(indx)
 
         !% --- max is used because xsect quadratic interp for small values can produce zero
-        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)), &
-                        setting%ZeroValue%Area)
+        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)),zerovalue)
 
     end function irregular_geometry_from_depth_singular    
 !%    
