@@ -2917,20 +2917,15 @@ contains
 
                 if (tseries_idx >= 0) then
                     !% --- this gets the Tseries.x2 values
-                    !%     Note the Tseries.x1 values will be overwritten by the .x2 values
-                    !%     only if the x2 value is less than timemax. This prepares for the
-                    !%     the next step of storing for SWMM5+
+                    !% --- gets time in days at what is now the x2 pointer 
+                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
+
+                    tnext = util_datetime_epoch_to_secs(tnext)
+
+                    !% move the linked list to the next step (which sets up the next value for x2)
                     success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
 
-                    if (success == 1) then
-                        !% --- gets time in days at what is now the x2 pointer 
-                        tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
-                        !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
-                        !print *, 'tnext Flow out of interface ',tnext
-
-                        tnext = util_datetime_epoch_to_secs(tnext)
-                        !print *, 'tnext Flow',tnext /3600.0
-                    else
+                    if (success .ne. oneI) then
                         !% --- failure to read time later than tnow from file
                         print *, ' '
                         write(*,"(A)") 'INPUT FILE FAILURE'
@@ -3021,18 +3016,12 @@ contains
                 !% --- this gets the Tseries.x2 values
                 !%     Note the Tseries.x1 values will be overwritten by the .x2 values
                 !%     only if the x2 value is less than timemax. This prepares for the
-                !%     the next step of storing for SWMM5+
+                !%     the next step of storing for SWMM5+      
+                !% --- gets time in days at what is now the x2 pointer 
+                tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
+                tnext = util_datetime_epoch_to_secs(tnext)
                 success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
-
-                if (success == 1) then
-                    !% --- gets time in days at what is now the x2 pointer 
-                    tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
-                    !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
-                    !print *, 'tnext Head out of interface ',tnext
-
-                    tnext = util_datetime_epoch_to_secs(tnext)
-                    !print *, 'tnext Head',tnext /3600.0
-                else
+                if (success .ne. oneI) then
                     !% --- failure to read time later than tnow from file
                     print *, ' '
                     write(*,"(A)") 'INPUT FILE FAILURE'

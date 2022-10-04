@@ -400,7 +400,7 @@ contains
 
         if (setting%Debug%File%boundary_conditions) then
             do ii = 1, NN
-                write(*, "(*(G0.4 : ','))") BC%flowTimeseries(bc_idx, ii, :)
+                Print*, 'Time ', BC%flowTimeseries(bc_idx, ii, brts_time), 'Flow ', BC%flowTimeseries(bc_idx, ii, brts_value)
             end do
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end if
