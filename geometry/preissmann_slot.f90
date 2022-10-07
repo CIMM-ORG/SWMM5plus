@@ -471,8 +471,8 @@ module preissmann_slot
             real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
             real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), temp(:)
             real(8), pointer    :: dSlotVol(:), dSlotArea(:), dSlotDepth(:), oldSlotVOl(:), volume(:) 
-            real(8), pointer    :: velocity(:), fPNumber(:)
-            real(8), pointer    :: TargetPCelerity, grav, Dt, Alpha, cfl
+            real(8), pointer    :: velocity(:), fPNumber(:), SurchargeTime(:)
+            real(8), pointer    :: TargetPCelerity, grav, Dt, Alpha, cfl, DecayRate
             logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:)
             character(64) :: subroutine_name = "slot_CC_ETM"
         !%------------------------------------------------------------------
@@ -505,6 +505,7 @@ module preissmann_slot
             volume     => elemR(:,er_Volume)
             velocity   => elemR(:,er_velocity)
             temp       => elemR(:,er_Temp01)
+            SurchargeTime => elemR(:,er_Surcharge_Time)
             !% --- pointer to elemYN column
             isSurcharge=> elemYN(:,eYN_isSurcharged)
             isSlot     => elemYN(:,eYN_isPSsurcharged)
@@ -517,6 +518,7 @@ module preissmann_slot
             !% --- pointer to necessary settings struct
             SlotMethod          => setting%Solver%PreissmannSlot%Method
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+            DecayRate           => setting%Solver%PreissmannSlot%DecayRate
             Alpha               => setting%Solver%PreissmannSlot%Alpha
             cfl                 => setting%VariableDT%CFL_target
             grav                => setting%Constant%gravity
@@ -604,10 +606,15 @@ module preissmann_slot
                 where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
                     !% --- get a new decreased preissmann number for the next time step for elements having a slot
                     !    PNumber(thisP) = max((PNumber(thisP) ** twoR - PNumber(thisP) + oneR) / PNumber(thisP), oneR)
-                    PNumber(thisP) = max(PNumber(thisP) - PNumber(thisP) * Dt, oneR)
+                    ! PNumber(thisP) = max(PNumber(thisP) -  1.0 * PNumber(thisP) * Dt, oneR)
+                    !% HACK testing
+                    SurchargeTime(thisP) = SurchargeTime(thisP) + Dt / twoR
+                    PNumber(thisP)       = (TargetPCelerity / (Alpha * sqrt(grav * ellMax(thisP)))) * exp(-DecayRate * SurchargeTime(thisP)) + oneR
                 elsewhere
+                    !% HACK testing
+                    SurchargeTime(thisP) = zeroR
                     !% reset the preissmann number for every CC element not having a slot
-                    PNumber(thisP) =  TargetPCelerity / (Alpha * sqrt(grav * ellMax(thisP)))
+                    PNumber(thisP) =  TargetPCelerity / (Alpha * sqrt(grav * ellMax(thisP))) + oneR
                 end where
 
             case default

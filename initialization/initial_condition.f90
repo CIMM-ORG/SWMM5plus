@@ -4346,7 +4346,8 @@ contains
         elemR(1:size(elemR,1)-1,er_dSlotDepth)            = zeroR
         elemR(1:size(elemR,1)-1,er_dSlotVolume)           = zeroR
         elemR(1:size(elemR,1)-1,er_SlotVolumeOld)         = zeroR
-        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR     
+        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
+        elemR(1:size(elemR,1)-1,er_Surcharge_Time)        = zeroR      
 
         !% only calculate slots for ETM time-march
         if (setting%Solver%SolverSelect == ETM) then

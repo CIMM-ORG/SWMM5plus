@@ -399,6 +399,7 @@ module define_indexes
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
         enumerator :: er_SourceMomentum             !% source term for momentum equation
+        enumerator :: er_Surcharge_Time             !% time a CC element is surcharged
         enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Temp02                     !% temporary array (use and set to null in a single procedure)
