@@ -467,11 +467,11 @@ module preissmann_slot
         !% Declarations
             integer, intent(in) :: thisCol, Npack
             integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
-            real(8), pointer    :: AreaN0(:), BreadthMax(:), ellMax(:), fullarea(:)
+            real(8), pointer    :: ellMax(:), fullarea(:)
             real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
-            real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), temp(:)
+            real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
             real(8), pointer    :: dSlotVol(:), dSlotArea(:), dSlotDepth(:), oldSlotVOl(:), volume(:) 
-            real(8), pointer    :: velocity(:), fPNumber(:), SurchargeTime(:)
+            real(8), pointer    :: velocity(:), fPNumber(:), SurchargeTime(:), PnumberInitial(:)
             real(8), pointer    :: TargetPCelerity, grav, Dt, Alpha, cfl, DecayRate
             logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:)
             character(64) :: subroutine_name = "slot_CC_ETM"
@@ -486,8 +486,6 @@ module preissmann_slot
         !% HACK -- many of these aliases are unused. Need to clean up 20220913 brh
             thisP      => elemP(1:Npack,thisCol)
             !% --- elemR data
-            AreaN0     => elemR(:,er_Area_N0)
-            BreadthMax => elemR(:,er_BreadthMax)
             dSlotArea  => elemR(:,er_dSlotArea)
             dSlotDepth => elemR(:,er_dSlotDepth)
             dSlotVol   => elemR(:,er_dSlotVolume)
@@ -504,8 +502,8 @@ module preissmann_slot
             SlotArea   => elemR(:,er_SlotArea)
             volume     => elemR(:,er_Volume)
             velocity   => elemR(:,er_velocity)
-            temp       => elemR(:,er_Temp01)
-            SurchargeTime => elemR(:,er_Surcharge_Time)
+            SurchargeTime  => elemR(:,er_Surcharge_Time)
+            PnumberInitial => elemR(:,er_Preissmann_Number_initial)
             !% --- pointer to elemYN column
             isSurcharge=> elemYN(:,eYN_isSurcharged)
             isSlot     => elemYN(:,eYN_isPSsurcharged)
@@ -577,9 +575,9 @@ module preissmann_slot
                     isfSlot(fDn(thisP)) = .true.
                     isSlot(thisP)       = .true.
                     isSurcharge(thisP)  = .true.
-                    !% smooth out preissmann number
-                    ! PNumber = max(onehalfR * (fPNumber(fUP(thisP)) + fPNumber(fDn(thisP))), oneR)
-                    !% find the preissmann celerity
+                    !% smooth out the preissmann number before celerity calculation
+                    PNumber = max(onehalfR * (fPNumber(fUP(thisP)) + fPNumber(fDn(thisP))), oneR)
+                    !% find the preissmann celerity from the preissmann number
                     PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
                     !% find the change in slot volume
                     dSlotVol(thisP)   = SlotVolume(thisP) - oldSlotVol(thisP)
@@ -604,18 +602,15 @@ module preissmann_slot
                 end where
 
                 where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
-                    !% --- get a new decreased preissmann number for the next time step for elements having a slot
-                    !    PNumber(thisP) = max((PNumber(thisP) ** twoR - PNumber(thisP) + oneR) / PNumber(thisP), oneR)
-                    ! PNumber(thisP) = max(PNumber(thisP) -  1.0 * PNumber(thisP) * Dt, oneR)
-                    !% HACK testing
-                    SurchargeTime(thisP) = SurchargeTime(thisP) + Dt / twoR
-                    PNumber(thisP)       = (TargetPCelerity / (Alpha * sqrt(grav * ellMax(thisP)))) * exp(-DecayRate * SurchargeTime(thisP)) + oneR
+                    !% --- calculate surcharge time
+                    SurchargeTime(thisP) = SurchargeTime(thisP) + Dt / twoR 
                 elsewhere
-                    !% HACK testing
+                    !% --- reset the surcharge timer
                     SurchargeTime(thisP) = zeroR
-                    !% reset the preissmann number for every CC element not having a slot
-                    PNumber(thisP) =  TargetPCelerity / (Alpha * sqrt(grav * ellMax(thisP))) + oneR
                 end where
+
+                !% find the new preissmann number for all the closed elements
+                PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp(-DecayRate * SurchargeTime(thisP)) + oneR
 
             case default
                 !% --- should not reach this stage

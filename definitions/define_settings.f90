@@ -485,8 +485,8 @@ module define_settings
         logical              :: force_folder_creationYN = .true.
         logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
-        character(len=256)   :: base_folder = ""
-        character(len=256)   :: library_folder = ""
+        character(len=256)   :: base_folder = "build"
+        character(len=256)   :: library_folder = "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
