@@ -70,6 +70,7 @@
         "UseCulvertsTF" : true
     },
     "Discretization" : {
+        "AllowChannelOverflowTF" : false,
         "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,

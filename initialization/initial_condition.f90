@@ -19,7 +19,7 @@ module initial_condition
     use update
     use face
     use diagnostic_elements
-    use geometry !BRHbugfix 20210813
+    use geometry 
     use arch_conduit
     use circular_conduit
     use basket_handle_conduit
@@ -32,13 +32,16 @@ module initial_condition
     use semi_elliptical_conduit
     use semi_circular_conduit
     use filled_circular_conduit
-    use rectangular_channel, only: rectangular_area_from_depth
-    use parabolic_channel, only: parabolic_area_from_depth
-    use rectangular_conduit, only: rectangular_closed_area_from_depth
-    use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth
-    use trapezoidal_channel, only: trapezoidal_area_from_depth
-    use triangular_channel, only: triangular_area_from_depth
+    use geometry_lowlevel
+    use irregular_channel, only: irregular_geometry_from_depth_singular
+    ! use rectangular_channel, only: rectangular_area_from_depth
+    ! use parabolic_channel, only: parabolic_area_from_depth
+    ! use rectangular_conduit, only: rectangular_closed_area_from_depth
+    ! use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth
+    ! use trapezoidal_channel, only: trapezoidal_area_from_depth
+    ! use triangular_channel, only: triangular_area_from_depth
     use storage_geometry
+    use preissmann_slot, only: slot_initialize
     use adjust
     use xsect_tables
     use interface_, only: interface_get_nodef_attribute
@@ -115,6 +118,10 @@ contains
         setting%Output%BarrelsExist = .false. !% will be set to true if barrels > 1 detected
         elemI(:,ei_barrels) = oneR
 
+        !% --- initialize sedmient depths
+        !%     Note: as of 20221006 only FilledCircular is allowed to have nonzero sediment depth
+        !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
+        elemR(:,er_SedimentDepth) = zeroR
 
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
@@ -410,20 +417,28 @@ contains
             !% necessary pointers
             thisLink    => packed_link_idx(ii)
 
+            !print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
 
+            !print *, 'calling get depth'
             call init_IC_get_depth (thisLink)
 
+            !print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
+            !print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
 
+            !print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
 
+            !print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
+            !print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)      
 
+            !print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
@@ -433,6 +448,8 @@ contains
             end if
 
         end do
+
+        !stop 293470
         
         !%------------------------------------------------------------------
         !% Closing
@@ -597,6 +614,7 @@ contains
         end if
 
         !% ---set the depths in link elements from links
+        !%    Note these depths are the combination of water and sediment
         select case (LdepthType)
 
             case (UniformDepth)
@@ -1090,11 +1108,13 @@ contains
         !%-------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisLink
-            integer, pointer    :: geometryType, link_tidx
-            integer :: ii, kk, thisTransectIdx, startT, endT
-            integer, dimension(:), allocatable :: packIdx
+            integer, pointer    :: geometryType, link_tidx, eIdx(:), thisP(:)
 
-            real(8), pointer :: depthnorm(:)
+            integer :: Npack, ii, mm
+
+            real(8), pointer    :: depth(:), fullarea(:), fullperimeter(:)
+            real(8), pointer    :: fulltopwidth(:), initialDepth(:)
+            real(8), pointer    :: fullhydradius(:), fulldepth(:)
 
             character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
         !%--------------------------------------------------------------------
@@ -1102,289 +1122,276 @@ contains
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
+        !% Aliases:
 
-        !% pointer to geometry type
-        geometryType => link%I(thisLink,li_geometry)
-        depthnorm    => elemR(:,er_Temp01)
+            !% --- pointer to geometry type
+            geometryType => link%I(thisLink,li_geometry)
+
+            !% --- pointer to element indexes
+            eIdx         => elemI(:,ei_Lidx)
+
+            !% --- pack the elements for this link in temporary array
+            Npack = count(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            if (Npack < 1) return 
+            elemI(1:Npack,ei_Temp01) = pack(eIdx,elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            thisP => elemI(1:Npack,ei_Temp01)
+
+            initialDepth => elemR(:,er_Temp01)
+            depth        => elemR(:,er_Depth)
+            fullarea     => elemR(:,er_FullArea)
+            fulldepth    => elemR(:,er_FullDepth)
+            fullhydradius=> elemR(:,er_FullHydRadius)
+            fullperimeter=> elemR(:,er_FullPerimeter)
+            fulltopwidth => elemR(:,er_FullTopwidth)
+        !%--------------------------------------------------------------------
+
+        !% --- temporarily store initial depth in temp array so that full depth
+        !%     can replace it for computing full geometry with standard functions
+        !%     We restore this to the regular depth before computing IC
+        !elemR(thisP,er_Temp01) = elemR(thisP,er_Depth)
+        initialDepth(thisP) = depth(thisP)
+        
 
         ! print *, 'in ',trim(subroutine_name)
         ! print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))
-
+        
         select case (geometryType)
 
-            case (lRectangular)
-
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                    elemI(:,ei_geometryType) = rectangular
-
-                    !% --- independent data
-                    elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Rectangular_Breadth)
-                    elemR(:,er_FullDepth)               = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
-                    elemR(:,er_FullHydDepth)            = link%R(thisLink,lr_FullDepth) 
-                    elemR(:,er_FullArea)                = link%R(thisLink,lr_FullArea)
-                    elemR(:,er_FullHydRadius)           = link%R(thisLink,lr_FullHydRadius)
-
-                    !% --- dependent on full depth
-                    elemR(:,er_FullPerimeter)           = twoR * link%R(thisLink,lr_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth) !% 20220406brh
-                    elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-
-                    !% --- dependent on full area
-                    elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
-                    elemR(:,er_ell_max)                 = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
-                                                         * elemR(:,er_BreadthMax)                      &
-                                                         + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-               
-                    !% --- store IC data
-                    elemR(:,er_Area)          = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
-                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                    
-                endwhere
-
-            case (lTrapezoidal)
-
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                    elemI(:,ei_geometryType) = trapezoidal
-
-                    !% --- independent data
-                    elemSGR(:,esgr_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,esgr_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
-                    elemSGR(:,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
-                    elemR(:,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
-
-                    !% --- dependent on FullDepth
-                    elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth)        &
-                                             + (  elemSGR(:,esgr_Trapezoidal_LeftSlope)    &
-                                                + elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-                     
-                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-
-                    elemR(:,er_FullArea)     = ( elemSGR(:,esgr_Trapezoidal_Breadth) &
-                                                 + onehalfR  &
-                                                  * (  elemSGR(:,esgr_Trapezoidal_LeftSlope) &
-                                                     + elemSGR(:,esgr_Trapezoidal_RightSlope) &
-                                                     ) * elemR(:,er_FullDepth) &
-                                                ) * elemR(:,er_FullDepth)
-
-                    elemR(:,er_FullPerimeter) = elemSGR(:,esgr_Trapezoidal_Breadth)                          &
-                                               + elemR(:,er_FullDepth)                                        &
-                                                * (   sqrt(oneR + elemSGR(:,esgr_Trapezoidal_LeftSlope )**2)  &
-                                                    + sqrt(oneR + elemSGR(:,esgr_Trapezoidal_RightSlope)**2) )                             
-
-                    !% --- depends on FullArea
-                    elemR(:,er_AreaBelowBreadthMax) = elemR(:,er_FullArea)
-                    elemR(:,er_FullVolume)          = elemR(:,er_FullArea) * elemR(:,er_Length)
-
-                    !% --- depends on BreadthMax et al
-                    elemR(:,er_ell_max)      = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax))  &
-                                              * elemR(:,er_BreadthMax)                         &
-                                              + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-
-                    elemR(:,er_FullHydDepth) = elemR(:,er_FullArea) / elemR(:,er_BreadthMax) 
-
-                
-                    !% --- store IC data
-                    elemR(:,er_Area)         = ( elemSGR(:,esgr_Trapezoidal_Breadth) &
-                                                 + onehalfR  &
-                                                 * (  elemSGR(:,esgr_Trapezoidal_LeftSlope)  &
-                                                    + elemSGR(:,esgr_Trapezoidal_RightSlope) &
-                                                    ) * elemR(:,er_Depth) &
-                                               ) * elemR(:,er_Depth)
-
-                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                               
-                endwhere
-
-                !print *, '----- trapezoidal full depth ',link%R(thisLink,lr_FullDepth)
-            
-            case (lTriangular)
-
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-
-                    elemI(:,ei_geometryType) = triangular
-                    !% --- independent data
-                    elemSGR(:,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_BreadthMax)                 = link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
-
-                    !% --- dependent on Full Depth
-                    elemSGR(:,esgr_Triangular_Slope)       = elemSGR(:,esgr_Triangular_TopBreadth) / (twoR * elemR(:,er_FullDepth))
-                    elemR(:,er_ZbreadthMax)                = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)                     = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)                   = elemR(:,er_FullDepth) * elemR(:, er_FullDepth) * elemSGR(:,esgr_Triangular_Slope) 
-
-                    !% --- dependent on Full Area
-                    elemR(:,er_FullVolume)                 = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_AreaBelowBreadthMax)        = elemR(:,er_FullArea)
-                    elemR(:,er_FullPerimeter)              = twoR * sqrt( ((elemSGR(:,esgr_Triangular_TopBreadth) ** twoR) / fourR) &
-                                                                        + (elemR(:,er_FullDepth) ** twoR) )
-
-                    !% -- depedendent on Breadth Max et al
-                    elemR(:,er_ell_max)           = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
-                                                   * elemR(:,er_BreadthMax)                        &
-                                                   + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-
-                    elemR(:,er_FullHydDepth)      = elemR(:,er_FullArea) / elemR(:,er_BreadthMax) 
-                    
-                    !% store IC data
-                    elemR(:,er_Area)         = elemR(:,er_Depth) * elemR(:, er_Depth) * elemSGR(:,esgr_Triangular_Slope) 
-                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                endwhere
-
-            case (lIrregular)
+        case (lIrregular)
               
-                link_tidx => link%I(thisLink,li_transect_idx)
+            !% --- transect index for this link
+            link_tidx => link%I(thisLink,li_transect_idx)
+            
+            !% --- assign non-table transect data
+            elemI(thisP,ei_geometryType)  = irregular
+            elemI(thisP,ei_link_transect_idx)  = link_tidx
+            
+            !% --- independent data
+            elemR(thisP,er_BreadthMax)          = link%transectR(link_tidx,tr_widthMax)
+            elemR(thisP,er_AreaBelowBreadthMax) = link%transectR(link_tidx,tr_areaBelowBreadthMax)
+            !% --- note, do not apply the full depth limiter function to transects!
+            elemR(thisP,er_FullDepth)           = link%transectR(link_tidx,tr_depthFull)
+            elemR(thisP,er_FullArea)            = link%transectR(link_tidx,tr_areaFull)
+            elemR(thisP,er_FullTopwidth)        = link%transectR(link_tidx,tr_widthFull)
+            elemR(thisP,er_ZbreadthMax)         = link%transectR(link_tidx,tr_depthAtBreadthMax) + elemR(thisP,er_Zbottom)
+            elemR(thisP,er_FullHydRadius)       = link%transectR(link_tidx,tr_hydRadiusFull)
+            
+            !% --- full conditions
+            elemR(thisP,er_FullPerimeter) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                                (thisP, fullhydradius(thisP), fullarea(thisP))
 
-                !% TESTING STUFF
-                ! print *, 'link_tidx ',link_tidx  
-                ! do ii=1,size(elemI,1)
-                !     if  (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                !         elemR(ii,er_Depth) = (real(ii,8) / 30.d0) * link%transectR(link_tidx,tr_depthFull)
-                !         print *,ii, 'depth ',elemR(ii,er_Depth)
-                !     end if
-                ! end do
+            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
 
-                ! !% --- initialize transect table
-                ! !%     get a packed index of elements in irregular link
-                ! packIdx = pack(elemI(:,ei_Lidx),(elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
-                ! !% --- assign the EPA SWMM transect table index to these links
-                ! elemI(packIdx,ei_link_transect_idx) = li_transect_idx
+            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)    
 
-                ! !% --- store separate link transect data table for each element
-                ! !%     although this is substantial extra storage, it allows us to
-                ! !%     write vector processing for updating element depth from volume
-                ! startT = lastTransectIdx+1
-                ! thisTransectIdx = lastTransectIdx
-                ! do kk=1,size(packIdx)
-                !     thisTransectIdx = thisTransectIdx+1
-                !     !% --- assign the element transect table index (unique for each element)
-                !     elemI(packIdx(kk),ei_transect_idx) = thisTransectIdx
-                !     transectTableAreaR (thisTransectIdx,:,:) = link%transectTableAreaR (link_tidx,:,:)
-                !     transectTableDepthR(thisTransectIdx,:,:) = link%transectTableDepthR(link_tidx,:,:)
-                ! end do
-                ! lastTransectIdx = thisTransectIdx
-                ! endT = lastTransectIdx
-                
-                !% assign non-table transect data
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    elemI(:,ei_geometryType)  = irregular
-                    elemI(:,ei_link_transect_idx)  = link_tidx
-                    
-                    !% store fixed data
-                    elemR(:,er_BreadthMax)    = link%transectR(link_tidx,tr_widthMax)
-                    !% --- note, do not apply the full depth limiter to transect!
-                    elemR(:,er_FullDepth)     = link%transectR(link_tidx,tr_depthFull)
-                    elemR(:,er_FullArea)      = link%transectR(link_tidx,tr_areaFull)
-                    elemR(:,er_FullHydDepth)  = elemR(:,er_FullArea) / link%transectR(link_tidx,tr_widthFull)
-                    elemR(:,er_ZbreadthMax)   = link%transectR(link_tidx,tr_depthAtBreadthMax) + elemR(:,er_Zbottom)
-                    elemR(:,er_FullPerimeter) = elemR(:,er_FullArea) / link%transectR(link_tidx,tr_hydRadiusFull)
-                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom)  + elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_AreaBelowBreadthMax)   =  link%transectR(link_tidx,tr_areaBelowBreadthMax)
-                    elemR(:,er_ell_max) = (  (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
-                                            + elemR(:,er_AreaBelowBreadthMax )                                       &
-                                          ) / elemR(:,er_BreadthMax)
-                endwhere
+            !% --- dependent data
+            elemR(thisP,er_Zcrown)        = elemR(thisP,er_Zbottom)  + elemR(thisP,er_FullDepth)
+            elemR(thisP,er_FullVolume)    = elemR(thisP,er_FullArea) * elemR(thisP,er_Length)
+            
 
-                !% --- IC data for area and volume cannot be initialized until the transect tables are setup, which is
-                !%     delayed until after the JB are initialized.
+            !% ---NOTE the IC data for area and volume cannot be initialized until the transect tables are setup, which is
+            !%     delayed until after the JB are initialized.
 
-                ! !% --- store IC data
-                ! !%     compute the normalized depth
-                ! depthnorm(packIdx) =  elemR(packIdx,er_Depth)/elemR(packIdx,er_FullDepth)
-                ! !% --- lookup the associated normalized area
-                ! call xsect_table_lookup_array ( &
-                !     elemR(:,er_Area), depthnorm, transectTableDepthR(:,:,tt_area), packIdx)
-                ! !% --- convert normalized area to physical area   
-                ! elemR(packIdx,er_Area) = elemR(packIdx,er_Area) * elemR(packIdx,er_FullArea)    
-                ! !% --- store other areas and volumes
-                ! elemR(packIdx,er_Area_N0)       = elemR(packIdx,er_Area)
-                ! elemR(packIdx,er_Area_N1)       = elemR(packIdx,er_Area)
-                ! elemR(packIdx,er_Volume)        = elemR(packIdx,er_Area) * elemR(packIdx,er_Length)
-                ! elemR(packIdx,er_Volume_N0)     = elemR(packIdx,er_Volume)
-                ! elemR(packIdx,er_Volume_N1)     = elemR(packIdx,er_Volume)
+        case (lParabolic)
 
-                ! ! do ii=1,size(packIdx)
-                ! !     print *, 'here  in ',trim(subroutine_name)
-                ! !     print *, ii, packIdx(ii)
-                ! !     print *, elemR(packIdx(ii),er_Depth), elemR(packIdx(ii),er_Area)
-                ! ! end do    
-                
-                ! depthnorm(packIdx) = nullvalueR
-                ! deallocate(packIdx)
+            elemI(thisP,ei_geometryType) = parabolic
 
-                ! !print *, 'working on irregular cross-sections'
-                ! !call util_crashpoint(448792)
-                ! !return
+            !% --- independent data
+            elemSGR(thisP,esgr_Parabolic_Breadth)   = link%R(thisLink,lr_BreadthScale)
+            elemSGR(thisP,esgr_Parabolic_Radius)    = elemSGR(thisP,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
+            elemR(thisP,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+  
+            !% --- full conditions
+            elemR(thisP,er_FullArea)      = llgeo_parabolic_area_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
 
-            case (lParabolic)
+            elemR(thisP,er_FullPerimeter) = llgeo_parabolic_perimeter_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
 
-                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            elemR(thisP,er_FullTopwidth)  = llgeo_parabolic_topwidth_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
+            
+            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
 
-                    elemI(:,ei_geometryType) = parabolic
+            elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                                (thisP, fullarea(thisP), fullperimeter(thisP))
 
-                    !% --- independent data
-                    elemSGR(:,esgr_Parabolic_Breadth)   = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,esgr_Parabolic_Radius)    = elemSGR(:,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
-                    elemR(:,er_BreadthMax)              = elemSGR(:,esgr_Parabolic_Breadth)
-                    elemR(:,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullArea)                = link%R(thisLink,lr_FullArea)
-                    elemR(:,er_FullHydRadius)           = link%R(thisLink,lr_FullHydRadius)
-                    elemR(:,er_FullHydDepth)            = (twoR/threeR) * link%R(thisLink,lr_FullDepth) 
+            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
+            
+            !% --- dependent 
+            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea) 
+            elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
+            elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
+            elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)
+             
 
-                    !% --- dependent on full depth
-                    elemR(:,er_FullPerimeter)           = onehalfR * elemSGR(:, esgr_Parabolic_Breadth) * elemSGR(:, esgr_Parabolic_Breadth) &
-                                                        * ((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) * sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) &
-                                                        / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth))) & 
-                                                        + log((twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)) + sqrt(oneR + (twoR * sqrt(elemR(:, er_FullDepth)) &
-                                                        / elemSGR(:, esgr_Parabolic_Breadth)) * (twoR * sqrt(elemR(:, er_FullDepth)) / elemSGR(:, esgr_Parabolic_Breadth)))))
+            !% --- store IC data
+            elemR(thisP,er_Area)          = llgeo_parabolic_area_from_depth_pure(thisP, depth(thisP))
+            elemR(thisP,er_Area_N0)       = elemR(thisP,er_Area)
+            elemR(thisP,er_Area_N1)       = elemR(thisP,er_Area)
+            elemR(thisP,er_Volume)        = elemR(thisP,er_Area) * elemR(thisP,er_Length)
+            elemR(thisP,er_Volume_N0)     = elemR(thisP,er_Volume)
+            elemR(thisP,er_Volume_N1)     = elemR(thisP,er_Volume)
 
-                    elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    !% --- dependent on full area
-                    elemR(:,er_FullVolume)              = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
-                    elemR(:,er_ell_max)                 = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) &
-                                                         * elemR(:,er_BreadthMax)                      &
-                                                         + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-                    !% --- store IC data
-                    elemR(:, er_Area) = (fourR / threeR) * elemSGR(:,esgr_Parabolic_Radius) * elemR(:, er_Depth) *  sqrt(elemR(:, er_Depth))
-                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                    
-                endwhere
+        case (lPower_function)
 
-            case default
+            print *, 'CODE/CONFIGURATION ERROR: power function cross-sections not supported in SWMM5+'
+            call util_crashpoint(4589723)
 
-                print *, 'In, ', subroutine_name
-                print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
-                print *, 'which has key ',trim(reverseKey(geometryType))
-                call util_crashpoint(98734)
+        case (lRectangular)
+
+            elemI(thisP,ei_geometryType) = rectangular
+
+            !% --- independent data
+            elemSGR(thisP,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+            elemR(thisP,er_FullDepth)               = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
+
+            !% --- custom functions using temporary store
+            do ii=1,size(thisP)
+                mm = thisP(ii)
+                elemR(mm,er_FullArea)      = llgeo_rectangular_closed_area_from_depth_singular &
+                                                    (mm, fulldepth(mm))
+
+                elemR(mm,er_FullPerimeter) = llgeo_rectangular_closed_perimeter_from_depth_singular &
+                                                    (mm, fulldepth(mm))
+
+                elemR(mm,er_FullTopwidth)  = llgeo_rectangular_closed_topwidth_from_depth_singular &
+                                                    (mm, fulldepth(mm))
+            end do
+
+            !% --- full conditions
+            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+
+            elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                                (thisP, fullarea(thisP), fullperimeter(thisP))
+
+            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)  
+
+            !% --- dependent data
+            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea)
+            elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
+            elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
+            elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)
+           
+
+            !% --- store IC data
+            elemR(thisP,er_Area)          = llgeo_rectangular_area_from_depth_pure(thisP,depth(thisP))
+            elemR(thisP,er_Area_N0)       = elemR(thisP,er_Area)
+            elemR(thisP,er_Area_N1)       = elemR(thisP,er_Area)
+            elemR(thisP,er_Volume)        = elemR(thisP,er_Area) * elemR(thisP,er_Length)
+            elemR(thisP,er_Volume_N0)     = elemR(thisP,er_Volume)
+            elemR(thisP,er_Volume_N1)     = elemR(thisP,er_Volume)
+
+        case (lTrapezoidal)
+
+            elemI(thisP,ei_geometryType) = trapezoidal
+
+            !% --- independent data
+            elemSGR(thisP,esgr_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
+            elemSGR(thisP,esgr_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
+            elemSGR(thisP,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
+            elemR(thisP,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
+
+            !% --- full conditions
+            elemR(thisP,er_FullArea)      = llgeo_trapezoidal_area_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
+
+            elemR(thisP,er_FullPerimeter) = llgeo_trapezoidal_perimeter_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
+
+            elemR(thisP,er_FullTopwidth)  = llgeo_trapezoidal_topwidth_from_depth_pure &
+                                                (thisP, fulltopwidth(thisP))
+            
+            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+
+            elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                                (thisP, fullarea(thisP), fullperimeter(thisP))
+
+            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
+            
+            !% --- dependent data
+            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea)
+            elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
+            elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
+            elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)
+            
+        
+            !% --- store IC data
+            elemR(thisP,er_Area)         = llgeo_trapezoidal_area_from_depth_pure (thisP, depth(thisP))
+            elemR(thisP,er_Area_N0)      = elemR(thisP,er_Area)
+            elemR(thisP,er_Area_N1)      = elemR(thisP,er_Area)
+            elemR(thisP,er_Volume)       = elemR(thisP,er_Area) * elemR(thisP,er_Length)
+            elemR(thisP,er_Volume_N0)    = elemR(thisP,er_Volume)
+            elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)                      
+        
+        case (lTriangular)
+
+            elemI(thisP,ei_geometryType) = triangular
+
+            !% --- independent data
+            elemSGR(thisP,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
+            elemR(thisP,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
+            elemSGR(thisP,esgr_Triangular_Slope)       = elemSGR(thisP,esgr_Triangular_TopBreadth) &
+                                                         / (twoR * elemR(thisP,er_FullDepth))
+
+            !% --- full conditions
+            elemR(thisP,er_FullArea)      = llgeo_triangular_area_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
+
+            elemR(thisP,er_FullPerimeter) = llgeo_triangular_perimeter_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
+                                                
+            elemR(thisP,er_FullTopwidth)  = llgeo_triangular_topwidth_from_depth_pure &
+                                                (thisP, fulldepth(thisP))
+  
+            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+
+            elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                                (thisP, fullarea(thisP), fullperimeter(thisP))
+
+            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)
+            
+            !% --- dependent data
+            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea)
+            elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
+            elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
+            elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)
+            
+            !% store IC data
+            elemR(thisP,er_Area)         = llgeo_triangular_area_from_depth_pure(thisP, depth(thisP)) 
+            elemR(thisP,er_Area_N0)      = elemR(thisP,er_Area)
+            elemR(thisP,er_Area_N1)      = elemR(thisP,er_Area)
+            elemR(thisP,er_Volume)       = elemR(thisP,er_Area) * elemR(thisP,er_Length)
+            elemR(thisP,er_Volume_N0)    = elemR(thisP,er_Volume)
+            elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)
+
+        case default
+
+            print *, 'In, ', subroutine_name
+            print *, 'CODE ERROR -- geometry type unknown for # ',geometryType
+            print *, 'which has key ',trim(reverseKey(geometryType))
+            call util_crashpoint(98734)
 
         end select
+        
+        !% --- reset the temporary space
+        !%     Note, real must be first as int is used for thisP
+        elemR(thisP,er_Temp01) = zeroR
+        elemI(thisP,ei_Temp01) = nullvalueI
+       
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine init_IC_get_channel_geometry
 !
 !==========================================================================
@@ -1392,191 +1399,101 @@ contains
 !
     subroutine init_IC_get_conduit_geometry (thisLink)
         !%-----------------------------------------------------------------
-        !% get the geometry data for conduit links
-        !% and calculate element volumes
+        !% Description:
+        !% get the geometry data for closed conduits
+        !% NOTE DepthBelowMaxBreadth is taken at the highest depth, or
+        !% just slightly below that, where the max breadth occurs; e.g.
+        !% for the basket handle the max breadth occurs between 0.2 and
+        !% 0.28 of the normalized depth, so we use 0.27 so that 
+        !% lookup tables fall in between two values with max breadth
         !%-----------------------------------------------------------------
-            integer :: ii
+        !% Declarations
+            integer :: ii, mm, Npack
             integer, intent(in) :: thisLink
-            integer, pointer    :: geometryType
-            real(8), pointer :: pi
+            integer, pointer    :: geometryType, eIdx(:), thisP(:)
+            real(8), pointer    :: fullDepth(:), breadthMax(:), fullArea(:)
+            real(8), pointer    :: depth(:), fullHydRadius(:)
+            real(8), pointer :: pi, topwidthDepth
+            real(8)          :: bottomHydRadius, dummyA(1)
             character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
         !%-----------------------------------------------------------------
+        !% Preliminaries
+            !% --- pack the elements for this link in temporary array
+            Npack = count(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            if (Npack < 1) return
+
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"   
-        !%-----------------------------------------------------------------------------
-        !% pointer to geometry type
-        geometryType => link%I(thisLink,li_geometry)
-        pi => setting%Constant%pi
+        !%------------------------------------------------------------------
+        !% Aliases
+            !% pointer to geometry type
+            geometryType => link%I(thisLink,li_geometry)
+            pi => setting%Constant%pi
+
+            !% --- pointer to element indexes
+            eIdx         => elemI(:,ei_Lidx)
+
+            !% --- pointer to full depth
+            depth         => elemR(:,er_Depth)
+            fullDepth     => elemR(:,er_FullDepth)
+            breadthMax    => elemR(:,er_BreadthMax)
+            fullArea      => elemR(:,er_FullArea)            
+            fullHydRadius => elemR(:,er_FullHydRadius)
+            !tempDepth     => elemR(:,er_Temp02)
+
+            elemI(1:Npack,ei_Temp01) = pack(eIdx,elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            thisP => elemI(1:Npack,ei_Temp01)
+        !%------------------------------------------------------------------
+        !% --- independent common data
+        elemR(thisP,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
+        elemR(thisP,er_FullArea)      = link%R(thisLink,lr_FullArea)
+        elemR(thisP,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
 
         select case (geometryType)
 
-        case (lRectangular_closed)
+        case (lArch)  !% TABULAR
 
-            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            elemI(thisP,ei_geometryType) = arch
 
-                !% PROBLEM 20220714brh --- this does not create a change to depth, area, volume
-                !% and Preissmann slot depth for initially surcharged conditions
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.28d0 * elemR(thisP,er_FullDepth)
+  
+            call geo_common_initialize (thisP, arch, AArch, TArch)
 
-                elemI(:,ei_geometryType)    = rectangular_closed
-                !% store geometry specific data
-                elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
-                elemR(:,er_BreadthMax)            = elemSGR(:,esgr_Rectangular_Breadth)
-                
-                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_FullArea)              = link%R(thisLink,lr_FullArea)
-                elemR(:,er_FullHydRadius)         = link%R(thisLink,lr_FullHydRadius)
-                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_ell_max)               = (  (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
-                                                        + elemR(:,er_AreaBelowBreadthMax )                                     &
-                                                    ) / elemR(:,er_BreadthMax) 
+        case (lBasket_handle) !% TABULAR
 
-                elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth) 
-                elemR(:,er_FullPerimeter)         = twoR * elemR(:,er_FullDepth) + elemSGR(:,esgr_Rectangular_Breadth)
-                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
-                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)
-                
-                where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                    !% --- not surcharged
-                    elemR(:,er_Area)      = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)   
-                    elemR(:,er_SlotDepth) = zeroR 
-                    elemYN(:,eYN_isPSsurcharged)  = .false. 
-                    elemYN(:,eYN_isSurcharged)    = .false.                  
-                elsewhere   
-                    !% --- surcharged with Preissmann Slot
-                    elemR(:,er_Area)      = elemR(:,er_FullArea)
-                    elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                    elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isPSsurcharged)  = .true.
-                    elemYN(:,eYN_isSurcharged)    = .true.
-                endwhere  
+            elemI(thisP,ei_geometryType) = basket_handle
 
-                elemR(:,er_Area_N0)               = elemR(:,er_Area)
-                elemR(:,er_Area_N1)               = elemR(:,er_Area)
-                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
-            endwhere
-       
-        case (lRect_round)
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax)  = 0.27d0 * elemR(thisP,er_FullDepth)
 
-            where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                elemI(:,ei_geometryType)                       = rect_round
-                !% elemR data
-                elemR(:,er_FullDepth)                          = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_FullArea)                           = link%R(thisLink,lr_FullArea)
-                elemR(:,er_FullHydRadius)                      = link%R(thisLink,lr_FullHydRadius)
-                !% elemSGR data
-                elemSGR(:,esgr_Rectangular_Round_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
-                elemSGR(:,esgr_Rectangular_Round_Ybot)         = link%R(thisLink,lr_BottomDepth)
-                elemSGR(:,esgr_Rectangular_Round_Rbot)         = link%R(thisLink,lr_BottomRadius)
-                elemSGR(:,esgr_Rectangular_Round_ThetaBot)     = twoR * asin(elemSGR(:,esgr_Rectangular_Round_BreadthMax) / twoR & 
-                                                               / elemSGR(:,esgr_Rectangular_Round_Rbot))
-                elemSGR(:,esgr_Rectangular_Round_Abot)         = onehalfR * (elemSGR(:,esgr_Rectangular_Round_Rbot) ** twoR) & 
-                                                               * (elemSGR(:,esgr_Rectangular_Round_ThetaBot) - sin(elemSGR(:,esgr_Rectangular_Round_ThetaBot)))
-                elemSGR(:,esgr_Rectangular_Round_YatMaxBreadth)= elemR(:,er_FullDepth)
-
-                where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                    !% --- not surcharged
-                    where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Round_Ybot))
-                        !% find theta first
-                        elemR(:,er_Temp01) = twoR * acos(oneR - elemR(:,er_Depth) / elemSGR(:,esgr_Rectangular_Round_Rbot))  
-                        elemR(:,er_Area)   = onehalfR * (elemSGR(:,esgr_Rectangular_Round_Rbot) ** twoR) &
-                                           * (elemR(:,er_Temp01) - sin(elemR(:,er_Temp01)))
-                    elsewhere
-                        elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Round_Abot) + (elemR(:,er_Depth) &
-                                         - elemSGR(:,esgr_Rectangular_Round_Ybot)) * elemSGR(:,esgr_Rectangular_Round_BreadthMax) 
-                    end where   
-                    elemR(:,er_SlotDepth) = zeroR   
-                    elemYN(:,eYN_isPSsurcharged)  = .false. 
-                    elemYN(:,eYN_isSurcharged)    = .false.               
-                elsewhere   
-                    !% --- surcharged with Preissmann Slot
-                    elemR(:,er_Area)      = elemR(:,er_FullArea)
-                    elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                    elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isPSsurcharged)  = .true.
-                    elemYN(:,eYN_isSurcharged)    = .true.
-                endwhere
-
-                elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth) 
-                elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                elemR(:,er_FullHydDepth)  = elemR(:,er_FullDepth)
-                elemR(:,er_FullPerimeter) = elemR(:,er_FullArea) / elemR(:,er_FullHydRadius)
-                elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
-                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
-                                                  + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-            endwhere
-
-        case (lRect_triang)
-
-            where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                elemI(:,ei_geometryType)                            = rect_triang
-                elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
-                elemR(:,er_FullHydRadius)                           = link%R(thisLink,lr_FullHydRadius)
-
-                elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)   = link%R(thisLink,lr_BreadthScale)
-                elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
-                elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)  = elemSGR(thisLink,esgr_Rectangular_Triangular_TopBreadth) / (twoR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
-                elemSGR(:,esgr_Rectangular_Triangular_BottomArea)   = onehalfR * elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) * elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)                                                
-                
-
-                where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                    !% --- not surcharged
-                    where (elemR(:,er_Depth) <= elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
-                        elemR(:,er_Area) = elemR(:,er_Depth) * elemR(:,er_Depth) * elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)
-                    elsewhere
-                        elemR(:,er_Area) = elemSGR(:,esgr_Rectangular_Triangular_BottomArea) + (elemR(:,er_Depth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth)) * &
-                                            elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
-                    end where   
-                    elemR(:,er_SlotDepth) = zeroR    
-                    elemYN(:,eYN_isPSsurcharged)  = .false. 
-                    elemYN(:,eYN_isSurcharged)    = .false.           
-                elsewhere   
-                    !% --- surcharged with Preissmann Slot
-                    elemR(:,er_Area)      = elemR(:,er_FullArea)
-                    elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                    elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isPSsurcharged)  = .true.
-                    elemYN(:,eYN_isSurcharged)    = .true.
-                endwhere
-
-                elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                elemR(:,er_FullHydDepth)  = elemSGR(:,esgr_Rectangular_Triangular_BottomDepth) / twoR + (elemR(:,er_FullDepth) - elemSGR(:,esgr_Rectangular_Triangular_BottomDepth))
-
-                elemR(:,er_FullPerimeter) = twoR * sqrt( ((elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) ** twoR) / fourR) + (elemR(:,esgr_Rectangular_Triangular_BottomDepth) ** twoR) ) &
-                                          + twoR * (elemR(:,er_FullDepth) - elemR(:,esgr_Rectangular_Triangular_BottomDepth)) + elemSGR(:,esgr_Rectangular_Triangular_TopBreadth) 
-                elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Rectangular_Triangular_TopBreadth)
-                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)!% 20220124brh
-                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                                elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-            endwhere
+            call geo_common_initialize (thisP, basket_handle, ABasketHandle, TBasketHandle)
     
-        case (lCircular,lForce_main) 
+        case (lCatenary)  !% TABULAR
+
+            elemI(thisP,ei_geometryType) = catenary
+
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.29d0 * elemR(thisP,er_FullDepth)
+
+            call geo_common_initialize (thisP, catenary, ACatenary, TCatenary)
+
+        case (lCircular,lForce_main) !% TABULAR
+
+            !% --- force mains are required to be circular pipe
+            elemI(thisP,ei_geometryType)    = circular
 
             !% --- Get data for force main
-            !%     Note: all force mains are circular pipes
+            !%     NotethisP all force mains are circular pipes
             if (setting%Solver%ForceMain%UseForceMainTF) then
                 if (geometryType == lForce_main) then 
-                    where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                        elemYN(:,eYN_isForceMain)    = .TRUE.
-                        elemSI(:,esi_ForceMain_method) = setting%SWMMinput%ForceMainEquation
-                        elemSR(:,esr_ForceMain_Coef) = link%R(thislink,lr_ForceMain_Coef)
+                    where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
+                        elemYN(thisP,eYN_isForceMain)      = .TRUE.
+                        elemSI(thisP,esi_ForceMain_method) = setting%SWMMinput%ForceMainEquation
+                        elemSR(thisP,esr_ForceMain_Coef)   = link%R(thislink,lr_ForceMain_Coef)
                     endwhere
                 endif
             else
@@ -1584,664 +1501,279 @@ contains
                 !%    make sure FM from the SWMM input are set to
                 !%    non-force-main.
                 if (geometryType == lForce_main) then 
-                    where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                        elemSI(:,esi_ForceMain_method) = nullvalueI
-                        elemYN(:,eYN_isForceMain) = .FALSE.
-                        elemSR(:,esr_ForceMain_Coef) = nullvalueR
+                    where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
+                        elemSI(thisP,esi_ForceMain_method) = nullvalueI
+                        elemYN(thisP,eYN_isForceMain)      = .FALSE.
+                        elemSR(thisP,esr_ForceMain_Coef)   = nullvalueR
                     endwhere
                 end if
             end if
+                        
+            !% --- independent custom data
+            elemSGR(thisP,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+            elemSGR(thisP,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
+            elemR(thisP,er_BreadthMax)            = elemSGR(thisP,esgr_Circular_Diameter)
+            elemR(thisP,er_DepthAtBreadthMax)     = 0.5d0 * elemR(thisP,er_FullDepth)
+
+            call geo_common_initialize (thisP, circular, ACirc, TCirc)    
+         
+        case (lCustom)  !% TABULAR
+            print *, 'CODE/CONFIGURATION ERROR: Custom conduit cross-sections not supported in SWMM5+'
+            call util_crashpoint(7798723)
+
+        case (lEggshaped)  !% TABULAR
+
+            elemI(thisP,ei_geometryType) = eggshaped
+
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale)
+            elemR(thisP,er_DepthAtBreadthMax) = 0.64d0 * elemR(thisP,er_FullDepth)
+
+            call geo_common_initialize (thisP, eggshaped, AEgg, TEgg)
         
-            !% --- set up for circular pipe
-            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+        case (lFilled_circular)  !% ANALYTICAL
+            !% --- note, Zbottom is always the bottom of the filled section (not the top of it)
 
-                elemI(:,ei_geometryType)    = circular
-                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_FullArea)              = link%R(thisLink,lr_FullArea)
-                elemR(:,er_FullHydRadius)         = link%R(thisLink,lr_FullHydRadius)
-                !% store geometry specific data
-                elemSGR(:,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
-                elemSGR(:,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
-                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
-                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
-                elemR(:,er_FullHydDepth)          = onefourthR * setting%constant%pi * elemSGR(:,esgr_Circular_Diameter)
-                elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
-                elemR(:,er_BreadthMax)            = elemR(:,er_FullDepth)
-                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR
+            elemI(thisP,ei_geometryType) = filled_circular
 
-                !% 20220714brh  HACK -- needs review
-                where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                    !% --- not surcharged
-                    elemR(:,er_Area)                  = (elemSGR(:,esgr_Circular_Radius) **2) * &
-                                (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))) - &
-                                sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,esgr_Circular_Radius))))/2.0 )    
-                    elemR(:,er_SlotDepth) = zeroR    
-                    elemYN(:,eYN_isPSsurcharged)  = .false. 
-                    elemYN(:,eYN_isSurcharged)    = .false.              
-                elsewhere   
-                    !% --- surcharged with Preissmann Slot
-                    elemR(:,er_Area)      = elemR(:,er_FullArea)
-                    elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                    elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                    elemYN(:,eYN_isPSsurcharged)  = .true.
-                    elemYN(:,eYN_isSurcharged)    = .true. 
-                endwhere            
-                
-                elemR(:,er_Area_N0)               = elemR(:,er_Area)
-                elemR(:,er_Area_N1)               = elemR(:,er_Area)
-                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
-                elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) + &
-                                                    elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-            end where
-        
-        case (lSemi_circular)
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = semi_circular
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius) 
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Semi_Circular_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Semi_Circular_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Semi_Circular_YatMaxBreadth) = 0.15 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = semi_circular_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Semi_Circular_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Semi_Circular_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = semi_circular_area_from_depth_singular (ii, elemSGR(ii,esgr_Semi_Circular_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
+            !% HACK -- THIS ASSUMES THAT INPUT VALUES OF FULLDEPTH IS FOR PIPE WITHOUT SEDIMENT -- NEED TO CHECK THIS
 
-                end if
-            end do
-          
-        case (lFilled_circular)
+            !% --- independent data
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = filled_circular
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Filled_Circular_Diameter) = link%R(thisLink,lr_FullDepth) + elemSGR(ii,esgr_Filled_Circular_Ybot) 
-                    elemSGR(ii,esgr_Filled_Circular_Ybot)     = link%R(thisLink,lr_BottomDepth)
-                    !% dummy elemR data -- needed for primary bottom geometry calculations
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth) + elemSGR(ii,esgr_Filled_Circular_Ybot) 
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius) 
-                    elemR(ii,er_FullArea)      = (pi / fourR) * elemR(ii,er_FullDepth) ** twoR
+            !% --- get the sediment depth
+            elemR(thisP,er_SedimentDepth) = link%R(thisLink,lr_BottomDepth)
 
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Filled_Circular_Abot) = circular_area_from_depth_singular (ii, elemSGR(ii,esgr_Filled_Circular_Ybot))
-                    elemSGR(ii,esgr_Filled_Circular_Tbot) = circular_topwidth_from_depth_singular(ii,elemSGR(ii,esgr_Filled_Circular_Ybot))
-                    elemSGR(ii,esgr_Filled_Circular_Pbot) = elemSGR(ii,esgr_Filled_Circular_Abot) / (onefourthR * elemR(ii,er_FullDepth) &
-                                                            * xsect_table_lookup_singular (elemSGR(ii,esgr_Filled_Circular_Ybot) / elemR(ii,er_FullDepth), RCirc))
-                    !% elemR data
-                    if (elemSGR(ii,esgr_Filled_Circular_Ybot) > elemR(ii,er_FullDepth)/twoR ) then
-                        elemSGR(ii,esgr_Filled_Circular_YatMaxBreadth) = elemSGR(ii,esgr_Filled_Circular_Ybot)
-                        elemR(ii,er_ZbreadthMax) = elemR(ii,esgr_Filled_Circular_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                        elemR(ii,er_BreadthMax)  = elemSGR(ii,esgr_Filled_Circular_Tbot)
-                    else 
-                        elemSGR(ii,esgr_Filled_Circular_YatMaxBreadth) = elemR(ii,er_FullDepth) / twoR
-                        elemR(ii,er_ZbreadthMax) = elemR(ii,esgr_Filled_Circular_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                        elemR(ii,er_BreadthMax)  = elemR(ii,er_FullDepth)
-                    end if
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth) ) &
-                                               - elemSGR(ii,esgr_Filled_Circular_Pbot) + elemSGR(ii,esgr_Filled_Circular_Tbot)
+            !% --- reset the depth previously computed from nodes (without sediment)
+            elemR(thisP,er_Depth) = elemR(thisP,er_Depth) - elemR(thisP,er_SedimentDepth)
 
-                    !% elemR data -- fix the full depth and area by removing the filled portion
-                    elemR(ii,er_FullArea)      = elemR(ii,er_FullArea) - elemSGR(ii,esgr_Filled_Circular_Abot)
-                    elemR(ii,er_FullDepth)     = elemR(ii,er_FullDepth) - elemSGR(ii,esgr_Filled_Circular_Ybot)
-                    
-                    !% Check for slot
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area)      = filled_circular_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_AreaBelowBreadthMax) = filled_circular_area_from_depth_singular (ii, elemSGR(ii,esgr_Filled_Circular_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                            + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
+            elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)    &
+                 = link%R(thisLink,lr_FullDepth) !% + elemR(thisLink,er_SedimentDepth)    !% HACK -- check what link full depth means
 
-        case (lArch)
+            elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)        &
+                = (onefourthR * pi) * (elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)**2)
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = arch
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+            elemSGR(thisP,esgR_Filled_Circular_TotalPipePerimeter)   &
+                = pi * elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)    
 
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Arch_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Arch_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Arch_YatMaxBreadth) = 0.28 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.    
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Arch_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Arch_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_AreaBelowBreadthMax) = arch_area_from_depth_singular (ii, elemSGR(ii,esgr_Arch_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-
-        case (lBasket_handle)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = basket_handle
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Basket_Handle_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Basket_Handle_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) = 0.2 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Basket_Handle_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = basket_handle_area_from_depth_singular (ii, elemSGR(ii,esgr_Basket_Handle_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-       
-        case (lCatenary)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = catenary
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Catenary_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Catenary_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Catenary_YatMaxBreadth) = 0.25 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = catenary_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Catenary_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Catenary_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = catenary_area_from_depth_singular (ii, elemSGR(ii,esgr_catenary_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
+            elemSGR(thisP,esgr_Filled_Circular_TotalPipeHydRadius)     &
+                =   elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)  &
+                  / elemSGR(thisP,esgR_Filled_Circular_TotalPipePerimeter)
             
-        case (lEggshaped)
+            do ii=1,size(thisP)
+                mm = thisP(ii)
+                if (elemR(mm,er_SedimentDepth) >= setting%ZeroValue%Depth) then
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = eggshaped
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Egg_Shaped_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Egg_Shaped_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth) = 0.64 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = egg_shaped_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
+                    elemSGR(mm,esgr_Filled_Circular_bottomArea)               &
+                        = llgeo_tabular_from_depth_singular                   &
+                            (mm, elemR(mm,er_SedimentDepth), fullArea(mm),    &
+                            setting%ZeroValue%Depth, ACirc )
+
+                    elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)           &
+                        = llgeo_tabular_from_depth_singular                   &
+                            (mm, elemR(mm,er_SedimentDepth), breadthMax(mm),  &
+                            setting%ZeroValue%Topwidth, TCirc )
+
+                    bottomHydRadius                                             &
+                        = llgeo_tabular_from_depth_singular                     &
+                            (mm, elemR(mm,er_SedimentDepth), fullHydRadius(mm), &
+                            setting%ZeroValue%Depth, RCirc )   
+
+                    if (bottomHydRadius <= setting%ZeroValue%Depth) then
+                        !% -- near zero hydraulic radius
+                        elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) = setting%ZeroValue%Topwidth
                     else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
+                        elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) &
+                            = elemSGR(mm,esgr_Filled_Circular_bottomArea) / bottomHydRadius
                     end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Egg_Shaped_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = egg_shaped_area_from_depth_singular (ii, elemSGR(ii,esgr_Egg_Shaped_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
+                else 
+                    !% --- near zero sediment depths
+                    elemSGR(mm,esgr_Filled_Circular_bottomArea)      = setting%ZeroValue%Area
+                    elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)  = setting%ZeroValue%Topwidth
+                    elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) = setting%ZeroValue%Topwidth
                 end if
+
+
             end do
+
+             !% --- for consistency in other uses, elemR store values for the flow section only
+            elemR(thisP,er_FullDepth)     =  elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)   &
+                                             - elemR(thisP,er_SedimentDepth)  
+
+            elemR(thisP,er_FullArea)      =  elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)       &
+                                           - elemSGR(thisP,esgr_Filled_Circular_bottomArea)
+
+            elemR(thisP,er_FullPerimeter) =   elemSGR(thisP,esgr_Filled_Circular_TotalPipePerimeter) &
+                                            - elemSGR(thisP,esgr_Filled_Circular_bottomPerimeter)    &
+                                            + elemSGR(thisP,esgr_Filled_Circular_bottomTopwidth)
+
+            elemR(thisP,er_FullHydRadius) = elemR(thisP,er_FullArea) / elemR(thisP,er_FullPerimeter) 
+
+            !% --- Location of maximum breadth
+            where (elemR(thisP,er_SedimentDepth)  &
+                   > (onehalfR * elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)) )
+
+                !% --- solid fill level is above the midpoint, then max breadth for flow is at top of solid fill
+                elemR(thisp,er_DepthAtBreadthMax)   = zeroR 
+                elemR(thisP,er_BreadthMax)          = elemSGR(thisP,esgr_Filled_Circular_bottomTopwidth)
+                elemR(thisP,er_AreaBelowBreadthMax) = zeroR
+
+            elsewhere
+                !% --- solid fill level is below the midpoint, then max breadth for flow is at midpoint
+                elemR(thisP,er_DepthAtBreadthMax)   =  onehalfR * elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter) &
+                                                       - elemR(thisP,er_SedimentDepth)
+
+                elemR(thisP,er_BreadthMax)          = elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)
+
+                elemR(thisP,er_AreaBelowBreadthMax) = onehalfR * elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)  &
+                                                               - elemSGR(thisP,esgr_Filled_Circular_bottomArea) 
+            endwhere
+
+            call geo_common_initialize (thisP, filled_circular, dummyA, dummyA)
         
-        case (lGothic)
+        case (lGothic) !% TABULAR
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = gothic
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+            elemI(thisP,ei_geometryType) = gothic
 
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Gothic_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Gothic_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Gothic_YatMaxBreadth) = 0.45 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = gothic_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Gothic_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Gothic_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = gothic_area_from_depth_singular (ii, elemSGR(ii,esgr_Gothic_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.49d0 * elemR(thisP,er_FullDepth)
 
-                end if
-            end do
+            call geo_common_initialize (thisP, gothic, AEgg, TEgg)
+          
+        case (lHoriz_ellipse) !% TABULAR
 
-        case (lHorseshoe)
+            elemI(thisP,ei_geometryType) = horiz_ellipse
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = horseshoe
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Horse_Shoe_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Horse_Shoe_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth) = 0.5 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = horse_shoe_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horse_Shoe_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = horse_shoe_area_from_depth_singular (ii, elemSGR(ii,esgr_Horse_Shoe_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.5d0 * elemR(thisP,er_FullDepth)
 
-        case (lHoriz_ellipse)
+            call geo_common_initialize (thisP, horiz_ellipse, AHorizEllip, THorizEllip)
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = horiz_ellipse
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+        case (lHorseshoe) !% TABULAR
 
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Horiz_Ellipse_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Horiz_Ellipse_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth) = 0.48 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(:,eYN_isPSsurcharged)  = .false. 
-                        elemYN(:,eYN_isSurcharged)    = .false.    
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Horiz_Ellipse_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_AreaBelowBreadthMax) = horiz_ellipse_area_from_depth_singular (ii, elemSGR(ii,esgr_Horiz_Ellipse_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
+            elemI(thisP,ei_geometryType) = horseshoe
 
-        case (lMod_basket)
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.5d0 * elemR(thisP,er_FullDepth)
 
-                where(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-                    elemI(:,ei_geometryType)                            = mod_basket
-                    elemR(:,er_FullDepth)                               = link%R(thisLink,lr_FullDepth)
-                    elemR(:,er_FullArea)                                = link%R(thisLink,lr_FullArea)
-                    elemR(:,er_FullHydRadius)                           = link%R(thisLink,lr_FullHydRadius)
-                    elemSGR(:,esgr_Mod_Basket_BreadthMax)               = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,esgr_Mod_Basket_Rtop)                     = link%R(thisLink,lr_BottomRadius)
-                    elemSGR(:,esgr_Mod_Basket_ThetaTop)                 = twoR * asin(elemSGR(:,esgr_Mod_Basket_BreadthMax) / twoR / elemSGR(:,esgr_Mod_Basket_Rtop) )
-                    elemSGR(:,esgr_Mod_Basket_Ytop)                     = elemSGR(:,esgr_Mod_Basket_Rtop) * (oneR - cos(elemSGR(:,esgr_Mod_Basket_ThetaTop) / twoR))
-                    elemSGR(:,esgr_Mod_Basket_YatMaxBreadth)            = elemR(:,er_FullDepth) - elemSGR(:,esgr_Mod_Basket_Ytop)
-                    elemSGR(:,esgr_Mod_Basket_Atop)                     = onehalfR * (elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemSGR(:,esgr_Mod_Basket_ThetaTop) &
-                                                                        - sin(elemSGR(:,esgr_Mod_Basket_ThetaTop)))                      
-                    where (elemR(:,er_Depth) < elemR(:,er_FullDepth))
-                        !% --- not surcharged
-                        where (elemR(:,er_Depth) <= elemSGR(:,esgr_Mod_Basket_YatMaxBreadth))
-                            elemR(:,er_Area) = elemR(:,er_Depth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                            elemR(:,er_SlotDepth) = zeroR
-                            elemYN(:,eYN_isPSsurcharged)  = .false. 
-                            elemYN(:,eYN_isSurcharged)    = .false.    
-                        elsewhere
-                            !% find empty top circular area
-                            !% -- find the height of the empty area
-                            elemR(:,er_Temp01) = max(elemR(:,er_FullDepth) - elemR(:,er_Depth), zeroR)
-                            !% -- find the theta of the empty area 
-                            elemR(:,er_Temp02) = twoR * acos(oneR - elemR(:,er_Temp01) / elemSGR(:,esgr_Mod_Basket_Rtop))
-                            !% -- now find the empty area
-                            elemR(:,er_Temp03) = (onehalfR * elemSGR(:,esgr_Mod_Basket_Rtop) ** twoR) * (elemR(:,er_Temp02) - sin(elemR(:,er_Temp02)))
-                            !% -- finally find the area by removing the empty area from Afull
-                            elemR(:,er_Area)   = elemR(:,er_FullArea) - elemR(:,er_Temp03)
-                        end where   
-                        elemR(:,er_SlotDepth) = zeroR     
-                        elemYN(:,eYN_isPSsurcharged)  = .false. 
-                        elemYN(:,eYN_isSurcharged)    = .false.          
-                    elsewhere   
-                        !% --- surcharged with Preissmann Slot
-                        elemR(:,er_Area)      = elemR(:,er_FullArea)
-                        elemR(:,er_SlotDepth) = elemR(:,er_Depth) - elemR(:,er_FullDepth)
-                        elemR(:,er_Depth)     = elemR(:,er_FullDepth)
-                        elemYN(:,eYN_isPSsurcharged)  = .true.
-                        elemYN(:,eYN_isSurcharged)    = .true.
-                    endwhere
-                    elemR(:,er_Area_N0)       = elemR(:,er_Area)
-                    elemR(:,er_Area_N1)       = elemR(:,er_Area)
-                    elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
-                    elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
-                    elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-                    elemR(:,er_ZbreadthMax)   = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)        = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)    = elemR(:,er_FullArea) * elemR(:,er_Length)
-                    elemR(:,er_FullHydDepth)  = elemR(:,er_Depth)
-                    elemR(:,er_FullPerimeter) = twoR * elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) + elemSGR(:,esgr_Mod_Basket_BreadthMax) &
-                                              + elemSGR(:,esgr_Mod_Basket_ThetaTop) * elemSGR(:,esgr_Mod_Basket_Rtop)
-                    elemR(:,er_BreadthMax)    = elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                    elemR(:,er_AreaBelowBreadthMax)   = elemSGR(:,esgr_Mod_Basket_YatMaxBreadth) * elemSGR(:,esgr_Mod_Basket_BreadthMax)
-                    elemR(:,er_ell_max)               = (elemR(:,er_Zcrown) - elemR(:,er_ZbreadthMax)) * elemR(:,er_BreadthMax) &
-                                                      + elemR(:,er_AreaBelowBreadthMax) / elemR(:,er_BreadthMax) 
-                endwhere
+            call geo_common_initialize (thisP, horseshoe, AHorseShoe, THorseShoe)
 
-        case (lVert_ellipse)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = vert_ellipse
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)     = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
-
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Vert_Ellipse_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Vert_Ellipse_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth) = 0.48 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = basket_handle_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false. 
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Vert_Ellipse_BreadthMax)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius) 
-                    elemR(ii,er_AreaBelowBreadthMax) = vert_ellipse_area_from_depth_singular (ii, elemSGR(ii,esgr_Vert_Ellipse_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                                + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax) 
-                end if
-            end do
-
-        case (lSemi_elliptical)
-
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_BIPquick) == thisLink) then
-                    !% elemI data
-                    elemI(ii,ei_geometryType) = semi_elliptical
-                    !% elemR data                                            
-                    elemR(ii,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_FullArea)      = link%R(thisLink,lr_FullArea)
-                    elemR(ii,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius) 
-                    
-                    !% elemSGR data
-                    elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)    = link%R(thisLink,lr_BreadthScale) 
-                    elemSGR(ii,esgr_Semi_Elliptical_YoverYfull)    = elemR(ii,er_Depth) / elemR(ii,er_FullDepth)
-                    elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth) = 0.15 * elemR(ii,er_FullDepth)
-                    !% elemR data
-                    if (elemR(ii,er_Depth) < elemR(ii,er_FullDepth)) then
-                        !% --- not surcharged
-                        elemR(ii,er_Area) = semi_elliptical_area_from_depth_singular (ii, elemR(ii,er_Depth))
-                        elemR(ii,er_SlotDepth) = zeroR
-                        elemYN(ii,eYN_isPSsurcharged)  = .false. 
-                        elemYN(ii,eYN_isSurcharged)    = .false.  
-                    else
-                        !% --- surcharged with Preissmann Slot
-                        elemR(ii,er_Area)      = elemR(ii,er_FullArea)
-                        elemR(ii,er_SlotDepth) = elemR(ii,er_Depth) - elemR(ii,er_FullDepth)
-                        elemR(ii,er_Depth)     = elemR(ii,er_FullDepth)
-                        elemYN(ii,eYN_isPSsurcharged)  = .true.
-                        elemYN(ii,eYN_isSurcharged)    = .true.
-                    end if
-                    elemR(ii,er_Area_N0)       = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)       = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)        = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)     = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)     = elemR(ii,er_Volume)
-                    elemR(ii,er_ZbreadthMax)   = elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_Zcrown)        = elemR(ii,er_FullDepth) + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullVolume)    = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullPerimeter) = elemR(ii,er_FullArea) / elemR(ii,er_FullHydRadius)
-                    elemR(ii,er_FullHydDepth)  = elemR(ii,er_FullDepth)
-                    elemR(ii,er_BreadthMax)    = elemSGR(ii,esgr_Semi_Elliptical_BreadthMax)
-                    elemR(ii,er_AreaBelowBreadthMax) = semi_elliptical_area_from_depth_singular (ii, elemSGR(ii,esgr_Semi_Elliptical_YatMaxBreadth))
-                    elemR(ii,er_ell_max)       = (elemR(ii,er_Zcrown) - elemR(ii,er_ZbreadthMax)) * elemR(ii,er_BreadthMax) &
-                                               + elemR(ii,er_AreaBelowBreadthMax) / elemR(ii,er_BreadthMax)
-
-                end if
-            end do
-        
- 
-
-        case (lIrregular)
+        case (lIrregular) !% ERROR
             print *, 'In ', trim(subroutine_name)
-            print *, 'USER ERROR: Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'
-            call util_crashpoint(4409874)
-            !return
+            print *, 'USER ERRORthisP Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'
+            call util_crashpoint(4409874)    
+
+        case (lMod_basket)  !% ANALYTICAL
+
+            elemI(thisP,ei_geometryType)  = mod_basket
+
+            !% --- independent custom data
+            elemR(  thisP,eR_BreadthMax)             = link%R(thisLink,lr_BreadthScale)
+            elemSGR(thisP,esgr_Mod_Basket_Rtop)      = link%R(thisLink,lr_BottomRadius)
+
+            elemSGR(thisP,esgr_Mod_Basket_ThetaTop)  = twoR * asin( onehalfR * elemR(thisP,er_BreadthMax) &
+                                                                    / elemSGR(thisP,esgr_Mod_Basket_Rtop) )
+
+            elemSGR(thisP,esgr_Mod_Basket_Ytop)      = elemSGR(thisP,esgr_Mod_Basket_Rtop) &
+                                                      * ( oneR - cos( elemSGR(thisP,esgr_Mod_Basket_ThetaTop) / twoR ) )
+
+                
+            elemSGR(thisP,esgr_Mod_Basket_Atop)      = onehalfR * ( elemSGR(thisP,esgr_Mod_Basket_Rtop)**2 )       &
+                                                                * ( elemSGR(thisP,esgr_Mod_Basket_ThetaTop)        &
+                                                                    - sin(elemSGR(thisP,esgr_Mod_Basket_ThetaTop)) &
+                                                                  ) 
+
+            elemR(thisP,er_DepthAtBreadthMax)        = elemR(thisP,er_FullDepth) - elemSGR(thisP,esgr_Mod_Basket_Ytop)                                                      
+
+            call geo_common_initialize (thisP, mod_basket, dummyA, dummyA)
+
+        case (lRectangular_closed)  !% ANALYTICAL
+
+                elemI(thisP,ei_geometryType) = rectangular_closed
+    
+                !% --- independent data
+                elemR(thisP,er_BreadthMax)         = link%R(thisLink,lr_BreadthScale)
+                elemR(thisP,er_DepthAtBreadthMax)  =  elemR(thisP,er_FullDepth)
+               
+                call geo_common_initialize (thisP, rectangular_closed, dummyA, dummyA)
+                    
+        case (lRect_round)
+
+            elemI(thisP,ei_geometryType)                       = rect_round
+
+            !% --- independent data
+            elemSGR(thisP,esgr_Rectangular_Round_Ybot)   = link%R(thisLink,lr_BottomDepth)
+            elemSGR(thisP,esgr_Rectangular_Round_Rbot)   = link%R(thisLink,lr_BottomRadius)
+            elemR( thisP,er_BreadthMax)                  = link%R(thisLink,lr_BreadthScale)
+            elemR( thisP,er_DepthAtBreadthMax)           = elemR(thisP,er_FullDepth)
+
+            elemSGR(thisP,esgr_Rectangular_Round_ThetaBot)                        &
+                    = twoR * asin(                                                &
+                                    onehalfR * elemR(thisP,er_BreadthMax)         & 
+                                    / elemSGR(thisP,esgr_Rectangular_Round_Rbot)  &
+                                    )
+            elemSGR(thisP,esgr_Rectangular_Round_Abot)                                   &
+                    = onehalfR * (elemSGR(thisP,esgr_Rectangular_Round_Rbot)**2)    & 
+                                * (                                                       &
+                                    elemSGR(thisP,esgr_Rectangular_Round_ThetaBot)        &
+                                    - sin(elemSGR(thisP,esgr_Rectangular_Round_ThetaBot)) &
+                                    )
+
+            call geo_common_initialize (thisP, rect_round, dummyA, dummyA)                
+
+        case (lRect_triang) !% ANALYTICAL
+
+            elemI(thisP,ei_geometryType) = rect_triang
+
+            !% --- independent data
+            elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
+            elemSGR(thisP,er_BreadthMax)                            = link%R(thisLink,lr_BreadthScale)
+            elemR(  thisP,er_DepthAtBreadthMax)                     = elemR(thisP,er_FullDepth)  
+            
+            elemSGR(thisP,esgr_Rectangular_Triangular_BottomSlope)  &
+                = elemR(thisP,er_BreadthMax)  / (twoR * elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth))
+
+            elemSGR(thisP,esgr_Rectangular_Triangular_BottomArea)  &
+                 = onehalfR * elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth) &
+                            * elemR(thisP,er_BreadthMax)  
+                            
+            call geo_common_initialize (thisP, rect_triang, dummyA, dummyA)             
+            
+        case (lSemi_circular) !% TABULAR
+
+            elemI(thisP,ei_geometryType) = semi_circular
+
+            !% --- independent custom data
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.19d0 * elemR(thisP,er_FullDepth)
+
+            call geo_common_initialize (thisP, semi_circular, ASemiCircular, TSemiCircular)
+        
+
+        case (lSemi_elliptical) !% TABULAR
+
+            elemI(thisP,ei_geometryType) = semi_elliptical
+
+            !% --- independent custom data
+            elemSGR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemSGR(thisP,er_DepthAtBreadthMax) = 0.24d0 * elemR(thisP,er_FullDepth)
+
+            call geo_common_initialize (thisP, semi_elliptical, ASemiEllip, TSemiEllip)
+    
+    
+        case (lVert_ellipse) !% TABULAR
+
+            elemI(thisP,ei_geometryType) = vert_ellipse
+
+            !% --- independent custom data
+            elemSGR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemSGR(thisP,er_DepthAtBreadthMax) = 0.50d0 * elemR(thisP,er_FullDepth)
+
+            call geo_common_initialize (thisP, vert_ellipse, AVertEllip, TVertEllip)
+
         case default
 
             print *, 'In, ', trim(subroutine_name)
@@ -2252,8 +1784,11 @@ contains
                 print *, 'which is not a valid geometry type index'
             end if
             call util_crashpoint(887344)
-            !return
+
         end select
+
+        !% --- reset temporary space
+        elemI(:,ei_Temp01) = nullvalueI
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -2465,7 +2000,7 @@ contains
 
         pi => setting%Constant%pi
         !% pointer to specific orifice type
-        specificOrificeType => link%I(thisLink,li_link_sub_type)
+        specificOrificeType => link%I(thisLink,li_link_sub_type)   
 
         select case (specificOrificeType)
         !% copy orifice specific data
@@ -2746,7 +2281,7 @@ contains
             elemR(:,er_FullArea)                = elemR(:,er_FullDepth) * elemR(:,er_BreadthMax)
             elemR(:,er_FullVolume)              = elemR(:,er_FullArea)  * elemR(:,er_Length)
             elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
-            elemR(:,er_ell_max)                 = elemR(:,er_FullDepth)
+            elemR(:,er_FullEll)                 = elemR(:,er_FullDepth)
             
             !% store IC data
             elemR(:,er_Area)          = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
@@ -2806,7 +2341,7 @@ contains
             ii=1
             thisCol(ii) = er_AreaBelowBreadthMax; ii=ii+1
             thisCol(ii) = er_BreadthMax;          ii=ii+1
-            thisCol(ii) = er_ell_max;             ii=ii+1
+            thisCol(ii) = er_FullEll;             ii=ii+1
             thisCol(ii) = er_FullArea;            ii=ii+1
             thisCol(ii) = er_FullDepth;           ii=ii+1
             thisCol(ii) = er_FullHydDepth;        ii=ii+1
@@ -3084,7 +2619,7 @@ contains
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
-        elemR(JMidx,er_ell_max)   = node%R(thisJunctionNode,nr_FullDepth)
+        elemR(JMidx,er_FullEll)   = node%R(thisJunctionNode,nr_FullDepth)
         elemR(JMidx,er_Zcrown)    = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
         
         !% --- overflow volume accumulator
@@ -3446,86 +2981,86 @@ contains
 
                 case (lRect_triang)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                +(real(elemSI(JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Rectangular_Triangular_TopBreadth)/twoR) )
+                                    * (elemR( JBidx,er_BreadthMax)/twoR) )
 
                 case (lBasket_handle)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Basket_Handle_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
                 case (lArch)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Arch_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
 
                 case (lHoriz_ellipse)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Horiz_Ellipse_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
                 case (lVert_ellipse)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Vert_Ellipse_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
 
                 case (lEggshaped)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Egg_Shaped_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
 
                 case (lHorseshoe)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Horse_Shoe_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
                 case (lCatenary)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Catenary_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
 
                 case (lGothic)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Gothic_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
                 case (lSemi_elliptical)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Semi_Elliptical_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
                                     
                 case (lCircular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
-                          * elemSGR(JBidx,esgr_Circular_Diameter) )
+                          * (elemR(JBidx,er_BreadthMax)/twoR) )
 
                 case (lSemi_circular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Semi_Circular_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
                 case (lFilled_circular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                          * elemR(  JBidx,er_Length)                                          &
-                          * elemSGR(JBidx,esgr_Filled_Circular_Diameter) )
+                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
+                          * elemR(  JBidx,er_Length)                                             &
+                          * elemR(  JBidx,er_BreadthMax) )
                 
                 case (lRect_round)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Rectangular_Round_BreadthMax)/twoR) )
+                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
 
                 case (lIrregular)    
                     !% --- for irregular geometry, we use the average breadth for the area below
@@ -4024,15 +3559,22 @@ contains
         !% the small depth cutoff to change the time-marching solution
         !% The ratio of the (fixed)small volume to the actual volume is 
         !% used to blend the CM small-volume solution with the SVE solution.
+        !%
+        !% NOTE: tpack is a 2D array although only 1D is used. This is
+        !% to ensure that it is compatible with the elemPGx arrays used
+        !% in llgeo_tabular_depth_from_column
         !%------------------------------------------------------------------
         !% Declarations:
             character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
             !logical, pointer    :: useSmallVolumes
             real(8), pointer    :: depthCutoff, smallVolume(:), length(:)
-            real(8), pointer    :: theta(:), radius(:), rectB(:), tempDepth(:)
-            real(8), pointer    :: trapB(:), trapL(:), trapR(:), depth(:)
-            integer, pointer    :: geoType(:), tPack(:), eIdx(:)
-            integer             :: npack, ii, indx
+            real(8), pointer    :: theta(:), radius(:),  area(:)
+            !real(8), pointer    :: trapB(:), trapL(:), trapR(:),rectB(:)
+            real(8), pointer    :: depth(:)
+            real(8), pointer    :: tempDepth(:), tempArea(:), Atable(:)
+            integer, pointer    :: geoType(:), tPack(:,:), eIdx(:) 
+            integer             :: npack, ii, indx, kk
+            integer, dimension(11) :: tabXsectType
         !%------------------------------------------------------------------
         !% Preliminaries
             !if (crashYN) return
@@ -4042,21 +3584,22 @@ contains
         !% Aliases
             !useSmallVolumes  => setting%SmallDepth%UseSmallVolumesYN
             depthCutoff      => setting%SmallDepth%DepthCutoff
-            geoType          => elemI(1:N_elem(this_image()),ei_geometryType)
-            tPack            => elemI(1:N_elem(this_image()),ei_Temp01)
-            eIdx             => elemI(1:N_elem(this_image()),ei_Lidx)
-            smallVolume      => elemR(1:N_elem(this_image()),er_SmallVolume)
-            length           => elemR(1:N_elem(this_image()),er_Length)
-            depth            => elemR(1:N_elem(this_image()),er_Depth)
-            tempDepth        => elemR(1:N_elem(this_image()),er_Temp01)
-            rectB            => elemSGR(1:N_elem(this_image()),esgr_Rectangular_Breadth)
-            radius           => elemSGR(1:N_elem(this_image()),esgr_Circular_Radius)
-            trapL            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_LeftSlope)
-            trapR            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_RightSlope)
-            trapB            => elemSGR(1:N_elem(this_image()),esgr_Trapezoidal_Breadth)
-            theta            => elemR(1:N_elem(this_image()),er_Temp01)
-
-            !print *, 'after alias'
+            geoType          => elemI(:,ei_geometryType)
+            !% --- note, tPack is 2D, but 2nd column is dummy
+            tPack            => elemI(:,ei_Temp01:ei_Temp02)
+            eIdx             => elemI(:,ei_Lidx)
+            smallVolume      => elemR(:,er_SmallVolume)
+            length           => elemR(:,er_Length)
+            area             => elemR(:,er_Area)
+            depth            => elemR(:,er_Depth)
+            tempDepth        => elemR(:,er_Temp01)
+            tempArea         => elemR(:,er_Temp02)
+            !rectB            => elemSGR(:,esgr_Rectangular_Breadth)
+            radius           => elemSGR(:,esgr_Circular_Radius)
+            !trapL            => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+            !trapR            => elemSGR(:,esgr_Trapezoidal_RightSlope)
+            !trapB            => elemSGR(:,esgr_Trapezoidal_Breadth)
+            theta            => elemR(:,er_Temp03)
         !%------------------------------------------------------------------
         !% More preliminaries
             elemR(:,er_SmallVolume) = zeroR
@@ -4077,212 +3620,189 @@ contains
             end if
         !%------------------------------------------------------------------
 
-        !% --- temporarily store depth, and replace depth with the cutoff
-        !%     so that we can use standard depth-to-area-functions.
-        !%     must be reversed at end of subroutine
-        tempDepth = Depth
-        depth = depthCutoff
+        tabXsectType = (/ arch, basket_handle, catenary, circular, eggshaped, gothic, &
+            horiz_ellipse, horseshoe, semi_circular, semi_elliptical, vert_ellipse /)
 
-        ! print *, 'AAAA '
-                
-        !% --- rectangular channel
-        tPack = zeroI
-        npack = count(geoType == rectangular)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == rectangular)
-            smallvolume(tPack(1:npack)) = rectangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
-        end if
+        !% --- temporarily store depth and area. 
+        !%     Replace depth with the cutoff depth so that we can use standard 
+        !%     depth-to-area-functions
+        !%     Area is overwritten in tabular_are_from_depth needed for conduits.
+        !%     These must be reversed at end of subroutine
+        tempDepth = depth
+        depth     = depthCutoff
+        tempArea  = area
+
+        !% --- cycle through tabulated cross-sections
+        do ii=1,size(tabXsectType)
+            select case (tabXsectType(ii))
+            case (arch)
+                Atable => AArch
+            case (basket_handle)
+                Atable => ABasketHandle
+            case (catenary)
+                Atable => ACatenary
+            case (circular)
+                Atable => ACirc
+            case (eggshaped)
+                Atable => AEgg
+            case (gothic)
+                Atable => AGothic
+            case (horiz_ellipse)
+                Atable => AHorizEllip
+            case (horseshoe)
+                Atable => AHorseShoe
+            case (semi_circular)
+                Atable => ASemiCircular
+            case (semi_elliptical)
+                Atable => ASemiEllip
+            case (vert_ellipse)
+                Atable => AVertEllip
+            end select
+
+            tPack(:,1) = zeroI
+            npack = count(geoType == arch)
+            if (npack > 0) then
+                tPack(1:npack,1) = pack(eIdx,geoType == tabXsectType(ii))
+                !% --- get area associated with small volume
+                call llgeo_tabular_area_from_depth(tpack, Npack,1, Atable)
+                !% --- small volume = A * length
+                smallvolume(tPack(1:npack,1)) = area(tPack(1:npack,1)) &
+                                                * length(tpack(1:npack,1))
+            end if
+        end do
 
         !% --- parabolic channel
-        tPack = zeroI
+        tPack(:,1) = zeroI
         npack = count(geoType == parabolic)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == parabolic)
-            smallvolume(tPack(1:npack)) = parabolic_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+            tPack(1:npack,1) = pack(eIdx,geoType == parabolic)
+            smallvolume(tPack(1:npack,1)) = llgeo_parabolic_area_from_depth_pure      &
+                                            (tPack(1:npack,1),depth(tPack(1:npack,1)) ) &
+                                            * length(tPack(1:npack,1))
         end if
 
-        !where (geoType == rectangular)
-        !    !smallVolume = depthCutoff * length * rectB
-        !end where
-
-        !print *, 'BBBB '
-        !% --- rectangular conduit
-        tPack = zeroI
-        npack = count(geoType == rectangular_closed)
+        !% --- power function channel
+        tPack(:,1) = zeroI
+        npack = count(geoType == power_function)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == rectangular_closed)
-            smallvolume(tPack(1:npack)) = rectangular_closed_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+            print *, 'error power function not completed'
+            call util_crashpoint(6698723)
+            tPack(1:npack,1) = pack(eIdx,geoType == power_function)
+            !smallvolume(tPack(1:npack)) = llgeo_powerfunction_area_from_depth_pure(tPack(1:npack)) * length(tPack(1:npack))
         end if
-      
-        !% --- trapezoidal conduit  
-        tPack = zeroI
+
+        !% --- rectangular channel
+        tPack(:,1) = zeroI
+        npack = count(geoType == rectangular)
+        if (npack > 0) then
+            tPack(1:npack,1) = pack(eIdx,geoType == rectangular)
+            smallvolume(tPack(1:npack,1)) = llgeo_rectangular_area_from_depth_pure &
+                                            (tPack(1:npack,1),depth(tpack(1:npack,1))) &
+                                            * length(tPack(1:npack,1))
+        end if
+
+        !% --- trapezoidal channel 
+        tPack(:,1) = zeroI
         npack = count(geoType == trapezoidal)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == trapezoidal)
-            smallvolume(tPack(1:npack)) = trapezoidal_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+            tPack(1:npack,1) = pack(eIdx,geoType == trapezoidal)
+            smallvolume(tPack(1:npack,1)) = llgeo_trapezoidal_area_from_depth_pure &
+                                            (tPack(1:npack,1),depth(tpack(1:npack,1)))  &
+                                            * length(tPack(1:npack,1))
         end if  
-        ! where (geoType == trapezoidal)
-        !     !rm smallVolume = trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff
-        !     smallVolume = (trapB * depthCutoff  + onehalfR*( trapL + trapR ) * depthCutoff * depthCutoff) * length !% 20220122brh
-        ! end where
 
-        !print *, 'DDDD '
-        !% --- triangular conduit  
-        tPack = zeroI
+        !% --- triangular channel 
+        tPack(:,1) = zeroI
         npack = count(geoType == triangular)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == triangular)
-            smallvolume(tPack(1:npack)) = triangular_area_from_depth(tPack(1:npack)) * length(tPack(1:npack))
+            tPack(1:npack,1) = pack(eIdx,geoType == triangular)
+            smallvolume(tPack(1:npack,1)) = llgeo_triangular_area_from_depth_pure &
+                                            (tPack(1:npack,1),depth(tpack(1:npack,1)))  &
+                                            * length(tPack(1:npack,1))
         end if 
 
-        !% ---  circular conduit
-        tPack = zeroI
-        npack = count(geoType == circular)
+        !% --- irregular channel 
+        tPack(:,1) = zeroI
+        npack = count(geoType == irregular)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == circular)
-            !% HACK -- temporary until problem for small volumes in circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Circular_Diameter) * depthCutoff * length
-        end if
+            tPack(1:npack,1) = pack(eIdx,geoType == irregular)
+            do kk=1,npack
+                smallvolume(tPack(kk,1)) = irregular_geometry_from_depth_singular &
+                    (tpack(kk,1),tt_area, depth(tpack(kk,1)),setting%ZeroValue%Area)
+            end do
+        end if 
+
+        !% ---- CLOSED CONDUITS
 
         !% ---  filled circular conduit
-        tPack = zeroI
+        tPack(:,1) = zeroI
         npack = count(geoType == filled_circular)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == filled_circular)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Filled_Circular_Diameter) * depthCutoff * length
+            tPack(1:npack,1) = pack(eIdx,geoType == filled_circular)
+            do kk=1,npack 
+                smallvolume(tpack(kk,1)) = llgeo_filled_circular_area_from_depth_singular &
+                                            (tpack(kk,1), depth(tpack(kk,1)))
+            end do
+        end if
+    
+        !% ---  Modified basket conduit
+        tPack(:,1) = zeroI
+        npack = count(geoType == mod_basket)
+        if (npack > 0) then
+            tPack(1:npack,1) = pack(eIdx,geoType == mod_basket)
+            do kk=1,npack 
+                smallvolume(tpack(kk,1)) = llgeo_mod_basket_area_from_depth_singular &
+                                            (tpack(kk,1), depth(tpack(kk,1)))
+            end do
         end if
 
-        !% ---  basket handle conduit
-        tPack = zeroI
-        npack = count(geoType == basket_handle)
+        !% --- rectangular closed conduit
+        tPack(:,1) = zeroI
+        npack = count(geoType == rectangular_closed)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == basket_handle)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Basket_Handle_BreadthMax) * depthCutoff * length
+            tPack(1:npack,1) = pack(eIdx,geoType == rectangular_closed)
+            do kk=1,npack 
+                smallvolume(tpack(kk,1)) = llgeo_rectangular_closed_area_from_depth_singular &
+                                            (tpack(kk,1), depth(tpack(kk,1)))
+            end do
         end if
 
         !% ---  rectangular round conduit
-        tPack = zeroI
+        tPack(:,1) = zeroI
         npack = count(geoType == rect_round)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == rect_round)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Rectangular_Round_BreadthMax) * depthCutoff * length
+            tPack(1:npack,1) = pack(eIdx,geoType == rect_round)
+            do kk=1,npack
+                smallvolume(tpack(kk,1)) = llgeo_rect_round_area_from_depth_singular &
+                                            (tpack(kk,1), depth(tpack(kk,1)))
+            end do
         end if
 
-        !% ---  arch conduit
-        tPack = zeroI
-        npack = count(geoType == arch)
+        !% ---  rectangular triang conduit
+        tPack(:,1) = zeroI
+        npack = count(geoType == rect_triang)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == arch)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Arch_BreadthMax) * depthCutoff * length
+            tPack(1:npack,1) = pack(eIdx,geoType == rect_triang)
+            do kk=1,npack 
+                smallvolume(tpack(kk,1)) = llgeo_rectangular_triangular_area_from_depth_singular &
+                                            (tpack(kk,1), depth(tpack(kk,1)))
+            end do
         end if
-
-        !% ---  horizontal ellipse conduit
-        tPack = zeroI
-        npack = count(geoType == horiz_ellipse)
+    
+        !% ---  custom conduit
+        tPack(:,1) = zeroI
+        npack = count(geoType == custom)
         if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == horiz_ellipse)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Horiz_Ellipse_BreadthMax) * depthCutoff * length
+            tPack(1:npack,1) = pack(eIdx,geoType == custom)
+            print *, 'PROBLEM IN SMALL VOLUMES FOR custom CONDUIT'
+            call util_crashpoint(6298738)
         end if
 
-        !% ---  vertical ellipse conduit
-        tPack = zeroI
-        npack = count(geoType == vert_ellipse)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == Vert_Ellipse)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Vert_Ellipse_BreadthMax) * depthCutoff * length
-        end if
-        
-        !% ---  horse shoe conduit
-        tPack = zeroI
-        npack = count(geoType == horseshoe)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == horseshoe)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Horse_Shoe_BreadthMax) * depthCutoff * length
-        end if
 
-        !% ---  catenary conduit
-        tPack = zeroI
-        npack = count(geoType == catenary)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == catenary)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Catenary_BreadthMax) * depthCutoff * length
-        end if
 
-        !% ---  gothic conduit
-        tPack = zeroI
-        npack = count(geoType == gothic)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == gothic)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Gothic_BreadthMax) * depthCutoff * length
-        end if
-
-        !% ---  Semi_Elliptical conduit
-        tPack = zeroI
-        npack = count(geoType == semi_elliptical)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == semi_elliptical)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Semi_Elliptical_BreadthMax) * depthCutoff * length
-        end if
-
-        !% ---  Semi-circular conduit
-        tPack = zeroI
-        npack = count(geoType == semi_circular)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == semi_circular)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Semi_Circular_BreadthMax) * depthCutoff * length
-        end if
-
-        !% ---  egg shaped conduit
-        tPack = zeroI
-        npack = count(geoType == eggshaped)
-        if (npack > 0) then
-            tPack(1:npack) = pack(eIdx,geoType == eggshaped)
-            !% HACK -- temporary until problem for small volumes in filled circular conduits is fixed
-            smallvolume(tPack(1:npack)) = 7.d0 * elemSGR(tPack(1:npack),esgr_Egg_Shaped_BreadthMax) * depthCutoff * length
-        end if
-            ! do ii=1,npack
-            !     indx = tPack(ii)
-            !     if (elemI(indx,ei_elementType) .eq. CC) then
-            !         print *, indx, trim(reverseKey(elemI(indx,ei_elementType)))
-            !         print *, elemSGR(indx,esgr_Circular_Diameter), elemSGR(indx,esgr_Circular_Radius)
-            !         print *, elemSGR(indx, esgr_Circular_YoverYfull), elemSGR(indx,esgr_Circular_AoverAfull)
-            !         call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular), epg_CC_circular)
-            !         elemR(indx,er_Volume) = 1.0d6 * elemR(indx,er_Volume)
-            !         print *, 'after depth',elemR(indx,er_Depth)
-            !         print *, 'after volume',elemR(indx,er_Length) * circular_area_from_depth_singular (indx) 
-            !     end if
-            ! end do
-
-            ! tPack(1:npack) = pack(eIdx,geoType == circular)
-            ! !% HACK -- we need an array lookup that can use the temporary pack.
-            ! do ii=1,npack
-            !     smallvolume(tPack(ii)) = circular_area_from_depth_singular(tPack(ii)) * length(tPack(ii))
-            !     !elemR(tPack(ii),er_Volume) = smallvolume(tPack(ii)) !% temporary for debugging
-            !     !print *, ii, smallvolume(tPack(ii)), circular_depth_from_volume_singular(tPack(ii))
-            ! end do
-            ! elemR(tPack(1:npack),er_Volume) = smallvolume(tPack(ii))
-            ! print *, 'before', elemR(tPack(1:npack),er_Depth)
-            ! call circular_depth_from_volume (elemPGetm, npack_elemPGetm(epg_CC_circular), epg_CC_circular)
-            ! print *, 'after ', elemR(tPack(1:npack),er_Depth)
-
-        !stop 
-        !call util_crashpoint(397803)
-
-        !print *, 'FFFF '
-
-        !% restore the initial condition depth to the depth vector
+        !% restore the initial condition depth to the depth and area vectors
         depth = tempDepth
+        area  = tempArea
  
         !%------------------------------------------------------------------
         !% Closing
@@ -4365,7 +3885,7 @@ contains
 
             case (DynamicSlot)
 
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_ell_max)))
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_FullEll)))
 
                 where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
@@ -4680,24 +4200,26 @@ contains
             end do
         end if
 
-        ! print *, ' '
-        ! print *, ' in ',trim(subroutine_name)
-        ! do ii=1,N_flowBC
-        !     print *, ii, node%P%have_flowBC(ii)
-        !     print *, 'node type ', node%I(nidx, ni_node_type), trim(reverseKey(node%I(nidx, ni_node_type)))
-        !     print *, BC%flowI(ii,bi_idx),BC%flowI(ii,bi_node_idx)
-        !     print *, 'elem, face : ',BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_face_idx)
-        !     print *, 'face up of elem ', elemI(BC%flowI(ii,bi_elem_idx),ei_Mface_uL)
-        !     print *, 'elem dn of face ', faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL)
-        ! end do
-        ! print *, ' '
-        ! print *,'dummy idx is ',dummyIdx
-        ! do ii=1,N_elem(1)
-        !     print *, ' '
-        !     print *, faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
-        !     print *, elemI(ii,ei_Mface_uL), ii, elemI(ii,ei_Mface_dL)
-        !     print *, faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
-        ! end do
+    !     print *, ' '
+    !     print *, ' in ',trim(subroutine_name)
+    !     do ii=1,N_flowBC
+    !         print *, ii, node%P%have_flowBC(ii)
+    !         print *, 'node type ', node%I(nidx, ni_node_type), trim(reverseKey(node%I(nidx, ni_node_type)))
+    !         print *, BC%flowI(ii,bi_idx),BC%flowI(ii,bi_node_idx)
+    !         print *, 'elem, face : ',BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_face_idx)
+    !         print *, 'face up of elem ', elemI(BC%flowI(ii,bi_elem_idx),ei_Mface_uL)
+    !         print *, 'elem dn of face ', faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL)
+    !     end do
+    !     print *, ' '
+    !     print *,'dummy idx is ',dummyIdx
+    !     do ii=1,N_elem(1)
+    !         print *, ' '
+    !         print *, faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
+    !         print *, elemI(ii,ei_Mface_uL), ii, elemI(ii,ei_Mface_dL)
+    !         print *, faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
+    !     end do
+
+    !    stop 2098734
 
         !% --- Initialize Head BCs
         if (N_headBC > 0) then
@@ -4883,7 +4405,7 @@ contains
 
         do ii = 1,N_headBC
 
-           ! print *, '---- ',ii
+           !print *, '---- ',ii
 
             UT_idx = UT_idx + 1
             !% --- the element index for the element upstream of the BC
@@ -4917,24 +4439,30 @@ contains
             !%     and maximum Q critical
             do while (thisdepth .le. (uniformTableR(UT_idx,utr_DepthMax)-depthTol))
                 !jj=jj+1
+                ! print *, 'jj= ',jj
                 thisDepth = thisDepth + deltaD
-                !print *, '----- thisDepth     ',thisDepth 
+                ! print *, '----- thisDepth     ',thisDepth 
 
                 sf = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
-                !print *, '----- sectionfactor ',sf
+
+                ! print *, '----- sectionfactor ',sf
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
 
                 qcrit = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
-                !print *, '----- qcrit        ',qcrit
+                ! print *, '----- qcrit        ',qcrit
                 uniformTableR(UT_idx,utr_QcritMax) = max(uniformTableR(UT_idx,utr_QcritMax),qcrit)
                 !print *, '----- '
+
+                !print *, 'depth max ',uniformTableR(UT_idx,utr_DepthMax)
+
+                !stop 5908734
 
             end do
 
         end do
 
-        ! print *,uniformTableR(1,utr_SFmax)
-        ! stop 2098734
+        !print *,uniformTableR(1,utr_SFmax)
+        !stop 2098734
 
     end subroutine init_BChead_uniformtable
 !%

@@ -17,6 +17,7 @@ module preissmann_slot
 
     private
     public :: slot_toplevel 
+    public :: slot_initialize
     public :: slot_JM_head_PSadd
     public :: slot_JM_head_PSremove
     public :: slot_CC_adjustments
@@ -80,6 +81,32 @@ module preissmann_slot
 !%
 !%==========================================================================
 !%==========================================================================
+!% 
+    subroutine slot_initialize (thisP)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% initializes slot depth, depth, and PS logicals for surcharge
+        !% or non-surcharged conditions
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP(:)
+        !%------------------------------------------------------------------
+
+        where (elemR(thisP,er_Depth) < elemR(thisP,er_FullDepth))
+            elemR(thisP,er_SlotDepth)         = zeroR   
+            elemYN(thisP,eYN_isPSsurcharged)  = .false. 
+            elemYN(thisP,eYN_isSurcharged)    = .false.    
+        elsewhere
+            elemR(thisP,er_SlotDepth)         = elemR(thisP,er_Depth) - elemR(thisP,er_FullDepth)
+            elemR(thisP,er_Depth)             = elemR(thisP,er_FullDepth)
+            elemYN(thisP,eYN_isPSsurcharged)  = .true.
+            elemYN(thisP,eYN_isSurcharged)    = .true.
+        endwhere
+
+    end subroutine slot_initialize
+!%
+!%==========================================================================
+!%==========================================================================
 !%    
     subroutine slot_JM_head_PSadd (thisColP_JM)
         !%------------------------------------------------------------------
@@ -112,7 +139,7 @@ module preissmann_slot
         PondedHead = zeroR
         if (setting%SWMMinput%AllowPonding) then 
             PondedHead(thisP) = PondedVolume(thisP) / PondedArea(thisP)
-            Head(thisP) = Head(thisP) + SlotDepth(thisP) + PondedHead(thisP)
+            Head(thisP) = Head(thisP) + max(SlotDepth(thisP), PondedHead(thisP))
         else
             Head(thisP) = Head(thisP) + SlotDepth(thisP)
         end if
@@ -167,7 +194,8 @@ module preissmann_slot
         integer, intent(in) :: thisColP_closed_CC
         integer, pointer    :: thisP(:), Npack, SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), dSlotDepth(:)
-        real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:), pressHead(:)
+        real(8), pointer    :: volume(:), ell(:), depth(:), area(:), SlotArea(:)
+        !real(8), pointer    :: pressurehead(:)
         real(8), pointer    :: head(:), fullVolume(:), fullArea(:), fullDepth(:)
         real(8), pointer    :: Overflow(:), zbottom(:), ellMax(:), SlotHydRad(:)
         logical, pointer    :: isSlot(:)
@@ -190,12 +218,12 @@ module preissmann_slot
             depth      => elemR(:,er_Depth)
             dSlotDepth => elemR(:,er_dSlotDepth)
             ell        => elemR(:,er_ell)
-            ellMax     => elemR(:,er_ell_max)
+            ellMax     => elemR(:,er_FullEll)
             fullDepth  => elemR(:,er_FullDepth)
             fullvolume => elemR(:,er_FullVolume)
             fullArea   => elemR(:,er_FullArea)
             head       => elemR(:,er_Head)
-            pressHead  => elemR(:,er_Pressure_Head)
+            !pressurehead  => elemR(:,er_Pressure_Head)
             SlotWidth  => elemR(:,er_SlotWidth)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
@@ -217,7 +245,7 @@ module preissmann_slot
                     ! area(thisP)   = area(thisP)    + SlotArea(thisP) !% KEEP AREA BASED ON CONDUIT
                     depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
                     head(thisP)      = head(thisP)      + SlotDepth(thisP)
-                    pressHead(thisP) = pressHead(thisP) + SlotDepth(thisP)
+                    !pressurehead(thisP) = pressurehead(thisP) + SlotDepth(thisP)
                 end where 
 
             case (DynamicSlot)
@@ -227,7 +255,7 @@ module preissmann_slot
                     SlotDepth(thisP) = max(SlotDepth(thisP) + dSlotDepth(thisP), zeroR) 
                     depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
                     head(thisP)      = max(head(thisP)  + SlotDepth(thisP), zbottom(thisP))
-                    pressHead(thisP) = pressHead(thisP) + SlotDepth(thisP)
+                    !pressurehead(thisP) = pressurehead(thisP) + SlotDepth(thisP)
                 elsewhere
                     SlotDepth(thisP)  = zeroR
                     ! SlotVolume(thisP) = zeroR
@@ -252,7 +280,8 @@ module preissmann_slot
             integer, intent(in) :: thisColP_JM
             integer, pointer    :: Npack, thisP(:)
             real(8), pointer    :: volume(:), depth(:), ell(:), ellMax(:), head(:)
-            real(8), pointer    :: pressHead(:), SlotVolume(:), SlotDepth(:)
+            !real(8), pointer    :: pressurehead(:)
+            real(8), pointer    :: SlotVolume(:), SlotDepth(:)
 
             character(64) :: subroutine_name = 'slot_JM_adjustments'
         !%------------------------------------------------------------------
@@ -270,8 +299,8 @@ module preissmann_slot
             depth  => elemR(:,er_Depth)
             head   => elemR(:,er_Head)
             ell    => elemR(:,er_ell)
-            ellMax => elemR(:,er_ell_max) 
-            pressHead  => elemR(:,er_Pressure_Head)
+            ellMax => elemR(:,er_FullEll) 
+            !pressurehead  => elemR(:,er_Pressure_Head)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
         !%------------------------------------------------------------------
@@ -280,7 +309,7 @@ module preissmann_slot
 
         volume(thisp) = volume(thisP) + SlotVolume(thisP)
         depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-        pressHead(thisP) = head(thisP) + SlotDepth(thisP)
+        !pressurehead(thisP) = head(thisP) + SlotDepth(thisP)
         ell(thisP)    = ellMax(thisP)
 
         if (setting%Debug%File%geometry) &
@@ -305,7 +334,8 @@ module preissmann_slot
             real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ell(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:), ellMax(:)
-            real(8), pointer :: pressHead(:), overflow(:), grav, TargetPCelerity, Alpha
+            !real(8), pointer :: pressurehead(:)
+            real(8), pointer :: overflow(:), grav, TargetPCelerity, Alpha
             logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:), isSurcharge(:), canSurcharge(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
             integer :: tB, ii, kk
@@ -329,12 +359,12 @@ module preissmann_slot
             fullArea      => elemR(:,er_FullArea)
             fullDepth     => elemR(:,er_FullDepth)
             overflow      => elemR(:,er_VolumeOverFlow)
-            pressHead     => elemR(:,er_Pressure_Head)
+            !pressurehead     => elemR(:,er_Pressure_Head)
             volume        => elemR(:,er_Volume)
             zcrown        => elemR(:,er_Zcrown)
             zbottom       => elemR(:,er_Zbottom)
             ell           => elemR(:,er_ell)
-            ellMax        => elemR(:,er_ell_max)
+            ellMax        => elemR(:,er_FullEll)
             fUp           => elemI(:,ei_Mface_uL)
             fDn           => elemI(:,ei_Mface_dL)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
@@ -394,7 +424,7 @@ module preissmann_slot
                         volume(tB) = volume(tB)  + SlotVolume(tB)
                         !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
                         depth(tB)  = depth(tB)   + SlotDepth(tB)
-                        pressHead(tB) = pressHead(tB) + SlotDepth(tB)
+                        !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
                         Overflow(tB) = zeroR  !% defined as zero (no oveflow from JB)
                     else 
                         !% --- excess head at JB in an open channel represents
@@ -435,7 +465,7 @@ module preissmann_slot
                         volume(tB) = volume(tB)  + SlotVolume(tB)
                         !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
                         depth(tB)  = depth(tB)   + SlotDepth(tB)
-                        pressHead(tB) = pressHead(tB) + SlotDepth(tB)
+                        !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
                         Overflow(tB) = zeroR !% defined as zero (no overflow from JB)
                     else 
                         !% --- excess head at JB in an open channel represents
@@ -491,7 +521,7 @@ module preissmann_slot
             dSlotArea  => elemR(:,er_dSlotArea)
             dSlotDepth => elemR(:,er_dSlotDepth)
             dSlotVol   => elemR(:,er_dSlotVolume)
-            ellMax     => elemR(:,er_ell_max)
+            ellMax     => elemR(:,er_FullEll)
             fullArea   => elemR(:,er_FullArea)
             fullVolume => elemR(:,er_FullVolume)
             length     => elemR(:,er_Length)

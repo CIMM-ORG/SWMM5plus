@@ -1488,7 +1488,7 @@ contains
                             thisposition = trim(subroutine_name)//'_R17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
+                           !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
@@ -1499,12 +1499,12 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
-                        case (api_linkf_xsect_culvertCode)
-                            !print *, 'call III'
-                            call load_api_procedure("api_get_linkf_attribute")
-                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_culvertCode, link_value)
-                            thisposition = trim(subroutine_name)//'_U17'
-                            call print_api_error(error, thisposition)
+                        ! case (api_linkf_xsect_culvertCode)
+                        !     !print *, 'call III'
+                        !     call load_api_procedure("api_get_linkf_attribute")
+                        !     error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_culvertCode, link_value)
+                        !     thisposition = trim(subroutine_name)//'_U17'
+                        !     call print_api_error(error, thisposition)
                         case default
                             !% circular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then

@@ -147,36 +147,36 @@ enum api_linkf_attributes {
   linkf_conduit_roughness,      // 68 *
   linkf_conduit_length,         // 69 *
   linkf_conduit_barrels,        // 70
-  linkf_rptFlag,                // 71
-  linkf_hasFlapGate,            // 72
-  linkf_cLossInlet,             // 73
-  linkf_cLossOutlet,            // 74
-  linkf_cLossAvg,               // 75
-  linkf_seepRate,               // 76
-  linkf_commonBreak,            // 77
+  linkf_culvertCode,            // 71
+  linkf_rptFlag,                // 72
+  linkf_hasFlapGate,            // 73
+  linkf_cLossInlet,             // 74
+  linkf_cLossOutlet,            // 75
+  linkf_cLossAvg,               // 76
+  linkf_seepRate,               // 77
+  linkf_commonBreak,            // 78
   // --- special elements attribute
-  linkf_type,                   // 78 *
-  linkf_sub_type,               // 79 *
-  linkf_typeBreak,              // 80
+  linkf_type,                   // 79 *
+  linkf_sub_type,               // 80 *
+  linkf_typeBreak,              // 81
   // --- xsect attributes
-  linkf_xsect_type,         // 81 *
-  linkf_geometry,           // 82 
-  linkf_xsect_wMax,         // 83 *
-  linkf_xsect_yBot,         // 84 *
-  linkf_xsect_yFull,        // 85 *
-  linkf_xsect_aFull,        // 86 *
-  linkf_xsect_rFull,        // 87 *
-  linkf_xsect_rBot,         // 88
-  linkf_xsect_culvertCode,  // 89
+  linkf_xsect_type,         // 82 *
+  linkf_geometry,           // 83 
+  linkf_xsect_wMax,         // 84 *
+  linkf_xsect_yBot,         // 85 *
+  linkf_xsect_yFull,        // 86 *
+  linkf_xsect_aFull,        // 87 *
+  linkf_xsect_rFull,        // 88 *
+  linkf_xsect_rBot,         // 89
   linkf_transectid,         // 90
-  linkf_forcemain_coef      // 91
+  linkf_forcemain_coef     // 91
 };
 // skip 2 numbers for index start and end flags
 // end flag                  // 92
 // start flag                // 93
 // these are identical to transect values in define_api_keys.f90
 enum api_transectf_attributes {
-  transectf_ID = 92,       // 94
+  transectf_ID = 94,       // 94
   transectf_yFull,         // 95
   transectf_aFull,         // 96
   transectf_rFull,         // 97

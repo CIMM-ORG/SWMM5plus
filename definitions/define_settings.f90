@@ -141,7 +141,7 @@ module define_settings
         logical :: isFluxConsOut            = .true.
         logical :: isFroudeNumberOut        = .false.
         logical :: isHeadOut                = .true.
-        logical :: isPressureHeadOut        = .true.
+        !logical :: isPressureHeadOut        = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
         logical :: isManningsNout           = .false.
@@ -455,11 +455,13 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
+        logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
         logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
         real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
         real(8) :: NominalElemLength   = 10.0d0
+        real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 
     ! setting%Eps
@@ -633,6 +635,7 @@ module define_settings
 
     !% storage for data read from SWMM input file
     !% NOT USER SETTINGS
+    !% setting%SWMMinput...
     type SWMMinputType
         logical :: AllowPonding
         integer :: ForceMainEquation
@@ -1149,11 +1152,18 @@ contains
 
         
     !% Discretization. =====================================================================
+        !% -- Channel overflow
+        !%                      Discretization.AllowChannelOverflowTF
+        call json%get('Discretization.AllowChannelOverflowTF', logical_value, found)
+        if (found) setting%Discretization%AllowChannelOverflowTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AllowChannelOverflowTF not found'
+      
         !% -- Nominal element length adjustment
         !%                      Discretization.AdustLinkLengthForJunctionBranchYN
         call json%get('Discretization.AdustLinkLengthForJunctionBranchYN', logical_value, found)
         if (found) setting%Discretization%AdustLinkLengthForJunctionBranchYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdustLinkLengthForJunctionBranchYN not found'
+
 
         !%                      Discretization.JunctionBranchLengthFactor
         call json%get('Discretization.JunctionBranchLengthFactor', real_value, found)

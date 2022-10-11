@@ -558,11 +558,11 @@ module runge_kutta2
             !% --- velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
                 !print *, '... vel     :',elemR(1:3,er_Velocity)
-                !  call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
+                 !call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
 
             !% --- prevent backflow through flapgates
             call ll_enforce_flapgate_CC (er_Velocity, thisPackCol, Npack)
-                !  call util_CLprint (' after rk2 call ll_enformce_flapgate_CC')
+                ! call util_CLprint (' after rk2 call ll_enforce_flapgate_CC')
 
         end if
 
@@ -570,7 +570,7 @@ module runge_kutta2
         call ll_flowrate_and_velocity_JB(ETM,istep)
 
             ! print *, '   in rk2momentum 555'
-            ! call util_CLprint (' after ll_flowrate_and_velocity_JB')
+            !call util_CLprint (' after ll_flowrate_and_velocity_JB')
 
     end subroutine rk2_momentum_step_ETM
 !%

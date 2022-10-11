@@ -663,7 +663,7 @@ contains
             link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
                 !print *, 'link_barrels   ', link%I(ii,li_barrels)  
                 !print *, ii, 'api_linkf_xsect_culvertCode ',api_linkf_xsect_culvertCode
-            link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_xsect_culvertCode, .true.)
+            link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_culvertCode, .true.)
                 print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
                 
             !% --- identify the upstream and downstream node indexes

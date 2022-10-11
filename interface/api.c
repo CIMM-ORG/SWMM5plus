@@ -1349,6 +1349,10 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_conduit_barrels :
             *value = Conduit[Link[link_idx].subIndex].barrels;
             break;
+
+        case linkf_culvertCode : 
+            *value = Link[link_idx].xsect.culvertCode;
+            break;   
     
         case linkf_rptFlag :
             if (Link[link_idx].rptFlag)
@@ -1447,11 +1451,7 @@ int DLLEXPORT api_get_linkf_attribute(
         
         case linkf_xsect_rBot : 
             *value = FTTOM(Link[link_idx].xsect.rBot);
-            break;
-
-        case linkf_xsect_culvertCode : 
-            *value = Link[link_idx].xsect.culvertCode;
-            break;    
+            break; 
 
         case linkf_transectid :
             *value = Link[link_idx].xsect.transect;
@@ -1475,8 +1475,7 @@ int DLLEXPORT api_get_linkf_attribute(
             //printf(" ****** in api_get_linkf_attribute  %e \n ", Link[link_idx].xsect.rBot);
             //*value = Link[link_idx].xsect.rBot;  // works for H-W
             break;
-        
-              
+ 
         default :             
             printf(" ****** api_get_linkf_attribute called without supported attr at 837954 %d \n ",attr);
             *value = API_NULL_VALUE_I;              

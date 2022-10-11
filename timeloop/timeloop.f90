@@ -242,7 +242,10 @@ contains
         !% --- initialize the time step counter
         thisStep = 1
 
+        !print *, 'starting tl_outerloop'
+
         do while (setting%Time%Now <= setting%Time%End - dtTol)
+                !print *, 'top of tl_outerloop loop'
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
                     !% --- skip BC update during spin-up after first step
@@ -251,6 +254,7 @@ contains
                     BCupdateYN = .true.
                 end if
     
+                !print *, 'before save previous values'
                 !% --- push the old values down the stack 
                 call tl_save_previous_values()
     
@@ -262,20 +266,22 @@ contains
                 !% --- main hydraulics time steop
                 if (doHydraulicsStepYN) then    
 
+                    !print *, 'in hydraulics step'
                     !% --- set a clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
                         call system_clock(count=cval,count_rate=crate,count_max=cmax)
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
     
-
+                    !print *, 'calling bc_update'
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
                         call bc_update() 
-                        call tl_lateral_inflow()
+                        ! call tl_lateral_inflow()!
                         call tl_smallestBC_timeInterval ()
                     end if
 
+                    !print *, 'calling controls'
                     !% --- perform control rules
                     if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
                         if (setting%Time%Now .ge. setting%Time%ControlRule%NextTime) then
@@ -298,7 +304,9 @@ contains
                     if (setting%Simulation%useHydrology .and. BCupdateYN) call tl_subcatchment_lateral_inflow ()
     
                     !% --- perform hydraulic routing
+                    !print *, 'calling tl_hydraulics'
                     call tl_hydraulics()
+                    !print *, 'out of tl_hydraulics'
 
                     !call util_CLprint ('in time_loop after tl_hydraulics')
     
@@ -315,6 +323,8 @@ contains
                 end if         
     
                 !call util_CLprint ('before reporting')
+
+                !print *, 'before reporting'
 
                 !% --- handle output reporting
                 if (setting%Output%Report%provideYN) then 
@@ -381,6 +391,8 @@ contains
                 !% --- check for blowup conditions
                 ! call util_crashcheck (773623)
                 if (crashI == 1) exit 
+
+                !print *, 'bottom of tl_outerloop'
     
             end do  !% end of time loop
 
@@ -544,8 +556,7 @@ contains
             Length              => elemR(:,er_Length)
             nBarrels            => elemI(:,ei_barrels)
 
-            npack    => npack_elemP(ep_BClat)
-            thisP    => elemP(1:npack,ep_BClat)
+            
             thisBC   => BC%P%BClat
         !%------------------------------------------------------------------
         !% set lateral to zero for all cells
@@ -554,10 +565,16 @@ contains
         !% --- if ep_BClat exist add lateral inflow BC to lateral inflow accumulator
         !%     note that thisP and thisBC must be the same size or there is something wrong  
         !%     For multi-barrel elements, divide lateral inflow evenly between barrels
+        npack    => npack_elemP(ep_BClat)
+        thisP    => elemP(1:npack,ep_BClat)
         if (npack > 0) then    
             Qlateral(thisP) = Qlateral(thisP) &
                 + BC%flowR(thisBC,br_value) / real(nBarrels(thisP),8)
+                ! print *, 'tl_lateral_inflow'
+                ! print *, BC%flowR(thisBC,br_value)
         end if
+
+        ! print *, 'Qlateral(thisP)',Qlateral(thisP)
 
         !% --- find the Adjust.Conductivity multiplier for the current month
         thisEpochTime = util_datetime_secs_to_epoch(setting%Time%Now)
@@ -581,6 +598,17 @@ contains
         elsewhere
             Qlateral(thisP) = Qlateral(thisP) - confac * SeepRate(thisP) * TopWidth(thisP)   * Length(thisP)
         endwhere
+
+        ! print *, 'confac ',confac
+        ! print *, 'seepRate ',SeepRate(thisP)
+        ! print *, 'topwidth ',Topwidth(thisP)
+        ! print *, 'BreadthMax ',BreadthMax(thisP)
+        ! print *, 'Qlateral(thisP)',Qlateral(thisP)
+
+        ! npack    => npack_elemP(ep_BClat)
+        ! thisP    => elemP(1:npack,ep_BClat)
+        ! print *, 'Qlateral(thisP)',Qlateral(thisP)
+        ! stop 5590873
 
         !% --- HACK TODO: need seepage for storage elements 20220907 brh
 

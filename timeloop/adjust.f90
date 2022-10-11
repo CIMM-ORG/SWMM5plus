@@ -1310,7 +1310,7 @@ module adjust
             faceHeadDn => faceR(:,fr_Head_d)          
             elemHead   => elemR(:,er_Head)    
             elemCrown  => elemR(:,er_Zcrown)
-            elemEllMax => elemR(:,er_ell_max)
+            elemEllMax => elemR(:,er_FullEll)
             w_uH       => elemR(:,er_InterpWeight_uH)
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)

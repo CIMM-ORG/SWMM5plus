@@ -314,6 +314,7 @@ module define_indexes
          !enumerator :: ei_Nsubcatch                 !% number of subcatchments feeding an element
          !% brh20211210e         
          enumerator :: ei_Temp01                    !% temporary array
+         enumerator :: ei_Temp02
          enumerator :: ei_tmType                    !% KEY time march type (dynamic)
          enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
          enumerator :: ei_link_transect_idx         !% index of the link transect in link array
@@ -331,16 +332,18 @@ module define_indexes
         enumerator :: er_Area_N0                    !% cross-sectional flow area (time N)
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
-        !enumerator :: er_Beta                       !% bottom slope / roughness, so that Q/beta = section factor
+        enumerator :: er_AoverAfull                 !% ratio of are to full area -- used for tabular geometry
+        !enumerator :: er_Beta                      !% bottom slope / roughness, so that Q/beta = section factor
         enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
+        enumerator :: er_DepthAtBreadthMax          !% depth below the point of maximum breadth
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
         enumerator :: er_dSlotArea                  !% change in slot volume
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
-        enumerator :: er_ell_max                    !% ell of  full pipe
+        enumerator :: er_FullEll                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
@@ -351,9 +354,10 @@ module define_indexes
         enumerator :: er_FullArea                   !% cross-sectional area of a full conduit (static)
         enumerator :: er_FullDepth                  !% maximum possible flow depth in full conduit (static)
         enumerator :: er_FullHydDepth               !% hydraulic (average) depth of full conduit (static)
-        enumerator :: er_FullHydRadius              !% hydraulic (average) radius of full conduit (static)
-        enumerator :: er_FullPerimeter              !% wetted perimeter of full conduit (static)
-        enumerator :: er_FullVolume                 !% Volume of a full conduit (static)
+        enumerator :: er_FullHydRadius              !% hydraulic radius of full conduit (static)
+        enumerator :: er_FullPerimeter              !% wetted perimeter of full conduit or channel (static)
+        enumerator :: er_FullTopwidth               !% Topwidth of full conduit or channel
+        enumerator :: er_FullVolume                 !% Volume of a full conduit or channel (static)
         enumerator :: er_GammaC                     !% gamma continuity source term for AC solver
         enumerator :: er_GammaM                     !% gamma momentum source term for AC solver
         enumerator :: er_Head                       !% piezometric head (latest) -- water surface elevation in open channel
@@ -380,9 +384,10 @@ module define_indexes
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Preissmann_Number          !% Preissmann number
-        enumerator :: er_Pressure_Head              !% Pressure head 
+        !enumerator :: er_Pressure_Head              !% Pressure head 
         enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
         enumerator :: er_ManningsN_Dynamic          !% total ManningsN roughness, including dynamic adjustment (experimental)
+        enumerator :: er_SedimentDepth
         enumerator :: er_SeepRate                   !% Local seepage rate in m/s
         enumerator :: er_Setting                    !% percent open setting for a link element
         !enumerator :: er_SectionFactor              !% present value of Qn/S0 section factor
@@ -420,6 +425,7 @@ module define_indexes
         enumerator :: er_VolumePonded               !% total volume in ponding
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_WaveSpeed                  !% wave speed in element
+        enumerator :: er_YoverYfull                 !% ratio of depth to full depth for tabular geometry
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
         enumerator :: er_ZbreadthMax                !% elevation at maximum breadth
         enumerator :: er_Zcrown                     !% inside crown elevation of closed conduit (static)
@@ -832,215 +838,202 @@ module define_indexes
     !% These are the full arrays of special, geometry, real data
     !%-------------------------------------------------------------------------
 
+    !% ===== OPEN CHANNELS ======
+
+    !% Define the column indexes for elemGSR(:,:) for irregular channel
+    enum, bind(c)
+        enumerator ::  esgr_Irregular_lastplusone = 1    !% dummy -- no data at this point
+    end enum   
+    integer, parameter :: Ncol_elemSGR_Irregular =  esgr_Irregular_lastplusone-1  
+
+    !% Define the column indexes for elemGSR(:,:) for parabolic channel
+    enum, bind(c)
+        enumerator ::  esgr_Parabolic_Breadth = 1    !% breadth for parabolic geometry
+        enumerator ::  esgr_Parabolic_Radius
+        enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
+    end enum    
+    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Parabolic_lastplusone-1    
+    
+    !% Define the column indexes for elemGSR(:,:) for powerfunction channel
+    enum, bind(c)
+        enumerator ::  esgr_PowerFunction_Breadth = 1    
+        enumerator ::  esgr_PowerFunction_Radius
+        enumerator ::  esgr_PowerFunction_lastplusone !% must be last enum item
+    end enum    
+    integer, parameter :: Ncol_elemSGR_PowerFunction =  esgr_PowerFunction_lastplusone-1     
+
     !% Define the column indexes for elemGSR(:,:) for rectangular pipe or channel
     enum, bind(c)
-         enumerator ::  esgr_Rectangular_Breadth = 1    !% breadth for rectangular geometry
-         enumerator ::  esgr_Rectangular_lastplusone !% must be last enum item
+        enumerator ::  esgr_Rectangular_Breadth = 1    !% breadth for rectangular geometry
+        enumerator ::  esgr_Rectangular_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSGR_Rectangular =  esgr_Rectangular_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for triangular channel
     enum, bind(c)
-         enumerator ::  esgr_Triangular_Slope = 1    !% side-slope for triangular geometry
-         enumerator ::  esgr_Triangular_TopBreadth  !% top breadth of triangular geometry
-         enumerator ::  esgr_Triangular_lastplusone !% must be last enum item
+        enumerator ::  esgr_Triangular_Slope = 1    !% side-slope for triangular geometry
+        enumerator ::  esgr_Triangular_TopBreadth  !% top breadth of triangular geometry
+        enumerator ::  esgr_Triangular_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSGR_Triangular =  esgr_Triangular_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for triangular channel
-    enum, bind(c)
-         enumerator ::  esgr_Rectangular_Triangular_TopBreadth = 1  !% top breadth of triangular geometry
-         enumerator ::  esgr_Rectangular_Triangular_BottomDepth     !% depth of the triangular section
-         enumerator ::  esgr_Rectangular_Triangular_BottomArea      !% area of the triangular section
-         enumerator ::  esgr_Rectangular_Triangular_BottomSlope     !% side slope of the triangular section
-         enumerator ::  esgr_Rectangular_Triangular_lastplusone     !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSGR_Rectangular_Triangular =  esgr_Rectangular_Triangular_lastplusone-1
-
     !% Define the column indexes for elemGSR(:,:) for trapezoidal pipe or channel
     enum, bind(c)
-         enumerator ::  esgr_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
-         enumerator ::  esgr_Trapezoidal_LeftSlope      !% left slope for trapezoidal geometry
-         enumerator ::  esgr_Trapezoidal_RightSlope     !% right slope for trapezoidal geometry
-         enumerator ::  esgr_Trapezoidal_lastplusone !% must be last enum item
+        enumerator ::  esgr_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
+        enumerator ::  esgr_Trapezoidal_LeftSlope      !% left slope for trapezoidal geometry
+        enumerator ::  esgr_Trapezoidal_RightSlope     !% right slope for trapezoidal geometry
+        enumerator ::  esgr_Trapezoidal_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Trapezoidal =  esgr_Trapezoidal_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
-    enum, bind(c)
-         enumerator ::  esgr_Circular_Diameter = 1    !% diameter for circular geometry
-         enumerator ::  esgr_Circular_Radius          !% radius for circular geometry
-         enumerator ::  esgr_Circular_YoverYfull      !% Y/Yfull for circular geometry
-         enumerator ::  esgr_Circular_AoverAfull      !% A/Afull for circular geometry
-         enumerator ::  esgr_Circular_lastplusone !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Circular =  esgr_Circular_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for filled circular pipe or channel
-    enum, bind(c)
-         enumerator ::  esgr_Filled_Circular_Diameter = 1    !% diameter for filled circular geometry
-         enumerator ::  esgr_Filled_Circular_YoverYfull      !% Y/Yfull for filled circular geometry
-         enumerator ::  esgr_Filled_Circular_AoverAfull      !% A/Afull for filled circular geometry
-         enumerator ::  esgr_Filled_Circular_Ybot            !% filled depth of filled circular geometry
-         enumerator ::  esgr_Filled_Circular_Abot            !% filled area of filled circular geometry
-         enumerator ::  esgr_Filled_Circular_Pbot            !% filled wetted perimeter of filled circular geometry
-         enumerator ::  esgr_Filled_Circular_Tbot            !% filled top-width of filled circular geometry
-         enumerator ::  esgr_Filled_Circular_YatMaxBreadth   !% depth at maximum breadth
-         enumerator ::  esgr_Filled_Circular_lastplusone     !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Filled_Circular =  esgr_Filled_Circular_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for parabolic channel
-    enum, bind(c)
-         enumerator ::  esgr_Parabolic_Breadth = 1    !% breadth for parabolic geometry
-         enumerator ::  esgr_Parabolic_Radius
-         enumerator ::  esgr_Parabolic_lastplusone !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Parabolic =  esgr_Parabolic_lastplusone-1
+    !% ===== CLOSED CONDUITS =====
 
-    !% Define the column indexes for elemGSR(:,:) for Rectangular round channel
+    !% Define the column indexes for elemGSR(:,:) for Arch shaped conduits
     enum, bind(c)
-         enumerator ::  esgr_Rectangular_Round_BreadthMax = 1    !% breadth for parabolic geometry
-         enumerator ::  esgr_Rectangular_Round_YatMaxBreadth     !% depth at maximum breadth
-         enumerator ::  esgr_Rectangular_Round_Ybot              !% depth of bottom circular section
-         enumerator ::  esgr_Rectangular_Round_Rbot              !% radius of the circular section
-         enumerator ::  esgr_Rectangular_Round_Abot              !% area of the circular section
-         enumerator ::  esgr_Rectangular_Round_ThetaBot          !% angle of the circular section
-         enumerator ::  esgr_Rectangular_Round_lastplusone       !% must be last enum item
+        enumerator ::  esgr_Arch_SoverSfull=1       !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Arch_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Rectangular_Round =  esgr_Parabolic_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Arch = esgr_Arch_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for basket_handle_conduit
     enum, bind(c)
-         enumerator ::  esgr_Basket_Handle_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Basket_Handle_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Basket_Handle_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Basket_Handle_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Basket_Handle_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Basket_Handle_lastplusone = 1      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Basket_Handle = esgr_Basket_Handle_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for mod_basket conduit
+    !% Define the column indexes for elemGSR(:,:) for Catenary shaped conduits
     enum, bind(c)
-         enumerator ::  esgr_Mod_Basket_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Mod_Basket_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Mod_Basket_Ytop             !% height of top circular arc
-         enumerator ::  esgr_Mod_Basket_Rtop             !% radius of top circular arc
-         enumerator ::  esgr_Mod_Basket_Atop             !% area of top circular arc
-         enumerator ::  esgr_Mod_Basket_ThetaTop         !% angle of top circular arc
-         enumerator ::  esgr_Mod_Basket_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Catenary_SoverSfull = 1       !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Catenary_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Mod_Basket = esgr_Mod_Basket_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Catenary = esgr_Catenary_lastplusone-1
+   
+    !% Define the column indexes for elemGSR(:,:) for circular conduit 
+    enum, bind(c)
+        enumerator ::  esgr_Circular_Diameter =1         !% diameter for circular geometry
+        enumerator ::  esgr_Circular_Radius            !% radius for circular geometry
+        enumerator ::  esgr_Circular_lastplusone !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Circular =  esgr_Circular_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for custom closed conduit
+    enum, bind(c)
+        enumerator ::  esgr_Custom_lastplusone = 1 !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Custom =  esgr_Custom_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for Egg_Shaped_conduit
     enum, bind(c)
-         enumerator ::  esgr_Egg_Shaped_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Egg_Shaped_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Egg_Shaped_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Egg_Shaped_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Egg_Shaped_lastplusone      !% must be last enum item
+         enumerator ::  esgr_Egg_Shaped_lastplusone = 1      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Egg_Shaped = esgr_Egg_Shaped_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for Horse Shoe shaped conduits
+    !% Define the column indexes for elemGSR(:,:) for filled circular pipe or channel
     enum, bind(c)
-         enumerator ::  esgr_Horse_Shoe_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Horse_Shoe_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Horse_Shoe_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Horse_Shoe_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Horse_Shoe_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Filled_Circular_TotalPipeDiameter = 1   !% diameter for entire pipe (filled + flow)
+        enumerator ::  esgr_Filled_Circular_TotalPipeArea       !% pipe cross-section area including filled area
+        enumerator ::  esgr_Filled_Circular_TotalPipePerimeter  !% pipe perimeter including filled area
+        enumerator ::  esgr_Filled_Circular_TotalPipeHydRadius  !% pipe hydradius including filled area
+        enumerator ::  esgr_Filled_Circular_bottomArea          !% filled area of filled circular geometry
+        enumerator ::  esgr_Filled_Circular_bottomPerimeter     !% filled wetted perimeter of filled circular geometry
+        enumerator ::  esgr_Filled_Circular_bottomTopwidth      !% filled top-width of filled circular geometry
+        enumerator ::  esgr_Filled_Circular_lastplusone     !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Horse_Shoe = esgr_Horse_Shoe_lastplusone-1
-
-    !% Define the column indexes for elemGSR(:,:) for Catenary shaped conduits
-    enum, bind(c)
-         enumerator ::  esgr_Catenary_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Catenary_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Catenary_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Catenary_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Catenary_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Catenary_lastplusone      !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Catenary = esgr_Catenary_lastplusone-1
+    integer, parameter :: Ncol_elemSGR_Filled_Circular =  esgr_Filled_Circular_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for Gothic shaped conduits
     enum, bind(c)
-         enumerator ::  esgr_Gothic_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Gothic_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Gothic_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Gothic_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Gothic_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Gothic_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Gothic_SoverSfull = 1       !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Gothic_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Gothic = esgr_Gothic_lastplusone-1
 
+    !% Define the column indexes for elemGSR(:,:) for HOrizontal ellipse shaped conduits
+    enum, bind(c)
+        enumerator ::  esgr_Horiz_Ellipse_SoverSfull = 1       !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Horiz_Ellipse_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Horiz_Ellipse = esgr_Horiz_Ellipse_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for Horse Shoe shaped conduits
+    enum, bind(c)
+        enumerator ::  esgr_Horse_Shoe_lastplusone = 1     !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Horse_Shoe = esgr_Horse_Shoe_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for mod_basket conduit
+    enum, bind(c)
+        enumerator ::  esgr_Mod_Basket_Ytop =1            !% height of top circular arc
+        enumerator ::  esgr_Mod_Basket_Rtop             !% radius of top circular arc
+        enumerator ::  esgr_Mod_Basket_Atop             !% area of top circular arc
+        enumerator ::  esgr_Mod_Basket_ThetaTop         !% angle of top circular arc
+        enumerator ::  esgr_Mod_Basket_lastplusone      !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Mod_Basket = esgr_Mod_Basket_lastplusone-1
+
+     !% Define the column indexes for elemGSR(:,:) for Rectangular closedchannel
+    enum, bind(c)
+        enumerator ::  esgr_Rectangular_Closed_lastplusone = 1       !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Rectangular_Closed =  esgr_Rectangular_Closed_lastplusone-1
+
+
+    !% Define the column indexes for elemGSR(:,:) for Rectangular round channel
+    enum, bind(c)
+        enumerator ::  esgr_Rectangular_Round_Ybot = 1              !% depth of bottom circular section
+        enumerator ::  esgr_Rectangular_Round_Rbot              !% radius of the circular section
+        enumerator ::  esgr_Rectangular_Round_Abot              !% area of the circular section
+        enumerator ::  esgr_Rectangular_Round_ThetaBot          !% angle of the circular section
+        enumerator ::  esgr_Rectangular_Round_lastplusone       !% must be last enum item
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Rectangular_Round =  esgr_Rectangular_Round_lastplusone-1
+
+    !% Define the column indexes for elemGSR(:,:) for rectangular triangular channel
+    enum, bind(c)
+        enumerator ::  esgr_Rectangular_Triangular_BottomDepth = 1     !% depth of the triangular section
+        enumerator ::  esgr_Rectangular_Triangular_BottomArea      !% area of the triangular section
+        enumerator ::  esgr_Rectangular_Triangular_BottomSlope     !% side slope of the triangular section
+        enumerator ::  esgr_Rectangular_Triangular_lastplusone     !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSGR_Rectangular_Triangular =  esgr_Rectangular_Triangular_lastplusone-1
+
     !% Define the column indexes for elemGSR(:,:) for Semi-Circular shaped conduits
     enum, bind(c)
-         enumerator ::  esgr_Semi_Circular_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Semi_Circular_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Semi_Circular_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Semi_Circular_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Semi_Circular_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Semi_Circular_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Semi_Circular_SoverSfull  = 1     !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Semi_Circular_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Semi_Circular = esgr_Semi_Circular_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for Semi-Circular shaped conduits
     enum, bind(c)
-         enumerator ::  esgr_Semi_Elliptical_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Semi_Elliptical_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Semi_Elliptical_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Semi_Elliptical_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Semi_Elliptical_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Semi_Elliptical_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Semi_Elliptical_SoverSfull = 1       !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Semi_Elliptical_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Semi_Elliptical = esgr_Semi_Elliptical_lastplusone-1
 
-    !% Define the column indexes for elemGSR(:,:) for Arch shaped conduits
-    enum, bind(c)
-         enumerator ::  esgr_Arch_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Arch_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Arch_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Arch_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Arch_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Arch_lastplusone      !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Arch = esgr_Arch_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for HOrizontal ellipse shaped conduits
     enum, bind(c)
-         enumerator ::  esgr_Horiz_Ellipse_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Horiz_Ellipse_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Horiz_Ellipse_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Horiz_Ellipse_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Horiz_Ellipse_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Horiz_Ellipse_lastplusone      !% must be last enum item
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Horiz_Ellipse = esgr_Horiz_Ellipse_lastplusone-1
-
-    !% Define the column indexes for elemGSR(:,:) for HOrizontal ellipse shaped conduits
-    enum, bind(c)
-         enumerator ::  esgr_Vert_Ellipse_BreadthMax = 1   !% breadth max for basket handle geometry
-         enumerator ::  esgr_Vert_Ellipse_YatMaxBreadth    !% depth at maximum breadth
-         enumerator ::  esgr_Vert_Ellipse_AoverAfull       !% Y/Yfull for basket handle geometry
-         enumerator ::  esgr_Vert_Ellipse_YoverYfull       !% A/Afull for basket handle geometry
-         enumerator ::  esgr_Vert_Ellipse_SoverSfull       !% S/Sfull for basket handle geometry
-         enumerator ::  esgr_Vert_Ellipse_lastplusone      !% must be last enum item
+        enumerator ::  esgr_Vert_Ellipse_SoverSfull = 1       !% S/Sfull for basket handle geometry
+        enumerator ::  esgr_Vert_Ellipse_lastplusone      !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Vert_Ellipse = esgr_Vert_Ellipse_lastplusone-1
@@ -1051,25 +1044,29 @@ module define_indexes
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSGR = max(&
-                            Ncol_elemSGR_Rectangular,   &
-                            Ncol_elemSGR_Trapezoidal,   &
-                            Ncol_elemSGR_Circular,      &
-                            Ncol_elemSGR_Trapezoidal,   &
-                            Ncol_elemSGR_Rectangular_Triangular, &
+                            Ncol_elemSGR_Irregular,              &
+                            Ncol_elemSGR_Parabolic,              &
+                            Ncol_elemSGR_PowerFunction,          &
+                            Ncol_elemSGR_Rectangular,            &
+                            Ncol_elemSGR_Trapezoidal,            &
+                            Ncol_elemSGR_Arch,                   &
+                            Ncol_elemSGR_Basket_Handle,          &
+                            Ncol_elemSGR_Catenary,               &
+                            Ncol_elemSGR_Circular,               &
+                            Ncol_elemSGR_Custom,                 &
+                            Ncol_elemSGR_Egg_Shaped,             &
                             Ncol_elemSGR_Filled_Circular,        &
-                            Ncol_elemSGR_Parabolic,     &
-                            Ncol_elemSGR_Rectangular_Round, &
-                            Ncol_elemSGR_Basket_Handle, &
-                            Ncol_elemSGR_Egg_Shaped,    &
-                            Ncol_elemSGR_Horse_Shoe,    &
-                            Ncol_elemSGR_Catenary,      &
-                            Ncol_elemSGR_Gothic,        &
-                            Ncol_elemSGR_Semi_Circular, &
-                            Ncol_elemSGR_Mod_Basket,    &
-                            Ncol_elemSGR_Arch,          &
-                            Ncol_elemSGR_Horiz_Ellipse, &
-                            Ncol_elemSGR_Vert_Ellipse,  &
-                            Ncol_elemSGR_Semi_Elliptical)
+                            Ncol_elemSGR_Gothic,                 &
+                            Ncol_elemSGR_Horiz_Ellipse,          &
+                            Ncol_elemSGR_Horse_Shoe,             &
+                            Ncol_elemSGR_Mod_Basket,             &
+                            Ncol_elemSGR_Rectangular_Closed,     &
+                            Ncol_elemSGR_Rectangular_Round,      &
+                            Ncol_elemSGR_Rectangular_Triangular, &
+                            Ncol_elemSGR_Semi_Circular,          &
+                            Ncol_elemSGR_Semi_Elliptical,        &
+                            Ncol_elemSGR_Vert_Ellipse)
+
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or
@@ -1479,7 +1476,7 @@ module define_indexes
         enumerator :: tr_areaAtMaxFlow     ! area at max flow (aMax in EPA-SWMM)
         enumerator :: tr_lengthFactor      ! floodplain / channel length (lengthFactor in EPA-SWMM)
         enumerator :: tr_ManningsN         ! Mannings n (roughness in EPA-SWMM)
-        enumerator :: tr_widthFull         ! not in EPA-SWMM
+        enumerator :: tr_widthFull         ! not in EPA-SWMM - width at full depth
         enumerator :: tr_areaBelowBreadthMax ! not in EPA-SWMM
         enumerator :: tr_lastplusone
     end enum

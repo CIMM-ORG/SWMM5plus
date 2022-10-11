@@ -4,6 +4,7 @@ module trapezoidal_channel
     use define_globals
     use define_indexes
     use define_keys
+    use geometry_lowlevel
 
     implicit none
 
@@ -15,15 +16,17 @@ module trapezoidal_channel
     private
 
     public :: trapezoidal_depth_from_volume
-    public :: trapezoidal_area_from_depth
-    public :: trapezoidal_area_from_depth_singular
     public :: trapezoidal_topwidth_from_depth
-    public :: trapezoidal_topwidth_from_depth_singular 
     public :: trapezoidal_perimeter_from_depth
-    public :: trapezoidal_perimeter_from_depth_singular
-    public :: trapezoidal_hyddepth_from_depth
+
+    ! public :: trapezoidal_area_from_depth_singular
+    ! public :: trapezoidal_topwidth_from_depth_singular 
+    ! public :: trapezoidal_perimeter_from_depth_singular
+    
+    !public :: trapezoidal_hyddepth_from_depth
     !public :: trapezoidal_hyddepth_from_depth_singular
-    public :: trapezoidal_hydradius_from_depth_singular
+    
+    !public :: trapezoidal_hydradius_from_depth_singular
 
 
     contains
@@ -32,76 +35,88 @@ module trapezoidal_channel
 !%==========================================================================
 !%
     subroutine trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
-        !% Assumes that volume > 0 is enforced in volume computations.
-        !% NOTE: this does NOT limit the depth by surcharge height at this point
-        !% This will be done after the head is computed.
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), volume(:), length(:), breadth(:)
-        real(8), pointer :: lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        thisP   => elemPGx(1:Npack,thisCol) 
-        depth   => elemR(:,er_Depth)
-        volume  => elemR(:,er_Volume)
-        length  => elemR(:,er_Length)
-        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%-----------------------------------------------------------------------------  
+        !% Assumes that volume > 0 is previuosly enforced in volume computations.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, pointer :: thisP(:)
+            real(8), pointer :: depth(:), volume(:)
+            real(8), pointer :: fullvolume(:), fulldepth(:)
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%-------------------------------------------------------------------
+            depth      => elemR(:,er_Depth)
+            volume     => elemR(:,er_Volume)
+            fullvolume => elemR(:,er_FullVolume)
+            fulldepth  => elemR(:,er_FullDepth)
+        !%------------------------------------------------------------------
 
-        depth(thisP)       = - onehalfR * (breadth(thisP)/(onehalfR*(lslope(thisP) + rslope(thisP))) &
-                - sqrt((breadth(thisP)/(onehalfR*(lslope(thisP) + rslope(thisP)))) ** twoR &
-                + fourR * volume(thisP)/(onehalfR*length(thisP)*(lslope(thisP) + rslope(thisP)))))
+        if (setting%Discretization%AllowChannelOverflowTF) then
+            where (volume(thisP) >= fullvolume(thisP))
+                !% --- truncate depth at full depth if there is overflow
+                depth(thisP) = fulldepth(thisP)
+            elsewhere
+                !% --- standard trapezoidal depth
+                depth(thisP) = llgeo_trapezoidal_depth_from_volume_pure &
+                                    (thisP, volume(thisP))
+            endwhere
+        else
+            !% --- if overflow is NOT allowed
+            where (volume(thisP) >= fullvolume(thisP))
+                !% --- volume above max level is rectangular at max breadth
+                depth(thisP) = llgeo_openchannel_depth_above_full_pure(thisP)
+            elsewhere
+                !% --- standard trapezoidal depth
+                depth(thisP) = llgeo_trapezoidal_depth_from_volume_pure &
+                                 (thisP, volume(thisP))
+            end where
+        end if
 
     end subroutine trapezoidal_depth_from_volume
 !%  
 !%==========================================================================
 !%==========================================================================
 !%
-    elemental real(8) function trapezoidal_area_from_depth (indx) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for trapezoidal cross section 
-        !% input may be a scalar or a packed array of indexes
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        !%-----------------------------------------------------------------------------
-        outvalue = (elemSGR(indx,esgr_Trapezoidal_Breadth)                        &
-                        + onehalfR * (  elemSGR(indx,esgr_Trapezoidal_LeftSlope)  &
-                                      + elemSGR(indx,esgr_Trapezoidal_RightSlope) &
-                                     ) * elemR(indx,er_Depth)                     &
-                    ) * elemR(indx,er_Depth)
-
-    end function trapezoidal_area_from_depth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
-        !% Computes the topwidth from a known depth in a rectangular channel
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: topwidth(:), depth(:), breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        thisP    => elemPGx(1:Npack,thisCol) 
-        topwidth => elemR(:,er_Topwidth)
-        depth    => elemR(:,er_Depth)
-        breadth  => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope   => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope   => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%-----------------------------------------------------------------------------
+        !% Computes the topwidth from a known depth in a trapezoidal channel
+        !%------------------------------------------------------------------
+            integer, target, intent(in) :: elemPGx(:,:)
+            integer, intent(in) ::  Npack, thisCol
+            integer, pointer :: thisP(:)
+            real(8), pointer :: topwidth(:), volume(:), fullvolume(:)
+            real(8), pointer :: depth(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases    
+            thisP       => elemPGx(1:Npack,thisCol) 
+            topwidth    => elemR(:,er_Topwidth)
+            volume      => elemR(:,er_Volume)
+            fullvolume  => elemR(:,er_FullVolume)
+            depth       => elemR(:,er_Depth)
+        !%----------------------------------------------------------------
+        if (setting%Discretization%AllowChannelOverflowTF) then 
+            !% --- depth is already limited to full depth
+            topwidth(thisP) = llgeo_trapezoidal_topwidth_from_depth_pure(thisP,depth(thisP))
+        else
+            where (volume(thisP) >= fullvolume(thisP))
+                topwidth(thisP) = llgeo_openchannel_topwidth_above_full_pure(thisP)
+            elsewhere
+                !% --- use elemental form as depth <= fulldepth
+                topwidth(thisP) = llgeo_trapezoidal_topwidth_from_depth_pure(thisP,depth(thisP))
+            endwhere
 
-        topwidth(thisP) = breadth(thisP) + depth(thisP) * (lslope(thisP) + rslope(thisP))
+        end if
+
+        !topwidth(thisP) = breadth(thisP) + depth(thisP) * (lslope(thisP) + rslope(thisP))
 
     end subroutine trapezoidal_topwidth_from_depth
 !%    
@@ -109,183 +124,189 @@ module trapezoidal_channel
 !%==========================================================================
 !%
     subroutine trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a trapezoidal channel
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: perimeter(:), depth(:), breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        thisP     => elemPGx(1:Npack,thisCol) 
-        perimeter => elemR(:,er_Perimeter)
-        depth     => elemR(:,er_Depth)
-        breadth   => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope    => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope    => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, target, intent(in) :: elemPGx(:,:)
+            integer, intent(in) ::  Npack, thisCol
+            integer, pointer :: thisP(:)
+            real(8), pointer :: perimeter(:), volume(:), fullvolume(:)
+            real(8), pointer :: depth(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP      => elemPGx(1:Npack,thisCol) 
+            perimeter  => elemR(:,er_Perimeter)
+            volume     => elemR(:,er_Volume)
+            fullvolume => elemR(:,er_FullVolume)
+            depth      => elemR(:,er_Depth)
+        !%-----------------------------------------------------------------
 
-        perimeter(thisP) = breadth(thisP) + depth(thisP) * (sqrt(oneR + lslope(thisP)**twoR) &
-                        + sqrt(oneR + rslope(thisP)**twoR))
+        if (setting%Discretization%AllowChannelOverflowTF) then 
+            !% --- depth is already limited to full depth
+            perimeter(thisP) = llgeo_trapezoidal_perimeter_from_depth_pure(thisP,depth(thisP))
+        else
+            where (volume(thisP) >= fullvolume(thisP))
+                perimeter(thisP) = llgeo_openchannel_perimeter_above_full_pure(thisP)
+            elsewhere
+                !% --- use elemental form as depth <= fulldepth
+                perimeter(thisP) = llgeo_trapezoidal_perimeter_from_depth_pure(thisP,depth(thisP))
+            endwhere
+        end if
+        
 
     end subroutine trapezoidal_perimeter_from_depth
 !%    
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the hydraulic (average) depth from a known depth in a rectangular channel
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:)
-        integer, intent(in) ::  Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: hyddepth(:), depth(:), breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        thisP     => elemPGx(1:Npack,thisCol) 
-        hyddepth  => elemR(:,er_HydDepth)
-        depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%----------------------------------------------------------------------------- 
+    ! subroutine trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes the hydraulic (average) depth from a known depth in a rectangular channel
+    !     !%----------------------------------------------------------------
+    !     integer, target, intent(in) :: elemPGx(:,:)
+    !     integer, intent(in) ::  Npack, thisCol
+    !     integer, pointer :: thisP(:)
+    !     real(8), pointer :: hyddepth(:), depth(:), breadth(:), lslope(:), rslope(:)
+    !     !%-----------------------------------------------------------------------------
+    !     thisP     => elemPGx(1:Npack,thisCol) 
+    !     hyddepth  => elemR(:,er_HydDepth)
+    !     depth   => elemR(:,er_Depth)
+    !     breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+    !     lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+    !     rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
+    !     !%----------------------------------------------------------------------------- 
 
-        hyddepth(thisP) = ((breadth(thisP) + onehalfR * (lslope(thisP) + rslope(thisP)) * &
-                    depth(thisP)) * depth(thisP)) / (breadth(thisP) + depth(thisP) * &
-                    (lslope(thisP) + rslope(thisP)))
+    !     hyddepth(thisP) = ((breadth(thisP) + onehalfR * (lslope(thisP) + rslope(thisP)) * &
+    !                 depth(thisP)) * depth(thisP)) / (breadth(thisP) + depth(thisP) * &
+    !                 (lslope(thisP) + rslope(thisP)))
 
-    end subroutine trapezoidal_hyddepth_from_depth
+    ! end subroutine trapezoidal_hyddepth_from_depth
 !%    
 !%========================================================================== 
 !% SINGULAR 
 !%==========================================================================
 !%
-    real(8) function trapezoidal_area_from_depth_singular &
-        (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes area from known depth for trapezoidal cross section of a single element
-        !% The input indx is the row index in full data 2D array.
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer :: breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%-----------------------------------------------------------------------------
-        outvalue = (breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * depth) * depth
+!     pure real(8) function trapezoidal_area_from_depth_singular &
+!         (indx, depth) result (outvalue)
+!         !%------------------------------------------------------------------
+!         !% Description:
+!         !% Computes area from known depth for trapezoidal cross section of a single element
+!         !% The input indx is the row index in full data 2D array.
+!         !%------------------------------------------------------------------
+!         integer, intent(in) :: indx
+!         real(8), intent(in) :: depth
+!         !%------------------------------------------------------------------
+!         outvalue = ( elemSGR(indx,esgr_Trapezoidal_Breadth)                     &
+!                     + onehalfR * (   elemSGR(indx,esgr_Trapezoidal_LeftSlope)   &
+!                                    + elemSGR(indx,esgr_Trapezoidal_RightSlope)  &
+!                                  ) * depth                                      &
+!                    ) * depth
 
-    end function trapezoidal_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function trapezoidal_topwidth_from_depth_singular &
-        (indx, depth) result (outvalue)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes the topwidth for a trapezoidal cross section of a single element
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
-        real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%-----------------------------------------------------------------------------
-        outvalue = breadth(indx) + depth * (lslope(indx) + rslope(indx))
+!     end function trapezoidal_area_from_depth_singular
+! !%
+! !%==========================================================================
+! !%==========================================================================
+! !%
+!     pure real(8) function trapezoidal_topwidth_from_depth_singular &
+!         (indx, depth) result (outvalue)
+!         !%------------------------------------------------------------------
+!         !% Description:
+!         !% Computes the topwidth for a trapezoidal cross section of a single element
+!         !%------------------------------------------------------------------
+!             integer, intent(in) :: indx 
+!             real(8), intent(in) :: depth
+!         !%------------------------------------------------------------------
+!         outvalue = elemSGR(indx,esgr_Trapezoidal_Breadth)             &
+!              + depth * (  elemSGR(indx,esgr_Trapezoidal_LeftSlope)    &
+!                         + elemSGR(indx,esgr_Trapezoidal_RightSlope)   &
+!                        )
 
-    end function trapezoidal_topwidth_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function trapezoidal_perimeter_from_depth_singular &
-        (indx, depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes wetted perimeter from known depth for a trapezoidal cross section of
-        !% a single element 
-        !%-----------------------------------------------------------------------------
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer :: breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%----------------------------------------------------------------------------- 
+!     end function trapezoidal_topwidth_from_depth_singular
+! !%
+! !%==========================================================================
+! !%==========================================================================
+! !%
+!     pure real(8) function trapezoidal_perimeter_from_depth_singular &
+!         (indx, depth) result (outvalue)
+!         !%  
+!         !%------------------------------------------------------------------
+!         !% Description:
+!         !% Computes wetted perimeter from known depth for a trapezoidal cross section of
+!         !% a single element 
+!         !%-----------------------------------------------------------------
+!             integer, intent(in) :: indx
+!             real(8), intent(in) :: depth
+!         !%-----------------------------------------------------------------------------
         
-        outvalue =  breadth(indx) + depth * (sqrt(oneR + lslope(indx)**twoR) + &
-                    sqrt(oneR + rslope(indx)**twoR))
+!         outvalue =  elemSGR(indx,esgr_Trapezoidal_Breadth) &
+!              + depth * (  sqrt(oneR + elemSGR(indx,esgr_Trapezoidal_LeftSlope )**2) &
+!                         + sqrt(oneR + elemSGR(indx,esgr_Trapezoidal_RightSlope)**2) &
+!                         )
 
-    end function trapezoidal_perimeter_from_depth_singular
-!%    
-!%==========================================================================
-!%==========================================================================
-!%
-    ! real(8) function trapezoidal_hyddepth_from_depth_singular &
-    !     (indx, depth) result (outvalue)
-    !     !%  
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes hydraulic depth from known depth for trapezoidal cross section of 
-    !     !% a single element
-    !     !%-----------------------------------------------------------------------------   
-    !     integer, intent(in) :: indx 
-    !     real(8), intent(in) :: depth
-    !     real(8), pointer    ::  breadth(:), lslope(:), rslope(:)
-    !     !%-----------------------------------------------------------------------------
-    !     breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-    !     lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-    !     rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-    !     !%-----------------------------------------------------------------------------     
+!     end function trapezoidal_perimeter_from_depth_singular
+! !%    
+! !%==========================================================================
+! !%==========================================================================
+! !%
+!     ! real(8) function trapezoidal_hyddepth_from_depth_singular &
+!     !     (indx, depth) result (outvalue)
+!     !     !%  
+!     !     !%-----------------------------------------------------------------------------
+!     !     !% Description:
+!     !     !% Computes hydraulic depth from known depth for trapezoidal cross section of 
+!     !     !% a single element
+!     !     !%-----------------------------------------------------------------------------   
+!     !     integer, intent(in) :: indx 
+!     !     real(8), intent(in) :: depth
+!     !     real(8), pointer    ::  breadth(:), lslope(:), rslope(:)
+!     !     !%-----------------------------------------------------------------------------
+!     !     breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+!     !     lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+!     !     rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
+!     !     !%-----------------------------------------------------------------------------     
 
-    !     outvalue = ( (breadth(indx)                                             &    
-    !                     + onehalfR * (lslope(indx) + rslope(indx)) * depth      &
-    !                  ) * depth                                                  &
-    !                  / (breadth(indx) + depth * (lslope(indx) + rslope(indx)) ) &
-    !                 )
+!     !     outvalue = ( (breadth(indx)                                             &    
+!     !                     + onehalfR * (lslope(indx) + rslope(indx)) * depth      &
+!     !                  ) * depth                                                  &
+!     !                  / (breadth(indx) + depth * (lslope(indx) + rslope(indx)) ) &
+!     !                 )
 
-    ! end function trapezoidal_hyddepth_from_depth_singular
-!%    
-!%==========================================================================
-!%==========================================================================
-!%
-    real(8) function trapezoidal_hydradius_from_depth_singular (indx, depth) result (outvalue)
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic radius from known depth for a trapezoidal cross section of
-        !% a single element 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx
-        real(8), intent(in) :: depth
-        real(8), pointer ::  breadth(:), lslope(:), rslope(:)
-        !%-----------------------------------------------------------------------------
-        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-        !%----------------------------------------------------------------------------- 
+!     ! end function trapezoidal_hyddepth_from_depth_singular
+! !%    
+! !%==========================================================================
+! !%==========================================================================
+! !%
+!     real(8) function trapezoidal_hydradius_from_depth_singular (indx, depth) result (outvalue)
+!         !%  
+!         !%-----------------------------------------------------------------------------
+!         !% Description:
+!         !% Computes hydraulic radius from known depth for a trapezoidal cross section of
+!         !% a single element 
+!         !%-----------------------------------------------------------------------------
+!         integer, intent(in) :: indx
+!         real(8), intent(in) :: depth
+!         real(8), pointer ::  breadth(:), lslope(:), rslope(:)
+!         !%-----------------------------------------------------------------------------
+!         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+!         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+!         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
+!         !%----------------------------------------------------------------------------- 
         
-        outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) &
-                     *  depth) * depth                                        &
-                   )                                                          &
-                   / ( breadth(indx)                                          &
-                       + depth * (  sqrt(oneR + lslope(indx)**twoR)           &
-                                  + sqrt(oneR + rslope(indx)**twoR))          &
-                     )
+!         outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) &
+!                      *  depth) * depth                                        &
+!                    )                                                          &
+!                    / ( breadth(indx)                                          &
+!                        + depth * (  sqrt(oneR + lslope(indx)**twoR)           &
+!                                   + sqrt(oneR + rslope(indx)**twoR))          &
+!                      )
 
-    end function trapezoidal_hydradius_from_depth_singular
+!     end function trapezoidal_hydradius_from_depth_singular
 !%    
 !%==========================================================================
 !% END MODULE

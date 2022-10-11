@@ -126,7 +126,7 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine xsect_table_lookup &
+    pure subroutine xsect_table_lookup &
         (inoutArray, normalizedInput, table, thisP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -139,12 +139,12 @@ contains
         !% the delta to return the position in the array.
         !%
         !%-----------------------------------------------------------------------------
-        real(8), intent(inout)    :: inoutArray(:)
-        real(8), intent(in)       :: normalizedInput(:), table(:)
-        integer, intent(in)       :: thisP(:)
-        integer, pointer          :: position(:)
-        integer                   :: nItems, ii
-        real(8)                   :: delta
+        real(8), intent(inout)           :: inoutArray(:)
+        real(8), intent(in)              :: normalizedInput(:), table(:)
+        integer, intent(in)              :: thisP(:)
+        integer, dimension(size(thisP))  :: position
+        integer                          :: nItems, ii
+        real(8)                          :: delta
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
 
@@ -152,7 +152,8 @@ contains
 
         !% pointer towards the position in the lookup table
         !% this is pointed towards temporary column
-        position => elemI(:,ei_Temp01)
+        !% 20221011 brh -- removed temporary space to make this subroutine pure
+        !position => elemI(:,ei_Temp01) 
 
         delta = oneR / (nItems - oneR)
 
@@ -195,7 +196,7 @@ contains
         endwhere
 
         !% reset the temporary values to nullvalue
-        position(thisP) = nullvalueI
+        ! position(thisP) = nullvalueI
 
     end subroutine xsect_table_lookup
 !%
