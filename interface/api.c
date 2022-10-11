@@ -1116,11 +1116,12 @@ int DLLEXPORT api_get_linkf_attribute(
 {
     int error;
 
+   // printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+   // printf(" ****** in api_get_linkf_attribute  %d \n ",linkf_type);
+
     error = check_api_is_initialized("api_get_linkf_attribute");
     if (error) return error;
 
-    //printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
-    //printf(" ****** in api_get_linkf_attribute  %d \n ",linkf_type);
 
 // the following are in the order of the enumeration in define_api_keys.f90 and api.h
     switch (attr) {

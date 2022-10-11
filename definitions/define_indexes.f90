@@ -343,7 +343,6 @@ module define_indexes
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
-        enumerator :: er_FullEll                    !% ell of  full pipe
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
@@ -353,6 +352,7 @@ module define_indexes
         enumerator :: er_FroudeNumber               !% froude number of flow
         enumerator :: er_FullArea                   !% cross-sectional area of a full conduit (static)
         enumerator :: er_FullDepth                  !% maximum possible flow depth in full conduit (static)
+        enumerator :: er_FullEll                    !% ell of  full pipe
         enumerator :: er_FullHydDepth               !% hydraulic (average) depth of full conduit (static)
         enumerator :: er_FullHydRadius              !% hydraulic radius of full conduit (static)
         enumerator :: er_FullPerimeter              !% wetted perimeter of full conduit or channel (static)
@@ -384,6 +384,7 @@ module define_indexes
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Preissmann_Number          !% Preissmann number
+        enumerator :: er_Preissmann_Number_initial  !% Initial Preissmann number before surcharge
         !enumerator :: er_Pressure_Head              !% Pressure head 
         enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
         enumerator :: er_ManningsN_Dynamic          !% total ManningsN roughness, including dynamic adjustment (experimental)
@@ -404,6 +405,7 @@ module define_indexes
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
         enumerator :: er_SourceMomentum             !% source term for momentum equation
+        enumerator :: er_Surcharge_Time             !% time a CC element is surcharged
         enumerator :: er_TargetSetting              !% target percent open setting for a link element in the next time step
         enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Temp02                     !% temporary array (use and set to null in a single procedure)

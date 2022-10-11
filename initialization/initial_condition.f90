@@ -3866,8 +3866,10 @@ contains
         elemR(1:size(elemR,1)-1,er_dSlotDepth)            = zeroR
         elemR(1:size(elemR,1)-1,er_dSlotVolume)           = zeroR
         elemR(1:size(elemR,1)-1,er_SlotVolumeOld)         = zeroR
-        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR     
-
+        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
+        elemR(1:size(elemR,1)-1,er_Surcharge_Time)        = zeroR      
+        elemR(1:size(elemR,1)-1,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+                                                              * elemR(1:size(elemR,1)-1,er_FullEll)))
         !% only calculate slots for ETM time-march
         if (setting%Solver%SolverSelect == ETM) then
             select case (SlotMethod)

@@ -233,6 +233,7 @@ module define_settings
         integer :: Method = DynamicSlot
         real(8) :: TargetCelerity = 3.0d0
         real(8) :: Alpha = 2.0d0
+        real(8) :: DecayRate = 1.0
     end type PreissmannSlotType
 
     !% setting%Output%Report
@@ -490,8 +491,8 @@ module define_settings
         logical              :: force_folder_creationYN = .true.
         logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
-        character(len=256)   :: base_folder = "build"
-        character(len=256)   :: library_folder = "build"
+        character(len=256)   :: base_folder = ""
+        character(len=256)   :: library_folder = "build"  !% DO NOT CHANGE THIS FROM "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
@@ -1901,6 +1902,11 @@ contains
         call json%get('Solver.PreissmannSlot.Alpha', real_value, found)
         if (found) setting%Solver%PreissmannSlot%Alpha = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.Alpha not found'
+
+        !%                      DecayRate
+        call json%get('Solver.PreissmannSlot.DecayRate', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%DecayRate = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.DecayRate not found'
 
 
     !% TestCase.  =====================================================================

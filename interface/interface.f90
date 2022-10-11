@@ -1231,12 +1231,14 @@ contains
             !%     First we use the api_linkf_type to get the overarching link type for this
             !%     link. This allows us to properly categorize the sub_type values to read         
     
+           ! print *, '****** CALLING api_get_linkf_attribute'
+            
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
 
-            !print *, 'here 5098734'
+            ! print *, 'here 5098734'
             ! print *, link_value
 
             ilink_value = int(link_value) !% the linkf_type is always an integer
@@ -1440,8 +1442,11 @@ contains
                     print *, 'input attr of ',attr, reverseKey_api(attr)
                     print *, 'unknown link value',ilink_value
                     print *, 'problem in call to ptr_api_get_linkf_attribute with api_linkf_type'
-                    print *, 'A possible cause is the EPA-SWMM executable needs to be recompiled'
+                    print *, 'A possible cause is the EPA-SWMM library needs to be recompiled'
                     print *, 'This usually requires a cmake .. followed by a make'
+                    print *, 'It is also possible that an old version of the libswmm5.so file'
+                    print *, 'is being used instead of the correct version. Check the library'
+                    print *, 'folder being used in setting%File%library_folder.'
                     call util_crashpoint(6698733)
             end select
       
@@ -2917,20 +2922,15 @@ contains
 
                 if (tseries_idx >= 0) then
                     !% --- this gets the Tseries.x2 values
-                    !%     Note the Tseries.x1 values will be overwritten by the .x2 values
-                    !%     only if the x2 value is less than timemax. This prepares for the
-                    !%     the next step of storing for SWMM5+
+                    !% --- gets time in days at what is now the x2 pointer 
+                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
+
+                    tnext = util_datetime_epoch_to_secs(tnext)
+
+                    !% move the linked list to the next step (which sets up the next value for x2)
                     success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
 
-                    if (success == 1) then
-                        !% --- gets time in days at what is now the x2 pointer 
-                        tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
-                        !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
-                        !print *, 'tnext Flow out of interface ',tnext
-
-                        tnext = util_datetime_epoch_to_secs(tnext)
-                        !print *, 'tnext Flow',tnext /3600.0
-                    else
+                    if (success .ne. oneI) then
                         !% --- failure to read time later than tnow from file
                         print *, ' '
                         write(*,"(A)") 'INPUT FILE FAILURE'
@@ -3021,18 +3021,12 @@ contains
                 !% --- this gets the Tseries.x2 values
                 !%     Note the Tseries.x1 values will be overwritten by the .x2 values
                 !%     only if the x2 value is less than timemax. This prepares for the
-                !%     the next step of storing for SWMM5+
+                !%     the next step of storing for SWMM5+      
+                !% --- gets time in days at what is now the x2 pointer 
+                tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
+                tnext = util_datetime_epoch_to_secs(tnext)
                 success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
-
-                if (success == 1) then
-                    !% --- gets time in days at what is now the x2 pointer 
-                    tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
-                    !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
-                    !print *, 'tnext Head out of interface ',tnext
-
-                    tnext = util_datetime_epoch_to_secs(tnext)
-                    !print *, 'tnext Head',tnext /3600.0
-                else
+                if (success .ne. oneI) then
                     !% --- failure to read time later than tnow from file
                     print *, ' '
                     write(*,"(A)") 'INPUT FILE FAILURE'

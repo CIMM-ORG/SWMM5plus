@@ -20,34 +20,18 @@
         }
     },
     "Discretization" : {
-        "JunctionBranchLengthFactor" : 0.33,
+        "JunctionBranchLengthFactor" : 1.0,
         "AdustLinkLengthForJunctionBranchYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.144
+        "NominalElemLength" : 0.036
     },
     "Junction" : {
         "FunStorageN" : 10,
-        "kFactor"     : 0.0,
+        "kFactor"     : 15.0,
         "InfiniteExtraDepthValue"    : 1000.0
     },
     "Limiter" : {
-        "BC" : {
-            "UseInflowLimiterYN" : true,
-            "Approach" : "FroudeNumber",
-            "FroudeInflowMaximum" : 1.5
-        },
-        "Channel" : {
-            "LargeDepthFactor" : 10.0
-        },
-        "Flowrate" : {
-            "FaceVolumeTransport" : 0.5,
-            "UseFaceVolumeTransportYN" : true
-        },
-        "Velocity" : {
-            "UseLimitMaxYN" : true,
-            "Maximum" : 10.0
-        },
         "Dt" : {
             "UseLimitMinYN" : true,
             "Minimum"     : 1e-10
@@ -59,7 +43,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 5000
+            "interval" : 50000
         },
         "DataOut" :{
             "isAreaOut"                 : true,
@@ -85,12 +69,9 @@
             "useHD5F" : false,  
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 0.02,
+            "TimeInterval" : 0.1,
             "TimeUnits" : "Seconds"
         }
-    },
-    "Profile" : {
-        "useYN" : false
     },
     "Simulation" : {
         "stopAfterInitializationYN" : false,
@@ -106,7 +87,7 @@
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T20",
+        "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
@@ -116,8 +97,9 @@
         },
         "PreissmannSlot" : {
             "Method" : "DynamicSlot",
-            "TargetCelerity" : 200.00,
-            "Alpha" : 3.0
+            "TargetCelerity" : 1000.00,
+            "Alpha" : 3.0,
+            "DecayRate" : 10.0
         }
     },
     "TestCase" : {
@@ -137,9 +119,9 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.60,
-        "CFL_target" : 0.55,
-        "CFL_lo_max" : 0.50,
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.45,
+        "CFL_lo_max" : 0.40,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     }

@@ -64,13 +64,13 @@ DRY_ONLY         NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                1                2                14.33       0.012       0          0          0          0  
-2                1                4                 1.43       0.012       0.32       0          0          0
+1                1                2                14.33       0.016       0          0          0          0  
+2                1                4                 1.43       0.016       0.32       0          0          0
 
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
-3                2                3               SIDE          0          0.7         NO      0     
+3                2                3                SIDE          0          0.8        NO      0     
 
 
 [XSECTIONS]
@@ -85,7 +85,7 @@ DRY_ONLY         NO
 
 RULE R1
 IF SIMULATION TIME >= 00:00:00
-THEN ORIFICE 3 SETTING = 0.6
+THEN ORIFICE 3 SETTING = 0.8
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

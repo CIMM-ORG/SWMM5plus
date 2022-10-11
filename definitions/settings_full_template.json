@@ -87,7 +87,7 @@
         "UseCommandLineFoldersYN"  : true,
         "force_folder_creationYN"  : true,
         "base_folder" : "",
-        "library_folder" : "",
+        "library_folder" : "build",
         "output_folder" : "",
         "output_temp_subfolder" : "",
         "project_folder" : "",

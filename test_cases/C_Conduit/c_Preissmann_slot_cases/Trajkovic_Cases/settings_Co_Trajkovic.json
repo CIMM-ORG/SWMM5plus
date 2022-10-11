@@ -53,7 +53,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 10000
+            "interval" : 20000
         },
         "DataOut" :{
             "isAreaOut"                 : true,
@@ -105,8 +105,9 @@
         },
         "PreissmannSlot" : {
             "Method" : "DynamicSlot",
-            "TargetCelerity" : 100.0,
-            "Alpha" : 3.00
+            "TargetCelerity" : 1000.0,
+            "Alpha" : 3.00,
+            "DecayRate" : 50.0
         }
     },    
     "TestCase" : {
