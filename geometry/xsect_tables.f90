@@ -160,7 +160,7 @@ contains
         !% --- Find the integer (lower) position in the table for interpolation
         !%     Note that fortran int() always gets the integer smaller than the value
         where (normalizedInput(thisP) / delta + oneR < real(nItems,8))
-            position(thisP) = int(normalizedInput(thisP) / delta) +oneI
+            position(thisP) = int(normalizedInput(thisP) / delta) + oneI
         elsewhere
             !% --- don't try to convert larger values to a position 
             !%     (possible integer overflow)

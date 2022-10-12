@@ -567,21 +567,21 @@ module geometry
                 horiz_ellipse, horseshoe)
             do ii=1,size(thisP)
                 mm = thisP(ii)
-                elemR(ii,er_Area) = llgeo_tabular_from_depth_singular &
+                elemR(mm,er_Area) = llgeo_tabular_from_depth_singular &
                     (mm, depth(mm), fullArea(mm), setting%ZeroValue%Area, ATableType)
             end do
 
         case (filled_circular)
             do ii=1,size(thisP)
                 mm = thisP(ii)
-                elemR(ii,er_Area) = llgeo_filled_circular_area_from_depth_singular &
+                elemR(mm,er_Area) = llgeo_filled_circular_area_from_depth_singular &
                                     (mm, depth(mm))
             end do
 
         case (mod_basket)
             do ii = 1,size(thisP)
                 mm = thisP(ii)
-                elemR(ii,er_Area) = llgeo_mod_basket_area_from_depth_singular &
+                elemR(mm,er_Area) = llgeo_mod_basket_area_from_depth_singular &
                                     (mm, depth(mm))
             end do
 
@@ -2897,8 +2897,8 @@ module geometry
 
            ! outvalue = arch_area_from_depth_singular (idx, indepth)
             outvalue = llgeo_tabular_from_depth_singular &
-                    (idx, depth(idx), fullArea(idx), setting%ZeroValue%Depth, Atable)
-
+                    (idx, indepth, fullArea(idx), setting%ZeroValue%Depth, Atable)
+            
         case (filled_circular)
             outvalue = llgeo_filled_circular_area_from_depth_singular (idx, indepth)     
             

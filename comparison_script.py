@@ -51,7 +51,7 @@ def convert_dset_to_csv(file_name,dset_name):
 tol = 5.0                   # tolerance for comparing between the norms
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
-unit             = 'CFS'    # unit of original swmm-c input file. options 'CFS' or 'SI'
+unit             = 'SI'     # unit of original swmm-c input file. options 'CFS' or 'SI'
 #-----------------------------------------------------------------------------------
 
 # Getting current working directory and time when the script is ran so that we can create a new folder

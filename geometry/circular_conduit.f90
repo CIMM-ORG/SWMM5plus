@@ -84,7 +84,7 @@ module circular_conduit
         if (Npack_analytical > zeroI) then
             thisP_analytical(1:Npack_analytical) = pack(thisP,AoverAfull(thisP) <= 0.04)
             call circular_get_normalized_depth_from_area_analytical &
-                (YoverYfull, AoverAfull, Npack_analytical, thisP_analytical)
+                (YoverYfull, AoverAfull, Npack_analytical, thisP_analytical(1:Npack_analytical) )
         end if
 
         !% --- pack the rest of the circular elements having AoverAfull > 0.04 which will use
@@ -93,7 +93,8 @@ module circular_conduit
         if (Npack_lookup > zeroI) then
             thisP_lookup(1:Npack_lookup) = pack(thisP,AoverAfull(thisP) > 0.04)
             call xsect_table_lookup &
-                (YoverYfull, AoverAfull, YCirc, thisP_lookup) 
+                (YoverYfull, AoverAfull, YCirc, thisP_lookup(1:Npack_lookup))
+
         endif
 
         !% --- unnormalize the depth 
