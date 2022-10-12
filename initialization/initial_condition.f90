@@ -1693,11 +1693,12 @@ contains
         case (lRectangular_closed)  !% ANALYTICAL
 
                 elemI(thisP,ei_geometryType) = rectangular_closed
-    
+
                 !% --- independent data
-                elemR(thisP,er_BreadthMax)         = link%R(thisLink,lr_BreadthScale)
-                elemR(thisP,er_DepthAtBreadthMax)  =  elemR(thisP,er_FullDepth)
-               
+                elemR(thisP,er_BreadthMax)              = link%R(thisLink,lr_BreadthScale)
+                elemR(thisP,er_DepthAtBreadthMax)       = elemR(thisP,er_FullDepth)
+                elemSGR(thisP,esgr_Rectangular_Breadth) = elemR(thisP,er_BreadthMax) 
+
                 call geo_common_initialize (thisP, rectangular_closed, dummyA, dummyA)
                     
         case (lRect_round)
