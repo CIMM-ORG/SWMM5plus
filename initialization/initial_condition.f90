@@ -1514,7 +1514,7 @@ contains
             elemSGR(thisP,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
             elemR(thisP,er_BreadthMax)            = elemSGR(thisP,esgr_Circular_Diameter)
             elemR(thisP,er_DepthAtBreadthMax)     = 0.5d0 * elemR(thisP,er_FullDepth)
-            print*, elemR(thisP, er_Depth), 'Depth at init'
+
             call geo_common_initialize (thisP, circular, ACirc, TCirc)    
          
         case (lCustom)  !% TABULAR

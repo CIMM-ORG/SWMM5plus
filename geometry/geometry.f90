@@ -806,7 +806,7 @@ module geometry
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer, pointer :: Npack, thisCol
-            character(64) :: subroutine_name = 'geo_depth_from_volume'
+            character(64) :: subroutine_name = 'geo_depth_from_volume_by_type'
         !%-------------------------------------------------------------------
         !% Preliminaries
             !!if (crashYN) return
