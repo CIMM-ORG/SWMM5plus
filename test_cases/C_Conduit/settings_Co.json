@@ -5,11 +5,15 @@
         "Long"  : "test",
         "Short" : "test"
     },
+    "BC" : {
+        "TimeSlotsStored" : 5,
+        "disableInterpolationYN": false
+    },
     "Discretization" : {
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 100.00
+        "NominalElemLength" : 500.00
     },
     "Limiter" : {
         "BC" : {

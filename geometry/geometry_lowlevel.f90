@@ -480,10 +480,9 @@ module geometry_lowlevel
             integer,         intent(in) :: SoverScol
             real(8),         intent(in) :: Stable(:)
             integer, pointer :: thisP(:)
-            real(8), pointer :: area(:), fullarea(:), fulldepth(:)
+            real(8), pointer :: area(:), fullarea(:), fulldepth(:), fullhydradius(:)
             real(8), pointer :: AoverAfull(:), SoverSfull(:), HydRadius(:)
             real(8), pointer :: SectionFactor(:)
-            real(8), parameter :: sfparam = 0.23172d0
         !%---------------------------------------------------------------------
         !% Preliminaries
             if (Npack < 1) return
@@ -493,6 +492,7 @@ module geometry_lowlevel
             area          => elemR(:,er_area)
             fullarea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_Fulldepth)
+            fullhydradius => elemR(:,er_FullHydRadius)
             HydRadius     => elemR(:,er_HydRadius)
             AoverAfull    => elemR(:,er_AoverAfull)
             SoverSfull    => elemSGR(:,SoverScol)
@@ -513,11 +513,10 @@ module geometry_lowlevel
 
         !% find the section factor 
         !% sF_full = Afull * (rFull) ^ (2/3)
-        !% rFull   = 0.23172 * yFull
         !% sF = sF_full * sF/sF_full
         SectionFactor(thisP) = &
                 ( fullArea(thisP) & 
-                  * ((sfparam * fullDepth(thisP))**twoThirdR) &
+                  * ((fullhydradius(thisP))**twoThirdR) &
                 ) * SoverSfull(thisP)
 
         !% --- compute hydraulic radius from section factor
@@ -587,7 +586,6 @@ module geometry_lowlevel
             real(8), intent(in) :: Stable(:),  area, fullHydRadius, zeroValue
             real(8), pointer    :: fullarea
             real(8)             :: AoverAfull, SoverSfull, SFfull
-            real(8), parameter  :: sfparam = 0.23172d0
         !%------------------------------------------------------------------  
         !% Aliases
             fullarea => elemR(indx,er_FullArea)
@@ -608,7 +606,6 @@ module geometry_lowlevel
             !     that has been replaced by using the full hydraulic radius
             !% unnormalize section factor -- store in outvalue 
             !% sF_full = Afull * (rFull) ^ (2/3)
-            !% rFull   = 0.23172 * yFull
             !% sF = sF_full * sF/sF_full
             ! outvalue(thisP) = &
             !         ( fullArea & 

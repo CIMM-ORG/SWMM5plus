@@ -567,21 +567,21 @@ module geometry
                 horiz_ellipse, horseshoe)
             do ii=1,size(thisP)
                 mm = thisP(ii)
-                elemR(ii,er_Area) = llgeo_tabular_from_depth_singular &
+                elemR(mm,er_Area) = llgeo_tabular_from_depth_singular &
                     (mm, depth(mm), fullArea(mm), setting%ZeroValue%Area, ATableType)
             end do
 
         case (filled_circular)
             do ii=1,size(thisP)
                 mm = thisP(ii)
-                elemR(ii,er_Area) = llgeo_filled_circular_area_from_depth_singular &
+                elemR(mm,er_Area) = llgeo_filled_circular_area_from_depth_singular &
                                     (mm, depth(mm))
             end do
 
         case (mod_basket)
             do ii = 1,size(thisP)
                 mm = thisP(ii)
-                elemR(ii,er_Area) = llgeo_mod_basket_area_from_depth_singular &
+                elemR(mm,er_Area) = llgeo_mod_basket_area_from_depth_singular &
                                     (mm, depth(mm))
             end do
 
@@ -634,14 +634,14 @@ module geometry
             real(8) :: thisPerimeter, thisArea
             character(64) :: subroutine_name = "geo_sectionfactor_from_depth_singular"
         !%------------------------------------------------------------------  
-        !print *, 'in ',trim(subroutine_name)    
-        !print *, 'input depth ',inDepth
+        ! print *, 'in ',trim(subroutine_name)    
+        ! print *, 'input depth ',inDepth
         thisArea      = geo_area_from_depth_singular      (eIdx,inDepth)
-        !print *, '----- area     ',thisArea
+        ! print *, '----- area     ',thisArea
         thisPerimeter = geo_perimeter_from_depth_singular (eIdx,inDepth)
-        !print *, '----- perimeter',thisPerimeter
+        ! print *, '----- perimeter',thisPerimeter
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
-         !print *, '----- sf       ',outvalue
+        ! print *, '----- sf       ',outvalue
 
     end function geo_sectionfactor_from_depth_singular
 !%
@@ -806,7 +806,7 @@ module geometry
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer, pointer :: Npack, thisCol
-            character(64) :: subroutine_name = 'geo_depth_from_volume'
+            character(64) :: subroutine_name = 'geo_depth_from_volume_by_type'
         !%-------------------------------------------------------------------
         !% Preliminaries
             !!if (crashYN) return
@@ -2897,8 +2897,8 @@ module geometry
 
            ! outvalue = arch_area_from_depth_singular (idx, indepth)
             outvalue = llgeo_tabular_from_depth_singular &
-                    (idx, depth(idx), fullArea(idx), setting%ZeroValue%Depth, Atable)
-
+                    (idx, indepth, fullArea(idx), setting%ZeroValue%Depth, Atable)
+            
         case (filled_circular)
             outvalue = llgeo_filled_circular_area_from_depth_singular (idx, indepth)     
             
@@ -3227,16 +3227,18 @@ module geometry
                     (iA, tempHydRadius, tempArea)
             outvalue = outA(1)
         
-        case (catenary, gothic, semi_circular, semi_elliptical)   
+        case (catenary, gothic, semi_circular, semi_elliptical)  
+            print*
+            print*, indepth, 'indepth' 
             tempArea(1)  = llgeo_tabular_from_depth_singular &
                     (idx, indepth, fullArea(idx), setting%ZeroValue%Depth, Atable)
-
+            print*, tempArea(1), 'tempArea(1)'
             temphydRadius(1)= llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
                 (idx, tempArea(1), fullhydradius(idx), setting%ZeroValue%Area, Stable)
-
+            print*, temphydRadius(1), 'temphydRadius(1)'
             outA = llgeo_perimeter_from_hydradius_and_area_pure &
                         (iA, tempHydradius, tempArea)
-
+            print*, outA, 'outA'
         case (filled_circular)
             outvalue = llgeo_filled_circular_perimeter_from_depth_singular (idx, indepth)
 
