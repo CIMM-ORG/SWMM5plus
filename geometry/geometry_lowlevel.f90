@@ -1668,7 +1668,7 @@ module geometry_lowlevel
 
         llgeo_triangular_perimeter_from_depth_pure                   &
             = twoR * depth                          &
-            * sqrt( oneR + elemSGR(thisP,esgr_Triangular_Slope)**2 )
+            * sqrt( oneR + elemSGR(thisP,esgr_Triangular_Slope)** twoI )
 
     end function llgeo_triangular_perimeter_from_depth_pure                   
 !%
@@ -1934,15 +1934,15 @@ module geometry_lowlevel
             outvalue = setting%ZeroValue%Topwidth
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= bottomDepth) ) then
-            outvalue = twoR * depth * sqrt(oneR + bottomSlope**2)
+            outvalue = twoR * depth * sqrt(oneR + bottomSlope**twoI)
 
         elseif ((depth >  bottomDepth) .and. (depth < fulldepth)) then
-            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**2) &   !triangular section
+            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**twoI) &   !triangular section
                         + twoR * (depth - bottomDepth)                      !rectangular section
 
         else 
             !% --- at or above full depth perimeter includes top
-            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**2) &   
+            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**twoI) &   
                         + twoR * (fullDepth - bottomDepth) + breadth                   
         endif
 
