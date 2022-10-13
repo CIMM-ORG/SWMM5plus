@@ -1220,6 +1220,7 @@ contains
             elemSGR(thisP,esgr_Parabolic_Breadth)   = link%R(thisLink,lr_BreadthScale)
             elemSGR(thisP,esgr_Parabolic_Radius)    = elemSGR(thisP,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
             elemR(thisP,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+            elemR(thisP,er_BreadthMax)              = link%R(thisLink,lr_BreadthScale)
   
             !% --- full conditions
             elemR(thisP,er_FullArea)      = llgeo_parabolic_area_from_depth_pure &
@@ -1239,8 +1240,7 @@ contains
 
             elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
             
-            !% --- dependent 
-            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            !% --- dependent  
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea) 
             elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
             elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)

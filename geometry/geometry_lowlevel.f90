@@ -1583,7 +1583,7 @@ module geometry_lowlevel
         llgeo_parabolic_perimeter_from_depth_pure &
                 = onehalfR * (elemSGR(thisP,esgr_Parabolic_Radius)**2)   &
                            * (                                           &
-                               temp1 * temp2   + log(temp1) + temp2      &
+                               temp1 * temp2   + log(temp1 + temp2)      &
                              )                   
 
     end function llgeo_parabolic_perimeter_from_depth_pure                   
