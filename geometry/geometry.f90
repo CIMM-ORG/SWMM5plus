@@ -564,7 +564,8 @@ module geometry
         !% --- get IC data for Area
         select case (thisGeoType)
         case (arch, basket_handle, catenary, circular, eggshaped, gothic, &
-                horiz_ellipse, horseshoe)
+                horiz_ellipse, horseshoe, semi_circular, semi_elliptical, &
+                vert_ellipse)
             do ii=1,size(thisP)
                 mm = thisP(ii)
                 elemR(mm,er_Area) = llgeo_tabular_from_depth_singular &
@@ -601,7 +602,7 @@ module geometry
                 mm = thisP(ii)
                 elemR(mm,er_Area) = llgeo_rectangular_triangular_area_from_depth_singular &
                                         (mm, depth(mm))
-                end do
+            end do
         case default
             print *, 'CODE ERROR: Unexpected case default'
             call util_crashpoint(5298722)
