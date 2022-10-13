@@ -4590,7 +4590,7 @@ contains
                 !%     array uses the final depth value
                 if (oldtestUvalue > testUvalue) isIncreasing = .false.
                 ! print *, 'isIncreasing',isIncreasing
-                 !print *, 'test value: ',testUvalue, thisUvalue
+                ! print *, 'test value: ',testUvalue, thisUvalue
                 ! print *, 'test depth: ',testDepth + deltaDepth, elemR(eIdx,er_FullDepth)
             end do
 
@@ -4606,8 +4606,8 @@ contains
                 !% --- interpolate across the two available values that bracket thisUvalue
                 thisDepth  = oldtestDepth  +        deltaDepth            *  (thisUvalue - oldtestUvalue) / deltaUvalue
                 thisArea   = oldtestArea   + (testArea  - oldtestArea)    *  (thisUvalue - oldtestUvalue) / deltaUvalue
-                ! print *, 'old, this, test Uvalue ',oldtestUvalue, thisUvalue, testUvalue
-                ! print *, 'ratio ',(thisUvalue - oldtestUvalue) / deltaUvalue
+                print *, 'old, this, test Uvalue ',oldtestUvalue, thisUvalue, testUvalue
+                print *, 'ratio ',(thisUvalue - oldtestUvalue) / deltaUvalue
             endif
 
             !% --- store the table data (normalized)   
@@ -4624,6 +4624,8 @@ contains
             !% --- final check for this item
             select case (Utype)
             case (SectionFactorData)
+                print*, '**************************************'
+                print*, thisDepth, 'thisDepth'
                 testUvalue    = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
             case (QcriticalData)
                 testUvalue    = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
