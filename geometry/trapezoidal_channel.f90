@@ -50,6 +50,7 @@ module trapezoidal_channel
         !% Preliminaries
             if (Npack < 1) return
         !%-------------------------------------------------------------------
+            thisP      => elemPGx(1:Npack,thisCol) 
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)
             fullvolume => elemR(:,er_FullVolume)
