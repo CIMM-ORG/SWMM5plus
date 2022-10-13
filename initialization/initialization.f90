@@ -645,33 +645,33 @@ contains
         !% -----------------------
         do ii = 1, setting%SWMMinput%N_link
 
-            print *, ' '
-            print *, '================================================='
-            print *, 'AAA in ',trim(subroutine_name), ii
-            print *, 'api_linkf_geometry ', api_linkf_geometry
-            print *, trim(reverseKey_api(api_linkf_geometry))
+            ! print *, ' '
+            ! print *, '================================================='
+            ! print *, 'AAA in ',trim(subroutine_name), ii
+            ! print *, 'api_linkf_geometry ', api_linkf_geometry
+            ! print *, trim(reverseKey_api(api_linkf_geometry))
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
-                print *, 'calling for link direction'
+                !print *, 'calling for link direction'
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
-                print *, 'link_direction ',link%I(ii,li_link_direction)
-                print *, 'calling for link type'
+                !print *, 'link_direction ',link%I(ii,li_link_direction)
+                !print *, 'calling for link type'
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
-                print *, 'link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
-                print *, 'calling for sub type'
+                !print *, 'link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
+                !print *, 'calling for sub type'
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
-                print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
-                print *, 'calling for geometry'
+                !print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
+                !print *, 'calling for geometry'
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
-                print *, 'link_geometry   ',trim(reverseKey(link%I(ii,li_geometry)))
-                print *, 'calling for barrels'
+                !print *, 'link_geometry   ',trim(reverseKey(link%I(ii,li_geometry)))
+                !print *, 'calling for barrels'
             link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
-                print *, 'link_barrels   ', link%I(ii,li_barrels)  
-                print *, 'calling for culvertcode'
+                !print *, 'link_barrels   ', link%I(ii,li_barrels)  
+                !print *, 'calling for culvertcode'
                 !print *, ii, 'api_linkf_xsect_culvertCode ',api_linkf_xsect_culvertCode
             link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_culvertCode, .true.)
-                print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
+                !print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
                 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then

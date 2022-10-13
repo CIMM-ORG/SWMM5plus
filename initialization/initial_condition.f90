@@ -4359,7 +4359,7 @@ contains
             character(64) :: subroutine_name = 'init_uniformtable_array'
         !%------------------------------------------------------------------
 
-       ! print *, 'in ',trim(subroutine_name)
+        !print *, 'in ',trim(subroutine_name)
         
         call util_allocate_uniformtable_array()
 
@@ -4368,15 +4368,22 @@ contains
         !% --- set up uniform tables for section factor and critical flow for head BC locations
         call init_BChead_uniformtable (lastUT_idx)
 
+        !stop 50987
+
         !% THIS IS WHERE WE WOULD INSERT ANY OTHER UNIFORM TABLE INITIATIONS
         !% NEW DATA STARTs FROM lastUT_idx+1
 
         !% --- fill of values for each location
         do ii = 1,size(uniformTableDataR,1)
 
-           ! print *, uniformTableR(ii,utr_SFmax)
+            !print *, ii, uniformTableR(ii,utr_SFmax)
+
+            !stop 5509873
+
             !% --- uniform values
             call init_uniformtabledata_Uvalue(ii,utr_SFmax,    utd_SF_uniform)
+
+            !stop 209873
 
             !print *, uniformTableR(ii,utr_SFmax)
 
@@ -4393,8 +4400,11 @@ contains
             call init_uniformtabledata_nonUvalue (ii, utd_Qcrit_depth_nonuniform, utd_Qcrit_uniform)
                ! print *, 'Qcritical by area ------------------'
             call init_uniformtabledata_nonUvalue (ii, utd_Qcrit_area_nonuniform,  utd_Qcrit_uniform)
+
+            !stop 34987
         end do
 
+        
     
 
     end subroutine init_uniformtable_array    
@@ -4423,11 +4433,11 @@ contains
         !% --- return if there are no head BC
         if (N_headBC < 1) return
 
-        !print *, 'in ',trim(subroutine_name)
+        ! print *, 'in ',trim(subroutine_name)
 
         do ii = 1,N_headBC
 
-           !print *, '---- ',ii
+        !    print *, '---- ',ii
 
             UT_idx = UT_idx + 1
             !% --- the element index for the element upstream of the BC
@@ -4456,26 +4466,26 @@ contains
             !% --- include a depth tolerance to prevent round-off from
             !%     creating a step larger than the max depth
             depthTol = deltaD / tenR
-            !jj=0
+            ! jj=0
             !% --- cycle through all the depths to find the maximum section factor
             !%     and maximum Q critical
             do while (thisdepth .le. (uniformTableR(UT_idx,utr_DepthMax)-depthTol))
-                !jj=jj+1
-                ! print *, 'jj= ',jj
+                ! jj=jj+1
+                !  print *, 'jj= ',jj
                 thisDepth = thisDepth + deltaD
-                ! print *, '----- thisDepth     ',thisDepth 
+                !  print *, '----- thisDepth     ',thisDepth 
 
                 sf = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
 
-                ! print *, '----- sectionfactor ',sf
+                !  print *, '----- sectionfactor ',sf
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
 
                 qcrit = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
-                ! print *, '----- qcrit        ',qcrit
+                !  print *, '----- qcrit        ',qcrit
                 uniformTableR(UT_idx,utr_QcritMax) = max(uniformTableR(UT_idx,utr_QcritMax),qcrit)
-                !print *, '----- '
+                ! print *, '----- '
 
-                !print *, 'depth max ',uniformTableR(UT_idx,utr_DepthMax)
+                ! print *, 'depth max ',uniformTableR(UT_idx,utr_DepthMax)
 
                 !stop 5908734
 
@@ -4625,8 +4635,8 @@ contains
                 !% --- interpolate across the two available values that bracket thisUvalue
                 thisDepth  = oldtestDepth  +        deltaDepth            *  (thisUvalue - oldtestUvalue) / deltaUvalue
                 thisArea   = oldtestArea   + (testArea  - oldtestArea)    *  (thisUvalue - oldtestUvalue) / deltaUvalue
-                print *, 'old, this, test Uvalue ',oldtestUvalue, thisUvalue, testUvalue
-                print *, 'ratio ',(thisUvalue - oldtestUvalue) / deltaUvalue
+                !print *, 'old, this, test Uvalue ',oldtestUvalue, thisUvalue, testUvalue
+                !print *, 'ratio ',(thisUvalue - oldtestUvalue) / deltaUvalue
             endif
 
             !% --- store the table data (normalized)   
@@ -4643,8 +4653,8 @@ contains
             !% --- final check for this item
             select case (Utype)
             case (SectionFactorData)
-                print*, '**************************************'
-                print*, thisDepth, 'thisDepth'
+                ! print*, '**************************************'
+                ! print*, thisDepth, 'thisDepth'
                 testUvalue    = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
             case (QcriticalData)
                 testUvalue    = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
@@ -4699,7 +4709,9 @@ contains
             character(64)    :: subroutine_name = 'init_uniformtabledata_Uvalue'
         !%------------------------------------------------------------------ 
 
-        !print *, 'in ',trim(subroutine_name)
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'UT_idx ',UT_idx
+        ! print *, 'utr_max ',utr_max
 
         !% --- maximum and mininum values of the uniform data
         uniformMax => uniformTableR(UT_idx,utr_max)
@@ -4722,9 +4734,11 @@ contains
             !% --- store the table data (normalized)    
             uniformTableDataR(UT_idx,jj,utd_uniform) = thisValue / uniformMax     
             
-            ! print *, '----- ',jj, thisValue,  uniformTableDataR(UT_idx,jj,utd_uniform)
+           ! print *, '----- ',jj, thisValue,  uniformTableDataR(UT_idx,jj,utd_uniform)
 
         end do
+
+        !stop 29873
         
     end subroutine init_uniformtabledata_Uvalue
 !%

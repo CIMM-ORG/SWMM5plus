@@ -737,6 +737,8 @@ module geometry
 
         ! print *, 'uniform table ', uniformTableR(UT_idx,utr_SFmax)
 
+        ! print *, size(uniformTableR,1), size(uniformTableR,2)
+
         !% --- normalize the section factor
         normSF   = sectionFactor / uniformTableR(UT_idx,utr_SFmax)
 
@@ -745,12 +747,12 @@ module geometry
         !% --- lookup the normalized normal depth
         outvalue = xsect_table_lookup_singular(normSF,thisTable)
 
-        !print *, 'outvalue 1 ',outvalue
+        ! print *, 'outvalue 1 ',outvalue
 
         !% --- return normal depth to physical value
         outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
 
-        !print *, 'outvalue 2 ',outvalue
+        ! print *, 'outvalue 2 ',outvalue
     
     end function geo_normaldepth_singular
 !%
@@ -3052,10 +3054,10 @@ module geometry
             outvalue = llgeo_mod_basket_topwidth_from_depth_singular (idx, indepth)
 
         case (rectangular_closed)
-                outvalue = llgeo_rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
+            outvalue = llgeo_rectangular_closed_topwidth_from_depth_singular  (idx, indepth)
 
         case (rect_round)
-                outvalue = llgeo_rect_round_topwidth_from_depth_singular (idx, indepth)
+            outvalue = llgeo_rect_round_topwidth_from_depth_singular (idx, indepth)
 
         case (rect_triang)
             outvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular  (idx, indepth)
@@ -3207,9 +3209,11 @@ module geometry
 
         case (trapezoidal)
             outA = llgeo_trapezoidal_perimeter_from_depth_pure (iA, indepthA)
+            outvalue = outA(1)
 
         case (triangular)
             outA = llgeo_triangular_perimeter_from_depth_pure (iA, indepthA)
+            outvalue = outA(1)
         
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular &
@@ -3228,17 +3232,19 @@ module geometry
             outvalue = outA(1)
         
         case (catenary, gothic, semi_circular, semi_elliptical)  
-            print*
-            print*, indepth, 'indepth' 
+            ! print*, 'in geo_perimeter_from_depth'
+            ! print*, indepth, 'indepth' 
             tempArea(1)  = llgeo_tabular_from_depth_singular &
                     (idx, indepth, fullArea(idx), setting%ZeroValue%Depth, Atable)
-            print*, tempArea(1), 'tempArea(1)'
+            ! print*, tempArea(1), 'tempArea(1)'
             temphydRadius(1)= llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
                 (idx, tempArea(1), fullhydradius(idx), setting%ZeroValue%Area, Stable)
-            print*, temphydRadius(1), 'temphydRadius(1)'
+            ! print*, temphydRadius(1), 'temphydRadius(1)'
             outA = llgeo_perimeter_from_hydradius_and_area_pure &
                         (iA, tempHydradius, tempArea)
-            print*, outA, 'outA'
+            ! print*, outA, 'outA'
+            outvalue = outA(1)
+
         case (filled_circular)
             outvalue = llgeo_filled_circular_perimeter_from_depth_singular (idx, indepth)
 

@@ -51,11 +51,12 @@ contains
         !% --- interpolate the BC to the present time
         ! print *, 'calling bc_interpolate_flow'
         call bc_interpolate_flow()
+
         ! print *, 'calling bc_interpolate_head'
         call bc_interpolate_head()
 
-    !    print *, 'calling face_interpolate_bc'
         !% --- store the BC value in face arrays
+        ! print *, 'calling face_interpolate_bc'
         call face_interpolate_bc(isBConly) 
 
     !  do ii=1,N_headBC
@@ -781,17 +782,18 @@ contains
                     ! print *, 'ffff 1111'
                     ! print *, ii, bi_UTidx, size(BC%HeadI,1), size(BC%HeadI,2)
                     ! print *, BC%HeadI(ii,bi_UTidx)
-                    print*, critDepth, 'critDepth'
+                    ! print*, critDepth, 'critDepth'
+                    ! print *, ii, bi_UTidx, BC%HeadI(ii,bi_UTidx)
                     normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
-                    print*, normDepth, 'normDepth'
+                    ! print*, normDepth, 'normDepth'
                     ! print *, 'ffff 2222'
                     !% --- BC head is the depth + Zbottom - referencehead
                     headValue(ii) = faceR(fIdx,fr_Zbottom)        &
                                   + min(critDepth,normDepth)      &
                                   - setting%Solver%ReferenceHead
-                    print*, headValue(ii), 'headValue(ii)'
+                    ! print*, headValue(ii), 'headValue(ii)'
 
-                    stop 78513
+                    ! stop 78513
                 else
                     print *, 'CODE ERROR: NEED ALGORITHM FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                     call util_crashpoint(792873)
