@@ -988,7 +988,7 @@ contains
         !%-----------------------------------------------------------------
         !% Declarations:
             integer, intent(in)  :: thisLink
-            integer, pointer     :: firstE, lastE
+            integer, pointer     :: firstE, lastE, thisC
             character(64) :: subroutine_name = 'init_IC_get_culvert_from_linkdata'
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -1012,18 +1012,37 @@ contains
                 call util_crashpoint(6628732)
         end if
 
-        print *, 'NOT COMPLETED IN ',trim(subroutine_name)
-        stop 209873
         
-        ! !% if only 1 element in link
-        ! if (firstE == lastE) then
-        !     elemSI(firstE,esi_Culvert_Code) = link%I(thisLink,li_culvertCode)
-        ! else 
-        !     elemSI(firstE:)
+        
+        !% --- the first element is always the inlet culvert and
+        !%     stores the culvert code
+        elemSI(firstE,esi_Culvert_Code) = link%I(thisLink,li_culvertCode)
+        if (firstE == lastE) then
+            !% if only 1 element in link
+            elemSI(firstE,esi_Culvert_inout) = Culvert_InOut
+        else 
+            elemSI(firstE,esi_Culvert_inout) = Culvert_Inlet
+            elemSI(lastE, esi_Culvert_inout) = Culvert_Outlet
+        end if
 
-        ! end if
+        !% --- store the culvert parameters
+        thisC => elemSI(firstE,esi_Culvert_Code)
 
-        !print *, 'culvert code ', elemI(firstE,ei_culvertCode)
+        !% --- convert the equation number to an integer
+        if (culvertValue(thisC,1) == 1.d0) then 
+            elemSI(firstE,esi_Culvert_EquationForm) = oneI
+        elseif (culvertValue(thisC,1) == 2.d0) then   
+            elemSI(firstE,esi_Culvert_EquationForm) = twoI
+        else 
+            print *, 'CODE ERROR: unexpected else'
+            call util_crashpoint(739874)
+        end if
+
+        elemSR(firstE,esr_Culvert_K) = culvertvalue(thisC,2)
+        elemSR(firstE,esr_Culvert_M) = culvertvalue(thisC,3)
+        elemSR(firstE,esr_Culvert_C) = culvertvalue(thisC,4)
+        elemSR(firstE,esr_Culvert_Y) = culvertvalue(thisC,5)
+
         
     end subroutine init_IC_get_culvert_from_linkdata
 !%

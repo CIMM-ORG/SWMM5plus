@@ -611,7 +611,9 @@ module define_indexes
     !% --- CULVERT
     enum, bind(c)
         !% define the column indexes for the elemSi(:,:)  culvert
-        enumerator :: esi_Culvert_inout = 1       !% type key for inlet, outlet in/out
+        enumerator :: esi_Culvert_Code  =1        !% culvert code number
+        enumerator :: esi_Culvert_EquationForm    !% first column of table H-2 in SWMM hydraulics manual
+        enumerator :: esi_Culvert_inout           !% type key for inlet, outlet in/out
         enumerator :: esi_Culvert_lastplusone     !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSI_Culvert = esi_Culvert_lastplusone-1
@@ -714,8 +716,7 @@ module define_indexes
 
     !% --- CULVERT
     enum, bind(c)
-        enumerator :: esr_Culvert_Form = 1                 !% Form from EPA=SWMM culvert.c
-        enumerator :: esr_Culvert_K                       
+        enumerator :: esr_Culvert_K =1      !% see Appendix H-1 in SWMM5 Hydraulics                
         enumerator :: esr_Culvert_M 
         enumerator :: esr_Culvert_C
         enumerator :: esr_Culvert_Y
