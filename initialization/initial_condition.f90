@@ -1750,7 +1750,7 @@ contains
 
             !% --- independent data
             elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
-            elemSGR(thisP,er_BreadthMax)                            = link%R(thisLink,lr_BreadthScale)
+            elemR(  thisP,er_BreadthMax)                            = link%R(thisLink,lr_BreadthScale)
             elemR(  thisP,er_DepthAtBreadthMax)                     = elemR(thisP,er_FullDepth)  
             
             elemSGR(thisP,esgr_Rectangular_Triangular_BottomSlope)  &
