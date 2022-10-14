@@ -70,7 +70,6 @@ contains
         allocate(N_elem(num_images()))
         allocate(N_face(num_images()))
         allocate(N_unique_face(num_images()))
-        allocate(N_culvert(num_images()))
 
     end subroutine util_allocate_scalar_for_images
 !%

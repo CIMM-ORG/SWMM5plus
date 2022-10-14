@@ -443,19 +443,20 @@ module define_indexes
 
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
+        enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
+        enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
+        enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
+        enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
+        enumerator :: eYN_isCulvert                     !% TRUE if element is inlet, outlet or culvert barrel
+        enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
+        enumerator :: eYN_isDummy
+        enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
+        enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
+        enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
+        enumerator :: eYN_isPSsurcharged                !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                 !% TRUE is a surcharged closed conduit, FALSE if non-surcharged 
         enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
-        enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
-        enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
-        enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
-        enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
-        enumerator :: eYN_isDummy
-        enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
-        enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
-        enumerator :: eYN_isPSsurcharged                        !% TRUE if Preissmann slot is present for this cell
-        enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
-        enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_Temp01                        !% temporary logical space
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
@@ -492,9 +493,9 @@ module define_indexes
         !enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
         enumerator :: ep_CCJM_H_ETM                 !% CC and JM elements that are ETM for H
         enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
-        enumerator :: ep_culvert_inlet              !% all CC elements that are also culvert inlets
-        enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
-        enumerator :: ep_culvert_inout              !% all CC elements that are both culvert inlet and outlet
+        enumerator :: ep_Culvert_Inlet              !% all CC elements that are also culvert inlets
+        !enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
+        !enumerator :: ep_culvert_inout              !% all CC elements that are both culvert inlet and outlet
         enumerator :: ep_Diag                       !% diagnostic elements (static)
         enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
@@ -605,27 +606,34 @@ module define_indexes
 !%  
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSI(:,:) arrays
-    !% These are the full arrays if special integer data
+    !% These are the full arrays of special integer data
+    !% NOTE: each esi type should ONLY write to rows for elements of the
+    !% correct type, otherwise it could be ovewriting data for a
+    !% different special element type. This idea is important when initializing
+    !% esi values!
     !%-------------------------------------------------------------------------
 
     !% --- CULVERT
     enum, bind(c)
         !% define the column indexes for the elemSi(:,:)  culvert
-        enumerator :: esi_Culvert_Code  =1        !% culvert code number
-        enumerator :: esi_Culvert_EquationForm    !% first column of table H-2 in SWMM hydraulics manual
-        enumerator :: esi_Culvert_inout           !% type key for inlet, outlet in/out
-        enumerator :: esi_Culvert_lastplusone     !% must be last enum item
+        enumerator :: esi_Conduit_Culvert_Code  =1        !% culvert code number
+        enumerator :: esi_Conduit_Culvert_EquationForm    !% first column of table H-2 in SWMM hydraulics manual
+        enumerator :: esi_Conduit_Culvert_Part            !% type key for inlet, outlet in/out
+        enumerator :: esi_Conduit_Culvert_OutletID        !% element # for outlet (only stored for inlet)
+        enumerator :: esi_Conduit_ForceMain_Method        !% type key HazenWilliams or DarcyWeisbach
+        enumerator :: esi_Conduit_lastplusone     !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSI_Culvert = esi_Culvert_lastplusone-1
+    integer, parameter :: Ncol_elemSI_Conduit = esi_Conduit_lastplusone-1
     
-    !% --- FORCE MAIN
-    enum, bind(c)
-        !% define the column indexes for the elemSi(:,:) force main elements
-        enumerator :: esi_ForceMain_method = 1       !% type key  HazenWilliams or DarcyWeisbach
-        !enumerator :: esi_ForceMain_isSubmerged    !% 0 = no, 1 = yes
-        enumerator :: esi_ForceMain_lastplusone    !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSI_ForceMain = esi_ForceMain_lastplusone-1
+!    ! % NOTE: storing force main data in esi or esr is
+!     !% --- FORCE MAIN
+!     enum, bind(c)
+!         !% define the column indexes for the elemSi(:,:) force main elements
+!         enumerator :: esi_Conduit_Forcemain_Method = 1       !% type key  HazenWilliams or DarcyWeisbach
+!         !enumerator :: esi_ForceMain_isSubmerged    !% 0 = no, 1 = yes
+!         enumerator :: esi_ForceMain_lastplusone    !% must be last enum item
+!     end enum
+!     integer, parameter :: Ncol_elemSI_ForceMain = esi_ForceMain_lastplusone-1
 
 
     !% --- JUNCTION
@@ -688,8 +696,7 @@ module define_indexes
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
-                            Ncol_elemSI_Culvert,    &
-                            Ncol_elemSI_ForceMain, &
+                            Ncol_elemSI_Conduit,    &
                             Ncol_elemSI_Junction, &
                             Ncol_elemSI_Orifice, &
                             Ncol_elemSI_Outlet, &
@@ -714,26 +721,29 @@ module define_indexes
     !% define the column indexes for elemSR(:,:) for geometry that has not yet been confirmed and assigned:
     !% Note that esr_JunctionMain, esr_JunctionBranch and esr_Storage share the same column sets.
 
-    !% --- CULVERT
+    !% --- Conduit data 
     enum, bind(c)
-        enumerator :: esr_Culvert_K =1      !% see Appendix H-1 in SWMM5 Hydraulics                
-        enumerator :: esr_Culvert_M 
-        enumerator :: esr_Culvert_C
-        enumerator :: esr_Culvert_Y
-        enumerator :: esr_Culvert_lastplusone             !% must be last enum item
+        enumerator :: esr_Conduit_Culvert_K =1      !% see Appendix H-1 in SWMM5 Hydraulics                
+        enumerator :: esr_Conduit_Culvert_M 
+        enumerator :: esr_Conduit_Culvert_C
+        enumerator :: esr_Conduit_Culvert_Y
+        enumerator :: esr_Conduit_Culvert_SCF
+        enumerator :: esr_Conduit_ForceMain_Coef                  !% Hazen-Williams C or Darcy-Weisbach epsilon
+        enumerator :: esr_Conduit_ForceMain_FrictionFactor         !% Darcy-Weisbach friction factor
+        enumerator :: esr_Conduit_lastplusone             !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSR_Culvert = esr_Culvert_lastplusone-1
+    integer, parameter :: Ncol_elemSR_Conduit = esr_Conduit_lastplusone-1
 
     !% --- FORCE MAIN 
     !%     This implies that Storage, Pump, Weir, Orifice, Outlet cannot also be Force Main
     !%     HACK -- if Storage needs to be defined as force main, then the coef will need to
     !%     be moved to the elemR array.
-    enum, bind(c)
-        enumerator :: esr_ForceMain_Coef = 1               !% Hazen-Williams C or Darcy-Weisbach epsilon
-        enumerator :: esr_ForceMain_FrictionFactor         !% Darcy-Weisbach friction factor
-        enumerator :: esr_ForceMain_lastplusone            !% must be last enum item
-    end enum
-    integer, parameter :: Ncol_elemSR_ForceMain = esr_ForceMain_lastplusone-1
+    ! enum, bind(c)
+    !     enumerator :: esr_Conduit_ForceMain_Coef = 1               !% Hazen-Williams C or Darcy-Weisbach epsilon
+    !     enumerator :: esr_ForceMain_FrictionFactor         !% Darcy-Weisbach friction factor
+    !     enumerator :: esr_ForceMain_lastplusone            !% must be last enum item
+    ! end enum
+    ! integer, parameter :: Ncol_elemSR_ForceMain = esr_ForceMain_lastplusone-1
    
     !% --- JUNCTION MAIN and STORAGE
     enum, bind(c)
@@ -818,8 +828,7 @@ module define_indexes
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
-                            Ncol_elemSR_Culvert,        &
-                            Ncol_elemSR_ForceMain,      &
+                            Ncol_elemSR_Conduit,        &
                             Ncol_elemSR_Junction,        &
                             Ncol_elemSR_Orifice,        &
                             Ncol_elemSR_Outlet,         &

@@ -207,7 +207,7 @@ module define_globals
     integer,  target :: N_ActionPoint
     integer,  target :: N_MonitorPoint
     !% number of culverts on an image
-    integer, allocatable, target :: N_culvert(:)
+    !integer, allocatable, target :: N_culvert(:)
 
     !% --- packed array of columns from elemR used in conmonR
     !integer, allocatable, target :: cmR_eR_col(:)  OBSOLETE 20221003
@@ -243,7 +243,7 @@ module define_globals
 
     !% Culvert parameters
     integer, parameter :: NculvertTypes = 57
-    integer, parameter :: NculvertParams = 5
+    integer, parameter :: NculvertParams = 6
     real(8), dimension(NculvertTypes,NculvertParams) :: culvertValue
 
     

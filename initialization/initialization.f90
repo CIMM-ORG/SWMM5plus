@@ -191,17 +191,28 @@ contains
         call util_crashstop(53454)
 
         !% --- read in profiles from .inp file and create 
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 profile processing"
         if (this_image() .eq. 1) then 
             call init_profiles()
         end if
 
+        !% --- initialize culverts
+        if (setting%Output%Verbose) print *, "begin initializing culverts"
+        call init_culvert()
+
         !% --- set water kinematic viscosity
         call init_viscosity()
 
+        !%====== NOTE, AFTER THIS POINT WE HAVE INSERTED NEW NODES AND SPLINT LINKS ========
+    
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
         call util_crashstop(5297)
+
+        !% HACK -- need to ensure that any phantom link defined is NOT a culvert.
+        !% i.e., the original portion of the link from SWMM must be defined as the
+        !% culvert. Not sure how to handle the remainder!
 
         !% --- default keys  brh20220103
         elemI(:,ei_elementType)  = undefinedKey
@@ -244,10 +255,6 @@ contains
         !% --- initialize simple controls from json file
         if (setting%Output%Verbose) print *, "begin initializing simulation controls"
         call init_simulation_controls() 
-
-        !% --- initialize culverts
-        if (setting%Output%Verbose) print *, "begin initializing culverts"
-        call init_culvert()
 
         !% --- HYDROLOGY
         if (setting%Simulation%useHydrology) then 
@@ -302,7 +309,7 @@ contains
         call init_report()
         
         !%=======================================================================
-        !%---INITIAL CONDITIONS
+        !%---INITIAL CONDITIONS ON ELEMENTS
         !%=======================================================================
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC"
         !call util_CLprint ('before init_IC_toplevel')
@@ -1013,8 +1020,6 @@ contains
                 linkUp => node%I(ii,ni_Mlink_u1)
                 linkDn => node%I(ii,ni_Mlink_d1)
 
-
-
                 !% --- special channels and conduits that allow nJ2
                 if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)    &
                         .or.                                           &
@@ -1054,14 +1059,23 @@ contains
                     node%I(ii, ni_node_type) = nJm
                 end if
 
-                !% --- regardles of the above, if either link up or down is a
+                !% --- regardless of the above, if either link up or down is a
                 !%     multi-barrel link, then the node must be an nJm node
-                if  ( (link%I(linkUp,li_barrels) > oneI)    &
+                if  (  (link%I(linkUp,li_barrels) > oneI)     &
                         .or.                                  &
                         (link%I(linkDn,li_barrels) > oneI)    &
                     ) then       
                     node%I(ii, ni_node_type) = nJm   
                 end if
+
+                !% --- regardless of the above, if either link up or down
+                !%     is a culvert then the node must be nJm
+                if (    (link%I(linkUp,li_culvertCode) > 0)      &
+                        .or.                                     &
+                        (link%I(linkDn,li_culvertCode) > 0)      &
+                    ) then
+                    node%I(ii, ni_node_type) = nJm 
+                end if   
 
                 ! print *, ' at CCC'
                 ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
@@ -2655,44 +2669,9 @@ contains
             integer, pointer :: thisLink
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
-        N_culvert(this_image()) = zeroI
 
-        !print *, 'calling '
         !% --- set up the culvert parameters array
         call culvert_parameter_values ()
-
-        !% --- cycle through to find culverts and set the elemSI(:,esi_Culvert_inout) key
-        !%     also count the number of culvert inlets
-        ! do ii=1,N_elem(this_image())
-        !     print *, ii
-        !     thisLink => elemI(ii,ei_link_Gidx_BIPquick)
-        !     !% --- cycle if no culvert
-        !     if (link%I(thisLink,li_culvertCode) == 0) cycle
-
-        !     !% --- look for inlet and outlet elements of culvert
-        !     if ((link%I(thisLink,li_first_elem_idx) == ii) .and. &
-        !         (link%I(thisLink,li_last_elem_idx)  == ii)       ) then
-        !         !% --- both inlet and outlet on single element
-        !         elemSI(ii,esi_Culvert_inout) = Culvert_InOut
-        !         !% --- increment the counter on this image
-        !         N_culvert(this_image()) =  N_culvert(this_image()) + 1
-
-        !     elseif (link%I(thisLink,li_first_elem_idx) == ii) then
-        !         !% --- upstream culvert inlet
-        !         elemSI(ii,esi_Culvert_inout) = Culvert_Inlet
-        !         !% --- increment the counter on this image
-        !         N_culvert(this_image()) =  N_culvert(this_image()) + 1
-
-        !     elseif (link%I(thisLink,li_last_elem_idx) == ii) then
-        !         !% --- downstream culvert outlet
-        !         elemSI(ii,esi_Culvert_inout) = Culvert_Outlet
-        !         !% --- DO NOT INCREMENT COUNTER FOR OUTLET!
-        !     else 
-        !         !% --- interior culvert element; no action
-        !     end if
-        ! end do
-
-        !stop 293874
 
     end subroutine init_culvert
 !% 

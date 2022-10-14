@@ -118,6 +118,9 @@ contains
         setting%Output%BarrelsExist = .false. !% will be set to true if barrels > 1 detected
         elemI(:,ei_barrels) = oneR
 
+        !% --- initialize culvert code to zero (no culvert)
+        elemI(:,ei_culvertCode) = zeroI
+
         !% --- initialize sedmient depths
         !%     Note: as of 20221006 only FilledCircular is allowed to have nonzero sediment depth
         !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
@@ -867,30 +870,18 @@ contains
                     else
                         !% --- not a force main
                         elemYN(firstE:lastE,eYN_isForceMain)      = .false.
-                        elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
-                        elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
+                        elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = nullvalueR
+                        elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = NotForceMain
                     end if
                 end if
-            ! else    
-            !     !% --- if NOT UseForceMain
-            !     elemYN(firstE:lastE,eYN_isForceMain)      = .false.
-            !     elemSR(firstE:lastE,esr_ForceMain_Coef)   = nullvalueR
-            !     elemSI(firstE:lastE,esi_ForceMain_method) = NotForceMain
-
-            !     !% --- if force main was specified in SWMMinput file, then
-            !     !%     use default roughness if none provided.
-            !     if (linkGeo .eq. lForce_main) then 
-            !         if ((link%I(thisLink,lr_Roughness) .le. zeroR) .or. &
-            !             (link%I(thisLink,lr_Roughness) .eq. nullvalueR) ) then 
-            !             !% --- use default Mannings n roughness    
-            !             elemR(firstE:lastE,er_ManningsN) = setting%Solver%ForceMain%Default_ManningsN
-            !         else
-            !             !% --- use supplied link roughness
-            !         end if
-            !     else 
-            !         !% --- not designated a force main, so no roughness change needed
-            !     end if   
+            else    
+                !% --- if force mains are turned off
+                elemYN(firstE:lastE,eYN_isForceMain)      = .false.
+                elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = nullvalueR
+                elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = NotForceMain
             end if
+        else
+            !% --- do not initialize FM storage for weir etc.
         end if
 
     end subroutine init_IC_get_ForceMain_from_linkdata
@@ -916,17 +907,17 @@ contains
         !%     the JSON file is used
         if (setting%Solver%ForceMain%UseSWMMinputMethodTF) then 
             !% --- using SWMM input method
-            elemSR(firstE:lastE,esr_ForceMain_Coef)   = link%R(thisLink,lr_ForceMain_Coef)
-            elemSI(firstE:lastE,esi_ForceMain_method) = setting%SWMMinput%ForceMainEquation
+            elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = link%R(thisLink,lr_ForceMain_Coef)
+            elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquation
         else
             !% --- overwriting with default method from JSON file
             select case (setting%Solver%ForceMain%Default_method)
             case (HazenWilliams)
-                elemSI(firstE:lastE,esi_ForceMain_method) = HazenWilliams
-                elemSR(firstE:lastE,esr_ForceMain_Coef)   = setting%Solver%ForceMain%Default_HazenWilliams_coef
+                elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = HazenWilliams
+                elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = setting%Solver%ForceMain%Default_HazenWilliams_coef
             case (DarcyWeisbach)
-                elemSI(firstE:lastE,esi_ForceMain_method) = DarcyWeisbach
-                elemSR(firstE:lastE,esr_ForceMain_Coef)   = setting%Solver%ForceMain%Default_DarcyWeisbach_roughness_mm
+                elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = DarcyWeisbach
+                elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = setting%Solver%ForceMain%Default_DarcyWeisbach_roughness_mm
             case default 
                 print *, 'CODE ERROR: unexpected case default'
                 call util_crashpoint(7729873)
@@ -937,15 +928,15 @@ contains
         !%     Examines if roughness values for FM are consistent with what's expected for the
         !%     Hazen-Williams or Darcy-Weisbach approaches.
         if (setting%Solver%ForceMain%errorCheck_RoughnessTF) then 
-            if (elemSI(firstE,esi_ForceMain_method) .eq. HazenWilliams) then 
+            if (elemSI(firstE,esi_Conduit_Forcemain_Method) .eq. HazenWilliams) then 
                 !% --- for Hazen Williams Force main
-                if (elemSR(firstE,esr_ForceMain_Coef) < 90.0) then
+                if (elemSR(firstE,esr_Conduit_ForceMain_Coef) < 90.0) then
                     print *, 'POSSIBLE CONFIGURATION ERROR: Force Main Coefficients'
                     print *, 'The Hazen-Williams equation for Force Mains is invoked '
                     print *, '   however the HW roughness coefficient seems small for'
                     print *, '   an HW solution.' 
                     print *, 'At link name ',trim(link%Names(thisLink)%str)
-                    print *, '  the HW roughness was ', elemSR(firstE,esr_ForceMain_Coef)
+                    print *, '  the HW roughness was ', elemSR(firstE,esr_Conduit_ForceMain_Coef)
                     print *, 'This might be because the roughness is for a Darcy-Weisbach'
                     print *, '  force main, in which case you need to change the FORCE_MAIN_EQUATION'
                     print *, '  in the SWMM input file.'
@@ -956,13 +947,13 @@ contains
                 end if
             else
                 !% --- for Darcy-Weisbach Force Main
-                if (elemSR(firstE,esr_ForceMain_Coef)*1000.d0 > 60) then 
+                if (elemSR(firstE,esr_Conduit_ForceMain_Coef)*1000.d0 > 60) then 
                     print *, 'POSSIBLE CONFIGURATION ERROR: Force Main Coefficients'
                     print *, 'The Darcy-Weisbach equation for Force Mains is invoked '
                     print *, '   however the DW roughness coefficient seems large for'
                     print *, '   a DW solution.' 
                     print *, 'At link name ',trim(link%Names(thisLink)%str)
-                    print *, '  the input DW roughness (in SI) was ', elemSR(firstE,esr_ForceMain_Coef)*1000.d0, ' mm'
+                    print *, '  the input DW roughness (in SI) was ', elemSR(firstE,esr_Conduit_ForceMain_Coef)*1000.d0, ' mm'
                     print *, 'This might be because the roughness is for a Hazen-Williams'
                     print *, '  force main, in which case you need to change the FORCE_MAIN_EQUATION'
                     print *, '  in the SWMM input file.'
@@ -989,6 +980,7 @@ contains
         !% Declarations:
             integer, intent(in)  :: thisLink
             integer, pointer     :: firstE, lastE, thisC
+            integer              :: ii
             character(64) :: subroutine_name = 'init_IC_get_culvert_from_linkdata'
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -1000,49 +992,76 @@ contains
             lastE       => link%I(thisLink,li_last_elem_idx)
         !%-----------------------------------------------------------------
 
-        !% --- error checking
-        if ((link%I(thisLink,li_culvertCode) < zeroR)   .or. &
-            (link%I(thisLink,li_culvertCode) > NculvertTypes) ) then 
-                print *, 'USER CONFIGURATION ERROR'
-                print *, 'Culvert Code found with value of ',link%I(thisLink,li_culvertCode)
-                print *, 'for link # ',thisLink
-                print *, 'which is the link named ',trim(link%Names(thisLink)%str)
-                print *, 'Allowable culvert codes are zero or greater and'
-                print *, 'less than ',NculvertTypes
-                call util_crashpoint(6628732)
+        !% --- look for culvert
+        if (link%I(thislink,li_culvertCode == 0)) then
+            elemYN(firstE:lastE,eYN_isCulvert) = .false.
+            !% --- elemSI is not initialized for non-culverts
+            return
+        elseif (link%I(thislink,li_culvertCode <= NculvertTypes)) then
+            elemYN(firstE:lastE,eYN_isCulvert) = .true.
+        else
+            print *, 'USER CONFIGURATION ERROR'
+            print *, 'Culvert Code found with value of ',link%I(thisLink,li_culvertCode)
+            print *, 'for link # ',thisLink
+            print *, 'which is the link named ',trim(link%Names(thisLink)%str)
+            print *, 'Allowable culvert codes are zero or greater and'
+            print *, 'less than or equal to ',NculvertTypes
+            call util_crashpoint(6628732)
         end if
+   
+        !% --- culverts are only defined on closed-conduit links
+        if (link%I(thislink,li_link_type) == lpipe) then
+            !% --- store the culvert code for all culvert elements
+            elemSI(firstE:lastE,esi_Conduit_Culvert_Code) = link%I(thisLink,li_culvertCode)
 
-        
-        
-        !% --- the first element is always the inlet culvert and
-        !%     stores the culvert code
-        elemSI(firstE,esi_Culvert_Code) = link%I(thisLink,li_culvertCode)
-        if (firstE == lastE) then
-            !% if only 1 element in link
-            elemSI(firstE,esi_Culvert_inout) = Culvert_InOut
+            !% --- identify parts of the culvert
+            if (firstE == lastE) then
+                !% if only 1 element in link
+                elemSI(firstE,esi_Conduit_Culvert_Part) = Culvert_InOut 
+                elemSI(firstE,esi_Conduit_Culvert_OutletID) = firstE
+            else 
+                !% --- designate inlet
+                elemSI(firstE,esi_Conduit_Culvert_Part) = Culvert_Inlet
+                !% --- designate outlet
+                elemSI(lastE ,esi_Conduit_Culvert_Part) = Culvert_Outlet
+                !% --- designate interior barrel elements
+                elemSI(firstE+1:lastE-1,esi_Conduit_Culvert_Part) = Culvert_Barrel
+                !% --- store outlet location 
+                elemSI(firstE,esi_Conduit_Culvert_OutletID) = lastE
+            end if
+
+            !% --- LOCAL STORE OF CULVERT VALUES:
+
+            !% --- convert the EquationForm real in the culvertValue to an integer
+            if (culvertValue(thisC,1) == 1.d0) then 
+                elemSI(firstE:lastE,esi_Conduit_Culvert_EquationForm) = oneI
+            elseif (culvertValue(thisC,1) == 2.d0) then   
+                elemSI(firstE:lastE,esi_Conduit_Culvert_EquationForm) = twoI
+            else 
+                print *, 'CODE ERROR: unexpected else'
+                call util_crashpoint(739874)
+            end if
+
+            !% --- pointer for covenience
+            thisC  => elemSI(firstE,esi_Conduit_Culvert_Code)
+
+            !% -- real data from culvertValue
+            elemSR(firstE:lastE,esr_Conduit_Culvert_K)   = culvertValue(thisC,2)
+            elemSR(firstE:lastE,esr_Conduit_Culvert_M)   = culvertValue(thisC,3)
+            elemSR(firstE:lastE,esr_Conduit_Culvert_C)   = culvertValue(thisC,4)
+            elemSR(firstE:lastE,esr_Conduit_Culvert_Y)   = culvertValue(thisC,5)
+            elemSR(firstE:lastE,esr_Conduit_Culvert_SCF) = culvertValue(thisC,6)
+
         else 
-            elemSI(firstE,esi_Culvert_inout) = Culvert_Inlet
-            elemSI(lastE, esi_Culvert_inout) = Culvert_Outlet
+            !% --- error: culvert not allowed for non-conduit elements
+            print *, 'CONFIGURATION ERROR'
+            print *, 'A culvert code has been found for a link that'
+            print *, 'is not a closed conduit.  Only closed conduits'
+            print *, 'can be culverts'
+            print *, 'Problem for link # ',thisLink
+            print *, 'Link Name ',trim(link%Names(thisLink)%str)
+            call util_crashpoint(833287)
         end if
-
-        !% --- store the culvert parameters
-        thisC => elemSI(firstE,esi_Culvert_Code)
-
-        !% --- convert the equation number to an integer
-        if (culvertValue(thisC,1) == 1.d0) then 
-            elemSI(firstE,esi_Culvert_EquationForm) = oneI
-        elseif (culvertValue(thisC,1) == 2.d0) then   
-            elemSI(firstE,esi_Culvert_EquationForm) = twoI
-        else 
-            print *, 'CODE ERROR: unexpected else'
-            call util_crashpoint(739874)
-        end if
-
-        elemSR(firstE,esr_Culvert_K) = culvertvalue(thisC,2)
-        elemSR(firstE,esr_Culvert_M) = culvertvalue(thisC,3)
-        elemSR(firstE,esr_Culvert_C) = culvertvalue(thisC,4)
-        elemSR(firstE,esr_Culvert_Y) = culvertvalue(thisC,5)
-
         
     end subroutine init_IC_get_culvert_from_linkdata
 !%
@@ -1511,8 +1530,8 @@ contains
                 if (geometryType == lForce_main) then 
                     where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
                         elemYN(thisP,eYN_isForceMain)      = .TRUE.
-                        elemSI(thisP,esi_ForceMain_method) = setting%SWMMinput%ForceMainEquation
-                        elemSR(thisP,esr_ForceMain_Coef)   = link%R(thislink,lr_ForceMain_Coef)
+                        elemSI(thisP,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquation
+                        elemSR(thisP,esr_Conduit_ForceMain_Coef)   = link%R(thislink,lr_ForceMain_Coef)
                     endwhere
                 endif
             else
@@ -1521,9 +1540,9 @@ contains
                 !%    non-force-main.
                 if (geometryType == lForce_main) then 
                     where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
-                        elemSI(thisP,esi_ForceMain_method) = nullvalueI
+                        elemSI(thisP,esi_Conduit_Forcemain_Method) = nullvalueI
                         elemYN(thisP,eYN_isForceMain)      = .FALSE.
-                        elemSR(thisP,esr_ForceMain_Coef)   = nullvalueR
+                        elemSR(thisP,esr_Conduit_ForceMain_Coef)   = nullvalueR
                     endwhere
                 end if
             end if

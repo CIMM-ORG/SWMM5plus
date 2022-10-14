@@ -670,8 +670,8 @@ module lowlevel_rk2
             velocity => elemR(:,er_velocity)
             Afull    => elemR(:,er_FullArea)
             Pfull    => elemR(:,er_FullPerimeter)
-            FMcoef   => elemSR(:,esr_ForceMain_Coef)
-            DWf      => elemSR(:,esr_ForceMain_FrictionFactor)
+            FMcoef   => elemSR(:,esr_Conduit_ForceMain_Coef)
+            DWf      => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
             grav => setting%constant%gravity
         !%------------------------------------------------------------------
 
@@ -776,8 +776,8 @@ module lowlevel_rk2
             Afull     => elemR(:,er_FullArea)
             Pfull     => elemR(:,er_FullPerimeter)
             velocity  => elemR(:,er_Velocity)
-            rough     => elemSR(:,esr_ForceMain_Coef)
-            Ffac      => elemSR(:,esr_ForceMain_FrictionFactor)
+            rough     => elemSR(:,esr_Conduit_ForceMain_Coef)
+            Ffac      => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
             viscosity => setting%Constant%water_kinematic_viscosity
         !%------------------------------------------------------------------
         !% --- for Reynolds number, use Hydraulic Diameter = 4 * hydraulic radius
@@ -822,8 +822,8 @@ module lowlevel_rk2
         !%------------------------------------------------------------------
         !% Aliases
             thisP      => elemP(1:Npack,thisCol)
-            HWcoef     => elemSR(:,esr_ForceMain_Coef)
-            Ffactor    => elemSR(:,esr_ForceMain_FrictionFactor)
+            HWcoef     => elemSR(:,esr_Conduit_ForceMain_Coef)
+            Ffactor    => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
             manningsN  => elemR(:,er_ManningsN)
             Afull      => elemR(:,er_FullArea)
             Pfull      => elemR(:,er_FullPerimeter)

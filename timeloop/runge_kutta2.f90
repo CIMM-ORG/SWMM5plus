@@ -107,6 +107,9 @@ module runge_kutta2
 
             ! call util_CLprint ('GGG  after diagnostic step 1')
 
+        !% --- RK2 solution step -- check culverts
+
+
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (whichTM) ! brh20220211 this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
@@ -160,6 +163,10 @@ module runge_kutta2
         call util_crashstop(662398)
 
             ! call util_CLprint ('OOO  after diagnostic step 2')
+
+        !% --- RK2 solution step -- check culverts
+
+        
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_Vfilter (whichTM)

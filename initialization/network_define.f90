@@ -1883,15 +1883,11 @@ contains
 !==========================================================================
 !
     subroutine init_network_map_nJ2 (image, thisJNode)
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%--------------------------------------------------------------------------
         !% map all the nJ2 nodes. All the nJ2 node maps are handeled in the partition
         !% this is for the special cases where a disconnected nJ2 has not been mapped
         !% properly
-        !
-        !--------------------------------------------------------------------------
-        !
+        !%--------------------------------------------------------------------------
         integer, intent(in) :: image, thisJNode
 
         integer             :: ii, upBranchSelector, dnBranchSelector
@@ -1900,7 +1896,7 @@ contains
         integer, pointer    :: eIdx, fLidx
 
         character(64) :: subroutine_name = 'init_network_map_nJ2'
-     !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
         !if (crashYN) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
