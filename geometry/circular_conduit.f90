@@ -52,6 +52,7 @@ module circular_conduit
         !% Declarations
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP(:), thisP_lookup(:), thisP_analytical(:)
+            integer, pointer :: thisPA(:), thisPL(:)
             real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:)
             real(8), pointer :: YoverYfull(:), fullArea(:), fulldepth(:)
             integer, target  :: Npack_analytical, Npack_lookup
@@ -82,18 +83,24 @@ module circular_conduit
         !%     from French, 1985 by using the central angle theta.
         Npack_analytical = count(AoverAfull(thisP) <= 0.04)
         if (Npack_analytical > zeroI) then
+
             thisP_analytical(1:Npack_analytical) = pack(thisP,AoverAfull(thisP) <= 0.04)
+            thisPA => thisP_analytical(1:Npack_analytical)
+
             call circular_get_normalized_depth_from_area_analytical &
-                (YoverYfull, AoverAfull, Npack_analytical, thisP_analytical(1:Npack_analytical) )
+                (YoverYfull, AoverAfull, Npack_analytical, thisPA)
         end if
 
         !% --- pack the rest of the circular elements having AoverAfull > 0.04 which will use
         !%     lookup table for interpolation.
         Npack_lookup = count(AoverAfull(thisP) > 0.04)
         if (Npack_lookup > zeroI) then
+            
             thisP_lookup(1:Npack_lookup) = pack(thisP,AoverAfull(thisP) > 0.04)
+            thisPL => thisP_lookup(1:Npack_lookup)
+
             call xsect_table_lookup &
-                (YoverYfull, AoverAfull, YCirc, thisP_lookup(1:Npack_lookup))
+               (YoverYfull, AoverAfull, YCirc, thisPL)
 
         endif
 
@@ -104,9 +111,8 @@ module circular_conduit
         depth(thisP) = min(depth(thisP),fulldepth(thisP))
 
         !% --- clear the temporary storage
-        if (Npack_analytical > zeroI) thisP_analytical(1:Npack_analytical) = nullvalueI
-        if (Npack_lookup     > zeroI) thisP_lookup    (1:Npack_lookup)     = nullvalueI
-
+        if (Npack_analytical > zeroI) thisPA = nullvalueI
+        if (Npack_lookup     > zeroI) thisPL = nullvalueI
 
     end subroutine circular_depth_from_volume
 !%

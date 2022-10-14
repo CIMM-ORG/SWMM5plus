@@ -152,7 +152,7 @@ module geometry
             end select
             call util_crashstop(49872)
         !%--------------------------------------------------------------------
-            !  call util_CLprint ('in geometry at top==========================================')  
+            !   call util_CLprint ('in geometry at top==========================================')  
 
         !% STATUS: at this point we know volume and velocity on all elements
         !% from RK2 solution
@@ -203,7 +203,7 @@ module geometry
         !%     without adding Preissmann Slot depth.
         call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry after depth_from_volume') 
+         !    call util_CLprint ('in geometry after depth_from_volume') 
 
         !% --- ZERO DEPTH CC JM
         !%     reset all zero or near-zero depths in aa CC and JM
@@ -211,7 +211,7 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
 
-            ! call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
+            !call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
 
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC and JM
@@ -870,7 +870,6 @@ module geometry
         if (Npack > 0) then
             call triangular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
-
 
 
         !% --- CLOSED CONDUITS  ---------------------------------------
