@@ -1239,6 +1239,7 @@ contains
             elemSGR(thisP,esgr_Parabolic_Breadth)   = link%R(thisLink,lr_BreadthScale)
             elemSGR(thisP,esgr_Parabolic_Radius)    = elemSGR(thisP,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
             elemR(thisP,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
+            elemR(thisP,er_BreadthMax)              = link%R(thisLink,lr_BreadthScale)
   
             !% --- full conditions
             elemR(thisP,er_FullArea)      = llgeo_parabolic_area_from_depth_pure &
@@ -1258,8 +1259,7 @@ contains
 
             elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
             
-            !% --- dependent 
-            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            !% --- dependent  
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea) 
             elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
             elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
@@ -1376,6 +1376,7 @@ contains
             !% --- independent data
             elemSGR(thisP,esgr_Triangular_TopBreadth)  = link%R(thisLink,lr_BreadthScale)
             elemR(thisP,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
+            elemR(thisP,er_BreadthMax)                 = link%R(thisLink,lr_BreadthScale)
             elemSGR(thisP,esgr_Triangular_Slope)       = elemSGR(thisP,esgr_Triangular_TopBreadth) &
                                                          / (twoR * elemR(thisP,er_FullDepth))
 
@@ -1398,7 +1399,7 @@ contains
             elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)
             
             !% --- dependent data
-            elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
+            
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea)
             elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
             elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
@@ -1769,7 +1770,7 @@ contains
 
             !% --- independent data
             elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
-            elemSGR(thisP,er_BreadthMax)                            = link%R(thisLink,lr_BreadthScale)
+            elemR(  thisP,er_BreadthMax)                            = link%R(thisLink,lr_BreadthScale)
             elemR(  thisP,er_DepthAtBreadthMax)                     = elemR(thisP,er_FullDepth)  
             
             elemSGR(thisP,esgr_Rectangular_Triangular_BottomSlope)  &

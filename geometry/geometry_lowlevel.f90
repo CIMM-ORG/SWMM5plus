@@ -1071,7 +1071,7 @@ module geometry_lowlevel
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= yBot)) then
             theta    = twoR * acos(oneR - depth / rBot)
-            outvalue = onehalfR * (rBot ** twoR) * (theta - sin(theta))  
+            outvalue = onehalfR * (rBot ** twoI) * (theta - sin(theta))  
 
         elseif ((depth > yBot) .and. (depth < fulldepth)) then
             outvalue = aBot + (depth - yBot) * breadth
@@ -1583,7 +1583,7 @@ module geometry_lowlevel
         llgeo_parabolic_perimeter_from_depth_pure &
                 = onehalfR * (elemSGR(thisP,esgr_Parabolic_Radius)**2)   &
                            * (                                           &
-                               temp1 * temp2   + log(temp1) + temp2      &
+                               temp1 * temp2   + log(temp1 + temp2)      &
                              )                   
 
     end function llgeo_parabolic_perimeter_from_depth_pure                   
@@ -1668,7 +1668,7 @@ module geometry_lowlevel
 
         llgeo_triangular_perimeter_from_depth_pure                   &
             = twoR * depth                          &
-            * sqrt( oneR + elemSGR(thisP,esgr_Triangular_Slope)**2 )
+            * sqrt( oneR + elemSGR(thisP,esgr_Triangular_Slope)** twoI )
 
     end function llgeo_triangular_perimeter_from_depth_pure                   
 !%
@@ -1898,12 +1898,12 @@ module geometry_lowlevel
         elseif ((depth > yBot) .and. (depth < fulldepth)) then
             !% --- top rectangular section
             theta    = twoR * asin(breadth / twoR / rBot)
-            outvalue = rBot * theta + twoR * depth - yBot
+            outvalue = rBot * theta + twoR * (depth - yBot)
 
         else 
             !% --- at or above full depth perimeter includes top
             theta    = twoR * asin(breadth / twoR / rBot)
-            outvalue = rBot * theta + twoR * fulldepth - yBot + breadth
+            outvalue = rBot * theta + twoR * (fulldepth - yBot) + breadth
         end if
 
     end function llgeo_rect_round_perimeter_from_depth_singular
@@ -1934,15 +1934,15 @@ module geometry_lowlevel
             outvalue = setting%ZeroValue%Topwidth
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= bottomDepth) ) then
-            outvalue = twoR * depth * sqrt(oneR + bottomSlope**2)
+            outvalue = twoR * depth * sqrt(oneR + bottomSlope**twoI)
 
         elseif ((depth >  bottomDepth) .and. (depth < fulldepth)) then
-            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**2) &   !triangular section
+            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**twoI) &   !triangular section
                         + twoR * (depth - bottomDepth)                      !rectangular section
 
         else 
             !% --- at or above full depth perimeter includes top
-            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**2) &   
+            outvalue = twoR * bottomDepth * sqrt(oneR + bottomSlope**twoI) &   
                         + twoR * (fullDepth - bottomDepth) + breadth                   
         endif
 

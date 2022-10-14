@@ -564,7 +564,8 @@ module geometry
         !% --- get IC data for Area
         select case (thisGeoType)
         case (arch, basket_handle, catenary, circular, eggshaped, gothic, &
-                horiz_ellipse, horseshoe)
+                horiz_ellipse, horseshoe, semi_circular, semi_elliptical, &
+                vert_ellipse)
             do ii=1,size(thisP)
                 mm = thisP(ii)
                 elemR(mm,er_Area) = llgeo_tabular_from_depth_singular &
@@ -589,12 +590,19 @@ module geometry
             elemR(thisP,er_Area) = elemR(thisP,er_Depth) * elemR(thisP,er_Breadthmax)
 
         case (rect_round)
-            elemR(thisP,er_Area) = llgeo_rect_round_area_from_depth_singular &
+            do ii=1,size(thisP)
+                mm = thisP(ii)
+                elemR(mm,er_Area) = llgeo_rect_round_area_from_depth_singular &
                                     (mm, depth(mm))
+            end do
+            print*, elemR(thisP,er_Area), 'elemR(thisP,er_Area)'
 
         case (rect_triang)
-            elemR(thisP,er_Area) = llgeo_rectangular_triangular_area_from_depth_singular &
-                                    (mm, depth(mm))
+            do ii=1,size(thisP)
+                mm = thisP(ii)
+                elemR(mm,er_Area) = llgeo_rectangular_triangular_area_from_depth_singular &
+                                        (mm, depth(mm))
+            end do
         case default
             print *, 'CODE ERROR: Unexpected case default'
             call util_crashpoint(5298722)
@@ -3232,17 +3240,16 @@ module geometry
             outvalue = outA(1)
         
         case (catenary, gothic, semi_circular, semi_elliptical)  
-            ! print*, 'in geo_perimeter_from_depth'
-            ! print*, indepth, 'indepth' 
+
             tempArea(1)  = llgeo_tabular_from_depth_singular &
                     (idx, indepth, fullArea(idx), setting%ZeroValue%Depth, Atable)
-            ! print*, tempArea(1), 'tempArea(1)'
+
             temphydRadius(1)= llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
                 (idx, tempArea(1), fullhydradius(idx), setting%ZeroValue%Area, Stable)
-            ! print*, temphydRadius(1), 'temphydRadius(1)'
+
             outA = llgeo_perimeter_from_hydradius_and_area_pure &
                         (iA, tempHydradius, tempArea)
-            ! print*, outA, 'outA'
+
             outvalue = outA(1)
 
         case (filled_circular)
