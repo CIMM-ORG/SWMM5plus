@@ -244,8 +244,12 @@ for x in all_dset_names:
             list_of_errors.append('link: '+link_name+" depths are not within given Linf range")
 
     # Check if the data set is a node
-    if(x[0:10]=='node_face_'):
-
+    if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
+        
+        if (x[0:10]=='node_face_'):
+            is_nJ2 = True
+        else:
+            is_nJ2 = False
         # ... store node name
         node_name = x[10::]
 
@@ -256,7 +260,10 @@ for x in all_dset_names:
         # ... extract swmm5plus node data
         # extract the flowrates from the swmm5_plus .h5 file
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-        swmmF_node_H = ((z[1:,5] + z[1:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        if is_nJ2:  
+            swmmF_node_H = ((z[1:,5] + z[1:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        else:
+            swmmF_node_H = (z[1:,5]) * Yf # take the JM peizometric head
         # extract the timestamp
         time = z[1:,0]
 

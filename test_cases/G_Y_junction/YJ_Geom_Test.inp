@@ -47,9 +47,9 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-J1               0.3489       4          1          10          0         
-J2               0.3489       4          1          10          0         
-J3               0.1745       4          1          10          0         
+J1               0.3489       4          1          1000          0         
+J2               0.3489       4          1          1000          0         
+J3               0.1745       4          1          1000          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
@@ -68,7 +68,7 @@ C3               J3               J4               1000       0.03       0      
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
 C1               CIRCULAR    4                0          0          0          1                    
 C2               CIRCULAR    4                0          0          0          1                    
-C3               CIRCULAR    4                2          0          0          1                    
+C3               CIRCULAR    4                0          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
