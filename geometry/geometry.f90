@@ -1173,7 +1173,7 @@ module geometry
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:), ellMax(:)
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
             real(8), pointer :: fullhyddepth(:), sedimentDepth(:), thisTable(:,:)
-            real(8), pointer :: fulltopwidth(:)
+            real(8), pointer :: fulltopwidth(:), breadthmax(:)
             !real(8), pointer :: pressurehead(:)
             real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:), fullhydradius(:)
             real(8), pointer :: Atable(:), Ttable(:), Rtable(:), Stable(:)
@@ -1197,6 +1197,7 @@ module geometry
         !% Aliases
             Npack         => npack_elemP(thisColP_JM)
             area          => elemR(:,er_Area)
+            breadthmax    => elemR(:,er_BreadthMax)
             depth         => elemR(:,er_Depth)
             dHdA          => elemR(:,er_dHdA)
             ell           => elemR(:,er_ell)
@@ -1469,7 +1470,9 @@ module geometry
                                         (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, Atable)
 
                                     topwidth(tB) = llgeo_tabular_from_depth_singular &
-                                        (tB, depth(tB), fullTopWidth(tB), setting%ZeroValue%Depth, Ttable)
+                                        (tB, depth(tB), breadthmax(tB), setting%ZeroValue%Depth, Ttable)
+
+                                    topwidth(tB) = max(topwidth(tB), fulltopwidth(tB))
 
                                     hydRadius(tB)= llgeo_tabular_from_depth_singular &
                                         (tB, depth(tB), fullHydRadius(tB), setting%ZeroValue%Depth, Rtable)
@@ -1484,7 +1487,9 @@ module geometry
                                          (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, Atable)
 
                                     topwidth(tB) = llgeo_tabular_from_depth_singular &
-                                         (tB, depth(tB), fullTopWidth(tB), setting%ZeroValue%Depth, Ttable)
+                                         (tB, depth(tB), breadthmax(tB), setting%ZeroValue%Depth, Ttable)
+
+                                    topwidth(tB) = max(topwidth(tB), fulltopwidth(tB))
 
                                     hydRadius(tB)= llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
                                          (tB, area(tB), fullhydradius(tB), setting%ZeroValue%Area, Stable)
