@@ -2979,11 +2979,12 @@ module geometry
             integer, intent(in)  :: idx
             integer, dimension(1):: iA
             real(8), dimension(1):: depthA, outA
-            real(8), pointer     :: depth(:), fullarea(:), fulltopwidth(:)
+            real(8), pointer     :: depth(:), fullarea(:), fulltopwidth(:), breadthmax(:)
             real(8), pointer     :: TTable(:)
             character(64) :: subroutine_name = 'geo_topwidth_from_depth_singular'
         !%------------------------------------------------------------------
             depth        => elemR(:,er_Depth)
+            breadthmax   => elemR(:,er_BreadthMax)
             fullarea     => elemR(:,er_FullArea)
             fulltopwidth => elemR(:,er_FullTopWidth)
         !%------------------------------------------------------------------
@@ -3052,7 +3053,9 @@ module geometry
                 vert_ellipse)
 
             outvalue = llgeo_tabular_from_depth_singular &
-                (idx, depth(idx), fullTopWidth(idx), setting%ZeroValue%Depth, Ttable)
+                (idx, depth(idx), breadthmax(idx), setting%ZeroValue%Depth, Ttable)
+
+            outvalue = max(outvalue, fullTopWidth(idx))
 
         case (filled_circular)
             outvalue = llgeo_filled_circular_topwidth_from_depth_singular  (idx, indepth)
