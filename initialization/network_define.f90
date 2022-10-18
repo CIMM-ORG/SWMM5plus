@@ -2083,6 +2083,7 @@ contains
         elemSI(ElemIdx,esi_JunctionBranch_Exists)   = zeroI
         faceR(FaceIdx,:)                            = zeroR
         faceYN(FaceIdx,fYN_isnull)                  = .true.
+        elemYN(ElemIdx,eYN_isDummy)                 = .true.
 
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

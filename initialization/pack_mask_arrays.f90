@@ -215,7 +215,7 @@ contains
         !% creates a pack for elemR, elemI, elemYN for output elements
         !%-----------------------------------------------------------------
         !% Declarations:
-            logical, pointer :: isElemOut(:)
+            logical, pointer :: isElemOut(:), isDummy(:)
             integer, pointer :: eIdx(:), ptype, npack
             character(64) :: subroutine_name = 'pack_element_outputML'
         !%------------------------------------------------------------------
@@ -227,6 +227,7 @@ contains
             eIdx => elemI(:,ei_Lidx)
             !% logical control on output for each element
             isElemOut => elemYN(:,eYN_isOutput)
+            isDummy   => elemYN(:,eYN_isDummy)
             ptype => col_elemP(ep_Output_Elements)
             npack => npack_elemP(ptype)
         !%------------------------------------------------------------------
@@ -235,7 +236,7 @@ contains
 
         !% output the true element indexes into a pack
         if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,isElemOut)
+            elemP(1:npack,ptype) = pack(eIdx,(isElemOut .and. (.not. isDummy)))
         else 
             !% continue     
         end if    
