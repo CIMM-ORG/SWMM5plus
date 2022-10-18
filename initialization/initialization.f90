@@ -419,6 +419,10 @@ contains
             !print *, faceI(384,fi_Melem_dL)
         !end if
 
+        ! do ii=1,N_Elem(this_image())
+        !     print *, ii, elemR(ii,er_Flowrate)
+        ! end do
+        ! stop 298734
         
         !print *, this_image(), elemR(:,er_Depth)
     
@@ -450,9 +454,9 @@ contains
                 call util_crashpoint(333578)
             end if
             call util_crashstop(440987)
-    
+
             if (setting%Debug%File%initialization)  &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"   
     end subroutine initialize_toplevel
 !%
 !%==========================================================================

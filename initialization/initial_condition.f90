@@ -417,31 +417,31 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
-            !% necessary pointers
+            ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
-            !print *, 'calling get barrels'
+            ! print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
 
-            !print *, 'calling get depth'
+            ! print *, 'calling get depth'
             call init_IC_get_depth (thisLink)
 
-            !print *, 'calling get flow and roughness'
+            ! print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
-            !print *, 'calling get elemtype'
+            ! print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
 
-            !print *, 'calling get geometry'
+            ! print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            !print *, 'calling get flapgate'
+            ! print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
-            !print *, 'calling get forcemain'
+            ! print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)      
 
-            !print *, 'calling get culvert'
+            ! print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
@@ -451,8 +451,6 @@ contains
             end if
 
         end do
-
-        !stop 293470
         
         !%------------------------------------------------------------------
         !% Closing
@@ -993,11 +991,12 @@ contains
         !%-----------------------------------------------------------------
 
         !% --- look for culvert
-        if (link%I(thislink,li_culvertCode == 0)) then
+        if (link%I(thislink,li_culvertCode) == 0) then
             elemYN(firstE:lastE,eYN_isCulvert) = .false.
             !% --- elemSI is not initialized for non-culverts
             return
-        elseif (link%I(thislink,li_culvertCode <= NculvertTypes)) then
+        elseif ((link%I(thislink,li_culvertCode) > 0 ) .and. &
+            (link%I(thislink,li_culvertCode) <= NculvertTypes)) then
             elemYN(firstE:lastE,eYN_isCulvert) = .true.
         else
             print *, 'USER CONFIGURATION ERROR'
@@ -1032,6 +1031,9 @@ contains
 
             !% --- LOCAL STORE OF CULVERT VALUES:
 
+            !% --- pointer for covenience
+            thisC  => elemSI(firstE,esi_Conduit_Culvert_Code)
+
             !% --- convert the EquationForm real in the culvertValue to an integer
             if (culvertValue(thisC,1) == 1.d0) then 
                 elemSI(firstE:lastE,esi_Conduit_Culvert_EquationForm) = oneI
@@ -1041,9 +1043,6 @@ contains
                 print *, 'CODE ERROR: unexpected else'
                 call util_crashpoint(739874)
             end if
-
-            !% --- pointer for covenience
-            thisC  => elemSI(firstE,esi_Conduit_Culvert_Code)
 
             !% -- real data from culvertValue
             elemSR(firstE:lastE,esr_Conduit_Culvert_K)   = culvertValue(thisC,2)
@@ -1240,6 +1239,16 @@ contains
             elemSGR(thisP,esgr_Parabolic_Radius)    = elemSGR(thisP,esgr_Parabolic_Breadth) / twoR / sqrt(link%R(thisLink,lr_FullDepth))
             elemR(thisP,er_FullDepth)               = link%R(thisLink,lr_FullDepth)
             elemR(thisP,er_BreadthMax)              = link%R(thisLink,lr_BreadthScale)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_FullDepth) .le. zeroR) .or. &
+                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Parabolic cross section has zero specified for Full Height or Top Width'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698704)
+            end if
   
             !% --- full conditions
             elemR(thisP,er_FullArea)      = llgeo_parabolic_area_from_depth_pure &
@@ -1286,6 +1295,16 @@ contains
             !% --- independent data
             elemSGR(thisP,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
             elemR(thisP,er_FullDepth)               = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_FullDepth) .le. zeroR) .or. &
+                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Rectangular open cross section has zero specified for Full Height or Top Width'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987041)
+            end if
 
             !% --- custom functions using temporary store
             do ii=1,size(thisP)
@@ -1335,6 +1354,19 @@ contains
             elemSGR(thisP,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
             elemR(thisP,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
 
+            !% --- error checking
+            if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_LeftSlope)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_RightSlope)   .le. zeroR) .or. &
+                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Trapezoidal open cross section has zero specified for Full Height,'
+                print *, 'Base Width, Left Slope, or Right Slope'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987042)
+            end if
+
             !% --- full conditions
             elemR(thisP,er_FullArea)      = llgeo_trapezoidal_area_from_depth_pure &
                                                 (thisP, fulldepth(thisP))
@@ -1379,6 +1411,17 @@ contains
             elemR(thisP,er_BreadthMax)                 = link%R(thisLink,lr_BreadthScale)
             elemSGR(thisP,esgr_Triangular_Slope)       = elemSGR(thisP,esgr_Triangular_TopBreadth) &
                                                          / (twoR * elemR(thisP,er_FullDepth))
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Triangular open cross section has zero specified for Full Height or Top Width,'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987043)
+            end if
+                                                                                      
 
             !% --- full conditions
             elemR(thisP,er_FullArea)      = llgeo_triangular_area_from_depth_pure &
@@ -1497,6 +1540,16 @@ contains
             !% --- independent custom data
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.28d0 * elemR(thisP,er_FullDepth)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Arch cross section has zero specified for Full Height or Top Width,'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987044)
+            end if
   
             call geo_common_initialize (thisP, arch, AArch, TArch)
 
@@ -1508,6 +1561,15 @@ contains
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax)  = 0.27d0 * elemR(thisP,er_FullDepth)
 
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'BasketHandle cross section has zero specified for Full Height'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987045)
+            end if
+
             call geo_common_initialize (thisP, basket_handle, ABasketHandle, TBasketHandle)
     
         case (lCatenary)  !% TABULAR
@@ -1517,6 +1579,15 @@ contains
             !% --- independent custom data
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.29d0 * elemR(thisP,er_FullDepth)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) ) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Catenary cross section has zero specified for Full Height ,'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987046)
+            end if
 
             call geo_common_initialize (thisP, catenary, ACatenary, TCatenary)
 
@@ -1554,6 +1625,15 @@ contains
             elemR(thisP,er_BreadthMax)            = elemSGR(thisP,esgr_Circular_Diameter)
             elemR(thisP,er_DepthAtBreadthMax)     = 0.5d0 * elemR(thisP,er_FullDepth)
 
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Circular cross section has zero specified for Diameter ,'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987047)
+            end if
+
             call geo_common_initialize (thisP, circular, ACirc, TCirc)    
          
         case (lCustom)  !% TABULAR
@@ -1567,6 +1647,15 @@ contains
             !% --- independent custom data
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale)
             elemR(thisP,er_DepthAtBreadthMax) = 0.64d0 * elemR(thisP,er_FullDepth)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Eggshaped cross section has zero specified for FullHeight ,'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987048)
+            end if
 
             call geo_common_initialize (thisP, eggshaped, AEgg, TEgg)
         
@@ -1582,6 +1671,17 @@ contains
 
             !% --- get the sediment depth
             elemR(thisP,er_SedimentDepth) = link%R(thisLink,lr_BottomDepth)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_BottomDepth)      <  zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Filled circular cross section has zero specified for FullHeight '
+                print *, 'or less than zero for sediment depth,'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(6987049)
+            end if
 
             !% --- reset the depth previously computed from nodes (without sediment)
             elemR(thisP,er_Depth) = elemR(thisP,er_Depth) - elemR(thisP,er_SedimentDepth)
@@ -1678,6 +1778,15 @@ contains
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.49d0 * elemR(thisP,er_FullDepth)
 
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Gothic cross section has zero specified for FullHeight '
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698701)
+            end if
+
             call geo_common_initialize (thisP, gothic, AEgg, TEgg)
           
         case (lHoriz_ellipse) !% TABULAR
@@ -1687,6 +1796,16 @@ contains
             !% --- independent custom data
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.5d0 * elemR(thisP,er_FullDepth)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_FullDepth)       .le. zeroR) ) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Horiz Ellipse cross section has zero specified for FullHeight or Max width'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698702)
+            end if
 
             call geo_common_initialize (thisP, horiz_ellipse, AHorizEllip, THorizEllip)
 
@@ -1698,11 +1817,20 @@ contains
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.5d0 * elemR(thisP,er_FullDepth)
 
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Horseshoe cross section has zero specified for FullHeight '
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698703)
+            end if
+
             call geo_common_initialize (thisP, horseshoe, AHorseShoe, THorseShoe)
 
         case (lIrregular) !% ERROR
             print *, 'In ', trim(subroutine_name)
-            print *, 'USER ERRORthisP Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'
+            print *, 'USER ERROR Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'
             call util_crashpoint(4409874)    
 
         case (lMod_basket)  !% ANALYTICAL
@@ -1727,6 +1855,18 @@ contains
 
             elemR(thisP,er_DepthAtBreadthMax)        = elemR(thisP,er_FullDepth) - elemSGR(thisP,esgr_Mod_Basket_Ytop)                                                      
 
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_BottomRadius)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Mod Basket cross section has zero specified for FullHeight, Base width, '
+                print *, 'or Top Radius'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698704)
+            end if
+
             call geo_common_initialize (thisP, mod_basket, dummyA, dummyA)
 
         case (lRectangular_closed)  !% ANALYTICAL
@@ -1737,6 +1877,16 @@ contains
                 elemR(thisP,er_BreadthMax)              = link%R(thisLink,lr_BreadthScale)
                 elemR(thisP,er_DepthAtBreadthMax)       = elemR(thisP,er_FullDepth)
                 elemSGR(thisP,esgr_Rectangular_Breadth) = elemR(thisP,er_BreadthMax) 
+
+                !% --- error checking
+                if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                    (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
+                    print *, 'USER CONFIGURATION ERROR'
+                    print *, 'Rectangular Closed cross section has zero specified for FullHeight or Top width, '
+                    print *, 'Problem with link # ',thisLink
+                    print *, 'which is named ',trim(link%Names(thisLink)%str)
+                    call util_crashpoint(698705)
+                end if               
 
                 call geo_common_initialize (thisP, rectangular_closed, dummyA, dummyA)
                     
@@ -1749,6 +1899,19 @@ contains
             elemSGR(thisP,esgr_Rectangular_Round_Rbot)   = link%R(thisLink,lr_BottomRadius)
             elemR( thisP,er_BreadthMax)                  = link%R(thisLink,lr_BreadthScale)
             elemR( thisP,er_DepthAtBreadthMax)           = elemR(thisP,er_FullDepth)
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_BottomRadius)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Rectangular Round cross section has zero specified for FullHeight or Top width, '
+                print *, 'or bottom radius.'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698706)
+            end if  
+
 
             elemSGR(thisP,esgr_Rectangular_Round_ThetaBot)                        &
                     = twoR * asin(                                                &
@@ -1772,7 +1935,19 @@ contains
             elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth)  = link%R(thisLink,lr_BottomDepth)
             elemR(  thisP,er_BreadthMax)                            = link%R(thisLink,lr_BreadthScale)
             elemR(  thisP,er_DepthAtBreadthMax)                     = elemR(thisP,er_FullDepth)  
-            
+
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_BottomDepth)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Rectangular triangular cross section has zero specified for FullHeight or Top width, '
+                print *, 'or triangle height.'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698706)
+            end if  
+
             elemSGR(thisP,esgr_Rectangular_Triangular_BottomSlope)  &
                 = elemR(thisP,er_BreadthMax)  / (twoR * elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth))
 
@@ -1790,6 +1965,14 @@ contains
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.19d0 * elemR(thisP,er_FullDepth)
 
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Semi Circular cross section has zero specified for FullHeight '
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)   
+                call util_crashpoint(698706)
+            end if
+
             call geo_common_initialize (thisP, semi_circular, ASemiCircular, TSemiCircular)
         
 
@@ -1803,7 +1986,16 @@ contains
 
             call geo_common_initialize (thisP, semi_elliptical, ASemiEllip, TSemiEllip)
     
-    
+            !% --- error checking
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_FullDepth)       .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Semi Elliptical cross section has zero specified for FullHeight or Max WIdth '
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698707)
+            end if
+
         case (lVert_ellipse) !% TABULAR
 
             elemI(thisP,ei_geometryType) = vert_ellipse
@@ -1811,6 +2003,15 @@ contains
             !% --- independent custom data
             elemSGR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemSGR(thisP,er_DepthAtBreadthMax) = 0.50d0 * elemR(thisP,er_FullDepth)
+
+            if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
+                (link%R(thisLink,lr_FullDepth)       .le. zeroR)) then 
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'Vertical Elliptical cross section has zero specified for FullHeight or Max Width'
+                print *, 'Problem with link # ',thisLink
+                print *, 'which is named ',trim(link%Names(thisLink)%str)
+                call util_crashpoint(698708)
+            end if
 
             call geo_common_initialize (thisP, vert_ellipse, AVertEllip, TVertEllip)
 

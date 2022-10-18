@@ -688,19 +688,37 @@ module geometry
             integer, pointer    :: eIdx
             real(8), pointer    :: gravity, thistable(:)
             real(8)             :: normFlowrate
+            integer :: ii
         !%------------------------------------------------------------------
         !% Aliases
             eIdx      => uniformTableI(UT_idx,uti_elem_idx)
             thisTable => uniformTableDataR(UT_idx,:,utd_Qcrit_depth_nonuniform)
         !%------------------------------------------------------------------
+        ! print *, 'UT_idx',UT_idx
+        ! print *, 'eIdx  ',eIdx
+        ! print *, 'flowrate     ', elemR(eIdx,er_Flowrate)
+        ! print *, 'utr_Qcritmax ',utr_QcritMax
+        ! print *, 'table        ', uniformTableR(UT_idx,utr_QcritMax)
+        ! do ii=1,N_Elem(this_image())
+        !    print *, ii, elemR(ii,er_Flowrate)
+        ! end do
+        
+        !stop 2098374
+
         !% --- normalize the critical flowrate
         normFlowrate = abs(elemR(eIdx,er_Flowrate) / uniformTableR(UT_idx,utr_QcritMax))
+        
+        ! print *, 'normflowrate ',normFlowrate
 
         !% --- lookup the normalized critical depth for this critical flow
         outvalue = xsect_table_lookup_singular (normFlowrate, thistable)
 
+        ! print *, 'outvalue 1',outvalue
+
         !% --- return depth to physical value
         outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
+
+        ! print *, 'outvalue 2 ',outvalue
 
     end function geo_criticaldepth_singular
 !%

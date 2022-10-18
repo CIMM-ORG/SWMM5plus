@@ -82,6 +82,8 @@ module runge_kutta2
 
             ! call util_CLprint ('CCC  after update aux step 1-----------------------')
 
+            !stop 293704
+
         !% --- set the flagged zero and small depth cells (allow depth to change)
         !%     This does not reset the zero/small depth packing
         call adjust_zero_and_small_depth_elem (whichTM, .false.)

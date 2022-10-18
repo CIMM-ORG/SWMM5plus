@@ -67,6 +67,8 @@ contains
         endTime     = setting%Time%End
         reportStart = setting%Output%Report%StartTime 
 
+        ! print *, 'AAA '
+
         !% --- set spinup controls and call spinup
         call tl_spinup()
 
@@ -79,6 +81,8 @@ contains
         setting%Time%End   = endTime
         setting%Output%Report%StartTime = reportStart
 
+        ! print *, 'BBB '
+
         sync all
         if (this_image()==1) then
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
@@ -87,11 +91,15 @@ contains
             setting%Time%WallClock%LastStepStored = setting%Time%Step
         end if 
 
+        ! print *, 'CCC '
         !% --- initialize the time settings for hydraulics and hydrology steps
         call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN, .false.)
 
+        ! print *, 'DDD '
         !-- perform the time-marching loop
         call tl_outerloop (doHydrologyStepYN, doHydraulicsStepYN, .false., .false.)
+
+        ! print *, 'EEE '
 
         sync all
         !% --- close the timemarch time tick
@@ -99,6 +107,8 @@ contains
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%TimeMarchEnd= cval
         end if
+
+        ! print *, 'FFF '
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -242,10 +252,10 @@ contains
         !% --- initialize the time step counter
         thisStep = 1
 
-        !print *, 'starting tl_outerloop'
+        ! print *, 'starting tl_outerloop'
 
         do while (setting%Time%Now <= setting%Time%End - dtTol)
-                !print *, 'top of tl_outerloop loop'
+                ! print *, 'top of tl_outerloop loop'
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
                     !% --- skip BC update during spin-up after first step
@@ -254,7 +264,7 @@ contains
                     BCupdateYN = .true.
                 end if
     
-                !print *, 'before save previous values'
+                ! print *, 'before save previous values'
                 !% --- push the old values down the stack 
                 call tl_save_previous_values()
     
@@ -266,22 +276,23 @@ contains
                 !% --- main hydraulics time steop
                 if (doHydraulicsStepYN) then    
 
-                    !print *, 'in hydraulics step'
+                    ! print *, 'in hydraulics step'
                     !% --- set a clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
                         call system_clock(count=cval,count_rate=crate,count_max=cmax)
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
     
-                    !print *, 'calling bc_update'
+                    ! print *, 'calling bc_update'
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
                         call bc_update() 
+                        ! print *, 'out of bc update'
                         ! call tl_lateral_inflow()!
                         call tl_smallestBC_timeInterval ()
                     end if
 
-                    !print *, 'calling controls'
+                    ! print *, 'calling controls'
                     !% --- perform control rules
                     if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
                         if (setting%Time%Now .ge. setting%Time%ControlRule%NextTime) then
@@ -304,7 +315,7 @@ contains
                     if (setting%Simulation%useHydrology .and. BCupdateYN) call tl_subcatchment_lateral_inflow ()
     
                     !% --- perform hydraulic routing
-                    !print *, 'calling tl_hydraulics'
+                    ! print *, 'calling tl_hydraulics'
                     call tl_hydraulics()
                     !print *, 'out of tl_hydraulics'
 
@@ -324,7 +335,7 @@ contains
     
                 !call util_CLprint ('before reporting')
 
-                !print *, 'before reporting'
+                ! print *, 'before reporting'
 
                 !% --- handle output reporting
                 if (setting%Output%Report%provideYN) then 
@@ -392,7 +403,7 @@ contains
                 ! call util_crashcheck (773623)
                 if (crashI == 1) exit 
 
-                !print *, 'bottom of tl_outerloop'
+                ! print *, 'bottom of tl_outerloop'
     
             end do  !% end of time loop
 

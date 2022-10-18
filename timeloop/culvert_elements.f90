@@ -3,7 +3,10 @@ module culvert_elements
     use define_globals
     use define_keys
     use define_indexes
+    use define_xsect_tables
     use define_settings, only: setting
+    use geometry_lowlevel
+    use xsect_tables
     use utility, only: util_CLprint
     use utility_crash, only: util_crashpoint
 
@@ -148,13 +151,19 @@ module culvert_elements
         !% checks for and enforces culvert behaviors
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, pointer :: thisCol, npack, eIn, eOut, EqForm
+            integer, pointer :: thisCol, npack, eIn, eOut, EqForm, geoType
             integer, pointer :: fUp(:), fDn(:), thisE(:)
-            real(8), pointer :: fHeadD(:), fHeadU(:), Dinlet(:), Flowrate(:)
-            real(8), pointer :: Zbtm(:)
+            real(8), pointer :: fHeadD(:), fHeadU(:),  Flowrate(:)
+            real(8), pointer :: Zbtm(:), Atable(:), Ttable(:)
             integer          :: ii
 
-            real(8) :: QIC
+            logical :: isConverged     = .false.
+            logical :: isReversedFlow  = .false.
+            logical :: isSubmerged     = .false.
+            logical :: isTabular       = .false.
+            logical :: isTransition    = .false.
+            logical :: isInconsistentFlow = .false.
+            real(8) :: QIC, Dinlet, PsiOut, H1s, H1u
 
         !%------------------------------------------------------------------
         !% Aliases
@@ -171,7 +180,9 @@ module culvert_elements
             Flowrate => elemR(:,er_Flowrate)
             Zbtm     => elemR(:,er_Zbottom)
 
-            Dinlet   => elemR(:,er_Temp01) !% storage for effective inlet depth
+            Atable => ACirc !% Dummy to prevent unallocated pointer
+            Ttable => TCirc !% Dummy to prevent unallocated pointer
+
         !%------------------------------------------------------------------
 
         !% --- cycle through the culverts
@@ -180,60 +191,67 @@ module culvert_elements
             eIn    => thisE(ii)
             eOut   => elemSI(eIn,esi_Conduit_Culvert_OutletID)
             EqForm => elemSI(eIn,esi_Conduit_Culvert_EquationForm)
+            isConverged = .false.
+            isInconsistentFlow = .false.
 
-            !% --- check flow direction
-            if ((Flowrate(eIn) > zeroR) .and. (Flowrate(eOut) > zeroR)) then 
-                !% --- downstream flow
+            !% --- geometry type
+            geoType => elemI(eIn,ei_geometryType)
 
-                !% --- effective inlet flow depth
-                Dinlet(eIn) = fHeadD(fUp(eIn)) - Zbtm(eIn)
+            !% --- get the correct table pointers for the geometry types
+            call culvert_table_pointers(geoType, isTabular, Atable, Ttable)
+            
+            !% --- check for flow reversal (upstream flow) and reset eIn=eOut if 
+            !%     reversed flow occurs.
+            isReversedFlow = culvert_isReversedFlow(eIn, eOut, isInconsistentFlow)
 
-                !% --- no action if negative inlet depth
-                if (Dinlet(eIn) .le. zeroR) cycle
+            !% --- where flow is into culvert from both ends or out of culvert from b
+            !%     both ends, do not use culvert flow limitation
+            if (isInconsistentFlow) cycle
                 
-                !% --- submergence
-                if (issubmerged(eIn,fUp(eIn),.false.)) then
-                    QIC =  culvert_submerged (eIn, fUp(eIn), .false.)
-                else
+            !% --- effective inlet flow depth
+            Dinlet = culvert_inlet_depth(eIn,isReversedFlow)
 
-                    !% --- compute QIC
-                    select case (EqForm)
-                    case (1)
-                    case (2)
-                        QIC = culvert_unsubmerged_form2 (eIn,fUp(eIn))
-                    case default
-                        print *, 'CODE ERROR: unexpected case default'
-                        call util_crashpoint(692873)
-                    end select
+            !% --- if negative inlet depth then there is no QIC
+            if (Dinlet .le. zeroR) cycle
+
+            !% --- check for submerged culvert and store H1s
+            call culvert_isSubmerged (eIn, isReversedFlow, isSubmerged, H1s)
+            
+            !% --- if submerged, then get QIC directly
+            if (isSubmerged) then
+                QIC =  culvert_QIC_submerged_eq (eIn, Dinlet, isReversedFlow)
+            else
+                !% --- check for transition status (between submerged and unsubmerged)
+                !%     and store H1u
+                call culvert_isTransition (eIn,Dinlet,isTransition,H1u)
+
+                !% --- compute Psi = D_c/D_full (only for unsumberged form 1)
+                if (EqForm == 1) then      
+                    !% --- get the normalized critical depth
+                    PsiOut =  culvert_Psi_unsubmerged_form1 (isConverged, isReversedFlow, &
+                                isTabular, geoType, eIn, Dinlet, Atable, Ttable)
+                else 
+                    !% --- PsiOut is a dummy that will not affect the solution
+                    PsiOut = zeroR
+                end if   
+
+                !% --- compute QIC for either form 1 or 2 unsubmerged
+                !%     Note this assigns a negative value for a reversed flow
+                QIC = culvert_QIC_unsubmerged &
+                        (isTabular,isReversedFlow, EqForm, eIn, geoType, PsiOut, Dinlet, &
+                         Atable, TTable)
+
+                !% ---  handle transition
+                if (isTransition) then 
+                    QIC = culvert_QIC_transition (eIn, Dinlet, QIC, H1s, H1u, &
+                                                  isTransition, isReversedFlow)
                 end if
 
+            endif
 
-            elseif ((Flowrate(eIn) < zeroR) .and. (Flowrate(eOut) < zeroR)) then 
-                !% --- upstream (reversed) flow
-
-                !% --- effective inlet flow depth
-                Dinlet(eOut) = fHeadU(fDn(eOut)) - Zbtm(eOut)
-
-                !% --- no action if negative inlet depth
-                if (Dinlet(eOut) .le. zeroR) cycle
-                
-                !% --- submergence
-                if (issubmerged(eOut,fDn(eOut),.true.)) then
-                    QIC =  culvert_submerged (eOut, fDn(eOut), .true.)
-                else
-                    !% --- compute QIC
-                    select case (EqForm)
-                    case (1)
-                    case (2)
-                        QIC = - culvert_unsubmerged_form2 (eOut,fDn(eOut))
-                    case default
-                        print *, 'CODE ERROR: unexpected case default'
-                        call util_crashpoint(6928735)
-                    end select
-                end if
-            else 
-                !% --- inconsistent flow directions
-                !%     skip culvert computations entirely
+            !% --- reset the flowrate if inlet control is less than time-advance flowrate
+            if (abs(QIC) < abs(Flowrate(eIn))) then 
+                Flowrate(eIn) = QIC
             end if
             
 
@@ -244,8 +262,185 @@ module culvert_elements
 !%
 !%==========================================================================  
 !%==========================================================================  
+!%
+    subroutine culvert_table_pointers (geoType, isTabular, Atable, Ttable)    
+        !%------------------------------------------------------------------
+        !% Description
+        !% provides pointers to the correct tables for the geometry type
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)    :: geoType
+            logical, intent(inout) :: isTabular
+            real(8), pointer, intent(inout) :: Atable(:), Ttable(:)
+        !%------------------------------------------------------------------
+
+        select case (geoType)
+
+        case (arch, basket_handle, catenary, circular, custom, eggshaped, gothic, &
+            horiz_ellipse, horseshoe, semi_circular, semi_elliptical, vert_ellipse)
+            !% --- set the table for tabular geometry
+            isTabular = .true.
+            select case (geoType)
+            case (arch)
+                Atable => AArch 
+                Ttable => TArch
+
+            case (basket_handle)
+                Atable => ABasketHandle
+                Ttable => TBasketHandle
+
+            case (catenary)
+                Atable => ACatenary
+                Ttable => TCatenary
+
+            case (circular)
+                Atable => ACirc
+                Ttable => TCirc
+
+            case (custom)
+                !Atable => A
+                !Ttable => T
+                print *, 'CODE ERROR: Custom conduit cross sections not completed'
+                call util_crashpoint(6229873)
+
+            case (eggshaped)
+                Atable => AEgg
+                Ttable => TEgg
+
+            case (gothic)
+                Atable => AGothic
+                Ttable => TGothic
+
+            case (horiz_ellipse)
+                Atable => AHorizEllip
+                Ttable => THorizEllip
+
+            case (horseshoe)
+                Atable => AHorseShoe
+                Ttable => THorseShoe
+
+            case (semi_circular)
+                Atable => ASemiCircular
+                Ttable => TSemiCircular
+
+            case (semi_elliptical)
+                Atable => ASemiEllip
+                Ttable => TSemiEllip
+
+            case (vert_ellipse)
+                Atable => AVertEllip
+                Ttable => TVertEllip
+
+            case default
+                print *, 'CODE ERROR: unexpected case default'
+                call util_crashpoint(7298733)
+            end select
+
+        case (filled_circular)
+            isTabular = .false.
+            Atable => ACirc
+            Ttable => TCirc
+
+        case (mod_basket)
+            isTabular = .false.
+            Atable => ACirc  !% Dummy to prevent unallocated pointer
+            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
+
+        case (rectangular_closed)
+            isTabular = .false.
+            Atable => ACirc  !% Dummy to prevent unallocated pointer
+            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
+
+        case (rect_round)
+            isTabular = .false.
+            Atable => ACirc  !% Dummy to prevent unallocated pointer
+            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
+
+        case (rect_triang)
+            isTabular = .false.
+            Atable => ACirc  !% Dummy to prevent unallocated pointer
+            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
+
+        case default
+            print *, 'CODE ERROR: unexpected case default'
+            call util_crashpoint(6098723)
+
+        end select
+
+    end subroutine culvert_table_pointers    
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%
+    logical function culvert_isReversedFlow &
+            (eIn, eOut, isInconsistentFlow) result (isReversedFlow)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Determines whether the flow in culvert is in the nominal downstream
+        !% direction, reversed, or inconsistent
+        !%------------------------------------------------------------------
+        !% Declarations:
+            logical, intent(inout)          :: isInconsistentFlow
+            integer, pointer, intent(inout) :: eIn
+            integer, pointer, intent(in)    :: eOut
+            real(8), pointer                :: Flowrate(:)
+        !%------------------------------------------------------------------
+        !% Aliases:
+            Flowrate => elemR(:,er_Flowrate)
+        !%------------------------------------------------------------------
+
+        !% --- check for reversed flow direction
+        if ((Flowrate(eIn) < zeroR) .and. (Flowrate(eOut) < zeroR)) then 
+            !% --- upstream (reversed) flow
+            isReversedFlow = .true.
+            isInconsistentFlow = .false.
+            eIn => eOut
+        elseif ((Flowrate(eIn) > zeroR) .and. (Flowrate(eOut) > zeroR)) then  
+            !% --- downstream (normal direction) flow
+            isReversedFlow = .false.
+            isInconsistentFlow = .false.
+        else
+            !% --- inconsistent flow directions, ignore culvert equations
+            isReversedFlow = .false.
+            isInconsistentFlow = .true.
+        end if
+
+    end function culvert_isReversedFlow
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%
+    real(8) function culvert_inlet_depth (eIn,isReversedFlow) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Sets the inlet depth as difference between the head on the
+        !% upstream face and the Zbottom of the first element in the culvert
+        !% Note this assumes that eIn is the nominal outlet end of culvert if
+        !% the culvert flow is reversed.
+        !% Note for a sediment-filled culvert this is the depth WITHOUT
+        !% considering the sediment.
+        !%------------------------------------------------------------------
+        !% Declarations: 
+            logical, intent(in) :: isReversedFlow
+            integer, intent(in) :: eIn  !% inlet  elements of culvert
+            integer, pointer    :: fup
+        !%------------------------------------------------------------------   
+        if (isReversedFlow) then 
+            fup      => elemI(eIn,ei_Mface_dL)
+            outvalue = faceR(fup,fr_Head_u) - elemR(eIn,er_Zbottom)
+        else
+            fup      => elemI(eIn,ei_Mface_uL)
+            outvalue = faceR(fup,fr_Head_d) - elemR(eIn,er_Zbottom)   
+        endif
+        
+    
+    end function culvert_inlet_depth
+!%
+!%==========================================================================  
+!%==========================================================================  
 !%   
-    logical function issubmerged (eIn, fIn, isreversed) result (outvalue)
+    subroutine culvert_isSubmerged &
+            (eIn, isReversedFlow, isSubmerged, H1s )
         !%------------------------------------------------------------------
         !% Description
         !% determines whether the culvert meets the submerged flow condition
@@ -253,17 +448,19 @@ module culvert_elements
         !% of the SWMM5 Reference Manual Vol II Hydraulics.
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: eIn, fIn
-            logical, intent(in) :: isreversed
-            real(8), pointer :: Dfull, Hup, Zbtm, Zcrown, slope
-            real(8), pointer :: Ccoef, Ycoef, SCF
+            integer, intent(in)    :: eIn
+            logical, intent(in)    :: isReversedFlow
+            logical, intent(inout) :: isSubmerged
+            real(8), intent(inout) :: H1s
+            real(8), pointer :: Dfull,  Zbtm, Zcrown, slope
+            real(8), pointer :: Ccoef, Ycoef, SCF, Hup
         !%------------------------------------------------------------------
         !% Aliases
             Dfull  =>  elemR(eIn,er_FullDepth)
-            if (.not. isreversed) then
-                Hup    =>  faceR(fIn,fr_Head_d)
+            if (.not. isReversedFlow) then
+                Hup    =>  faceR(elemI(eIn,ei_Mface_uL),fr_Head_d)
             else
-                Hup    =>  faceR(fIn,fr_Head_u)
+                Hup    =>  faceR(elemI(eIn,ei_Mface_dL),fr_Head_u)
             end if
             Zbtm   =>  elemR(eIn,er_Zbottom)
             Zcrown =>  elemR(eIn,er_Zcrown)
@@ -272,52 +469,517 @@ module culvert_elements
             Ycoef  => elemSR(eIn,esr_Conduit_Culvert_Y)
             SCF    => elemSR(eIn,esr_Conduit_Culvert_SCF)
         !%------------------------------------------------------------------
-
-
-        if (.not. isreversed) then
-            if ( ( Hup > Zcrown)                                              &
-                .or.                                                          &
-                 (Hup > (ZBtm + Dfull * (16.d0 * Ccoef + Ycoef + SCF*slope))) &
-                ) then 
-
-                outvalue = .true.
-
+        if (.not. isReversedFlow) then
+            H1s = (ZBtm + Dfull * (16.d0 * Ccoef + Ycoef + SCF*slope))
+            if ( (Hup > Zcrown) .or. (Hup > H1s) ) then 
+                isSubmerged = .true.
             else 
-                outvalue = .false.
+                isSubmerged = .false.
             end if
         else 
             !% --- reverse flow neglects slope term
-            if ( (Hup > Zcrown)                                                &
-                .or.                                                           &
-                (Hup > (ZBtm + Dfull * (16.d0 * Ccoef + Ycoef)))               &
-                ) then 
-
-                outvalue = .true.
-
+            H1s = (ZBtm + Dfull * (16.d0 * Ccoef + Ycoef))
+            if ( (Hup > Zcrown) .or. (Hup > H1s)) then 
+                isSubmerged = .true.
             else 
-                outvalue = .false.
-            end if
-            
+                isSubmerged = .false.
+            end if   
         end if
 
-    end function issubmerged
+    end subroutine culvert_isSubmerged
+!%
+!%==========================================================================     
+!%==========================================================================  
+!% 
+    subroutine culvert_isTransition (eIn, Dinlet, isTransition, H1u)     
+        !%------------------------------------------------------------------
+        !% Description
+        !% Checks whether an unsubmerged culvert is in the transition zone
+        !% Should only be called on nominally unsubmerged elements (i.e.
+        !% that have already passed the submergence test).
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)    :: eIn
+            real(8), intent(in)    :: Dinlet
+            real(8), intent(inout) :: H1u
+            logical, intent(inout) :: isTransition
+            real(8), parameter  :: dfactor = 0.95d0 !% from EPA-SWMM Hydraulics manual eq 7-49
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        !% --- store the cutoff depth for the transition regime
+        H1u =  dfactor * elemR(eIn,er_FullDepth)
+
+        !% --- set logical if in transition
+        if (Dinlet .ge. H1u) then
+            isTransition = .true.
+        else
+            isTransition = .false.
+        end if
+
+        !% --- output is cutoff head for transition
+        H1u = H1u + elemR(eIn,er_Zbottom)
+
+    end subroutine culvert_isTransition
 !%
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine culvert_unsubmerged_form1 ()
+    real(8) function culvert_QIC_submerged_eq &
+            (eIn, Dinlet, isReversedFlow) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes the inlet submerged form of the culvert equations
+        !% Output is the inlet-controlled flowrate
+        !% eIn is the index of the true inlet to the culvert (i.e., the
+        !% nominal outlet in reversed flow)
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: eIn
+            real(8), intent(in) :: Dinlet
+            logical, intent(in) :: isReversedFlow
+            real(8), pointer :: Afull, Dfull, slope
+            real(8), pointer :: Ccoef, Ycoef, SCF
+        !%------------------------------------------------------------------
+            Afull  =>  elemR(eIn,er_FullArea)
+            Dfull  =>  elemR(eIn,er_FullDepth)
+            slope  =>  elemR(eIn,er_BottomSlope)
+            Ccoef  => elemSR(eIn,esr_Conduit_Culvert_C)
+            Ycoef  => elemSR(eIn,esr_Conduit_Culvert_Y)
+            SCF    => elemSR(eIn,esr_Conduit_Culvert_SCF)
+        !%------------------------------------------------------------------
+
+        if (.not. isReversedFlow) then
+            !% --- conventional downstream flow
+            outvalue = ( Afull * sqrt(Dfull) / kUnit )                  &
+                    * sqrt(                                             &
+                            ( ( Dinlet / Dfull) - Ycoef - SCF * slope ) &
+                            / Ccoef                                     &
+                        ) 
+        else
+            !% --- reversed flow in culvert (neglects slope term)
+            !%     This applies the negative for the flowrate direction
+            outvalue = - ( Afull * sqrt(Dfull) / kUnit )                &
+                    * sqrt(                                             &
+                            ( ( Dinlet / Dfull) - Ycoef )               &
+                            / Ccoef                                     &
+                        ) 
+        end if
 
 
-        ! Dhat = culvert_Dhat (eIn, isreversed)
+    end function culvert_QIC_submerged_eq
+!%
+!%==========================================================================     
+!%==========================================================================  
+!%
+    real(8) function culvert_Psi_unsubmerged_form1              &
+            (isConverged, isReversedFlow, isTabular,        &
+             geoType, eIn, Dinlet, Atable, Ttable ) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Solves form1 unsubmerged equation using SWMM5+ approach
+        !%------------------------------------------------------------------
+        !% Declarations:
+            logical, intent(inout) :: isConverged
+            logical, intent(in) :: isReversedFlow, isTabular
+            integer, intent(in) :: eIn, geoType
+            real(8), intent(in) :: Dinlet, Atable(:), Ttable(:)
+            
+            real(8), pointer :: sedimentDepth, totalPipeDiameter
 
-        ! Dhat = Di
+            real(8) :: Bhat, Khat, Dhat, Delta, halfM
+            real(8) :: Psi(4), resid(4), Omega(3)
+
+            integer :: ii
+
+            real(8), parameter :: epsConverged = 0.0003d0
+            real(8), parameter :: smalldepth = 0.001d0
+        !%------------------------------------------------------------------
+        !% Aliases:
+            if (geoType == filled_circular) then
+                sedimentDepth     =>   elemR(eIn,er_SedimentDepth)
+                totalPipeDiameter => elemSGR(eIn,esgr_Filled_Circular_TotalPipeDiameter)
+            end if
+        !%------------------------------------------------------------------    
+        !% --- STEP 1: get the culvert constants
+        halfM = elemSR(eIn,esr_Conduit_Culvert_M) * onehalfR
+        Bhat = culvert_Bhat (eIn)
+        Khat = culvert_Khat (eIn, Bhat)
+        Dhat = culvert_Dhat (eIn, Dinlet, isReversedFlow)
+
+        !% --- STEP 2: initial values
+        !%     Psi is the nondimensionalized depth (solution variable)
+        Psi(1) = smalldepth
+        Psi(2) = min(oneR, Dinlet/elemR(eIn,er_FullDepth) )
+        if (geoType == filled_circular) then 
+            !% --- Psi must be based on total pipe diameter, not full depth
+            !%     This is needed for later table lookups
+            Psi(1) = (sedimentDepth + smalldepth) / totalPipeDiameter 
+            Psi(2) = min(oneR, (Dinlet + sedimentDepth) / totalPipeDiameter)
+        end if
+        Psi(3) = onehalfR * (Psi(1) + Psi(2))
+
+        !% --- STEP 3: define Delta
+        Delta = abs(Psi(1)-Psi(2))
+
+        !% --- STEPS 4, 5, 6: define gamma, phi, omega, and residual
+        do ii=1,2
+            Omega(ii) = culvert_omega (isTabular, geoType, eIn, Psi(ii), Atable, Ttable)
+            resid(ii) = culvert_residual_form1 (Psi(ii), Omega(ii), halfM, Dhat, Khat, Bhat)
+        end do
+
+        !% --- STEP 7: check to see if we're done
+        if ( abs(resid(1)) < 100.d0 * tiny(resid) ) then
+            outvalue = Psi(1)
+            return
+        end if
+        if ( abs(resid(2)) < 100.d0 * tiny(resid) ) then 
+            outvalue = Psi(2)
+            return
+        end if
+
+        !% --- STEP 8: check for root being constrained by residuals
+        !%     they must be opposite sign
+        if ( resid(1) * resid(2) > zeroR ) then 
+            outvalue = nullvalueR  !% failure
+            return
+        end if
+
+        isConverged = .false.
+
+        do while (.not. isConverged)
+            !% --- STEPS 4, 5, and 6: Update for Psi(3)
+            Omega(3) = culvert_omega (isTabular, geoType, eIn, Psi(3), Atable, Ttable)
+            resid(3) = culvert_residual_form1 (Psi(3), Omega(3), halfM, Dhat, Khat, Bhat)
+
+            !% --- STEP 7: check for solution
+            if ( abs(resid(3)) < 100.d0 * tiny(resid) ) then 
+                outvalue = Psi(3)
+                isConverged = .true.
+                return
+            end if
+
+            !% --- STEP 9: Compute Psi(4) and Omega(4)
+            Psi(4) = Psi(3)                                                     &
+                + (resid(3) * (Psi(3) - Psi(1)) * sign(oneR,resid(1)-resid(2))) &
+                / sqrt( (resid(3)**2) - resid(1) * resid(2)  )
+
+            !% --- STEP 10: check for solution
+            if (abs(Psi(4)-Psi(3)) .le. epsConverged) then 
+                outvalue = Psi(3)
+                isConverged = .true.
+                return
+            end if
+
+            !% --- STEP 12,13: Compute Omega(4) and resid(4)
+            Omega(4) = culvert_omega (isTabular, geoType, eIn, Psi(4), Atable, Ttable)  
+            resid(4) = culvert_residual_form1 (Psi(4), Omega(4), halfM, Dhat, Khat, Bhat)
+
+            !% --- STEPS 14,15,16,17,18
+            if (resid(3) * resid(4) < zeroR) then 
+                Psi(1)   = Psi(3)
+                Psi(2)   = Psi(4)
+                resid(1) = resid(3)
+                resid(2) = resid(4)
+            elseif (resid(1) * resid(4) < zeroR) then 
+                Psi(2)   = Psi(4)
+                resid(2) = resid(4)
+            elseif (resid(2) * resid(4) < zeroR) then 
+                Psi(1)   = Psi(4)
+                resid(1) = resid(4)
+            else
+                !% FAILURE -- should not reach this point
+                outvalue = nullvalueR ! 
+                return
+            end if
+
+            !% --- STEP 19: update Psi(3)
+            Psi(3) = onehalfR * (Psi(1) + Psi(2))
+
+            !% --- STEP 20,21,22: check if finished and update Delta
+            if (abs(Psi(1)- Psi(2)) .le. epsConverged) then 
+                outvalue = Psi(3)
+                isConverged = .true.
+                return
+            elseif ((abs(Psi(1)- Psi(2)) > Delta)) then
+                !% FAILURE -- diverging solution
+                outvalue = nullvalueR
+                return
+            else 
+                Delta = abs(Psi(1) - Psi(2))
+                !% continue do loop
+            end if
+
+            !% TESTING TO PREVENT INFINITE LOOP
+            !isConverged = .true.
+
+        end do
         
-    end subroutine culvert_unsubmerged_form1 
+    end function culvert_Psi_unsubmerged_form1 
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%   
+    real(8) function culvert_QIC_unsubmerged                       & 
+            (isTabular, isReversedFlow, EqnForm, eIn, geoType, Psi, Dinlet, &
+             Atable, Ttable ) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes inlet-constrained flowrate for culvert
+        !%------------------------------------------------------------------
+        !% Declarations
+            logical, intent(in) :: isTabular, isReversedFlow
+            integer, intent(in) :: EqnForm, eIn, geoType
+            real(8), intent(in) :: Psi, Dinlet, Atable(:), Ttable(:)
+
+            real(8), pointer    :: grav, Afull, Dfull, Tmax, sedimentArea
+            real(8)             :: Tvalue, Avalue
+        !%------------------------------------------------------------------
+        !% Aliases:
+            Afull  =>  elemR(eIn,er_FullArea)
+            Dfull  =>  elemR(eIn,er_FullDepth)
+            Tmax   =>  elemR(eIn,er_BreadthMax)
+            grav   =>  setting%Constant%gravity
+            sedimentArea =>  elemSGR(eIn,esgr_Filled_Circular_bottomArea)
+        !%------------------------------------------------------------------
+        select case (EqnForm)
+        case (1)
+            if (isTabular) then
+                !% --- QIC based on normalized value lookups for unsumberged EqForm=1
+                !%     where Psi has been computed
+                outvalue = sqrt(                                                       &
+                                ( grav * (Afull**3)                                    &
+                                * (xsect_table_lookup_singular(Psi,Atable)**3)         &
+                                )                                                      &
+                                / ( Tmax * xsect_table_lookup_singular(Psi,Ttable) )   &
+                                )
+            else 
+                select case (geoType)
+                !% --- QIC based on computations for physical values    
+                case(filled_circular)
+                    !% --- requires Psi to be based on total pipe diameter
+                    Tvalue = Tmax  * xsect_table_lookup_singular(Psi,Ttable)
+                    Avalue = Afull * xsect_table_lookup_singular(Psi,Atable) - sedimentArea
+                    outvalue = sqrt(grav * (Avalue**3) / Tvalue)
+
+                case (mod_basket)
+                    Tvalue = llgeo_mod_basket_topwidth_from_depth_singular (eIn,Psi*Dfull)
+                    Avalue = llgeo_mod_basket_area_from_depth_singular     (eIn,Psi*Dfull)
+                    outvalue = sqrt( grav * (Avalue**3) / Tvalue )
+
+                case (rectangular_closed)
+                    outvalue = sqrt( grav * ((Psi*Dfull*Tmax)**3) / Tmax )
+
+                case (rect_round)
+                    !% --- using physical values
+                    Tvalue = llgeo_rect_round_topwidth_from_depth_singular (eIn,Psi*Dfull)
+                    Avalue = llgeo_rect_round_area_from_depth_singular     (eIn,Psi*Dfull)
+                    outvalue = sqrt( grav * (Avalue**3) / Tvalue )
+
+                case (rect_triang)
+                    !% --- using physical values
+                    Tvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular (eIn,Psi*Dfull)
+                    Avalue = llgeo_rectangular_triangular_area_from_depth_singular     (eIn,Psi*Dfull)
+                    outvalue = sqrt( grav * (Avalue**3) / Tvalue )
+
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(5098723)
+                end select
+            end if
+
+        case (2)
+            !% --- simpler form 2 equation:
+            outvalue = culvert_QIC_unsubmerged_form2 (eIn, Dinlet)
+
+        case default     
+            print *, 'CODE ERROR: unexpected default case'  
+            call util_crashpoint(598723) 
+        end select
+
+        !% --- provide negative flowrate for reversed flow
+        if (isReversedFlow) outvalue = -outvalue
+
+    end function culvert_QIC_unsubmerged
+!%
+!%==========================================================================     
+!%==========================================================================  
+!% 
+    real(8) function culvert_QIC_transition &
+         (eIn, Dinlet, QICu, H1s, H1u,&
+          isTransition, isReversedFlow) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes the transition regime for culvert, in between the
+        !% sumberged and unsubmerged equations
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: eIn
+            real(8), intent(in) :: QICu, Dinlet, H1s, H1u
+            logical, intent(in) :: isTransition, isReversedFlow
+            real(8), pointer    :: Zbtm
+            real(8)             :: QICs
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (.not. isTransition) return
+        !%------------------------------------------------------------------
+            Zbtm => elemR(eIn,er_Zbottom)
+        !%------------------------------------------------------------------
+        
+        if (H1s > H1u) then
+            !% --- get the submerged flowrate    
+            QICs =  culvert_QIC_submerged_eq (eIn, Dinlet, isReversedFlow)
+            outvalue = QICu + (QICs - QICu) * (Dinlet + Zbtm - H1u) &
+                                             / (H1s - H1u)
+        else
+            !% --- inconsistent result in H1s and H1u, so retain QICu value
+            outvalue = QICu
+        end if
+
+end function culvert_QIC_transition    
+!%
+!%==========================================================================     
+!%==========================================================================  
+!%  
+    real(8) function culvert_omega &
+            (isTabular, geoType, eIn, Psi, Atable, Ttable) result (Omega)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes local Omega = Gamma / Phi, i.e. the normalized area
+        !% divided by the normalized topwidth
+        !% HACK -- this could be more efficient if the llgeo_... functions
+        !% for the non-tabular are provided as normalized functions for
+        !% area, topwidth using inputs of normalized depth. Below we must
+        !% normalize the area and topwidth before we can use them to get
+        !% Omega
+        !%------------------------------------------------------------------
+        !% Declarations
+            logical, intent(in) :: isTabular
+            integer, intent(in) :: geoType, eIn
+            real(8), intent(in) :: Psi, Atable(:), Ttable(:)
+            real(8), pointer    :: sedimentDepth, FullDepth, MaxTopwidth
+            real(8), pointer    :: totalPipeArea
+            real(8)             :: Atemp, Ttemp
+        !%------------------------------------------------------------------
+        !% Aliases
+            if (.not. isTabular) then
+                sedimentDepth => elemR(eIn,er_SedimentDepth)
+                FullDepth     => elemR(eIn,er_FullDepth)
+                MaxTopwidth   => elemR(eIn,er_BreadthMax)
+                totalPipeArea => elemSGR(eIn,esgr_Filled_Circular_TotalPipeArea)
+            end if
+        !%------------------------------------------------------------------
+        if (isTabular) then 
+            !% --- simple table lookups
+            Omega = xsect_table_lookup_singular(Psi,Atable) &
+                  / xsect_table_lookup_singular(Psi,Ttable)
+        else 
+            select case (geoType)
+            case (filled_circular)
+                !% --- table lookups for circular pipe are with sediment removed
+                !%     but the area must be renormalized to flow area (fulldepth)
+                Omega  = ( (                                                          &
+                            (totalPipeArea * xsect_table_lookup_singular(Psi,Atable)) &
+                            - sedimentDepth                                           &
+                           ) / FullDepth                                              &
+                         ) / (xsect_table_lookup_singular(Psi,Ttable))
+
+            case (mod_basket)
+                Atemp = (llgeo_mod_basket_area_from_depth_singular (eIn,Psi*FullDepth)) &
+                        / FullDepth
+                Ttemp = (llgeo_mod_basket_topwidth_from_depth_singular(eIn,Psi*FullDepth)) &
+                        / MaxTopwidth
+                Omega = Atemp / Ttemp
+
+            case (rectangular_closed)
+                !% --- rectangular case devolves to omega = psi
+                Omega = Psi
+
+            case (rect_round)
+                Atemp = (llgeo_rect_round_area_from_depth_singular (eIn,Psi*FullDepth)) &
+                        / FullDepth
+                Ttemp = (llgeo_rect_round_topwidth_from_depth_singular(eIn,Psi*FullDepth)) &
+                        / MaxTopwidth
+                Omega = Atemp / Ttemp
+
+            case (rect_triang)
+                Atemp = (llgeo_rectangular_triangular_area_from_depth_singular (eIn,Psi*FullDepth)) &
+                        / FullDepth
+                Ttemp = (llgeo_rectangular_triangular_topwidth_from_depth_singular(eIn,Psi*FullDepth)) &
+                        / MaxTopwidth
+                Omega = Atemp / Ttemp
+
+            case default
+                print *, 'CODE ERROR: Unexpected case default'
+                call util_crashpoint(55098723)
+            end select
+        end if
+
+    end function culvert_omega
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%   
+    pure real(8) function culvert_residual_form1 &
+            (Psi, Omega, halfM, Dhat, Khat, Bhat) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% residual equation of form 1 culvert from SWWM5+ documentation
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in) :: Dhat, Khat, Omega, halfM, Bhat, Psi
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        outvalue = Dhat - Khat * (Omega**halfM) - Bhat * Omega - Psi
+
+    end function culvert_residual_form1
 !%
 !%==========================================================================  
 !%==========================================================================  
 !%
-    pure real(8) function culvert_Dhat (eIn, isreversed) result (outvalue)
+    pure real(8) function culvert_Bhat (eIn) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the \hat{B} constant defined in the SWMM5+ documentation
+        !% for equation form 1 culverts
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: eIn
+        !%------------------------------------------------------------------
+
+        outvalue = onehalfR * elemR(eIn,er_FullArea)                    &
+                / ( elemR(eIn,er_BreadthMax) * elemR(eIn,er_FullDepth) )
+
+    end function culvert_Bhat
+!%
+!%==========================================================================  
+!%==========================================================================  
+!%
+    pure real(8) function culvert_Khat (eIn, Bhat) result (outvalue)
+        !%------------------------------------------------------------------
+        !% Descriptions:
+        !% computes the \hat{K} constant defined in the SWMM5+ documentation
+        !% for equation form 1 culverts
+        !%
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: eIn
+            real(8), intent(in) :: Bhat
+        !%------------------------------------------------------------------
+
+        outvalue = elemSR(eIn,esr_Conduit_Culvert_K)                          &
+                    * ( (kUnit * sqrt(                                        &
+                                      twoR * setting%Constant%gravity * Bhat  &
+                                     )**elemSR(eIn,esr_Conduit_Culvert_M)     &
+                        ) )
+    
+    end function culvert_Khat
+!%
+!%========================================================================== 
+!%==========================================================================  
+!%
+    pure real(8) function culvert_Dhat (eIn, Dinlet, isreversed) result (outvalue)
         !%------------------------------------------------------------------
         !% Descriptions:
         !% computes the \hat{D} constant defined in the SWMM5+ documentation
@@ -327,82 +989,41 @@ module culvert_elements
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: eIn
+            real(8), intent(in) :: Dinlet
             logical, intent(in) :: isreversed
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
 
         if (.not. isreversed) then 
-            outvalue = (elemR(eIn,er_Temp01) / elemR(eIn,er_FullDepth) )  &
+            outvalue = (Dinlet / elemR(eIn,er_FullDepth) )  &
                      - elemSI(eIn,esr_Conduit_Culvert_SCF)                &
                      * elemR(eIn,er_BottomSlope)
         else
-            outvalue = elemR(eIn,er_Temp01) / elemR(eIn,er_FullDepth)  
+            outvalue = Dinlet / elemR(eIn,er_FullDepth)  
         end if
 
     end function culvert_Dhat
     !%
-!%==========================================================================  
-!%==========================================================================  
-!%
-    ! pure real(8) function culvert_Bhat (eIn) result (outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Descriptions:
-    !     !% computes the \hat{B} constant defined in the SWMM5+ documentation
-    !     !% for equation form 1 culverts
-    !     !%------------------------------------------------------------------
-
-    !     outvalue = onehalfR * elemR(eIn,er_FullArea)
-    !             / (elemR(eIn,er_T))
-    ! end function culvert_Bhat
-!%
-!%==========================================================================  
+!%==========================================================================      
 !%==========================================================================  
 !%
-    pure real(8) function culvert_Khat (eIn) result (outvalue)
-        !%------------------------------------------------------------------
-        !% Descriptions:
-        !% computes the \hat{K} constant defined in the SWMM5+ documentation
-        !% for equation form 1 culverts
-        !% REQUIRES the B term from SWMM5+ derivation to be stored in
-        !% elemR(:,erTemp02)
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: eIn
-        !%------------------------------------------------------------------
-
-
-        outvalue = elemSR(eIn,esr_Conduit_Culvert_K)                  &
-                    * (                                               &
-                        (                                             &
-                        kUnit * sqrt(twoR * setting%Constant%gravity  &
-                                      * elemR(eIn,er_Temp02))            &
-                        )**elemSR(eIn,esr_Conduit_Culvert_M)          &
-                    )
-    
-    end function culvert_Khat
-!%
-!%==========================================================================  
-!%==========================================================================  
-!%
-    real(8) function culvert_unsubmerged_form2 (eIn,fIn) result (outvalue)
+    real(8) function culvert_QIC_unsubmerged_form2 (eIn, Dinlet) result (outvalue)
         !%------------------------------------------------------------------
         !% Description
         !% Computes the inlet controlled flowrate for unsubmerged form 2
         !% equations
-        !% eIn is the index of the inlet to the culvert and fUp is the
-        !% face upstream of the inlet. Note that for reversed flow
-        !% the eIn stores the conventional "outlet" and the fUp is a
-        !% the nominal downstream face that is feeding the culvert.
+        !% eIn is the index of the element with true inflow to the culvert
+        !% NOTE this does NOT provide the negative for reversed flow.
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: eIn, fIn   
-            real(8), pointer    :: Afull, Dfull, Dinlet, Kcoef, Mcoef
+            integer, intent(in) :: eIn  
+            real(8), intent(in) :: Dinlet
+            real(8), pointer    :: Afull, Dfull, Kcoef, Mcoef
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         !% Aliases
             Afull  =>  elemR(eIn,er_FullArea)
             Dfull  =>  elemR(eIn,er_FullDepth)
-            Dinlet =>  elemR(eIn,er_Temp01)
             Kcoef  => elemSR(eIn,esr_Conduit_Culvert_K)
             Mcoef  => elemSR(eIn,esr_Conduit_Culvert_M)
         !%------------------------------------------------------------------
@@ -413,62 +1034,15 @@ module culvert_elements
                     ( Dinlet / (Dfull * Kcoef)) ** (oneR / Mcoef)    &
                 ) 
         else 
-            !% --- degenerate case, QIC is a large number
+            !% --- degenerate case, QIC is a large number so that
+            !%     it is not a constraint
             outvalue = huge(nullvalueR)
         end if
 
-
-    end function culvert_unsubmerged_form2 
+    end function culvert_QIC_unsubmerged_form2 
 !%
 !%==========================================================================  
-!%==========================================================================  
-!%
-    real(8) function culvert_submerged (eIn, fUp, isreversed) result (outvalue)
-        !%------------------------------------------------------------------
-        !% Description
-        !% Computes the inlet submerged form of the culvert equations
-        !% Output is the inlet-controlled flowrate
-        !% eIn is the index of the inlet to the culvert and fUp is the
-        !% face upstream of the inlet. Note that for reversed flow
-        !% the eIn stores the conventional "outlet" and the fUp is a
-        !% the nominal downstream face that is feeding the culvert.
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: eIn, fUp
-            logical, intent(in) :: isreversed
-            real(8), pointer :: Afull, Dfull, Dinlet, slope
-            real(8), pointer :: Kcoef, Ccoef, Ycoef, SCF
-        !%------------------------------------------------------------------
-            Afull  =>  elemR(eIn,er_FullArea)
-            Dfull  =>  elemR(eIn,er_FullDepth)
-            Dinlet =>  elemR(eIn,er_Temp01)
-            slope  =>  elemR(eIn,er_BottomSlope)
-            Kcoef  => elemSR(eIn,esr_Conduit_Culvert_K)
-            Ccoef  => elemSR(eIn,esr_Conduit_Culvert_C)
-            Ycoef  => elemSR(eIn,esr_Conduit_Culvert_Y)
-            SCF    => elemSR(eIn,esr_Conduit_Culvert_SCF)
-        !%------------------------------------------------------------------
-
-        if (.not. isreversed) then
-            !% --- conventional downstream flow
-            outvalue = ( Afull * sqrt(Dfull) / kUnit )                  &
-                    * sqrt(                                             &
-                            ( ( Dinlet / Dfull) - Ycoef - SCF * slope ) &
-                            / Ccoef                                     &
-                        ) 
-        else
-            !% --- reversed flow in culvert (neglect slope term)
-            outvalue = ( Afull * sqrt(Dfull) / kUnit )                  &
-                    * sqrt(                                             &
-                            ( ( Dinlet / Dfull) - Ycoef )               &
-                            / Ccoef                                     &
-                        ) 
-        end if
-
-
-    end function culvert_submerged
-!%
-!%==========================================================================   
+ 
 !% END OF MODULE
 !%==========================================================================
 end module culvert_elements

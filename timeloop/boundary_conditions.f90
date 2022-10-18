@@ -649,7 +649,7 @@ contains
             fIdx        => BC%headI(ii,bi_face_idx)
             eIdx        => BC%headI(ii,bi_elem_idx)
 
-            !print *, 'AAA ',nIdx, fIdx, eIdx
+            ! print *, 'AAA ',nIdx, fIdx, eIdx
 
             !% --- Error check: fail if offset present
             if (link%R(node%I(nIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
@@ -661,7 +661,7 @@ contains
                 call util_crashpoint(6098734)
             end if
             
-            !print *, 'BBB'
+            ! print *, 'BBB'
             !% --- select outfall type
             select case (BC%headI(ii,bi_subcategory))
 
@@ -777,6 +777,7 @@ contains
 
                 if (elemI(eIdx,ei_elementType) == CC) then
                     ! print *, 'ffff 0000'
+                    ! print *, BC%HeadI(ii,bi_UTidx)
                     !% --- free outfall depth is smaller of critical and normal depth
                     critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
                     ! print *, 'ffff 1111'
@@ -810,7 +811,7 @@ contains
                 call util_crashpoint(86474)
             end select
 
-            ! print *, 'hhhh '
+            !print *, 'hhhh '
         end do
 
         if (setting%Debug%File%boundary_conditions) &
