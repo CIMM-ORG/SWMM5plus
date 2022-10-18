@@ -349,8 +349,8 @@ contains
             print*, '----------------------------------------------------'
             print*, 'image = ', this_image()
             print*, '.....................elements.......................'
-            print*, elemI(:,ei_elementType), 'element type'
-            print*, elemI(:,ei_geometryType),'element geometry'
+            print*, reversekey(elemI(:,ei_elementType)), 'element type'
+            print*, reversekey(elemI(:,ei_geometryType)),'element geometry'
             print*, '-------------------Geometry Data--------------------'
             print*, elemR(:,er_Depth), 'depth'
             print*, elemR(:,er_Area), 'area'

@@ -2669,9 +2669,11 @@ contains
                         !%
                         if (.not. isOutNodeElemWriteFVOnly(kk)) then
                             !% --- set the filenames for output of SWMM links
-                            fn_nodeElem_unf = trim(setting%File%outputML_Node_kernel) // '_' //trim(tnodename) //'.unf'
-                            fn_nodeElem_csv = trim(setting%File%outputML_Node_kernel) // '_' //trim(tnodename) //'.csv'
-                            fn_nodeElem_h5  = "node_"//trim(tnodename)
+                            fn_nodeElem_unf = trim(setting%File%outputML_Node_kernel) &
+                                // '_elem_' //trim(tnodename) //'.unf'
+                            fn_nodeElem_csv = trim(setting%File%outputML_Node_kernel) &
+                                // '_elem_' //trim(tnodename) //'.csv'
+                            fn_nodeElem_h5  = "node_elem_"//trim(tnodename)
                             if (ii==1) then  !% --- Create new node output files and write headers for first file read
                                 ! !% --- open unformatted node file
                                 ! open(newunit=fU_nodeElem_unf, file=trim(fn_nodeElem_unf), form='unformatted', &
