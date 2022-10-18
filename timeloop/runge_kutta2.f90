@@ -7,6 +7,7 @@ module runge_kutta2
     use update
     use face
     use lowlevel_rk2
+    use culvert_elements, only: culvert_toplevel
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use adjust
     use diagnostic_elements
@@ -110,7 +111,8 @@ module runge_kutta2
             ! call util_CLprint ('GGG  after diagnostic step 1')
 
         !% --- RK2 solution step -- check culverts
-
+        call culvert_toplevel()
+        call util_crashstop(669743)
 
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (whichTM) ! brh20220211 this is useful in lateral flow induced oscillations
@@ -167,6 +169,8 @@ module runge_kutta2
             ! call util_CLprint ('OOO  after diagnostic step 2')
 
         !% --- RK2 solution step -- check culverts
+        call culvert_toplevel()
+        call util_crashstop(669742)
 
         
         

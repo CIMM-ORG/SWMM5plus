@@ -298,7 +298,6 @@ module define_indexes
          enumerator :: ei_elementType               !% KEY general element type  (static)
          enumerator :: ei_geometryType              !% KEY cross-sectional geometry type  (static)
          enumerator :: ei_barrels                   !% Integer number of barrels
-         enumerator :: ei_culvertCode               !% KEY culvert code
          enumerator :: ei_HeqType                   !% KEY type of head equation (static)
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)

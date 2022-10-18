@@ -76,14 +76,14 @@ F04                0.0        FREE          YES
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
 C01                J01              J02             300       0.03        0          0          0.0         10   
-C02                J02              J03             10         0.03        0          0          0.0         10
+C02                J02              J03             10        0.03        0          0          0.0         10
 C03                J03              F04             300       0.03        0          0          0.0         10               
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- -------- 
 C01               RECT_OPEN    10.2               2.0         0          0          1   
-C02               RECT_CLOSED  3.2                2.0         0          0          1      
+C02               RECT_CLOSED  0.5               0.5         0          0          1      11
 C03               RECT_OPEN    10.2               2.0         0          0          1                        
 
 [INFLOWS]

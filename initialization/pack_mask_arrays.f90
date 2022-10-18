@@ -3269,7 +3269,7 @@ contains
         npack => npack_elemP(Ptype)
         if (setting%Culvert%UseCulvertsTF) then
             npack = count(                                          &
-                (elemI(:,ei_culvertCode) > 0)                       &
+                (elemYN(:,eYN_isCulvert))                           &
                 .and.                                               &
                 (                                                   &
                     (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Inlet) &
@@ -3279,7 +3279,7 @@ contains
 
             if (npack > 0) then 
                 elemP(1:npack,ptype) = pack(eIdx, &
-                    (elemI(:,ei_culvertCode) > 0)                       &
+                (elemYN(:,eYN_isCulvert))                         &
                     .and.                                               &
                     (                                                   &
                         (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Inlet) &
@@ -3297,7 +3297,7 @@ contains
         ! npack => npack_elemP(Ptype)
         ! if (setting%Culvert%UseCulvertsTF) then
         !     npack = count(                                           &
-        !         (elemI(:,ei_culvertCode) > 0)                        &
+        !         (elemYN(:,eYN_isCulvert))                          &
         !         .and.                                                &
         !         (                                                    &
         !             (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Outlet) &
@@ -3306,7 +3306,7 @@ contains
         !         ) )
         !     if (npack > 0) then 
         !         elemP(1:npack,ptype) = pack(eIdx,                        &
-        !             (elemI(:,ei_culvertCode) > 0)                        &
+        !             (elemYN(:,eYN_isCulvert))                          &
         !             .and.                                                &
         !             (                                                    &
         !                 (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Outlet) &

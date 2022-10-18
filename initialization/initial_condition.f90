@@ -118,9 +118,6 @@ contains
         setting%Output%BarrelsExist = .false. !% will be set to true if barrels > 1 detected
         elemI(:,ei_barrels) = oneR
 
-        !% --- initialize culvert code to zero (no culvert)
-        elemI(:,ei_culvertCode) = zeroI
-
         !% --- initialize sedmient depths
         !%     Note: as of 20221006 only FilledCircular is allowed to have nonzero sediment depth
         !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
@@ -996,7 +993,7 @@ contains
             !% --- elemSI is not initialized for non-culverts
             return
         elseif ((link%I(thislink,li_culvertCode) > 0 ) .and. &
-            (link%I(thislink,li_culvertCode) <= NculvertTypes)) then
+                (link%I(thislink,li_culvertCode) <= NculvertTypes)) then
             elemYN(firstE:lastE,eYN_isCulvert) = .true.
         else
             print *, 'USER CONFIGURATION ERROR'

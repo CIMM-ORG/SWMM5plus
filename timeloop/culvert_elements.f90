@@ -23,6 +23,7 @@ module culvert_elements
     real(8), parameter  :: kUnit = 1.811d0
 
     public :: culvert_parameter_values
+    public :: culvert_toplevel
     
 
     contains
@@ -151,7 +152,7 @@ module culvert_elements
         !% checks for and enforces culvert behaviors
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, pointer :: thisCol, npack, eIn, eOut, EqForm, geoType
+            integer, pointer :: thisCol, npack, eIn, eOut, EqForm, geoType, fInlet
             integer, pointer :: fUp(:), fDn(:), thisE(:)
             real(8), pointer :: fHeadD(:), fHeadU(:),  Flowrate(:)
             real(8), pointer :: Zbtm(:), Atable(:), Ttable(:)
@@ -179,6 +180,7 @@ module culvert_elements
             fHeadU   => faceR(:,fr_Head_u)
             Flowrate => elemR(:,er_Flowrate)
             Zbtm     => elemR(:,er_Zbottom)
+            
 
             Atable => ACirc !% Dummy to prevent unallocated pointer
             Ttable => TCirc !% Dummy to prevent unallocated pointer
@@ -189,6 +191,7 @@ module culvert_elements
         do ii=1,npack
             !% --- inlet and outlet
             eIn    => thisE(ii)
+            fInlet => elemI(thisE(ii),ei_Mface_uL)
             eOut   => elemSI(eIn,esi_Conduit_Culvert_OutletID)
             EqForm => elemSI(eIn,esi_Conduit_Culvert_EquationForm)
             isConverged = .false.
@@ -202,7 +205,7 @@ module culvert_elements
             
             !% --- check for flow reversal (upstream flow) and reset eIn=eOut if 
             !%     reversed flow occurs.
-            isReversedFlow = culvert_isReversedFlow(eIn, eOut, isInconsistentFlow)
+            isReversedFlow = culvert_isReversedFlow(eIn, eOut, fInlet, isInconsistentFlow)
 
             !% --- where flow is into culvert from both ends or out of culvert from b
             !%     both ends, do not use culvert flow limitation
@@ -210,6 +213,8 @@ module culvert_elements
                 
             !% --- effective inlet flow depth
             Dinlet = culvert_inlet_depth(eIn,isReversedFlow)
+
+            !print *, 'Dinlet , dculvert ',Dinlet, elemR(eIn,er_Depth)
 
             !% --- if negative inlet depth then there is no QIC
             if (Dinlet .le. zeroR) cycle
@@ -219,11 +224,15 @@ module culvert_elements
             
             !% --- if submerged, then get QIC directly
             if (isSubmerged) then
+                !print *, 'isSubmerged ',isSubmerged
                 QIC =  culvert_QIC_submerged_eq (eIn, Dinlet, isReversedFlow)
             else
                 !% --- check for transition status (between submerged and unsubmerged)
                 !%     and store H1u
                 call culvert_isTransition (eIn,Dinlet,isTransition,H1u)
+
+                !if (isTransition) print *, 'isTransition ',isTransition
+                !print *, 'EqForm       ',EqForm
 
                 !% --- compute Psi = D_c/D_full (only for unsumberged form 1)
                 if (EqForm == 1) then      
@@ -240,7 +249,7 @@ module culvert_elements
                 QIC = culvert_QIC_unsubmerged &
                         (isTabular,isReversedFlow, EqForm, eIn, geoType, PsiOut, Dinlet, &
                          Atable, TTable)
-
+         
                 !% ---  handle transition
                 if (isTransition) then 
                     QIC = culvert_QIC_transition (eIn, Dinlet, QIC, H1s, H1u, &
@@ -249,9 +258,13 @@ module culvert_elements
 
             endif
 
-            !% --- reset the flowrate if inlet control is less than time-advance flowrate
-            if (abs(QIC) < abs(Flowrate(eIn))) then 
-                Flowrate(eIn) = QIC
+             !print *, 'QIC, flowrate: ',QIC, elemR(eIn,er_Flowrate)
+
+            !% --- reset the flowrate on element and upstrem face
+            !%     if inlet control is less than time-advance flowrate
+            if (abs(QIC) < abs(faceR(fInlet,fr_Flowrate))) then 
+                elemR(eIn,er_Flowrate) = QIC
+                faceR(fInlet,fr_Flowrate) = QIC
             end if
             
 
@@ -373,7 +386,7 @@ module culvert_elements
 !%==========================================================================  
 !%
     logical function culvert_isReversedFlow &
-            (eIn, eOut, isInconsistentFlow) result (isReversedFlow)
+            (eIn, eOut, fInlet, isInconsistentFlow) result (isReversedFlow)
         !%------------------------------------------------------------------
         !% Description:
         !% Determines whether the flow in culvert is in the nominal downstream
@@ -381,7 +394,7 @@ module culvert_elements
         !%------------------------------------------------------------------
         !% Declarations:
             logical, intent(inout)          :: isInconsistentFlow
-            integer, pointer, intent(inout) :: eIn
+            integer, pointer, intent(inout) :: eIn, fInlet
             integer, pointer, intent(in)    :: eOut
             real(8), pointer                :: Flowrate(:)
         !%------------------------------------------------------------------
@@ -394,7 +407,10 @@ module culvert_elements
             !% --- upstream (reversed) flow
             isReversedFlow = .true.
             isInconsistentFlow = .false.
+            !% --- make the inlet point at the outlet
             eIn => eOut
+            !% --- make the face point at the outlet downstream face
+            fInlet => elemI(eOut,ei_MFace_dL)
         elseif ((Flowrate(eIn) > zeroR) .and. (Flowrate(eOut) > zeroR)) then  
             !% --- downstream (normal direction) flow
             isReversedFlow = .false.
@@ -628,6 +644,9 @@ module culvert_elements
             resid(ii) = culvert_residual_form1 (Psi(ii), Omega(ii), halfM, Dhat, Khat, Bhat)
         end do
 
+       ! print *, Omega(1), Omega(2)
+       ! print *, resid(1), resid(2)
+
         !% --- STEP 7: check to see if we're done
         if ( abs(resid(1)) < 100.d0 * tiny(resid) ) then
             outvalue = Psi(1)
@@ -642,6 +661,8 @@ module culvert_elements
         !%     they must be opposite sign
         if ( resid(1) * resid(2) > zeroR ) then 
             outvalue = nullvalueR  !% failure
+            !print *, 'failure of residual '
+            !stop 298734
             return
         end if
 
@@ -930,7 +951,7 @@ end function culvert_QIC_transition
             real(8), intent(in) :: Dhat, Khat, Omega, halfM, Bhat, Psi
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
-
+        
         outvalue = Dhat - Khat * (Omega**halfM) - Bhat * Omega - Psi
 
     end function culvert_residual_form1
@@ -996,7 +1017,7 @@ end function culvert_QIC_transition
 
         if (.not. isreversed) then 
             outvalue = (Dinlet / elemR(eIn,er_FullDepth) )  &
-                     - elemSI(eIn,esr_Conduit_Culvert_SCF)                &
+                     - elemSR(eIn,esr_Conduit_Culvert_SCF)                &
                      * elemR(eIn,er_BottomSlope)
         else
             outvalue = Dinlet / elemR(eIn,er_FullDepth)  
@@ -1042,7 +1063,6 @@ end function culvert_QIC_transition
     end function culvert_QIC_unsubmerged_form2 
 !%
 !%==========================================================================  
- 
 !% END OF MODULE
 !%==========================================================================
 end module culvert_elements
