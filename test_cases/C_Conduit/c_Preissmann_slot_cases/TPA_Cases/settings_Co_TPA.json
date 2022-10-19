@@ -24,7 +24,7 @@
         "AdustLinkLengthForJunctionBranchYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.036
+        "NominalElemLength" : 0.143
     },
     "Junction" : {
         "FunStorageN" : 10,

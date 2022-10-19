@@ -64,11 +64,11 @@ C2               J2               J3               1000       0.03       0      
 C3               J3               J4               1000       0.03       0          0          3.0     0         
 
 [XSECTIONS]
-;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;Link           Shape        Geom1           Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1               RECT_OPEN    4                3          0          0          1                    
-C2               RECT_OPEN    4                3          0          0          1                    
-C3               RECT_OPEN    4                3          0          0          1                    
+C1                SEMIELLIPTICAL      4             0           0          0           1                   
+C2                SEMIELLIPTICAL      4             0           0          0           1                   
+C3                SEMIELLIPTICAL      4             0           0          0           1    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

@@ -48,12 +48,12 @@ module mod_basket_conduit
         !%-------------------------------------------------------------------
         !% Declarations
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, pointer :: thisP(:), thisP_analytical(:), thisP_lookup(:)
+            integer, pointer :: thisPA(:), thisPL(:)
             real(8), pointer :: depth(:), fullArea(:), fullDepth(:), topArea(:), rTop(:)
             real(8), pointer :: length(:), breadth(:), AoverAfull(:), YoverYfull(:)
             real(8), pointer :: volume(:), pi
             logical, pointer :: topSection(:)
-            integer, allocatable, target :: thisP_analytical(:), thisP_lookup(:)
             integer, target              :: Npack_analytical, Npack_lookup
         !%---------------------------------------------------------------------
         !% Preliminaries
@@ -68,10 +68,13 @@ module mod_basket_conduit
             rTop        => elemSGR(:,esgr_Mod_Basket_Rtop)
             volume      => elemR(:,er_Volume)
             length      => elemR(:,er_Length)
-            AoverAfull  => elemR(:,er_Temp01)
-            YoverYfull  => elemR(:,er_Temp02)
+            AoverAfull  => elemR(:,er_AoverAfull)
+            YoverYfull  => elemR(:,er_YoverYfull)
             topSection  => elemYN(:,eYN_Temp01)
-            pi          => setting%Constant%pi
+
+            thisP_analytical => elemI(:,ei_Temp01)
+            thisP_lookup     => elemI(:,ei_Temp02)
+            pi               => setting%Constant%pi
         !%-----------------------------------------------------------------------------
 
         !% initialize AoverAfull
@@ -91,23 +94,28 @@ module mod_basket_conduit
         !%     from French, 1985 by using the central angle theta.
         !% HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
         Npack_analytical = count((AoverAfull(thisP) <= 0.04) .and. topSection(thisP))
-        thisP_analytical = pack(thisP,(AoverAfull(thisP) <= 0.04 .and. topSection(thisP)))
+        if (Npack_analytical > zeroI) then
+
+            thisP_analytical = pack(thisP,(AoverAfull(thisP) <= 0.04 .and. topSection(thisP)))
+            thisPA => thisP_analytical(1:Npack_analytical)
+
+            call circular_get_normalized_depth_from_area_analytical &
+                (YoverYfull, AoverAfull, Npack_analytical, thisPA)
+        end if 
 
         !% --- pack where the rest of the elements having AoverAfull > 0.04 which will use
         !%     lookup table for interpolation.
         !% HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
         Npack_lookup = count((AoverAfull(thisP) > 0.04) .and. topSection(thisP))
-        thisP_lookup = pack(thisP,(AoverAfull(thisP) > 0.04 .and. topSection(thisP)))
+        
 
-        if (Npack_analytical > zeroI) then
-            call circular_get_normalized_depth_from_area_analytical &
-                (YoverYfull, AoverAfull, Npack_analytical, thisP_analytical)
-        end if 
+        if (Npack_lookup > zeroI) then  
 
-        if (Npack_lookup > zeroI) then        
+            thisP_lookup = pack(thisP,(AoverAfull(thisP) > 0.04 .and. topSection(thisP)))
+            thisPL => thisP_lookup(1:Npack_lookup)       
             !% retrive the normalized Y/Yfull from the lookup table
             call xsect_table_lookup &
-                (YoverYfull, AoverAfull, YCirc, thisP_lookup)  
+                (YoverYfull, AoverAfull, YCirc, thisPL)  
         end if
 
         !% --- get the depth by calculating the difference between full height & unfilled heigh
@@ -117,6 +125,10 @@ module mod_basket_conduit
 
         !% --- ensure the full depth is not exceeded
         depth(thisP) = min(depth(thisP),fulldepth(thisP))
+
+        !% --- clear the temporary storage
+        if (Npack_analytical > zeroI) thisPA = nullvalueI
+        if (Npack_lookup     > zeroI) thisPL = nullvalueI
                 
     end subroutine mod_basket_depth_from_volume
 !%

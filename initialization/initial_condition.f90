@@ -1978,8 +1978,8 @@ contains
             elemI(thisP,ei_geometryType) = semi_elliptical
 
             !% --- independent custom data
-            elemSGR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
-            elemSGR(thisP,er_DepthAtBreadthMax) = 0.24d0 * elemR(thisP,er_FullDepth)
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.24d0 * elemR(thisP,er_FullDepth)
 
             call geo_common_initialize (thisP, semi_elliptical, ASemiEllip, TSemiEllip)
     
@@ -1998,8 +1998,8 @@ contains
             elemI(thisP,ei_geometryType) = vert_ellipse
 
             !% --- independent custom data
-            elemSGR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
-            elemSGR(thisP,er_DepthAtBreadthMax) = 0.50d0 * elemR(thisP,er_FullDepth)
+            elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
+            elemR(thisP,er_DepthAtBreadthMax) = 0.50d0 * elemR(thisP,er_FullDepth)
 
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR)) then 
@@ -3089,7 +3089,7 @@ contains
 
             case (rectangular, trapezoidal, parabolic, triangular, rect_triang, rect_round, rectangular_closed, &
                     filled_circular, arch, semi_circular, circular, semi_elliptical, catenary, basket_handle,   &
-                    horseshoe, gothic, eggshaped, horiz_ellipse, vert_ellipse, irregular)
+                    horseshoe, gothic, eggshaped, horiz_ellipse, vert_ellipse, mod_basket, irregular)
                 !% --- Copy all the geometry specific data from the adjacent element cell
                 !%     Note that because irregular transect tables are not yet initialized, the
                 !%     Area and Volume here will be junk for an irregular cross-section and will need to be
@@ -3102,7 +3102,9 @@ contains
                 elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
                 elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
                 elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
+                elemR(JBidx,er_FullHydRadius)       = elemR(Aidx,er_FullHydRadius)[Ci]
                 elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
+                elemR(JBidx,er_FullTopwidth)        = elemR(Aidx,er_FullTopwidth)[Ci]
                 !% --- reference the Zbreadth max to the local bottom
                 elemR(JBidx,er_ZbreadthMax)         = (elemR(Aidx,er_ZbreadthMax)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)
                 !% --- reference the Zcrown to the local bottom
@@ -3276,7 +3278,7 @@ contains
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                                     
-                case (lCircular)
+                case (lCircular,lForce_main)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
@@ -3289,6 +3291,12 @@ contains
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
                 case (lFilled_circular)
+                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
+                          * elemR(  JBidx,er_Length)                                             &
+                          * elemR(  JBidx,er_BreadthMax) )
+                
+                case (lMod_basket)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
                           * elemR(  JBidx,er_Length)                                             &
@@ -3321,14 +3329,6 @@ contains
             !% Breadth is consistent with length and plane area
             elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plane_Area) &
                                                     /   elemR(JMidx,er_Length)
-
-        
-
-            ! !% Volume depends on plane area and depth
-            ! elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_Depth)                                        
-            ! elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
-            ! elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
-            ! elemR(JMidx,er_FullVolume) = elemSR(JMidx,esr_Storage_Plane_Area) * elemR(JMidx,er_FullDepth)
 
         case (FunctionalStorage)
             ! !elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)      &
@@ -3383,7 +3383,10 @@ contains
         !%   which would be simply sqrt(FullVolume * FullDepth)
         !%   This would allow the preissmann slot to be set for surcharged
         !%   on storage elements.
-
+        select case (JmType)
+        case (FunctionalStorage, TabularStorage)
+            elemR(JMidx,er_FullArea) = sqrt(elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth))
+        end select
         !stop 2397840
 
         if (setting%Debug%File%initial_condition) &

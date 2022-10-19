@@ -288,7 +288,7 @@ contains
                     if (BCupdateYN) then
                         call bc_update() 
                         ! print *, 'out of bc update'
-                        ! call tl_lateral_inflow()!
+                        call tl_lateral_inflow()
                         call tl_smallestBC_timeInterval ()
                     end if
 
