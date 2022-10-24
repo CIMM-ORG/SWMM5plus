@@ -6,6 +6,8 @@
         "Short" : "EPAex01m02"
     },
     "Discretization" : {
+        "AllowChannelOverflowTF" : false,
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
@@ -39,7 +41,7 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1
+            "interval" : 100
         },
         "DataOut" :{
             "isAreaOut"         : true,
@@ -72,6 +74,9 @@
     "Simulation" : {
         "useHydrology" : true,
         "useHydraulics" : true
+    },
+     "Solver" : {
+        "MomentumSourceMethod" : "T10"
     },
     "TestCase" : {
         "UseTestCaseYN" : false,

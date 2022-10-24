@@ -94,8 +94,8 @@ module define_globals
 
     !integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
-    integer :: iet(1) = 1
-    integer :: ift(2) = (/1, 2/)
+    integer :: iet(4) = (/8, 9, 10 ,         11  /)
+    integer :: ift(4) =   (/9, 10,    11,12/)
 
     integer(kind=8) :: irecCount = 0
 
@@ -259,7 +259,7 @@ module define_globals
     real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
     !% subcatchments -- NOT coarray
-    real(8), allocatable, target :: subcatchR(:,:)      !% subcatchment real data
+    real(8), allocatable, target :: subcatchR(:,:)[:]   !% subcatchment real data
     integer, allocatable, target :: subcatchI(:,:)      !% subcatchment integer data
     logical, allocatable, target :: subcatchYN(:,:)     !% subcatchment logical data
 
@@ -448,6 +448,7 @@ module define_globals
     integer :: N_monitor_types = 7 !% # of data types transferred from monitorR in monitorPassR
     !integer :: SWMM_N_curve
     integer :: N_Curve
+    integer :: N_subcatch_runon
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 

@@ -624,7 +624,7 @@ contains
         !% the boundary condition to get the corresponding value.
         !%-------------------------------------------------------------------
         !% Declarations:
-            real(8) :: normDepth, critDepth
+            real(8) :: normDepth, critDepth, thisDepth
             real(8), pointer :: tnow, headValue(:)
             integer :: ii,  lower_idx , mm
             integer :: thisBCtype = BCHead
@@ -643,7 +643,7 @@ contains
         !%-------------------------------------------------------------------    
         !% --- cycle throuhg the head BC
         do ii=1, N_headBC
-            !print *, ii, 'in ',trim(subroutine_name)
+            ! print *, ii, 'in ',trim(subroutine_name)
 
             nIdx        => BC%headI(ii,bi_node_idx)
             fIdx        => BC%headI(ii,bi_face_idx)
@@ -685,20 +685,27 @@ contains
 
                 ! print *, 'DDD'
                 !% --- error check
-                if (headValue(ii) .le. faceR(fIdx,fr_Zbottom)) then
+                if (headValue(ii) + setting%Solver%ReferenceHead .le. &
+                     faceR(fIdx,fr_Zbottom) + setting%SmallDepth%DepthCutoff) then
                     print *, ' '
                     print *, '*** WARNING ***'
-                    print *, '*** time series outfall stage is below the channel bottom at OUTFALL ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                    print *, '*** value is reset to smaller of normal or critical depth'
+                    print *, '*** time series outfall stage is near the channel bottom at OUTFALL ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    print *, '*** value is reset to smaller of normal or critical depth or'
+                    print *, '*** to the setting%SmallDepth%DepthCutoff'
                     print *, ' '
                     print *, 'head before fixing ',headValue(ii)
                     print *, ' '
                     critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
                     normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+
                     !% --- BC head is the depth + Zbottom - referencehead
                     headValue(ii) = faceR(fIdx,fr_Zbottom)        &
-                                  + min(critDepth,normDepth)      &
+                                  + max( min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)      &
                                   - setting%Solver%ReferenceHead
+
+                    !% -- note that time series head value is allowed to be larger than the
+                    !%    upstream value        
+
                     !call util_crashpoint(566823)
                 end if
 
@@ -713,9 +720,11 @@ contains
                    
                 ! print *, 'bbbb '
                 !% --- error check
-                if (headValue(ii) .le. faceR(fIdx,fr_Zbottom)) then
+                if ((headValue(ii) + setting%Solver%ReferenceHead) .le. &
+                    (faceR(fIdx,fr_Zbottom) + setting%SmallDepth%DepthCutoff)) then
                     print *, 'CONFIGURATION ERROR: a FIXED OUTFALL must have...'
-                    print *, '... a STAGE elevation greater than the Zbottom of the outfall'
+                    print *, '... a STAGE elevation greater than '
+                    print *, ' Zbottom + setting.SmallDepth.DepthCutff of the outfall'
                     print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
                     call util_crashpoint(566823)
                 end if
@@ -746,10 +755,18 @@ contains
                         call util_crashpoint(728474)
                     end if
 
+                    !% --- depth is the larger of the normal depth or the small depth cutoff
+                    thisDepth = max(geo_normaldepth_singular(BC%HeadI(ii,bi_UTidx)), &
+                                    setting%SmallDepth%DepthCutoff)
+
                     !% --- BC head is the normal depth + Zbottom - referencehead
-                    headValue(ii) = faceR(fIdx,fr_Zbottom)                          &
-                                  + geo_normaldepth_singular(BC%HeadI(ii,bi_UTidx)) &
+                    headValue(ii) = faceR(fIdx,fr_Zbottom)                   &
+                                  + thisDepth                                &
                                   - setting%Solver%ReferenceHead
+
+                    !% --- Outfall head should not be larger than the upstream
+                    headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
+
                 else
                     print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                     call util_crashpoint(792873)
@@ -759,7 +776,8 @@ contains
                 end if
 
             case (BCH_free)
-                ! print *, 'eeee '
+                ! print *, ' '
+                !  print *, 'BCH_free  in ',trim(subroutine_name)
                 !% 20220729brh debugged (without offset)
                 !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
                 !%     the domain determines the outfall height, which can set up an instability
@@ -788,11 +806,28 @@ contains
                     normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
                     ! print*, normDepth, 'normDepth'
                     ! print *, 'ffff 2222'
+
+                    
+                    !% --- Use the smaller of critical depth or normal depth,
+                    !%     but always use the depth cutoff as the smallest
+                    !%     value allowed to prevent absurdly small depths
+                    thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)
+                
+
                     !% --- BC head is the depth + Zbottom - referencehead
                     headValue(ii) = faceR(fIdx,fr_Zbottom)        &
-                                  + min(critDepth,normDepth)      &
+                                  + thisDepth     &
                                   - setting%Solver%ReferenceHead
-                    ! print*, headValue(ii), 'headValue(ii)'
+
+                    !% --- Head should not be larger than the upstream
+                    headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
+
+                    ! print *, 'headValue(ii)', ii, headValue(ii)
+                    ! print *, 'critdepth(ii)', ii, critDepth
+                    ! print *, 'normDepth(ii)', ii, normDepth
+
+                    ! print *, setting%ZeroValue%Depth
+                    ! print *, setting%SmallDepth%DepthCutoff
 
                     ! stop 78513
                 else

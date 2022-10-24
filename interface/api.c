@@ -725,7 +725,8 @@ int DLLEXPORT api_get_nodef_attribute(
 {
     int error, bpat, idx, tseries_idx;
 
-    //printf("==== %d \n",attr);
+    // printf("==== IN api_get_nodef_attribute %d \n",attr);
+    // printf(" node index ",node_idx);
 
     error = check_api_is_initialized("api_get_nodef_attribute");
     if (error) return error;
@@ -749,6 +750,20 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             break;   
 
+        case nodef_outfall_idx :
+            // DO NOT add 1 to this! SWMM5+ needs the EPA SWMM index
+            switch (Node[node_idx].type) {
+                case OUTFALL :             
+                    *value = Node[node_idx].subIndex;
+                    break;
+                default :    
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting nodef_outfall_idx for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;
+            }
+            break;
+
         case nodef_hasFlapGate :
             switch (Node[node_idx].type) {
                 case OUTFALL :             
@@ -762,8 +777,26 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             break;
 
+        case nodef_RouteTo :  
+            // NOTE +1 added to the *value in interface_get_nodef_attribute
+            switch (Node[node_idx].type) {
+                case OUTFALL :             
+                    *value = Outfall[Node[node_idx].subIndex].routeTo;
+                    //  printf("==== node index %d \n",node_idx);
+                    //  printf("===== Node[node_idx].subIndex %d \n",Node[node_idx].subIndex);
+                    //  printf("==== routeTo %e \n",*value);
+                    break;
+                default :    
+                    *value = API_NULL_VALUE_I;
+                    sprintf(errmsg, "Extracting nodef_RouteTo for NODE %s, which is not an outfall [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    return api_err_wrong_type;
+            }
+            break;
+
         
         case nodef_head_tSeries :
+            // NOTE +1 added to the *value in interface_get_nodef_attribute
             if (Node[node_idx].type == OUTFALL)   
             {
                 // the outfall index
@@ -864,9 +897,15 @@ int DLLEXPORT api_get_nodef_attribute(
         case nodef_initDepth  :
             switch (Node[node_idx].type) {
                 case OUTFALL :
+                    // get the head at the outfall
                     error = api_get_headBC(node_idx, StartDateTime, value);
+                    // subtract the bottom elevation
+                    *value -= FTTOM(Node[node_idx].invertElev);
+                    // printf(" \n outfall head %e \n ",*value);
+                    // printf(" \n %e \n ", FTTOM(Node[node_idx].invertElev));
+                    // printf(" \n %e \n ",FTTOM(Node[node_idx].initDepth));
+                    //printf(" \n return value %e \n ",*value);
                     if (error) return error;
-                    //*value -= FTTOM(Node[node_idx].invertElev);
                     break;
                 default :
                     *value = FTTOM(Node[node_idx].initDepth);
@@ -914,6 +953,7 @@ int DLLEXPORT api_get_nodef_attribute(
             break;
 
         case nodef_extInflow_tSeries :
+            // NOTE +1 added to the *value in interface_get_nodef_attribute
             if (Node[node_idx].extInflow)
             {
                 // printf(" in api_get_nodef_attribute node+idx, tseries %d %d \n", node_idx,Node[node_idx].extInflow->tSeries);
@@ -955,6 +995,7 @@ int DLLEXPORT api_get_nodef_attribute(
             break;     
 
         case nodef_extInflow_basePat_idx  :
+            // NOTE +1 added to the *value in interface_get_nodef_attribute
             if (Node[node_idx].extInflow)
             {
                 *value = Node[node_idx].extInflow->basePat;
@@ -1116,8 +1157,8 @@ int DLLEXPORT api_get_linkf_attribute(
 {
     int error;
 
-   // printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
-   // printf(" ****** in api_get_linkf_attribute  %d \n ",linkf_type);
+  // printf(" ****** in api_get_linkf_attribute  %d \n ",attr);
+  // printf(" ****** in api_get_linkf_attribute  %d \n ",linkf_type);
 
     error = check_api_is_initialized("api_get_linkf_attribute");
     if (error) return error;
@@ -2604,6 +2645,29 @@ int DLLEXPORT api_find_object(
 // |  Hydrology
 // v
 // -------------------------------------------------------------------------
+//===============================================================================
+int DLLEXPORT api_export_runon_volume(
+    int outfall_idx, double volume)
+//===============================================================================
+    // exports the runon volume from SWMM5+ to EPA SWMM
+{
+    // printf(" \n in api_export_runon_volume \n");
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    // convert the SWMM5+ m^3 flowrate to ft^3
+    Outfall[outfall_idx].vRouted = CMTOCFT(volume);
+
+    // printf("\n in api export_runon_volume \n ");
+    // printf("   index %d  \n ",outfall_idx);
+    // printf("   volume in cf  %e \n ", Outfall[outfall_idx].vRouted);
+    // printf("   volume in cm  %e \n ", volume);
+}
 //===============================================================================
 int DLLEXPORT api_call_runoff_execute()
 //===============================================================================

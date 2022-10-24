@@ -74,7 +74,8 @@ module lowlevel_rk2
 
         elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
 
-        !print *, 'in ll_continuity_netflowrate_CC'
+        ! print *, 'in ll_continuity_netflowrate_CC'
+        ! print *, fQ(iup(1)), fQ(idn(1)), eQlat(1)
         !print *, fQ(iup(ietmp(3))), fQ(idn(ietmp(3))), eQlat(ietmp(3))
         !print *, elemR(ietmp(3),outCol)
 
@@ -534,8 +535,8 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! print *, 'fQ  * fU up',fQ(iup(iet(4))) * fUdn(iup(iet(4)))
-        ! print *, 'fQ  * fU dn',fQ(idn(iet(4))) * fUup(idn(iet(4)))
+        ! print *, 'fQ  * fU up',fQ(iup(iet(3))) * fUdn(iup(iet(3)))
+        ! print *, 'fQ  * fU dn',fQ(idn(iet(3))) * fUup(idn(iet(3)))
         ! print *, 'fAdn * Hdn ',fAdn(iup(iet(4))) * fHdn(iup(iet(4)))
         ! print *, 'fAup * Hup ',fAup(idn(iet(4))) * fHup(idn(iet(4)))
         ! ! ! print *, 'eksource ',eKsource(iet(7))
@@ -544,7 +545,7 @@ module lowlevel_rk2
         ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(4))) * fHdn(iup(iet(4))) - fAup(idn(iet(4))) * fHup(idn(iet(4))))
         ! print *, 'fAdn , Hdn ',fAdn(iup(iet(4))) , fHdn(iup(iet(4)))
         ! print *, 'fAup , Hup ',fAup(idn(iet(4))) , fHup(idn(iet(4)))
-        ! print *, 'eksource   ',eKsource(iet(4))
+        ! print *, 'eksource   ',eKsource(iet(3))
         ! print *, 'out        ',elemR(iet(4),outCol)
         ! print *, ' '
 

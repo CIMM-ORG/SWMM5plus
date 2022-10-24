@@ -123,6 +123,8 @@ contains
         !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
         elemR(:,er_SedimentDepth) = zeroR
 
+            ! call util_CLprint ('initial_condition near start')
+
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
@@ -178,6 +180,7 @@ contains
         call pack_mask_arrays_all ()
   
             ! call util_CLprint ('initial_condition after pack_mask_arrays_all')
+    
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
@@ -220,6 +223,11 @@ contains
         call init_IC_derived_data()
 
             ! call util_CLprint ('initial_condition after IC_derived_data')
+
+        ! !% --- need geometry defined before BC processing  --- 20221024 brh
+        ! call geometry_toplevel (whichTM)
+
+        !      call util_CLprint ('initial_condition after geometry_toplevel')
 
         !% --- set the reference head (based on Zbottom values)
         !%     this must be called before bc_update() so that
@@ -265,6 +273,7 @@ contains
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
+
 
             ! call util_CLprint ('initial_condition after update_auxiliary_variables')
 
@@ -313,6 +322,7 @@ contains
         call init_IC_oneVectors ()
 
 
+
           !  call util_CLprint ('initial_condition at end')
 
         ! print *, trim(reverseKey(elemI(14,ei_elementType))),' ', trim(reverseKey(elemI(14,ei_geometryType)))
@@ -339,6 +349,41 @@ contains
 
         !% Notes on initial conditions brh20211215
         !% dHdA is not initialized in channels except where timemarch is AC
+
+
+        ! do ii=1,N_elem(this_image())
+        !     print *, elemI(ii,ei_Mface_uL), ii, elemI(ii,ei_Mface_dL)
+        ! end do
+
+        ! print *, 'f', elemI(1,ei_Mface_uL)
+        ! print *, 'e',       1
+        ! print *, 'f', elemI(1,ei_Mface_dL)
+        ! print *, 'f', elemI(2,ei_Mface_uL)
+        ! print *, 'e',       2
+        ! print *, 'f', elemI(2,ei_Mface_dL)
+        ! print *, 'f', elemI(3,ei_Mface_uL)
+        ! print *, 'e',       3
+        ! print *, 'f', elemI(3,ei_Mface_dL)
+        ! print *, '--------------------'
+        ! print *, 'EUp', faceI(4,fi_Melem_uL)
+        ! print *, 'F  ',       4
+        ! print *, 'Edn', faceI(4,fi_Melem_dL)
+        ! print *, '--------------------'
+        ! print *, 'f', elemI(4,ei_Mface_uL)
+        ! print *, 'e',       4
+        ! print *, 'f', elemI(4,ei_Mface_dL)
+        ! print *, 'f', elemI(5,ei_Mface_uL)
+        ! print *, 'e',       5
+        ! print *, 'f', elemI(5,ei_Mface_dL)
+        ! print *, 'f', elemI(6,ei_Mface_uL)
+        ! print *, 'e',       6
+        ! print *, 'f', elemI(6,ei_Mface_dL)
+
+
+
+
+
+        ! stop 293704
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -389,7 +434,7 @@ contains
         !% get the initial depth, flowrate, and geometry data from links
         !%------------------------------------------------------------------
         !% Declarations:
-            integer                                     :: ii, pLink, npack
+            integer                                     :: ii, kk, pLink, npack
             integer, pointer                            :: thisLink, eIdx(:)
             integer, dimension(:), allocatable, target  :: packed_link_idx
             integer, dimension(:), allocatable, target  :: ePack
@@ -514,6 +559,7 @@ contains
             integer, allocatable :: pElem(:)
             integer, pointer     :: LdepthType,  nUp, nDn
             integer, pointer     :: thisP(:)
+            logical, pointer     :: hasFlapGate
             real(8), pointer     :: DepthUp, DepthDn
             real(8), pointer     :: zLinkUp, zLinkDn
             real(8), pointer     :: eDepth(:), eLength(:), eZbottom(:)
@@ -533,6 +579,8 @@ contains
             !% --- upstream and downstream nodes
             nUp      => link%I(thisLink,li_Mnode_u)
             nDn      => link%I(thisLink,li_Mnode_d)
+            !% --- flapgate on downstream node (e.g. outfall)
+            hasFlapGate => node%YN(nDn,nYN_hasFlapGate)
             !% --- link upstream and downstream bottom elevation
             zLinkUp  => link%R(thisLink,lr_ZbottomUp)
             zLinkDn  => link%R(thisLink,lr_ZbottomDn)
@@ -545,38 +593,74 @@ contains
             eZbottom  => elemR(:,er_Zbottom)
         !%-----------------------------------------------------------------
 
-        !% --- up and downstream heads on connected nodes
+        !% --- Head upstream
         headUp = node%R(nUp,nr_Zbottom) + node%R(nUp,nr_InitialDepth)
+        !% --- provisional head downstream
         headDn = node%R(nDn,nr_Zbottom) + node%R(nDn,nr_InitialDepth)
 
         !% --- set upstream link depths including effects of offsets
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
 
+        ! print *, ' =================================== '
+    !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
+    !     print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
+    !     print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
+    !   !  print *, 'ZlinkUp  ',zLinkUp
+    !   !  print *, 'zlinkDn  ',zLinkDn
+    !   !  print *, 'DepthUp  ',DepthUp
+    !   !  print *, 'DepthDn  ',DepthDn
+    !     print *, 'HeadUp   ',headUp
+    !     print *, 'HeadDn   ',headDn
+    !     print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
+    !     print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
+    !     print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
+    !     print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
+    !     print *, ' '
+
+    
         !% --- set downstream link depths including effects of offsets
         !%     where downstream head is less than zbottom, depth is zero
         DepthDn = max(headDn - zLinkDn, zeroR)
 
+        ! print *, 'Depth Dn AAA ',DepthDn
+
         !% --- check for a downstream gate on the node
         !%     adjust depths and head as needed
         if (node%YN(nDn,nYN_hasFlapGate)) then
-            !% --- if upstreamhead is lower than downstream head
-            !%     then flap gate is closed
-            if (headUp < headDn) then
-                !% --- closed flap gate
-                if (DepthUp == zeroR) then
-                    !% --- if zero depth upstream, then downstream is also zero
-                    DepthDn = zeroR
-                    headDn  = zLinkDn
-                else
-                    !% --- if some positive depth is upstream, then
-                    !%     set downstream at the same head (ponding at gate)
+            !print *, 'has Flap Gate'
+            if (DepthUp == zeroR) then
+                !% --- if zero depth upstream, then downstream is also zero
+                !%     and we switch to a uniform depth interpolation scheme
+                !%     so that the entire link is dry
+                DepthDn = zeroR
+                headDn  = zLinkDn
+                LdepthType = UniformDepth
+            else
+                !% --- for positive upstream depth
+                !%     if upstream head is lower than downstream head
+                !%     then flap gate is closed
+                if (headUp < headDn) then
+                    !% --- closed flap gate
+                    !%     set downstream at the upstream head (ponding at gate)
                     headDn  = headUp
                     DepthDn = headDn - zLinkDn
+                    !% --- ensure the elements are handled by fixed head
                     LdepthType = FixedHead
+                else
+                    !% --- for upstream head > downstream head
+                    !%     ensure interpolation over link
+                    select case (LdepthType)
+                    case (UniformDepth, FixedHead)
+                        LdepthType = LinearlyVaryingDepth
+                    case default 
+                        !% --- continue with selected interpolation type
+                    end select
                 end if
             end if
         end if
+
+       ! print *, 'Depth Dn BBB ',DepthDn
 
         !% --- pack the elements for this link
         pElem = pack(elemI(:,ei_Lidx), (elemI(:,ei_link_Gidx_BIPquick) == thisLink))
@@ -587,7 +671,7 @@ contains
         firstidx = findloc(elemI(pElem,ei_link_Pos),1)
         if (firstidx(1) .ne. 1) then
             print *, 'CODE ERROR'
-            print *, 'Possible problem in element ordeing in a link'
+            print *, 'Possible problem in element ordering in a link'
             print *, 'error with link ',trim(link%Names(thisLink)%str)
             print *, elemI(pElem,ei_link_Pos)
             call util_crashpoint(55872)
@@ -596,6 +680,8 @@ contains
         !% --- total depth delta
         dDelta = DepthUp - DepthDn
 
+        !print *, 'Depth Delta ',dDelta
+
         !% --- total length of all elements in link
         linkLength = sum(eLength(pElem))
 
@@ -603,13 +689,18 @@ contains
         !%    to an interative element center
         length2Here = zeroR
 
-        !% --- set single element of linearly varying or exponential to uniform depth
+        !% --- Single-length elements can only be UniformDepth or
+        !%     FixedHead. Set interpolated schemes to UniformDepth
         if (size(pElem) == 1) then
-            if (     (LdepthType == LinearlyVaryingDepth) &
-                .or. (LdepthType == ExponentialDepth)      ) then
+            select case (LdepthType)
+            case (LinearlyVaryingDepth, ExponentialDepth)
                 LdepthType = UniformDepth
-            end if
+            case (default)
+                !% no change
+            end select
         end if
+
+        !print *, 'Depth Type = ',reverseKey(LdepthType)
 
         !% ---set the depths in link elements from links
         !%    Note these depths are the combination of water and sediment
@@ -1146,6 +1237,11 @@ contains
 
             integer :: Npack, ii, mm
 
+            !% for pure calls to scalars
+            integer, dimension(1) :: Iarg
+            real(8), dimension(1) :: Rarg
+        
+
             real(8), pointer    :: depth(:), fullarea(:), fullperimeter(:)
             real(8), pointer    :: fulltopwidth(:), initialDepth(:)
             real(8), pointer    :: fullhydradius(:), fulldepth(:)
@@ -1291,6 +1387,7 @@ contains
 
             !% --- independent data
             elemSGR(thisP,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+            elemR(thisP,er_Breadthmax)              = link%R(thisLink,lr_BreadthScale)
             elemR(thisP,er_FullDepth)               = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
 
             !% --- error checking
@@ -1304,17 +1401,26 @@ contains
             end if
 
             !% --- custom functions using temporary store
-            do ii=1,size(thisP)
-                mm = thisP(ii)
-                elemR(mm,er_FullArea)      = llgeo_rectangular_closed_area_from_depth_singular &
-                                                    (mm, fulldepth(mm))
+            elemR(thisP,er_FullArea)      = llgeo_rectangular_area_from_depth_pure  &
+                                            (thisP, fulldepth(thisP))
 
-                elemR(mm,er_FullPerimeter) = llgeo_rectangular_closed_perimeter_from_depth_singular &
-                                                    (mm, fulldepth(mm))
+            elemR(thisP,er_FullPerimeter) = llgeo_rectangular_perimeter_from_depth_pure &
+                                            (thisP, fulldepth(thisP))
 
-                elemR(mm,er_FullTopwidth)  = llgeo_rectangular_closed_topwidth_from_depth_singular &
-                                                    (mm, fulldepth(mm))
-            end do
+            elemR(thisP,er_FullTopwidth)   = llgeo_rectangular_topwidth_from_depth_pure &
+                                            (thisP, fulldepth(thisP))
+
+            ! do ii=1,size(thisP)
+            !     mm = thisP(ii)
+            !     ! elemR(mm,er_FullArea)      = llgeo_rectangular_area_from_depth_pure &
+            !     !                                     (nn, fulldepth(mm))
+
+            !     elemR(mm,er_FullPerimeter) = llgeo_rectangular_closed_perimeter_from_depth_singular &
+            !                                         (mm, fulldepth(mm))
+
+            !     elemR(mm,er_FullTopwidth)  = llgeo_rectangular_closed_topwidth_from_depth_singular &
+            !                                         (mm, fulldepth(mm))
+            ! end do
 
             !% --- full conditions
             elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
@@ -1340,6 +1446,12 @@ contains
             elemR(thisP,er_Volume)        = elemR(thisP,er_Area) * elemR(thisP,er_Length)
             elemR(thisP,er_Volume_N0)     = elemR(thisP,er_Volume)
             elemR(thisP,er_Volume_N1)     = elemR(thisP,er_Volume)
+
+            ! print *, 'thisP ',thisP
+            ! print *, 'full area ',elemR(thisP,er_FullArea)
+            ! print *, 'full Depth ',elemR(thisP,er_FullDepth)
+            ! print *, 'rectbreadth ',elemSGR(thisP,esgr_Rectangular_Breadth)
+            ! stop 298374
 
         case (lTrapezoidal)
 
@@ -4573,7 +4685,8 @@ contains
         !% for computing normal depth
         !% 20220726 -- only stored for elements upstream of an outfall
         !%------------------------------------------------------------------
-            integer       :: ii,  lastUT_idx      
+            integer       :: ii,  lastUT_idx  , kk    
+            real(8) :: thisdepth, thiswidth
             character(64) :: subroutine_name = 'init_uniformtable_array'
         !%------------------------------------------------------------------
 
@@ -4594,17 +4707,25 @@ contains
         !% --- fill of values for each location
         do ii = 1,size(uniformTableDataR,1)
 
-            !print *, ii, uniformTableR(ii,utr_SFmax)
+           ! print *, ii, uniformTableR(ii,utr_SFmax)
 
             !stop 5509873
 
-            !% --- uniform values
-            call init_uniformtabledata_Uvalue(ii,utr_SFmax,    utd_SF_uniform)
+            !% --- uniformly-distributed section factor
+            call init_uniformtabledata_Uvalue(ii,utr_SFmax, utd_SF_uniform)
+
+            ! print *, ' '
+            ! print *, 'section factors'
+            ! do kk=1,size(uniformTableDataR,2)
+            !     print *, ii, uniformtableDataR(ii,kk,utd_SF_uniform),  &
+            !     uniformtableDataR(ii,kk,utd_SF_uniform)* uniformTableR(ii,utr_SFmax)
+            ! end do
 
             !stop 209873
 
             !print *, uniformTableR(ii,utr_SFmax)
 
+            !% -- uniformly-distributed critical flow
             call init_uniformtabledata_Uvalue(ii,utr_QcritMax, utd_Qcrit_uniform)
    
             !% --- nonuniform values mapping from section factors
@@ -4619,11 +4740,35 @@ contains
                ! print *, 'Qcritical by area ------------------'
             call init_uniformtabledata_nonUvalue (ii, utd_Qcrit_area_nonuniform,  utd_Qcrit_uniform)
 
-            !stop 34987
+            ! print *, ' '
+            ! print *, 'depths for uniformly-distributed section factors'
+            ! do kk=1,size(uniformTableDataR,2)
+            !     print *, ii, uniformTableDataR(ii,kk,utd_SF_depth_nonuniform), &
+            !     uniformTableDataR(ii,kk,utd_SF_depth_nonuniform) * uniformTableR(ii,utr_DepthMax)
+            ! end do
+
+            ! print *, ' '
+            ! print *, 'implied sF from depth and actual sf for rectangular for simple case'
+            ! thiswidth = elemR(1,er_BreadthMax)
+            ! do kk=1,size(uniformTableDataR,2)
+            !     thisdepth = uniformTableDataR(ii,kk,utd_SF_depth_nonuniform) * uniformTableR(ii,utr_DepthMax)
+            !     print *, ii, ((thiswidth*thisdepth)**(5.d0/3.d0)) &
+            !      / ((thiswidth + twoR*thisdepth)**(2.d0/3.d0)), &
+            !      uniformtableDataR(ii,kk,utd_SF_uniform)* uniformTableR(ii,utr_SFmax)
+            ! end do
+
+            ! print *, ' '
+            ! print *, 'implied Qcrit from depth and Qcrit from table for rectangular simple case'
+            ! thiswidth = elemR(1,er_BreadthMax)
+            ! do kk=1,size(uniformTableDataR,2)
+            !     thisdepth = uniformTableDataR(ii,kk,utd_Qcrit_depth_nonuniform) * uniformTableR(ii,utr_DepthMax)
+            !     print *, ii, (thisdepth * thiswidth) * sqrt(9.81d0 * thisdepth), &
+            !     uniformtableDataR(ii,kk,utd_Qcrit_uniform)* uniformTableR(ii,utr_QcritMax)
+            ! end do
+
+            ! stop 34987
         end do
 
-        
-    
 
     end subroutine init_uniformtable_array    
 !%
@@ -4633,9 +4778,11 @@ contains
     subroutine init_BChead_uniformtable (UT_idx)
         !%------------------------------------------------------------------ 
         !% Description
-        !% initialized the uniform table lookup values for head BC data
+        !% Get the maximum values (no necessarily at full!) that are used
+        !% for normalizing the uniform tables that are lookup by SF or Depth
         !% UT_idx is the last uniform table index used, which is incremented
         !% as more table data is added
+        !% NOTE: see init_uniformtable_array for the actual table values
         !%------------------------------------------------------------------ 
         !% Declarations
             integer, intent (inout) :: UT_idx
@@ -4651,11 +4798,11 @@ contains
         !% --- return if there are no head BC
         if (N_headBC < 1) return
 
-        ! print *, 'in ',trim(subroutine_name)
+          !print *, 'in ',trim(subroutine_name)
 
         do ii = 1,N_headBC
 
-        !    print *, '---- ',ii
+            ! print *, '---- ',ii
 
             UT_idx = UT_idx + 1
             !% --- the element index for the element upstream of the BC
@@ -4684,30 +4831,41 @@ contains
             !% --- include a depth tolerance to prevent round-off from
             !%     creating a step larger than the max depth
             depthTol = deltaD / tenR
-            ! jj=0
+             jj=0
             !% --- cycle through all the depths to find the maximum section factor
             !%     and maximum Q critical
             do while (thisdepth .le. (uniformTableR(UT_idx,utr_DepthMax)-depthTol))
-                ! jj=jj+1
-                !  print *, 'jj= ',jj
+                 !jj=jj+1
+                  !print *, 'jj= ',jj
                 thisDepth = thisDepth + deltaD
-                !  print *, '----- thisDepth     ',thisDepth 
+                  !print *, '----- thisDepth     ',thisDepth 
 
+                !% --- section factor at this depth
                 sf = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
 
-                !  print *, '----- sectionfactor ',sf
+                 !print *, jj,'----- sectionfactor ',sf
+
+                !% --- check if this is the max sf thus far
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
 
+                !% -- critical flowrwate at this depth
                 qcrit = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
+
                 !  print *, '----- qcrit        ',qcrit
+                
+                !% --- check if this is the max q crit thus far
                 uniformTableR(UT_idx,utr_QcritMax) = max(uniformTableR(UT_idx,utr_QcritMax),qcrit)
                 ! print *, '----- '
 
-                ! print *, 'depth max ',uniformTableR(UT_idx,utr_DepthMax)
+                !print *, 'SF, Qcrit ', uniformTableR(UT_idx,utr_SFmax) , uniformTableR(UT_idx,utr_QcritMax)
+                !print *, 'depth max ',uniformTableR(UT_idx,utr_DepthMax)
 
                 !stop 5908734
 
             end do
+
+            ! print *,uniformTableR(1,utr_SFmax)
+            ! stop 2098736
 
         end do
 
