@@ -1538,7 +1538,7 @@ module geometry
                                     perimeter(tB) = llgeo_mod_basket_perimeter_from_depth_singular   (tB,depth(tB))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ell(tBA)      = llgeo_ell_pure (tBA)
 
                                 case (rectangular_closed) !% analytical
                                     area(tB)      = llgeo_rectangular_closed_area_from_depth_singular      (tB, depth(tB))
