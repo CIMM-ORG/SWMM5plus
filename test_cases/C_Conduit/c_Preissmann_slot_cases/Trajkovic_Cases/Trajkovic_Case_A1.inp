@@ -52,35 +52,32 @@ DRY_ONLY         NO
 2                0.26082    0.1        0.02       1000        0         
 3                0.26082    0.1        0.02       1000        0         
 4                0.0378     0.1        0.02       1000        0         
-5                0.0378     0.1        0.02       1000        0         
-6                0          1.5        0.02       1000        0         
+5                0.0378     0.1        0.02       1000        0                
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-7                 -1.5      FREE                        YES                       
+6                 0         FREE                        YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
 1                1                2                1.5        0.008      0          0          0          0         
 3                3                4                8.3        0.008      0          0          0          0         
-5                5                6                1.4        0.008      0          0          0          0         
-6                6                7                5          0.025      0          0          0          0         
+5                5                6                1.4        0.008      0          0          0          0                 
 
 [ORIFICES]
 ;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
-2                2                3                SIDE         0          0.74        NO       0.0007          
-4                4                5                SIDE         0          0.74        NO       0.0007          
+2                2                3                SIDE         0          0.74        NO       0.0005          
+4                4                5                SIDE         0          0.74        NO       0.0005          
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
 1                CIRCULAR     0.1              0          0          0          1                    
 3                CIRCULAR     0.1              0          0          0          1                    
-5                CIRCULAR     0.1              0          0          0          1                    
-6                CIRCULAR     0.5              0          0          0          1                    
+5                CIRCULAR     0.1              0          0          0          1                                      
 2                CIRCULAR     0.1              0          0          0
 4                CIRCULAR     0.1              0          0          0
 

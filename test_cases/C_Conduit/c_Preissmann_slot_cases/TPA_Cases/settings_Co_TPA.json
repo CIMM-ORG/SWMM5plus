@@ -24,7 +24,7 @@
         "AdustLinkLengthForJunctionBranchYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.143
+        "NominalElemLength" : 0.072
     },
     "Junction" : {
         "FunStorageN" : 10,
@@ -69,7 +69,7 @@
             "useHD5F" : false,  
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 0.1,
+            "TimeInterval" : 0.05,
             "TimeUnits" : "Seconds"
         }
     },

@@ -232,7 +232,7 @@ contains
             npack => npack_elemP(ptype)
         !%------------------------------------------------------------------
         !% count the output elements to be packed
-        npack = count(isElemOut)
+        npack = count(isElemOut .and. (.not. isDummy))
 
         !% output the true element indexes into a pack
         if (npack > 0) then
