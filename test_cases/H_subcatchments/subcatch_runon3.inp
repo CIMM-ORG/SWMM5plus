@@ -1,10 +1,11 @@
 [TITLE]
-;;Project Title/Notes
+;;Subcatchment as runon for simple channel
+;;test of runon connection to subcatchment
 [OPTIONS]
 ;;Option             Value
-FLOW_UNITS           CFS
+FLOW_UNITS           CMS
 INFILTRATION         HORTON
-FLOW_ROUTING         KINWAVE
+FLOW_ROUTING         DYNWAVE
 LINK_OFFSETS         DEPTH
 MIN_SLOPE            0
 ALLOW_PONDING        NO
@@ -14,13 +15,13 @@ START_TIME           00:00:00
 REPORT_START_DATE    12/01/2021
 REPORT_START_TIME    00:00:00
 END_DATE             12/01/2021
-END_TIME             06:00:00
+END_TIME             04:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:05
-WET_STEP             00:00:05
-DRY_STEP             00:00:05
+REPORT_STEP          00:01:00
+WET_STEP             00:15:00
+DRY_STEP             00:15:00
 ROUTING_STEP         0:00:01 
 RULE_STEP            00:00:00
 INERTIAL_DAMPING     PARTIAL
@@ -45,62 +46,84 @@ DRY_ONLY         NO
 [RAINGAGES]
 ;;Name           Format    Interval SCF      Source    
 ;;-------------- --------- ------ ------ ----------
-1                INTENSITY 0:01     1.0      TIMESERIES series          
+RG1                INTENSITY 0:15     1.0      TIMESERIES series          
 
 [SUBCATCHMENTS]
 ;;Name           Rain Gage        Outlet           Area     %Imperv  Width    %Slope   CurbLen  SnowPack        
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- -------- ----------------
-1                1                2                5        25       500      0.5      0                        
+S4                RG1                J5                1        100       500      0.5      0                           
 
 [SUBAREAS]
 ;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     PctZero    RouteTo    PctRouted 
 ;;-------------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-1                0.01       0.1        0.05       0.05       25         OUTLET    
+S4                0.01       0.1        0.0       0.0         100         OUTLET    
 
 [INFILTRATION]
 ;;Subcatchment   Param1     Param2     Param3     Param4     Param5    
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                3.0        0.5        4          7          0         
+S4                3.0        0.5        4          7          0            
 
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-2                10         0          0          0          0         
+J1A                4.1         0          0.0          0          0 
+J1B                4.1         0          0.0          0          0 
+J1C                4.1         0          0.0          0          0 
+J5                3.0         0          0.0          0          0    
+      
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-3                0          FIXED      2                NO                       
+O3A                3.1          FREE                        YES       S4
+O3B                3.1          FREE                        YES       S4
+O3C                3.1          FREE                        YES       S4
+O7                 2.0          FIXED      2.5              YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                2                3                400        0.01       0          0          0          0         
+C2A                J1A               O3A              400        0.03       0          0          0          0     
+C2B                J1B               O3B              400        0.03       0          0          0          0   
+C2C                J1C               O3C              400        0.03       0          0          0          0   
+C6                 J5                O7               400        0.03       0          0          0          0        
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-1                CIRCULAR     1                0          0          0          1                    
+C2A               RECT_OPEN     100                1          0          0          1       
+C2B               RECT_OPEN     100                1          0          0          1    
+C2C               RECT_OPEN     100                1          0          0          1    
+C6                RECT_OPEN     100                1          0          0          1                      
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-2                FLOW             ""               FLOW     1.0      1.0      1               
+J1A                FLOW             ""               FLOW     1.0      1.0      0.01   
+J1B                FLOW             ""               FLOW     1.0      1.0      0.01   
+J1C                FLOW             ""               FLOW     1.0      1.0      0.01             
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
-series                      00:10      10        
-series                      00:15      20        
-series                      00:30      80        
-series                      01:00      10        
-series                      02:00      0         
+series                      00:00      0        
+series                      00:15      3.6       
+series                      00:30      3.6        
+series                      00:45      3.6    
+series                      01:00      3.6      
+series                      01:15      3.6      
+series                      01:30      3.6        
+series                      01:45      3.6      
+series                      02:00      3.6     
+series                      02:15      3.6        
+series                      02:30      3.6  
+series                      02:45      3.6  
+series                      03:00      3.6  
+series                      03:15      3.6  
+series                      03:30      3.6 
+series                      03:45      3.6
+series                      04:00      3.6    
 
-[PATTERNS]
-;;Name           Type       Multipliers
-;;-------------- ---------- -----------
-a                MONTHLY    1.0   1.0   1.0   1.0   1.0   1.0  
-a                           1.0   1.0   1.0   1.0   1.0   1.0  
 
 [REPORT]
 ;;Reporting Options

@@ -6,6 +6,8 @@
         "Short" : "EPAex01m02"
     },
     "Discretization" : {
+        "AllowChannelOverflowTF" : false,
+        "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",

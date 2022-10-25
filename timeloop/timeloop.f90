@@ -17,7 +17,8 @@ module timeloop
         only: interface_export_link_results, &
               interface_get_subcatch_runoff, &
               interface_call_runoff_execute, &
-              interface_get_newRunoffTime
+              interface_get_newRunoffTime,   &
+              interface_export_runon_volume
     use utility_crash
     use control_hydraulics, only: control_update
 
@@ -183,7 +184,6 @@ contains
         lastHydraulicsTime  = setting%Time%Start
         lastControlRuleTime = setting%Time%Start
 
-
         !% local T/F that changes with each time step depending on whether or 
         !% not the hydrology or hydraulics are conducted in that step
         doHydrologyStepYN  = setting%Simulation%useHydrology
@@ -192,9 +192,18 @@ contains
         !% get the next hydrology time
         if (setting%Simulation%useHydrology) then      
             nextHydrologyTime  = interface_get_NewRunoffTime()
+            ! print *, 'nextHydrologyTime from runoff = ',nextHydrologyTime
         else   
             !% set a large dummy time for hydrology if not used
             nextHydrologyTime  = setting%Time%End + onethousandR * dtTol
+            ! print *, 'nextHydrologyTime from dummy = ',nextHydrologyTime
+        end if
+
+        if ((nextHydrologyTime == lastHydrologyTime) .and. &
+            (setting%Simulation%useHydrology) ) then
+            !% --- call the first hydrology step
+            call tl_hydrology()
+            nextHydrologyTime  = interface_get_NewRunoffTime()
         end if
 
         !    call util_CLprint('in tl_initialize')
@@ -255,7 +264,11 @@ contains
         ! print *, 'starting tl_outerloop'
 
         do while (setting%Time%Now <= setting%Time%End - dtTol)
-                ! print *, 'top of tl_outerloop loop'
+                ! print *, ' '
+                ! print * , '==========================================================================='
+                ! print *, 'top of tl_outerloop loop at time ',setting%Time%Now
+                ! print *, ' '
+
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
                     !% --- skip BC update during spin-up after first step
@@ -263,17 +276,40 @@ contains
                 else
                     BCupdateYN = .true.
                 end if
+
+                ! print *, ' '
+                ! print *, '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+                ! print *, '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+                ! print *, ' '
+                !  print *, '0 nextHydrologyTime and delta', setting%Time%Hydrology%NextTime, setting%Time%Hydrology%NextTime-setting%Time%Now
+                ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                ! if (.not.doHydraulicsStepYN) then 
+                !     stop 0
+                ! end if
     
                 ! print *, 'before save previous values'
                 !% --- push the old values down the stack 
                 call tl_save_previous_values()
+
+                !
+                !call util_CLprint ('-2222 before hydrology step in timeloop---------------------------')
     
                 !% store the runoff from hydrology on a hydrology step
                 if ((.not. inSpinUpYN) .or. (inSpinUpYN .and. BCupdateYN) ) then
                     if (doHydrologyStepYN) call tl_hydrology()
                 end if
+
+                ! print *, '1 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                ! print *, "doHydraulicsStepYN",doHydraulicsStepYN
+                ! if (.not. doHydraulicsStepYN) then 
+                !     stop 1
+                ! end if
+
+                !call util_CLprint ('-1111 after hydrology step in timeloop---------------------------')
+
+                
     
-                !% --- main hydraulics time steop
+                !% --- main hydraulics time step
                 if (doHydraulicsStepYN) then    
 
                     ! print *, 'in hydraulics step'
@@ -283,6 +319,8 @@ contains
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
     
+                    !call util_CLprint ('0000 before BC update in timeloop---------------------------')
+
                     ! print *, 'calling bc_update'
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
@@ -291,6 +329,13 @@ contains
                         call tl_lateral_inflow()
                         call tl_smallestBC_timeInterval ()
                     end if
+
+                    ! print *, '2 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                    ! if (.not. doHydraulicsStepYN) then 
+                    !     stop 2
+                    ! end if
+
+                    !call util_CLprint ('1111 after BC update in timeloop---------------------------')
 
                     ! print *, 'calling controls'
                     !% --- perform control rules
@@ -307,19 +352,50 @@ contains
                         ! print *, 'orifice setting ',elemR(iet(3),er_Setting)
                     end if
 
-    
+                    ! print *, '3 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                    ! if (.not. doHydraulicsStepYN) then 
+                    !     stop 3
+                    ! end if
+
+                    !call util_CLprint ('2222 after controls in timeloop---------------------------')
+
                     !% --- add subcatchment inflows
                     !%     note, this has "useHydrology" and not "doHydrologyStepYN" because the
                     !%     former is whether or not hydrology is used, and the latter is
                     !%     whether or not it is computed in this time step
-                    if (setting%Simulation%useHydrology .and. BCupdateYN) call tl_subcatchment_lateral_inflow ()
+                    if (setting%Simulation%useHydrology .and. BCupdateYN) then 
+                        call tl_subcatchment_lateral_inflow ()
+                    end if
     
+                    !call util_CLprint ('3333 after subcatchment lateral inflow in timeloop---------------------------')
+
                     !% --- perform hydraulic routing
-                    ! print *, 'calling tl_hydraulics'
+                    !  print *, '3A nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                    !  print *, 'calling tl_hydraulics'
+
                     call tl_hydraulics()
-                    !print *, 'out of tl_hydraulics'
+                
+                    ! print *, 'out of tl_hydraulics'
+
+                    ! print *, '4 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                    ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                    ! if (.not.doHydraulicsStepYN) then 
+                    !     stop 4
+                    ! end if
 
                     !call util_CLprint ('in time_loop after tl_hydraulics')
+
+                    !% --- accumulate RunOn from hydraulic elements to subcatchments
+                    if ((setting%Simulation%useHydrology) .and. (any(subcatchYN(:,sYN_hasRunOn)))) then 
+                        call tl_subcatchment_accumulate_runon ()
+                    end if
+
+                    ! print *, '5 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                    ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                    ! if (.not.doHydraulicsStepYN) then 
+                    !     stop 5
+                    ! end if
+
     
                     !% --- close the clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -330,12 +406,22 @@ contains
                             + setting%Time%WallClock%HydraulicsStop &
                             - setting%Time%WallClock%HydraulicsStart
                     end if 
+
+                    ! print *, '6 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                    ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                    ! if (.not.doHydraulicsStepYN) then 
+                    !     stop 6
+                    ! end if
     
                 end if         
     
                 !call util_CLprint ('before reporting')
 
-                ! print *, 'before reporting'
+                ! print *, '7 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                ! if (.not.doHydraulicsStepYN) then 
+                !     stop 7
+                ! end if
 
                 !% --- handle output reporting
                 if (setting%Output%Report%provideYN) then 
@@ -370,6 +456,12 @@ contains
                         end if
                     end if  
                 end if
+
+                ! print *, '8 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                ! if (.not.doHydraulicsStepYN) then 
+                !     stop 8
+                ! end if
     
                 call util_crashstop(13978)
     
@@ -379,12 +471,24 @@ contains
                     call system_clock(count=cval,count_rate=crate,count_max=cmax)
                     setting%Time%WallClock%HydraulicsStart = cval
                 end if 
+
+                ! print *, '9 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                ! if (.not.doHydraulicsStepYN) then 
+                !     stop 9
+                ! end if
     
                 !call util_CLprint('before time step change')
         
                 sync all
                 !% ---increment the time step and counters for the next time loop
                 call tl_increment_timestep_and_counters(doHydraulicsStepYN, doHydrologyStepYN, inSpinUpYN)
+
+                ! print *, '10 nextHydrologyTime ', setting%Time%Hydrology%NextTime
+                ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                ! if (.not.doHydraulicsStepYN) then 
+                !     stop 10
+                ! end if
     
                 !% --- close the hydraulics time tick
                 sync all
@@ -398,7 +502,11 @@ contains
                 end if
 
                 
-    
+                ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
+                ! if (.not.doHydraulicsStepYN) then 
+                !     stop 11
+                ! end if
+
                 !% --- check for blowup conditions
                 ! call util_crashcheck (773623)
                 if (crashI == 1) exit 
@@ -419,12 +527,11 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer :: ii
-            real(8), pointer :: sRunoff(:)
+            real(8), pointer :: sRunoff(:), dt
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'tl_hydrology'
         !%------------------------------------------------------------------
         !% Preliminaries
-            !if (crashYN) return
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% wall clock tick
@@ -435,6 +542,7 @@ contains
         !%------------------------------------------------------------------              
         !% Aliases
             sRunoff => subcatchR(:,sr_RunoffRate_baseline)  
+            dt      => setting%Time%Hydrology%Dt
         !%------------------------------------------------------------------   
             
         if (setting%Simulation%useSpinUp) then
@@ -442,20 +550,47 @@ contains
             call util_crashpoint(4482333)
         end if
 
-        !% execute the SWMM-C runoff for the next interval 
-        call interface_call_runoff_execute()
+        !call util_CLprint ('aaa before subcatch runon ---------------------------')
 
-        !% get the next runoff time
-        setting%Time%Hydrology%NextTime = interface_get_NewRunoffTime()   
+        !% --- set the runon flowrate (if any)
+        if (any(subcatchYN(:,sYN_hasRunOn))) then
+            !print *, ' CALLING RUNON IN tl_hydrology '
+            call tl_subcatchment_set_runon_volume ()
+        end if
+       
+        !call util_CLprint ('bbb before interface runon ---------------------------')
+        
 
-        !% cycle through the subcatchments to get the runoff 
-        !% ii-1 required in arg as C arrays start from 0
-        do ii = 1,setting%SWMMinput%N_subcatch
-            sRunoff(ii) = interface_get_subcatch_runoff(ii-1)  
-        end do
+        ! print *, 'NewRunoffTime ',setting%Time%Hydrology%NextTime
+        ! print *, 'Total Duration',setting%SWMMinput%TotalDuration
+        
+        !% --- only execute runoff if the next time is sufficently small
+        if (setting%Time%Hydrology%NextTime < (setting%SWMMinput%TotalDuration - setting%Time%DtTol)) then
+            
+            ! print *, 'calling hydrology in tl_hydrology **********************************************'
+
+            !% --- execute the EPA SWMM runoff for the next interval 
+            call interface_call_runoff_execute()
+
+            !% --- get the next runoff time
+            setting%Time%Hydrology%NextTime = interface_get_NewRunoffTime()  
+            ! print *, 'setting next hydrology time in tl_hydrology = ',setting%Time%Hydrology%NextTime
+
+            !call util_CLprint ('ccc before get runoof ---------------------------')
+
+            !% --- cycle through the subcatchments to get the runoff 
+            !%     ii-1 required in arg as C arrays start from 0
+            do ii = 1,setting%SWMMinput%N_subcatch
+                sRunoff(ii) = interface_get_subcatch_runoff(ii-1)  
+            end do
+        else 
+            sRunoff(:) = zeroR
+        end if
+
+        !call util_CLprint ('ddd after get runoff ---------------------------')
 
         !%------------------------------------------------------------------   
-        !% wall clock tick
+        !% --- wall clock tick
         if (this_image()==1) then
             call system_clock(count=cval,count_rate=crate,count_max=cmax)
             setting%Time%WallClock%HydrologyStop = cval
@@ -505,7 +640,7 @@ contains
         case (ETM)
             ! print *, ' '
             ! print *, ' '
-            ! print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+             !print *, 'here calling rk2 toplevel------------------------------------------',this_image()
             ! print *, ' '
         !    call util_CLprint ()
 
@@ -662,6 +797,98 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine tl_subcatchment_accumulate_runon ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% accumulates the runon volume from hydraulic element to a 
+        !% subcatchment
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: mm, kk
+            integer, pointer :: nRunOn, fIdx
+            real(8), pointer :: dt
+        !%------------------------------------------------------------------
+        !% Aliases
+            dt       => setting%Time%Hydraulics%Dt
+        !%------------------------------------------------------------------
+
+        !% --- cycle through the subcatchments
+        do mm = 1,setting%SWMMinput%N_subcatch
+            !% --- get the count of runons
+            nRunOn => subcatchI(mm,si_RunOn_count)
+            if (nRunOn == 0) cycle
+
+            !% --- cycle through the runons to this subcatchment
+            do kk=1,nRunOn
+                !% --- get runons for the image associated with the outfall node
+                if (subcatchI(mm,si_RunOn_P_image(kk)) .eq. this_image()) then 
+                    !% --- identify the face
+                    fIdx => subcatchI(mm,si_RunOn_faceIdx(kk))
+                    !% --- store the volume associated with the face flowrate
+                    !%     this uses the conservative flowrate
+                    subcatchR(mm,sr_RunOn_Volume(kk)) &
+                        = subcatchR(mm,sr_RunOn_Volume(kk))               &
+                          + faceR(fIdx,fr_Flowrate_Conservative) * dt
+                else 
+                    subcatchR(mm,sr_RunOn_Volume(kk)) = zeroR
+                end if
+            end do
+        end do
+
+        
+    end subroutine tl_subcatchment_accumulate_runon  
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine tl_subcatchment_set_runon_volume()
+        !%------------------------------------------------------------------
+        !% Description: 
+        !% computes the runon volumes for all outfalls that end on
+        !% subcatchments
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer :: mm, kk
+            integer, pointer :: nRunOn 
+            real(8), pointer :: dt
+        !%------------------------------------------------------------------
+        !% Aliases:
+            dt   => setting%Time%Hydrology%Dt
+        !%------------------------------------------------------------------
+        
+        !% --- cycle through the subcatchments
+        do mm=1,setting%SWMMinput%N_subcatch
+            nRunOn => subcatchI(mm,si_RunOn_count)
+            if (nRunOn == 0) cycle
+            
+            !print *, 'dt hydrology in tl_subcatchment_set_runon_volume',dt
+
+            do kk = 1,nRunOn
+                if (subcatchI(mm,si_RunOn_P_image(kk)) == this_image()) then
+                    !% --- change all values to a flowrate
+                    subcatchR(mm,sr_RunOn_Volume(kk)) = subcatchR(mm,sr_RunOn_Volume(kk))
+
+                    ! print *, 'runon volume',subcatchR(mm,sr_RunOn_Volume(kk))
+                else 
+                    subcatchR(mm,sr_RunOn_Volume(kk)) = zeroR
+                end if
+
+                !% --- disgribute the runon volume to all images
+                call co_max(subcatchR(mm,sr_RunOn_Volume(kk)))
+            end do
+
+            !% --- export the volume to EPASWMM outfall.vRouted storage
+            call interface_export_runon_volume ()
+
+            !% --- reset the runon values to zero
+            subcatchR(mm,sr_RunOn_Volume(:)) = zeroR
+
+        end do
+    end subroutine tl_subcatchment_set_runon_volume
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_increment_timestep_and_counters ( &
         doHydraulicsStepYN, doHydrologyStepYN, inSpinUpYN)
         !%-------------------------------------------------------------------
@@ -675,7 +902,7 @@ contains
             real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
             real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
             real(8)                :: nextTime, nextTimeLocal
-            real(8), pointer       :: dtTol, timeNow, dtHydraulics
+            real(8), pointer       :: dtTol, timeNow, dtHydraulics, dtHydrology
             integer                :: minImg
             integer, pointer       :: reportStep
             integer(kind=8), pointer    :: hydraulicStep, hydrologyStep, step
@@ -690,6 +917,7 @@ contains
             hydraulicStep => setting%Time%Hydraulics%Step
             hydrologyStep => setting%Time%Hydrology%Step
             dtHydraulics  => setting%Time%Hydraulics%Dt
+            dtHydrology   => setting%Time%Hydrology%Dt
             timeNow       => setting%Time%Now
             step          => setting%Time%Step
             reportStep    => setting%Output%Report%ThisStep
@@ -713,7 +941,7 @@ contains
             nextHydraulicsTime = setting%Time%End + tenR*DtTol
         end if    
 
-        ! print *, 'DT            ',dtHydraulics 
+        !print *, 'DT   AAAA       ',dtHydraulics 
         ! print *, 'next Hydraulics Time AAA ',nextHydraulicsTime
 
         !% --- The NextHydrologyTime is updated in SWMM, here we just need to
@@ -721,6 +949,7 @@ contains
         if (.not. useHydrology) then
             nextHydrologyTime = max(setting%Time%End + tenR*DtTol, &
                                     setting%Simulation%SpinUpDays * seconds_per_day)
+           ! print *, 'setting NextHydrologyTime without hydrology ',nextHydrologyTime
         else
             !% --- SWMM-C will not return a next hydrology time that is
             !%     beyond the end of the simulation, so we need a special
@@ -729,9 +958,11 @@ contains
                 (timeNow > setting%Time%Start)) then 
                 nextHydrologyTime = max(setting%Time%End + tenR*DtTol , &
                                         setting%Simulation%SpinUpDays * seconds_per_day)
+
+                !print *, 'setting last hydrology time = ',nextHydrologyTime
             end if
         end if
-
+        ! print *, 'next Hydrology  Time BBB ',nextHydrologyTime
         ! print *, 'next Hydraulics Time BBB',nextHydraulicsTime
 
         !% --- Ensure that all processors use the same time step.
@@ -756,20 +987,9 @@ contains
         doHydrologyStepYN  = (abs(nextTime - nextHydrologyTime)  <= dtTol) .and. useHydrology
         doHydraulicsStepYN = (abs(nextTime - nextHydraulicsTime) <= dtTol) .and. useHydraulics
 
-        !nextTimeLocal = nextTime
-        !% Get the smallest nextTime across all the processors, and make that the
-        !% nextTime on all processors
-        !call co_min(dt)
-        !call co_min(nextTime)
-
-        ! if (nextTime == nextTimeLocal) then
-        !     minImg = this_image()
-        ! else
-        !     minImg = -1
-        ! end if
-        ! call co_max(minImg)
-        ! call co_broadcast(doHydraulicsStepYN, minImg)
-        ! call co_broadcast(doHydrologyStepYN, minImg)
+        if (doHydrologyStepYN) then 
+            dtHydrology = nextTime - lastHydrologyTime
+        end if
 
         if ((.not. inSpinUpYN) .or. & 
             ((inSpinUpYN) .and. (setting%Simulation%stopAfterSpinUp)) ) then
@@ -850,17 +1070,21 @@ contains
         oldDT =  setting%Time%Hydraulics%Dt  ! not a pointer (important!)
         newDT => setting%Time%Hydraulics%Dt
 
+        ! print *, 'starting dt', oldDT, setting%Time%Hydraulics%Dt
+
         !% --- set the minimum CFL, used to detect near zero flow conditions
         if (setting%Limiter%Dt%UseLimitMaxYN) then
             minCFL = setting%Eps%Velocity * oldDT / setting%Discretization%NominalElemLength
         end if
 
+        ! print *, 'minCFL ',minCFL
             ! print *, ' '
             ! print *, 'in ',trim(subroutine_name)
             ! print *, matchHydrologyStep, useHydrology, inSpinUpYN
             ! print *, ' '
 
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
+            ! print *, 'in matching hydrology step'
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
             !%     step to match the next hydrology time
             timeLeft = nextHydrologyTime - lastHydraulicsTime
@@ -869,18 +1093,27 @@ contains
             !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,timeleft)  
             thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,timeleft)  
 
+            ! print *, 'thisCFL ',thisCFL
+
             !% --- check to see if a single time step to match the hydrology time is possible
             if (thisCFL .le. maxCFL) then
                 neededSteps = 1 !% only 1 hydraulic step to match hydrology step
                 !% --- check to be sure there is significant time left
+                ! print *, 'timeleft, oldDT ',timeLeft, oldDT
                 if (timeLeft > dtTol) then
+                    
+                    ! print *, 'timeleft /oldDT, increasefactor ',timeleft /oldDT , increaseFactor
                     !% --- check increase that is implied with a single time step to the next hydrology
                     if (timeleft / oldDT < increaseFactor) then
                         !% --- use a single hydraulics step for the remaining hydrology time
                         newDT = timeleft
+                        ! print *, 'time left, newDT ',timeleft, newDT
                     else
                         !% --- increase the oldDT by the maximum allowed
                         newDT = increaseFactor * oldDT
+                        ! print *, 'newDT',newDT
+                        neededSteps = ceiling(timeLeft/newDT)
+                        !print *, 'needed steps HERE ',neededSteps
                     end if
                 else
                     !% --- negligible time left, don't bother with it, go back to the old dt
@@ -891,10 +1124,12 @@ contains
                     if (thisCFL > maxCFL) then 
                         !% --- if CFL too large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
+                        neededSteps = ceiling(timeLeft/newDT)
                     end if
 
                 end if
             else
+                
                 !% --- if more than one time step is needed, compute the needed steps 
                 !%     to break up the large CFL and time step size.
                 if (thisCFL/targetCFL .ge. huge(neededSteps)) then
@@ -931,7 +1166,15 @@ contains
 
                 end if
             end if
+
+            ! print *, 'newDT', newDT
         else
+            if (useHydrology) then 
+                print *, 'USER CONFIGURATION ERROR: Hydrology requires '
+                print *, 'setting%Time%matchHydrologyStep = .true.'
+                print *, 'the setup for non-match has not been tested'
+                call util_crashpoint(509872)
+            end if
             !% --- for hydraulics without hydrology or if we are not matching the hydrology step
             neededSteps = 3 !% forces rounding check
 
@@ -980,7 +1223,7 @@ contains
 
         !% --- prevent large increases in the time step
         newDT = min(newDT,OldDT * increaseFactor)
-        !    print *, 'before adjust newDT, oldDT : ',newDT, OldDT
+            ! print *, 'before adjust newDT, oldDT : ',newDT, OldDT
 
         !% 20220328brh time step limiter for inflows into small or zero volumes
         call tl_limit_BCinflow_dt (newDT)
@@ -992,12 +1235,19 @@ contains
         call tl_limit_LatInflow_dt (newDT)
             ! print *, 'dt Qlat limit   ',newDt
 
+        if ((matchHydrologyStep) .and. (useHydrology)) then
+            neededSteps = ceiling(timeLeft/newDT)
+        end if
+
+
+
         !% --- limit by inflow/head external boundary conditions time intervals
         if (setting%VariableDT%limitByBC_YN) then
             !print *, 'here limiting DT by BC ',newDT, setting%BC%smallestTimeInterval
             newDT = min(setting%BC%smallestTimeInterval,newDT)
         end if
 
+        ! print *, 'neededSteps ',neededSteps
         !% --- if dt is large and there is more than 2 steps, then round to an integer number
         if ((matchHydrologyStep) .and. (useHydrology) .and. (neededSteps .le. 2)) then
             !% don't round the dt

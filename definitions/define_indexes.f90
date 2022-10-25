@@ -153,6 +153,8 @@ module define_indexes
         enumerator :: ni_elem_idx      !% this is the element of an nJM node, upstream element of BCdn, downstream element of BCup
         enumerator :: ni_face_idx      !% for nJ2, BCup, BCdn, nJ1, this is the face associated with the node, not defined for nJM
         enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
+        enumerator :: ni_routeTo       !% subcatchment that node outfall is routed to
+        enumerator :: ni_SWMMoutfallIdx !% Outfall index in EPA SWMM for an outfall node
         enumerator :: ni_lastplusone !% must be last enum item
     end enum
     integer, parameter :: ni_idx_base1 = ni_lastplusone-1
@@ -1254,6 +1256,8 @@ module define_indexes
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
+        enumerator :: fr_FlowrateMax            !% maximum flowrate based on upstream volume/timestep
+        enumerator :: fr_FlowrateMin            !% minimum flowrate (negative maximum) based on downstream volume/timestep
         !enumerator :: fr_Flowrate_Max           !% maximum flowrate based on upstream element
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
@@ -1397,10 +1401,13 @@ module define_indexes
     !% These are arrays with setting%SWMMinput%N_subcatch rows.
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: sr_RunoffRate_baseline=1    !% hydrology step runoff rate from EPASWMM
+        enumerator :: sr_RunOffRate_baseline=1    !% hydrology step runoff rate from EPASWMM
         enumerator :: sr_lastplusone            !% must be the last enum item
     end enum
     integer, target :: Ncol_subcatchR = sr_lastplusone-1
+
+    !% --- additional sr columns that are of length N_subcatch_runon
+    integer, allocatable, target :: sr_RunOn_Volume(:)
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for subcatchI(:,:) arrays
@@ -1410,16 +1417,26 @@ module define_indexes
         enumerator :: si_runoff_nodeIdx = 1   !% node index for runoff
         enumerator :: si_runoff_elemIdx       !% runoff element for this subcatchment  
         enumerator :: si_runoff_P_image       !% coarray image that holds element for runoff
+        enumerator :: si_RunOn_count          !% Number of runons to this subcatchment
         enumerator :: si_lastplusone          !% must be the last enum item
     end enum
     integer, target :: Ncol_subcatchI = si_lastplusone-1
 
+
+    !% --- additional si columns that are of length N_subcatch_runon
+    integer, allocatable, target :: si_RunOn_nodeIdx(:)
+    integer, allocatable, target :: si_RunOn_SWMMoutfallIdx(:)
+    integer, allocatable, target :: si_RunOn_faceIdx(:)
+    integer, allocatable, target :: si_RunOn_P_image(:)
+
+    
     !%-------------------------------------------------------------------------
     !% Define the column indexes for subcatchYN(:,:) arrays
     !% These are arrays with setting%SWMMinput%N_subcatch rows.
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: sYN_hasRunoff            !% TRUE if subcatchment has runoff to an element
+        enumerator :: sYN_hasRunOff            !% TRUE if subcatchment has runoff to an element
+        enumerator :: sYN_hasRunOn             !% TRUE if at least one runon to subcatchment
         enumerator :: sYN_lastplusone          !% must be the last enum item
     end enum
     integer, target :: Ncol_subcatchYN = sYN_lastplusone-1
@@ -1532,6 +1549,8 @@ module define_indexes
     integer, parameter :: Ncol_uniformTableR = utr_lastplusone - 1
 
     !% uniformTablDataR integer array indexes
+    !% These are tables where uniformly-distributed value is NOT depth
+    !% but is instead Section Factor or Q critical
     enum, bind(c)
         enumerator :: utd_SF_uniform = 1            ! uniform distribution of section factor
         enumerator :: utd_SF_depth_nonuniform       ! depth column corresponding to section factor value

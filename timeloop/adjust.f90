@@ -113,6 +113,8 @@ module adjust
         !% Aliases:   
         !%------------------------------------------------------------------
      
+            !  call util_CLprint('-------------0000')
+
         if (isreset) then
             call adjust_zerodepth_identify_all ()
            
@@ -162,9 +164,16 @@ module adjust
         !% Aliases:
         !%------------------------------------------------------------------
         call adjust_smalldepth_face_fluxes     (whichTM,ifixQCons)
+            ! call util_CLprint ('FFF01  after zero/small face step A-----------------')
+
         call adjust_zerodepth_face_fluxes_CC   (whichTM,ifixQCons)
+            ! call util_CLprint ('FFF02  after zero/small face step B-----------------')
+
         call adjust_zerodepth_face_fluxes_JMJB (whichTM,ifixQCons)
+            ! call util_CLprint ('FFF03  after zero/small face step C-----------------')
+
         call adjust_JB_elem_flux_to_equal_face (whichTM) !% 20220123brh
+            ! call util_CLprint ('FFF04  after zero/small face step D-----------------')
     
         !%------------------------------------------------------------------
         !% Closing:
@@ -810,12 +819,22 @@ module adjust
             fArea_u => faceR(:,fr_Area_u)
             fArea_d => faceR(:,fr_Area_d)
         !% -----------------------------------------------------------------
+
         !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
         fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
+        ! print *, 'thisP ',thisP
+        ! print *, 'fQ(fup) ',fQ(fup(thisP)) 
+        ! print *, 'fQ(fdn) ',fQ(fdn(thisP))
+
         !% --- Set inflow from adjacent cell based on head gradient
         call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+
+        ! print *, ' '
+        ! print *, 'thisP ',thisP
+        ! print *, 'fQ(fup) ',fQ(fup(thisP)) 
+        ! print *, 'fQ(fdn) ',fQ(fdn(thisP))
 
             !call util_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
 
@@ -1201,6 +1220,11 @@ module adjust
             Vcoef(thisP)  = zeroR
         endwhere
 
+        !% --- eliminate cells that have no upstream inflow  !% TEST 20221021 brh
+        where (faceR(mapUp(thisP),fr_Flowrate) .eq. zeroR)
+            Vcoef(thisP) = zeroR
+        end where
+
         !% --- Reducing V-filter when Qlateral is large  20220524brh
         !%     HACK the fraction below should be replaced with a coefficient
         ! where (Qlateral(thisP) > onefourthR * abs(elemFlow(thisP)))
@@ -1386,7 +1410,9 @@ module adjust
         !% face is more than twice the input thisDepthCutoff
         !% Should only be applied to faces of zero depth or small depth cells  
         !% thisP should be a packed set of element indexes that are either
-        !% small depth or zero depth elements 
+        !% small depth or zero depth elements.
+        !% Uses the faceR(:,er_FlowrateMax) and faceR(:,er_FlowrateMin)
+        !% to limit the allowable flowrate driven by head
         !%------------------------------------------------------------------
         !% Declarations
             integer,  intent(in) :: thisP(:)
@@ -1397,7 +1423,7 @@ module adjust
             !integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:) !, fQCons(:)
             real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
-            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: faceDu(:), faceDd(:), faceQmax(:), faceQmin(:)
             real(8), pointer :: elemH(:), elemL(:) !, elemVol(:)
             real(8), pointer :: dt, grav
             integer :: ii
@@ -1410,6 +1436,8 @@ module adjust
             faceAd    => faceR(:,fr_Area_d)
             faceDu    => faceR(:,fr_HydDepth_u)
             faceDd    => faceR(:,fr_HydDepth_d)
+            faceQmax  => faceR(:,fr_FlowrateMax)
+            faceQmin  => faceR(:,fr_FlowrateMin)
             !fQCons    => faceR(:,fr_Flowrate_Conservative)
             !elemQ     => elemR(:,er_Flowrate)
             elemH     => elemR(:,er_Head)
@@ -1425,14 +1453,20 @@ module adjust
         !% --- For the downstream face, dH/dx < 0 leads to a negative Q
         !%     Only applies where head gradient implies flow into the small volume and the
         !%     depth at the face is twice the small depth cutoff
+
         where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
                 .and. &
                 (faceDu(fdn(thisP)) > twoR * thisDepthCutoff) )
+
+            !% --- value based on head gradient
             faceQ(fdn(thisP)) = min(                                                 &
                 faceQ(fdn(thisP)),                                                   &
                 dt * grav * faceAu(fdn(thisP)) * (elemH(thisP) - faceHu(fdn(thisP))) &
                 / (onehalfR * (elemL(thisP)))                                        &
                 )
+
+            !% --- limit by available volume flowrate that empties downstream element
+            faceQ(fdn(thisP)) = max( faceQ(fdn(thisP)), faceQmin(fdn(thisP)))   
         end where
 
         !% --- for the upstream face dH/dx > 0 leads to a positive Q
@@ -1441,12 +1475,19 @@ module adjust
         where ( (elemH(thisP) < faceHd(fup(thisP)) ) &
                 .and. &
                 (faceDd(fup(thisP)) > twoR * thisDepthCutoff) )
+
+            !% --- value based on head gradient
             faceQ(fup(thisP)) = max(                                                 &
-                faceQ(fdn(thisP)),                                                   &
+                faceQ(fup(thisP)),                                                   &
                 dt * grav * faceAd(fup(thisP)) * (faceHd(fup(thisP)) - elemH(thisP)) &
                 / (onehalfR * (elemL(thisP)))                                        &
                 )
+
+           !% --- limit by available volume flowrate that empties upstream element
+            faceQ(fup(thisP)) = min( faceQ(fup(thisP)), faceQmax(fup(thisP)))
         end where
+
+
 
     end subroutine adjust_faceflux_for_headgradient
 !%

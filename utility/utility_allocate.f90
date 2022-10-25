@@ -34,6 +34,7 @@ module utility_allocate
     public :: util_allocate_link_transect
     public :: util_allocate_element_transect
     public :: util_allocate_uniformtable_array
+    public :: util_allocate_subcatch_runon
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -409,6 +410,51 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine util_allocate_subcatch_runon()
+        !%------------------------------------------------------------------
+        !% Description
+        !% allocates index storage needed for subcatchment runon from elements
+        !% These store column indexes in the subcatchI arrays for 
+        !% RunOn data. This approach is taken because we need separate columns
+        !% for each of the runon connections.
+        !% NOTE: this changes the Ncol_subcatchI size
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        !% ---columns for subcatchI
+        allocate(si_RunOn_nodeIdx(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_nodeIdx')
+        si_RunOn_nodeIdx(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+        allocate(si_RunOn_SWMMoutfallIdx(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_SWMMoutfallIdx')
+        si_RunOn_SWMMoutfallIdx(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+        allocate(si_RunOn_faceIdx(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_faceIdx')
+        si_RunOn_faceIdx(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+        allocate(si_RunOn_P_image(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_P_image')
+        si_RunOn_P_image(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+
+        !% --- columns for subcatchR
+        allocate(sr_RunOn_Volume(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'sr_RunOn_Volume')
+        sr_RunOn_Volume(:) = (/Ncol_subcatchR +1 : Ncol_subcatchR  +N_subcatch_runon /)
+        Ncol_subcatchR  = Ncol_subcatchR  + N_subcatch_runon
+
+
+    end subroutine util_allocate_subcatch_runon
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_allocate_subcatch()
         !%------------------------------------------------------------------
         !% Description:
@@ -429,8 +475,8 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
-        !% subcatchR
-        allocate(subcatchR(setting%SWMMinput%N_subcatch, Ncol_subcatchR), stat=allocation_status, errmsg=emsg)
+        !% subcatchR (coarray)
+        allocate(subcatchR(setting%SWMMinput%N_subcatch, Ncol_subcatchR)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'subcatchR')
         subcatchR(:,:) = nullvalueR
 

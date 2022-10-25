@@ -651,6 +651,8 @@ module geometry
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
         ! print *, '----- sf       ',outvalue
 
+        !write(*,"(10f12.5)") inDepth, thisArea, thisPerimeter, outvalue
+
     end function geo_sectionfactor_from_depth_singular
 !%
 !%==========================================================================    
@@ -687,38 +689,42 @@ module geometry
             integer, intent(in) :: UT_idx
             integer, pointer    :: eIdx
             real(8), pointer    :: gravity, thistable(:)
-            real(8)             :: normFlowrate
+            real(8)             :: QcritNormalized
             integer :: ii
         !%------------------------------------------------------------------
         !% Aliases
             eIdx      => uniformTableI(UT_idx,uti_elem_idx)
             thisTable => uniformTableDataR(UT_idx,:,utd_Qcrit_depth_nonuniform)
         !%------------------------------------------------------------------
+        ! print *, ' '
+        ! print *, 'in geo_criticaldepth_singular'
         ! print *, 'UT_idx',UT_idx
         ! print *, 'eIdx  ',eIdx
         ! print *, 'flowrate     ', elemR(eIdx,er_Flowrate)
         ! print *, 'utr_Qcritmax ',utr_QcritMax
-        ! print *, 'table        ', uniformTableR(UT_idx,utr_QcritMax)
-        ! do ii=1,N_Elem(this_image())
-        !    print *, ii, elemR(ii,er_Flowrate)
-        ! end do
+        ! print *, 'table Qcritmax       ', uniformTableR(UT_idx,utr_QcritMax)
+        !do ii=1,N_Elem(this_image())
+        !   print *, ii, elemR(ii,er_Flowrate)
+        !end do
         
         !stop 2098374
 
         !% --- normalize the critical flowrate
-        normFlowrate = abs(elemR(eIdx,er_Flowrate) / uniformTableR(UT_idx,utr_QcritMax))
+        QcritNormalized = abs(elemR(eIdx,er_Flowrate) / uniformTableR(UT_idx,utr_QcritMax))
         
-        ! print *, 'normflowrate ',normFlowrate
+        ! print *, 'QcritNormalized',QcritNormalized
 
         !% --- lookup the normalized critical depth for this critical flow
-        outvalue = xsect_table_lookup_singular (normFlowrate, thistable)
+        outvalue = xsect_table_lookup_singular (QcritNormalized, thistable)
 
-        ! print *, 'outvalue 1',outvalue
+        ! print *, 'normalized critical depth',outvalue
+
+        ! print *, 'DepthMax ',uniformTableR(UT_idx,utr_DepthMax)
 
         !% --- return depth to physical value
         outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
 
-        ! print *, 'outvalue 2 ',outvalue
+        ! print *, 'critical depth ',outvalue
 
     end function geo_criticaldepth_singular
 !%

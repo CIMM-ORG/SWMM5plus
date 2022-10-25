@@ -62,10 +62,12 @@ module interface_
     public :: interface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
+    public :: interface_export_runon_volume
     public :: interface_call_runoff_execute
     public :: interface_get_subcatch_runoff
     public :: interface_get_subcatch_runoff_nodeIdx
     public :: interface_get_NewRunoffTime
+
 
 !%==========================================================================
 !%==========================================================================
@@ -477,8 +479,16 @@ module interface_
         !% -------------------------------------------------------------------------------
         ! --- Hydrology
         !% -------------------------------------------------------------------------------   
+        integer(c_int) function api_export_runon_volume(outfall_idx,flowrate) &
+            BIND(C, name='api_export_runon_volume')
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int), value, intent(in) :: outfall_idx
+            real(c_double), value, intent(in) :: flowrate
+        end function api_export_runon_volume
+        !% -------------------------------------------------------------------------------   
         integer(c_int) function api_call_runoff_execute() &
-            BIND(C, name='api_call_runoff_execte')
+            BIND(C, name='api_call_runoff_execute')
             use, intrinsic :: iso_c_binding
             implicit none 
         end function api_call_runoff_execute
@@ -557,6 +567,7 @@ module interface_
     procedure(api_export_link_results),        pointer :: ptr_api_export_link_results
     procedure(api_export_node_results),        pointer :: ptr_api_export_node_results
     procedure(api_find_object),                pointer :: ptr_api_find_object
+    procedure(api_export_runon_volume),      pointer :: ptr_api_export_runon_volume
     procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
     procedure(api_get_subcatch_runoff_nodeIdx), pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
@@ -1137,7 +1148,9 @@ contains
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
         if (    (attr == api_nodef_extInflow_tSeries    )    &
            .or. (attr == api_nodef_extInflow_basePat_idx)    &
-           .or. (attr == api_nodef_head_tSeries) ) then
+           .or. (attr == api_nodef_head_tSeries)             &
+           .or. (attr == api_nodef_RouteTo)                  &
+           ) then
             if (node_value /= -1) node_value = node_value + 1
         end if
 
@@ -1173,7 +1186,8 @@ contains
         !%----------------------------------------------------------------------
         !% Preliminaries
             !% --- error checking
-            ! print *, 'calling linkf_attribute', attr
+            ! print *, '--- in interface_get_linkf_attribute'
+            ! print *, 'linkf_attribute = ', attr, trim(reverseKey_api(attr))
             ! print *, 'api_linkf_start ',api_linkf_start
             ! print *, 'api_linkf_commonbreak', api_linkf_commonbreak
             ! print *, 'api_linkf_typeBreak', api_linkf_typeBreak
@@ -1447,6 +1461,10 @@ contains
                     print *, 'It is also possible that an old version of the libswmm5.so file'
                     print *, 'is being used instead of the correct version. Check the library'
                     print *, 'folder being used in setting%File%library_folder.'
+                    print *, 'Library folder is: ',trim(setting%File%library_folder)
+                    print *, 'The other likely source is failure to update transect_ID'
+                    print *, 'and linkf_ID in api.h, which causes enum of api keys to be offset'
+                    print *, 'from define_api_keys.f90'
                     call util_crashpoint(6698733)
             end select
       
@@ -3675,6 +3693,39 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%   
+    subroutine interface_export_runon_volume()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% takes the runon flowrate from hydraulics to subcatchments, stored
+        !% in subcatchR(:,sr_RunOn_Volume), and transfers to the outfall[].vRouted
+        !% in EPASWMM
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer :: mm, kk, error
+            integer, pointer :: outfallIdx
+            real(8), pointer :: thisVolume
+        !%---------------------------------------------------------------------
+
+        !% --- cycle through the subcatchments
+        do mm=1,setting%SWMMinput%N_subcatch
+            call load_api_procedure("api_export_runon_volume")
+            !% 
+            if (subcatchYN(mm,sYN_hasRunOn)) then
+                do kk=1,subcatchI(mm,si_RunOn_count)        
+                    !% --- pointers for clarity
+                    outfallIdx   => subcatchI(mm,si_RunOn_SWMMoutfallIdx(kk))
+                    thisVolume   => subcatchR(mm,sr_RunOn_Volume(kk))
+                    !% --- export the runon flowrate
+                    error = ptr_api_export_runon_volume(outfallIdx, thisVolume)
+                end do
+            end if
+        end do
+
+    end subroutine interface_export_runon_volume
+!%
+!%=============================================================================
+!%=============================================================================
+!%   
     subroutine interface_call_runoff_execute()
         !%---------------------------------------------------------------------
         !% Description:
@@ -3853,6 +3904,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
             case ("api_update_linkResult")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+            case ("api_export_runon_volume")    
+                call c_f_procpointer(c_lib%procaddr, ptr_api_export_runon_volume)
             case ("api_call_runoff_execute")    
                 call c_f_procpointer(c_lib%procaddr, ptr_api_call_runoff_execute)
             case ("api_get_subcatch_runoff")
