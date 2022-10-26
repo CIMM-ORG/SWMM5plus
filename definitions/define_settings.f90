@@ -252,7 +252,7 @@ module define_settings
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
     type TimeStepType
-       real(8) :: Dt        !% NOT A USER SETTING
+       real(8) :: Dt
        real(8) :: LastTime  !% NOT A USER SETTING
        real(8) :: NextTime  !% NOT A USER SETTING
        integer(kind=8) :: Step  !% NOT A USER SETTING
@@ -492,7 +492,7 @@ module define_settings
         logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
         character(len=256)   :: base_folder = ""
-        character(len=256)   :: library_folder = "build"  !% DO NOT CHANGE THIS FROM "build"
+        character(len=256)   :: library_folder = ""  !% DO NOT CHANGE THIS FROM "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
@@ -1965,9 +1965,8 @@ contains
         !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.EndEpoch not found'
 
         !%                      Time.Hydraulics.Dt
-        !% DO NOT READ THE HYDRAULICS TIME -- THIS IS OVERWRITTEN BY THE VARIABLE DT
-        ! call json%get('Time.Hydraulics.Dt', real_value, found)
-        ! if (found) setting%Time%Hydraulics%Dt = real_value
+        call json%get('Time.Hydraulics.Dt', real_value, found)
+        if (found) setting%Time%Hydraulics%Dt = real_value
         !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydraulics.Dt not found'
     
         !% do not read          Time.Hydraulics.LastTime
@@ -1975,9 +1974,8 @@ contains
         !% do not read          Time.Hydraulics.Step
 
         !%                      Time.Hydrology.Dt
-        !% DO NOT READ THE HYDROLOGY DT, SHOULD USE SWMMinput
-        ! if (found) call json%get('Time.Hydrology.Dt', real_value, found)
-        ! setting%Time%Hydrology%Dt = real_value
+        if (found) call json%get('Time.Hydrology.Dt', real_value, found)
+        setting%Time%Hydrology%Dt = real_value
         !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydrology.Dt not found'
 
         !% do not read          Time.Hydrology.LastTime

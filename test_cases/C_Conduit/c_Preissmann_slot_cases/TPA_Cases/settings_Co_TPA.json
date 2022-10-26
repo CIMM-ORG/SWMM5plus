@@ -24,7 +24,7 @@
         "AdustLinkLengthForJunctionBranchYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.072
+        "NominalElemLength" : 0.036
     },
     "Junction" : {
         "FunStorageN" : 10,
@@ -119,9 +119,9 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.45,
-        "CFL_lo_max" : 0.40,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     }
