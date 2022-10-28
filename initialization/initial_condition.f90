@@ -471,10 +471,10 @@ contains
             ! print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
-            ! print *, 'calling get elemtype'
+            !  print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
 
-            ! print *, 'calling get geometry'
+            !  print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
 
             ! print *, 'calling get flapgate'
@@ -602,21 +602,21 @@ contains
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
 
-        ! print *, ' =================================== '
-    !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
-    !     print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
-    !     print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
-    !   !  print *, 'ZlinkUp  ',zLinkUp
-    !   !  print *, 'zlinkDn  ',zLinkDn
-    !   !  print *, 'DepthUp  ',DepthUp
-    !   !  print *, 'DepthDn  ',DepthDn
-    !     print *, 'HeadUp   ',headUp
-    !     print *, 'HeadDn   ',headDn
-    !     print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
-    !     print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
-    !     print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
-    !     print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
-    !     print *, ' '
+            ! print *, ' =================================== '
+        !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
+        !     print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
+        !     print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
+        !   !  print *, 'ZlinkUp  ',zLinkUp
+        !   !  print *, 'zlinkDn  ',zLinkDn
+        !   !  print *, 'DepthUp  ',DepthUp
+        !   !  print *, 'DepthDn  ',DepthDn
+        !     print *, 'HeadUp   ',headUp
+        !     print *, 'HeadDn   ',headDn
+        !     print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
+        !     print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
+        !     print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
+        !     print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
+        !     print *, ' '
 
     
         !% --- set downstream link depths including effects of offsets

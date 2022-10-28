@@ -1245,7 +1245,8 @@ contains
             !%     First we use the api_linkf_type to get the overarching link type for this
             !%     link. This allows us to properly categorize the sub_type values to read         
     
-           ! print *, '****** CALLING api_get_linkf_attribute'
+            ! print *, '****** CALLING api_get_linkf_attribute with linkf_type' 
+            ! print *, api_linkf_type, trim(reverseKey_api(api_linkf_type))
             
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
@@ -1253,12 +1254,16 @@ contains
             call print_api_error(error, thisposition)
 
             ! print *, 'here 5098734'
-            ! print *, link_value
+            ! print *, 'link value ',link_value
 
             ilink_value = int(link_value) !% the linkf_type is always an integer
 
             ! print *, 'ilink_value', ilink_value
-            ! print *, API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
+            ! print *, 'options: ',API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
+
+            ! print *, 'attr               ',attr, trim(reverseKey_api(attr))
+            ! print *, 'api_linkf_type     ',api_linkf_type
+            ! print *, 'api_linkf_sub_type ',api_linkf_sub_type
 
             !% --- handle the different linkf_type
             select case (ilink_value)
@@ -1477,6 +1482,9 @@ contains
 
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
+            ! print *, '********* calling linkf_attribute with xsect_type '
+            ! print *, api_linkf_xsect_type, trim(reverseKey_api(api_linkf_xsect_type))
+
             !% --- load the cross-section type no matter what the input attr is.
             ! print *, ' '
             ! print *, 'call GGG calling get_linkf_attribute for xsect_type'
@@ -1487,8 +1495,8 @@ contains
 
             ! print *, 'attr ',attr, trim(reverseKey_api(attr))
             ! print *, 'link_value ',link_value, API_FORCE_MAIN
-            !print *, 'error ',error
-            !print *, API_FORCE_MAIN
+            ! !print *, 'error ',error
+            ! print *, 'API_FORCE_MAIN  = ',API_FORCE_MAIN
 
             !% 20220420brh
             ilink_value = int(link_value) !% these attributes should be integers
@@ -2303,14 +2311,26 @@ contains
                                 ! print *, 'in ',trim(subroutine_name), ' at T27',link_value
                             thisposition = trim(subroutine_name)//'_T27'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                             call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                             thisposition = trim(subroutine_name)//'_T28'
+                             call print_api_error(error, thisposition)
+                         case (api_linkf_xsect_rFull)
+                             !print *, 'call III'
+                             call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                             thisposition = trim(subroutine_name)//'_T29'
+                             call print_api_error(error, thisposition)
                         case (api_linkf_forcemain_coef)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_forcemain_coef, link_value)
-                                ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
+                                 ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
                             thisposition = trim(subroutine_name)//'_U28'  
                             call print_api_error(error, thisposition)
                         case default
-                            print *, 'case ',attr,trim(reverseKey_api(attr))
+                            print *, 'case default for API_FORCE_MAIN ',trim(reverseKey_api(attr)),' (could be error): ',attr,trim(reverseKey_api(attr))
                     end select
                 case default
                     !print *, 'in else ',link_value
