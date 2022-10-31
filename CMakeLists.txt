@@ -7,19 +7,22 @@ enable_language (Fortran)
 
 
 find_package (Python3 COMPONENTS Interpreter)
-function(check_dependencies module)
+set(testing_available ON)
+
+function(check_python_dependencies module)
+message(STATUS "Looking for Python module '${module}'")
 execute_process(COMMAND pip show ${module}
     OUTPUT_QUIET   
     ERROR_QUIET 
     RESULT_VARIABLE EXIT_CODE_PIPSHOW
-    
     )
 if (NOT ${EXIT_CODE_PIPSHOW} EQUAL 0)
-    message(WARNING "\nTesting unavailable\nMissing Python module '${module}'\nPlease run python_dependencies.sh\n")
+    set(testing_available OFF PARENT_SCOPE)
+    message(WARNING "\nMissing Python module '${module}'\n**Testing unavailable**\nPlease run python_dependencies.sh\n")
+else()
+    message(STATUS "'${module}' found")
 endif()
 endfunction()
-
-check_dependencies(swmmtoolbox)
 
 
 
@@ -68,7 +71,7 @@ elseif(build_configuration STREQUAL "debug")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared -fcommon")
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl -lz")
 
 set(FETCHCONTENT_QUIET "ON")
 
@@ -77,6 +80,7 @@ set(BUILD_HDF5 "/hdf5/hdf5-1.12.1/hdf5")
 if (DEFINED ENV{HDF5_DIR})
     set(BUILD_HDF5 $ENV{HDF5_DIR})
 endif()
+
 
 
 
@@ -227,8 +231,14 @@ add_dependencies(SWMM hdf5)
 
 
 #Testing
-enable_testing()
-add_test(A_Single_Link SWMM
-${CMAKE_SOURCE_DIR}/test_cases/A_Single_Link/SL_sub_IN\=con_OUT\=fix.inp
--s ${CMAKE_SOURCE_DIR}/test_cases/A_Single_Link/settings_SL.json
-)
+check_python_dependencies(tornado)
+check_python_dependencies(tabulate)
+check_python_dependencies(h5py)
+check_python_dependencies(swmmtoolbox)
+
+#Tests defined in separate file: ctest/CMakeLists.txt
+if (testing_available)
+    message(STATUS "Making tests available")
+    add_subdirectory(ctest)    
+    enable_testing()
+endif()
