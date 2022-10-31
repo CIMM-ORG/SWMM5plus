@@ -7,6 +7,7 @@ module runge_kutta2
     use update
     use face
     use lowlevel_rk2
+    use culvert_elements, only: culvert_toplevel
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use adjust
     use diagnostic_elements
@@ -41,7 +42,6 @@ module runge_kutta2
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
         !% Preliminaries
-            !if (crashYN) return
             if (setting%Debug%File%runge_kutta2) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% --- set the time-marching type for this routine
@@ -52,8 +52,8 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-        print *, ' '
-        call util_CLprint ('======= AAA  start of RK2 ==============================')
+        ! print *, ' '
+        ! call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -67,7 +67,10 @@ module runge_kutta2
         !% --- compute Force Main Manning's N for non-submerged FM elements
         if (setting%Solver%ForceMain%UseForceMainTF) call rk2_ForceMain_ManningsN ()
 
-        !% --- RK2 solution step -- single time advance step for CC and JM
+        !% --- RK2 solution step -- single time advance step
+        !%     CC advanced for continuity and momentum
+        !%     JM advanced for continuity
+        !%     JB determined from adjacent values.
         istep=1
         call rk2_step_ETM (istep)
 
@@ -78,6 +81,8 @@ module runge_kutta2
         call update_auxiliary_variables (whichTM)
 
             ! call util_CLprint ('CCC  after update aux step 1-----------------------')
+
+            !stop 293704
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         !%     This does not reset the zero/small depth packing
@@ -104,6 +109,10 @@ module runge_kutta2
 
             ! call util_CLprint ('GGG  after diagnostic step 1')
 
+        !% --- RK2 solution step -- check culverts
+        call culvert_toplevel()
+        call util_crashstop(669743)
+
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter (whichTM) ! brh20220211 this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
@@ -120,6 +129,9 @@ module runge_kutta2
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
+        !%     CC advanced for continuity and momentum
+        !%     JM advanced for continuity
+        !%     JB determined from adjacent values.
 
         istep=2
         call rk2_step_ETM (istep)
@@ -154,6 +166,10 @@ module runge_kutta2
         call util_crashstop(662398)
 
             ! call util_CLprint ('OOO  after diagnostic step 2')
+
+        !% --- RK2 solution step -- check culverts
+        call culvert_toplevel()
+        call util_crashstop(669742)        
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         call adjust_Vfilter (whichTM)
@@ -171,8 +187,8 @@ module runge_kutta2
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
         
-             call util_CLprint ('ZZZ  after accumulate overflow step 2')
-             print *, '==================================================='
+            !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
+            !  print *, '==================================================='
         
 
         !%-----------------------------------------------------------------
@@ -317,12 +333,15 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Performs a single rk2 step for ETM
+        !% continuity on CC and JM
+        !% momentum on CC
+        !% velocity/flowrate on JB
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: istep
         integer :: tmType
         !%-----------------------------------------------------------------------------
         !%
-        !% perform the continuity step of the rk2 for ETM
+        !% perform the continuity step of the rk2 for ETM CC and JM
         call rk2_continuity_step_ETM(istep)
 
             ! print *, this_image(),'    aaaa  after rk2 continuity step etm',this_image()
@@ -373,7 +392,6 @@ module runge_kutta2
         logical :: isreset
         !%-----------------------------------------------------------------------------
         !%
-        !if (crashYN) return
         !% Baseline continuity source:
         !% Compute net flowrates for channels, conduits 
         thisPackCol => col_elemP(ep_CC_H_ETM)
@@ -383,7 +401,9 @@ module runge_kutta2
         end if
 
         ! print *, '----------aaaa '
-        ! write(*,"(5f12.7)") elemR(iet(1),er_SourceContinuity)
+        ! print *, elemR(1,er_SourceContinuity)
+        !write(*,"(5f12.7)") elemR(iet(1),er_SourceContinuity)
+        
 
 
         !% compute net flowrates for junction mains
@@ -394,7 +414,9 @@ module runge_kutta2
         end if
 
         ! print *, '------------bbbb  '
+        ! print *, elemR(1,er_SourceContinuity)
         ! write(*,"(5f12.7)") elemR(iet(1),er_SourceContinuity)
+
 
         !% Solve for volume in ETM step
         thisPackCol => col_elemP(ep_CCJM_H_ETM)
@@ -404,6 +426,7 @@ module runge_kutta2
         end if
 
         ! print *, '------------cccc  '
+        ! print *, elemR(1,er_SourceContinuity), elemR(1,er_Volume)
         ! write(*,"(5f12.7)") elemR(iet(1),er_Volume)
 
         !% MOVED INTO SLOT_TOPLEVEL, called near top of geometry 
@@ -492,6 +515,7 @@ module runge_kutta2
         !%------------------------------------------------------------------
         !% Description:
         !% perform the momentum step of the rk2 for ETM (or ETM part of ETMAC)
+        !% Computed on CC elements and velocity/flowrate for JB
         !%-------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: istep
@@ -509,18 +533,18 @@ module runge_kutta2
 
             !% --- momentum K source terms for different methods for ETM
             call ll_momentum_Ksource_CC (er_Ksource, thisPackCol, Npack)
-                !print *, '... Ksource :',elemR(1:3,er_Ksource)
+            ! write(*,"(A,10f12.5)") '... Ksource :',elemR(iet(1:3),er_Ksource)
                 !  call util_CLprint (' after rk2 call ll_momentum_Ksource_CC')
 
             !% --- Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
-                !print *, '... sM      :',elemR(1:3,er_SourceMomentum)
+            ! write(*,"(A,10f12.5)") '... sM      :',elemR(iet(1:3),er_SourceMomentum)
                 !  call util_CLprint (' after rk2 call ll_momentum_source_CC')
 
             !% --- Common Gamma for momentum on channels and conduits for  ETM
             !%     Here for all channels and conduits, assuming CM roughness
             call ll_momentum_gammaCM_CC (er_GammaM, thisPackCol, Npack)
-                !print *, '... gamma   :',elemR(1:3,er_GammaM)
+            ! write(*,"(A,10f12.5)") '... gamma   :',elemR(iet(1:3),er_GammaM)
                 !  call util_CLprint (' after rk2 call ll_momentum_gamma_CC')
 
             !% --- handle force mains as Gamma terms
@@ -542,17 +566,18 @@ module runge_kutta2
 
             !% --- Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
-                !print *, '... vel     :',elemR(1:3,er_Velocity)
+            ! write(*,"(A,10f12.5)") '... vel     :',elemR(iet(1:3),er_Velocity)
                 !  call util_CLprint (' after rk2 call ll_momentum_solve_CC')
 
             !% --- velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
-                !print *, '... vel     :',elemR(1:3,er_Velocity)
-                !  call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
+            ! write(*,"(A,10f12.5)") '... vel     :',elemR(iet(1:3),er_Velocity)
+                 !call util_CLprint (' after rk2 call ll_momentum_velocity_CC')
 
             !% --- prevent backflow through flapgates
             call ll_enforce_flapgate_CC (er_Velocity, thisPackCol, Npack)
-                !  call util_CLprint (' after rk2 call ll_enformce_flapgate_CC')
+
+                !  call util_CLprint (' after rk2 call ll_enforce_flapgate_CC')
 
         end if
 
@@ -560,7 +585,7 @@ module runge_kutta2
         call ll_flowrate_and_velocity_JB(ETM,istep)
 
             ! print *, '   in rk2momentum 555'
-            ! call util_CLprint (' after ll_flowrate_and_velocity_JB')
+            !call util_CLprint (' after ll_flowrate_and_velocity_JB')
 
     end subroutine rk2_momentum_step_ETM
 !%

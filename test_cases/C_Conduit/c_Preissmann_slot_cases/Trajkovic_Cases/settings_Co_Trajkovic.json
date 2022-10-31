@@ -13,7 +13,7 @@
             "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : false,
+            "ApplyYN" : true,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0,
             "FullDepthMultiplier" : 0.00001
@@ -53,7 +53,7 @@
         "StoredLevels" : 1000,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 10000
+            "interval" : 20000
         },
         "DataOut" :{
             "isAreaOut"                 : true,
@@ -78,7 +78,7 @@
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 115.0,
-            "TimeInterval" : 0.3,
+            "TimeInterval" : 0.1,
             "TimeUnits" : "Seconds"
         }
     },
@@ -106,7 +106,8 @@
         "PreissmannSlot" : {
             "Method" : "DynamicSlot",
             "TargetCelerity" : 100.0,
-            "Alpha" : 3.00
+            "Alpha" : 5.00,
+            "DecayRate" : 10.0
         }
     },    
     "TestCase" : {

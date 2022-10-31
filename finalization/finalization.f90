@@ -48,6 +48,7 @@ contains
             if (setting%Debug%File%finalization) print *, '*** enter ', this_image(), subroutine_name
             !if (setting%Output%Verbose) write(*,"(2A,i5,A)") 'finalize [Processor ', this_image(), "]"
         !--------------------------------------------------------------------
+
         !% --- finalize the profiler and print times
         if (setting%Profile%useYN) call util_profiler_print_summary()
 

@@ -215,7 +215,7 @@ contains
         !% creates a pack for elemR, elemI, elemYN for output elements
         !%-----------------------------------------------------------------
         !% Declarations:
-            logical, pointer :: isElemOut(:)
+            logical, pointer :: isElemOut(:), isDummy(:)
             integer, pointer :: eIdx(:), ptype, npack
             character(64) :: subroutine_name = 'pack_element_outputML'
         !%------------------------------------------------------------------
@@ -227,15 +227,16 @@ contains
             eIdx => elemI(:,ei_Lidx)
             !% logical control on output for each element
             isElemOut => elemYN(:,eYN_isOutput)
+            isDummy   => elemYN(:,eYN_isDummy)
             ptype => col_elemP(ep_Output_Elements)
             npack => npack_elemP(ptype)
         !%------------------------------------------------------------------
         !% count the output elements to be packed
-        npack = count(isElemOut)
+        npack = count(isElemOut .and. (.not. isDummy))
 
         !% output the true element indexes into a pack
         if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,isElemOut)
+            elemP(1:npack,ptype) = pack(eIdx,(isElemOut .and. (.not. isDummy)))
         else 
             !% continue     
         end if    
@@ -2510,7 +2511,7 @@ contains
                 )
         end if
 
-!       % --- Gothic conduits -----------------------------------------------
+        !% --- Gothic conduits -----------------------------------------------
         ptype => col_elemPGetm(epg_CC_gothic)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -2570,7 +2571,7 @@ contains
                 )
         end if
 
-    !% --- Modified-basket conduits ---------------------------
+        !% --- Modified-basket conduits ---------------------------
         ptype => col_elemPGetm(epg_CC_mod_basket)
         npack => npack_elemPGetm(ptype)
         npack = count( &
@@ -3243,25 +3244,98 @@ contains
                 ) )
         end if
 
+        !% ep_FM_HW_all
+        !% --- all force main (CC) elements that HW roughness method
         if (setting%Solver%ForceMain%UseForceMainTF) then
             !% print *, 'ForceMain Hazen-Williams ALL elements
-            !% ep_FM_HW_all
-            !% --- all force main (CC) elements that HW roughness method
+            
             ptype => col_elemP(ep_FM_HW_all)
             npack => npack_elemP(ptype)
 
             npack = count(                                            &
                     (elemYN(:,eYN_isForceMain))                       &
                     .and.                                             &
-                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) )
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams) )
 
             if (npack > 0) then
                 elemP(1:npack,ptype) = pack(eIdx,                     &
                     (elemYN(:,eYN_isForceMain))                       &
                     .and.                                             &
-                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) )
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams) )
             end if
         end if
+
+        !% ep_culvert_inlet
+        ptype => col_elemP(ep_Culvert_Inlet)
+        npack => npack_elemP(Ptype)
+        if (setting%Culvert%UseCulvertsTF) then
+            npack = count(                                          &
+                (elemYN(:,eYN_isCulvert))                           &
+                .and.                                               &
+                (                                                   &
+                    (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Inlet) &
+                    .or.                                            &
+                    (elemSI(:,esi_Conduit_Culvert_Part) == Culvert_InOut)  &
+                ) )
+
+            if (npack > 0) then 
+                elemP(1:npack,ptype) = pack(eIdx, &
+                (elemYN(:,eYN_isCulvert))                         &
+                    .and.                                               &
+                    (                                                   &
+                        (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Inlet) &
+                        .or.                                            &
+                        (elemSI(:,esi_Conduit_Culvert_Part) == Culvert_InOut)  &
+                    ) )
+            end if
+        else
+            !% --- set the npack to zero
+            npack = 0
+        end if
+
+        ! !% ep_culvert_outlet
+        ! ptype => col_elemP(ep_culvert_outlet)
+        ! npack => npack_elemP(Ptype)
+        ! if (setting%Culvert%UseCulvertsTF) then
+        !     npack = count(                                           &
+        !         (elemYN(:,eYN_isCulvert))                          &
+        !         .and.                                                &
+        !         (                                                    &
+        !             (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Outlet) &
+        !             .or.                                             &
+        !             (elemSI(:,esi_Conduit_Culvert_Part) == Culvert_InOut)   &
+        !         ) )
+        !     if (npack > 0) then 
+        !         elemP(1:npack,ptype) = pack(eIdx,                        &
+        !             (elemYN(:,eYN_isCulvert))                          &
+        !             .and.                                                &
+        !             (                                                    &
+        !                 (elemSI(:,esi_Conduit_Culvert_Part)  == Culvert_Outlet) &
+        !                 .or.                                             &
+        !                 (elemSI(:,esi_Conduit_Culvert_Part) == Culvert_InOut)   &
+        !             ) )
+        !     end if
+        ! else
+        !     !% --- set the npack to zero
+        !     npack = 0
+        ! end if
+
+        ! !% ep_culvert_inout
+        ! ptype => col_elemP(ep_culvert_inout)
+        ! npack => npack_elemP(Ptype)
+        ! if ( (setting%Culvert%UseCulvertsTF) .and. (N_culvert(this_image()) > 0) ) then
+        !     npack = count( &
+        !         (elemSI(:,esi_Culvert_inout)  == Culvert_InOut) &
+        !         )
+        !     if (npack > 0) then 
+        !         elemP(1:npack,ptype) = pack(eIdx, &
+        !         (elemSI(:,esi_Culvert_inout)  == Culvert_InOut) &
+        !         )
+        !     end if
+        ! else
+        !     !% --- set the npack to zero
+        !     npack = 0
+        ! end if 
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -3962,7 +4036,7 @@ contains
             npack = count(                                            &
                     (elemYN(:,eYN_isForceMain))                       &
                     .and.                                             &
-                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) &
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams) &
                     .and.                                             &
                     (elemR(:,er_SlotVolume) > zeroR) )
 
@@ -3970,7 +4044,7 @@ contains
                 elemP(1:npack,ptype) = pack(eIdx,                     &
                     (elemYN(:,eYN_isForceMain))                       &
                     .and.                                             &
-                    (elemSI(:,eSI_ForceMain_method) == HazenWilliams) &
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams) &
                     .and.                                             &
                     (elemR(:,er_SlotVolume) > zeroR)  )
             end if
@@ -3985,7 +4059,7 @@ contains
             ! npack = count(                                             &
             !         (elemYN(:,eYN_isForceMain))                        &
             !         .and.                                              &
-            !         (elemSI(:,eSI_ForceMain_method) == HazenWilliams)  &
+            !         (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams)  &
             !         .and.                                              &
             !         (elemR(:,er_SlotVolume) .eq. zeroR) )
 
@@ -3993,7 +4067,7 @@ contains
             !     elemP(1:npack,ptype) = pack(eIdx,                      &
             !         (elemYN(:,eYN_isForceMain))                        &
             !         .and.                                              &
-            !         (elemSI(:,eSI_ForceMain_method) == HazenWilliams)  &
+            !         (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams)  &
             !         .and.                                              &
             !         (elemR(:,er_SlotVolume) .eq. zeroR)  )
             ! end if
@@ -4007,7 +4081,7 @@ contains
             npack = count(                                             &
                     (elemYN(:,eYN_isForceMain))                        &
                     .and.                                              &
-                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)  &
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == DarcyWeisbach)  &
                     .and.                                              &
                     (elemR(:,er_SlotVolume) > zeroR) )
 
@@ -4015,7 +4089,7 @@ contains
                 elemP(1:npack,ptype) = pack(eIdx,                      &
                     (elemYN(:,eYN_isForceMain))                        &
                     .and.                                              &
-                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)  &
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == DarcyWeisbach)  &
                     .and.                                              &
                     (elemR(:,er_SlotVolume) > zeroR)  )
             end if
@@ -4029,7 +4103,7 @@ contains
             npack = count(                                                &
                     (elemYN(:,eYN_isForceMain))                           &
                     .and.                                                 &
-                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)     &
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == DarcyWeisbach)     &
                     .and.                                                 &
                     (elemR(:,er_SlotVolume) .eq. zeroR) )
 
@@ -4037,7 +4111,7 @@ contains
                 elemP(1:npack,ptype) = pack(eIdx,                         &
                     (elemYN(:,eYN_isForceMain))                           &
                     .and.                                                 &
-                    (elemSI(:,eSI_ForceMain_method) == DarcyWeisbach)     &
+                    (elemSI(:,esi_Conduit_Forcemain_Method) == DarcyWeisbach)     &
                     .and.                                                 &
                     (elemR(:,er_SlotVolume) .eq. zeroR)  )
             end if

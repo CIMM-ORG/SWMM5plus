@@ -45,12 +45,12 @@ module update
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%------------------------------------------------------------------
         !%
-            ! call util_CLprint ('in update before geometry toplevel')
+            !  call util_CLprint ('in update before geometry toplevel')
 
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
-            ! call util_CLprint ('in update before adjust_limit_velocity_max')
+            !  call util_CLprint ('in update before adjust_limit_velocity_max')
 
         !% --- adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
@@ -143,7 +143,7 @@ module update
         Npack => npack_elemP(thisCol)
 
         ! print *, 'in ',trim(subroutine_name)
-        ! print *, flowrate(139), area(139), velocity(139)
+        ! print *, flowrate(1), area(1), velocity(1)
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)

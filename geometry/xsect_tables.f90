@@ -126,7 +126,7 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine xsect_table_lookup &
+    pure subroutine xsect_table_lookup &
         (inoutArray, normalizedInput, table, thisP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -139,63 +139,60 @@ contains
         !% the delta to return the position in the array.
         !%
         !%-----------------------------------------------------------------------------
-        real(8), intent(inout)    :: inoutArray(:)
-        real(8), intent(in)       :: normalizedInput(:), table(:)
-        integer, intent(in)       :: thisP(:)
-        integer, pointer          :: position(:)
-        integer                   :: nItems, ii
-        real(8)                   :: delta
+        real(8), intent(inout)           :: inoutArray(:)
+        real(8), intent(in)              :: normalizedInput(:), table(:)
+        integer, intent(in)              :: thisP(:)
+        integer, dimension(size(thisP))  :: position
+        integer                          :: nItems, ii
+        real(8)                          :: delta
         !%-----------------------------------------------------------------------------
-        !if (crashYN) return
 
         nItems = size(table)
 
         !% pointer towards the position in the lookup table
         !% this is pointed towards temporary column
-        position => elemI(:,ei_Temp01)
+        !% 20221011 brh -- removed temporary space to make this subroutine pure
+        !position => elemI(:,ei_Temp01) 
 
-        delta = oneR / (nItems - oneR)
+        delta = oneR / (real(nItems,8) - oneR)
 
         !% --- Find the integer (lower) position in the table for interpolation
         !%     Note that fortran int() always gets the integer smaller than the value
-        where (normalizedInput(thisP) / delta + oneR < real(nItems,8))
-            position(thisP) = int(normalizedInput(thisP) / delta) +oneI
+        where ( ((normalizedInput(thisP) / delta) + oneR) < real(nItems,8))
+            position = int(normalizedInput(thisP) / delta) + oneI
         elsewhere
             !% --- don't try to convert larger values to a position 
             !%     (possible integer overflow)
-            position(thisP) = nItems
+             position = nItems
         endwhere
 
         !% find the normalized output from the lookup table
-        where (position(thisP) .LT. oneI)
+        where (position .LT. oneI)
             inoutArray(thisP) = zeroR
 
-        elsewhere ( (position(thisP) .GE. oneI  ) .and. &
-                    (position(thisP) .LT. nItems) )
+        elsewhere ( (position .GE. oneI  ) .and. &
+                    (position .LT. nItems) )
 
             !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
-            inoutArray(thisP) = table(position(thisP)) &
-                                + (normalizedInput(thisP) - real((position(thisP) - oneI),8) * delta) &
-                                 *(table(position(thisP) + oneI) - table(position(thisP))) / delta
+            inoutArray(thisP) = table(position) &
+                                + (normalizedInput(thisP) - real((position - oneI),8) * delta) &
+                                 *(table(position + oneI) - table(position)) / delta
 
-        elsewhere (position(thisP) .GE. nItems)
+        elsewhere (position .GE. nItems)
             inoutArray(thisP) = table(nItems)
         endwhere
 
         !% quadratic interpolation for low value of normalizedInput
-        where (position(thisP) .LE. twoI)
+        where (position .LE. twoI)
             inoutArray(thisP) = max(zeroR,                                                   &
                     inoutArray(thisP)                                                        & 
-                    + (  (normalizedInput(thisP) - real((position(thisP) - oneI),8) * delta) &
-                        *(normalizedInput(thisP) - real((position(thisP)       ),8) * delta) &
+                    + (  (normalizedInput(thisP) - real((position - oneI),8) * delta) &
+                        *(normalizedInput(thisP) - real((position       ),8) * delta) &
                          / (delta*delta) )                                                   &
-                     *(   onehalfR * table(position(thisP)     )                             &
-                        -            table(position(thisP)+oneI)                             &
-                        + onehalfR * table(position(thisP)+twoI) ) )
+                     *(   onehalfR * table(position     )                             &
+                        -            table(position+oneI)                             &
+                        + onehalfR * table(position+twoI) ) )
         endwhere
-
-        !% reset the temporary values to nullvalue
-        position(thisP) = nullvalueI
 
     end subroutine xsect_table_lookup
 !%

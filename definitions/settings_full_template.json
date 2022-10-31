@@ -66,7 +66,11 @@
         "energy_correction_factor" : 1.0,
         "water_temprature" : 20.0
     },
+    "Culvert" : {
+        "UseCulvertsTF" : true
+    },
     "Discretization" : {
+        "AllowChannelOverflowTF" : false,
         "AdustLinkLengthForJunctionBranchYN" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
@@ -83,7 +87,7 @@
         "UseCommandLineFoldersYN"  : true,
         "force_folder_creationYN"  : true,
         "base_folder" : "",
-        "library_folder" : "",
+        "library_folder" : "build",
         "output_folder" : "",
         "output_temp_subfolder" : "",
         "project_folder" : "",

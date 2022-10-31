@@ -69,9 +69,9 @@ C3               J3               Out1             2000        0.015      0     
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
 C1               CIRCULAR     2.0                0          0          0          1                    
-C2               CIRCULAR     2.0                0          0          0          2  
+C2               CIRCULAR     2.0                0          0          0          1         
 C3               CIRCULAR     2.0                0          0          0          1   
-;;C1                RECT_OPEN    2                2          0          0          1    
+;;C1                RECT_OPEN    2                2          0          0         1    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

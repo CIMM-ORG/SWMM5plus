@@ -1,0 +1,64 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "test",
+        "Short" : "test"
+    },
+    "Adjust" : {
+        "Flowrate" : {
+            "SmallDepthMultiplier" : 3.0
+        },
+    },    
+    "Discretization" : {
+        "AdustLinkLengthForJunctionBranchYN" : false,
+        "JunctionBranchLengthFactor" : 0.33,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "NominalElemLength" : 10.00
+    },
+    "Output" : {
+        "StoredLevels" : 100,
+        "CommandLine" : {
+            "interval" : 10
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFluxConsOut"     : true,
+            "isFroudeNumberOut" : true,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isManningsNout" : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
+        }
+    },
+    "Simulation" :{
+        "useSpinUp" : false,
+        "SpinUpDays" : 0.0,
+        "stopAfterSpinUp" : false
+    },
+    "SmallDepth" : {
+        "DepthCutoff" : 0.01,
+        "ManningsN" : 0.1
+    },
+    "Solver" : {
+        "MomentumSourceMethod" : "T10"
+    },
+    "VariableDT" : {
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.4,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10,
+        "InitialDt"      : 10.0
+    }
+}

@@ -481,15 +481,20 @@ module face
         !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
         faceR(idx_fBC, fr_Head_u) = headBC(idx_P)
 
+        ! print*, ' '
         ! print *, 'in ',trim(subroutine_name)
-        ! print *, 'faceR value ', faceR(idx_fBC, fr_Head_u)
+        ! print *, 'BC Head idx ', BC%headI(:, bi_idx)
+        ! print *, 'BC head cat ', BC%headI(:, bi_subcategory)
+        ! print *, 'BC head key ', trim(reverseKey(BC%headI(1, bi_subcategory))), ' ',trim(reverseKey(BC%headI(1, bi_subcategory)))
+        ! print *, 'face ID ', idx_fBC
+        ! print *, 'faceR head value ', faceR(idx_fBC, fr_Head_u)
         ! print *, 'BC head ',headBC(idx_P)
         ! print *, 'BC depth',headBC(idx_P) - faceR(idx_fBC,fr_Zbottom)
 
         !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
         faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
 
-        ! print *, eHead(eup(idx_fBC)), headBC(idx_P)
+        ! print *, 'e head, head bc ', eHead(eup(idx_fBC)), headBC(idx_P)
         
         !% --- for a flap gate on a BC with higher head downstream
         where ( hasFlapGateBC(idx_P) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
@@ -498,7 +503,7 @@ module face
             faceR(idx_fBC, fr_Head_d) = headBC(idx_P)
         endwhere
 
-        ! print *, 'faceR value ',faceR(idx_fBC, fr_Head_u)
+        ! print *, 'faceR value head ',faceR(idx_fBC, fr_Head_u)
         
         !% --- get geometry for face from upstream element shape
         if (.not. isBConly) then
@@ -510,9 +515,10 @@ module face
             !%     but using the depthBC at the upstream side of the face (which may be closed gate)   
             do ii=1,size(idx_fBC)
                 elemUpstream => eup(idx_fBC(ii))
-                faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
+                !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
                 faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
                 faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular    (elemUpstream,depthBC(idx_P(ii)))
+                faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_area_and_topwidth_singular(elemUpstream, faceR(idx_fBC(ii),fr_Area_u),faceR(idx_fBC(ii),fr_Topwidth_u) )
                 ! !% TEST 20220712--- apply simple linear interpolation to prevent large downstream area from causing numerical problems
                 ! !% 20220712brh
                 ! faceR(idx_fBC(ii),fr_Area_u)     =  (faceR(idx_fBC(ii),fr_Area_u)     + eArea(elemUpstream)    ) * onehalfR
@@ -529,22 +535,28 @@ module face
             ! print *, 'depthBC ',depthBC(idx_P(1))
             ! print *, 'area    ',faceR(idx_fBC(1),fr_Area_u)
             ! print *, ' '
-            !stop 2987355
+            ! !stop 2987355
 
             !% --- set the flowrate to the upstream element value
             do ii = 1,size(idx_fBC)
                 elemUpstream => eup(idx_fBC(ii))
 
+                ! print *, ' '
+                ! print *, 'elem upstream ', elemUpstream
+
                 !% --- check for closed flap gate
                 if (hasFlapGateBC(idx_P(ii))) then
+                    ! print *, 'has flapgate'
                     if (faceR(idx_fBC(ii), fr_Head_u) < headBC(idx_P(ii))) then
                         !% --- set BC flow to zero for closed flap gate
                         faceR(idx_fBC(ii), fr_Flowrate) = zeroR
+                        ! print *, 'setting face flowrate to zero'
                     else
                         !% --- set BC flow to the flow at the upstream element center
                         !%     note that if the upstream value is negative the BC is set to zero
                         !%     to prevent backflow
                         faceR(idx_fBC(ii), fr_Flowrate) = max(eFlow(elemUpstream),zeroR)
+                        ! print *, 'face flowrate ',faceR(idx_fBC(ii), fr_Flowrate)
                     end if
                     cycle  !% no need to consider possible backflows
                 end if
@@ -589,7 +601,7 @@ module face
                     !%     NOTE this flowrate may be either upstream or downstream!
                     faceR(idx_fBC(ii),fr_Flowrate) = min(Vtemp * faceR(idx_fBC(ii),fr_Area_u),eFlow(elemUpstream))
 
-                    !print *, 'naive face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
+                    ! print *, 'naive face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
 
                     !% --- final check on upstream flowrate magnitude
                     if (faceR(idx_fBC(ii),fr_Flowrate) < zeroR) then
@@ -598,7 +610,7 @@ module face
                         !%     This reduces oscillatory behavior by preventing over filling on back flow
                         thisDepth  = faceR(idx_fBC(ii), fr_Head_u) - eZbottom(elemUpstream)
 
-                        !print *, 'thisDepth ',thisDepth
+                        ! print *, 'thisDepth ',thisDepth
 
                         if (thisDepth > zeroR) then
                             !% --- get the volume of the upstream element if filled to the BC head level
@@ -634,7 +646,7 @@ module face
                     faceR(idx_fBC(ii), fr_Flowrate) = eFlow(elemUpstream)
                 end if
 
-            !print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
+            ! print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
             end do
 
 
@@ -646,6 +658,8 @@ module face
             !     faceR(idx_fBC, fr_Flowrate) = zeroR
             ! end where
 
+            ! print *, 'face area u ', faceR(idx_fBC,fr_Area_u)
+            ! print *, 'face area d ', faceR(idx_fBC,fr_Area_d)
 
             !% --- ensure face area_u is not smaller than zerovalue
             where (faceR(idx_fBC,fr_Area_d) < setting%ZeroValue%Area)
@@ -657,6 +671,9 @@ module face
 
             faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_u)
             faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)  
+
+            ! print *, 'face velocity u ', faceR(idx_fBC,fr_Velocity_u)
+            ! print *, 'face velocity d ', faceR(idx_fBC,fr_Velocity_d)
 
             !%  limit high velocities
             if (setting%Limiter%Velocity%UseLimitMaxYN) then
@@ -803,6 +820,7 @@ module face
         !%------------------------------------------------------------------
         !% Aliases       
             Npack => npack_faceP(facePackCol)
+            if (Npack < 1) return
         !%------------------------------------------------------------------  
         !% Preliminaries    
             if (setting%Debug%File%face) &
@@ -867,6 +885,9 @@ module face
 
         !% reset all the hydraulic jump interior faces
         call jump_compute
+
+        !% --- compute volume-based limits on flowrate
+        call face_flowrate_limits_interior (facePackCol)
 
         !%------------------------------------------------------------------
         !% Closing
@@ -967,6 +988,9 @@ module face
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
         call face_velocities (facePackCol, .false.)
+
+        !% --- compute volume-based limits on flowrate
+        call face_flowrate_limits_shared (facePackCol)
 
         !% 20220425brh
         ! if (this_image() == 3) then
@@ -1781,6 +1805,91 @@ module face
     !     if (setting%Debug%File%face) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     ! end subroutine face_interp_set_byMask
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine face_flowrate_limits_interior (facePackCol)   
+        !%------------------------------------------------------------------
+        !% Description:
+        !% stores maximum and minimum flowrates on the face based on
+        !% emptying the volume of the upstream element (maximum) or the 
+        !% downstream element (reversed flow maximum negative or minimum flow)
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: facePackCol
+            integer, pointer :: Npack
+            integer, pointer :: thisP(:), eup(:), edn(:)
+            real(8), pointer :: dt, eVolume(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            Npack => npack_faceP(facePackCol)
+            if (Npack < 1) return
+            thisP   => faceP(1:Npack,facePackCol)
+            eup     => faceI(:,fi_Melem_uL)
+            edn     => faceI(:,fi_Melem_dL)
+            eVolume => elemR(:,er_Volume)
+            dt      => setting%Time%Hydraulics%Dt
+        !%------------------------------------------------------------------ 
+
+        faceR(thisP,fr_FlowrateMax) =  eVolume(eup(thisP)) / dt
+        faceR(thisP,fr_FlowrateMin) = -eVolume(edn(thisP)) / dt
+
+        ! print *, 'thisP ',thisP
+        ! print *, 'eup(thisP)', eup(thisP)
+        ! print *, 'edn(thisP)', edn(thisP)
+        ! print *, faceR(thisP,fr_FlowrateMax)
+        ! print *, faceR(thisP,fr_FlowrateMin)
+        ! stop 43534
+
+    end subroutine face_flowrate_limits_interior
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine face_flowrate_limits_shared (facePackCol)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% stores maximum and minimum flowrates on the face based on
+        !% emptying the volume of the upstream element (maximum) or the 
+        !% downstream element (reversed flow maximum negative or minimum flow)
+        !% Must be conducted AFTER  inter_image_data_transfer
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer             :: ii
+            integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
+            integer, pointer    :: Npack        !% expected number of packed rows in faceP.
+            integer, pointer    :: thisP, eup, edn, BUpIdx, BDnIdx
+            real(8), pointer    :: dt
+            logical, pointer    :: isGhostUp, isGhostDn
+        !%-------------------------------------------------------------------
+        !% Preliminaries   
+            Npack => npack_facePS(facePackCol)
+            if (Npack < 1) return
+            dt => setting%Time%Hydraulics%Dt
+    
+        !%-------------------------------------------------------------------   
+        do ii=1,Npack
+            !%---------------------------------------------------------------
+            !% Local Aliases
+            thisP           => facePS(ii,facePackCol)
+            eup             => faceI(thisP,fi_Melem_uL)
+            edn             => faceI(thisP,fi_Melem_dL)
+            BUpIdx          => faceI(thisP,fi_BoundaryElem_uL)
+            BDnIdx          => faceI(thisP,fi_BoundaryElem_dL)
+            isGhostUp       => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn       => faceYN(thisP,fYN_isDnGhost)
+            !%---------------------------------------------------------------
+            if (isGhostUp) then 
+                faceR(thisP,fr_FlowrateMax) = elemGR(ii,ebgr_Volume) / dt
+            elseif (isGhostDn) then 
+                faceR(thisP,fr_FlowrateMin) = -elemGR(ii,ebgr_Volume) / dt 
+            end if
+
+        end do
+
+
+    end subroutine face_flowrate_limits_shared
 !%
 !%==========================================================================
 !% END OF MODULE

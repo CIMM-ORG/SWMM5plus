@@ -6,7 +6,8 @@ module orifice_elements
     use define_settings, only: setting
     use common_elements
     use adjust
-    use geometry, only: geo_ell_singular
+    use geometry_lowlevel, only: llgeo_ell_pure
+    !use geometry, only: geo_ell_singular
     use define_xsect_tables
     use utility, only: util_sign_with_ones
     use xsect_tables
@@ -341,6 +342,9 @@ module orifice_elements
         integer, pointer :: GeometryType
         real(8)          :: YoverYfull
 
+        integer, dimension(1) :: iA 
+        real(8), dimension(1) :: outA
+
         character(64) :: subroutine_name = 'orifice_geometry_update'
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
@@ -429,7 +433,10 @@ module orifice_elements
                     Perimeter = setting%ZeroValue%Depth
                 end if
 
-                ell = geo_ell_singular(eIdx)
+                !ell = geo_ell_singular(eIdx)
+                iA(1) = eIdx
+                outA = llgeo_ell_pure(iA)
+                ell = outA(1)
    
             case default
                 print *, 'CODE ERROR geometry type unknown for # ', GeometryType

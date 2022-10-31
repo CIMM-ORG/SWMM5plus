@@ -92,7 +92,10 @@ module define_globals
     ! integer :: iet(7) = (/ 3141, 3142,  8520, 8521, 3122, 8518, 8519/)
     ! integer :: ift(8) = (/3255, 3256, 3257, 8702, 3235, 3236, 8701, 3224 /)
 
-    integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
+    !integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
+
+    integer :: iet(4) = (/8, 9, 10 ,         11  /)
+    integer :: ift(4) =   (/9, 10,    11,12/)
 
     integer(kind=8) :: irecCount = 0
 
@@ -146,6 +149,17 @@ module define_globals
     real(8), allocatable, target :: uniformTableR(:,:)
     real(8), allocatable, target :: uniformTableDataR(:,:,:) 
 
+    !% HOLD FOR LATER IMPLEMENTATION 20220930
+    ! !% --- geometry unified fast lookup tables
+    ! !%     rows are elements
+    ! !%     col2 is 1:26 lookup
+    ! !%     col3 is type of lookup
+    ! real(8), allocatable, target :: geometryTableR(:,:,:)
+
+    ! !% --- Number of discrete entries in the geometry Table R
+    ! integer ::  Ncol2_GeometryTableR = 26
+
+
     !% boundary elements array
     type(BoundaryElemArray), allocatable :: elemB[:]
 
@@ -192,9 +206,11 @@ module define_globals
     !% number of control action and monitoring points in system (identical on each image)
     integer,  target :: N_ActionPoint
     integer,  target :: N_MonitorPoint
+    !% number of culverts on an image
+    !integer, allocatable, target :: N_culvert(:)
 
     !% --- packed array of columns from elemR used in conmonR
-    integer, allocatable, target :: cmR_eR_col(:)
+    !integer, allocatable, target :: cmR_eR_col(:)  OBSOLETE 20221003
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]       !% coarray for elements
@@ -225,6 +241,14 @@ module define_globals
 
     real(8), allocatable, target :: monitorPassR(:)[:]  !% monitor data to be passed between coarrays
 
+    !% Culvert parameters
+    integer, parameter :: NculvertTypes = 57
+    integer, parameter :: NculvertParams = 6
+    real(8), dimension(NculvertTypes,NculvertParams) :: culvertValue
+
+    
+
+
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]       !% coarray for faces real data
     integer, allocatable, target :: faceI(:,:)[:]       !% coarray for faces integer data
@@ -235,7 +259,7 @@ module define_globals
     real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
     !% subcatchments -- NOT coarray
-    real(8), allocatable, target :: subcatchR(:,:)      !% subcatchment real data
+    real(8), allocatable, target :: subcatchR(:,:)[:]   !% subcatchment real data
     integer, allocatable, target :: subcatchI(:,:)      !% subcatchment integer data
     logical, allocatable, target :: subcatchYN(:,:)     !% subcatchment logical data
 
@@ -424,6 +448,7 @@ module define_globals
     integer :: N_monitor_types = 7 !% # of data types transferred from monitorR in monitorPassR
     !integer :: SWMM_N_curve
     integer :: N_Curve
+    integer :: N_subcatch_runon
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 

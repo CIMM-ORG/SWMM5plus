@@ -99,7 +99,6 @@ module diagnostic_elements
             thisP    => elemP(1:Npack,thisCol)
         !%-----------------------------------------------------------------------------
 
-
         !% this cycles through the individual elements, but each
         !% cycle is entirely independent
         do ii=1,Npack

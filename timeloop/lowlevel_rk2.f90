@@ -74,7 +74,8 @@ module lowlevel_rk2
 
         elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
 
-        !print *, 'in ll_continuity_netflowrate_CC'
+        ! print *, 'in ll_continuity_netflowrate_CC'
+        ! print *, fQ(iup(1)), fQ(idn(1)), eQlat(1)
         !print *, fQ(iup(ietmp(3))), fQ(idn(ietmp(3))), eQlat(ietmp(3))
         !print *, elemR(ietmp(3),outCol)
 
@@ -534,8 +535,8 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! print *, 'fQ  * fU up',fQ(iup(iet(4))) * fUdn(iup(iet(4)))
-        ! print *, 'fQ  * fU dn',fQ(idn(iet(4))) * fUup(idn(iet(4)))
+        ! print *, 'fQ  * fU up',fQ(iup(iet(3))) * fUdn(iup(iet(3)))
+        ! print *, 'fQ  * fU dn',fQ(idn(iet(3))) * fUup(idn(iet(3)))
         ! print *, 'fAdn * Hdn ',fAdn(iup(iet(4))) * fHdn(iup(iet(4)))
         ! print *, 'fAup * Hup ',fAup(idn(iet(4))) * fHup(idn(iet(4)))
         ! ! ! print *, 'eksource ',eKsource(iet(7))
@@ -544,7 +545,7 @@ module lowlevel_rk2
         ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(4))) * fHdn(iup(iet(4))) - fAup(idn(iet(4))) * fHup(idn(iet(4))))
         ! print *, 'fAdn , Hdn ',fAdn(iup(iet(4))) , fHdn(iup(iet(4)))
         ! print *, 'fAup , Hup ',fAup(idn(iet(4))) , fHup(idn(iet(4)))
-        ! print *, 'eksource   ',eKsource(iet(4))
+        ! print *, 'eksource   ',eKsource(iet(3))
         ! print *, 'out        ',elemR(iet(4),outCol)
         ! print *, ' '
 
@@ -629,7 +630,7 @@ module lowlevel_rk2
                 /                                                   &
                 ( rh(thisP)**fourthirdsR )                         
     
-        !    print *, 'in ll_momentum_gamma_CC'
+        !    print *, 'in ',trim(subroutine_name)
         !    print *, elemR(thisP,outCol)
         !    print *, ' '
         !    print *, '============================'
@@ -657,7 +658,7 @@ module lowlevel_rk2
             real(8), pointer   :: grav, velocity(:), AFull(:), Pfull(:)
             real(8), pointer   :: FMcoef(:), DWf(:)
             integer, pointer   :: thisP(:)
-            real(8), parameter :: HZfactor = 1.351d0
+            real(8), parameter :: HZfactor = 1.354d0
             real(8), parameter :: HZexpU   = 0.852d0
             real(8), parameter :: HZexpD1  = 1.852d0
             real(8), parameter :: HZexpD2  = 1.1667d0
@@ -670,8 +671,8 @@ module lowlevel_rk2
             velocity => elemR(:,er_velocity)
             Afull    => elemR(:,er_FullArea)
             Pfull    => elemR(:,er_FullPerimeter)
-            FMcoef   => elemSR(:,esr_ForceMain_Coef)
-            DWf      => elemSR(:,esr_ForceMain_FrictionFactor)
+            FMcoef   => elemSR(:,esr_Conduit_ForceMain_Coef)
+            DWf      => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
             grav => setting%constant%gravity
         !%------------------------------------------------------------------
 
@@ -680,10 +681,18 @@ module lowlevel_rk2
             elemR(thisP,outCol) =                                            &
                 (HZfactor * grav * abs(velocity(thisP))**(HZexpU))           &
                 / ( (FMcoef(thisP)**HZexpD1) * ((Afull(thisP) / Pfull(thisP))**HZexpD2) )
+
+                ! print *, 'HazenWilliams in ',trim(subroutine_name)
+                ! print *, elemR(thisP,outCol)
+
         case (DarcyWeisbach)
             elemR(thisP,outCol) = &
                 (DWf(thisP) * abs(velocity(thisP)) ) &
                 / ( eightR * Afull(thisP)/Pfull(thisP)  )
+
+                ! print *, 'DarcyWeisbach in ',trim(subroutine_name) 
+                ! print *, elemR(thisP,outCol)
+
         case default
             print *, 'CODE ERROR: unexpected case default'
             call util_crashpoint(5592283)
@@ -760,9 +769,9 @@ module lowlevel_rk2
         !% Declarations:
             integer, intent(in) :: thisCol, Npack
             integer, pointer    :: thisP(:)
-            real(8), pointer    :: Re(:), hydradius(:), Afull(:), Pfull(:)
+            real(8), pointer    :: Re(:), Re2(:), hydradius(:), Afull(:), Pfull(:)
             real(8), pointer    :: velocity(:), rough(:), Ffac(:), viscosity
-            real(8), parameter  :: eCoef = 1.081d0 !% roughness multiplier in SI
+            real(8), parameter  :: eCoef = 1.08108d0 !% roughness multiplier in SI (4/3.7)
             real(8), parameter  :: rCoef = 5.74d0  !% Reynolds number coef
             real(8), parameter  :: rExpon = 0.9d0  !% Reynolds number exponent
         !%--------------------------------------------------------------------
@@ -772,12 +781,13 @@ module lowlevel_rk2
         !% Aliases
             thisP     => elemP(1:Npack,thisCol)
             Re        => elemR(:,er_Temp01)
+            Re2       => elemR(:,er_Temp02)
             hydradius => elemR(:,er_HydRadius)
             Afull     => elemR(:,er_FullArea)
             Pfull     => elemR(:,er_FullPerimeter)
             velocity  => elemR(:,er_Velocity)
-            rough     => elemSR(:,esr_ForceMain_Coef)
-            Ffac      => elemSR(:,esr_ForceMain_FrictionFactor)
+            rough     => elemSR(:,esr_Conduit_ForceMain_Coef)
+            Ffac      => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
             viscosity => setting%Constant%water_kinematic_viscosity
         !%------------------------------------------------------------------
         !% --- for Reynolds number, use Hydraulic Diameter = 4 * hydraulic radius
@@ -786,14 +796,33 @@ module lowlevel_rk2
         !%     manning's n computed at full pipe conditions.
         Re(thisP) = velocity(thisP) * fourR * (Afull(thisP) / Pfull(thisP)) / viscosity
 
-        !% --- compute the friction factor
+        !% --- lower bound for Reynolds number following forcemain_getReynolds in EPA SWMM
+        Re(thisP) = min(Re(thisP),tenR)
+
+        !% --- setup for Re < 4000
+        Re2(thisP) = max(Re(thisP),4000.d0)
+     
+        !% --- compute the friction factor for fully turbulent flow
         !%     This uses the full hydraulic radius for consistency in the derivation
         !%     of the equivalent Manning's n
         Ffac(thisP) = onefourthR                                             &
             / ( log10(                                                       &
                       (eCoef * rough(thisP) / (Afull(thisP) / Pfull(thisP))) &
-                       + (rCoef / (Re(thisP)**rExpon))                       &
+                       + (rCoef / (Re2(thisP)**rExpon))                       &
                      )**2 ) 
+
+        !% --- handle low Re following approach in EPA SWMM forcemain_getFricFactor
+        where (Re(thisP) .le. 2000.d0)
+            Ffac(thisP) = 64.d0 / Re(thisP)
+        elsewhere ((Re(thisP) > 2000.d0) .and. (Re(thisP) < 4000.d0))
+            Ffac(thisP) = 0.032d0 + (Ffac(thisP) - 0.032d0) * (Re(thisP) - 2000.d0) / 2000.d0
+        elsewhere
+            !% -- accept the f from full turbulence
+        end where       
+        
+        !% --- reset temporary values
+        Re = nullvalueR
+        Re2 = nullvalueR
 
     end subroutine ll_ForceMain_dw_friction
 !%
@@ -812,18 +841,18 @@ module lowlevel_rk2
             real(8), pointer    :: manningsN(:), slope(:), Afull(:), Pfull(:)
             real(8), pointer    :: HWcoef(:), Ffactor(:)
             real(8), pointer    :: slopeMin, grav
-            real(8), parameter  :: HWfactorD = 0.85d0
+            real(8), parameter  :: HWfactorD = 0.8492d0
             real(8), parameter  :: HWslopeExp = 0.04d0
-            real(8), parameter  :: HWhydradExp = 0.037d0
-            real(8), parameter  :: DWhydradExp = 0.1667d0
+            real(8), parameter  :: HWhydradExp = 0.03667d0
+            real(8), parameter  :: DWhydradExp = 0.1667d0 !% (1/6)
         !%------------------------------------------------------------------
         !% Preliminaries
             if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases
             thisP      => elemP(1:Npack,thisCol)
-            HWcoef     => elemSR(:,esr_ForceMain_Coef)
-            Ffactor    => elemSR(:,esr_ForceMain_FrictionFactor)
+            HWcoef     => elemSR(:,esr_Conduit_ForceMain_Coef)
+            Ffactor    => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
             manningsN  => elemR(:,er_ManningsN)
             Afull      => elemR(:,er_FullArea)
             Pfull      => elemR(:,er_FullPerimeter)

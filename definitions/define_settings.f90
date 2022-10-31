@@ -141,7 +141,7 @@ module define_settings
         logical :: isFluxConsOut            = .true.
         logical :: isFroudeNumberOut        = .false.
         logical :: isHeadOut                = .true.
-        logical :: isPressureHeadOut        = .true.
+        !logical :: isPressureHeadOut        = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
         logical :: isManningsNout           = .false.
@@ -233,6 +233,7 @@ module define_settings
         integer :: Method = DynamicSlot
         real(8) :: TargetCelerity = 3.0d0
         real(8) :: Alpha = 2.0d0
+        real(8) :: DecayRate = 1.0
     end type PreissmannSlotType
 
     !% setting%Output%Report
@@ -251,7 +252,7 @@ module define_settings
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
     type TimeStepType
-       real(8) :: Dt
+       real(8) :: Dt        !% NOT A USER SETTING
        real(8) :: LastTime  !% NOT A USER SETTING
        real(8) :: NextTime  !% NOT A USER SETTING
        integer(kind=8) :: Step  !% NOT A USER SETTING
@@ -440,6 +441,10 @@ module define_settings
         real(8) :: PercentVelocityAtLimit  !% percentage of cells at velocity limit that causes crash
     end type CrashType
 
+    type CulvertType
+        logical :: UseCulvertsTF = .true.   !% false allows culverts to be treated as conduits
+    end type CulvertType
+
     !% setting%Debug
     !% THESE WILL BE OBSOLETE
     type DebugType
@@ -451,11 +456,13 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
+        logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
         logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
         real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
         real(8) :: NominalElemLength   = 10.0d0
+        real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 
     ! setting%Eps
@@ -484,8 +491,8 @@ module define_settings
         logical              :: force_folder_creationYN = .true.
         logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
-        character(len=256)   :: base_folder = "build"
-        character(len=256)   :: library_folder = "build"
+        character(len=256)   :: base_folder = ""
+        character(len=256)   :: library_folder = "build"  !% DO NOT CHANGE THIS FROM "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
@@ -616,9 +623,9 @@ module define_settings
         real(8) :: AverageZbottom = zeroR               !% NOT A USER SETTING
         real(8) :: MaxZbottom = zeroR                   !% NOT A USER SETTING
         real(8) :: MinZbottom = zeroR                   !% NOT A USER SETTING
-        real(8), dimension(2) :: crk2 = [0.5d0, 1.0d0]  !% NOT A USER SETTING
-        type(ForceMainType) :: ForceMain
-        type(ManningsNtype) :: ManningsN
+        real(8), dimension(2)    :: crk2 = [0.5d0, 1.0d0]  !% NOT A USER SETTING
+        type(ForceMainType)      :: ForceMain
+        type(ManningsNtype)      :: ManningsN
         type(PreissmannSlotType) :: PreissmannSlot
     end type SolverType
 
@@ -629,6 +636,7 @@ module define_settings
 
     !% storage for data read from SWMM input file
     !% NOT USER SETTINGS
+    !% setting%SWMMinput...
     type SWMMinputType
         logical :: AllowPonding
         integer :: ForceMainEquation
@@ -699,7 +707,7 @@ module define_settings
     type ZerovalueType
         logical :: UseZeroValues = .true.
         real(8) :: Area = 1.d-3 ! m^2 -- NOT A USER SETTING
-        real(8) :: Depth = 1.d-3 ! m
+        real(8) :: Depth = 1.d-6 ! m
         real(8) :: Slope = 1.e-6 ! prevents zero values (may be + or -)
         real(8) :: Topwidth = 1.d-3 ! m -- NOT A USER SETTING
         real(8) :: Volume = 1.d-2 ! m^3 -- NOT A USER SETTING
@@ -721,6 +729,7 @@ module define_settings
         type(ConstantType)       :: Constant ! Constants
         type(ControlType)        :: Control  ! Control data structure
         type(CrashType)          :: Crash    !% conditions where code is considered crashin
+        type(CulvertType)        :: Culvert  
         type(DebugType)          :: Debug
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
@@ -1135,12 +1144,27 @@ contains
     !% Crash =====================================================================
         !%                       Crash. are set by code    
 
+
+    !% Culvert =====================================================================
+    !%                          Culvert.UseCulvertsTF
+        call json%get('Culvert.UseCulvertsTF',logical_value, found)
+        if (found) setting%Culvert%UseCulvertsTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Culvert.UseCulvertsTF not found'
+
+        
     !% Discretization. =====================================================================
+        !% -- Channel overflow
+        !%                      Discretization.AllowChannelOverflowTF
+        call json%get('Discretization.AllowChannelOverflowTF', logical_value, found)
+        if (found) setting%Discretization%AllowChannelOverflowTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AllowChannelOverflowTF not found'
+      
         !% -- Nominal element length adjustment
         !%                      Discretization.AdustLinkLengthForJunctionBranchYN
         call json%get('Discretization.AdustLinkLengthForJunctionBranchYN', logical_value, found)
         if (found) setting%Discretization%AdustLinkLengthForJunctionBranchYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdustLinkLengthForJunctionBranchYN not found'
+
 
         !%                      Discretization.JunctionBranchLengthFactor
         call json%get('Discretization.JunctionBranchLengthFactor', real_value, found)
@@ -1879,6 +1903,11 @@ contains
         if (found) setting%Solver%PreissmannSlot%Alpha = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.Alpha not found'
 
+        !%                      DecayRate
+        call json%get('Solver.PreissmannSlot.DecayRate', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%DecayRate = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.DecayRate not found'
+
 
     !% TestCase.  =====================================================================
         !%                       TestCase.UseTestCaseYN
@@ -1936,8 +1965,9 @@ contains
         !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.EndEpoch not found'
 
         !%                      Time.Hydraulics.Dt
-        call json%get('Time.Hydraulics.Dt', real_value, found)
-        if (found) setting%Time%Hydraulics%Dt = real_value
+        !% DO NOT READ THE HYDRAULICS TIME -- THIS IS OVERWRITTEN BY THE VARIABLE DT
+        ! call json%get('Time.Hydraulics.Dt', real_value, found)
+        ! if (found) setting%Time%Hydraulics%Dt = real_value
         !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydraulics.Dt not found'
     
         !% do not read          Time.Hydraulics.LastTime
@@ -1945,8 +1975,9 @@ contains
         !% do not read          Time.Hydraulics.Step
 
         !%                      Time.Hydrology.Dt
-        if (found) call json%get('Time.Hydrology.Dt', real_value, found)
-        setting%Time%Hydrology%Dt = real_value
+        !% DO NOT READ THE HYDROLOGY DT, SHOULD USE SWMMinput
+        ! if (found) call json%get('Time.Hydrology.Dt', real_value, found)
+        ! setting%Time%Hydrology%Dt = real_value
         !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydrology.Dt not found'
 
         !% do not read          Time.Hydrology.LastTime

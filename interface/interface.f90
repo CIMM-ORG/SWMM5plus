@@ -62,10 +62,12 @@ module interface_
     public :: interface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
+    public :: interface_export_runon_volume
     public :: interface_call_runoff_execute
     public :: interface_get_subcatch_runoff
     public :: interface_get_subcatch_runoff_nodeIdx
     public :: interface_get_NewRunoffTime
+
 
 !%==========================================================================
 !%==========================================================================
@@ -477,8 +479,16 @@ module interface_
         !% -------------------------------------------------------------------------------
         ! --- Hydrology
         !% -------------------------------------------------------------------------------   
+        integer(c_int) function api_export_runon_volume(outfall_idx,flowrate) &
+            BIND(C, name='api_export_runon_volume')
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int), value, intent(in) :: outfall_idx
+            real(c_double), value, intent(in) :: flowrate
+        end function api_export_runon_volume
+        !% -------------------------------------------------------------------------------   
         integer(c_int) function api_call_runoff_execute() &
-            BIND(C, name='api_call_runoff_execte')
+            BIND(C, name='api_call_runoff_execute')
             use, intrinsic :: iso_c_binding
             implicit none 
         end function api_call_runoff_execute
@@ -557,6 +567,7 @@ module interface_
     procedure(api_export_link_results),        pointer :: ptr_api_export_link_results
     procedure(api_export_node_results),        pointer :: ptr_api_export_node_results
     procedure(api_find_object),                pointer :: ptr_api_find_object
+    procedure(api_export_runon_volume),      pointer :: ptr_api_export_runon_volume
     procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
     procedure(api_get_subcatch_runoff_nodeIdx), pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
@@ -1137,7 +1148,9 @@ contains
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
         if (    (attr == api_nodef_extInflow_tSeries    )    &
            .or. (attr == api_nodef_extInflow_basePat_idx)    &
-           .or. (attr == api_nodef_head_tSeries) ) then
+           .or. (attr == api_nodef_head_tSeries)             &
+           .or. (attr == api_nodef_RouteTo)                  &
+           ) then
             if (node_value /= -1) node_value = node_value + 1
         end if
 
@@ -1173,7 +1186,12 @@ contains
         !%----------------------------------------------------------------------
         !% Preliminaries
             !% --- error checking
-            !print *, 'calling linkf_attribute'
+            ! print *, '--- in interface_get_linkf_attribute'
+            ! print *, 'linkf_attribute = ', attr, trim(reverseKey_api(attr))
+            ! print *, 'api_linkf_start ',api_linkf_start
+            ! print *, 'api_linkf_commonbreak', api_linkf_commonbreak
+            ! print *, 'api_linkf_typeBreak', api_linkf_typeBreak
+
             if (setting%Debug%File%interface) &
                 write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
                 "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
@@ -1227,18 +1245,25 @@ contains
             !%     First we use the api_linkf_type to get the overarching link type for this
             !%     link. This allows us to properly categorize the sub_type values to read         
     
+            ! print *, '****** CALLING api_get_linkf_attribute with linkf_type' 
+            ! print *, api_linkf_type, trim(reverseKey_api(api_linkf_type))
+            
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
 
-            !print *, 'here 5098734'
-            ! print *, link_value
+            ! print *, 'here 5098734'
+            ! print *, 'link value ',link_value
 
             ilink_value = int(link_value) !% the linkf_type is always an integer
 
             ! print *, 'ilink_value', ilink_value
-            ! print *, API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
+            ! print *, 'options: ',API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
+
+            ! print *, 'attr               ',attr, trim(reverseKey_api(attr))
+            ! print *, 'api_linkf_type     ',api_linkf_type
+            ! print *, 'api_linkf_sub_type ',api_linkf_sub_type
 
             !% --- handle the different linkf_type
             select case (ilink_value)
@@ -1436,8 +1461,15 @@ contains
                     print *, 'input attr of ',attr, reverseKey_api(attr)
                     print *, 'unknown link value',ilink_value
                     print *, 'problem in call to ptr_api_get_linkf_attribute with api_linkf_type'
-                    print *, 'A possible cause is the EPA-SWMM executable needs to be recompiled'
+                    print *, 'A possible cause is the EPA-SWMM library needs to be recompiled'
                     print *, 'This usually requires a cmake .. followed by a make'
+                    print *, 'It is also possible that an old version of the libswmm5.so file'
+                    print *, 'is being used instead of the correct version. Check the library'
+                    print *, 'folder being used in setting%File%library_folder.'
+                    print *, 'Library folder is: ',trim(setting%File%library_folder)
+                    print *, 'The other likely source is failure to update transect_ID'
+                    print *, 'and linkf_ID in api.h, which causes enum of api keys to be offset'
+                    print *, 'from define_api_keys.f90'
                     call util_crashpoint(6698733)
             end select
       
@@ -1450,6 +1482,9 @@ contains
 
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
+            ! print *, '********* calling linkf_attribute with xsect_type '
+            ! print *, api_linkf_xsect_type, trim(reverseKey_api(api_linkf_xsect_type))
+
             !% --- load the cross-section type no matter what the input attr is.
             ! print *, ' '
             ! print *, 'call GGG calling get_linkf_attribute for xsect_type'
@@ -1460,8 +1495,8 @@ contains
 
             ! print *, 'attr ',attr, trim(reverseKey_api(attr))
             ! print *, 'link_value ',link_value, API_FORCE_MAIN
-            !print *, 'error ',error
-            !print *, API_FORCE_MAIN
+            ! !print *, 'error ',error
+            ! print *, 'API_FORCE_MAIN  = ',API_FORCE_MAIN
 
             !% 20220420brh
             ilink_value = int(link_value) !% these attributes should be integers
@@ -1484,7 +1519,7 @@ contains
                             thisposition = trim(subroutine_name)//'_R17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
+                           !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
@@ -1495,6 +1530,12 @@ contains
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
+                        ! case (api_linkf_xsect_culvertCode)
+                        !     !print *, 'call III'
+                        !     call load_api_procedure("api_get_linkf_attribute")
+                        !     error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_culvertCode, link_value)
+                        !     thisposition = trim(subroutine_name)//'_U17'
+                        !     call print_api_error(error, thisposition)
                         case default
                             !% circular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
@@ -2270,14 +2311,26 @@ contains
                                 ! print *, 'in ',trim(subroutine_name), ' at T27',link_value
                             thisposition = trim(subroutine_name)//'_T27'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                             call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                             thisposition = trim(subroutine_name)//'_T28'
+                             call print_api_error(error, thisposition)
+                         case (api_linkf_xsect_rFull)
+                             !print *, 'call III'
+                             call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                             thisposition = trim(subroutine_name)//'_T29'
+                             call print_api_error(error, thisposition)
                         case (api_linkf_forcemain_coef)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_forcemain_coef, link_value)
-                                ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
+                                 ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
                             thisposition = trim(subroutine_name)//'_U28'  
                             call print_api_error(error, thisposition)
                         case default
-                            print *, 'case ',attr,trim(reverseKey_api(attr))
+                            print *, 'case default for API_FORCE_MAIN ',trim(reverseKey_api(attr)),' (could be error): ',attr,trim(reverseKey_api(attr))
                     end select
                 case default
                     !print *, 'in else ',link_value
@@ -2907,20 +2960,15 @@ contains
 
                 if (tseries_idx >= 0) then
                     !% --- this gets the Tseries.x2 values
-                    !%     Note the Tseries.x1 values will be overwritten by the .x2 values
-                    !%     only if the x2 value is less than timemax. This prepares for the
-                    !%     the next step of storing for SWMM5+
+                    !% --- gets time in days at what is now the x2 pointer 
+                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
+
+                    tnext = util_datetime_epoch_to_secs(tnext)
+
+                    !% move the linked list to the next step (which sets up the next value for x2)
                     success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
 
-                    if (success == 1) then
-                        !% --- gets time in days at what is now the x2 pointer 
-                        tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
-                        !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
-                        !print *, 'tnext Flow out of interface ',tnext
-
-                        tnext = util_datetime_epoch_to_secs(tnext)
-                        !print *, 'tnext Flow',tnext /3600.0
-                    else
+                    if (success .ne. oneI) then
                         !% --- failure to read time later than tnow from file
                         print *, ' '
                         write(*,"(A)") 'INPUT FILE FAILURE'
@@ -3011,18 +3059,12 @@ contains
                 !% --- this gets the Tseries.x2 values
                 !%     Note the Tseries.x1 values will be overwritten by the .x2 values
                 !%     only if the x2 value is less than timemax. This prepares for the
-                !%     the next step of storing for SWMM5+
+                !%     the next step of storing for SWMM5+      
+                !% --- gets time in days at what is now the x2 pointer 
+                tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
+                tnext = util_datetime_epoch_to_secs(tnext)
                 success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
-
-                if (success == 1) then
-                    !% --- gets time in days at what is now the x2 pointer 
-                    tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
-                    !tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x1) 20220604brh
-                    !print *, 'tnext Head out of interface ',tnext
-
-                    tnext = util_datetime_epoch_to_secs(tnext)
-                    !print *, 'tnext Head',tnext /3600.0
-                else
+                if (success .ne. oneI) then
                     !% --- failure to read time later than tnow from file
                     print *, ' '
                     write(*,"(A)") 'INPUT FILE FAILURE'
@@ -3671,6 +3713,39 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%   
+    subroutine interface_export_runon_volume()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% takes the runon flowrate from hydraulics to subcatchments, stored
+        !% in subcatchR(:,sr_RunOn_Volume), and transfers to the outfall[].vRouted
+        !% in EPASWMM
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer :: mm, kk, error
+            integer, pointer :: outfallIdx
+            real(8), pointer :: thisVolume
+        !%---------------------------------------------------------------------
+
+        !% --- cycle through the subcatchments
+        do mm=1,setting%SWMMinput%N_subcatch
+            call load_api_procedure("api_export_runon_volume")
+            !% 
+            if (subcatchYN(mm,sYN_hasRunOn)) then
+                do kk=1,subcatchI(mm,si_RunOn_count)        
+                    !% --- pointers for clarity
+                    outfallIdx   => subcatchI(mm,si_RunOn_SWMMoutfallIdx(kk))
+                    thisVolume   => subcatchR(mm,sr_RunOn_Volume(kk))
+                    !% --- export the runon flowrate
+                    error = ptr_api_export_runon_volume(outfallIdx, thisVolume)
+                end do
+            end if
+        end do
+
+    end subroutine interface_export_runon_volume
+!%
+!%=============================================================================
+!%=============================================================================
+!%   
     subroutine interface_call_runoff_execute()
         !%---------------------------------------------------------------------
         !% Description:
@@ -3849,6 +3924,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
             case ("api_update_linkResult")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+            case ("api_export_runon_volume")    
+                call c_f_procpointer(c_lib%procaddr, ptr_api_export_runon_volume)
             case ("api_call_runoff_execute")    
                 call c_f_procpointer(c_lib%procaddr, ptr_api_call_runoff_execute)
             case ("api_get_subcatch_runoff")

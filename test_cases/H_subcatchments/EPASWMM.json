@@ -39,13 +39,13 @@
         "StoredLevels" : 100,
         "CommandLine" : {
             "quietYN" : false,
-            "interval" : 1000
+            "interval" : 1
         },
         "DataOut" :{
             "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
-            "isFroudeNumberOut" : false,
+            "isFroudeNumberOut" : true,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,
@@ -80,12 +80,15 @@
     "Time" : {
         "useSWMMinpYN" : true,
         "matchHydrologyStep" : true,
-        "DtTol" : 1e-1,
-        "Hydraulics" : {
-            "Dt" : 10.0
-        },
-        "Hydrology" : {
-            "Dt" : 600.0
-        }
+        "DtTol" : 1e-1
+    },    
+    "VariableDT" : {
+        "CFL_hi_max" : 0.5,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.2,
+        "CFL_inflow_max" : 0.2,
+        "increaseFactor" : 2.0,
+        "NstepsForCheck" : 5,
+        "InitialDt"      : 100.0
     }
 }

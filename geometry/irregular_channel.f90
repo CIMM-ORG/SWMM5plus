@@ -4,6 +4,7 @@ module irregular_channel
     use define_globals
     use define_indexes
     use define_keys
+    use geometry_lowlevel
     use xsect_tables
 
     implicit none
@@ -17,7 +18,9 @@ module irregular_channel
 
     public :: irregular_depth_from_volume
     public :: irregular_topwidth_from_depth
-    public :: irregular_hydradius_from_depth
+    public :: irregular_perimeter_and_hydradius_from_depth
+
+
     public :: irregular_perimeter_from_hydradius_area
     public :: irregular_hyddepth_from_topwidth_area
     public :: irregular_geometry_from_depth_singular
@@ -32,9 +35,7 @@ contains
         !% Description:
         !% Computes the depth from volume for irregular channel
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
-        !% Assumes that volume > 0 is enforced in volume computations.
-        !% NOTE: this does NOT limit the depth by surcharge height at this point
-        !% This will be done after the head is computed.
+        !% Assumes that volume > 0 is previously enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
@@ -67,13 +68,22 @@ contains
         !% --- convert to physical depth
         depth(thisP) = depth(thisP) * transectR(tidx(thisP),tr_depthFull)
 
-        where (depth(thisP) > fulldepth(thisP))
-            depth(thisP) = fulldepth(thisP)
-        end where
+        !% --- correct the depth for overfull channel
+        if (setting%Discretization%AllowChannelOverflowTF) then
+            !% --- volume is already limited to full volume
+            !%     so no correction needed
+        else
+            !% --- if overflow is not allowed, use rectangular volume abovev
+            !%     for overfull elements
+            where  (volume(thisP) >= fullvolume(thisP))
+                !% --- volume above max level is rectangular at max breadth
+                depth(thisP) = llgeo_openchannel_depth_above_full_pure(thisP)
+            endwhere
+        end if
 
         !%------------------------------------------------------------------
         !% Closing
-        !% --- reset the temp array
+            !% --- reset the temp array
             normInput(:) = zeroR
 
     end subroutine irregular_depth_from_volume
@@ -86,14 +96,13 @@ contains
         !% Description:
         !% Computes the topwidth from depth for irregular channel
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
-        !% Assumes that volume > 0 is enforced in volume computations.
-        !% NOTE: this does NOT limit the depth by surcharge height at this point
-        !% This will be done after the head is computed.
+        !% Assumes that volume > 0 is previousy enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP(:), tidx(:)
             real(8), pointer :: depth(:), fulldepth(:), topwidth(:)
+            real(8), pointer :: volume(:), fullvolume(:)
             real(8), pointer :: thisTable(:,:), normInput(:)
         !%------------------------------------------------------------------
         !% Aliases
@@ -101,6 +110,8 @@ contains
             depth      => elemR(:,er_Depth)
             fulldepth  => elemR(:,er_FullDepth)
             topwidth   => elemR(:,er_TopWidth)
+            volume     => elemR(:,er_Volume)
+            fullvolume => elemR(:,er_FullVolume)
             normInput  => elemR(:,er_Temp01)
             thisTable  => transectTableDepthR(:,:,tt_width)
             tidx       => elemI(:,ei_transect_idx)
@@ -118,6 +129,20 @@ contains
         !% --- convert to physical topwidth
         topwidth(thisP) = topwidth(thisP) * transectR(tidx(thisP),tr_widthMax)
 
+        !% --- correct the depth for overfull channel
+        if (setting%Discretization%AllowChannelOverflowTF) then
+            !% --- depth is already limited to full depth
+            !%     so no correction needed
+        else
+            !% --- if overflow is not allowed, then volume > full volume is possible
+            !%     use rectangular shape to correct
+            !%     topwidth for depth greater than full depth
+            where  (volume(thisP) >= fullvolume(thisP))
+                !% --- volume above max level is rectangular at max breadth
+                topwidth(thisP) = llgeo_openchannel_depth_above_full_pure(thisP)
+            endwhere
+        end if
+
         !%------------------------------------------------------------------
         !% Closing
         !% --- reset the temp array
@@ -128,19 +153,18 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine irregular_hydradius_from_depth(elemPGx, Npack, thisCol)
+    subroutine irregular_perimeter_and_hydradius_from_depth(elemPGx, Npack, thisCol)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the hydraulic radius from depth for irregular channel
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
-        !% Assumes that volume > 0 is enforced in volume computations.
-        !% NOTE: this does NOT limit the depth by surcharge height at this point
-        !% This will be done after the head is computed.
+        !% Assumes that volume > 0 is previuosly enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP(:), tidx(:)
             real(8), pointer :: depth(:), fulldepth(:), hydradius(:)
+            real(8), pointer :: perimeter(:), area(:), volume(:), fullvolume(:)
             real(8), pointer :: thisTable(:,:), normInput(:)
         !%------------------------------------------------------------------
         !% Aliases
@@ -148,6 +172,8 @@ contains
             depth          => elemR(:,er_Depth)
             fulldepth      => elemR(:,er_FullDepth)
             hydradius      => elemR(:,er_HydRadius)
+            perimeter      => elemR(:,er_Perimeter)
+            area           => elemR(:,er_Area)
             normInput      => elemR(:,er_Temp01)
             thisTable      => transectTableDepthR(:,:,tt_width)
             tidx           => elemI(:,ei_transect_idx)
@@ -165,14 +191,39 @@ contains
         !% --- convert to physical topwidth
         hydradius(thisP) = hydradius(thisP) * transectR(tidx(thisP),tr_hydRadiusFull)
 
+        !% --- correct for overfull channel
+        if (setting%Discretization%AllowChannelOverflowTF) then
+            !% --- depth is already limited to full depth
+            !%     so no correction needed to hydradius
+            perimeter = llgeo_perimeter_from_hydradius_and_area_pure &
+                            (thisP, hydradius(thisP), area(thisP))
+        else
+            !% --- if overflow is not allowed, then volume > full volume is possible
+            !%     use rectangular shape to correct
+            !%     thydraidius and perimeter for depth greater than full depth
+            where  (volume(thisP) >= fullvolume(thisP))
+                !% --- use the full perimeter and volume excess to get the new perimeter
+                perimeter(thisP) = llgeo_openchannel_perimeter_above_full_pure(thisP)
+                !% --- note that the area with an extra volume already includes the
+                !%     extra volume effect.
+                hydradius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                        (thisP, area(thisP), perimeter(thisP))
+            endwhere
+        end if
+
         !%------------------------------------------------------------------
         !% Closing
         !% --- reset the temp array
             normInput(:) = zeroR
 
-    end subroutine irregular_hydradius_from_depth
+    end subroutine irregular_perimeter_and_hydradius_from_depth
 !%    
 !%==========================================================================
+
+
+
+
+
 !%==========================================================================
 !%
     subroutine irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
@@ -228,7 +279,10 @@ contains
                 (indx, table_idx, depth, zerovalue) result (outvalue)
         !%----------------------------------------------------------------------
         !% Description:
-        !%  Computes cross-sectional area for a given depth for a single element
+        !%  Computes cross-sectional geometry for a given depth for a single element (indx)
+        !%  depth is the unormalized depth of interest
+        !%  table_idx is in {tt_area, tt_width, tt_depth, tt_hydradius}
+        !%  zerovalue is the result used in place of zeros
         !%----------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx, table_idx
@@ -245,8 +299,7 @@ contains
         depthnorm     = depth/fulldepth(indx)
 
         !% --- max is used because xsect quadratic interp for small values can produce zero
-        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)), &
-                        setting%ZeroValue%Area)
+        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)),zerovalue)
 
     end function irregular_geometry_from_depth_singular    
 !%    

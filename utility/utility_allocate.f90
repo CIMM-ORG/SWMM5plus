@@ -26,6 +26,7 @@ module utility_allocate
     character(len=99) ::              emsg
 
     ! public members
+    public :: util_allocate_scalar_for_images
     public :: util_allocate_secondary_coarrays
     public :: util_allocate_linknode
     public :: util_allocate_monitor_points
@@ -33,6 +34,7 @@ module utility_allocate
     public :: util_allocate_link_transect
     public :: util_allocate_element_transect
     public :: util_allocate_uniformtable_array
+    public :: util_allocate_subcatch_runon
     public :: util_allocate_subcatch
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
@@ -57,6 +59,22 @@ contains
 !%
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine util_allocate_scalar_for_images ()    
+        !%------------------------------------------------------------------
+        !% Description
+        !% allocates coarrays that appear as scalars on an image
+        !% These are NOT coarrays, but are indexed off the present image
+        !%------------------------------------------------------------------
+
+        allocate(N_elem(num_images()))
+        allocate(N_face(num_images()))
+        allocate(N_unique_face(num_images()))
+
+    end subroutine util_allocate_scalar_for_images
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine util_allocate_secondary_coarrays ()
@@ -392,6 +410,51 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine util_allocate_subcatch_runon()
+        !%------------------------------------------------------------------
+        !% Description
+        !% allocates index storage needed for subcatchment runon from elements
+        !% These store column indexes in the subcatchI arrays for 
+        !% RunOn data. This approach is taken because we need separate columns
+        !% for each of the runon connections.
+        !% NOTE: this changes the Ncol_subcatchI size
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        !% ---columns for subcatchI
+        allocate(si_RunOn_nodeIdx(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_nodeIdx')
+        si_RunOn_nodeIdx(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+        allocate(si_RunOn_SWMMoutfallIdx(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_SWMMoutfallIdx')
+        si_RunOn_SWMMoutfallIdx(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+        allocate(si_RunOn_faceIdx(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_faceIdx')
+        si_RunOn_faceIdx(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+        allocate(si_RunOn_P_image(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'si_RunOn_P_image')
+        si_RunOn_P_image(:) = (/Ncol_subcatchI +1 : Ncol_subcatchI  +N_subcatch_runon /)
+        Ncol_subcatchI  = Ncol_subcatchI  + N_subcatch_runon
+
+
+        !% --- columns for subcatchR
+        allocate(sr_RunOn_Volume(N_subcatch_runon), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'sr_RunOn_Volume')
+        sr_RunOn_Volume(:) = (/Ncol_subcatchR +1 : Ncol_subcatchR  +N_subcatch_runon /)
+        Ncol_subcatchR  = Ncol_subcatchR  + N_subcatch_runon
+
+
+    end subroutine util_allocate_subcatch_runon
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_allocate_subcatch()
         !%------------------------------------------------------------------
         !% Description:
@@ -412,8 +475,8 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
-        !% subcatchR
-        allocate(subcatchR(setting%SWMMinput%N_subcatch, Ncol_subcatchR), stat=allocation_status, errmsg=emsg)
+        !% subcatchR (coarray)
+        allocate(subcatchR(setting%SWMMinput%N_subcatch, Ncol_subcatchR)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'subcatchR')
         subcatchR(:,:) = nullvalueR
 
@@ -556,6 +619,13 @@ contains
         ! allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         ! call util_allocate_check(allocation_status, emsg, 'faceM')
         ! faceM(:,:) = nullvalueL
+
+        !% HOLD FOR LATER IMPLEMENTATION 20220930
+        ! !% ---3D geometry table for fast look up by element
+        ! allocate(geometryTableR &
+        !          (max_caf_elem_N+N_dummy_elem, Ncol2_GeometryTableR, Ncol3_GeometryTableR), &
+        !           stat=allocation_status,errmsg=emsg)
+        ! geometryTableR(:,:,:) = nullvalueR
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

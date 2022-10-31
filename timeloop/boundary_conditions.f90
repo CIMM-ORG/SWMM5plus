@@ -8,7 +8,7 @@ module boundary_conditions
     use utility_interpolate
     use define_settings, only: setting
     use face, only: face_interpolate_bc
-    use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth_singular, rectangular_triangular_topwidth_from_depth_singular
+    !use rectangular_triangular_conduit, only: rectangular_triangular_area_from_depth_singular, rectangular_triangular_topwidth_from_depth_singular
     use define_xsect_tables
     use geometry
     use xsect_tables
@@ -45,13 +45,18 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% --- ensure that we have BC data that brackets the current time
+        ! print *, 'calling bc_step'
         call bc_step()
 
         !% --- interpolate the BC to the present time
+        ! print *, 'calling bc_interpolate_flow'
         call bc_interpolate_flow()
+
+        ! print *, 'calling bc_interpolate_head'
         call bc_interpolate_head()
 
         !% --- store the BC value in face arrays
+        ! print *, 'calling face_interpolate_bc'
         call face_interpolate_bc(isBConly) 
 
     !  do ii=1,N_headBC
@@ -79,18 +84,20 @@ contains
         !     print *, '=============================='
         !     print *, 'ii = ',ii
         !     print *, 'bi_idx         ',BC%flowI(ii,bi_idx) 
-        !     print *, 'bi_node_idx    ',BC%flowI(ii,bi_node_idx), trim(node%Names(BC%flowI(ii,bi_node_idx))%str)
+        !     print *, 'bi_node_idx    ',BC%flowI(ii,bi_node_idx),    trim(node%Names(BC%flowI(ii,bi_node_idx))%str)
         !     print *, 'bi_elem_idx    ',BC%flowI(ii,bi_elem_idx)
         !     print *, 'bi_face_idx    ',BC%flowI(ii,bi_face_idx)
-        !     print *, 'bi_category    ',BC%flowI(ii,bi_category), trim(reverseKey(BC%flowI(1,bi_category)))
+        !     print *, 'bi_category    ',BC%flowI(ii,bi_category),    trim(reverseKey(BC%flowI(1,bi_category)))
         !     print *, 'bi_subcategory ',BC%flowI(ii,bi_subcategory), trim(reverseKey(BC%flowI(1,bi_subcategory)))
         !     print *, 'bi_fetch       ',BC%flowI(ii,bi_fetch)
         !     print *, 'bi_TS_upper_idx',BC%flowI(ii,bi_TS_upper_idx)
         !     print *, 'br_value       ',BC%flowR(ii,br_value)
-        !     print *, 'face flowrate  ',faceR(BC%flowI(ii,bi_face_idx),fr_Flowrate)
-        !     print *, 'downstream elem',faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL)
-        !     print *, 'link           ',elemI(faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL),ei_link_Gidx_SWMM)
-        !     print *, 'link name      ',trim(link%Names(elemI(faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL),ei_link_Gidx_SWMM))%str)
+        !     if (BC%flowI(ii,bi_face_idx) .ne. nullvalueI) then 
+        !         print *, 'face flowrate  ',faceR(BC%flowI(ii,bi_face_idx),fr_Flowrate)
+        !         print *, 'downstream elem',faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL)
+        !         print *, 'link           ',elemI(faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL),ei_link_Gidx_SWMM)
+        !         print *, 'link name      ',trim(link%Names(elemI(faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL),ei_link_Gidx_SWMM))%str)
+        !     end if
         ! end do
 
         ! print *, ' =============='
@@ -104,7 +111,9 @@ contains
         !     print *, 'face up     ', elemI(link%I(ii,li_first_elem_idx),ei_Mface_uL)
         !     print *, 'face dn     ', elemI(link%I(ii,li_last_elem_idx),ei_Mface_dL)
         ! end do
-        ! stop 330987
+
+        !print *, 'calling closing'
+        !stop 330987
         !%------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%boundary_conditions) then
@@ -400,7 +409,7 @@ contains
 
         if (setting%Debug%File%boundary_conditions) then
             do ii = 1, NN
-                write(*, "(*(G0.4 : ','))") BC%flowTimeseries(bc_idx, ii, :)
+                Print*, 'Time ', BC%flowTimeseries(bc_idx, ii, brts_time), 'Flow ', BC%flowTimeseries(bc_idx, ii, brts_value)
             end do
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end if
@@ -615,7 +624,7 @@ contains
         !% the boundary condition to get the corresponding value.
         !%-------------------------------------------------------------------
         !% Declarations:
-            real(8) :: normDepth, critDepth
+            real(8) :: normDepth, critDepth, thisDepth
             real(8), pointer :: tnow, headValue(:)
             integer :: ii,  lower_idx , mm
             integer :: thisBCtype = BCHead
@@ -634,13 +643,13 @@ contains
         !%-------------------------------------------------------------------    
         !% --- cycle throuhg the head BC
         do ii=1, N_headBC
-            !print *, ii, 'in ',trim(subroutine_name)
+            ! print *, ii, 'in ',trim(subroutine_name)
 
             nIdx        => BC%headI(ii,bi_node_idx)
             fIdx        => BC%headI(ii,bi_face_idx)
             eIdx        => BC%headI(ii,bi_elem_idx)
 
-            !print *, nIdx, fIdx, eIdx
+            ! print *, 'AAA ',nIdx, fIdx, eIdx
 
             !% --- Error check: fail if offset present
             if (link%R(node%I(nIdx,ni_Mlink_u1),lr_OutletOffset) > zeroR) then
@@ -652,6 +661,7 @@ contains
                 call util_crashpoint(6098734)
             end if
             
+            ! print *, 'BBB'
             !% --- select outfall type
             select case (BC%headI(ii,bi_subcategory))
 
@@ -663,7 +673,7 @@ contains
                 !% --- get the index below the current upper index
                 lower_idx   =  upper_idx(ii) - 1
 
-                ! print *, ii
+                ! print *, 'CCC ',ii
                 ! print *, 'tnow ',tnow
                 ! print *, 'indexes ',lower_idx, upper_idx(ii)
 
@@ -673,43 +683,55 @@ contains
                 !% --- the time series are elevation (not depth)
                 headValue(ii) = headValue(ii) - setting%Solver%ReferenceHead
 
+                ! print *, 'DDD'
                 !% --- error check
-                if (headValue(ii) .le. faceR(fIdx,fr_Zbottom)) then
+                if (headValue(ii) + setting%Solver%ReferenceHead .le. &
+                     faceR(fIdx,fr_Zbottom) + setting%SmallDepth%DepthCutoff) then
                     print *, ' '
                     print *, '*** WARNING ***'
-                    print *, '*** time series outfall stage is below the channel bottom at OUTFALL ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                    print *, '*** value is reset to smaller of normal or critical depth'
+                    print *, '*** time series outfall stage is near the channel bottom at OUTFALL ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    print *, '*** value is reset to smaller of normal or critical depth or'
+                    print *, '*** to the setting%SmallDepth%DepthCutoff'
                     print *, ' '
                     print *, 'head before fixing ',headValue(ii)
                     print *, ' '
                     critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
                     normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+
                     !% --- BC head is the depth + Zbottom - referencehead
                     headValue(ii) = faceR(fIdx,fr_Zbottom)        &
-                                  + min(critDepth,normDepth)      &
+                                  + max( min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)      &
                                   - setting%Solver%ReferenceHead
+
+                    !% -- note that time series head value is allowed to be larger than the
+                    !%    upstream value        
+
                     !call util_crashpoint(566823)
                 end if
 
-                !print *, '*** head value at outfall ',headValue(ii)
+                ! print *, '*** head value at outfall ',headValue(ii)
 
             case (BCH_fixed)
                 !% 20220729brh debugged (without offset)
-
+                ! print *, 'aaaa '
                 !% --- Note that SWMM.inp for FIXED BC is the elevation (not depth)
                 headValue(ii) = interface_get_headBC(ii, setting%Time%Start) &
                               - setting%Solver%ReferenceHead
                    
+                ! print *, 'bbbb '
                 !% --- error check
-                if (headValue(ii) .le. faceR(fIdx,fr_Zbottom)) then
+                if ((headValue(ii) + setting%Solver%ReferenceHead) .le. &
+                    (faceR(fIdx,fr_Zbottom) + setting%SmallDepth%DepthCutoff)) then
                     print *, 'CONFIGURATION ERROR: a FIXED OUTFALL must have...'
-                    print *, '... a STAGE elevation greater than the Zbottom of the outfall'
+                    print *, '... a STAGE elevation greater than '
+                    print *, ' Zbottom + setting.SmallDepth.DepthCutff of the outfall'
                     print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
                     call util_crashpoint(566823)
                 end if
 
             case (BCH_normal)
                 !% 20220729brh debugged (without offset)
+                ! print *, 'cccc '
 
                 !% --- Error check, normal depth is infinite for a reverse flow, so a flap gate is needed
                 if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
@@ -717,6 +739,8 @@ contains
                     print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
                     call util_crashpoint(5668663)
                 end if
+
+                ! print *, 'dddd '
 
                 if (elemI(eIdx,ei_elementType) == CC) then
                     !% --- Error check, normal depth is infinite for adverse slope
@@ -731,10 +755,18 @@ contains
                         call util_crashpoint(728474)
                     end if
 
+                    !% --- depth is the larger of the normal depth or the small depth cutoff
+                    thisDepth = max(geo_normaldepth_singular(BC%HeadI(ii,bi_UTidx)), &
+                                    setting%SmallDepth%DepthCutoff)
+
                     !% --- BC head is the normal depth + Zbottom - referencehead
-                    headValue(ii) = faceR(fIdx,fr_Zbottom)                          &
-                                  + geo_normaldepth_singular(BC%HeadI(ii,bi_UTidx)) &
+                    headValue(ii) = faceR(fIdx,fr_Zbottom)                   &
+                                  + thisDepth                                &
                                   - setting%Solver%ReferenceHead
+
+                    !% --- Outfall head should not be larger than the upstream
+                    headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
+
                 else
                     print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                     call util_crashpoint(792873)
@@ -744,6 +776,8 @@ contains
                 end if
 
             case (BCH_free)
+                ! print *, ' '
+                !  print *, 'BCH_free  in ',trim(subroutine_name)
                 !% 20220729brh debugged (without offset)
                 !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
                 !%     the domain determines the outfall height, which can set up an instability
@@ -757,15 +791,45 @@ contains
                     ! call util_crashpoint(566823)
                 end if
 
+                ! print *, 'ffff '
+
                 if (elemI(eIdx,ei_elementType) == CC) then
+                    ! print *, 'ffff 0000'
+                    ! print *, BC%HeadI(ii,bi_UTidx)
                     !% --- free outfall depth is smaller of critical and normal depth
                     critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
+                    ! print *, 'ffff 1111'
+                    ! print *, ii, bi_UTidx, size(BC%HeadI,1), size(BC%HeadI,2)
+                    ! print *, BC%HeadI(ii,bi_UTidx)
+                    ! print*, critDepth, 'critDepth'
+                    ! print *, ii, bi_UTidx, BC%HeadI(ii,bi_UTidx)
                     normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+                    ! print*, normDepth, 'normDepth'
+                    ! print *, 'ffff 2222'
+
+                    
+                    !% --- Use the smaller of critical depth or normal depth,
+                    !%     but always use the depth cutoff as the smallest
+                    !%     value allowed to prevent absurdly small depths
+                    thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)
+                
 
                     !% --- BC head is the depth + Zbottom - referencehead
                     headValue(ii) = faceR(fIdx,fr_Zbottom)        &
-                                  + min(critDepth,normDepth)      &
+                                  + thisDepth     &
                                   - setting%Solver%ReferenceHead
+
+                    !% --- Head should not be larger than the upstream
+                    headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
+
+                    ! print *, 'headValue(ii)', ii, headValue(ii)
+                    ! print *, 'critdepth(ii)', ii, critDepth
+                    ! print *, 'normDepth(ii)', ii, normDepth
+
+                    ! print *, setting%ZeroValue%Depth
+                    ! print *, setting%SmallDepth%DepthCutoff
+
+                    ! stop 78513
                 else
                     print *, 'CODE ERROR: NEED ALGORITHM FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                     call util_crashpoint(792873)
@@ -774,11 +838,15 @@ contains
                     !headValue(ii) =  faceR(fIdx,fr_Zbottom)
                 end if
 
+                ! print *, 'gggg '
+
             case default
                 call util_print_warning("CODE ERROR (bc_interpolate): Unknown downstream boundary condition type at " &
                     // trim(node%Names(nIdx)%str) // " node")
                 call util_crashpoint(86474)
             end select
+
+            !print *, 'hhhh '
         end do
 
         if (setting%Debug%File%boundary_conditions) &
@@ -957,229 +1025,229 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-function bc_critDepth_enum (elemIdx, Q, yEstimate) result (criticalDepth)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% gets the critical depth of a CC by enumeration method
-    !% this code has been adapted from SWMM5-C code
-    !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: elemIdx
-        real(8), intent(in)  :: Q, yEstimate
-        real(8)              :: criticalDepth
-        real(8), pointer     :: FullDepth
-        real(8)              :: dY, Y, Q0, QC
-        integer              :: i1, ii
-        character(64)        :: subroutine_name = 'bc_critDepth_enum'
-    !%-----------------------------------------------------------------------------
+! function bc_critDepth_enum (elemIdx, Q, yEstimate) result (criticalDepth)
+!     !%-----------------------------------------------------------------------------
+!     !% Description:
+!     !% gets the critical depth of a CC by enumeration method
+!     !% this code has been adapted from SWMM5-C code
+!     !%-----------------------------------------------------------------------------
+!         integer, intent(in)  :: elemIdx
+!         real(8), intent(in)  :: Q, yEstimate
+!         real(8)              :: criticalDepth
+!         real(8), pointer     :: FullDepth
+!         real(8)              :: dY, Y, Q0, QC
+!         integer              :: i1, ii
+!         character(64)        :: subroutine_name = 'bc_critDepth_enum'
+!     !%-----------------------------------------------------------------------------
 
-    FullDepth => elemR(elemIdx,er_FullDepth)
+!     FullDepth => elemR(elemIdx,er_FullDepth)
 
-    !% find the critical depth from SWMM5 ennumeration method
-    dY = FullDepth/25.0
-    i1 = int(yEstimate/dY)
-    Q0 = bc_get_critical_flow(elemIdx,i1*dY,zeroR)
+!     !% find the critical depth from SWMM5 ennumeration method
+!     dY = FullDepth/25.0
+!     i1 = int(yEstimate/dY)
+!     Q0 = bc_get_critical_flow(elemIdx,i1*dY,zeroR)
 
-    if (Q0 < Q) then
-        criticalDepth = FullDepth
-        do  ii = i1+1,25
-            QC = bc_get_critical_flow(elemIdx,ii*dY,zeroR)
-            if (QC > Q) then
-                criticalDepth = ((Q-Q0)/(QC-Q0)+ real((ii-1),8))*dY
-                return
-            end if
-            Q0 = QC
-        end do
-    else
-        criticalDepth = zeroR
-        do  ii = i1-1,0,-1
-            QC = bc_get_critical_flow(elemIdx,ii*dY,zeroR)
-            if (QC < Q) then
-                criticalDepth = ((Q-QC)/(Q0-QC)+ real((ii),8))*dY
-                return
-            end if
-            Q0 = QC
-        end do
-    end if
+!     if (Q0 < Q) then
+!         criticalDepth = FullDepth
+!         do  ii = i1+1,25
+!             QC = bc_get_critical_flow(elemIdx,ii*dY,zeroR)
+!             if (QC > Q) then
+!                 criticalDepth = ((Q-Q0)/(QC-Q0)+ real((ii-1),8))*dY
+!                 return
+!             end if
+!             Q0 = QC
+!         end do
+!     else
+!         criticalDepth = zeroR
+!         do  ii = i1-1,0,-1
+!             QC = bc_get_critical_flow(elemIdx,ii*dY,zeroR)
+!             if (QC < Q) then
+!                 criticalDepth = ((Q-QC)/(Q0-QC)+ real((ii),8))*dY
+!                 return
+!             end if
+!             Q0 = QC
+!         end do
+!     end if
 
-end function bc_critDepth_enum
+! end function bc_critDepth_enum
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-function bc_critDepth_ridder (elemIdx, Q, yEstimate) result (criticalDepth)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% gets the critical depth of a CC by ridder method
-    !% this code has been adapted from SWMM5-C code
-    !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: elemIdx
-        real(8), intent(in)  :: Q, yEstimate
-        real(8)              :: criticalDepth, Y1, Y2
-        real(8), pointer     :: FullDepth
-        real(8)              :: Q0, Q1, Q2, Tol
-        character(64)        :: subroutine_name = 'bc_critDepth_ridder'
-    !%-----------------------------------------------------------------------------
+! function bc_critDepth_ridder (elemIdx, Q, yEstimate) result (criticalDepth)
+!     !%-----------------------------------------------------------------------------
+!     !% Description:
+!     !% gets the critical depth of a CC by ridder method
+!     !% this code has been adapted from SWMM5-C code
+!     !%-----------------------------------------------------------------------------
+!         integer, intent(in)  :: elemIdx
+!         real(8), intent(in)  :: Q, yEstimate
+!         real(8)              :: criticalDepth, Y1, Y2
+!         real(8), pointer     :: FullDepth
+!         real(8)              :: Q0, Q1, Q2, Tol
+!         character(64)        :: subroutine_name = 'bc_critDepth_ridder'
+!     !%-----------------------------------------------------------------------------
 
-    FullDepth => elemR(elemIdx,er_FullDepth)
+!     FullDepth => elemR(elemIdx,er_FullDepth)
 
-    Y1 = zeroR
-    Y2 = 0.99d0*FullDepth
+!     Y1 = zeroR
+!     Y2 = 0.99d0*FullDepth
 
-    !% check if critical flow at full depth < target flow
-    Q2 = bc_get_critical_flow(elemIdx,Y2,zeroR)
-    if (Q2 < Q) then
-        criticalDepth = FullDepth
+!     !% check if critical flow at full depth < target flow
+!     Q2 = bc_get_critical_flow(elemIdx,Y2,zeroR)
+!     if (Q2 < Q) then
+!         criticalDepth = FullDepth
 
-    !% otherwise evaluate critical flow at initial estimate
-    !% and 1/2 of fullDepth
-    else
-        Q0 = bc_get_critical_flow(elemIdx,yEstimate,zeroR)
-        Q1 = bc_get_critical_flow(elemIdx, onehalfR*FullDepth,zeroR)
+!     !% otherwise evaluate critical flow at initial estimate
+!     !% and 1/2 of fullDepth
+!     else
+!         Q0 = bc_get_critical_flow(elemIdx,yEstimate,zeroR)
+!         Q1 = bc_get_critical_flow(elemIdx, onehalfR*FullDepth,zeroR)
 
-        if (Q0 > Q) then
-            Y2 = yEstimate
-            if (Q1 < Q) Y1 = onehalfR*FullDepth
-        else
-            Y1 = yEstimate
-            if (Q1 > Q) Y2 = onehalfR*FullDepth
-        end if
-        Tol = 0.001
-        criticalDepth = bc_findRoot_ridder_for_critDepth(elemIdx,Q,Y1,Y2,Tol)
-    end if
+!         if (Q0 > Q) then
+!             Y2 = yEstimate
+!             if (Q1 < Q) Y1 = onehalfR*FullDepth
+!         else
+!             Y1 = yEstimate
+!             if (Q1 > Q) Y2 = onehalfR*FullDepth
+!         end if
+!         Tol = 0.001
+!         criticalDepth = bc_findRoot_ridder_for_critDepth(elemIdx,Q,Y1,Y2,Tol)
+!     end if
 
-end function bc_critDepth_ridder
+! end function bc_critDepth_ridder
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-function bc_findRoot_ridder_for_critDepth(elemIdx,Q,Y1,Y2,Tol) result (criticalDepth)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% find root for the critical depth of a CC by ridder method
-    !% this code has directly been adapted from SWMM5-C code
-    !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: elemIdx
-        real(8), intent(in)  :: Q, Y1, Y2, Tol
-        real(8)              :: criticalDepth
-        integer              :: ii, MaxIter
-        real(8)              :: ans, fhi, flo, fm, fnew, s, Yhi, Ylo, Ym, Ynew
+! function bc_findRoot_ridder_for_critDepth(elemIdx,Q,Y1,Y2,Tol) result (criticalDepth)
+!     !%-----------------------------------------------------------------------------
+!     !% Description:
+!     !% find root for the critical depth of a CC by ridder method
+!     !% this code has directly been adapted from SWMM5-C code
+!     !%-----------------------------------------------------------------------------
+!         integer, intent(in)  :: elemIdx
+!         real(8), intent(in)  :: Q, Y1, Y2, Tol
+!         real(8)              :: criticalDepth
+!         integer              :: ii, MaxIter
+!         real(8)              :: ans, fhi, flo, fm, fnew, s, Yhi, Ylo, Ym, Ynew
 
-        character(64)        :: subroutine_name = 'bc_findRoot_ridder_for_critDepth'
-    !%-----------------------------------------------------------------------------
-        MaxIter = 60
-        flo = bc_get_critical_flow(elemIdx,Y1,Q)
-        fhi = bc_get_critical_flow(elemIdx,Y2,Q)
+!         character(64)        :: subroutine_name = 'bc_findRoot_ridder_for_critDepth'
+!     !%-----------------------------------------------------------------------------
+!         MaxIter = 60
+!         flo = bc_get_critical_flow(elemIdx,Y1,Q)
+!         fhi = bc_get_critical_flow(elemIdx,Y2,Q)
 
-        if (flo == zeroR) then
-            criticalDepth = Y1
-            return
-        end if
+!         if (flo == zeroR) then
+!             criticalDepth = Y1
+!             return
+!         end if
 
-        if (fhi == zeroR) then
-            criticalDepth = Y2
-            return
-        end if
+!         if (fhi == zeroR) then
+!             criticalDepth = Y2
+!             return
+!         end if
 
-        ans = onehalfR*(Y1+Y2)
+!         ans = onehalfR*(Y1+Y2)
 
-        if ((flo > zeroR .and. fhi < zeroR) .or. (flo < zeroR .and. fhi > zeroR)) then
-            Ylo = Y1
-            Yhi = Y2
-            do ii = 1,MaxIter
-                Ym = onehalfR*(Ylo+Yhi)
-                fm = bc_get_critical_flow(elemIdx,Ym,Q)
-                s = sqrt(fm*fm - flo*fhi)
-                if (s == zeroR) then
-                    criticalDepth = ans
-                    return
-                end if
+!         if ((flo > zeroR .and. fhi < zeroR) .or. (flo < zeroR .and. fhi > zeroR)) then
+!             Ylo = Y1
+!             Yhi = Y2
+!             do ii = 1,MaxIter
+!                 Ym = onehalfR*(Ylo+Yhi)
+!                 fm = bc_get_critical_flow(elemIdx,Ym,Q)
+!                 s = sqrt(fm*fm - flo*fhi)
+!                 if (s == zeroR) then
+!                     criticalDepth = ans
+!                     return
+!                 end if
 
-                if (flo >= fhi) then
-                    Ynew = Ym + (Ym-Ylo)*fm/s
-                else
-                    Ynew = Ym + (Ym-Ylo)*(-oneI*fm/s)
-                endif
+!                 if (flo >= fhi) then
+!                     Ynew = Ym + (Ym-Ylo)*fm/s
+!                 else
+!                     Ynew = Ym + (Ym-Ylo)*(-oneI*fm/s)
+!                 endif
 
-                if(abs(Ynew-ans) <= Tol) then 
-                    criticalDepth = Ynew
-                    return
-                end if
-                ans = Ynew
-                fnew = bc_get_critical_flow(elemIdx,Ynew,Q)
+!                 if(abs(Ynew-ans) <= Tol) then 
+!                     criticalDepth = Ynew
+!                     return
+!                 end if
+!                 ans = Ynew
+!                 fnew = bc_get_critical_flow(elemIdx,Ynew,Q)
 
-                if (sign(fm,fnew) /= fm) then
-                    Ylo = Ym
-                    flo = fm
-                    Yhi = ans
-                    fhi = fnew
-                else if (sign(flo,fnew) /= flo) then
-                    Yhi = ans
-                    fhi = fnew
-                else if (sign(fhi,fnew) /= fhi) then
-                    Ylo = ans
-                    flo = fnew
-                else
-                    criticalDepth = ans
-                    return
-                end if
+!                 if (sign(fm,fnew) /= fm) then
+!                     Ylo = Ym
+!                     flo = fm
+!                     Yhi = ans
+!                     fhi = fnew
+!                 else if (sign(flo,fnew) /= flo) then
+!                     Yhi = ans
+!                     fhi = fnew
+!                 else if (sign(fhi,fnew) /= fhi) then
+!                     Ylo = ans
+!                     flo = fnew
+!                 else
+!                     criticalDepth = ans
+!                     return
+!                 end if
 
-                if ( abs(Yhi - Ylo) <= Tol) then
-                    criticalDepth = ans
-                    return
-                end if
-            end do
-            criticalDepth = ans
-        end if
+!                 if ( abs(Yhi - Ylo) <= Tol) then
+!                     criticalDepth = ans
+!                     return
+!                 end if
+!             end do
+!             criticalDepth = ans
+!         end if
 
-end function bc_findRoot_ridder_for_critDepth
+! end function bc_findRoot_ridder_for_critDepth
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% gets the critical flow of a CC element for a given depth
-    !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: elemIdx
-        real(8), intent(in)  :: Depth, Flow_0 
-        real(8)              :: Flow
-        integer, pointer     :: elemGeometry
-        real(8), pointer     :: fullDepth, fullArea, grav
-        real(8)              :: YoverYfull, Area, Topwidth
-        character(64) :: subroutine_name = 'bc_get_critical_flow'
-    !%-----------------------------------------------------------------------------
+! function bc_get_critical_flow (elemIdx, Depth, Flow_0) result (Flow)
+!     !%-----------------------------------------------------------------------------
+!     !% Description:
+!     !% gets the critical flow of a CC element for a given depth
+!     !%-----------------------------------------------------------------------------
+!         integer, intent(in)  :: elemIdx
+!         real(8), intent(in)  :: Depth, Flow_0 
+!         real(8)              :: Flow
+!         integer, pointer     :: elemGeometry
+!         real(8), pointer     :: fullDepth, fullArea, grav
+!         real(8)              :: YoverYfull, Area, Topwidth
+!         character(64) :: subroutine_name = 'bc_get_critical_flow'
+!     !%-----------------------------------------------------------------------------
 
-    elemGeometry => elemI(elemIdx,ei_geometryType)
-    fullDepth    => elemR(elemIdx,er_FullDepth)
-    fullArea     => elemR(elemIdx,er_FullArea)
-    grav         => setting%constant%gravity
+!     elemGeometry => elemI(elemIdx,ei_geometryType)
+!     fullDepth    => elemR(elemIdx,er_FullDepth)
+!     fullArea     => elemR(elemIdx,er_FullArea)
+!     grav         => setting%constant%gravity
 
-    select case (elemGeometry)
+!     select case (elemGeometry)
 
-    case (circular)
-        YoverYfull = Depth/fullDepth
-        Area     = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc ) !% 20220506brh removed NACirc
-        Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc), &   !% 20220506brh removed NTirc
-                    setting%ZeroValue%Topwidth)
+!     case (circular)
+!         YoverYfull = Depth/fullDepth
+!         Area     = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc ) !% 20220506brh removed NACirc
+!         Topwidth = max(fullDepth * xsect_table_lookup_singular (YoverYfull, TCirc), &   !% 20220506brh removed NTirc
+!                     setting%ZeroValue%Topwidth)
 
-        Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
+!         Flow  = Area * sqrt(grav*Area/Topwidth) - Flow_0
     
-    case (rect_triang)
-        Area     = rectangular_triangular_area_from_depth_singular (elemIdx, Depth)
-        Topwidth = rectangular_triangular_topwidth_from_depth_singular (elemIdx, Depth)
-        Flow     = Area * sqrt(grav*Area/Topwidth) - Flow_0
+!     case (rect_triang)
+!         Area     = rectangular_triangular_area_from_depth_singular (elemIdx, Depth)
+!         Topwidth = rectangular_triangular_topwidth_from_depth_singular (elemIdx, Depth)
+!         Flow     = Area * sqrt(grav*Area/Topwidth) - Flow_0
 
-    case default
-        print *, 'in ',trim(subroutine_name)
-        print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
-        print *, 'which has key ',trim(reverseKey(elemGeometry))
-        !stop 
-        call util_crashpoint( 84198)
-        !return
-     end select
+!     case default
+!         print *, 'in ',trim(subroutine_name)
+!         print *, 'CODE ERROR: unknown geometry of # ',elemGeometry 
+!         print *, 'which has key ',trim(reverseKey(elemGeometry))
+!         !stop 
+!         call util_crashpoint( 84198)
+!         !return
+!      end select
 
-end function bc_get_critical_flow
+! end function bc_get_critical_flow
 !%
 !%==========================================================================
 !% END OF MODULE

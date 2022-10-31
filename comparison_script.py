@@ -51,6 +51,7 @@ def convert_dset_to_csv(file_name,dset_name):
 tol = 5.0                   # tolerance for comparing between the norms
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
+unit             = 'SI'     # unit of original swmm-c input file. options 'CFS' or 'SI'
 #-----------------------------------------------------------------------------------
 
 # Getting current working directory and time when the script is ran so that we can create a new folder
@@ -153,6 +154,20 @@ all_dset_names=h5_file.keys()
 # this will be used to keep a running list of which links and nodes are now within given tolerances
 list_of_errors =[]
 
+if unit == 'CFS':
+    Yf = 3.28084
+    Qf = 35.3147
+    Yunit = '(ft)'
+    Qunit = '(cfs)'
+elif unit == 'SI':
+    Yf = 1.
+    Qf = 1.
+    Yunit = '(m)'
+    Qunit = '(cms)'
+else:
+    print('Worng unit type seletced. Only allowables are CFS and SI')
+    
+
 # Loop through all of the data set names 
 for x in all_dset_names:
     
@@ -170,9 +185,9 @@ for x in all_dset_names:
         # ... extract SWMM5+ data
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
         # extract the flowrates from the swmm5_plus .h5 file
-        swmmF_link_Q = z[1:,3]
+        swmmF_link_Q = z[1:,3] * Qf
         # extract the depths from the swmm5_plus .h5 file
-        swmmF_link_Y = z[1:,2]
+        swmmF_link_Y = z[1:,2] * Yf
         # extract the timestamp
         time = z[1:,0]
         array_len_Q = len(swmmC_link_Q)
@@ -186,7 +201,7 @@ for x in all_dset_names:
         print('-------------------------------------------------------------------------------')
         print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
         if print_timeseries:
-            link_col_headers = ["Time (hrs.)","SWMM-C Q (cms)", "SWMM5+ Q (cms)", "SWMM-C Y (m)", "SWMM5+ Y (m)"]
+            link_col_headers = ["Time (hrs.)","SWMM-C Q "+Qunit, "SWMM5+ Q "+Qunit, "SWMM-C Y "+Yunit, "SWMM5+ Y "+Yunit]
             link_merged_array = np.array([time[:array_len_Q],swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
             link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
             print(' ') 
@@ -229,8 +244,12 @@ for x in all_dset_names:
             list_of_errors.append('link: '+link_name+" depths are not within given Linf range")
 
     # Check if the data set is a node
-    if(x[0:10]=='node_face_'):
-
+    if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
+        
+        if (x[0:10]=='node_face_'):
+            is_nJ2 = True
+        else:
+            is_nJ2 = False
         # ... store node name
         node_name = x[10::]
 
@@ -241,7 +260,10 @@ for x in all_dset_names:
         # ... extract swmm5plus node data
         # extract the flowrates from the swmm5_plus .h5 file
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-        swmmF_node_H = (z[1:,5] + z[1:,6])/2. # averaging the u/s and d/s peizometric heads
+        if is_nJ2:  
+            swmmF_node_H = ((z[1:,5] + z[1:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        else:
+            swmmF_node_H = (z[1:,5]) * Yf # take the JM peizometric head
         # extract the timestamp
         time = z[1:,0]
 
@@ -254,7 +276,7 @@ for x in all_dset_names:
         print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
         # print node depth data
         if print_timeseries:
-            node_col_headers = ["Time (hrs.)", "SWMMC H (m)", "SWMM5+ H (m)"]
+            node_col_headers = ["Time (hrs.)", "SWMMC H "+Yunit, "SWMM5+ H "+Yunit]
             node_merged_array = np.array([time[:array_len_H],swmmC_node_H, swmmF_node_H[:array_len_H]]).T
             node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
             print(' ')
