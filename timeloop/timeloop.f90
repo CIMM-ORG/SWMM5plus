@@ -18,7 +18,9 @@ module timeloop
               interface_get_subcatch_runoff, &
               interface_call_runoff_execute, &
               interface_get_newRunoffTime,   &
-              interface_export_runon_volume
+              interface_export_runon_volume, &
+              interface_call_climate_setState, &
+              interface_get_evaporation_rate
     use utility_crash
     use control_hydraulics, only: control_update
 
@@ -289,14 +291,34 @@ contains
     
                 ! print *, 'before save previous values'
                 !% --- push the old values down the stack 
+                !%     e.g. Flowrate to Flowrate_N0  and Flowrate_N0 to Flowrate_N1
                 call tl_save_previous_values()
 
                 !
                 !call util_CLprint ('-2222 before hydrology step in timeloop---------------------------')
     
-                !% store the runoff from hydrology on a hydrology step
+                !% --- store the runoff from hydrology on a hydrology step
                 if ((.not. inSpinUpYN) .or. (inSpinUpYN .and. BCupdateYN) ) then
-                    if (doHydrologyStepYN) call tl_hydrology()
+                    !% --- note that hydrology in SWMM includes climate update
+                    if (doHydrologyStepYN) then 
+                        call tl_hydrology()
+                        setting%Climate%EvapRate = interface_get_evaporation_rate()
+                    else 
+                        !% --- update climate if evaporation is needed in hydraulics-only simulations
+                        if (setting%Climate%useHydraulicsEvaporationTF) then 
+                            !print *, 'time now            ',setting%Time%Now
+                            !print *, 'climate next update ',setting%Climate%NextTimeUpdate
+                            if (setting%Time%Now .ge. setting%Climate%NextTimeUpdate) then 
+                                !% --- update the time for the next climate call
+                                setting%Climate%LastTimeUpdate = setting%Time%Now
+                                setting%Climate%NextTimeUpdate = setting%Climate%LastTimeUpdate &
+                                    + setting%Climate%HydraulicsOnlyIntervalHours * 3600.d0
+                                call interface_call_climate_setState()    
+                            end if
+                        else 
+                            !% --- no update to evaporation rate
+                        end if
+                    end if
                 end if
 
                 ! print *, '1 nextHydrologyTime ', setting%Time%Hydrology%NextTime
@@ -688,7 +710,7 @@ contains
             integer, pointer :: npack, thisP(:), thisBC(:), nBarrels(:)
             real(8), pointer :: Qlateral(:), SeepRate(:), BreadthMax(:)
             real(8), pointer :: TopWidth(:), Area(:), AreaBelowBreadthMax(:)
-            real(8), pointer :: Length(:)
+            real(8), pointer :: Length(:), Fevap(:), EvapRate
             real(8) :: thisEpochTime, confac
             integer :: year, month, day
         !%------------------------------------------------------------------
@@ -701,7 +723,8 @@ contains
             AreaBelowBreadthMax => elemR(:,er_AreaBelowBreadthMax)
             Length              => elemR(:,er_Length)
             nBarrels            => elemI(:,ei_barrels)
-
+            Fevap               => elemSR(:,esr_Storage_FractionEvap)
+            EvapRate            => setting%Climate%EvapRate
             
             thisBC   => BC%P%BClat
         !%------------------------------------------------------------------
@@ -727,6 +750,7 @@ contains
         call util_datetime_decodedate(thisEpochTime, year, month, day)
         confac = setting%Adjust%Conductivity(month)
 
+
         !% --- Subtract the seepage rate for all conduit and channel cells
         !%     Convert m/s seep to m^3/s flux by multiplying by topwidth and length
         !%     Note that Topwidth is either the actual topwidth or the maximum value if the present
@@ -737,13 +761,36 @@ contains
         !%     a single link because the latter is giving the flow rate at the end of the
         !%     link after all the seepage is removed (i.e, what is expected in the last elem
         !%     of the link.)
-        npack => npack_elemP(ep_CC_NOTzerodepth)
+        npack => npack_elemP  (ep_CC_NOTzerodepth)
         thisP => elemP(1:npack,ep_CC_NOTzerodepth)
         where (Area(thisP) > AreaBelowBreadthMax(thisP))
             Qlateral(thisP) = Qlateral(thisP) - confac * SeepRate(thisP) * BreadthMax(thisP) * Length(thisP)
         elsewhere
             Qlateral(thisP) = Qlateral(thisP) - confac * SeepRate(thisP) * TopWidth(thisP)   * Length(thisP)
         endwhere
+
+        !% --- subtract the evaporation rate 
+        if (setting%Climate%useHydraulicsEvaporationTF) then 
+
+            !% --- apply to open channels
+            npack    => npack_elemP  (ep_CC_Open_Elements)
+            thisP    => elemP(1:npack,ep_CC_Open_Elements)
+            !% --- apply evaporation to open-channel CC elements that are larger than zero depth
+            where (elemR(thisP,er_Depth) > setting%ZeroValue%Depth)
+                Qlateral(thisP) = Qlateral(thisP) - EvapRate * BreadthMax(thisP) * Length(thisP)
+            endwhere
+
+            !% --- apply evaporation to storage elements
+            !%     note that Implied Storage has Fevap = 0.0, so this has no effect
+            npack    => npack_elemP  (ep_JM)
+            thisP    => elemP(1:npack,ep_JM)
+            Qlateral(thisP) = Qlateral(thisP) - EvapRate * Fevap(thisP) * BreadthMax(thisP) * Length(thisP)
+        else
+            !% --- evaporation has no effect
+        end if
+
+
+
 
         ! print *, 'confac ',confac
         ! print *, 'seepRate ',SeepRate(thisP)

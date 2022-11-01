@@ -903,7 +903,12 @@ contains
             node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
             ! write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
             ! write(*,*)
-    
+
+            ! write(*,*) 'call api_nodef_StorageFevap == ', reverseKey_api(api_nodef_StorageFevap)
+            node%R(ii,nr_StorageFevap)      = interface_get_nodef_attribute(ii, api_nodef_StorageFevap)
+            ! write(*,*) '... nr_StorageFevap = ',node%R(ii,nr_StorageFevap)
+            ! write(*,*)
+
             !% --- ponded area
             if (setting%SWMMinput%AllowPonding) then
                 ! write(*,*) 'call api_nodef_PondedArea == ', reverseKey_api(api_nodef_PondedArea)
@@ -2095,6 +2100,18 @@ contains
             ! HACK ??                  = setting%SWMMinput%TotalDuration
         else 
             !% use values from json file
+        end if
+
+        !% --- set the next time for updating climate if hydrology
+        !%     is not used
+        if ((.not. setting%Simulation%useHydrology)            &
+            .and.                                              &
+            (setting%Climate%useHydraulicsEvaporationTF)) then
+
+            setting%Climate%LastTimeUpdate = setting%Time%Now
+
+            setting%Climate%NextTimeUpdate = setting%Climate%LastTimeUpdate  &
+                + setting%Climate%HydraulicsOnlyIntervalHours * 3600.d0
         end if
 
         ! print *, setting%Time%EndEpoch

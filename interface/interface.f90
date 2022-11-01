@@ -66,6 +66,8 @@ module interface_
     public :: interface_call_runoff_execute
     public :: interface_get_subcatch_runoff
     public :: interface_get_subcatch_runoff_nodeIdx
+    public :: interface_call_climate_setState
+    public :: interface_get_evaporation_rate
     public :: interface_get_NewRunoffTime
 
 
@@ -509,6 +511,20 @@ module interface_
             integer(c_int),        intent(inout) :: node_idx
         end function api_get_subcatch_runoff_nodeIdx
         !% -------------------------------------------------------------------------------
+        integer(c_int) function api_call_climate_setState(thisDate) &
+            BIND(C, name='api_call_climate_setState')
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double), value, intent(in) :: thisDate
+        end function api_call_climate_setState
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_get_evaporation_rate(evapRate) &
+            BIND(C, name='api_get_evaporation_rate')
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double),  intent(inout) :: evapRate
+        end function api_get_evaporation_rate
+        !% -------------------------------------------------------------------------------
         ! --- Utils
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_find_object(object_type, object_name) &
@@ -567,10 +583,12 @@ module interface_
     procedure(api_export_link_results),        pointer :: ptr_api_export_link_results
     procedure(api_export_node_results),        pointer :: ptr_api_export_node_results
     procedure(api_find_object),                pointer :: ptr_api_find_object
-    procedure(api_export_runon_volume),      pointer :: ptr_api_export_runon_volume
+    procedure(api_export_runon_volume),        pointer :: ptr_api_export_runon_volume
     procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
     procedure(api_get_subcatch_runoff_nodeIdx), pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
+    procedure(api_call_climate_setState),      pointer :: ptr_api_call_climate_setState
+    procedure(api_get_evaporation_rate),       pointer :: ptr_api_get_evaporation_rate
     
     !% Error handling
     character(len = 1024) :: errmsg
@@ -3749,9 +3767,10 @@ contains
     subroutine interface_call_runoff_execute()
         !%---------------------------------------------------------------------
         !% Description:
+        !% calls the EPA SWMM runoff procedures
         !%---------------------------------------------------------------------
-        integer             :: error
-        character(64) :: subroutine_name = 'interface_call_runoff_execute'     
+            integer       :: error
+            character(64) :: subroutine_name = 'interface_call_runoff_execute'     
         !%---------------------------------------------------------------------   
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -3826,6 +3845,43 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_subcatch_runoff_nodeIdx
+!%
+!%=============================================================================
+!%=============================================================================
+!%  
+    subroutine interface_call_climate_setState ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% calls the EPA SWMM procedures to set the current climate state
+        !%---------------------------------------------------------------------
+            integer       :: error
+            character(64) :: subroutine_name = 'interface_call_climate_setState'     
+        !%---------------------------------------------------------------------  
+
+        call load_api_procedure("api_call_climate_setState")
+        error = ptr_api_call_climate_setState(setting%Time%Now)   
+        call print_api_error(error, subroutine_name)
+
+    end subroutine interface_call_climate_setState
+!%
+!%=============================================================================
+!%=============================================================================
+!% 
+    real(8) function interface_get_evaporation_rate () result(evapRate)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Gets the SWMM-C evaporation rate, converted to m/s
+        !%---------------------------------------------------------------------
+        !% Declarations
+        integer       :: error
+        character(64) :: subroutine_name = 'interface_get_evaporation_rate'     
+        !%---------------------------------------------------------------------   
+
+        call load_api_procedure("api_get_evaporation_rate")
+        error = ptr_api_get_evaporation_rate (evapRate)
+        call print_api_error(error, subroutine_name)
+
+    end function interface_get_evaporation_rate    
 !%
 !%=============================================================================
 !% PRIVATE
@@ -3934,6 +3990,10 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_subcatch_runoff_nodeIdx)        
             case ("api_get_NewRunoffTime")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_NewRunoffTime)
+            case ("api_call_climate_setState")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_call_climate_setState)
+            case ("api_get_evaporation_rate")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_evaporation_rate)
             case default
                 write(*,"(A,A)") "Error, procedure " // api_procedure_name // &
                  " has not been handled in load_api_procedure"

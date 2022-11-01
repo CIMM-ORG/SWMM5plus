@@ -391,10 +391,10 @@ module define_settings
     type AdjustType
         type(AdjustFlowrateType)   :: Flowrate
         type(AdjustHeadType)       :: Head
-        real(8), dimension(12)     :: Temperature   !% from SWMM input [ADJUSTMENTS] not use setting
-        real(8), dimension(12)     :: Evaporation   !% from SWMM input [ADJUSTMENTS] not use setting
-        real(8), dimension(12)     :: Rainfall      !% from SWMM input [ADJUSTMENTS] not use setting
-        real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] not use setting
+        real(8), dimension(12)     :: Temperature   !% from SWMM input [ADJUSTMENTS] not used
+        real(8), dimension(12)     :: Evaporation   !% from SWMM input [ADJUSTMENTS] not used 
+        real(8), dimension(12)     :: Rainfall      !% from SWMM input [ADJUSTMENTS] not used 
+        real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] not used 
     end type AdjustType
 
     ! setting%BC
@@ -410,6 +410,15 @@ module define_settings
         character(16)  ::    Short = 'default'
         character(31)  ::    withTimeStamp   !% NOT A USER SETTING
     end type CaseNameType
+
+    !% setting%Climate
+    type ClimateType
+        logical :: useHydraulicsEvaporationTF = .true. !% user may turn off hydrauilcs evaporation
+        real(8) :: HydraulicsOnlyIntervalHours = 1.d0 !% hours between updating climate if no runoff
+        real(8) :: LastTimeUpdate = 0.d0 !% time (seconds) of last update NOT A USER SETTING
+        real(8) :: NextTimeUpdate = 0.d0 !% time (seconds) of next update NOT A USER SETTING
+        real(8) :: EvapRate = 0.d0 !% current evaporation rate in m/s
+    end type ClimateType
 
     ! setting%Constant
     type ConstantType
@@ -726,6 +735,7 @@ module define_settings
         type(AdjustType)         :: Adjust
         type(BCPropertiesType)   :: BC
         type(CaseNameType)       :: CaseName ! name of case
+        type(ClimateType)        :: Climate  ! climate controls
         type(ConstantType)       :: Constant ! Constants
         type(ControlType)        :: Control  ! Control data structure
         type(CrashType)          :: Crash    !% conditions where code is considered crashin
@@ -1063,6 +1073,19 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'CaseName.Short not found'
         
         !% do not read           CaseName.withTimeStamp
+
+    !% Climate. =====================================================================
+        !%                        Climate.useHydraulicsEvaporationTF
+        call json%get('Climate.useHydraulicsEvaporationTF',logical_value, found)
+        if (found) setting%Climate%useHydraulicsEvaporationTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Climate.useHydraulicsEvaporationTF not found'
+
+        !%                          Climate.HydraulicsOnlyIntervalHours
+        call json%get('Climate.HydraulicsOnlyIntervalHours', real_value, found)
+        if (found) setting%Climate%HydraulicsOnlyIntervalHours = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Climate.HydraulicsOnlyIntervalHours not found'
+   
+        !% do not read Climate.LastTimeUpdate or Climate.NextTimeUpdate
 
     !% Constant. =====================================================================
         !%                       Constant.gravity

@@ -952,6 +952,16 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             break;
 
+        case nodef_StorageFevap :
+            switch (Node[node_idx].type) {
+                case STORAGE :
+                    *value = Storage[Node[node_idx].subIndex].fEvap;
+                    break;
+                default :
+                    *value = -1;
+            }
+            break;
+
         case nodef_extInflow_tSeries :
             // NOTE +1 added to the *value in interface_get_nodef_attribute
             if (Node[node_idx].extInflow)
@@ -2727,6 +2737,46 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     *node_idx = Subcatch[sc_idx].outNode;
 
     //printf("... sc_idx, node_idx %d , %d \n",sc_idx,*node_idx);
+    
+    return 0;
+}
+
+//===============================================================================
+int DLLEXPORT api_call_climate_setState(double thisDate)
+//===============================================================================
+    // calls the climate_setState() procedure in SWMM-C
+{
+    //printf(" \n  in api_call_climate_setState \n");
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    climate_setState(thisDate);
+    
+    return 0;
+}
+
+//===============================================================================
+int DLLEXPORT api_get_evaporation_rate(double *evapRate)
+//===============================================================================
+    // gets the Evap.rate (ft/s) from EPA SWMM
+{
+    //printf(" \n  in api_get_evaporation_rate \n");
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    *evapRate = FTTOM(Evap.rate);
+
+    //printf(" evap rate = %e \n ",Evap.rate);
     
     return 0;
 }
