@@ -227,57 +227,70 @@ module interface_
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_setup( &
             flow_units, &
-            route_model, &
+            infiltration_model_type, &
+            flow_routing_model_type, &
+            link_offset_type, &
+            force_main_equation, &
+            ignore_rainfall, &
+            ignore_snowmelt, &
+            ignore_groundwater, &
+            ignore_rdii, &
+            ignore_routing, &
+            ignore_quality, &
             allow_ponding, &
-            ignore_RDII, &
-            inertial_damping, &
-            num_threads, &
-            skip_steady_state, &
-            force_main_eqn, &
-            max_trials, &
-            normal_flow_limiter, &
-            rule_step, &
-            surcharge_method, &
+            steadystate_skip, &
+            steadystate_system_flow_tolerance, &
+            steadystate_lateral_flow_tolerance, &
+            routing_step_lengthening_time, &
+            routing_step_Courant_factor, &
+            routing_step_minimum,  &
+            inertial_damping_type, &
+            normal_flow_limiter_type, &
+            minimum_surface_area, &
+            minimum_conduit_slope, &
+            maximum_number_of_trials, &
+            head_convergence_tolerance, &
+            number_parallel_threads, &
             tempdir_provided, &
-            variable_step, &
-            lengthening_step, &
-            route_step, &
-            min_route_step, &
-            min_surface_area, &
-            min_slope, &
-            head_tol, &
-            sys_flow_tol, &
-            lat_flow_tol) &
+            control_rule_step, &
+            surcharge_method) &
             BIND(C, name="api_get_SWMM_setup")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), intent(inout) :: flow_units
-            integer(c_int), intent(inout) :: route_model
+            integer(c_int), intent(inout) :: infiltration_model_type
+            integer(c_int), intent(inout) :: flow_routing_model_type
+            integer(c_int), intent(inout) :: link_offset_type
+            integer(c_int), intent(inout) :: force_main_equation
+            integer(c_int), intent(inout) :: ignore_rainfall
+            integer(c_int), intent(inout) :: ignore_snowmelt
+            integer(c_int), intent(inout) :: ignore_groundwater
+            integer(c_int), intent(inout) :: ignore_rdii
+            integer(c_int), intent(inout) :: ignore_routing
+            integer(c_int), intent(inout) :: ignore_quality
             integer(c_int), intent(inout) :: allow_ponding
-            integer(c_int), intent(inout) :: ignore_RDII
-            integer(c_int), intent(inout) :: inertial_damping
-            integer(c_int), intent(inout) :: num_threads
-            integer(c_int), intent(inout) :: skip_steady_state
-            integer(c_int), intent(inout) :: force_main_eqn
-            integer(c_int), intent(inout) :: max_trials
-            integer(c_int), intent(inout) :: normal_flow_limiter
-            integer(c_int), intent(inout) :: rule_step
-            integer(c_int), intent(inout) :: surcharge_method
+            integer(c_int), intent(inout) :: steadystate_skip
+            real(c_double), intent(inout) :: steadystate_system_flow_tolerance
+            real(c_double), intent(inout) :: steadystate_lateral_flow_tolerance
+            real(c_double), intent(inout) :: routing_step_lengthening_time
+            real(c_double), intent(inout) :: routing_step_Courant_factor
+            real(c_double), intent(inout) :: routing_step_minimum
+            integer(c_int), intent(inout) :: inertial_damping_type
+            integer(c_int), intent(inout) :: normal_flow_limiter_type
+            real(c_double), intent(inout) :: minimum_surface_area
+            real(c_double), intent(inout) :: minimum_conduit_slope
+            integer(c_int), intent(inout) :: maximum_number_of_trials
+            real(c_double), intent(inout) :: head_convergence_tolerance
+            integer(c_int), intent(inout) :: number_parallel_threads
             integer(c_int), intent(inout) :: tempdir_provided
-            real(c_double), intent(inout) :: variable_step
-            real(c_double), intent(inout) :: lengthening_step
-            real(c_double), intent(inout) :: route_step
-            real(c_double), intent(inout) :: min_route_step
-            real(c_double), intent(inout) :: min_surface_area
-            real(c_double), intent(inout) :: min_slope
-            real(c_double), intent(inout) :: head_tol
-            real(c_double), intent(inout) :: sys_flow_tol
-            real(c_double), intent(inout) :: lat_flow_tol
+            integer(c_int), intent(inout) :: control_rule_step
+            integer(c_int), intent(inout) :: surcharge_method
         end function api_get_SWMM_setup
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_times &
             (starttime_epoch, endtime_epoch, report_start_datetime, report_step, &
-             hydrology_step, hydrology_dry_step, hydraulic_step, total_duration) &
+             hydrology_wet_step, hydrology_dry_step, sweep_start_dayofyear, &
+             sweep_end_dayofyear, dry_days, hydraulic_step, total_duration) &
             BIND(C, name="api_get_SWMM_times")
             use, intrinsic :: iso_c_binding
             implicit none
@@ -285,8 +298,11 @@ module interface_
             real(c_double), intent(inout) :: endtime_epoch
             real(c_double), intent(inout) :: report_start_datetime
             integer(c_int), intent(inout) :: report_step
-            integer(c_int), intent(inout) :: hydrology_step
+            integer(c_int), intent(inout) :: hydrology_wet_step
             integer(c_int), intent(inout) :: hydrology_dry_step
+            integer(c_int), intent(inout) :: sweep_start_dayofyear
+            integer(c_int), intent(inout) :: sweep_end_dayofyear
+            integer(c_int), intent(inout) :: dry_days
             real(c_double), intent(inout) :: hydraulic_step
             real(c_double), intent(inout) :: total_duration
         end function api_get_SWMM_times
@@ -3324,14 +3340,22 @@ contains
         !% file and have been processed by SWMM-C. Stores data that will be
         !% used in SWMM5+ in the setting.SWMMinput... structure
         !%---------------------------------------------------------------------
-            integer       :: flow_units, route_model, allow_ponding, ignore_RDII
-            integer       :: inertial_damping, num_threads, skip_steady_state
-            integer       :: force_main_eqn, max_trials, normal_flow_limiter
-            integer       :: rule_step, surcharge_method, tempdir_provided
-            real(8)       :: variable_step, lengthening_step, route_step
-            real(8)       :: min_route_step, min_surface_area, min_slope
-            real(8)       :: head_tol, sys_flow_tol, lat_flow_tol
-            integer       :: error, ii
+            integer :: flow_units, infiltration_model_type, flow_routing_model_type
+            integer :: link_offset_type, force_main_equation, ignore_rainfall
+            integer :: ignore_snowmelt, ignore_groundwater, ignore_rdii
+            integer :: ignore_routing, ignore_quality, allow_ponding
+            integer :: steadystate_skip
+            real(8) :: steadystate_system_flow_tolerance
+            real(8) :: steadystate_lateral_flow_tolerance
+            real(8) :: routing_step_lengthening_time, routing_step_Courant_factor
+            real(8) :: routing_step_minimum
+            integer :: inertial_damping_type, normal_flow_limiter_type
+            real(8) :: minimum_surface_area, minimum_conduit_slope
+            integer :: maximum_number_of_trials
+            real(8) :: head_convergence_tolerance
+            integer :: number_parallel_threads, tempdir_provided, control_rule_step
+            integer :: surcharge_method
+            integer :: error, ii
             integer, parameter  :: nset = 30
             logical       :: thisWarning(1:nset)
             logical       :: thisFailure(1:nset)
@@ -3348,290 +3372,491 @@ contains
 
         error = ptr_api_get_SWMM_setup( &
             flow_units,  &
-            route_model, &
+            infiltration_model_type, &
+            flow_routing_model_type, &
+            link_offset_type, &
+            force_main_equation, &
+            ignore_rainfall, &
+            ignore_snowmelt, &
+            ignore_groundwater, &
+            ignore_rdii, &
+            ignore_routing, &
+            ignore_quality, &
             allow_ponding, &
-            ignore_RDII, &
-            inertial_damping, &
-            num_threads, &
-            skip_steady_state, &
-            force_main_eqn, &
-            max_trials, &
-            normal_flow_limiter, &
-            rule_step, &
-            surcharge_method, &
+            steadystate_skip, &
+            steadystate_system_flow_tolerance, &
+            steadystate_lateral_flow_tolerance, &
+            routing_step_lengthening_time, &
+            routing_step_Courant_factor, &
+            routing_step_minimum,  &
+            inertial_damping_type, &
+            normal_flow_limiter_type, &
+            minimum_surface_area, &
+            minimum_conduit_slope, &
+            maximum_number_of_trials, &
+            head_convergence_tolerance, &
+            number_parallel_threads, &
             tempdir_provided, &
-            variable_step, &
-            lengthening_step, &
-            route_step, &
-            min_route_step, &
-            min_surface_area, &
-            min_slope, &
-            head_tol, &
-            sys_flow_tol, &
-            lat_flow_tol)
+            control_rule_step, &
+            surcharge_method &
+            )
 
         call print_api_error(error, subroutine_name)
 
-        !% check for pollutants
-        setting%SWMMinput%N_pollutant = get_num_objects(API_POLLUT)
+        !% --- count numbers of objects from define_api_keys (SWMM objects)
+        setting%SWMMinput%N_gage        = get_num_objects(API_GAGE)
+        setting%SWMMinput%N_subcatch    = get_num_objects(API_SUBCATCH)
+        setting%SWMMinput%N_node        = get_num_objects(API_NODE)
+        setting%SWMMinput%N_link        = get_num_objects(API_LINK)
+        setting%SWMMinput%N_pollutant   = get_num_objects(API_POLLUT)
+        setting%SWMMinput%N_landuse     = get_num_objects(API_LANDUSE)
+        setting%SWMMinput%N_timepattern = get_num_objects(API_TIMEPATTERN)
+        setting%SWMMinput%N_curve       = get_num_objects(API_CURVE)
+        setting%SWMMinput%N_tseries     = get_num_objects(API_TSERIES)
+        setting%SWMMinput%N_control     = get_num_objects(API_CONTROL)
+        setting%SWMMinput%N_transect    = get_num_objects(API_TRANSECT)
+        setting%SWMMinput%N_aquifer     = get_num_objects(API_AQUIFER)
+        setting%SWMMinput%N_unithyd     = get_num_objects(API_UNITHYD)
+        setting%SWMMinput%N_snowmelt    = get_num_objects(API_SNOWMELT)
+        setting%SWMMinput%N_shape       = get_num_objects(API_SHAPE)
+        setting%SWMMinput%N_lid         = get_num_objects(API_LID)
 
-        !% check for controls
-        setting%SWMMinput%N_control = get_num_objects(API_CONTROL)
-        
-        !% check for divider nodes
-        setting%SWMMinput%N_divider = get_num_objects(API_DIVIDER)
+        !% --- count number of node types
+        setting%SWMMinput%N_junction = get_num_objects(API_JUNCTION)
+        setting%SWMMinput%N_outfall  = get_num_objects(API_OUTFALL)
+        setting%SWMMinput%N_storage  = get_num_objects(API_STORAGE)
+        setting%SWMMinput%N_divider  = get_num_objects(API_DIVIDER)
 
-        !% seconds between control rule evaluations
-        setting%SWMMinput%RuleStep = rule_step
-    
-        !print *, 'N control ', setting%SWMMinput%N_control
-
-        !print *, 'route_step ', route_step
+        !% --- seconds between control rule evaluations
+        setting%SWMMinput%ControlRuleStep = control_rule_step
     
 
         thisFailure(:) = .false.
         thisWarning(:) = .false.
         thisVariable(:) = ''
+        thisProblem(:) = 'none'
 
-        !% Units are always CMS for SWMM5+
-        !% HACK there might be issues with hydrology input in CFS
-        ii = 1;
+        !% --- Flow Units are always CMS for SWMM5+ (enum in enum.h)
+        ii = 1
         select case(flow_units)
-        case(3)
-            !% continue with CMS units
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii) = .true.
-            thisFailure(ii) = .false.
-            thisVariable(ii) = 'FLOW_UNITS'
-            thisProblem(ii) = 'CFS input units are converted to CMS for all SWMM5+ computation and output.'
+            case(0)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_CFS
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'CFS input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(1)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_GPM
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'GPM input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(2)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_MGD
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'MGD input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(3)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_CMS
+                !% continue with CMS units
+            case(4)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_LPS
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'LPS input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(5)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_MLD
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'MLD input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case default
+                thisWarning(ii) = .true.
+                thisFailure(ii) = .true.
+                thisVariable(ii) = 'FLOW_UNITS'
+                thisProblem(ii) = 'Unknown value for SWMM input: (CFS, GPM, NGD, CMS, LPS, MLD) supported'
         end select
 
-        !% Routing model is always DYNWAVE for SWMM5+
+        !% --- Infiltration method 
+        !%     from enum InfilType in infil.h
         ii=ii+1
-        select case (route_model)
-        case (4)
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .true.
-            thisVariable(ii) = 'FLOW_ROUTING'
-            thisProblem(ii)  = 'must be set to DYNWAVE in *.inp file'
+        select case (infiltration_model_type)
+            case (0)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Horton
+            case (1)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Mod_Horton
+            case (2)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Green_Ampt
+            case (3)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Mod_Green_Ampt
+            case (4)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Curve_Number
+            case default
+                thisWarning(ii) = .true.
+                thisFailure(ii) = .true.
+                thisProblem(ii) = 'Unknown value for SWMM input (HORTON, MODIFIED_HORTON, GREEN_AMPT, MODIFIED_GREEN_AMPT, CURVE_NUMBER) supported'
         end select
 
-        !% Ponding 
+           
+        !% --- Routing model 
+        !%     is always DYNWAVE for SWMM5+
+        !%     from enum RouteModelType in enum.h
         ii=ii+1
-        select case (allow_ponding)
-        case (0)
-            setting%SWMMinput%AllowPonding = .false.
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case (1)
-            setting%SWMMinput%AllowPonding = .true.
-            thisWarning(ii)  = .false.
-            thisFailure(ii)  = .false.
-        case default
+        select case (flow_routing_model_type)
+            case (0)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_NoRouting
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'NO_ROUTING must be set to DYNWAVE in *.inp file'
+            case (1)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_SteadyFlow
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'STEADY must be set to DYNWAVE in *.inp file'
+            case (2)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_KinematicWave
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'KINWAVE must be set to DYNWAVE in *.inp file'
+            case (3)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_ExtendedKinematicWave
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'XKINWAVE must be set to DYNWAVE in *.inp file'
+            case (4)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_DynamicWave
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: SWMM5+ only supports DYNWAVE in *.inp file'
         end select
 
-        !% RDII
+        !% --- link offset type
+        !%     from enum OffsetType in enums.h
+        ii=ii+1
+        select case (link_offset_type)
+            case(0)
+                setting%SWMMinput%LinkOffsetsType = SWMM_LinkOffset_DepthOffset
+            case(1)
+                setting%SWMMinput%LinkOffsetsType = SWMM_LinkOffset_ElevOffset
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'LINK_OFFSETS'
+                thisProblem(ii)  = 'Unknown value found: (DEPTH, ELEVATION) supported'
+        end select
+
+        !% --- Force mains in EPA SWMM use 0 = Hazen-Williams, 1 = Darcy-Weisbach 
+        !%     from enum ForceMainType in enum.h
+        ii=ii+1
+        select case (force_main_equation)
+            case (0)
+                setting%SWMMinput%ForceMainEquationType = HazenWilliams
+            case (1)
+                setting%SWMMinput%ForceMainEquationType = DarcyWeisbach
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FORCE_MAIN_EQUATION'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (H_W, D_W) supported.'
+        end select    
+
+        !% --- ignore rainfall (logical)
+        ii=ii+1
+        select case (ignore_rainfall)
+            case (0)
+                setting%SWMMinput%IgnoreRainfall = .false.
+            case (1)
+                setting%SWMMinput%IgnoreRainfall = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_RAINFALL'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore snowmelt (logical)
+        ii=ii+1
+        select case (ignore_snowmelt)
+            case (0)
+                setting%SWMMinput%IgnoreSnowmelt = .false.
+            case (1)
+                setting%SWMMinput%IgnoreSnowmelt = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_SNOWMELT'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore groundwater (logical)
+        ii=ii+1
+        select case (ignore_groundwater)
+            case (0)
+                setting%SWMMinput%IgnoreGroundwater = .false.
+            case (1)
+                setting%SWMMinput%IgnoreGroundwater = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_GROUNDWATER'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore RDII (logical)
         ii=ii+1
         select case (ignore_RDII)
-        case (0)
-            setting%SWMMinput%IgnoreRDII = .false.
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case (1)
-            setting%SWMMinput%IgnoreRDII = .true.
-            thisWarning(ii)  = .false.
-            thisFailure(ii)  = .false.
-        case default
+            case (0)
+                setting%SWMMinput%IgnoreRDII = .false.
+            case (1)
+                setting%SWMMinput%IgnoreRDII = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_RDII'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
         end select
 
-        !% Inertial damping is never used in SWMM5+
+        !% --- ignore routing (logical)
         ii=ii+1
-        select case (inertial_damping)
-        case (0)
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'INERTIAL_DAMPING'
-            thisProblem(ii)  = 'is ignored.'
+        select case (ignore_routing)
+            case (0)
+                setting%SWMMinput%IgnoreRouting = .false.
+            case (1)
+                setting%SWMMinput%IgnoreRouting = .true.  
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_ROUTING'
+                thisProblem(ii)  = 'SWMM5+ requires IGNORE_ROUTING = NO in SWMM input file'
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_ROUTING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
         end select
 
-        !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
+        !% --- ignore quality (logical)
         ii=ii+1
-        select case (num_threads)
-        case (1)
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'NUM_THREADS'
-            thisProblem(ii)  = 'is ignored.'
+        select case (ignore_quality)
+            case (0)
+                setting%SWMMinput%IgnoreQuality = .false.
+                if (setting%SWMMinput%N_pollutant > 0) then
+                    thisWarning(ii)  = .true.
+                    thisFailure(ii)  = .true.
+                    thisVariable(ii) = 'IGNORE_QUALITY'
+                    thisProblem(ii)  = 'SWMM5+ requires IGNORE_QUALTIY = YES in SWMM input file'
+                else 
+                    !% -- no pollutants found, so this shouldn't matter
+                end if
+            case (1)
+                setting%SWMMinput%IgnoreQuality = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_QUALITY'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
         end select
 
-        !% SWMM5+ does not recognize steady state conditions as of 20211223
+        !% --- Ponding 
         ii=ii+1
-        if (skip_steady_state) then
+        select case (allow_ponding)
+            case (0)
+                setting%SWMMinput%AllowPonding = .false.
+            case (1)
+                setting%SWMMinput%AllowPonding = .true.
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'ALLOW_PONDING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- Steady state skip routing
+        ii=ii+1
+        select case (steadystate_skip)
+            case (0)
+                setting%SWMMinput%SteadyState_Skip = .false.
+            case (1)
+                setting%SWMMinput%SteadyState_Skip = .true.
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'SKIP_STEADY_STATE'
+                thisProblem(ii)  = 'SWMM5+ requires SKIP_STEADY_STATE = NO in SWMM input file'
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'SKIP_STEADY_STATE'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- steady state system flow tolerance
+        !%     only relevant if steadystate_skip = 1, which is a failure mode
+        setting%SWMMinput%SteadyState_System_FlowrateTolerance  = steadystate_system_flow_tolerance
+        setting%SWMMinput%SteadyState_Lateral_FlowrateTolerance = steadystate_lateral_flow_tolerance
+
+        !% --- routing step lengthening (not used in SWMM5+)
+        ii=ii+1
+        setting%SWMMinput%RoutingStep_LengtheningTime = routing_step_lengthening_time
+        if (routing_step_lengthening_time .ne. zeroR) then
             thisWarning(ii)  = .true.
             thisFailure(ii)  = .false.
-            thisVariable(ii) = 'SKIP_STEADY_STATE'
-            thisProblem(ii)  = 'is ignored.'
+            thisVariable(ii) = 'LENGTHENING_STEP'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
         end if
 
-        !% Force mains in EPA SWMM use 0 = Hazen-Williams, 1 = Darcy-Weisbach 
+        !% --- courant factor for EPA SWMM variable time step
         ii=ii+1
-        select case (force_main_eqn)
-        case (0)
-            setting%SWMMinput%ForceMainEquation = HazenWilliams
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case (1)
-            setting%SWMMinput%ForceMainEquation = DarcyWeisbach
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
+        setting%SWMMinput%RoutingStep_CourantFactor  = routing_step_Courant_factor
+        if (routing_step_Courant_factor .ne. zeroR) then
             thisWarning(ii)  = .true.
-            thisFailure(ii)  = .true.
-            thisVariable(ii) = 'FORCE_MAIN_EQUATION'
-            thisProblem(ii)  = 'unknown option (should be 0 for HW or 1 for DW).'
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'VARIABLE_STEP'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        end if
+
+        !% --- minimum hydraulics time step of EPA SWMM is ignored
+        ii=ii+1
+        setting%SWMMinput%RoutingStep_Minimum         = routing_step_minimum
+        if (routing_step_minimum .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'MINIMUM_STEP'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        end if
+
+        !% --- Inertial damping is never used in SWMM5+
+        !%     from enum InertialDampingType in enums.h
+        ii=ii+1
+        select case (inertial_damping_type)
+            case (0)
+                setting%SWMMinput%InertialDampingType = SWMM_InertialDamping_NoDamping
+            case (1)
+                setting%SWMMinput%InertialDampingType = SWMM_InertialDamping_PartialDamping
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'INERTIAL_DAMPING'
+                thisProblem(ii)  = 'Only NONE is supported in SWMM5+'
+            case (2)
+                setting%SWMMinput%InertialDampingType = SWMM_InertialDamping_FullDamping
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'INERTIAL_DAMPING'
+                thisProblem(ii)  = 'Only NONE is supported in SWMM5+'
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'INERTIAL_DAMPING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: Only NONE is supported in SWMM5+'
         end select
 
-        !% Max trials is irrelevant
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'MAX_TRIALS'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Normal flow limiters are not implemented
+        !% --- Normal flow limiter
+        !%     from enum NormalFlowType in enums.h
         ii=ii+1
         thisWarning(ii)  = .true.
         thisFailure(ii)  = .false.
         thisVariable(ii) = 'NORMAL_FLOW_LIMITED'
-        thisProblem(ii)  = 'is ignored.'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        select case (normal_flow_limiter_type)
+        case(0)
+            setting%SWMMinput%NormalFlowLimiterType = SWMM_NormalFlowLimiterType_Slope
+        case(1)
+            setting%SWMMinput%NormalFlowLimiterType = SWMM_NormalFlowLimiterType_Froude
+        case(2)
+            setting%SWMMinput%NormalFlowLimiterType = SWMM_NormalFlowLimiterType_Both
+        case default
+        end select
 
+        !% --- Minimum surface area for nodes from EPA SWMM is not used
+        ii=ii+1
+        setting%SWMMinput%SurfaceArea_Minimum = minimum_surface_area
+        if (minimum_surface_area .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'MIN_SURFAREA'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        end if
 
-        !% Rule Step is always OK
+        !% --- Minimum slope is never used (default of 0.0 is ignored)
+        ii=ii+1
+        setting%SWMMinput%ConduitSlope_Minimum = minimum_conduit_slope
+        thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
+        thisVariable(ii) = 'MIN_SLOPE'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+
+        !% --- Max trials is irrelevant
+        ii=ii+1
+        setting%SWMMinput%NumberOfTrials_Maximum = maximum_number_of_trials
+        thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
+        thisVariable(ii) = 'MAX_TRIALS'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+
+        !% Head Tolerance is irrelevant 
+        ii=ii+1
+        setting%SWMMinput%Head_ConvergenceTolerance = head_convergence_tolerance
+        thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
+        thisVariable(ii) = 'HEAD_TOL'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+
+        !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
+        ii=ii+1
+        setting%SWMMinput%NumberParallelThreads = number_parallel_threads
+        select case (number_parallel_threads)
+            case (1)
+                !% --- continue
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .false.
+                thisVariable(ii) = 'NUM_THREADS'
+                thisProblem(ii)  = 'input value is ignored in SWMM5+ (set threads at compile time).'
+        end select
+
+        ii=ii+1        
+        if (tempdir_provided == 1) then
+            setting%SWMMinput%TempDirectory_Provided = .true.
+            thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'TEMPDIR'
+            thisProblem(ii)  = 'input value is ignored for SWMM5+ output (available for some EPA-SWMM output).'
+        else
+            setting%SWMMinput%TempDirectory_Provided = .false.
+        end if
+
+        !%--------------------------------------------------------------------------------
+        !% --- OTHER SWMM OPTIONS
+
+        !% Control Rule Step is always OK
         ii=ii+1
         thisWarning(ii) = .false.
         thisFailure(ii) = .false.
         thisVariable(ii) = 'RULESTEP'
 
-        !% only Preissman SLOT is presently allowed for surcharge method -- handled by JSON file
+        !% --- Surcharge method
+        !%     only Preissman SLOT is presently allowed for surcharge method -- handled by JSON file
+        !%     from enum  SurchargeMethodType in enums.h
         ii=ii+1
         select case (surcharge_method)
+        case (0)
+            setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Extran
+            thisWarning(ii) = .true.
+            thisVariable(ii) = 'SURCHARGE_METHOD'
+            thisProblem(ii)  = 'input value ignored. SWMM5+ uses Preissmann slot (set in JSON file).'
         case (1)
+            setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Slot
             !% Preissmann SLOT is specified
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'SWMM5+ uses Preissmann slot (set in JSON file).'
+            thisProblem(ii)  = 'Unknown value for SWMM input. SWMM5+ overwrites (ETRAN,SLOT) from json file'
         end select
 
-        if (tempdir_provided ==1) then
+        !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20221103
+        ii=ii+1
+        if ((setting%SWMMinput%N_pollutant > 0) .and. (.not. setting%SWMMinput%IgnoreQuality))then
             thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'TEMPDIR'
-            thisProblem(ii)  = 'is ignored for SWMM5+ output (available for some EPA-SWMM output).'
-        end if
-
-        !% Variable time step in SWMM5+ does not use external controls
-        ii=ii+1
-        if (variable_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'VARIABLE_STEP'
-            thisProblem(ii)  = 'is ignored. JSON file setting.VariableDT is used.'
-        end if
-
-        !% Dynamic lengthening of pipe not used in SWMM5+ as of 20211223
-        ii=ii+1
-        if (lengthening_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'LENGTHENING_STEP'
-            thisProblem(ii)  = 'is ignored.'
-        end if
-
-        !% User-set routing time step is not allowed
-        ii=ii+1
-        if (route_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'ROUTING_STEP'
-            thisProblem(ii)  = 'is ignored. JSON file setting.Time.Hydraulics.Dt is used.'
-        end if
-
-        !% Minimum time steps are set through the json file
-        ii=ii+1
-        if (min_route_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'MIN_ROUTE_STEP'
-            thisProblem(ii)  = 'is ignored (JSON file setting.VariableDT.cfl_lo_max is used).'
-        end if
-
-        !% Minimum surface area for nodes is not used
-        ii=ii+1
-        if (min_surface_area .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'MIN_SURFAREA'
-            thisProblem(ii)  = 'is ignored.'
-        end if
-
-        !% Minimum slope is never used (default of 0.0 is ignored)
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'MIN_SLOPE'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Head Tolerance is irrelevant 
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'HEAD_TOL'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% System Flow Tolerance is not used
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'SYS_FLOW_TOL'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Lateral in/out Flow Tolerance is not used
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'LAT_FLOW_TOL'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20211223
-        ii=ii+1
-        if (setting%SWMMinput%N_pollutant > 0) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = '[POLLUTANTS]'
-            thisProblem(ii)  = 'are ignored in routing'
-        end if
-
-        !% Controls in hydraulics not supported in SWMM5+ as of 20211223
-        ii=ii+1
-        if (setting%SWMMinput%N_control > 0) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = '[CONTROL]'
-            thisProblem(ii)  = 'all ignored in routing.'
+            thisProblem(ii)  = 'are not supported in SWMM5+, set IGNORE_QUALITY = YES.'
         end if
 
         !% Dividers are not used in SWMM5+ as we do not support Kinematic Wave
@@ -3640,9 +3865,12 @@ contains
             thisWarning(ii)  = .true.
             thisFailure(ii)  = .false.
             thisVariable(ii) = '[DIVIDER]'
-            thisProblem(ii)  = 'are ignored.'
+            thisProblem(ii)  = 'in SWMM input file are converted to junctions for dynamic wave in EPA SWMM.'
         end if
 
+        !% -----------------------------------------------------------------------------------
+        !% --- printouts
+        !%
         if ((any(thisWarning)) .and. (this_image() == 1) ) then
             write(*,'(A)') ' '
             write(*,'(A)') ' '
@@ -3693,10 +3921,11 @@ contains
         !% file and have been processed by SWMM-C
         !%---------------------------------------------------------------------
             integer                :: error
-            real(c_double), target :: reportStart_epoch, RouteStep 
+            real(c_double), target :: reportStart_epoch, hydraulics_route_step 
             real(c_double), target :: starttime_epoch, endtime_epoch
             real(c_double), target :: TotalDuration
-            integer(c_int), target :: reportStep, WetStep, DryStep
+            integer(c_int), target :: reportStep, hydrology_wet_step, hydrology_dry_step
+            integer(c_int), target :: sweep_start_dayofyear, sweep_end_dayofyear, dry_days
             character(64)          :: subroutine_name = 'interface_get_SWMM_times'
         !%----------------------------------------------------------------------
         !% Preliminaries
@@ -3717,9 +3946,12 @@ contains
             endtime_epoch,    &
             reportStart_epoch, &
             reportStep,  &
-            WetStep,     &
-            DryStep,     &
-            RouteStep,   &
+            hydrology_wet_step,     &
+            hydrology_dry_step,     &
+            sweep_start_dayofyear,  &
+            sweep_end_dayofyear, &
+            dry_days,                &
+            hydraulics_route_step,   &
             TotalDuration)
         call print_api_error(error, subroutine_name)
 
@@ -3727,9 +3959,12 @@ contains
         setting%SWMMinput%EndEpoch              = endtime_epoch                      
         setting%SWMMinput%ReportStartTimeEpoch  = reportStart_epoch
         setting%SWMMinput%ReportTimeInterval    = reportStep
-        setting%SWMMinput%WetStep               = WetStep
-        setting%SWMMinput%RouteStep             = RouteStep
-        setting%SWMMinput%DryStep               = DryStep
+        setting%SWMMinput%Hydrology_WetStep     = hydrology_wet_step
+        setting%SWMMinput%Hydrology_DryStep     = hydrology_dry_step
+        setting%SWMMinput%Sweep_Start_Day       = sweep_start_dayofyear
+        setting%SWMMinput%Sweep_End_Day         = sweep_end_dayofyear
+        setting%SWMMinput%DryDaysBeforeStart    = dry_days
+        setting%SWMMinput%Hydraulics_RouteStep  = hydraulics_route_step
         setting%SWMMinput%TotalDuration         = TotalDuration
 
         !%----------------------------------------------------------------------

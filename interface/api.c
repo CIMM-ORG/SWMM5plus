@@ -592,81 +592,93 @@ int DLLEXPORT api_get_headBC(
 }
 //===============================================================================
 int DLLEXPORT api_get_SWMM_setup(
-    int*  flow_units,
-    int*  route_model,
-    int*  allow_ponding,
-    int*  ignore_RDII,
-    int*  inertial_damping,
-    int*  num_threads,
-    int*  skip_steady_state,
-    int*  force_main_eqn,
-    int*  max_trials,
-    int*  normal_flow_limiter,
-    int*  rule_step,
-    int*  surcharge_method,
-    int*  tempdir_provided,
-    double* variable_step,
-    double* lengthening_step,
-    double* route_step,
-    double* min_route_step,
-    double* min_surface_area,
-    double* min_slope,
-    double* head_tol,
-    double* sys_flow_tol,
-    double* lat_flow_tol)
+    int*    flow_units,
+    int*    infiltration_model_type,
+    int*    flow_routing_model_type,
+    int*    link_offset_type,
+    int*    force_main_equation,
+    int*    ignore_rainfall,
+    int*    ignore_snowmelt,
+    int*    ignore_groundwater,
+    int*    ignore_rdii,
+    int*    ignore_routing,
+    int*    ignore_quality,
+    int*    allow_ponding,
+    int*    steadystate_skip,
+    double* steadystate_system_flow_tolerance,
+    double* steadystate_lateral_flow_tolerance,
+    double* routing_step_lengthening_time,
+    double* routing_step_Courant_factor,
+    double* routing_step_minimum, 
+    int*    inertial_damping_type,
+    int*    normal_flow_limiter_type,
+    double* minimum_surface_area,
+    double* minimum_conduit_slope,
+    int*    maximum_number_of_trials,
+    double* head_convergence_tolerance,
+    int*    number_parallel_threads,
+    int*    tempdir_provided,
+    int*    control_rule_step,
+    int*    surcharge_method
+    )
+
 //===============================================================================
-    // Note, at this time this only gets the SWMM setup that are important to hydraulics
+    // Gets all SWMM options from input file plus some derived options
 {
     int error;
 
     error = check_api_is_initialized("api_get_SWMM_setup");
     if (error) return error;
 
+    // OPTIONS from SWMM input file
+
     *flow_units = FlowUnits;
 
-    *route_model = RouteModel;
+    *infiltration_model_type = InfilModel;
+
+    *flow_routing_model_type = RouteModel;
+
+    *link_offset_type = LinkOffsets;    
+
+    *force_main_equation = ForceMainEqn;
+
+    *ignore_rainfall    = IgnoreRainfall;
+    *ignore_snowmelt    = IgnoreSnowmelt;
+    *ignore_groundwater = IgnoreGwater;
+    *ignore_rdii        = IgnoreRDII;
+    *ignore_routing     = IgnoreRouting;
+    *ignore_quality     = IgnoreQuality;
 
     *allow_ponding = AllowPonding;
 
-    *ignore_RDII = IgnoreRDII;
+    *steadystate_skip = SkipSteadyState;
+    *steadystate_system_flow_tolerance  = CFTOCM(SysFlowTol);
+    *steadystate_lateral_flow_tolerance = CFTOCM(LatFlowTol);
 
-    *inertial_damping = InertDamping;
+    *routing_step_lengthening_time = LengtheningStep;
+    *routing_step_Courant_factor   = CourantFactor;
+    *routing_step_minimum          = MinRouteStep;
 
-    *num_threads = NumThreads;
+    *inertial_damping_type    = InertDamping;
+    *normal_flow_limiter_type = NormalFlowLtd;
 
-    *skip_steady_state = SkipSteadyState;
+    *minimum_surface_area  = FT2TOM2(MinSurfArea);
+    *minimum_conduit_slope = MinSlope;
 
-    *force_main_eqn = ForceMainEqn;
+    *maximum_number_of_trials = MaxTrials;
 
-    *max_trials = MaxTrials;
+    *head_convergence_tolerance = FTTOM(HeadTol);
 
-    *normal_flow_limiter = NormalFlowLtd;
-
-    *rule_step = RuleStep;
-
-    *surcharge_method = SurchargeMethod;
+    *number_parallel_threads = NumThreads;
 
     *tempdir_provided = 0;
-    if (strlen(TempDir) >0)
-        *tempdir_provided = 1;
+    if (strlen(TempDir) >0) *tempdir_provided = 1;
     
-    *variable_step = CourantFactor;
+    // OTHER SWMM setup values
 
-    *lengthening_step = LengtheningStep;
+    *control_rule_step = RuleStep;
 
-    *route_step = RouteStep;
-    
-    *min_route_step = MinRouteStep;
-
-    *min_surface_area = FT2TOM2(MinSurfArea);
-
-    *min_slope = MinSlope;
-
-    *head_tol = FTTOM(HeadTol);
-
-    *sys_flow_tol = CFTOCM(SysFlowTol);
-
-    *lat_flow_tol = CFTOCM(LatFlowTol);
+    *surcharge_method = SurchargeMethod;
 
     //printf(" RouteModel = %d \n",RouteModel);
 
@@ -685,10 +697,14 @@ int DLLEXPORT api_get_SWMM_times(
     double* endtime_epoch,
     double* report_start_datetime, 
     int*    report_step, 
-    int*    hydrology_step, 
+    int*    hydrology_wet_step, 
     int*    hydrology_dry_step, 
+    int*    sweep_start_dayofyear,
+    int*    sweep_end_dayofyear,
+    int*    dry_days,
     double* hydraulic_step,
-    double* total_duration) 
+    double* total_duration
+    ) 
 //===============================================================================    
 {
     int error;
@@ -700,8 +716,11 @@ int DLLEXPORT api_get_SWMM_times(
     *endtime_epoch         = EndDateTime;
     *report_start_datetime = ReportStart;
     *report_step           = ReportStep;
-    *hydrology_step        = WetStep;
+    *hydrology_wet_step    = WetStep;
     *hydrology_dry_step    = DryStep;
+    *sweep_start_dayofyear = SweepStart;
+    *sweep_end_dayofyear   = SweepEnd;
+    *dry_days              = StartDryDays;
     *hydraulic_step        = RouteStep;
     *total_duration        = TotalDuration / 1000.0;
 

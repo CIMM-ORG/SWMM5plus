@@ -2095,7 +2095,7 @@ contains
             setting%Time%StartEpoch    = setting%SWMMinput%StartEpoch
             setting%Time%EndEpoch      = setting%SWMMinput%EndEpoch
             !setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep -- do not use!
-            setting%Time%Hydrology%Dt  = setting%SWMMinput%WetStep
+            setting%Time%Hydrology%Dt  = setting%SWMMinput%Hydrology_WetStep
             ! HACK ??                  = setting%SWMMinput%DryStep
             ! HACK ??                  = setting%SWMMinput%TotalDuration
         else 

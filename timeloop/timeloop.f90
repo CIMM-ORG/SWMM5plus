@@ -229,7 +229,7 @@ contains
         end if
 
         !% --- set the next control rule evaluation time
-        nextControlRuleTime = lastControlRuleTime + real(setting%SWMMinput%RuleStep,8)
+        nextControlRuleTime = lastControlRuleTime + real(setting%SWMMinput%ControlRuleStep,8)
 
         !% check to see if there is an initial step to hydrology
         !% if not, then skip the initial tl_hydrology
@@ -373,7 +373,8 @@ contains
                             !%     across all images.
                             call control_update ()
                             !% --- set the next time the controls will be evaluated
-                            setting%Time%ControlRule%NextTime = setting%Time%Now + real(setting%SWMMinput%RuleStep,8)
+                            setting%Time%ControlRule%NextTime = setting%Time%Now  &
+                                + real(setting%SWMMinput%ControlRuleStep,8)
                         end if
                         ! print *, 'CONTROL----------------------------'
                         ! print *, 'orifice setting ',elemR(iet(3),er_Setting)

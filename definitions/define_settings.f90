@@ -647,27 +647,70 @@ module define_settings
     !% NOT USER SETTINGS
     !% setting%SWMMinput...
     type SWMMinputType
-        logical :: AllowPonding
+        !% --- following SWMM *.inp file Rossman user manual
+        integer :: FlowUnitsType
+        integer :: InfiltrationType
+        integer :: FlowRoutingType
+        integer :: LinkOffsetsType
+        integer :: ForceMainEquationType
+        logical :: IgnoreRainfall
+        logical :: IgnoreSnowmelt
+        logical :: IgnoreGroundwater
         logical :: IgnoreRDII
-        integer :: ForceMainEquation
-        integer :: N_control = zeroI
-        integer :: N_curve = zeroI
-        integer :: N_divider = zeroI
-        integer :: N_link = zeroI
-        integer :: N_link_transect = zeroI
-        integer :: N_node = zeroI
-        integer :: N_pollutant = zeroI
-        integer :: N_subcatch = zeroI
-        integer :: N_transect_depth_items = zeroI
-        integer :: RuleStep = nullvalueI 
+        logical :: IgnoreRouting
+        logical :: IgnoreQuality
+        logical :: AllowPonding
+        logical :: SteadyState_Skip
+        real(8) :: SteadyState_System_FlowrateTolerance
+        real(8) :: SteadyState_Lateral_FlowrateTolerance
+        real(8) :: StartEpoch           = nullvalueR
+        real(8) :: EndEpoch             = nullvalueR
         real(8) :: ReportStartTimeEpoch = nullvalueR
-        real(8) :: ReportTimeInterval = nullvalueR
-        real(8) :: StartEpoch = nullvalueR
-        real(8) :: EndEpoch = nullvalueR
-        real(8) :: WetStep = nullvalueR
-        real(8) :: DryStep = nullvalueR
-        real(8) :: RouteStep = nullvalueR
+        integer :: Sweep_Start_Day = 1
+        integer :: Sweep_End_Day   = 365
+        integer :: DryDaysBeforeStart = 0
+        real(8) :: ReportTimeInterval      = nullvalueR
+        real(8) :: Hydrology_WetStep       = nullvalueR
+        real(8) :: Hydrology_DryStep       = nullvalueR
+        real(8) :: Hydraulics_RouteStep    = nullvalueR
+        real(8) :: RoutingStep_LengtheningTime
+        real(8) :: RoutingStep_CourantFactor
+        real(8) :: RoutingStep_Minimum
+        integer :: InertialDampingType
+        integer :: NormalFlowLimiterType
+        real(8) :: SurfaceArea_Minimum
+        real(8) :: ConduitSlope_Minimum
+        integer :: NumberOfTrials_Maximum
+        real(8) :: Head_ConvergenceTolerance
+        integer :: NumberParallelThreads
+        logical :: TempDirectory_Provided
+        !% --- other SWMM configuration values
+        integer :: ControlRuleStep = nullvalueI 
+        integer :: SurchargeMethod
         real(8) :: TotalDuration = nullvalueR
+        !% --- object counts
+        integer :: N_gage = zeroI
+        integer :: N_subcatch = zeroI
+        integer :: N_node = zeroI
+        integer :: N_link = zeroI
+        integer :: N_pollutant = zeroI
+        integer :: N_landuse = zeroI
+        integer :: N_timepattern = zeroI
+        integer :: N_curve = zeroI
+        integer :: N_tseries = zeroI
+        integer :: N_control = zeroI
+        integer :: N_transect = zeroI
+        integer :: N_aquifer = zeroI
+        integer :: N_unithyd = zeroI
+        integer :: N_snowmelt = zeroI
+        integer :: N_shape = zeroI
+        integer :: N_lid = zeroI
+        integer :: N_junction = zeroI
+        integer :: N_outfall  = zeroI
+        integer :: N_storage  = zeroI
+        integer :: N_divider = zeroI
+        integer :: N_link_transect = zeroI
+        integer :: N_transect_depth_items = zeroI
     end type SWMMinputType    
 
     ! setting%Time
@@ -1788,22 +1831,22 @@ contains
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SolverSelect not found'
 
-        ! !%                       Solver.ForceMainEquation
-        ! call json%get('Solver.ForceMainEquation', c, found)
+        ! !%                       Solver.ForceMainEquationType
+        ! call json%get('Solver.ForceMainEquationType', c, found)
         ! call util_lower_case(c)
         ! if (found) then 
         !     if (c == 'hazenwilliams') then
-        !         setting%Solver%ForceMainEquation = HazenWilliams
+        !         setting%Solver%ForceMainEquationType = HazenWilliams
         !     else if (c == 'darcyweisbach') then
-        !         setting%Solver%ForceMainEquation = DarcyWeisbach
+        !         setting%Solver%ForceMainEquationType = DarcyWeisbach
         !     else
-        !         write(*,"(A)") 'Error - json file - setting.Solver.ForceMainEquation of ',trim(c)
+        !         write(*,"(A)") 'Error - json file - setting.Solver.ForceMainEquationType of ',trim(c)
         !         write(*,"(A)") '..is not in allowed options of:'
         !         write(*,"(A)") '... HazenWilliams, DarcyWeisbach'
         !         stop 9375466
         !     end if
         ! end if
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMainEquation not found'
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMainEquationType not found'
 
         !%                       Solver.SwitchFractionDn
         call json%get('Solver.SwitchFractionDn', real_value, found)

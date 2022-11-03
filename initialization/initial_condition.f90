@@ -994,7 +994,7 @@ contains
         if (setting%Solver%ForceMain%UseSWMMinputMethodTF) then 
             !% --- using SWMM input method
             elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = link%R(thisLink,lr_ForceMain_Coef)
-            elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquation
+            elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquationType
         else
             !% --- overwriting with default method from JSON file
             select case (setting%Solver%ForceMain%Default_method)
@@ -1711,7 +1711,7 @@ contains
                 if (geometryType == lForce_main) then 
                     where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
                         elemYN(thisP,eYN_isForceMain)      = .TRUE.
-                        elemSI(thisP,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquation
+                        elemSI(thisP,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquationType
                         elemSR(thisP,esr_Conduit_ForceMain_Coef)   = link%R(thislink,lr_ForceMain_Coef)
                     endwhere
                 endif
