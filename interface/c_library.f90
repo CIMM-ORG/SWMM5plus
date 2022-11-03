@@ -132,7 +132,7 @@ contains
             errstat = -1
             errmsg = 'The procedure ' // trim(c_lib%procname) // ' in file ' &
                      // trim(c_lib%filename) // ' could not be loaded.'
-            !stop 
+            print *, trim(errmsg)
             call util_crashpoint(55783)
         else   
             errstat = 0 

@@ -595,6 +595,7 @@ int DLLEXPORT api_get_SWMM_setup(
     int*  flow_units,
     int*  route_model,
     int*  allow_ponding,
+    int*  ignore_RDII,
     int*  inertial_damping,
     int*  num_threads,
     int*  skip_steady_state,
@@ -626,6 +627,8 @@ int DLLEXPORT api_get_SWMM_setup(
     *route_model = RouteModel;
 
     *allow_ponding = AllowPonding;
+
+    *ignore_RDII = IgnoreRDII;
 
     *inertial_damping = InertDamping;
 
@@ -2740,7 +2743,48 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     
     return 0;
 }
+//===============================================================================
+int DLLEXPORT api_getNumRdiiFlows(
+    double thisDateTime, int *nRDII)
+//===============================================================================
+    // calls the rdii_getNumRdiiFlows() procedure in SWMM-C
+    // to get the count of the nodes with RDII inflows
+{
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
 
+    *nRDII = rdii_getNumRdiiFlows(thisDateTime);
+
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_getRdiiFlows(
+    int rdiiIdx, int *nodeIdx, double *flowrate)
+//===============================================================================
+    // calls the rdii_getRdiiFlows() procedure in SWMM-C
+{
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    // input RDII index is adjusted for C by -1
+    rdii_getRdiiFlows(rdiiIdx-1, *nodeIdx, *flowrate);
+
+    // adjust output node index for Fortran
+    *nodeIdx = *nodeIdx+1;
+
+    // flowrate unit conversion from ft^3/s to m^3/s
+    *flowrate = CFTOCM(*flowrate);
+
+    return 0;
+}
 //===============================================================================
 int DLLEXPORT api_call_climate_setState(double thisDate)
 //===============================================================================

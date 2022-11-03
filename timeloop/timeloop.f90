@@ -20,7 +20,8 @@ module timeloop
               interface_get_newRunoffTime,   &
               interface_export_runon_volume, &
               interface_call_climate_setState, &
-              interface_get_evaporation_rate
+              interface_get_evaporation_rate, &
+              interface_call_RDII_inflow
     use utility_crash
     use control_hydraulics, only: control_update
 
@@ -319,6 +320,10 @@ contains
                             !% --- no update to evaporation rate
                         end if
                     end if
+                end if
+
+                if (.not. setting%SWMMinput%IgnoreRDII) then 
+                    call interface_call_RDII_inflow ()
                 end if
 
                 ! print *, '1 nextHydrologyTime ', setting%Time%Hydrology%NextTime

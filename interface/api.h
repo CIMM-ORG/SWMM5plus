@@ -297,6 +297,7 @@ int DLLEXPORT api_get_SWMM_setup(
     int*  flow_units,
     int*  route_model,
     int*  allow_ponding,
+    int*  ignore_RDII,
     int*  inertial_damping,
     int*  num_threads,
     int*  skip_steady_state,
@@ -362,6 +363,8 @@ int DLLEXPORT api_export_node_results(int node_idx);
 int DLLEXPORT api_export_runon_volume(int kk, double flowrate);
 int DLLEXPORT api_call_runoff_execute();
 int DLLEXPORT api_get_subcatch_runoff(int id, double *runoff);
+int DLLEXPORT api_getNumRdiiFlows(double thisDateTime, int *nRDII);
+int DLLEXPORT api_getRdiiFlows(int rdiiIdx, int *nodeIdx, double *flowrate);
 
 // --- Climate
 int DLLEXPORT api_call_climate_setState(double thisDate);

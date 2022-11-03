@@ -66,9 +66,10 @@ module interface_
     public :: interface_call_runoff_execute
     public :: interface_get_subcatch_runoff
     public :: interface_get_subcatch_runoff_nodeIdx
+    public :: interface_get_NewRunoffTime
     public :: interface_call_climate_setState
     public :: interface_get_evaporation_rate
-    public :: interface_get_NewRunoffTime
+    public :: interface_call_RDII_inflow
 
 
 !%==========================================================================
@@ -228,6 +229,7 @@ module interface_
             flow_units, &
             route_model, &
             allow_ponding, &
+            ignore_RDII, &
             inertial_damping, &
             num_threads, &
             skip_steady_state, &
@@ -252,6 +254,7 @@ module interface_
             integer(c_int), intent(inout) :: flow_units
             integer(c_int), intent(inout) :: route_model
             integer(c_int), intent(inout) :: allow_ponding
+            integer(c_int), intent(inout) :: ignore_RDII
             integer(c_int), intent(inout) :: inertial_damping
             integer(c_int), intent(inout) :: num_threads
             integer(c_int), intent(inout) :: skip_steady_state
@@ -511,6 +514,23 @@ module interface_
             integer(c_int),        intent(inout) :: node_idx
         end function api_get_subcatch_runoff_nodeIdx
         !% -------------------------------------------------------------------------------
+        integer(c_int) function api_getNumRdiiFlows(thisDateTime, nRDII) &
+            BIND(C, name="api_getNumRdiiFlows")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double), value, intent(in)    :: thisDateTime
+            integer(c_int),        intent(inout) :: nRDII
+        end function api_getNumRdiiFlows
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_getRdiiFlows(rdiiIdx, nodeIdx, flowrate) &
+            BIND(C, name="api_getRdiiFlows")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int), value, intent(in)    :: rdiiIdx
+            integer(c_int),        intent(inout) :: nodeIdx
+            real(c_double),        intent(inout) :: flowrate
+        end function api_getRdiiFlows
+        !% -------------------------------------------------------------------------------
         integer(c_int) function api_call_climate_setState(thisDate) &
             BIND(C, name='api_call_climate_setState')
             use, intrinsic :: iso_c_binding
@@ -586,7 +606,9 @@ module interface_
     procedure(api_export_runon_volume),        pointer :: ptr_api_export_runon_volume
     procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
-    procedure(api_get_subcatch_runoff_nodeIdx), pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
+    procedure(api_get_subcatch_runoff_nodeIdx),pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
+    procedure(api_getNumRdiiFlows),            pointer :: ptr_api_getNumRdiiFlows
+    procedure(api_getRdiiFlows),               pointer :: ptr_api_getRdiiFlows
     procedure(api_call_climate_setState),      pointer :: ptr_api_call_climate_setState
     procedure(api_get_evaporation_rate),       pointer :: ptr_api_get_evaporation_rate
     
@@ -3302,7 +3324,7 @@ contains
         !% file and have been processed by SWMM-C. Stores data that will be
         !% used in SWMM5+ in the setting.SWMMinput... structure
         !%---------------------------------------------------------------------
-            integer       :: flow_units, route_model, allow_ponding
+            integer       :: flow_units, route_model, allow_ponding, ignore_RDII
             integer       :: inertial_damping, num_threads, skip_steady_state
             integer       :: force_main_eqn, max_trials, normal_flow_limiter
             integer       :: rule_step, surcharge_method, tempdir_provided
@@ -3328,6 +3350,7 @@ contains
             flow_units,  &
             route_model, &
             allow_ponding, &
+            ignore_RDII, &
             inertial_damping, &
             num_threads, &
             skip_steady_state, &
@@ -3398,7 +3421,7 @@ contains
             thisProblem(ii)  = 'must be set to DYNWAVE in *.inp file'
         end select
 
-        !% Ponding is being developed as of 20220907
+        !% Ponding 
         ii=ii+1
         select case (allow_ponding)
         case (0)
@@ -3409,8 +3432,20 @@ contains
             setting%SWMMinput%AllowPonding = .true.
             thisWarning(ii)  = .false.
             thisFailure(ii)  = .false.
-            !thisVariable(ii) = 'ALLOW_PONDING'
-            !thisProblem(ii)  = 'is not presently available in SWMM5+, must be set to NO.'
+        case default
+        end select
+
+        !% RDII
+        ii=ii+1
+        select case (ignore_RDII)
+        case (0)
+            setting%SWMMinput%IgnoreRDII = .false.
+            thisWarning(ii) = .false.
+            thisFailure(ii) = .false.
+        case (1)
+            setting%SWMMinput%IgnoreRDII = .true.
+            thisWarning(ii)  = .false.
+            thisFailure(ii)  = .false.
         case default
         end select
 
@@ -3873,8 +3908,8 @@ contains
         !% Gets the SWMM-C evaporation rate, converted to m/s
         !%---------------------------------------------------------------------
         !% Declarations
-        integer       :: error
-        character(64) :: subroutine_name = 'interface_get_evaporation_rate'     
+            integer       :: error
+            character(64) :: subroutine_name = 'interface_get_evaporation_rate'     
         !%---------------------------------------------------------------------   
 
         call load_api_procedure("api_get_evaporation_rate")
@@ -3882,6 +3917,60 @@ contains
         call print_api_error(error, subroutine_name)
 
     end function interface_get_evaporation_rate    
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_call_RDII_inflow ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Mimics section in EPA SWMM routing.C where addRdiiInflows() is called
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer             :: nRDII, ii, nIdx
+            integer             :: error
+            integer, pointer    :: eIdx
+            real(8)             :: flowrate
+            character(64)       :: subroutine_name = 'interface_call_RDII_inflow'
+        !%---------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+
+        !% --- get the number of RDII flows
+        call load_api_procedure("api_getNumRdiiFlows")
+        error = ptr_api_getNumRdiiFlows (setting%Time%Now,nRDII) 
+        call print_api_error(error, subroutine_name)
+
+        !% --- if there are no RDII
+        if (nRDII < 1) return
+
+        !% --- cycle through all the RDII nodes
+        !%     HACK: in the future we should bring the RDII functions into SWMM5+ so that
+        !%     the operations can be vectorized.
+        do ii=1,nRDII
+            !% --- get the RDII flows
+            !%     input/output are Fortran indexes
+            call load_api_procedure("api_getRdiiFlow")
+            error = ptr_api_getRdiiFlows(ii, nIdx, flowrate)
+            call print_api_error(error, subroutine_name)
+
+            !% --- note that EPA SWMM uses a FLOW_TOL = 1e-5 cfs, not sure if we need to replicate
+            !%     however it seems a good idea to prevent a negative value in case something goes
+            !%     wonky in the RDII file.
+            if (flowrate < zeroR) cycle
+
+            !% --- check if node is on this processor -- if so then add RDII to lateral flowrate
+            if (node%I(nIdx,ni_P_image) == this_image()) then
+                !% --- get the element index
+                eIdx => node%I(nIdx,ni_elem_idx)
+                !% --- add RDII to lateral flowrate 
+                elemR(eIdx,er_FlowrateLateral) = elemR(eIdx,er_FlowrateLateral) + flowrate
+            else
+                !% --- no action
+            end if
+
+        end do
+
+    end subroutine interface_call_RDII_inflow
 !%
 !%=============================================================================
 !% PRIVATE
@@ -3990,6 +4079,10 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_subcatch_runoff_nodeIdx)        
             case ("api_get_NewRunoffTime")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_NewRunoffTime)
+            case ("api_getNumRdiiFlows")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_getNumRdiiFlows)
+            case ("api_getRdiiFlows")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_getRdiiFlows)
             case ("api_call_climate_setState")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_call_climate_setState)
             case ("api_get_evaporation_rate")

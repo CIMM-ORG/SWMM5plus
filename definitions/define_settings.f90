@@ -648,6 +648,7 @@ module define_settings
     !% setting%SWMMinput...
     type SWMMinputType
         logical :: AllowPonding
+        logical :: IgnoreRDII
         integer :: ForceMainEquation
         integer :: N_control = zeroI
         integer :: N_curve = zeroI
