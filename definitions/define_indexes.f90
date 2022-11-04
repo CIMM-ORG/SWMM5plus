@@ -199,6 +199,7 @@ module define_indexes
         enumerator :: nr_StorageConstant
         enumerator :: nr_StorageCoeff
         enumerator :: nr_StorageExponent
+        enumerator :: nr_StorageFevap
         enumerator :: nr_PondedArea
         enumerator :: nr_SurchargeExtraDepth
         enumerator :: nr_MaxInflow
@@ -756,6 +757,7 @@ module define_indexes
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
         enumerator ::  esr_Storage_Plane_Area
+        enumerator ::  esr_Storage_FractionEvap   !% --- fraction of area over which evaporation acts
         enumerator ::  esr_Storage_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Junction = esr_Storage_lastplusone-1

@@ -9,7 +9,9 @@
 #include "swmm5.h"
 #include "headers.h"
 #include "api_error.h"
+#include "lid.h"
 #include "api.h"
+
 
 //-----------------------------------------------------------------------------
 //  Imported variables
@@ -591,79 +593,113 @@ int DLLEXPORT api_get_headBC(
     }
 }
 //===============================================================================
-int DLLEXPORT api_get_SWMM_setup(
-    int*  flow_units,
-    int*  route_model,
-    int*  allow_ponding,
-    int*  inertial_damping,
-    int*  num_threads,
-    int*  skip_steady_state,
-    int*  force_main_eqn,
-    int*  max_trials,
-    int*  normal_flow_limiter,
-    int*  rule_step,
-    int*  surcharge_method,
-    int*  tempdir_provided,
-    double* variable_step,
-    double* lengthening_step,
-    double* route_step,
-    double* min_route_step,
-    double* min_surface_area,
-    double* min_slope,
-    double* head_tol,
-    double* sys_flow_tol,
-    double* lat_flow_tol)
+int DLLEXPORT api_count_subobjects (int *N_groundwater)
 //===============================================================================
-    // Note, at this time this only gets the SWMM setup that are important to hydraulics
+{
+    int error, ii;
+
+    error = check_api_is_initialized("api_count_subobjects");
+    if (error) return error;
+
+    // number of subcatchments with groundwater
+    *N_groundwater = 0;
+    for (ii = 0; ii < Nobjects[SUBCATCH]; ii++)
+    {
+        if (Subcatch[ii].groundwater)
+            *N_groundwater++ ;   
+    }
+
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_SWMM_setup(
+    int*    flow_units,
+    int*    infiltration_model_type,
+    int*    flow_routing_model_type,
+    int*    link_offset_type,
+    int*    force_main_equation,
+    int*    ignore_rainfall,
+    int*    ignore_snowmelt,
+    int*    ignore_groundwater,
+    int*    ignore_rdii,
+    int*    ignore_routing,
+    int*    ignore_quality,
+    int*    allow_ponding,
+    int*    steadystate_skip,
+    double* steadystate_system_flow_tolerance,
+    double* steadystate_lateral_flow_tolerance,
+    double* routing_step_lengthening_time,
+    double* routing_step_Courant_factor,
+    double* routing_step_minimum, 
+    int*    inertial_damping_type,
+    int*    normal_flow_limiter_type,
+    double* minimum_surface_area,
+    double* minimum_conduit_slope,
+    int*    maximum_number_of_trials,
+    double* head_convergence_tolerance,
+    int*    number_parallel_threads,
+    int*    tempdir_provided,
+    int*    control_rule_step,
+    int*    surcharge_method
+    )
+
+//===============================================================================
+    // Gets all SWMM options from input file plus some derived options
 {
     int error;
 
     error = check_api_is_initialized("api_get_SWMM_setup");
     if (error) return error;
 
+    // OPTIONS from SWMM input file
+
     *flow_units = FlowUnits;
 
-    *route_model = RouteModel;
+    *infiltration_model_type = InfilModel;
+
+    *flow_routing_model_type = RouteModel;
+
+    *link_offset_type = LinkOffsets;    
+
+    *force_main_equation = ForceMainEqn;
+
+    *ignore_rainfall    = IgnoreRainfall;
+    *ignore_snowmelt    = IgnoreSnowmelt;
+    *ignore_groundwater = IgnoreGwater;
+    *ignore_rdii        = IgnoreRDII;
+    *ignore_routing     = IgnoreRouting;
+    *ignore_quality     = IgnoreQuality;
 
     *allow_ponding = AllowPonding;
 
-    *inertial_damping = InertDamping;
+    *steadystate_skip = SkipSteadyState;
+    *steadystate_system_flow_tolerance  = CFTOCM(SysFlowTol);
+    *steadystate_lateral_flow_tolerance = CFTOCM(LatFlowTol);
 
-    *num_threads = NumThreads;
+    *routing_step_lengthening_time = LengtheningStep;
+    *routing_step_Courant_factor   = CourantFactor;
+    *routing_step_minimum          = MinRouteStep;
 
-    *skip_steady_state = SkipSteadyState;
+    *inertial_damping_type    = InertDamping;
+    *normal_flow_limiter_type = NormalFlowLtd;
 
-    *force_main_eqn = ForceMainEqn;
+    *minimum_surface_area  = FT2TOM2(MinSurfArea);
+    *minimum_conduit_slope = MinSlope;
 
-    *max_trials = MaxTrials;
+    *maximum_number_of_trials = MaxTrials;
 
-    *normal_flow_limiter = NormalFlowLtd;
+    *head_convergence_tolerance = FTTOM(HeadTol);
 
-    *rule_step = RuleStep;
-
-    *surcharge_method = SurchargeMethod;
+    *number_parallel_threads = NumThreads;
 
     *tempdir_provided = 0;
-    if (strlen(TempDir) >0)
-        *tempdir_provided = 1;
+    if (strlen(TempDir) >0) *tempdir_provided = 1;
     
-    *variable_step = CourantFactor;
+    // OTHER SWMM setup values
 
-    *lengthening_step = LengtheningStep;
+    *control_rule_step = RuleStep;
 
-    *route_step = RouteStep;
-    
-    *min_route_step = MinRouteStep;
-
-    *min_surface_area = FT2TOM2(MinSurfArea);
-
-    *min_slope = MinSlope;
-
-    *head_tol = FTTOM(HeadTol);
-
-    *sys_flow_tol = CFTOCM(SysFlowTol);
-
-    *lat_flow_tol = CFTOCM(LatFlowTol);
+    *surcharge_method = SurchargeMethod;
 
     //printf(" RouteModel = %d \n",RouteModel);
 
@@ -682,10 +718,14 @@ int DLLEXPORT api_get_SWMM_times(
     double* endtime_epoch,
     double* report_start_datetime, 
     int*    report_step, 
-    int*    hydrology_step, 
+    int*    hydrology_wet_step, 
     int*    hydrology_dry_step, 
+    int*    sweep_start_dayofyear,
+    int*    sweep_end_dayofyear,
+    int*    dry_days,
     double* hydraulic_step,
-    double* total_duration) 
+    double* total_duration
+    ) 
 //===============================================================================    
 {
     int error;
@@ -697,8 +737,11 @@ int DLLEXPORT api_get_SWMM_times(
     *endtime_epoch         = EndDateTime;
     *report_start_datetime = ReportStart;
     *report_step           = ReportStep;
-    *hydrology_step        = WetStep;
+    *hydrology_wet_step    = WetStep;
     *hydrology_dry_step    = DryStep;
+    *sweep_start_dayofyear = SweepStart;
+    *sweep_end_dayofyear   = SweepEnd;
+    *dry_days              = StartDryDays;
     *hydraulic_step        = RouteStep;
     *total_duration        = TotalDuration / 1000.0;
 
@@ -946,6 +989,16 @@ int DLLEXPORT api_get_nodef_attribute(
             switch (Node[node_idx].type) {
                 case STORAGE :
                     *value = Storage[Node[node_idx].subIndex].aCurve + 1;
+                    break;
+                default :
+                    *value = -1;
+            }
+            break;
+
+        case nodef_StorageFevap :
+            switch (Node[node_idx].type) {
+                case STORAGE :
+                    *value = Storage[Node[node_idx].subIndex].fEvap;
                     break;
                 default :
                     *value = -1;
@@ -2727,6 +2780,169 @@ int DLLEXPORT api_get_subcatch_runoff_nodeIdx(
     *node_idx = Subcatch[sc_idx].outNode;
 
     //printf("... sc_idx, node_idx %d , %d \n",sc_idx,*node_idx);
+    
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_getNumRdiiFlows(
+    double thisDateTime, int *nRDII)
+//===============================================================================
+    // calls the rdii_getNumRdiiFlows() procedure in SWMM-C
+    // to get the count of the nodes with RDII inflows
+{
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    *nRDII = rdii_getNumRdiiFlows(thisDateTime);
+
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_getRdiiFlow(
+    int rdiiIdx, int *nodeIdx, double *flowrate)
+//===============================================================================
+    // calls the rdii_getRdiiFlow() procedure in SWMM-C
+{
+    int nIdx;
+    double fr;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    // input RDII index is adjusted for C by -1
+    //  note that function returns pointers
+    rdii_getRdiiFlow(rdiiIdx-1, &nIdx, &fr);
+
+    // adjust output node index for Fortran
+    *nodeIdx = nIdx+1;
+
+    // flowrate unit conversion from ft^3/s to m^3/s
+    *flowrate = CFTOCM(fr);
+
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_groundwaterFlow(
+    double thisTime, double LastRunoffTime, double NextRunoffTime,
+    int sIdx, int *nodeIdx, 
+    double *flowrate)
+//===============================================================================
+    // gets the flowrate from groundwater at thisTime for the subcatchment
+    // with sIdx that is into node at nodeIdx
+{
+    double ff;
+    TGroundwater* gw;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+
+    // interpolate time between runoff
+    ff = (thisTime - LastRunoffTime) / (NextRunoffTime - LastRunoffTime);
+    if ( ff < 0.0 ) ff = 0.0;
+    if ( ff > 1.0 ) ff = 1.0;
+
+    gw = Subcatch[sIdx].groundwater;
+    if ( gw )
+    {
+        
+        *nodeIdx = gw->node;
+        if (*nodeIdx >=0)
+        {
+            // increment node index for Fortran
+            *nodeIdx++;
+            *flowrate = CFTOCM( ((1.0-ff)*(gw->oldFlow) + ff*(gw->newFlow) )
+                                 * Subcatch[sIdx].area );
+        }
+        
+    }
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_LID_DrainFlow(
+    double thisTime, double LastRunoffTime, double NextRunoffTime,
+    int sIdx, int *nodeIdx, double *flowrate)
+//===============================================================================
+    // gets the flowrate from LID at thisTime for the subcatchment
+    // with sIdx that is into node at nodeIdx
+    // Mimics routing.c/addLidDrainInflows and lid.c/lid_addDrainInflow
+{
+    double ff, qq;
+    int nIdx;
+    
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+
+    // interpolate time between runoff
+    ff = (thisTime - LastRunoffTime) / (NextRunoffTime - LastRunoffTime);
+    if ( ff < 0.0 ) ff = 0.0;
+    if ( ff > 1.0 ) ff = 1.0;
+
+    // check that this subcatchment exists and has lid 
+    if ( Subcatch[sIdx].area > 0.0 && Subcatch[sIdx].lidArea > 0.0 )
+    {
+        // get the inflow rate and node index
+        // note that this function is an add-on to the lid.c functions
+        // that is found in add_to_lid.c and requires add_to_lid.h
+        lid_get_DrainInflow(sIdx, ff, &nIdx, &qq);
+
+        if (nIdx >= 0)
+        {
+            *nodeIdx  = nIdx+1;
+            *flowrate = CFTOCM(qq);
+        }
+        else
+        {
+            *nodeIdx  = 0;
+            *flowrate = 0.0;
+        }
+    }
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_call_climate_setState(double thisDate)
+//===============================================================================
+    // calls the climate_setState() procedure in SWMM-C
+{
+    //printf(" \n  in api_call_climate_setState \n");
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    climate_setState(thisDate);
+    
+    return 0;
+}
+
+//===============================================================================
+int DLLEXPORT api_get_evaporation_rate(double *evapRate)
+//===============================================================================
+    // gets the Evap.rate (ft/s) from EPA SWMM
+{
+    //printf(" \n  in api_get_evaporation_rate \n");
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    *evapRate = FTTOM(Evap.rate);
+
+    //printf(" evap rate = %e \n ",Evap.rate);
     
     return 0;
 }
