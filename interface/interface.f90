@@ -71,6 +71,7 @@ module interface_
     public :: interface_get_evaporation_rate
     public :: interface_get_RDII_inflow
     public :: interface_get_groundwater_inflow
+    public :: interface_get_LID_inflow
 
 
 
@@ -556,9 +557,9 @@ module interface_
             real(c_double),        intent(inout) :: flowrate
         end function api_getRdiiFlow
         !% -------------------------------------------------------------------------------
-        integer (c_int) function api_get_groundwaterFlows( &
+        integer (c_int) function api_get_groundwaterFlow( &
             thisTime, LastRunoffTime, NextRunoffTime, sIdx, nodeIdx, flowrate) &
-            BIND(C, name="api_get_groundwaterFlows")
+            BIND(C, name="api_get_groundwaterFlow")
             use, intrinsic :: iso_c_binding
             implicit none 
             real(c_double), value, intent(in)    :: thisTime
@@ -567,7 +568,20 @@ module interface_
             integer(c_int), value, intent(in)    :: sIdx
             integer(c_int),        intent(inout) :: nodeIdx
             real(c_double),        intent(inout) :: flowrate
-        end function api_get_groundwaterFlows
+        end function api_get_groundwaterFlow
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_get_LID_DrainFlow( &
+            thisTime, LastRunoffTime, NextRunoffTime, sIdx, nIdx, flowrate) &
+            BIND(C, name="api_get_LID_DrainFlow")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double), value, intent(in)    :: thisTime
+            real(c_double), value, intent(in)    :: LastRunoffTime
+            real(c_double), value, intent(in)    :: NextRunoffTime
+            integer(c_int), value, intent(in)    :: sIdx
+            integer(c_int),        intent(inout) :: nIdx
+            real(c_double),        intent(inout) :: flowrate
+        end function api_get_LID_DrainFlow
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_call_climate_setState(thisDate) &
             BIND(C, name='api_call_climate_setState')
@@ -606,7 +620,6 @@ module interface_
     procedure(api_controls_get_action_data),   pointer :: ptr_api_controls_get_action_data
     procedure(api_controls_transfer_monitor_data), pointer :: ptr_api_controls_transfer_monitor_data
     procedure(api_controls_execute),           pointer :: ptr_api_controls_execute
-
     procedure(api_initialize),                 pointer :: ptr_api_initialize
     procedure(api_finalize),                   pointer :: ptr_api_finalize
     procedure(api_run_step),                   pointer :: ptr_api_run_step
@@ -647,8 +660,9 @@ module interface_
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
     procedure(api_get_subcatch_runoff_nodeIdx),pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
     procedure(api_getNumRdiiFlows),            pointer :: ptr_api_getNumRdiiFlows
-    procedure(api_getRdiiFlow),               pointer :: ptr_api_getRdiiFlow
-    procedure(api_get_groundwaterFlows),       pointer :: ptr_api_get_groundwaterFlows
+    procedure(api_getRdiiFlow),                pointer :: ptr_api_getRdiiFlow
+    procedure(api_get_groundwaterFlow),        pointer :: ptr_api_get_groundwaterFlow
+    procedure(api_get_LID_DrainFlow),          pointer :: ptr_api_get_LID_DrainFlow
     procedure(api_call_climate_setState),      pointer :: ptr_api_call_climate_setState
     procedure(api_get_evaporation_rate),       pointer :: ptr_api_get_evaporation_rate
     
@@ -3485,7 +3499,7 @@ contains
         setting%SWMMinput%N_unithyd     = get_num_objects(API_UNITHYD)
         setting%SWMMinput%N_snowmelt    = get_num_objects(API_SNOWMELT)
         setting%SWMMinput%N_shape       = get_num_objects(API_SHAPE)
-        setting%SWMMinput%N_lid         = get_num_objects(API_LID)
+        setting%SWMMinput%N_LID         = get_num_objects(API_LID)
 
         !% --- count number of node types
         setting%SWMMinput%N_junction = get_num_objects(API_JUNCTION)
@@ -4281,21 +4295,21 @@ contains
         !% mimics the call to routing.c/addGroundwaterInflows in EPA SWMM
         !%---------------------------------------------------------------------
         !% Declarations:
-        integer             :: error, nIdx, ii
-        integer, pointer    :: eIdx
-        real(8)             :: flowrate
-        real(8), pointer    :: NextRunoffTime, LastRunoffTime, thisTime
-        character(64)       :: subroutine_name = 'interface_get_groundwater_inflow'
+            integer             :: error, nIdx, ii
+            integer, pointer    :: eIdx
+            real(8)             :: flowrate
+            real(8), pointer    :: NextRunoffTime, LastRunoffTime, thisTime
+            character(64)       :: subroutine_name = 'interface_get_groundwater_inflow'
         !%---------------------------------------------------------------------
-
-        thisTime => setting%Time%Now
-        NextRunoffTime => setting%Time%Hydrology%NextTime
-        LastRunoffTime => setting%Time%Hydrology%LastTime
-
+        !% Aliases:
+            thisTime => setting%Time%Now
+            NextRunoffTime => setting%Time%Hydrology%NextTime
+            LastRunoffTime => setting%Time%Hydrology%LastTime
+        !%---------------------------------------------------------------------
         do ii=1,setting%SWMMinput%N_subcatch
             !% --- get the node and flowrate for each groundwater inflow
-            call load_api_procedure("api_get_groundwaterFlows")
-            error = ptr_api_get_groundwaterFlows &
+            call load_api_procedure("api_get_groundwaterFlow")
+            error = ptr_api_get_groundwaterFlow &
                 (thisTime, LastRunoffTime, NextRunoffTime, ii, nIdx, flowrate)
             call print_api_error(error, subroutine_name)
 
@@ -4314,6 +4328,53 @@ contains
         end do
 
     end subroutine interface_get_groundwater_inflow
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_get_LID_inflow ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% gets the LID inflows into nodes
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer             :: error, nIdx, ii
+            integer, pointer    :: eIdx
+            real(8)             :: flowrate
+            real(8), pointer    :: NextRunoffTime, LastRunoffTime, thisTime
+            character(64)       :: subroutine_name = 'interface_get_LID_inflow'
+        !%---------------------------------------------------------------------
+        !% Aliases
+            thisTime      => setting%Time%Now
+            NextRunoffTime => setting%Time%Hydrology%NextTime
+            LastRunoffTime => setting%Time%Hydrology%LastTime
+        !%---------------------------------------------------------------------
+
+        nIdx    = zeroI
+        flowrate = zeroR
+
+        do ii=1,setting%SWMMinput%N_subcatch
+            !% --- get the node and flowrate for each groundwater inflow
+            call load_api_procedure("api_get_LID_DrainFlow")
+            error = ptr_api_get_LID_DrainFlow &
+                (thisTime, LastRunoffTime, NextRunoffTime, ii, nIdx, flowrate)
+            call print_api_error(error, subroutine_name)
+
+            !% --- check for no node returned
+            if (nIdx < 1) cycle
+        
+            !% --- check if node is on this processor -- if so then add groundwater to lateral flowrate
+            if (node%I(nIdx,ni_P_image) == this_image()) then
+                !% --- get the element index
+                eIdx => node%I(nIdx,ni_elem_idx)
+                !% --- add RDII to lateral flowrate 
+                elemR(eIdx,er_FlowrateLateral) = elemR(eIdx,er_FlowrateLateral) + flowrate
+            else
+                !% --- no action
+            end if
+        end do
+
+    end subroutine interface_get_LID_inflow    
 !%
 !%=============================================================================
 !% PRIVATE
@@ -4428,8 +4489,10 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_getNumRdiiFlows)
             case ("api_getRdiiFlow")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_getRdiiFlow)
-            case ("api_get_groundwaterFlows")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_get_groundwaterFlows)
+            case ("api_get_groundwaterFlow")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_groundwaterFlow)
+            case ("api_get_LID_DrainFlow")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_LID_DrainFlow)
             case ("api_call_climate_setState")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_call_climate_setState)
             case ("api_get_evaporation_rate")

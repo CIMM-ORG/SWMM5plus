@@ -9,7 +9,9 @@
 #include "swmm5.h"
 #include "headers.h"
 #include "api_error.h"
+#include "lid.h"
 #include "api.h"
+
 
 //-----------------------------------------------------------------------------
 //  Imported variables
@@ -606,6 +608,7 @@ int DLLEXPORT api_count_subobjects (int *N_groundwater)
         if (Subcatch[ii].groundwater)
             *N_groundwater++ ;   
     }
+
     return 0;
 }
 //===============================================================================
@@ -2827,7 +2830,7 @@ int DLLEXPORT api_getRdiiFlow(
     return 0;
 }
 //===============================================================================
-int DLLEXPORT api_get_groundwaterFlows(
+int DLLEXPORT api_get_groundwaterFlow(
     double thisTime, double LastRunoffTime, double NextRunoffTime,
     int sIdx, int *nodeIdx, 
     double *flowrate)
@@ -2843,6 +2846,8 @@ int DLLEXPORT api_get_groundwaterFlows(
 
     // interpolate time between runoff
     ff = (thisTime - LastRunoffTime) / (NextRunoffTime - LastRunoffTime);
+    if ( ff < 0.0 ) ff = 0.0;
+    if ( ff > 1.0 ) ff = 1.0;
 
     gw = Subcatch[sIdx].groundwater;
     if ( gw )
@@ -2853,10 +2858,52 @@ int DLLEXPORT api_get_groundwaterFlows(
         {
             // increment node index for Fortran
             *nodeIdx++;
-            *flowrate = ( (1.0-ff)*(gw->oldFlow) + ff*(gw->newFlow) )
-                        * Subcatch[sIdx].area;
+            *flowrate = CFTOCM( ((1.0-ff)*(gw->oldFlow) + ff*(gw->newFlow) )
+                                 * Subcatch[sIdx].area );
         }
         
+    }
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_LID_DrainFlow(
+    double thisTime, double LastRunoffTime, double NextRunoffTime,
+    int sIdx, int *nodeIdx, double *flowrate)
+//===============================================================================
+    // gets the flowrate from LID at thisTime for the subcatchment
+    // with sIdx that is into node at nodeIdx
+    // Mimics routing.c/addLidDrainInflows and lid.c/lid_addDrainInflow
+{
+    double ff, qq;
+    int nIdx;
+    
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+
+    // interpolate time between runoff
+    ff = (thisTime - LastRunoffTime) / (NextRunoffTime - LastRunoffTime);
+    if ( ff < 0.0 ) ff = 0.0;
+    if ( ff > 1.0 ) ff = 1.0;
+
+    // check that this subcatchment exists and has lid 
+    if ( Subcatch[sIdx].area > 0.0 && Subcatch[sIdx].lidArea > 0.0 )
+    {
+        // get the inflow rate and node index
+        // note that this function is an add-on to the lid.c functions
+        // that is found in add_to_lid.c and requires add_to_lid.h
+        lid_get_DrainInflow(sIdx, ff, &nIdx, &qq);
+
+        if (nIdx >= 0)
+        {
+            *nodeIdx  = nIdx+1;
+            *flowrate = CFTOCM(qq);
+        }
+        else
+        {
+            *nodeIdx  = 0;
+            *flowrate = 0.0;
+        }
     }
     return 0;
 }

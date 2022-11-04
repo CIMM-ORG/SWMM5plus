@@ -704,7 +704,7 @@ module define_settings
         integer :: N_unithyd = zeroI
         integer :: N_snowmelt = zeroI
         integer :: N_shape = zeroI
-        integer :: N_lid = zeroI
+        integer :: N_LID = zeroI
         integer :: N_junction = zeroI
         integer :: N_outfall  = zeroI
         integer :: N_storage  = zeroI

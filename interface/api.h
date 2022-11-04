@@ -376,7 +376,11 @@ int DLLEXPORT api_call_runoff_execute();
 int DLLEXPORT api_get_subcatch_runoff(int id, double *runoff);
 int DLLEXPORT api_getNumRdiiFlows(double thisDateTime, int *nRDII);
 int DLLEXPORT api_getRdiiFlow(int rdiiIdx, int *nodeIdx, double *flowrate);
-int DLLEXPORT api_get_groundwaterFlows(
+int DLLEXPORT api_get_groundwaterFlow(
+                double thisTime, double LastRunoffTime, double NextRunoffTime,
+                int sIdx, int *nodeIdx, double *flowrate);
+
+int DLLEXPORT api_get_LID_DrainFlow(
                 double thisTime, double LastRunoffTime, double NextRunoffTime,
                 int sIdx, int *nodeIdx, double *flowrate);
 
