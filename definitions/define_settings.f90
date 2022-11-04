@@ -709,6 +709,8 @@ module define_settings
         integer :: N_outfall  = zeroI
         integer :: N_storage  = zeroI
         integer :: N_divider = zeroI
+        !% --- other counts
+        integer :: N_groundwater = zeroI
         integer :: N_link_transect = zeroI
         integer :: N_transect_depth_items = zeroI
     end type SWMMinputType    

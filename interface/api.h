@@ -278,23 +278,8 @@ double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
 int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flowBC);
 int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC);
-//brh20211208s
-//int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
-int DLLEXPORT api_get_SWMM_times(
-  double * starttime_epoch,
-  double * endtime_epoch,
-  double * report_start_datetime, 
-  int    * report_step, 
-  int    * hydrology_wet_step,
-  int    * hydrology_dry_step,
-  int    * sweep_start_dayofyear,
-  int    * sweep_end_dayofyear,
-  int    * dry_days,
-  double * hydraulic_step,
-  double * total_duration);
 
-  double DLLEXPORT api_get_NewRunoffTime();
-//brh20211208e
+int DLLEXPORT api_count_subobjects (int* N_groundwater);
 
 int DLLEXPORT api_get_SWMM_setup(
     int*    flow_units,
@@ -326,6 +311,22 @@ int DLLEXPORT api_get_SWMM_setup(
     int*    control_rule_step,
     int*    surcharge_method
    );
+
+//int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
+int DLLEXPORT api_get_SWMM_times(
+  double * starttime_epoch,
+  double * endtime_epoch,
+  double * report_start_datetime, 
+  int    * report_step, 
+  int    * hydrology_wet_step,
+  int    * hydrology_dry_step,
+  int    * sweep_start_dayofyear,
+  int    * sweep_end_dayofyear,
+  int    * dry_days,
+  double * hydraulic_step,
+  double * total_duration);
+
+  double DLLEXPORT api_get_NewRunoffTime();
 
 int DLLEXPORT api_get_nodef_attribute(int node_idx, int attr, double* value);
 int DLLEXPORT api_get_linkf_attribute(int link_idx, int attr, double* value);
@@ -374,7 +375,10 @@ int DLLEXPORT api_export_runon_volume(int kk, double flowrate);
 int DLLEXPORT api_call_runoff_execute();
 int DLLEXPORT api_get_subcatch_runoff(int id, double *runoff);
 int DLLEXPORT api_getNumRdiiFlows(double thisDateTime, int *nRDII);
-int DLLEXPORT api_getRdiiFlows(int rdiiIdx, int *nodeIdx, double *flowrate);
+int DLLEXPORT api_getRdiiFlow(int rdiiIdx, int *nodeIdx, double *flowrate);
+int DLLEXPORT api_get_groundwaterFlows(
+                double thisTime, double LastRunoffTime, double NextRunoffTime,
+                int sIdx, int *nodeIdx, double *flowrate);
 
 // --- Climate
 int DLLEXPORT api_call_climate_setState(double thisDate);

@@ -591,6 +591,24 @@ int DLLEXPORT api_get_headBC(
     }
 }
 //===============================================================================
+int DLLEXPORT api_count_subobjects (int *N_groundwater)
+//===============================================================================
+{
+    int error, ii;
+
+    error = check_api_is_initialized("api_count_subobjects");
+    if (error) return error;
+
+    // number of subcatchments with groundwater
+    *N_groundwater = 0;
+    for (ii = 0; ii < Nobjects[SUBCATCH]; ii++)
+    {
+        if (Subcatch[ii].groundwater)
+            *N_groundwater++ ;   
+    }
+    return 0;
+}
+//===============================================================================
 int DLLEXPORT api_get_SWMM_setup(
     int*    flow_units,
     int*    infiltration_model_type,
@@ -2781,11 +2799,14 @@ int DLLEXPORT api_getNumRdiiFlows(
     return 0;
 }
 //===============================================================================
-int DLLEXPORT api_getRdiiFlows(
+int DLLEXPORT api_getRdiiFlow(
     int rdiiIdx, int *nodeIdx, double *flowrate)
 //===============================================================================
-    // calls the rdii_getRdiiFlows() procedure in SWMM-C
+    // calls the rdii_getRdiiFlow() procedure in SWMM-C
 {
+    int nIdx;
+    double fr;
+
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
     {
@@ -2794,14 +2815,49 @@ int DLLEXPORT api_getRdiiFlows(
     }
 
     // input RDII index is adjusted for C by -1
-    rdii_getRdiiFlows(rdiiIdx-1, *nodeIdx, *flowrate);
+    //  note that function returns pointers
+    rdii_getRdiiFlow(rdiiIdx-1, &nIdx, &fr);
 
     // adjust output node index for Fortran
-    *nodeIdx = *nodeIdx+1;
+    *nodeIdx = nIdx+1;
 
     // flowrate unit conversion from ft^3/s to m^3/s
-    *flowrate = CFTOCM(*flowrate);
+    *flowrate = CFTOCM(fr);
 
+    return 0;
+}
+//===============================================================================
+int DLLEXPORT api_get_groundwaterFlows(
+    double thisTime, double LastRunoffTime, double NextRunoffTime,
+    int sIdx, int *nodeIdx, 
+    double *flowrate)
+//===============================================================================
+    // gets the flowrate from groundwater at thisTime for the subcatchment
+    // with sIdx that is into node at nodeIdx
+{
+    double ff;
+    TGroundwater* gw;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+
+    // interpolate time between runoff
+    ff = (thisTime - LastRunoffTime) / (NextRunoffTime - LastRunoffTime);
+
+    gw = Subcatch[sIdx].groundwater;
+    if ( gw )
+    {
+        
+        *nodeIdx = gw->node;
+        if (*nodeIdx >=0)
+        {
+            // increment node index for Fortran
+            *nodeIdx++;
+            *flowrate = ( (1.0-ff)*(gw->oldFlow) + ff*(gw->newFlow) )
+                        * Subcatch[sIdx].area;
+        }
+        
+    }
     return 0;
 }
 //===============================================================================

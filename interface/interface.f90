@@ -69,7 +69,9 @@ module interface_
     public :: interface_get_NewRunoffTime
     public :: interface_call_climate_setState
     public :: interface_get_evaporation_rate
-    public :: interface_call_RDII_inflow
+    public :: interface_get_RDII_inflow
+    public :: interface_get_groundwater_inflow
+
 
 
 !%==========================================================================
@@ -224,6 +226,13 @@ module interface_
             real(c_double), value, intent(in   ) :: current_datetime
             real(c_double),        intent(inout) :: headBC
         end function api_get_headBC
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_count_subobjects(N_groundwater) &
+            BIND(C, name="api_count_subobjects")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int),       intent(inout) :: N_groundwater
+        end function api_count_subobjects
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_setup( &
             flow_units, &
@@ -538,14 +547,27 @@ module interface_
             integer(c_int),        intent(inout) :: nRDII
         end function api_getNumRdiiFlows
         !% -------------------------------------------------------------------------------
-        integer(c_int) function api_getRdiiFlows(rdiiIdx, nodeIdx, flowrate) &
-            BIND(C, name="api_getRdiiFlows")
+        integer(c_int) function api_getRdiiFlow(rdiiIdx, nodeIdx, flowrate) &
+            BIND(C, name="api_getRdiiFlow")
             use, intrinsic :: iso_c_binding
             implicit none 
             integer(c_int), value, intent(in)    :: rdiiIdx
             integer(c_int),        intent(inout) :: nodeIdx
             real(c_double),        intent(inout) :: flowrate
-        end function api_getRdiiFlows
+        end function api_getRdiiFlow
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_get_groundwaterFlows( &
+            thisTime, LastRunoffTime, NextRunoffTime, sIdx, nodeIdx, flowrate) &
+            BIND(C, name="api_get_groundwaterFlows")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double), value, intent(in)    :: thisTime
+            real(c_double), value, intent(in)    :: LastRunoffTime
+            real(c_double), value, intent(in)    :: NextRunoffTime
+            integer(c_int), value, intent(in)    :: sIdx
+            integer(c_int),        intent(inout) :: nodeIdx
+            real(c_double),        intent(inout) :: flowrate
+        end function api_get_groundwaterFlows
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_call_climate_setState(thisDate) &
             BIND(C, name='api_call_climate_setState')
@@ -594,6 +616,7 @@ module interface_
     procedure(api_get_end_datetime),           pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),                 pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),                 pointer :: ptr_api_get_headBC
+    procedure(api_count_subobjects),           pointer :: ptr_api_count_subobjects
     procedure(api_get_SWMM_setup),             pointer :: ptr_api_get_SWMM_setup
     procedure(api_get_SWMM_times),             pointer :: ptr_api_get_SWMM_times
     procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
@@ -624,7 +647,8 @@ module interface_
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
     procedure(api_get_subcatch_runoff_nodeIdx),pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
     procedure(api_getNumRdiiFlows),            pointer :: ptr_api_getNumRdiiFlows
-    procedure(api_getRdiiFlows),               pointer :: ptr_api_getRdiiFlows
+    procedure(api_getRdiiFlow),               pointer :: ptr_api_getRdiiFlow
+    procedure(api_get_groundwaterFlows),       pointer :: ptr_api_get_groundwaterFlows
     procedure(api_call_climate_setState),      pointer :: ptr_api_call_climate_setState
     procedure(api_get_evaporation_rate),       pointer :: ptr_api_get_evaporation_rate
     
@@ -904,21 +928,33 @@ contains
         api_is_initialized = .true.
         print *, ' ' !% needed because there is no \n after the EPA-SWMM printout of "Retrieving project data"
 
-        !% --- Get number of objects in SWMM-C
-        setting%SWMMinput%N_link = get_num_objects(API_LINK)
+        ! !% --- Get number of objects in SWMM-C
+        ! setting%SWMMinput%N_link = get_num_objects(API_LINK)
+        ! N_link = setting%SWMMinput%N_link
+
+        ! setting%SWMMinput%N_node = get_num_objects(API_NODE)
+        ! N_node = setting%SWMMinput%N_node
+
+        ! setting%SWMMinput%N_curve = get_num_objects(API_CURVE)
+        ! N_curve = setting%SWMMinput%N_curve
+
+        ! setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
+
+        ! setting%SWMMinput%N_link_transect = get_num_objects(API_TRANSECT)
+
+        !% --- get the time start, end, and interval data from SWMM-C input file
+        call interface_get_SWMM_times()
+
+        !% --- get the setup from the SWMM-C input file
+        call interface_get_SWMM_setup()
+
+        !% --- get counts of subobjects
+        call interface_count_subobjects ()
+
+        !% --- Set globals 
         N_link = setting%SWMMinput%N_link
-
-        setting%SWMMinput%N_node = get_num_objects(API_NODE)
         N_node = setting%SWMMinput%N_node
-
-        setting%SWMMinput%N_curve = get_num_objects(API_CURVE)
-        N_curve = setting%SWMMinput%N_curve
-
-        setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
-
-        setting%SWMMinput%N_link_transect = get_num_objects(API_TRANSECT)
-
-                
+       
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
             print *, '*                        FATAL ERROR                               *'
@@ -949,11 +985,6 @@ contains
             !% API so that the error condition is correctly represented.
         end if
 
-        !% --- get the time start, end, and interval data from SWMM-C input file
-        call interface_get_SWMM_times()
-
-        !% --- get the setup from the SWMM-C input file
-        call interface_get_SWMM_setup()
 
         !%----------------------------------------------------------------------
         !% closing
@@ -1267,6 +1298,7 @@ contains
             ! print *, 'api_linkf_start       ',api_linkf_start
             ! print *, 'api_linkf_commonbreak ',api_linkf_commonbreak
             ! print *, 'api_linkf_typeBreak   ',api_linkf_typeBreak
+            ! print *, '=============== end of top stuff '
 
         !% --- parse the link section
         if     (  attr .le. api_linkf_start) then    
@@ -1549,12 +1581,12 @@ contains
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
 
+            ! print *, ' '
             ! print *, 'attr ',attr, trim(reverseKey_api(attr))
             ! print *, 'link_value ',link_value, API_FORCE_MAIN
             ! !print *, 'error ',error
             ! print *, 'API_FORCE_MAIN  = ',API_FORCE_MAIN
 
-            !% 20220420brh
             ilink_value = int(link_value) !% these attributes should be integers
             select case (ilink_value)
 
@@ -2350,8 +2382,8 @@ contains
                     end select
 
                 case (API_FORCE_MAIN)
-                    !print *, ' '
-                    !print *, 'in FORCE MAIN'
+                    ! print *, ' '
+                    ! print *, 'in FORCE MAIN ', reverseKey_api(attr)
                     select case (attr)
                         case (api_linkf_geometry)
                             link_value = lForce_main
@@ -2373,21 +2405,34 @@ contains
                              error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                              thisposition = trim(subroutine_name)//'_T28'
                              call print_api_error(error, thisposition)
-                         case (api_linkf_xsect_rFull)
+                        case (api_linkf_xsect_rFull)
                              !print *, 'call III'
                              call load_api_procedure("api_get_linkf_attribute")
                              error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                              thisposition = trim(subroutine_name)//'_T29'
                              call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
+                             thisposition = trim(subroutine_name)//'_T30'
+                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T31'
+                            call print_api_error(error, thisposition)     
                         case (api_linkf_forcemain_coef)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_forcemain_coef, link_value)
                                  ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
                             thisposition = trim(subroutine_name)//'_U28'  
                             call print_api_error(error, thisposition)
+
                         case default
                             print *, 'case default for API_FORCE_MAIN ',trim(reverseKey_api(attr)),' (could be error): ',attr,trim(reverseKey_api(attr))
                     end select
+                    ! print *, 'DONE FORCE MAIN '
+                    ! print *, ' '
                 case default
                     !print *, 'in else ',link_value
                         !% some links like pumps or outlets does not have any geometric features
@@ -3333,6 +3378,27 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
+    subroutine interface_count_subobjects()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% gets counts of subobjects of SWMM objects
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer :: error
+            integer, pointer :: Ngroundwater
+            character(64) :: subroutine_name = "interface_count_subobjects"
+        !%---------------------------------------------------------------------
+
+        Ngroundwater => setting%SWMMinput%N_groundwater
+        call load_api_procedure("api_count_subobjects")
+        error = ptr_api_count_subobjects(Ngroundwater)
+        call print_api_error(error, subroutine_name)   
+
+    end subroutine interface_count_subobjects    
+!%
+!%=============================================================================
+!%=============================================================================
+!%
     subroutine interface_get_SWMM_setup()
         !%---------------------------------------------------------------------
         !% Description
@@ -3430,7 +3496,6 @@ contains
         !% --- seconds between control rule evaluations
         setting%SWMMinput%ControlRuleStep = control_rule_step
     
-
         thisFailure(:) = .false.
         thisWarning(:) = .false.
         thisVariable(:) = ''
@@ -3839,7 +3904,7 @@ contains
             setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Extran
             thisWarning(ii) = .true.
             thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'input value ignored. SWMM5+ uses Preissmann slot (set in JSON file).'
+            thisProblem(ii)  = 'input value ignored. SWMM5+ uses Preissmann slot.'
         case (1)
             setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Slot
             !% Preissmann SLOT is specified
@@ -3847,7 +3912,7 @@ contains
             thisWarning(ii)  = .true.
             thisFailure(ii)  = .true.
             thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'Unknown value for SWMM input. SWMM5+ overwrites (ETRAN,SLOT) from json file'
+            thisProblem(ii)  = 'Unknown value for SWMM input. SWMM5+ overwrites (EXTRAN,SLOT).'
         end select
 
         !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20221103
@@ -3865,7 +3930,7 @@ contains
             thisWarning(ii)  = .true.
             thisFailure(ii)  = .false.
             thisVariable(ii) = '[DIVIDER]'
-            thisProblem(ii)  = 'in SWMM input file are converted to junctions for dynamic wave in EPA SWMM.'
+            thisProblem(ii)  = 'in SWMM input file are converted to junctions for dynamic wave.'
         end if
 
         !% -----------------------------------------------------------------------------------
@@ -4156,7 +4221,7 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    subroutine interface_call_RDII_inflow ()
+    subroutine interface_get_RDII_inflow ()
         !%---------------------------------------------------------------------
         !% Description:
         !% Mimics section in EPA SWMM routing.C where addRdiiInflows() is called
@@ -4166,7 +4231,7 @@ contains
             integer             :: error
             integer, pointer    :: eIdx
             real(8)             :: flowrate
-            character(64)       :: subroutine_name = 'interface_call_RDII_inflow'
+            character(64)       :: subroutine_name = 'interface_get_RDII_inflow'
         !%---------------------------------------------------------------------
         !%---------------------------------------------------------------------
 
@@ -4185,7 +4250,7 @@ contains
             !% --- get the RDII flows
             !%     input/output are Fortran indexes
             call load_api_procedure("api_getRdiiFlow")
-            error = ptr_api_getRdiiFlows(ii, nIdx, flowrate)
+            error = ptr_api_getRdiiFlow(ii, nIdx, flowrate)
             call print_api_error(error, subroutine_name)
 
             !% --- note that EPA SWMM uses a FLOW_TOL = 1e-5 cfs, not sure if we need to replicate
@@ -4205,7 +4270,50 @@ contains
 
         end do
 
-    end subroutine interface_call_RDII_inflow
+    end subroutine interface_get_RDII_inflow
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_get_groundwater_inflow ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% mimics the call to routing.c/addGroundwaterInflows in EPA SWMM
+        !%---------------------------------------------------------------------
+        !% Declarations:
+        integer             :: error, nIdx, ii
+        integer, pointer    :: eIdx
+        real(8)             :: flowrate
+        real(8), pointer    :: NextRunoffTime, LastRunoffTime, thisTime
+        character(64)       :: subroutine_name = 'interface_get_groundwater_inflow'
+        !%---------------------------------------------------------------------
+
+        thisTime => setting%Time%Now
+        NextRunoffTime => setting%Time%Hydrology%NextTime
+        LastRunoffTime => setting%Time%Hydrology%LastTime
+
+        do ii=1,setting%SWMMinput%N_subcatch
+            !% --- get the node and flowrate for each groundwater inflow
+            call load_api_procedure("api_get_groundwaterFlows")
+            error = ptr_api_get_groundwaterFlows &
+                (thisTime, LastRunoffTime, NextRunoffTime, ii, nIdx, flowrate)
+            call print_api_error(error, subroutine_name)
+
+            !% --- check for no node returned
+            if (nIdx < 1) cycle
+        
+            !% --- check if node is on this processor -- if so then add groundwater to lateral flowrate
+            if (node%I(nIdx,ni_P_image) == this_image()) then
+                !% --- get the element index
+                eIdx => node%I(nIdx,ni_elem_idx)
+                !% --- add RDII to lateral flowrate 
+                elemR(eIdx,er_FlowrateLateral) = elemR(eIdx,er_FlowrateLateral) + flowrate
+            else
+                !% --- no action
+            end if
+        end do
+
+    end subroutine interface_get_groundwater_inflow
 !%
 !%=============================================================================
 !% PRIVATE
@@ -4284,6 +4392,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
             case ("api_get_headBC")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
+            case ("api_count_subobjects")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_count_subobjects)
             case ("api_get_SWMM_setup")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_setup)
             case ("api_get_SWMM_times")
@@ -4316,15 +4426,17 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_NewRunoffTime)
             case ("api_getNumRdiiFlows")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_getNumRdiiFlows)
-            case ("api_getRdiiFlows")
-                call c_f_procpointer(c_lib%procaddr, ptr_api_getRdiiFlows)
+            case ("api_getRdiiFlow")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_getRdiiFlow)
+            case ("api_get_groundwaterFlows")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_groundwaterFlows)
             case ("api_call_climate_setState")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_call_climate_setState)
             case ("api_get_evaporation_rate")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_evaporation_rate)
             case default
                 write(*,"(A,A)") "Error, procedure " // api_procedure_name // &
-                 " has not been handled in load_api_procedure"
+                 " has not been handled in load_api_procedure in interface.f90"
                 !stop 
                 call util_crashpoint(420987)
                 !return

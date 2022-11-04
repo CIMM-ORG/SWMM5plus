@@ -21,7 +21,8 @@ module timeloop
               interface_export_runon_volume, &
               interface_call_climate_setState, &
               interface_get_evaporation_rate, &
-              interface_call_RDII_inflow
+              interface_get_RDII_inflow, &
+              interface_get_groundwater_inflow
     use utility_crash
     use control_hydraulics, only: control_update
 
@@ -322,9 +323,6 @@ contains
                     end if
                 end if
 
-                if (.not. setting%SWMMinput%IgnoreRDII) then 
-                    call interface_call_RDII_inflow ()
-                end if
 
                 ! print *, '1 nextHydrologyTime ', setting%Time%Hydrology%NextTime
                 ! print *, "doHydraulicsStepYN",doHydraulicsStepYN
@@ -393,6 +391,16 @@ contains
                     !%     whether or not it is computed in this time step
                     if (setting%Simulation%useHydrology .and. BCupdateYN) then 
                         call tl_subcatchment_lateral_inflow ()
+                    end if
+
+                    !% --- add RDII inflows
+                    if (.not. setting%SWMMinput%IgnoreRDII) then 
+                        call interface_get_RDII_inflow ()
+                    end if
+    
+                    if ((.not. setting%SWMMinput%IgnoreGroundwater) .and. &
+                              (setting%SWMMinput%N_groundwater > 0) ) then 
+                        call interface_get_groundwater_inflow ()
                     end if
     
                     !call util_CLprint ('3333 after subcatchment lateral inflow in timeloop---------------------------')

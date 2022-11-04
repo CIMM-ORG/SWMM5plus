@@ -577,15 +577,15 @@ module define_api_keys
         enumerator :: api_linkf_commonBreak              ! 81  ! must be end of common  ...linkf... types
 
         ! --- special elements attributes
-        enumerator :: api_linkf_type              ! 83  ! must match linkf_type in api.h
-        enumerator :: api_linkf_sub_type          ! 84
-        enumerator :: api_linkf_typeBreak         ! 85  ! must be end of ...linkf... special types
+        enumerator :: api_linkf_type              ! 82  ! must match linkf_type in api.h
+        enumerator :: api_linkf_sub_type          ! 83
+        enumerator :: api_linkf_typeBreak         ! 84  ! must be end of ...linkf... special types
         ! --- xsect attributes for linkf
-        enumerator :: api_linkf_xsect_type        ! 86
-        enumerator :: api_linkf_geometry          ! 87
-        enumerator :: api_linkf_xsect_wMax        ! 88
-        enumerator :: api_linkf_xsect_yBot        ! 89
-        enumerator :: api_linkf_xsect_yFull       ! 80
+        enumerator :: api_linkf_xsect_type        ! 85
+        enumerator :: api_linkf_geometry          ! 86
+        enumerator :: api_linkf_xsect_wMax        ! 87
+        enumerator :: api_linkf_xsect_yBot        ! 88
+        enumerator :: api_linkf_xsect_yFull       ! 89
         enumerator :: api_linkf_xsect_aFull       ! 90
         enumerator :: api_linkf_xsect_rFull       ! 91
         enumerator :: api_linkf_xsect_rBot        ! 92
