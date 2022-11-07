@@ -13,7 +13,7 @@
             "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : true,
+            "ApplyYN" : false,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0,
             "FullDepthMultiplier" : 0.5
@@ -99,7 +99,7 @@
             "Method" : "DynamicSlot",
             "TargetCelerity" : 1000.00,
             "Alpha" : 3.0,
-            "DecayRate" : 10.0
+            "DecayRate" : 50.0
         }
     },
     "TestCase" : {
