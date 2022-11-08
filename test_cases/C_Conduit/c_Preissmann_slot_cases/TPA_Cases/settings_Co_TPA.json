@@ -87,7 +87,7 @@
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
+        "MomentumSourceMethod" : "T20",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
@@ -99,7 +99,7 @@
             "Method" : "DynamicSlot",
             "TargetCelerity" : 1000.00,
             "Alpha" : 3.0,
-            "DecayRate" : 50.0
+            "DecayRate" : 0.05
         }
     },
     "TestCase" : {

@@ -107,7 +107,7 @@
             "Method" : "DynamicSlot",
             "TargetCelerity" : 1000.0,
             "Alpha" : 3.00,
-            "DecayRate" : 50.0
+            "DecayRate" : 0.02
         }
     },    
     "TestCase" : {

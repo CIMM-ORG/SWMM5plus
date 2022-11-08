@@ -492,7 +492,7 @@ module define_settings
         logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
         character(len=256)   :: base_folder = ""
-        character(len=256)   :: library_folder = ""  !% DO NOT CHANGE THIS FROM "build"
+        character(len=256)   :: library_folder = "build"  !% DO NOT CHANGE THIS FROM "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
@@ -1884,6 +1884,8 @@ contains
                 setting%Solver%PreissmannSlot%Method = StaticSlot
             else if (c == 'dynamicslot') then
                 setting%Solver%PreissmannSlot%Method = DynamicSlot
+            else if (c == 'dynamicslot_test') then
+                setting%Solver%PreissmannSlot%Method = DynamicSlotTest
             else
                 write(*,"(A)") 'Error - json file - setting.Solver.PreissmannSlot%Method of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
