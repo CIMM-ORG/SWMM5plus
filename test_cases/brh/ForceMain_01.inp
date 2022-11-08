@@ -25,9 +25,9 @@ WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         00:00:01 
 
-INERTIAL_DAMPING     NONE
+INERTIAL_DAMPING     PARTIAL
 NORMAL_FLOW_LIMITED  BOTH
-FORCE_MAIN_EQUATION  H-W
+FORCE_MAIN_EQUATION  D-W
 VARIABLE_STEP        0.75
 LENGTHENING_STEP     0
 MIN_SURFAREA         0
@@ -47,34 +47,34 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-J1               0.3489       4          1          1000          0         
-J2               0.3489       4          1          1000          0         
-J3               0.1745       4          1          1000          0         
+J1               2.0          1           1.0        1000          0                
+;;J3               1.0        1           1          1000          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-J4               0          FREE                        NO                       
+J4               1.0         FIXED       2.5              YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               J1               J3               1000       0.03       0          0          1.5     0         
-C2               J2               J3               1000       0.03       0          0          1.5     0         
-C3               J3               J4               1000       0.03       0          0          3.0     0         
+C1               J1               J4               1000       0.0126        0          0          1.5       0         
+      
 
-[XSECTIONS]
+[XSECTIONS]     
+;;Link           Shape         Geom 1              Geom2
 ;;Link           Shape        Diameter           Roughness      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1                FORCE_MAIN    4                0.1           0          0                              
-C2                FORCE_MAIN    4                0.1           0          0                              
-C3                FORCE_MAIN    4                0.1           0          0                
+;;C1                FORCE_MAIN    1.0                 120           0          0   
+C1                FORCE_MAIN    1.0                 0.0078           0          0  
+C1               CIRCULAR         1.0                  0          0            0                      
+             
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-J1               FLOW             ""               FLOW     1.0      1.0      1.5 
-J2               FLOW             ""               FLOW     1.0      1.0      1.5 
+J1               FLOW             ""               FLOW     1.0      1.0      1.24 
+
 
 [REPORT]
 ;;Reporting Options

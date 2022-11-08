@@ -471,10 +471,10 @@ contains
             ! print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
-            ! print *, 'calling get elemtype'
+            !  print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
 
-            ! print *, 'calling get geometry'
+            !  print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
 
             ! print *, 'calling get flapgate'
@@ -602,21 +602,21 @@ contains
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
 
-        ! print *, ' =================================== '
-    !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
-    !     print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
-    !     print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
-    !   !  print *, 'ZlinkUp  ',zLinkUp
-    !   !  print *, 'zlinkDn  ',zLinkDn
-    !   !  print *, 'DepthUp  ',DepthUp
-    !   !  print *, 'DepthDn  ',DepthDn
-    !     print *, 'HeadUp   ',headUp
-    !     print *, 'HeadDn   ',headDn
-    !     print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
-    !     print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
-    !     print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
-    !     print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
-    !     print *, ' '
+            ! print *, ' =================================== '
+        !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
+        !     print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
+        !     print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
+        !   !  print *, 'ZlinkUp  ',zLinkUp
+        !   !  print *, 'zlinkDn  ',zLinkDn
+        !   !  print *, 'DepthUp  ',DepthUp
+        !   !  print *, 'DepthDn  ',DepthDn
+        !     print *, 'HeadUp   ',headUp
+        !     print *, 'HeadDn   ',headDn
+        !     print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
+        !     print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
+        !     print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
+        !     print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
+        !     print *, ' '
 
     
         !% --- set downstream link depths including effects of offsets
@@ -994,7 +994,7 @@ contains
         if (setting%Solver%ForceMain%UseSWMMinputMethodTF) then 
             !% --- using SWMM input method
             elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = link%R(thisLink,lr_ForceMain_Coef)
-            elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquation
+            elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquationType
         else
             !% --- overwriting with default method from JSON file
             select case (setting%Solver%ForceMain%Default_method)
@@ -1711,7 +1711,7 @@ contains
                 if (geometryType == lForce_main) then 
                     where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
                         elemYN(thisP,eYN_isForceMain)      = .TRUE.
-                        elemSI(thisP,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquation
+                        elemSI(thisP,esi_Conduit_Forcemain_Method) = setting%SWMMinput%ForceMainEquationType
                         elemSR(thisP,esr_Conduit_ForceMain_Coef)   = link%R(thislink,lr_ForceMain_Coef)
                     endwhere
                 endif
@@ -2951,18 +2951,21 @@ contains
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
-                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)
+                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)          
             else
                 !% --- tabular storage
                 elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
                 elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
             end if
+            !% --- common data
+            elemSR(JMidx,esr_Storage_FractionEvap)= node%R(thisJunctionNode,nr_StorageFevap)
         else
             !%-----------------------------------------------------------------------
             !% HACK: Junction main with implied storage are rectangular
             !%-----------------------------------------------------------------------
-            elemSI(JMidx,esi_JunctionMain_Type) = ImpliedStorage
-            elemI(JMidx,ei_geometryType)        = rectangular
+            elemSI(JMidx,esi_JunctionMain_Type)    = ImpliedStorage
+            elemI(JMidx,ei_geometryType)           = rectangular
+            elemSR(JMidx,esr_Storage_FractionEvap) = zeroR  !% --- no evap from implied storage junction
         end if
 
         !% --- junction main depth and head from initial conditions

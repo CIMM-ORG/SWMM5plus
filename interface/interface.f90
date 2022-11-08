@@ -67,6 +67,12 @@ module interface_
     public :: interface_get_subcatch_runoff
     public :: interface_get_subcatch_runoff_nodeIdx
     public :: interface_get_NewRunoffTime
+    public :: interface_call_climate_setState
+    public :: interface_get_evaporation_rate
+    public :: interface_get_RDII_inflow
+    public :: interface_get_groundwater_inflow
+    public :: interface_get_LID_inflow
+
 
 
 !%==========================================================================
@@ -222,57 +228,79 @@ module interface_
             real(c_double),        intent(inout) :: headBC
         end function api_get_headBC
         !% -------------------------------------------------------------------------------
+        integer(c_int) function api_count_subobjects(N_groundwater) &
+            BIND(C, name="api_count_subobjects")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int),       intent(inout) :: N_groundwater
+        end function api_count_subobjects
+        !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_setup( &
             flow_units, &
-            route_model, &
+            infiltration_model_type, &
+            flow_routing_model_type, &
+            link_offset_type, &
+            force_main_equation, &
+            ignore_rainfall, &
+            ignore_snowmelt, &
+            ignore_groundwater, &
+            ignore_rdii, &
+            ignore_routing, &
+            ignore_quality, &
             allow_ponding, &
-            inertial_damping, &
-            num_threads, &
-            skip_steady_state, &
-            force_main_eqn, &
-            max_trials, &
-            normal_flow_limiter, &
-            rule_step, &
-            surcharge_method, &
+            steadystate_skip, &
+            steadystate_system_flow_tolerance, &
+            steadystate_lateral_flow_tolerance, &
+            routing_step_lengthening_time, &
+            routing_step_Courant_factor, &
+            routing_step_minimum,  &
+            inertial_damping_type, &
+            normal_flow_limiter_type, &
+            minimum_surface_area, &
+            minimum_conduit_slope, &
+            maximum_number_of_trials, &
+            head_convergence_tolerance, &
+            number_parallel_threads, &
             tempdir_provided, &
-            variable_step, &
-            lengthening_step, &
-            route_step, &
-            min_route_step, &
-            min_surface_area, &
-            min_slope, &
-            head_tol, &
-            sys_flow_tol, &
-            lat_flow_tol) &
+            control_rule_step, &
+            surcharge_method) &
             BIND(C, name="api_get_SWMM_setup")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), intent(inout) :: flow_units
-            integer(c_int), intent(inout) :: route_model
+            integer(c_int), intent(inout) :: infiltration_model_type
+            integer(c_int), intent(inout) :: flow_routing_model_type
+            integer(c_int), intent(inout) :: link_offset_type
+            integer(c_int), intent(inout) :: force_main_equation
+            integer(c_int), intent(inout) :: ignore_rainfall
+            integer(c_int), intent(inout) :: ignore_snowmelt
+            integer(c_int), intent(inout) :: ignore_groundwater
+            integer(c_int), intent(inout) :: ignore_rdii
+            integer(c_int), intent(inout) :: ignore_routing
+            integer(c_int), intent(inout) :: ignore_quality
             integer(c_int), intent(inout) :: allow_ponding
-            integer(c_int), intent(inout) :: inertial_damping
-            integer(c_int), intent(inout) :: num_threads
-            integer(c_int), intent(inout) :: skip_steady_state
-            integer(c_int), intent(inout) :: force_main_eqn
-            integer(c_int), intent(inout) :: max_trials
-            integer(c_int), intent(inout) :: normal_flow_limiter
-            integer(c_int), intent(inout) :: rule_step
-            integer(c_int), intent(inout) :: surcharge_method
+            integer(c_int), intent(inout) :: steadystate_skip
+            real(c_double), intent(inout) :: steadystate_system_flow_tolerance
+            real(c_double), intent(inout) :: steadystate_lateral_flow_tolerance
+            real(c_double), intent(inout) :: routing_step_lengthening_time
+            real(c_double), intent(inout) :: routing_step_Courant_factor
+            real(c_double), intent(inout) :: routing_step_minimum
+            integer(c_int), intent(inout) :: inertial_damping_type
+            integer(c_int), intent(inout) :: normal_flow_limiter_type
+            real(c_double), intent(inout) :: minimum_surface_area
+            real(c_double), intent(inout) :: minimum_conduit_slope
+            integer(c_int), intent(inout) :: maximum_number_of_trials
+            real(c_double), intent(inout) :: head_convergence_tolerance
+            integer(c_int), intent(inout) :: number_parallel_threads
             integer(c_int), intent(inout) :: tempdir_provided
-            real(c_double), intent(inout) :: variable_step
-            real(c_double), intent(inout) :: lengthening_step
-            real(c_double), intent(inout) :: route_step
-            real(c_double), intent(inout) :: min_route_step
-            real(c_double), intent(inout) :: min_surface_area
-            real(c_double), intent(inout) :: min_slope
-            real(c_double), intent(inout) :: head_tol
-            real(c_double), intent(inout) :: sys_flow_tol
-            real(c_double), intent(inout) :: lat_flow_tol
+            integer(c_int), intent(inout) :: control_rule_step
+            integer(c_int), intent(inout) :: surcharge_method
         end function api_get_SWMM_setup
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_times &
             (starttime_epoch, endtime_epoch, report_start_datetime, report_step, &
-             hydrology_step, hydrology_dry_step, hydraulic_step, total_duration) &
+             hydrology_wet_step, hydrology_dry_step, sweep_start_dayofyear, &
+             sweep_end_dayofyear, dry_days, hydraulic_step, total_duration) &
             BIND(C, name="api_get_SWMM_times")
             use, intrinsic :: iso_c_binding
             implicit none
@@ -280,8 +308,11 @@ module interface_
             real(c_double), intent(inout) :: endtime_epoch
             real(c_double), intent(inout) :: report_start_datetime
             integer(c_int), intent(inout) :: report_step
-            integer(c_int), intent(inout) :: hydrology_step
+            integer(c_int), intent(inout) :: hydrology_wet_step
             integer(c_int), intent(inout) :: hydrology_dry_step
+            integer(c_int), intent(inout) :: sweep_start_dayofyear
+            integer(c_int), intent(inout) :: sweep_end_dayofyear
+            integer(c_int), intent(inout) :: dry_days
             real(c_double), intent(inout) :: hydraulic_step
             real(c_double), intent(inout) :: total_duration
         end function api_get_SWMM_times
@@ -509,6 +540,63 @@ module interface_
             integer(c_int),        intent(inout) :: node_idx
         end function api_get_subcatch_runoff_nodeIdx
         !% -------------------------------------------------------------------------------
+        integer(c_int) function api_getNumRdiiFlows(thisDateTime, nRDII) &
+            BIND(C, name="api_getNumRdiiFlows")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double), value, intent(in)    :: thisDateTime
+            integer(c_int),        intent(inout) :: nRDII
+        end function api_getNumRdiiFlows
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_getRdiiFlow(rdiiIdx, nodeIdx, flowrate) &
+            BIND(C, name="api_getRdiiFlow")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            integer(c_int), value, intent(in)    :: rdiiIdx
+            integer(c_int),        intent(inout) :: nodeIdx
+            real(c_double),        intent(inout) :: flowrate
+        end function api_getRdiiFlow
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_get_groundwaterFlow( &
+            thisTime, LastRunoffTime, NextRunoffTime, sIdx, nodeIdx, flowrate) &
+            BIND(C, name="api_get_groundwaterFlow")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double), value, intent(in)    :: thisTime
+            real(c_double), value, intent(in)    :: LastRunoffTime
+            real(c_double), value, intent(in)    :: NextRunoffTime
+            integer(c_int), value, intent(in)    :: sIdx
+            integer(c_int),        intent(inout) :: nodeIdx
+            real(c_double),        intent(inout) :: flowrate
+        end function api_get_groundwaterFlow
+        !% -------------------------------------------------------------------------------
+        integer (c_int) function api_get_LID_DrainFlow( &
+            thisTime, LastRunoffTime, NextRunoffTime, sIdx, nIdx, flowrate) &
+            BIND(C, name="api_get_LID_DrainFlow")
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double), value, intent(in)    :: thisTime
+            real(c_double), value, intent(in)    :: LastRunoffTime
+            real(c_double), value, intent(in)    :: NextRunoffTime
+            integer(c_int), value, intent(in)    :: sIdx
+            integer(c_int),        intent(inout) :: nIdx
+            real(c_double),        intent(inout) :: flowrate
+        end function api_get_LID_DrainFlow
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_call_climate_setState(thisDate) &
+            BIND(C, name='api_call_climate_setState')
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double), value, intent(in) :: thisDate
+        end function api_call_climate_setState
+        !% -------------------------------------------------------------------------------
+        integer(c_int) function api_get_evaporation_rate(evapRate) &
+            BIND(C, name='api_get_evaporation_rate')
+            use, intrinsic :: iso_c_binding
+            implicit none 
+            real(c_double),  intent(inout) :: evapRate
+        end function api_get_evaporation_rate
+        !% -------------------------------------------------------------------------------
         ! --- Utils
         !% -------------------------------------------------------------------------------
         integer(c_int) function api_find_object(object_type, object_name) &
@@ -532,7 +620,6 @@ module interface_
     procedure(api_controls_get_action_data),   pointer :: ptr_api_controls_get_action_data
     procedure(api_controls_transfer_monitor_data), pointer :: ptr_api_controls_transfer_monitor_data
     procedure(api_controls_execute),           pointer :: ptr_api_controls_execute
-
     procedure(api_initialize),                 pointer :: ptr_api_initialize
     procedure(api_finalize),                   pointer :: ptr_api_finalize
     procedure(api_run_step),                   pointer :: ptr_api_run_step
@@ -542,6 +629,7 @@ module interface_
     procedure(api_get_end_datetime),           pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),                 pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),                 pointer :: ptr_api_get_headBC
+    procedure(api_count_subobjects),           pointer :: ptr_api_count_subobjects
     procedure(api_get_SWMM_setup),             pointer :: ptr_api_get_SWMM_setup
     procedure(api_get_SWMM_times),             pointer :: ptr_api_get_SWMM_times
     procedure(api_get_NewRunoffTime),          pointer :: ptr_api_get_NewRunoffTime
@@ -567,10 +655,16 @@ module interface_
     procedure(api_export_link_results),        pointer :: ptr_api_export_link_results
     procedure(api_export_node_results),        pointer :: ptr_api_export_node_results
     procedure(api_find_object),                pointer :: ptr_api_find_object
-    procedure(api_export_runon_volume),      pointer :: ptr_api_export_runon_volume
+    procedure(api_export_runon_volume),        pointer :: ptr_api_export_runon_volume
     procedure(api_call_runoff_execute),        pointer :: ptr_api_call_runoff_execute
     procedure(api_get_subcatch_runoff),        pointer :: ptr_api_get_subcatch_runoff 
-    procedure(api_get_subcatch_runoff_nodeIdx), pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
+    procedure(api_get_subcatch_runoff_nodeIdx),pointer :: ptr_api_get_subcatch_runoff_nodeIdx 
+    procedure(api_getNumRdiiFlows),            pointer :: ptr_api_getNumRdiiFlows
+    procedure(api_getRdiiFlow),                pointer :: ptr_api_getRdiiFlow
+    procedure(api_get_groundwaterFlow),        pointer :: ptr_api_get_groundwaterFlow
+    procedure(api_get_LID_DrainFlow),          pointer :: ptr_api_get_LID_DrainFlow
+    procedure(api_call_climate_setState),      pointer :: ptr_api_call_climate_setState
+    procedure(api_get_evaporation_rate),       pointer :: ptr_api_get_evaporation_rate
     
     !% Error handling
     character(len = 1024) :: errmsg
@@ -848,21 +942,33 @@ contains
         api_is_initialized = .true.
         print *, ' ' !% needed because there is no \n after the EPA-SWMM printout of "Retrieving project data"
 
-        !% --- Get number of objects in SWMM-C
-        setting%SWMMinput%N_link = get_num_objects(API_LINK)
+        ! !% --- Get number of objects in SWMM-C
+        ! setting%SWMMinput%N_link = get_num_objects(API_LINK)
+        ! N_link = setting%SWMMinput%N_link
+
+        ! setting%SWMMinput%N_node = get_num_objects(API_NODE)
+        ! N_node = setting%SWMMinput%N_node
+
+        ! setting%SWMMinput%N_curve = get_num_objects(API_CURVE)
+        ! N_curve = setting%SWMMinput%N_curve
+
+        ! setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
+
+        ! setting%SWMMinput%N_link_transect = get_num_objects(API_TRANSECT)
+
+        !% --- get the time start, end, and interval data from SWMM-C input file
+        call interface_get_SWMM_times()
+
+        !% --- get the setup from the SWMM-C input file
+        call interface_get_SWMM_setup()
+
+        !% --- get counts of subobjects
+        call interface_count_subobjects ()
+
+        !% --- Set globals 
         N_link = setting%SWMMinput%N_link
-
-        setting%SWMMinput%N_node = get_num_objects(API_NODE)
         N_node = setting%SWMMinput%N_node
-
-        setting%SWMMinput%N_curve = get_num_objects(API_CURVE)
-        N_curve = setting%SWMMinput%N_curve
-
-        setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
-
-        setting%SWMMinput%N_link_transect = get_num_objects(API_TRANSECT)
-
-                
+       
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
             print *, '*                        FATAL ERROR                               *'
@@ -893,11 +999,6 @@ contains
             !% API so that the error condition is correctly represented.
         end if
 
-        !% --- get the time start, end, and interval data from SWMM-C input file
-        call interface_get_SWMM_times()
-
-        !% --- get the setup from the SWMM-C input file
-        call interface_get_SWMM_setup()
 
         !%----------------------------------------------------------------------
         !% closing
@@ -1211,6 +1312,7 @@ contains
             ! print *, 'api_linkf_start       ',api_linkf_start
             ! print *, 'api_linkf_commonbreak ',api_linkf_commonbreak
             ! print *, 'api_linkf_typeBreak   ',api_linkf_typeBreak
+            ! print *, '=============== end of top stuff '
 
         !% --- parse the link section
         if     (  attr .le. api_linkf_start) then    
@@ -1245,7 +1347,8 @@ contains
             !%     First we use the api_linkf_type to get the overarching link type for this
             !%     link. This allows us to properly categorize the sub_type values to read         
     
-           ! print *, '****** CALLING api_get_linkf_attribute'
+            ! print *, '****** CALLING api_get_linkf_attribute with linkf_type' 
+            ! print *, api_linkf_type, trim(reverseKey_api(api_linkf_type))
             
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
@@ -1253,12 +1356,16 @@ contains
             call print_api_error(error, thisposition)
 
             ! print *, 'here 5098734'
-            ! print *, link_value
+            ! print *, 'link value ',link_value
 
             ilink_value = int(link_value) !% the linkf_type is always an integer
 
             ! print *, 'ilink_value', ilink_value
-            ! print *, API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
+            ! print *, 'options: ',API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
+
+            ! print *, 'attr               ',attr, trim(reverseKey_api(attr))
+            ! print *, 'api_linkf_type     ',api_linkf_type
+            ! print *, 'api_linkf_sub_type ',api_linkf_sub_type
 
             !% --- handle the different linkf_type
             select case (ilink_value)
@@ -1477,6 +1584,9 @@ contains
 
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
+            ! print *, '********* calling linkf_attribute with xsect_type '
+            ! print *, api_linkf_xsect_type, trim(reverseKey_api(api_linkf_xsect_type))
+
             !% --- load the cross-section type no matter what the input attr is.
             ! print *, ' '
             ! print *, 'call GGG calling get_linkf_attribute for xsect_type'
@@ -1485,12 +1595,12 @@ contains
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
 
+            ! print *, ' '
             ! print *, 'attr ',attr, trim(reverseKey_api(attr))
             ! print *, 'link_value ',link_value, API_FORCE_MAIN
-            !print *, 'error ',error
-            !print *, API_FORCE_MAIN
+            ! !print *, 'error ',error
+            ! print *, 'API_FORCE_MAIN  = ',API_FORCE_MAIN
 
-            !% 20220420brh
             ilink_value = int(link_value) !% these attributes should be integers
             select case (ilink_value)
 
@@ -2286,8 +2396,8 @@ contains
                     end select
 
                 case (API_FORCE_MAIN)
-                    !print *, ' '
-                    !print *, 'in FORCE MAIN'
+                    ! print *, ' '
+                    ! print *, 'in FORCE MAIN ', reverseKey_api(attr)
                     select case (attr)
                         case (api_linkf_geometry)
                             link_value = lForce_main
@@ -2303,15 +2413,40 @@ contains
                                 ! print *, 'in ',trim(subroutine_name), ' at T27',link_value
                             thisposition = trim(subroutine_name)//'_T27'
                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_aFull)
+                            !print *, 'call III'
+                             call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
+                             thisposition = trim(subroutine_name)//'_T28'
+                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rFull)
+                             !print *, 'call III'
+                             call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
+                             thisposition = trim(subroutine_name)//'_T29'
+                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_yBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
+                             thisposition = trim(subroutine_name)//'_T30'
+                             call print_api_error(error, thisposition)
+                        case (api_linkf_xsect_rBot)
+                            call load_api_procedure("api_get_linkf_attribute")
+                            error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rBot, link_value)
+                            thisposition = trim(subroutine_name)//'_T31'
+                            call print_api_error(error, thisposition)     
                         case (api_linkf_forcemain_coef)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_forcemain_coef, link_value)
-                                ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
+                                 ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
                             thisposition = trim(subroutine_name)//'_U28'  
                             call print_api_error(error, thisposition)
+
                         case default
-                            print *, 'case ',attr,trim(reverseKey_api(attr))
+                            print *, 'case default for API_FORCE_MAIN ',trim(reverseKey_api(attr)),' (could be error): ',attr,trim(reverseKey_api(attr))
                     end select
+                    ! print *, 'DONE FORCE MAIN '
+                    ! print *, ' '
                 case default
                     !print *, 'in else ',link_value
                         !% some links like pumps or outlets does not have any geometric features
@@ -3257,6 +3392,27 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
+    subroutine interface_count_subobjects()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% gets counts of subobjects of SWMM objects
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer :: error
+            integer, pointer :: Ngroundwater
+            character(64) :: subroutine_name = "interface_count_subobjects"
+        !%---------------------------------------------------------------------
+
+        Ngroundwater => setting%SWMMinput%N_groundwater
+        call load_api_procedure("api_count_subobjects")
+        error = ptr_api_count_subobjects(Ngroundwater)
+        call print_api_error(error, subroutine_name)   
+
+    end subroutine interface_count_subobjects    
+!%
+!%=============================================================================
+!%=============================================================================
+!%
     subroutine interface_get_SWMM_setup()
         !%---------------------------------------------------------------------
         !% Description
@@ -3264,14 +3420,22 @@ contains
         !% file and have been processed by SWMM-C. Stores data that will be
         !% used in SWMM5+ in the setting.SWMMinput... structure
         !%---------------------------------------------------------------------
-            integer       :: flow_units, route_model, allow_ponding
-            integer       :: inertial_damping, num_threads, skip_steady_state
-            integer       :: force_main_eqn, max_trials, normal_flow_limiter
-            integer       :: rule_step, surcharge_method, tempdir_provided
-            real(8)       :: variable_step, lengthening_step, route_step
-            real(8)       :: min_route_step, min_surface_area, min_slope
-            real(8)       :: head_tol, sys_flow_tol, lat_flow_tol
-            integer       :: error, ii
+            integer :: flow_units, infiltration_model_type, flow_routing_model_type
+            integer :: link_offset_type, force_main_equation, ignore_rainfall
+            integer :: ignore_snowmelt, ignore_groundwater, ignore_rdii
+            integer :: ignore_routing, ignore_quality, allow_ponding
+            integer :: steadystate_skip
+            real(8) :: steadystate_system_flow_tolerance
+            real(8) :: steadystate_lateral_flow_tolerance
+            real(8) :: routing_step_lengthening_time, routing_step_Courant_factor
+            real(8) :: routing_step_minimum
+            integer :: inertial_damping_type, normal_flow_limiter_type
+            real(8) :: minimum_surface_area, minimum_conduit_slope
+            integer :: maximum_number_of_trials
+            real(8) :: head_convergence_tolerance
+            integer :: number_parallel_threads, tempdir_provided, control_rule_step
+            integer :: surcharge_method
+            integer :: error, ii
             integer, parameter  :: nset = 30
             logical       :: thisWarning(1:nset)
             logical       :: thisFailure(1:nset)
@@ -3288,277 +3452,490 @@ contains
 
         error = ptr_api_get_SWMM_setup( &
             flow_units,  &
-            route_model, &
+            infiltration_model_type, &
+            flow_routing_model_type, &
+            link_offset_type, &
+            force_main_equation, &
+            ignore_rainfall, &
+            ignore_snowmelt, &
+            ignore_groundwater, &
+            ignore_rdii, &
+            ignore_routing, &
+            ignore_quality, &
             allow_ponding, &
-            inertial_damping, &
-            num_threads, &
-            skip_steady_state, &
-            force_main_eqn, &
-            max_trials, &
-            normal_flow_limiter, &
-            rule_step, &
-            surcharge_method, &
+            steadystate_skip, &
+            steadystate_system_flow_tolerance, &
+            steadystate_lateral_flow_tolerance, &
+            routing_step_lengthening_time, &
+            routing_step_Courant_factor, &
+            routing_step_minimum,  &
+            inertial_damping_type, &
+            normal_flow_limiter_type, &
+            minimum_surface_area, &
+            minimum_conduit_slope, &
+            maximum_number_of_trials, &
+            head_convergence_tolerance, &
+            number_parallel_threads, &
             tempdir_provided, &
-            variable_step, &
-            lengthening_step, &
-            route_step, &
-            min_route_step, &
-            min_surface_area, &
-            min_slope, &
-            head_tol, &
-            sys_flow_tol, &
-            lat_flow_tol)
+            control_rule_step, &
+            surcharge_method &
+            )
 
         call print_api_error(error, subroutine_name)
 
-        !% check for pollutants
-        setting%SWMMinput%N_pollutant = get_num_objects(API_POLLUT)
+        !% --- count numbers of objects from define_api_keys (SWMM objects)
+        setting%SWMMinput%N_gage        = get_num_objects(API_GAGE)
+        setting%SWMMinput%N_subcatch    = get_num_objects(API_SUBCATCH)
+        setting%SWMMinput%N_node        = get_num_objects(API_NODE)
+        setting%SWMMinput%N_link        = get_num_objects(API_LINK)
+        setting%SWMMinput%N_pollutant   = get_num_objects(API_POLLUT)
+        setting%SWMMinput%N_landuse     = get_num_objects(API_LANDUSE)
+        setting%SWMMinput%N_timepattern = get_num_objects(API_TIMEPATTERN)
+        setting%SWMMinput%N_curve       = get_num_objects(API_CURVE)
+        setting%SWMMinput%N_tseries     = get_num_objects(API_TSERIES)
+        setting%SWMMinput%N_control     = get_num_objects(API_CONTROL)
+        setting%SWMMinput%N_transect    = get_num_objects(API_TRANSECT)
+        setting%SWMMinput%N_aquifer     = get_num_objects(API_AQUIFER)
+        setting%SWMMinput%N_unithyd     = get_num_objects(API_UNITHYD)
+        setting%SWMMinput%N_snowmelt    = get_num_objects(API_SNOWMELT)
+        setting%SWMMinput%N_shape       = get_num_objects(API_SHAPE)
+        setting%SWMMinput%N_LID         = get_num_objects(API_LID)
 
-        !% check for controls
-        setting%SWMMinput%N_control = get_num_objects(API_CONTROL)
-        
-        !% check for divider nodes
-        setting%SWMMinput%N_divider = get_num_objects(API_DIVIDER)
+        !% --- count number of node types
+        setting%SWMMinput%N_junction = get_num_objects(API_JUNCTION)
+        setting%SWMMinput%N_outfall  = get_num_objects(API_OUTFALL)
+        setting%SWMMinput%N_storage  = get_num_objects(API_STORAGE)
+        setting%SWMMinput%N_divider  = get_num_objects(API_DIVIDER)
 
-        !% seconds between control rule evaluations
-        setting%SWMMinput%RuleStep = rule_step
+        !% --- seconds between control rule evaluations
+        setting%SWMMinput%ControlRuleStep = control_rule_step
     
-        !print *, 'N control ', setting%SWMMinput%N_control
-
-        !print *, 'route_step ', route_step
-    
-
         thisFailure(:) = .false.
         thisWarning(:) = .false.
         thisVariable(:) = ''
+        thisProblem(:) = 'none'
 
-        !% Units are always CMS for SWMM5+
-        !% HACK there might be issues with hydrology input in CFS
-        ii = 1;
+        !% --- Flow Units are always CMS for SWMM5+ (enum in enum.h)
+        ii = 1
         select case(flow_units)
-        case(3)
-            !% continue with CMS units
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii) = .true.
-            thisFailure(ii) = .false.
-            thisVariable(ii) = 'FLOW_UNITS'
-            thisProblem(ii) = 'CFS input units are converted to CMS for all SWMM5+ computation and output.'
+            case(0)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_CFS
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'CFS input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(1)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_GPM
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'GPM input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(2)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_MGD
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'MGD input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(3)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_CMS
+                !% continue with CMS units
+            case(4)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_LPS
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'LPS input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case(5)
+                setting%SWMMinput%FlowUnitsType = SWMM_FlowUnits_MLD
+                thisWarning(ii) = .true.
+                thisProblem(ii) = 'MLD input flow units are converted to CMS for all SWMM5+ computation and output.'
+            case default
+                thisWarning(ii) = .true.
+                thisFailure(ii) = .true.
+                thisVariable(ii) = 'FLOW_UNITS'
+                thisProblem(ii) = 'Unknown value for SWMM input: (CFS, GPM, NGD, CMS, LPS, MLD) supported'
         end select
 
-        !% Routing model is always DYNWAVE for SWMM5+
+        !% --- Infiltration method 
+        !%     from enum InfilType in infil.h
         ii=ii+1
-        select case (route_model)
-        case (4)
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .true.
-            thisVariable(ii) = 'FLOW_ROUTING'
-            thisProblem(ii)  = 'must be set to DYNWAVE in *.inp file'
+        select case (infiltration_model_type)
+            case (0)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Horton
+            case (1)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Mod_Horton
+            case (2)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Green_Ampt
+            case (3)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Mod_Green_Ampt
+            case (4)
+                setting%SWMMinput%InfiltrationType = SWMM_Infiltration_Curve_Number
+            case default
+                thisWarning(ii) = .true.
+                thisFailure(ii) = .true.
+                thisProblem(ii) = 'Unknown value for SWMM input (HORTON, MODIFIED_HORTON, GREEN_AMPT, MODIFIED_GREEN_AMPT, CURVE_NUMBER) supported'
         end select
 
-        !% Ponding is being developed as of 20220907
+           
+        !% --- Routing model 
+        !%     is always DYNWAVE for SWMM5+
+        !%     from enum RouteModelType in enum.h
+        ii=ii+1
+        select case (flow_routing_model_type)
+            case (0)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_NoRouting
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'NO_ROUTING must be set to DYNWAVE in *.inp file'
+            case (1)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_SteadyFlow
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'STEADY must be set to DYNWAVE in *.inp file'
+            case (2)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_KinematicWave
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'KINWAVE must be set to DYNWAVE in *.inp file'
+            case (3)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_ExtendedKinematicWave
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'XKINWAVE must be set to DYNWAVE in *.inp file'
+            case (4)
+                setting%SWMMinput%FlowRoutingType = SWMM_FlowRouting_DynamicWave
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FLOW_ROUTING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: SWMM5+ only supports DYNWAVE in *.inp file'
+        end select
+
+        !% --- link offset type
+        !%     from enum OffsetType in enums.h
+        ii=ii+1
+        select case (link_offset_type)
+            case(0)
+                setting%SWMMinput%LinkOffsetsType = SWMM_LinkOffset_DepthOffset
+            case(1)
+                setting%SWMMinput%LinkOffsetsType = SWMM_LinkOffset_ElevOffset
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'LINK_OFFSETS'
+                thisProblem(ii)  = 'Unknown value found: (DEPTH, ELEVATION) supported'
+        end select
+
+        !% --- Force mains in EPA SWMM use 0 = Hazen-Williams, 1 = Darcy-Weisbach 
+        !%     from enum ForceMainType in enum.h
+        ii=ii+1
+        select case (force_main_equation)
+            case (0)
+                setting%SWMMinput%ForceMainEquationType = HazenWilliams
+            case (1)
+                setting%SWMMinput%ForceMainEquationType = DarcyWeisbach
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'FORCE_MAIN_EQUATION'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (H_W, D_W) supported.'
+        end select    
+
+        !% --- ignore rainfall (logical)
+        ii=ii+1
+        select case (ignore_rainfall)
+            case (0)
+                setting%SWMMinput%IgnoreRainfall = .false.
+            case (1)
+                setting%SWMMinput%IgnoreRainfall = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_RAINFALL'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore snowmelt (logical)
+        ii=ii+1
+        select case (ignore_snowmelt)
+            case (0)
+                setting%SWMMinput%IgnoreSnowmelt = .false.
+            case (1)
+                setting%SWMMinput%IgnoreSnowmelt = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_SNOWMELT'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore groundwater (logical)
+        ii=ii+1
+        select case (ignore_groundwater)
+            case (0)
+                setting%SWMMinput%IgnoreGroundwater = .false.
+            case (1)
+                setting%SWMMinput%IgnoreGroundwater = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_GROUNDWATER'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore RDII (logical)
+        ii=ii+1
+        select case (ignore_RDII)
+            case (0)
+                setting%SWMMinput%IgnoreRDII = .false.
+            case (1)
+                setting%SWMMinput%IgnoreRDII = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_RDII'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore routing (logical)
+        ii=ii+1
+        select case (ignore_routing)
+            case (0)
+                setting%SWMMinput%IgnoreRouting = .false.
+            case (1)
+                setting%SWMMinput%IgnoreRouting = .true.  
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_ROUTING'
+                thisProblem(ii)  = 'SWMM5+ requires IGNORE_ROUTING = NO in SWMM input file'
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_ROUTING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- ignore quality (logical)
+        ii=ii+1
+        select case (ignore_quality)
+            case (0)
+                setting%SWMMinput%IgnoreQuality = .false.
+                if (setting%SWMMinput%N_pollutant > 0) then
+                    thisWarning(ii)  = .true.
+                    thisFailure(ii)  = .true.
+                    thisVariable(ii) = 'IGNORE_QUALITY'
+                    thisProblem(ii)  = 'SWMM5+ requires IGNORE_QUALTIY = YES in SWMM input file'
+                else 
+                    !% -- no pollutants found, so this shouldn't matter
+                end if
+            case (1)
+                setting%SWMMinput%IgnoreQuality = .true.  
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'IGNORE_QUALITY'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
+        end select
+
+        !% --- Ponding 
         ii=ii+1
         select case (allow_ponding)
-        case (0)
-            setting%SWMMinput%AllowPonding = .false.
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case (1)
-            setting%SWMMinput%AllowPonding = .true.
-            thisWarning(ii)  = .false.
-            thisFailure(ii)  = .false.
-            !thisVariable(ii) = 'ALLOW_PONDING'
-            !thisProblem(ii)  = 'is not presently available in SWMM5+, must be set to NO.'
-        case default
+            case (0)
+                setting%SWMMinput%AllowPonding = .false.
+            case (1)
+                setting%SWMMinput%AllowPonding = .true.
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'ALLOW_PONDING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
         end select
 
-        !% Inertial damping is never used in SWMM5+
+        !% --- Steady state skip routing
         ii=ii+1
-        select case (inertial_damping)
-        case (0)
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'INERTIAL_DAMPING'
-            thisProblem(ii)  = 'is ignored.'
+        select case (steadystate_skip)
+            case (0)
+                setting%SWMMinput%SteadyState_Skip = .false.
+            case (1)
+                setting%SWMMinput%SteadyState_Skip = .true.
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'SKIP_STEADY_STATE'
+                thisProblem(ii)  = 'SWMM5+ requires SKIP_STEADY_STATE = NO in SWMM input file'
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'SKIP_STEADY_STATE'
+                thisProblem(ii)  = 'Unknown value for SWMM input: (YES, NO) supported'
         end select
 
-        !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
-        ii=ii+1
-        select case (num_threads)
-        case (1)
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'NUM_THREADS'
-            thisProblem(ii)  = 'is ignored.'
-        end select
+        !% --- steady state system flow tolerance
+        !%     only relevant if steadystate_skip = 1, which is a failure mode
+        setting%SWMMinput%SteadyState_System_FlowrateTolerance  = steadystate_system_flow_tolerance
+        setting%SWMMinput%SteadyState_Lateral_FlowrateTolerance = steadystate_lateral_flow_tolerance
 
-        !% SWMM5+ does not recognize steady state conditions as of 20211223
+        !% --- routing step lengthening (not used in SWMM5+)
         ii=ii+1
-        if (skip_steady_state) then
+        setting%SWMMinput%RoutingStep_LengtheningTime = routing_step_lengthening_time
+        if (routing_step_lengthening_time .ne. zeroR) then
             thisWarning(ii)  = .true.
             thisFailure(ii)  = .false.
-            thisVariable(ii) = 'SKIP_STEADY_STATE'
-            thisProblem(ii)  = 'is ignored.'
+            thisVariable(ii) = 'LENGTHENING_STEP'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
         end if
 
-        !% Force mains in EPA SWMM use 0 = Hazen-Williams, 1 = Darcy-Weisbach 
+        !% --- courant factor for EPA SWMM variable time step
         ii=ii+1
-        select case (force_main_eqn)
-        case (0)
-            setting%SWMMinput%ForceMainEquation = HazenWilliams
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case (1)
-            setting%SWMMinput%ForceMainEquation = DarcyWeisbach
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
-        case default
+        setting%SWMMinput%RoutingStep_CourantFactor  = routing_step_Courant_factor
+        if (routing_step_Courant_factor .ne. zeroR) then
             thisWarning(ii)  = .true.
-            thisFailure(ii)  = .true.
-            thisVariable(ii) = 'FORCE_MAIN_EQUATION'
-            thisProblem(ii)  = 'unknown option (should be 0 for HW or 1 for DW).'
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'VARIABLE_STEP'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        end if
+
+        !% --- minimum hydraulics time step of EPA SWMM is ignored
+        ii=ii+1
+        setting%SWMMinput%RoutingStep_Minimum         = routing_step_minimum
+        if (routing_step_minimum .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'MINIMUM_STEP'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        end if
+
+        !% --- Inertial damping is never used in SWMM5+
+        !%     from enum InertialDampingType in enums.h
+        ii=ii+1
+        select case (inertial_damping_type)
+            case (0)
+                setting%SWMMinput%InertialDampingType = SWMM_InertialDamping_NoDamping
+            case (1)
+                setting%SWMMinput%InertialDampingType = SWMM_InertialDamping_PartialDamping
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'INERTIAL_DAMPING'
+                thisProblem(ii)  = 'Only NONE is supported in SWMM5+'
+            case (2)
+                setting%SWMMinput%InertialDampingType = SWMM_InertialDamping_FullDamping
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'INERTIAL_DAMPING'
+                thisProblem(ii)  = 'Only NONE is supported in SWMM5+'
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'INERTIAL_DAMPING'
+                thisProblem(ii)  = 'Unknown value for SWMM input: Only NONE is supported in SWMM5+'
         end select
 
-        !% Max trials is irrelevant
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'MAX_TRIALS'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Normal flow limiters are not implemented
+        !% --- Normal flow limiter
+        !%     from enum NormalFlowType in enums.h
         ii=ii+1
         thisWarning(ii)  = .true.
         thisFailure(ii)  = .false.
         thisVariable(ii) = 'NORMAL_FLOW_LIMITED'
-        thisProblem(ii)  = 'is ignored.'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        select case (normal_flow_limiter_type)
+        case(0)
+            setting%SWMMinput%NormalFlowLimiterType = SWMM_NormalFlowLimiterType_Slope
+        case(1)
+            setting%SWMMinput%NormalFlowLimiterType = SWMM_NormalFlowLimiterType_Froude
+        case(2)
+            setting%SWMMinput%NormalFlowLimiterType = SWMM_NormalFlowLimiterType_Both
+        case default
+        end select
 
+        !% --- Minimum surface area for nodes from EPA SWMM is not used
+        ii=ii+1
+        setting%SWMMinput%SurfaceArea_Minimum = minimum_surface_area
+        if (minimum_surface_area .ne. zeroR) then
+            thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'MIN_SURFAREA'
+            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        end if
 
-        !% Rule Step is always OK
+        !% --- Minimum slope is never used (default of 0.0 is ignored)
+        ii=ii+1
+        setting%SWMMinput%ConduitSlope_Minimum = minimum_conduit_slope
+        thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
+        thisVariable(ii) = 'MIN_SLOPE'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+
+        !% --- Max trials is irrelevant
+        ii=ii+1
+        setting%SWMMinput%NumberOfTrials_Maximum = maximum_number_of_trials
+        thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
+        thisVariable(ii) = 'MAX_TRIALS'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+
+        !% Head Tolerance is irrelevant 
+        ii=ii+1
+        setting%SWMMinput%Head_ConvergenceTolerance = head_convergence_tolerance
+        thisWarning(ii)  = .true.
+        thisFailure(ii)  = .false.
+        thisVariable(ii) = 'HEAD_TOL'
+        thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+
+        !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
+        ii=ii+1
+        setting%SWMMinput%NumberParallelThreads = number_parallel_threads
+        select case (number_parallel_threads)
+            case (1)
+                !% --- continue
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .false.
+                thisVariable(ii) = 'NUM_THREADS'
+                thisProblem(ii)  = 'input value is ignored in SWMM5+ (set threads at compile time).'
+        end select
+
+        ii=ii+1        
+        if (tempdir_provided == 1) then
+            setting%SWMMinput%TempDirectory_Provided = .true.
+            thisWarning(ii)  = .true.
+            thisFailure(ii)  = .false.
+            thisVariable(ii) = 'TEMPDIR'
+            thisProblem(ii)  = 'input value is ignored for SWMM5+ output (available for some EPA-SWMM output).'
+        else
+            setting%SWMMinput%TempDirectory_Provided = .false.
+        end if
+
+        !%--------------------------------------------------------------------------------
+        !% --- OTHER SWMM OPTIONS
+
+        !% Control Rule Step is always OK
         ii=ii+1
         thisWarning(ii) = .false.
         thisFailure(ii) = .false.
         thisVariable(ii) = 'RULESTEP'
 
-        !% only Preissman SLOT is presently allowed for surcharge method -- handled by JSON file
+        !% --- Surcharge method
+        !%     only Preissman SLOT is presently allowed for surcharge method -- handled by JSON file
+        !%     from enum  SurchargeMethodType in enums.h
         ii=ii+1
         select case (surcharge_method)
+        case (0)
+            setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Extran
+            thisWarning(ii) = .true.
+            thisVariable(ii) = 'SURCHARGE_METHOD'
+            thisProblem(ii)  = 'input value ignored. SWMM5+ uses Preissmann slot.'
         case (1)
+            setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Slot
             !% Preissmann SLOT is specified
-            thisWarning(ii) = .false.
-            thisFailure(ii) = .false.
         case default
             thisWarning(ii)  = .true.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'SWMM5+ uses Preissmann slot (set in JSON file).'
+            thisProblem(ii)  = 'Unknown value for SWMM input. SWMM5+ overwrites (EXTRAN,SLOT).'
         end select
 
-        if (tempdir_provided ==1) then
+        !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20221103
+        ii=ii+1
+        if ((setting%SWMMinput%N_pollutant > 0) .and. (.not. setting%SWMMinput%IgnoreQuality))then
             thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'TEMPDIR'
-            thisProblem(ii)  = 'is ignored for SWMM5+ output (available for some EPA-SWMM output).'
-        end if
-
-        !% Variable time step in SWMM5+ does not use external controls
-        ii=ii+1
-        if (variable_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'VARIABLE_STEP'
-            thisProblem(ii)  = 'is ignored. JSON file setting.VariableDT is used.'
-        end if
-
-        !% Dynamic lengthening of pipe not used in SWMM5+ as of 20211223
-        ii=ii+1
-        if (lengthening_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'LENGTHENING_STEP'
-            thisProblem(ii)  = 'is ignored.'
-        end if
-
-        !% User-set routing time step is not allowed
-        ii=ii+1
-        if (route_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'ROUTING_STEP'
-            thisProblem(ii)  = 'is ignored. JSON file setting.Time.Hydraulics.Dt is used.'
-        end if
-
-        !% Minimum time steps are set through the json file
-        ii=ii+1
-        if (min_route_step .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'MIN_ROUTE_STEP'
-            thisProblem(ii)  = 'is ignored (JSON file setting.VariableDT.cfl_lo_max is used).'
-        end if
-
-        !% Minimum surface area for nodes is not used
-        ii=ii+1
-        if (min_surface_area .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'MIN_SURFAREA'
-            thisProblem(ii)  = 'is ignored.'
-        end if
-
-        !% Minimum slope is never used (default of 0.0 is ignored)
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'MIN_SLOPE'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Head Tolerance is irrelevant 
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'HEAD_TOL'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% System Flow Tolerance is not used
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'SYS_FLOW_TOL'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Lateral in/out Flow Tolerance is not used
-        ii=ii+1
-        thisWarning(ii)  = .true.
-        thisFailure(ii)  = .false.
-        thisVariable(ii) = 'LAT_FLOW_TOL'
-        thisProblem(ii)  = 'is ignored.'
-
-        !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20211223
-        ii=ii+1
-        if (setting%SWMMinput%N_pollutant > 0) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
+            thisFailure(ii)  = .true.
             thisVariable(ii) = '[POLLUTANTS]'
-            thisProblem(ii)  = 'are ignored in routing'
-        end if
-
-        !% Controls in hydraulics not supported in SWMM5+ as of 20211223
-        ii=ii+1
-        if (setting%SWMMinput%N_control > 0) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = '[CONTROL]'
-            thisProblem(ii)  = 'all ignored in routing.'
+            thisProblem(ii)  = 'are not supported in SWMM5+, set IGNORE_QUALITY = YES.'
         end if
 
         !% Dividers are not used in SWMM5+ as we do not support Kinematic Wave
@@ -3567,9 +3944,12 @@ contains
             thisWarning(ii)  = .true.
             thisFailure(ii)  = .false.
             thisVariable(ii) = '[DIVIDER]'
-            thisProblem(ii)  = 'are ignored.'
+            thisProblem(ii)  = 'in SWMM input file are converted to junctions for dynamic wave.'
         end if
 
+        !% -----------------------------------------------------------------------------------
+        !% --- printouts
+        !%
         if ((any(thisWarning)) .and. (this_image() == 1) ) then
             write(*,'(A)') ' '
             write(*,'(A)') ' '
@@ -3620,10 +4000,11 @@ contains
         !% file and have been processed by SWMM-C
         !%---------------------------------------------------------------------
             integer                :: error
-            real(c_double), target :: reportStart_epoch, RouteStep 
+            real(c_double), target :: reportStart_epoch, hydraulics_route_step 
             real(c_double), target :: starttime_epoch, endtime_epoch
             real(c_double), target :: TotalDuration
-            integer(c_int), target :: reportStep, WetStep, DryStep
+            integer(c_int), target :: reportStep, hydrology_wet_step, hydrology_dry_step
+            integer(c_int), target :: sweep_start_dayofyear, sweep_end_dayofyear, dry_days
             character(64)          :: subroutine_name = 'interface_get_SWMM_times'
         !%----------------------------------------------------------------------
         !% Preliminaries
@@ -3644,9 +4025,12 @@ contains
             endtime_epoch,    &
             reportStart_epoch, &
             reportStep,  &
-            WetStep,     &
-            DryStep,     &
-            RouteStep,   &
+            hydrology_wet_step,     &
+            hydrology_dry_step,     &
+            sweep_start_dayofyear,  &
+            sweep_end_dayofyear, &
+            dry_days,                &
+            hydraulics_route_step,   &
             TotalDuration)
         call print_api_error(error, subroutine_name)
 
@@ -3654,9 +4038,12 @@ contains
         setting%SWMMinput%EndEpoch              = endtime_epoch                      
         setting%SWMMinput%ReportStartTimeEpoch  = reportStart_epoch
         setting%SWMMinput%ReportTimeInterval    = reportStep
-        setting%SWMMinput%WetStep               = WetStep
-        setting%SWMMinput%RouteStep             = RouteStep
-        setting%SWMMinput%DryStep               = DryStep
+        setting%SWMMinput%Hydrology_WetStep     = hydrology_wet_step
+        setting%SWMMinput%Hydrology_DryStep     = hydrology_dry_step
+        setting%SWMMinput%Sweep_Start_Day       = sweep_start_dayofyear
+        setting%SWMMinput%Sweep_End_Day         = sweep_end_dayofyear
+        setting%SWMMinput%DryDaysBeforeStart    = dry_days
+        setting%SWMMinput%Hydraulics_RouteStep  = hydraulics_route_step
         setting%SWMMinput%TotalDuration         = TotalDuration
 
         !%----------------------------------------------------------------------
@@ -3729,9 +4116,10 @@ contains
     subroutine interface_call_runoff_execute()
         !%---------------------------------------------------------------------
         !% Description:
+        !% calls the EPA SWMM runoff procedures
         !%---------------------------------------------------------------------
-        integer             :: error
-        character(64) :: subroutine_name = 'interface_call_runoff_execute'     
+            integer       :: error
+            character(64) :: subroutine_name = 'interface_call_runoff_execute'     
         !%---------------------------------------------------------------------   
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -3806,6 +4194,187 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_subcatch_runoff_nodeIdx
+!%
+!%=============================================================================
+!%=============================================================================
+!%  
+    subroutine interface_call_climate_setState ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% calls the EPA SWMM procedures to set the current climate state
+        !%---------------------------------------------------------------------
+            integer       :: error
+            character(64) :: subroutine_name = 'interface_call_climate_setState'     
+        !%---------------------------------------------------------------------  
+
+        call load_api_procedure("api_call_climate_setState")
+        error = ptr_api_call_climate_setState(setting%Time%Now)   
+        call print_api_error(error, subroutine_name)
+
+    end subroutine interface_call_climate_setState
+!%
+!%=============================================================================
+!%=============================================================================
+!% 
+    real(8) function interface_get_evaporation_rate () result(evapRate)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Gets the SWMM-C evaporation rate, converted to m/s
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer       :: error
+            character(64) :: subroutine_name = 'interface_get_evaporation_rate'     
+        !%---------------------------------------------------------------------   
+
+        call load_api_procedure("api_get_evaporation_rate")
+        error = ptr_api_get_evaporation_rate (evapRate)
+        call print_api_error(error, subroutine_name)
+
+    end function interface_get_evaporation_rate    
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_get_RDII_inflow ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% Mimics section in EPA SWMM routing.C where addRdiiInflows() is called
+        !%---------------------------------------------------------------------
+        !% Declarations
+            integer             :: nRDII, ii, nIdx
+            integer             :: error
+            integer, pointer    :: eIdx
+            real(8)             :: flowrate
+            character(64)       :: subroutine_name = 'interface_get_RDII_inflow'
+        !%---------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+
+        !% --- get the number of RDII flows
+        call load_api_procedure("api_getNumRdiiFlows")
+        error = ptr_api_getNumRdiiFlows (setting%Time%Now,nRDII) 
+        call print_api_error(error, subroutine_name)
+
+        !% --- if there are no RDII
+        if (nRDII < 1) return
+
+        !% --- cycle through all the RDII nodes
+        !%     HACK: in the future we should bring the RDII functions into SWMM5+ so that
+        !%     the operations can be vectorized.
+        do ii=1,nRDII
+            !% --- get the RDII flows
+            !%     input/output are Fortran indexes
+            call load_api_procedure("api_getRdiiFlow")
+            error = ptr_api_getRdiiFlow(ii, nIdx, flowrate)
+            call print_api_error(error, subroutine_name)
+
+            !% --- note that EPA SWMM uses a FLOW_TOL = 1e-5 cfs, not sure if we need to replicate
+            !%     however it seems a good idea to prevent a negative value in case something goes
+            !%     wonky in the RDII file.
+            if (flowrate < zeroR) cycle
+
+            !% --- check if node is on this processor -- if so then add RDII to lateral flowrate
+            if (node%I(nIdx,ni_P_image) == this_image()) then
+                !% --- get the element index
+                eIdx => node%I(nIdx,ni_elem_idx)
+                !% --- add RDII to lateral flowrate 
+                elemR(eIdx,er_FlowrateLateral) = elemR(eIdx,er_FlowrateLateral) + flowrate
+            else
+                !% --- no action
+            end if
+
+        end do
+
+    end subroutine interface_get_RDII_inflow
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_get_groundwater_inflow ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% mimics the call to routing.c/addGroundwaterInflows in EPA SWMM
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer             :: error, nIdx, ii
+            integer, pointer    :: eIdx
+            real(8)             :: flowrate
+            real(8), pointer    :: NextRunoffTime, LastRunoffTime, thisTime
+            character(64)       :: subroutine_name = 'interface_get_groundwater_inflow'
+        !%---------------------------------------------------------------------
+        !% Aliases:
+            thisTime => setting%Time%Now
+            NextRunoffTime => setting%Time%Hydrology%NextTime
+            LastRunoffTime => setting%Time%Hydrology%LastTime
+        !%---------------------------------------------------------------------
+        do ii=1,setting%SWMMinput%N_subcatch
+            !% --- get the node and flowrate for each groundwater inflow
+            call load_api_procedure("api_get_groundwaterFlow")
+            error = ptr_api_get_groundwaterFlow &
+                (thisTime, LastRunoffTime, NextRunoffTime, ii, nIdx, flowrate)
+            call print_api_error(error, subroutine_name)
+
+            !% --- check for no node returned
+            if (nIdx < 1) cycle
+        
+            !% --- check if node is on this processor -- if so then add groundwater to lateral flowrate
+            if (node%I(nIdx,ni_P_image) == this_image()) then
+                !% --- get the element index
+                eIdx => node%I(nIdx,ni_elem_idx)
+                !% --- add RDII to lateral flowrate 
+                elemR(eIdx,er_FlowrateLateral) = elemR(eIdx,er_FlowrateLateral) + flowrate
+            else
+                !% --- no action
+            end if
+        end do
+
+    end subroutine interface_get_groundwater_inflow
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    subroutine interface_get_LID_inflow ()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !% gets the LID inflows into nodes
+        !%---------------------------------------------------------------------
+        !% Declarations:
+            integer             :: error, nIdx, ii
+            integer, pointer    :: eIdx
+            real(8)             :: flowrate
+            real(8), pointer    :: NextRunoffTime, LastRunoffTime, thisTime
+            character(64)       :: subroutine_name = 'interface_get_LID_inflow'
+        !%---------------------------------------------------------------------
+        !% Aliases
+            thisTime      => setting%Time%Now
+            NextRunoffTime => setting%Time%Hydrology%NextTime
+            LastRunoffTime => setting%Time%Hydrology%LastTime
+        !%---------------------------------------------------------------------
+
+        nIdx    = zeroI
+        flowrate = zeroR
+
+        do ii=1,setting%SWMMinput%N_subcatch
+            !% --- get the node and flowrate for each groundwater inflow
+            call load_api_procedure("api_get_LID_DrainFlow")
+            error = ptr_api_get_LID_DrainFlow &
+                (thisTime, LastRunoffTime, NextRunoffTime, ii, nIdx, flowrate)
+            call print_api_error(error, subroutine_name)
+
+            !% --- check for no node returned
+            if (nIdx < 1) cycle
+        
+            !% --- check if node is on this processor -- if so then add groundwater to lateral flowrate
+            if (node%I(nIdx,ni_P_image) == this_image()) then
+                !% --- get the element index
+                eIdx => node%I(nIdx,ni_elem_idx)
+                !% --- add RDII to lateral flowrate 
+                elemR(eIdx,er_FlowrateLateral) = elemR(eIdx,er_FlowrateLateral) + flowrate
+            else
+                !% --- no action
+            end if
+        end do
+
+    end subroutine interface_get_LID_inflow    
 !%
 !%=============================================================================
 !% PRIVATE
@@ -3884,6 +4453,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
             case ("api_get_headBC")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
+            case ("api_count_subobjects")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_count_subobjects)
             case ("api_get_SWMM_setup")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_SWMM_setup)
             case ("api_get_SWMM_times")
@@ -3914,9 +4485,21 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_subcatch_runoff_nodeIdx)        
             case ("api_get_NewRunoffTime")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_NewRunoffTime)
+            case ("api_getNumRdiiFlows")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_getNumRdiiFlows)
+            case ("api_getRdiiFlow")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_getRdiiFlow)
+            case ("api_get_groundwaterFlow")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_groundwaterFlow)
+            case ("api_get_LID_DrainFlow")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_LID_DrainFlow)
+            case ("api_call_climate_setState")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_call_climate_setState)
+            case ("api_get_evaporation_rate")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_evaporation_rate)
             case default
                 write(*,"(A,A)") "Error, procedure " // api_procedure_name // &
-                 " has not been handled in load_api_procedure"
+                 " has not been handled in load_api_procedure in interface.f90"
                 !stop 
                 call util_crashpoint(420987)
                 !return

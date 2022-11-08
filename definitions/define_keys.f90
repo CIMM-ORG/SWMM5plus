@@ -312,11 +312,36 @@
         ! enumerator :: RectangularConcrete_56
         ! enumerator :: RectangularConcrete_57
         !% last items for bookkeeping
+        enumerator :: SWMM_FlowUnits_CFS
+        enumerator :: SWMM_FlowUnits_GPM
+        enumerator :: SWMM_FlowUnits_MGD
+        enumerator :: SWMM_FlowUnits_CMS
+        enumerator :: SWMM_FlowUnits_LPS
+        enumerator :: SWMM_FlowUnits_MLD
+        enumerator :: SWMM_Infiltration_Horton
+        enumerator :: SWMM_Infiltration_Mod_Horton
+        enumerator :: SWMM_Infiltration_Green_Ampt
+        enumerator :: SWMM_Infiltration_Mod_Green_Ampt
+        enumerator :: SWMM_Infiltration_Curve_Number
+        enumerator :: SWMM_FlowRouting_NoRouting
+        enumerator :: SWMM_FlowRouting_SteadyFlow
+        enumerator :: SWMM_FlowRouting_KinematicWave
+        enumerator :: SWMM_FlowRouting_ExtendedKinematicWave
+        enumerator :: SWMM_FlowRouting_DynamicWave
+        enumerator :: SWMM_LinkOffset_DepthOffset
+        enumerator :: SWMM_LinkOffset_ElevOffset
+        enumerator :: SWMM_InertialDamping_NoDamping
+        enumerator :: SWMM_InertialDamping_PartialDamping
+        enumerator :: SWMM_InertialDamping_FullDamping
+        enumerator :: SWMM_NormalFlowLimiterType_Slope
+        enumerator :: SWMM_NormalFlowLimiterType_Froude
+        enumerator :: SWMM_NormalFlowLimiterType_Both
+        enumerator :: SWMM_SurchargeMethod_Extran
+        enumerator :: SWMM_SurchargeMethod_Slot
         enumerator :: undefinedKey
         enumerator :: keys_lastplusone
     end enum
     
-
  contains   
 !%==========================================================================
 !%
@@ -529,6 +554,33 @@
         reverseKey(Paved)  = 'Paved'
         reverseKey(Gravel) = 'Gravel'
         reverseKey(NoRoadSurface) = 'NoRoadSurface'
+        reverseKey(SWMM_FlowUnits_CFS) = 'SWMM_FlowUnits_CFS'
+        reverseKey(SWMM_FlowUnits_GPM) = 'SWMM_FlowUnits_GPM'
+        reverseKey(SWMM_FlowUnits_MGD) = 'SWMM_FlowUnits_MGD'
+        reverseKey(SWMM_FlowUnits_CMS) = 'SWMM_FlowUnits_CMS'
+        reverseKey(SWMM_FlowUnits_LPS) = 'SWMM_FlowUnits_LPS'
+        reverseKey(SWMM_FlowUnits_MLD) = 'SWMM_FlowUnits_MLD'
+        reverseKey(SWMM_Infiltration_Horton) = 'SWMM_Infiltration_Horton'
+        reverseKey(SWMM_Infiltration_Mod_Horton) = 'SWMM_Infiltration_Mod_Horton'
+        reverseKey(SWMM_Infiltration_Green_Ampt) = 'SWMM_Infiltration_Green_Ampt'
+        reverseKey(SWMM_Infiltration_Mod_Green_Ampt) = 'SWMM_Infiltration_Mod_Green_Ampt'
+        reverseKey(SWMM_Infiltration_Curve_Number) = 'SWMM_Infiltration_Curve_Number'
+        reverseKey(SWMM_FlowRouting_NoRouting) = 'SWMM_FlowRouting_NoRouting'
+        reverseKey(SWMM_FlowRouting_SteadyFlow) = 'SWMM_FlowRouting_SteadyFlow'
+        reverseKey(SWMM_FlowRouting_KinematicWave) = 'SWMM_FlowRouting_KinematicWave'
+        reverseKey(SWMM_FlowRouting_ExtendedKinematicWave) = 'SWMM_FlowRouting_ExtendedKinematicWave'
+        reverseKey(SWMM_FlowRouting_DynamicWave) = 'SWMM_FlowRouting_DynamicWave'
+        reverseKey(SWMM_LinkOffset_DepthOffset) = 'SWMM_LinkOffset_DepthOffset'
+        reverseKey(SWMM_LinkOffset_ElevOffset) = 'SWMM_LinkOffset_ElevOffset'
+        reverseKey(SWMM_InertialDamping_NoDamping) = 'SWMM_InertialDamping_NoDamping'
+        reverseKey(SWMM_InertialDamping_PartialDamping) = 'SWMM_InertialDamping_PartialDamping'
+        reverseKey(SWMM_InertialDamping_FullDamping) = 'SWMM_InertialDamping_FullDamping'
+        reverseKey(SWMM_NormalFlowLimiterType_Slope) = 'SWMM_NormalFlowLimiterType_Slope'
+        reverseKey(SWMM_NormalFlowLimiterType_Froude) = 'SWMM_NormalFlowLimiterType_Froude'
+        reverseKey(SWMM_NormalFlowLimiterType_Both) = 'SWMM_NormalFlowLimiterType_Both'
+        reverseKey(SWMM_SurchargeMethod_Extran) = 'SWMM_SurchargeMethod_Extran'
+        reverseKey(SWMM_SurchargeMethod_Slot) = 'SWMM_SurchargeMethod_Slot'
+             
         reverseKey(undefinedKey)     = 'undefinedKey'
         reverseKey(keys_lastplusone) = 'keys_lastplusone'
 

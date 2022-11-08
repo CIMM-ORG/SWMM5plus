@@ -604,28 +604,28 @@ contains
                 ! print *, ' '
                 ! print *, 'calling for link direction'
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
-                ! print *, 'link_direction ',link%I(ii,li_link_direction)
+                ! print *, '     link_direction ',link%I(ii,li_link_direction)
                 ! print *, ' '
                 ! print *, 'calling for link type'
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
-                ! print *, 'link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
+                ! print *, '     link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
                 ! print *, ' '
                 ! print *, 'calling for sub type'
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
-                ! print *, 'link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
+                !  print *, '     link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
                 ! print *, ' '
                 ! print *, 'calling for geometry'
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
-                ! print *, 'link_geometry   ',trim(reverseKey(link%I(ii,li_geometry)))
+                !  print *, '     link_geometry   ',trim(reverseKey(link%I(ii,li_geometry)))
                 ! print *, ' '
                 ! print *, 'calling for barrels'
             link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
-                ! print *, 'link_barrels   ', link%I(ii,li_barrels) 
+                !  print *, '     link_barrels   ', link%I(ii,li_barrels) 
                 ! print *, ' ' 
                 ! print *, 'calling for culvertcode'
                 ! print *, ii, 'api_linkf_xsect_culvertCode ',api_linkf_culvertCode
             link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_culvertCode, .true.)
-                !print *, 'link_culvertCode  ', link%I(ii,li_culvertCode) 
+                ! print *, '     link_culvertCode  ', link%I(ii,li_culvertCode) 
                 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -666,20 +666,36 @@ contains
             !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
+                ! print *, ' '
+                ! print *, 'calling for Length'
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-                ! print *, 'link_Length            ',link%R(ii,lr_Length)
+                !  print *, '     link_Length            ',link%R(ii,lr_Length)
+                !  print *, ' '
+                !  print *, 'calling for BreadthScale'
             link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
-                ! print *, 'link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
+                !  print *, '     link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
+                !  print *, ' '
+                !  print *, 'calling for LeftSlope'
             link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
-                ! print *, 'link_LeftSlope          ', link%R(ii,lr_LeftSlope)
+                !  print *, '     link_LeftSlope          ', link%R(ii,lr_LeftSlope)
+                !  print *, ' '
+                !  print *, 'calling for RightSlope'
             link%R(ii,lr_RightSlope)         = interface_get_linkf_attribute(ii, api_linkf_right_slope,      .false.)
-                ! print *, 'link_RightSlope         ', link%R(ii,lr_RightSlope)
+                !  print *, '     link_RightSlope         ', link%R(ii,lr_RightSlope)
+                !  print *, ' '
+                !  print *, 'calling for Roughness' 
             link%R(ii,lr_Roughness)          = interface_get_linkf_attribute(ii, api_linkf_conduit_roughness,.false.)
-                ! print *, 'link_Roughness          ', link%R(ii,lr_Roughness)
+                !  print *, '     link_Roughness          ', link%R(ii,lr_Roughness)
+                !  print *, ' '
+                ! print *, 'calling for FullDepth'
             link%R(ii,lr_FullDepth)          = interface_get_linkf_attribute(ii, api_linkf_xsect_yFull,      .false.)
-                ! print *, 'link_FullDepth          ', link%R(ii,lr_FullDepth)
+                !  print *, '     link_FullDepth          ', link%R(ii,lr_FullDepth)
+                !  print *, ' '
+                !  print *, 'calling for FullArea'
             link%R(ii,lr_FullArea)           = interface_get_linkf_attribute(ii, api_linkf_xsect_aFull,      .false.)
-                ! print *, 'link_FullArea          ', link%R(ii,lr_FullArea)
+                !  print *, '     link_FullArea          ', link%R(ii,lr_FullArea)
+                !  print *, ' '
+                !  print *, 'calling for'
             link%R(ii,lr_FullHydRadius)      = interface_get_linkf_attribute(ii, api_linkf_xsect_rFull,      .false.)
                 ! print *, 'link_FullHydRadius     ', link%R(ii,lr_FullHydRadius)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
@@ -702,6 +718,8 @@ contains
                 ! print *, 'link_Kexit_MinorLoss    ', link%R(ii,lr_Kexit_MinorLoss)
             link%R(ii,lr_SeepRate)           = interface_get_linkf_attribute(ii, api_linkf_seepRate,         .false.)
                 ! print *, 'link_SeepRate           ', link%R(ii,lr_SeepRate)
+            link%R(ii,lr_ForceMain_Coef)     = interface_get_linkf_attribute(ii, api_linkf_forcemain_coef,    .false.)
+            ! print *, 'link_ForceMain_Coef           ', link%R(ii,lr_ForceMain_Coef)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -885,7 +903,12 @@ contains
             node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
             ! write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
             ! write(*,*)
-    
+
+            ! write(*,*) 'call api_nodef_StorageFevap == ', reverseKey_api(api_nodef_StorageFevap)
+            node%R(ii,nr_StorageFevap)      = interface_get_nodef_attribute(ii, api_nodef_StorageFevap)
+            ! write(*,*) '... nr_StorageFevap = ',node%R(ii,nr_StorageFevap)
+            ! write(*,*)
+
             !% --- ponded area
             if (setting%SWMMinput%AllowPonding) then
                 ! write(*,*) 'call api_nodef_PondedArea == ', reverseKey_api(api_nodef_PondedArea)
@@ -2072,11 +2095,23 @@ contains
             setting%Time%StartEpoch    = setting%SWMMinput%StartEpoch
             setting%Time%EndEpoch      = setting%SWMMinput%EndEpoch
             !setting%Time%Hydraulics%Dt = setting%SWMMinput%RouteStep -- do not use!
-            setting%Time%Hydrology%Dt  = setting%SWMMinput%WetStep
+            setting%Time%Hydrology%Dt  = setting%SWMMinput%Hydrology_WetStep
             ! HACK ??                  = setting%SWMMinput%DryStep
             ! HACK ??                  = setting%SWMMinput%TotalDuration
         else 
             !% use values from json file
+        end if
+
+        !% --- set the next time for updating climate if hydrology
+        !%     is not used
+        if ((.not. setting%Simulation%useHydrology)            &
+            .and.                                              &
+            (setting%Climate%useHydraulicsEvaporationTF)) then
+
+            setting%Climate%LastTimeUpdate = setting%Time%Now
+
+            setting%Climate%NextTimeUpdate = setting%Climate%LastTimeUpdate  &
+                + setting%Climate%HydraulicsOnlyIntervalHours * 3600.d0
         end if
 
         ! print *, setting%Time%EndEpoch
