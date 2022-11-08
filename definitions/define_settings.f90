@@ -1884,7 +1884,7 @@ contains
                 setting%Solver%PreissmannSlot%Method = StaticSlot
             else if (c == 'dynamicslot') then
                 setting%Solver%PreissmannSlot%Method = DynamicSlot
-            else if (c == 'dynamicslot_test') then
+            else if (c == 'dynamicslottest') then
                 setting%Solver%PreissmannSlot%Method = DynamicSlotTest
             else
                 write(*,"(A)") 'Error - json file - setting.Solver.PreissmannSlot%Method of ',trim(c)
