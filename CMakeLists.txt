@@ -245,6 +245,7 @@ check_python_dependencies(swmmtoolbox)
 
 # Tests defined in separate file: ctest/CMakeLists.txt
 if (testing_available)
+    enable_testing()
     message(STATUS "Making tests available")
     add_subdirectory(ctest)    
 endif()
