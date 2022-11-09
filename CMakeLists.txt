@@ -7,6 +7,7 @@ enable_language (Fortran)
 
 
 find_package (Python3 COMPONENTS Interpreter)
+
 set(testing_available ON)
 
 function(check_python_dependencies module)
@@ -136,7 +137,7 @@ $ export HDF5_DIR=path/to/hdf5/")
     FetchContent_Populate(hdf5)
     ExternalProject_Add(hdf5
     SOURCE_DIR ${hdf5_SOURCE_DIR}
-    CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran
+    CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran --without-zlib
     BINARY_DIR ${hdf5_BINARY_DIR}
     BUILD_COMMAND ${MAKE}
     COMMAND make install)
@@ -242,9 +243,8 @@ check_python_dependencies(tabulate)
 check_python_dependencies(h5py)
 check_python_dependencies(swmmtoolbox)
 
-#Tests defined in separate file: ctest/CMakeLists.txt
-# if (testing_available)
-#     message(STATUS "Making tests available")
-#     add_subdirectory(ctest)    
-#     enable_testing()
-# endif()
+# Tests defined in separate file: ctest/CMakeLists.txt
+if (testing_available)
+    message(STATUS "Making tests available")
+    add_subdirectory(ctest)    
+endif()

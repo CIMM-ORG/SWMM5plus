@@ -51,6 +51,7 @@ def convert_dset_to_csv(file_name,dset_name):
 tol = 5.0                   # tolerance for comparing between the norms
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
+unit             = 'SI'     # unit of original swmm-c input file. options 'CFS' or 'SI'
 #-----------------------------------------------------------------------------------
 
 # Getting current working directory and time when the script is ran so that we can create a new folder
@@ -70,14 +71,14 @@ if  recompile_swmmC or os.system('find swmm5_C'):
 
 if(len(sys.argv) < 2):
     print('no local path to input file provided')
-    exit()
+    exit(1)
 
 if(sys.argv[1] == '-h'):
     print("--------------USEFUL INFO FOR RUNNING SCRIPT---------------")
     print("The format for running this script is python comparison_script.py -i *local path to input file* -s *local path to json setting file* -n *num of processors* ")
     print("If no setting file given it will use the default settings of swmm5_plus ")
     print("If no processor amount given, default is 1 processor")
-    exit()
+    exit(1)
 
 has_output_path = False
 
@@ -102,18 +103,16 @@ if((len(sys.argv)%2) != 0):
 else:
     print("incorrect amount of arguments given")
     print("run python comparison_script.py -h for info on using the script")
-    exit()
+    exit(1)
 
 # allow for different find of output paths
 if has_output_path:
-    output_dir = os.path.join(output_path, inp_name+'_comparison')
-    output_dir_timestamped = os.path.join(output_dir, time_now)
-    print('printing_outtputdirs', output_dir, output_dir_timestamped)
+    output_dir = output_path+'/'+inp_name+"_comparison"
+    output_dir_timestamped = output_dir+'/'+time_now+'/'
 else:
     #setting the output directory
     output_dir = inp_name+"_comparison"
-    output_dir_timestamped = os.path.join(output_dir, time_now)
-
+    output_dir_timestamped = output_dir+'/'+time_now+'/'
 
 #creates new output_dir for the test_case and inside of it a timestamped version 
 os.system('mkdir '+ output_dir)
@@ -124,6 +123,8 @@ os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
 #inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
 out_path = output_dir_timestamped + inp_name +'.out'
 rpt_path = output_dir_timestamped + inp_name +'.rpt'
+
+
 #run the swmm5_C
 os.system('./swmm5_C '+inp_path+' '+rpt_path+' '+out_path)
 
@@ -140,10 +141,10 @@ else:
 # We have to loop because when swmm5_plus runs it also names the output with a timestamped folder so we don't know it before runtime
 for x in os.listdir(output_dir_timestamped):
     if(str.rfind(x,'.') == -1):
-        swmm5_plus_dir = output_dir_timestamped+'/' + x
+        swmm5_plus_dir = output_dir_timestamped+'' + x
 
 x = os.listdir(swmm5_plus_dir)[0]
-swmm5_plus_dir = os.path.join(swmm5_plus_dir,x)
+swmm5_plus_dir = swmm5_plus_dir + '/' + x
     
      
 # now we have the location of the h5 file, and the list of all the datasets in the h5 file
@@ -152,6 +153,20 @@ all_dset_names=h5_file.keys()
 
 # this will be used to keep a running list of which links and nodes are now within given tolerances
 list_of_errors =[]
+
+if unit == 'CFS':
+    Yf = 3.28084
+    Qf = 35.3147
+    Yunit = '(ft)'
+    Qunit = '(cfs)'
+elif unit == 'SI':
+    Yf = 1.
+    Qf = 1.
+    Yunit = '(m)'
+    Qunit = '(cms)'
+else:
+    print('Worng unit type seletced. Only allowables are CFS and SI')
+    
 
 # Loop through all of the data set names 
 for x in all_dset_names:
@@ -170,9 +185,9 @@ for x in all_dset_names:
         # ... extract SWMM5+ data
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
         # extract the flowrates from the swmm5_plus .h5 file
-        swmmF_link_Q = z[1:,3]
+        swmmF_link_Q = z[1:,3] * Qf
         # extract the depths from the swmm5_plus .h5 file
-        swmmF_link_Y = z[1:,2]
+        swmmF_link_Y = z[1:,2] * Yf
         # extract the timestamp
         time = z[1:,0]
         array_len_Q = len(swmmC_link_Q)
@@ -186,7 +201,7 @@ for x in all_dset_names:
         print('-------------------------------------------------------------------------------')
         print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
         if print_timeseries:
-            link_col_headers = ["Time (hrs.)","SWMM-C Q (cms)", "SWMM5+ Q (cms)", "SWMM-C Y (m)", "SWMM5+ Y (m)"]
+            link_col_headers = ["Time (hrs.)","SWMM-C Q "+Qunit, "SWMM5+ Q "+Qunit, "SWMM-C Y "+Yunit, "SWMM5+ Y "+Yunit]
             link_merged_array = np.array([time[:array_len_Q],swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
             link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
             print(' ') 
@@ -229,8 +244,12 @@ for x in all_dset_names:
             list_of_errors.append('link: '+link_name+" depths are not within given Linf range")
 
     # Check if the data set is a node
-    if(x[0:10]=='node_face_'):
-
+    if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
+        
+        if (x[0:10]=='node_face_'):
+            is_nJ2 = True
+        else:
+            is_nJ2 = False
         # ... store node name
         node_name = x[10::]
 
@@ -241,7 +260,10 @@ for x in all_dset_names:
         # ... extract swmm5plus node data
         # extract the flowrates from the swmm5_plus .h5 file
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-        swmmF_node_H = (z[1:,5] + z[1:,6])/2. # averaging the u/s and d/s peizometric heads
+        if is_nJ2:  
+            swmmF_node_H = ((z[1:,5] + z[1:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        else:
+            swmmF_node_H = (z[1:,5]) * Yf # take the JM peizometric head
         # extract the timestamp
         time = z[1:,0]
 
@@ -254,7 +276,7 @@ for x in all_dset_names:
         print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
         # print node depth data
         if print_timeseries:
-            node_col_headers = ["Time (hrs.)", "SWMMC H (m)", "SWMM5+ H (m)"]
+            node_col_headers = ["Time (hrs.)", "SWMMC H "+Yunit, "SWMM5+ H "+Yunit]
             node_merged_array = np.array([time[:array_len_H],swmmC_node_H, swmmF_node_H[:array_len_H]]).T
             node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
             print(' ')
@@ -285,10 +307,21 @@ for x in all_dset_names:
 print(' ')
 if(len(list_of_errors) == 0):
     print("no links or nodes are out of the L0, L1, and Linf norm range for given tolerance", tol)
+else:
+    print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance", tol)
+    print(list_of_errors)
+
+print(' ')
+print("-------------------------------End of comparison-------------------------------")
+print(' ')
+print(' ')
+
+if(len(list_of_errors) == 0):
+    print("no links or nodes are out of the L0, L1, and Linf norm range for given tolerance", tol)
     sys.stdout.write("no links or nodes are out of the L0, L1, and Linf norm range for given tolerance {tol}")
-    sys.exit(0)
+    exit(0)
 else:
     print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance {tol}")
     print(list_of_errors)
     sys.stderr.write(list_of_errors)
-    sys.exit(1)
+    exit(1)
