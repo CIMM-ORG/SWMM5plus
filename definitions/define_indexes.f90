@@ -386,6 +386,7 @@ module define_indexes
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
         enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Preissmann_Number          !% Preissmann number
+        enumerator :: er_Preissmann_Number_N0       !% preissmann number at previous time step
         enumerator :: er_Preissmann_Number_initial  !% Initial Preissmann number before surcharge
         !enumerator :: er_Pressure_Head              !% Pressure head 
         enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
@@ -397,10 +398,11 @@ module define_indexes
         !enumerator :: er_SectionFactor_Max          !% maximum value of section factor (for S0 = 0)
         enumerator :: er_SlotWidth                  !% slot width
         enumerator :: er_SlotDepth                  !% slot depth
+        enumerator :: er_SlotDepth_N0
         enumerator :: er_SlotArea                   !% slot area
         enumerator :: er_SlotHydRadius              !% slot hydraulic radius 
         enumerator :: er_SlotVolume                 !% slot volume 
-        enumerator :: er_SlotVolumeOld              !% old slot volume      
+        enumerator :: er_SlotVolume_N0              !% old slot volume      
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_ManningsN      !% roughness used for computing Chezzy-Manning on small volume
