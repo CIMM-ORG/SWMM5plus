@@ -798,7 +798,21 @@ contains
             !%     note that Implied Storage has Fevap = 0.0, so this has no effect
             npack    => npack_elemP  (ep_JM)
             thisP    => elemP(1:npack,ep_JM)
-            Qlateral(thisP) = Qlateral(thisP) - EvapRate * Fevap(thisP) * BreadthMax(thisP) * Length(thisP)
+            where (elemR(thisP,er_Depth) > setting%ZeroValue%Depth)
+                Qlateral(thisP) = Qlateral(thisP) - EvapRate * Fevap(thisP) * BreadthMax(thisP) * Length(thisP)
+            endwhere
+
+            ! BRHWORKING NEED EXFILTRATION FOR STORAGE 
+            ! routing.c  calls node_getLosses
+            ! which calls node.c/node_getLosses
+            ! which calls node.c/storage_getLosses
+            ! which compute exfilRate as a local variable -- which is what we need
+
+            ! IF EVERYTHING WE NEED IS STORED, THEN WE SHOULD BE ABLE TO 
+            ! CALL exfil_getLoss() from an api.
+            ! Must cycle through all the storage nodes.
+
+
         else
             !% --- evaporation has no effect
         end if

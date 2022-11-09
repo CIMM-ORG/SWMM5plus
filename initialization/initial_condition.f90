@@ -4547,8 +4547,6 @@ contains
                         end if
                     end if
 
-
-
                 else
                     print *, "CODE ERROR: unexpected else."
                     print *, "Only nodes with extInflow or dwfInflow can have inflow BC"
