@@ -13,7 +13,7 @@
             "SmallDepthMultiplier" : 1.0
         },
         "Head" : {
-            "ApplyYN" : true,
+            "ApplyYN" : false,
             "Approach" : "vshape_surcharge_only",
             "Coef" : 1.0,
             "FullDepthMultiplier" : 0.5
@@ -24,7 +24,7 @@
         "AdustLinkLengthForJunctionBranchYN" : false,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 0.072
+        "NominalElemLength" : 0.036
     },
     "Junction" : {
         "FunStorageN" : 10,
@@ -87,7 +87,7 @@
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
+        "MomentumSourceMethod" : "T20",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
@@ -96,10 +96,10 @@
             "useDynamicManningsN" : false
         },
         "PreissmannSlot" : {
-            "Method" : "DynamicSlot",
+            "Method" : "DynamicSlotTest",
             "TargetCelerity" : 1000.00,
             "Alpha" : 3.0,
-            "DecayRate" : 10.0
+            "DecayRate" : 0.05
         }
     },
     "TestCase" : {
@@ -119,9 +119,9 @@
     },
     "VariableDT" : {
         "ApplyYN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.45,
-        "CFL_lo_max" : 0.40,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4,
         "increaseFactor" : 1.2,
         "NstepsForCheck" : 10
     }

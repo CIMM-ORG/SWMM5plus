@@ -4221,9 +4221,10 @@ contains
         elemR(1:size(elemR,1)-1,er_dSlotArea)             = zeroR
         elemR(1:size(elemR,1)-1,er_dSlotDepth)            = zeroR
         elemR(1:size(elemR,1)-1,er_dSlotVolume)           = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotVolumeOld)         = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotVolume_N0)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
         elemR(1:size(elemR,1)-1,er_Surcharge_Time)        = zeroR      
+        elemR(1:size(elemR,1)-1,er_SlotDepth_N0)          = elemR(1:size(elemR,1)-1,er_SlotDepth)    
         elemR(1:size(elemR,1)-1,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
                                                               * elemR(1:size(elemR,1)-1,er_FullEll)))
         !% only calculate slots for ETM time-march
@@ -4241,10 +4242,10 @@ contains
                     elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
                 end where
 
-            case (DynamicSlot)
+            case (DynamicSlot, DynamicSlotTest)
 
                 elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_FullEll)))
-
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number_N0)  = elemR(1:size(elemR,1)-1,er_Preissmann_Number)
                 where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)

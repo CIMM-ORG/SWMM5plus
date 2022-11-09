@@ -78,7 +78,7 @@
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 115.0,
-            "TimeInterval" : 0.1,
+            "TimeInterval" : 0.01,
             "TimeUnits" : "Seconds"
         }
     },
@@ -95,7 +95,7 @@
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T00",
+        "MomentumSourceMethod" : "T20",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
@@ -105,9 +105,9 @@
         },
         "PreissmannSlot" : {
             "Method" : "DynamicSlot",
-            "TargetCelerity" : 100.0,
-            "Alpha" : 5.00,
-            "DecayRate" : 10.0
+            "TargetCelerity" : 1000.0,
+            "Alpha" : 3.00,
+            "DecayRate" : 0.02
         }
     },    
     "TestCase" : {

@@ -74,6 +74,11 @@ DRY_ONLY         NO
 1                CIRCULAR     0.094            0          0          0          1                                        
 2                CIRCULAR     0.5              0          0          0          1  
 
+[LOSSES]
+;;Link           Kentry     Kexit      Kavg       Flap Gate  Seepage
+;;-------------- ---------- ---------- ---------- ---------- ----------
+1                0          0          0         NO         0
+
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
