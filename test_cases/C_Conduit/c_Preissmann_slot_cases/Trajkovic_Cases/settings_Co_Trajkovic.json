@@ -77,8 +77,8 @@
             "useSWMMinpYN" :false,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
-            "StartTime" : 115.0,
-            "TimeInterval" : 0.01,
+            "StartTime" : 0.0,
+            "TimeInterval" : 0.05,
             "TimeUnits" : "Seconds"
         }
     },

@@ -501,7 +501,7 @@ module define_settings
         logical              :: duplicate_input_file = .true.  !% NOT A USER SETTING, should always be true
         !% standard files and folders
         character(len=256)   :: base_folder = ""
-        character(len=256)   :: library_folder = "build"  !% DO NOT CHANGE THIS FROM "build"
+        character(len=256)   :: library_folder = ""  !% DO NOT CHANGE THIS FROM "build"
         character(len=256)   :: output_folder= "" !
         character(len=256)   :: output_timestamp_subfolder = ""
         character(len=256)   :: output_temp_subfolder = "temp"
