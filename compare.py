@@ -48,7 +48,7 @@ def convert_dset_to_csv(file_name,dset_name):
 
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
-tol = 5.0                   # tolerance for comparing between the norms
+tolerance = 10.0            # % tolerance for comparing between the norms
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
 unit             = 'SI'     # unit of original swmm-c input file. options 'CFS' or 'SI'
@@ -167,6 +167,7 @@ elif unit == 'SI':
 else:
     print('Worng unit type seletced. Only allowables are CFS and SI')
     
+tol = tolerance / 100.
 
 # Loop through all of the data set names 
 for x in all_dset_names:
@@ -194,9 +195,8 @@ for x in all_dset_names:
         array_len_Y = len(swmmC_link_Y)
         # print link flowrate and depth data
 
-
-        rsme_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
-        rsme_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
+        rmse_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
+        rmse_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
         print(' ')
         print('-------------------------------------------------------------------------------')
         print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
@@ -207,8 +207,8 @@ for x in all_dset_names:
             print(' ') 
             print(link_table)
             print(' ')
-        print('Flowrate   RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_link_Q)
-        print('Flow depth RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_link_Y)
+        print('Flowrate   RMSE SWMM-C vs SWMM5+ :',"%.3f" %rmse_link_Q)
+        print('Flow depth RMSE SWMM-C vs SWMM5+ :',"%.3f" %rmse_link_Y)
         print('-------------------------------------------------------------------------------')
 
         # ... Calculate the norms
@@ -229,19 +229,13 @@ for x in all_dset_names:
         swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y[:array_len_Y])
         swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y[:array_len_Y],inf)
 
-        #check if the L1, L2, Linf norms are within a given range and if not append to list of errors
-        if(abs(swmmC_link_Q_l1 - swmmF_link_Q_l1) > tol):
-            list_of_errors.append('link: '+link_name+" flowrates are not within given L1 range")
-        if(abs(swmmC_link_Q_l2 - swmmF_link_Q_l2) > tol):
-            list_of_errors.append('link: '+link_name+" flowrates are not within given L2 range")
-        if(abs(swmmC_link_Q_linf - swmmF_link_Q_linf) > tol):
-            list_of_errors.append('link: '+link_name+" flowrates are not within given Linf range")
-        if(abs(swmmC_link_Y_l1 - swmmF_link_Y_l1) > tol):
-            list_of_errors.append('link: '+link_name+" depths are not within given L1 range")
-        if(abs(swmmC_link_Y_l2 - swmmF_link_Y_l2) > tol):
-            list_of_errors.append('link: '+link_name+" depths are not within given L2 range")
-        if(abs(swmmC_link_Y_linf - swmmF_link_Y_linf) > tol):
-            list_of_errors.append('link: '+link_name+" depths are not within given Linf range")
+        # ... Find the normalized errors for fail detection
+        norm_rmse_link_Q = np.linalg.norm(1 - abs(swmmF_link_Q[:array_len_Q]/swmmC_link_Q)) / np.sqrt(len(swmmC_link_Q))
+
+        # Fail check
+        if(norm_rmse_link_Q > tol):
+            print('Failed link',link_name,'. Normalized rmse Q = ',norm_rmse_link_Q)
+            list_of_errors.append('link: '+link_name+" flowrates are not within given error tolerance range")
 
     # Check if the data set is a node
     if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
@@ -268,9 +262,8 @@ for x in all_dset_names:
         time = z[1:,0]
 
         array_len_H = len(swmmC_node_H)
-        
 
-        rsme_node_Y = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
+        rmse_node_H = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
         print(' ')
         print('-------------------------------------------------------------------------------')
         print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
@@ -282,7 +275,7 @@ for x in all_dset_names:
             print(' ')
             print(node_table)
             print(' ')
-        print('Head RMSE SWMM-C vs SWMM5+ :',"%.3f" %rsme_node_Y)
+        print('Head RMSE SWMM-C vs SWMM5+ :',"%.3f" %rmse_node_H)
         print('-------------------------------------------------------------------------------')
 
         # calculate L1,L2,Linf norms for the swmm_c output
@@ -295,14 +288,13 @@ for x in all_dset_names:
         swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H[:array_len_H])
         swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H[:array_len_H],inf)
 
-        # check if the L1, L2, Linf norms are within a given range and if not append to list of errors
-        if(abs(swmmC_node_Y_l1 - swmmF_node_Y_l1) > tol):
-            list_of_errors.append('node: '+node_name+" depths are not within given L1 range")
-        if(abs(swmmC_node_Y_l2 - swmmF_node_Y_l2) > tol):
-            list_of_errors.append('node: '+node_name+" depths are not within given L2 range")
-        if(abs(swmmC_node_Y_linf - swmmF_node_Y_linf) > tol):
-            list_of_errors.append('node: '+node_name+" depths are not within given Linf range")
-        
+        # ... Find the normalized errors for fail detection
+        norm_rmse_node_H = np.linalg.norm(1 - abs(swmmF_node_H[:array_len_H] / swmmC_node_H)) / np.sqrt(len(swmmC_node_H))
+
+        # Fail check
+        if(norm_rmse_node_H > tol):
+            print('Failed node',node_name,'. Normalized rmse Head = ',norm_rmse_node_H)
+            list_of_errors.append('node: '+node_name+" head errors are not within given tolerance range")  
 
 print(' ')
 if(len(list_of_errors) == 0):
