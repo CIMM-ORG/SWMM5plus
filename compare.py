@@ -186,11 +186,11 @@ for x in all_dset_names:
         # ... extract SWMM5+ data
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
         # extract the flowrates from the swmm5_plus .h5 file
-        swmmF_link_Q = z[1:,3] * Qf
+        swmmF_link_Q = z[:,3] * Qf
         # extract the depths from the swmm5_plus .h5 file
-        swmmF_link_Y = z[1:,2] * Yf
+        swmmF_link_Y = z[:,2] * Yf
         # extract the timestamp
-        time = z[1:,0]
+        time = z[:,0]
         array_len_Q = len(swmmC_link_Q)
         array_len_Y = len(swmmC_link_Y)
         # print link flowrate and depth data
@@ -255,11 +255,11 @@ for x in all_dset_names:
         # extract the flowrates from the swmm5_plus .h5 file
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
         if is_nJ2:  
-            swmmF_node_H = ((z[1:,5] + z[1:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+            swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
         else:
-            swmmF_node_H = (z[1:,5]) * Yf # take the JM peizometric head
+            swmmF_node_H = (z[:,5]) * Yf # take the JM peizometric head
         # extract the timestamp
-        time = z[1:,0]
+        time = z[:,0]
 
         array_len_H = len(swmmC_node_H)
 

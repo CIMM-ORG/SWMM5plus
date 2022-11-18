@@ -14,9 +14,9 @@ SKIP_STEADY_STATE    NO
 START_DATE           06/14/2021
 START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
-REPORT_START_TIME    00:00:00
+REPORT_START_TIME    01:00:00
 END_DATE             06/14/2021
-END_TIME             02:00:00
+END_TIME             03:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -48,14 +48,14 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-N1                13.129     0          1          0          0         
-N2                8.7523     0          1          0          0         
-N3                4.3762     0          1          0          0         
+N1                13.129     0          2          0          0         
+N2                8.7523     0          2          0          0         
+N3                4.3762     0          2          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-O4                0          FREE                       YES                       
+O4                0         FIXED      1.0                  YES                         
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -67,9 +67,9 @@ C3                N3                O4                1000       0.03       0   
 [XSECTIONS]
 ;;Link           Shape        Diameter           Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1                CIRCULAR    2                   0           0          0           1                   
-C2                CIRCULAR    2                   0           0          0           1                   
-C3                CIRCULAR    2                   0           0          0           1        
+C1                CIRCULAR    4                   0           0          0           1                   
+C2                CIRCULAR    4                   0           0          0           1                   
+C3                CIRCULAR    4                   0           0          0           1        
 
 [LOSSES]
 ;; Conduit      Kentry      Kexit       Kavg        Flap       Seepage

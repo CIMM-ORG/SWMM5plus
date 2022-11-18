@@ -14,9 +14,9 @@ SKIP_STEADY_STATE    NO
 START_DATE           06/14/2021
 START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
-REPORT_START_TIME    00:00:00
+REPORT_START_TIME    01:00:00
 END_DATE             06/14/2021
-END_TIME             02:00:00
+END_TIME             03:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -55,7 +55,7 @@ N3                4.3762     0          1          0          0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-O4                0         FREE                         YES                       
+O4                0         FIXED      1.0                  YES                          
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
