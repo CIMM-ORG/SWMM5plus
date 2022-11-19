@@ -35,4 +35,5 @@ swmm5_output
 build/
 debug/
 dwflow/
+ctest/temp
 NCIMM-White-Box-Testing/
