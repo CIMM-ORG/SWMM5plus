@@ -1,0 +1,155 @@
+[TITLE]
+;;Project Title/Notes
+        EXTRAN USER''S MANUAL EXAMPLE PROBLEM 19
+        J.E. BALL SAMPLE DRAINAGE NETWORK # 2
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           01/01/1988
+START_TIME           00:00:00
+REPORT_START_DATE    01/01/1988
+REPORT_START_TIME    00:00:00
+END_DATE             01/01/1988
+END_TIME             05:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:16:40
+WET_STEP             00:15:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:10 
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         0
+MAX_TRIALS           0
+HEAD_TOLERANCE       0
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+; *    JUNCTION DATA *    JUN   GRELEV   Z  QINST  Y
+1                10.00      15.00      .00        0          0         
+2                8.08       16.92      .00        0          0         
+3                6.25       18.75      .00        0          0         
+4                3.55       21.45      .00        0          0         
+5                19.52      5.48       .00        0          0         
+6                16.26      8.74       .00        0          0         
+7                12.45      12.55      .00        0          0         
+8                3.31       21.69      .00        0          0         
+9                3.19       21.81      .00        0          0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+10               -0.376     FREE                        NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+; *   CONDUIT DATA *   NCOND NJ1  NJ2   QO  NKLASS AFULL DEEP WIDE LEN   ZP1  ZP2  ROUGH STHETA SPHI
+1                1                2                548.6      0.015      0.0        0.0        0.025      0         
+2                2                3                632.5      0.015      0.0        0.0        0.025      0         
+3                3                4                1524.0     0.015      0.0        0.0        0.05       0         
+4                4                8                152.4      0.015      0.0        0.0        0.025      0         
+5                5                6                1554.5     0.015      0.0        0.0        0.025      0         
+6                6                7                1066.8     0.015      0.0        0.0        0.05       0         
+7                7                8                1524.0     0.015      0.0        0.0        0.1        0         
+8                8                9                91.4       0.015      0.0        0.0        0.1        0         
+9                9                10               1371.6     0.015      0.0        0.0        0.1        0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+1                CIRCULAR     1.219            0.0        0.0        0.0        1                    
+2                CIRCULAR     1.219            0.0        0.0        0.0        1                    
+3                CIRCULAR     1.524            0.0        0.0        0.0        1                    
+4                CIRCULAR     1.829            0.0        0.0        0.0        1                    
+5                CIRCULAR     1.372            0.0        0.0        0.0        1                    
+6                CIRCULAR     1.372            0.0        0.0        0.0        1                    
+7                CIRCULAR     1.676            0.0        0.0        0.0        1                    
+8                CIRCULAR     2.286            0.0        0.0        0.0        1                    
+9                CIRCULAR     2.286            0.0        0.0        0.0        1                    
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+1                FLOW             INFLOW@1         FLOW     1.0      1.0              
+3                FLOW             INFLOW@3         FLOW     1.0      1.0              
+5                FLOW             INFLOW@5         FLOW     1.0      1.0              
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+;Name             Date       Time       Value
+INFLOW@1         01/01/1988 00:00      0.02500   
+INFLOW@1                    00:30      1.00000   
+INFLOW@1                    03:00      1.00000   
+INFLOW@1                    04:00      0.02500   
+INFLOW@1                    06:00      0.02500   
+;
+INFLOW@3         01/01/1988 00:00      0.02500   
+INFLOW@3                    00:30      0.50000   
+INFLOW@3                    03:00      0.50000   
+INFLOW@3                    04:00      0.02500   
+INFLOW@3                    06:00      0.02500   
+;
+INFLOW@5         01/01/1988 00:00      0.02500   
+INFLOW@5                    00:30      1.25000   
+INFLOW@5                    03:00      1.25000   
+INFLOW@5                    04:00      0.02500   
+INFLOW@5                    06:00      0.02500   
+
+[REPORT]
+;;Reporting Options
+INPUT      NO
+CONTROLS   NO
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 5.500 5.500 104.500 104.500
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+1                10.000             100.000           
+2                20.000             100.000           
+3                30.000             30.000            
+4                30.000             10.000            
+5                100.000            10.000            
+6                40.000             10.000            
+7                40.000             20.000            
+8                40.000             30.000            
+9                40.000             40.000            
+10               50.000             50.000            
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

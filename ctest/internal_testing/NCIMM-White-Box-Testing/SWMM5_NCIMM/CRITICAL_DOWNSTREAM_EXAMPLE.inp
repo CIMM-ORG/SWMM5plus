@@ -1,0 +1,449 @@
+[TITLE]
+;;Project Title/Notes
+' Extran with surcharge in 2 foot circular conduits' ;' SWMM CRADA Example 1 ' ;
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CFS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           02/22/2002
+START_TIME           00:00:00
+REPORT_START_DATE    02/22/2002
+REPORT_START_TIME    00:00:00
+END_DATE             02/22/2002
+END_TIME             04:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:00:01
+WET_STEP             00:15:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:01 
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  SLOPE
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         12.56
+MAX_TRIALS           0
+HEAD_TOLERANCE       0
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+; *    JUNCTION   GRELEV   Z      QINST  Y
+Inflow           10.00      10         .00        .00        0         
+mid1             10.00      10.00      .00        .00        0         
+mid2             10.00      10.00      .00        .00        0         
+mid3             10.00      10.00      .00        .00        0         
+mid4             10.00      10.00      .00        .00        0         
+mid5             10.00      10.00      .00        .00        0         
+mid6             10.00      10.00      .00        .00        0         
+mid7             10.00      10.00      .00        .00        0         
+mid8             10.00      10.00      .00        .00        0         
+mid9             10.00      10.00      .00        .00        0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+Outlet           10         FREE                        NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+pipe1            Inflow           mid1             1000       0.011      0          3          0          0         
+pipe2            mid1             mid2             1000       0.011      0          3          0          0         
+pipe3            mid2             mid3             1000       0.011      0          3          0          0         
+pipe4            mid3             mid4             1000       0.011      0          3          0          0         
+pipe5            mid4             mid5             1000       0.011      0          3          0          0         
+pipe6            mid5             mid6             1000       0.011      0          3          0          0         
+pipe7            mid6             mid7             1000       0.011      0          3          0          0         
+pipe8            mid7             mid8             1000       0.011      0          3          0          0         
+pipe9            mid8             mid9             1000       0.011      0          3          0          0         
+outlet           mid9             Outlet           1000       0.011      0          3          0          0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+pipe1            CIRCULAR     2                0          0          0          1                    
+pipe2            CIRCULAR     2                0          0          0          1                    
+pipe3            CIRCULAR     2                0          0          0          1                    
+pipe4            CIRCULAR     2                0          0          0          1                    
+pipe5            CIRCULAR     2                0          0          0          1                    
+pipe6            CIRCULAR     2                0          0          0          1                    
+pipe7            CIRCULAR     2                0          0          0          1                    
+pipe8            CIRCULAR     2                0          0          0          1                    
+pipe9            CIRCULAR     2                0          0          0          1                    
+outlet           CIRCULAR     2                0          0          0          1                    
+
+[CONTROLS]
+;===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+Inflow           FLOW             1                FLOW     1.0      1.0              
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+;-------------------------------------------------
+1                           0:00       0.00000   
+1                           0:15       25        
+1                           12:00      25        
+
+[REPORT]
+;;Reporting Options
+INPUT      NO
+CONTROLS   NO
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 35.500 35.500 134.500 134.500
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+Inflow           40.000             40.000            
+mid1             50.000             50.000            
+mid2             60.000             60.000            
+mid3             70.000             70.000            
+mid4             80.000             80.000            
+mid5             90.000             90.000            
+mid6             100.000            100.000           
+mid7             110.000            110.000           
+mid8             120.000            120.000           
+mid9             130.000            130.000           
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

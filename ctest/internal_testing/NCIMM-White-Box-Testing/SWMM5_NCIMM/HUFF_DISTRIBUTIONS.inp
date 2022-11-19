@@ -1,0 +1,321 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CFS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           01/01/2002
+START_TIME           00:00:00
+REPORT_START_DATE    01/01/2002
+REPORT_START_TIME    00:00:00
+END_DATE             01/02/2002
+END_TIME             12:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             5.000000
+REPORT_STEP          00:05:00
+WET_STEP             01:00:05
+DRY_STEP             00:01:00
+ROUTING_STEP         0:01:00 
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     1
+MIN_SURFAREA         12.557
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.005
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[FILES]
+;;Interfacing Files
+SAVE Outflows/Calibration "Huff.txt"
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+TIMESERIES       HourlyEvaporation
+DRY_ONLY         NO
+
+[RAINGAGES]
+;;Name           Format    Interval SCF      Source    
+;;-------------- --------- ------ ------ ----------
+HUFF_1ST_QUARTER CUMULATIVE 1.200000 1.000000 TIMESERIES Huff_1st_Quarter_24_Hours
+HUFF_2ND_QUARTER CUMULATIVE 1.200000 1.000000 TIMESERIES Huff_2nd_Quarter_24_Hours
+HUFF_3RD_QUARTER CUMULATIVE 1.200000 1.000000 TIMESERIES Huff_3rd_Quarter_24_Hours
+HUFF_4TH_QUARTER CUMULATIVE 1.200000 1.000000 TIMESERIES Huff_4th_Quarter_24_Hours
+
+[SUBCATCHMENTS]
+;;Name           Rain Gage        Outlet           Area     %Imperv  Width    %Slope   CurbLen  SnowPack        
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- -------- ----------------
+HUFF_1ST         HUFF_1ST_QUARTER OFALL-10         0.131210 25.000000 500.000000 0.100000 0.000000                 
+HUFF_2           HUFF_2ND_QUARTER OFALL-10         0.112399 25.000000 500.000000 0.100000 0.000000                 
+HUFF_3RD         HUFF_3RD_QUARTER OFALL-10         0.132377 25.000000 500.000000 0.100000 0.000000                 
+HUFF_4TH         HUFF_4TH_QUARTER OFALL-10         0.074351 25.000000 500.000000 0.100000 0.000000                 
+
+[SUBAREAS]
+;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     PctZero    RouteTo    PctRouted 
+;;-------------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+HUFF_1ST         0.012000   0.100000   0.050000   0.200000   25.000000  OUTLET    
+HUFF_2           0.012000   0.100000   0.050000   0.200000   25.000000  OUTLET    
+HUFF_3RD         0.012000   0.100000   0.050000   0.200000   25.000000  OUTLET    
+HUFF_4TH         0.012000   0.100000   0.050000   0.200000   25.000000  OUTLET    
+
+[INFILTRATION]
+;;Subcatchment   MaxRate    MinRate    Decay      DryTime    MaxInfil  
+;;-------------- ---------- ---------- ---------- ---------- ----------
+HUFF_1ST         3.000000   0.100000   0.050000   0.001000   0.000000  
+HUFF_2           3.000000   0.100000   0.050000   0.001000   0.000000  
+HUFF_3RD         3.000000   0.100000   0.050000   0.001000   0.000000  
+HUFF_4TH         3.000000   0.100000   0.050000   0.001000   0.000000  
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+; New Outfall
+OFALL-10         0.000000   FREE                        NO                       
+
+[CONTROLS]
+
+
+
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+HUFF_1ST_QUARTER_24_HOURS            0:00       0.000000  
+HUFF_1ST_QUARTER_24_HOURS            1:12       0.063000  
+HUFF_1ST_QUARTER_24_HOURS            2:24       0.178000  
+HUFF_1ST_QUARTER_24_HOURS            3:36       0.333000  
+HUFF_1ST_QUARTER_24_HOURS            4:48       0.500000  
+HUFF_1ST_QUARTER_24_HOURS            6:00       0.620000  
+HUFF_1ST_QUARTER_24_HOURS            7:12       0.705000  
+HUFF_1ST_QUARTER_24_HOURS            8:24       0.760000  
+HUFF_1ST_QUARTER_24_HOURS            9:36       0.798000  
+HUFF_1ST_QUARTER_24_HOURS            10:48      0.830000  
+HUFF_1ST_QUARTER_24_HOURS            12:00      0.855000  
+HUFF_1ST_QUARTER_24_HOURS            13:12      0.880000  
+HUFF_1ST_QUARTER_24_HOURS            14:24      0.898000  
+HUFF_1ST_QUARTER_24_HOURS            15:36      0.915000  
+HUFF_1ST_QUARTER_24_HOURS            16:48      0.930000  
+HUFF_1ST_QUARTER_24_HOURS            18:00      0.944000  
+HUFF_1ST_QUARTER_24_HOURS            19:12      0.958000  
+HUFF_1ST_QUARTER_24_HOURS            20:24      0.971000  
+HUFF_1ST_QUARTER_24_HOURS            21:36      0.983000  
+HUFF_1ST_QUARTER_24_HOURS            22:48      0.994000  
+HUFF_1ST_QUARTER_24_HOURS            24:00      1.000000  
+;
+HUFF_2ND_QUARTER_24_HOURS            0:00       0.000000  
+HUFF_2ND_QUARTER_24_HOURS            1:12       0.015000  
+HUFF_2ND_QUARTER_24_HOURS            2:24       0.031000  
+HUFF_2ND_QUARTER_24_HOURS            3:36       0.070000  
+HUFF_2ND_QUARTER_24_HOURS            4:48       0.125000  
+HUFF_2ND_QUARTER_24_HOURS            6:00       0.208000  
+HUFF_2ND_QUARTER_24_HOURS            7:12       0.305000  
+HUFF_2ND_QUARTER_24_HOURS            8:24       0.420000  
+HUFF_2ND_QUARTER_24_HOURS            9:36       0.525000  
+HUFF_2ND_QUARTER_24_HOURS            10:48      0.630000  
+HUFF_2ND_QUARTER_24_HOURS            12:00      0.725000  
+HUFF_2ND_QUARTER_24_HOURS            13:12      0.805000  
+HUFF_2ND_QUARTER_24_HOURS            14:24      0.860000  
+HUFF_2ND_QUARTER_24_HOURS            15:36      0.900000  
+HUFF_2ND_QUARTER_24_HOURS            16:48      0.930000  
+HUFF_2ND_QUARTER_24_HOURS            18:00      0.948000  
+HUFF_2ND_QUARTER_24_HOURS            19:12      0.962000  
+HUFF_2ND_QUARTER_24_HOURS            20:24      0.974000  
+HUFF_2ND_QUARTER_24_HOURS            21:36      0.985000  
+HUFF_2ND_QUARTER_24_HOURS            22:48      0.993000  
+HUFF_2ND_QUARTER_24_HOURS            24:00      1.000000  
+;
+HUFF_3RD_QUARTER_24_HOURS            0:00       0.000000  
+HUFF_3RD_QUARTER_24_HOURS            1:12       0.020000  
+HUFF_3RD_QUARTER_24_HOURS            2:24       0.040000  
+HUFF_3RD_QUARTER_24_HOURS            3:36       0.072000  
+HUFF_3RD_QUARTER_24_HOURS            4:48       0.100000  
+HUFF_3RD_QUARTER_24_HOURS            6:00       0.122000  
+HUFF_3RD_QUARTER_24_HOURS            7:12       0.140000  
+HUFF_3RD_QUARTER_24_HOURS            8:24       0.155000  
+HUFF_3RD_QUARTER_24_HOURS            9:36       0.180000  
+HUFF_3RD_QUARTER_24_HOURS            10:48      0.215000  
+HUFF_3RD_QUARTER_24_HOURS            12:00      0.280000  
+HUFF_3RD_QUARTER_24_HOURS            13:12      0.395000  
+HUFF_3RD_QUARTER_24_HOURS            14:24      0.535000  
+HUFF_3RD_QUARTER_24_HOURS            15:36      0.690000  
+HUFF_3RD_QUARTER_24_HOURS            16:48      0.790000  
+HUFF_3RD_QUARTER_24_HOURS            18:00      0.875000  
+HUFF_3RD_QUARTER_24_HOURS            19:12      0.935000  
+HUFF_3RD_QUARTER_24_HOURS            20:24      0.965000  
+HUFF_3RD_QUARTER_24_HOURS            21:36      0.985000  
+HUFF_3RD_QUARTER_24_HOURS            22:48      0.995000  
+HUFF_3RD_QUARTER_24_HOURS            24:00      1.000000  
+;
+HUFF_4TH_QUARTER_24_HOURS            0:00       0.000000  
+HUFF_4TH_QUARTER_24_HOURS            1:12       0.020000  
+HUFF_4TH_QUARTER_24_HOURS            2:24       0.040000  
+HUFF_4TH_QUARTER_24_HOURS            3:36       0.055000  
+HUFF_4TH_QUARTER_24_HOURS            4:48       0.070000  
+HUFF_4TH_QUARTER_24_HOURS            6:00       0.085000  
+HUFF_4TH_QUARTER_24_HOURS            7:12       0.100000  
+HUFF_4TH_QUARTER_24_HOURS            8:24       0.115000  
+HUFF_4TH_QUARTER_24_HOURS            9:36       0.135000  
+HUFF_4TH_QUARTER_24_HOURS            10:48      0.155000  
+HUFF_4TH_QUARTER_24_HOURS            12:00      0.185000  
+HUFF_4TH_QUARTER_24_HOURS            13:12      0.215000  
+HUFF_4TH_QUARTER_24_HOURS            14:24      0.245000  
+HUFF_4TH_QUARTER_24_HOURS            15:36      0.290000  
+HUFF_4TH_QUARTER_24_HOURS            16:48      0.350000  
+HUFF_4TH_QUARTER_24_HOURS            18:00      0.435000  
+HUFF_4TH_QUARTER_24_HOURS            19:12      0.545000  
+HUFF_4TH_QUARTER_24_HOURS            20:24      0.740000  
+HUFF_4TH_QUARTER_24_HOURS            21:36      0.920000  
+HUFF_4TH_QUARTER_24_HOURS            22:48      0.975000  
+HUFF_4TH_QUARTER_24_HOURS            24:00      1.000000  
+;
+HourlyEvaporation 01/01/2002 0          0         
+HourlyEvaporation            1          0         
+HourlyEvaporation            2          0         
+HourlyEvaporation            3          0         
+HourlyEvaporation            4          .02       
+HourlyEvaporation            5          .03       
+HourlyEvaporation            6          .03       
+HourlyEvaporation            7          .04       
+HourlyEvaporation            8          .03       
+HourlyEvaporation            9          .02       
+HourlyEvaporation            10         .01       
+HourlyEvaporation            11         .02       
+HourlyEvaporation            12         .02       
+HourlyEvaporation            13         .03       
+HourlyEvaporation            14         .01       
+HourlyEvaporation            15         0         
+HourlyEvaporation            16         0         
+HourlyEvaporation            17         0         
+HourlyEvaporation            18         0         
+HourlyEvaporation            19         .02       
+HourlyEvaporation            20         .03       
+HourlyEvaporation            21         .03       
+HourlyEvaporation            22         .04       
+HourlyEvaporation            23         .03       
+HourlyEvaporation 01/02/2002 0          .02       
+HourlyEvaporation            1          .01       
+HourlyEvaporation            2          .02       
+HourlyEvaporation            3          .02       
+HourlyEvaporation            4          .04       
+HourlyEvaporation            5          .04       
+HourlyEvaporation            6          .04       
+HourlyEvaporation            7          .04       
+HourlyEvaporation            8          .04       
+HourlyEvaporation            9          0         
+HourlyEvaporation            10         0         
+HourlyEvaporation            11         0         
+HourlyEvaporation            12         0         
+HourlyEvaporation            13         .02       
+HourlyEvaporation            14         .03       
+HourlyEvaporation            15         .03       
+HourlyEvaporation            16         .04       
+HourlyEvaporation            17         .03       
+HourlyEvaporation            18         .02       
+HourlyEvaporation            19         .01       
+HourlyEvaporation            20         .02       
+HourlyEvaporation            21         .02       
+HourlyEvaporation            22         .04       
+HourlyEvaporation            23         .04       
+
+[REPORT]
+;;Reporting Options
+INPUT      NO
+CONTROLS   NO
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS -0.214 0.031 1.262 0.944
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+OFALL-10         0.442              0.536             
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+
+[Polygons]
+;;Subcatchment   X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+HUFF_1ST         0.311              0.824             
+HUFF_1ST         0.154              0.527             
+HUFF_1ST         0.136              0.501             
+HUFF_1ST         0.106              0.486             
+HUFF_1ST         0.091              0.479             
+HUFF_1ST         -0.063             0.546             
+HUFF_1ST         -0.107             0.607             
+HUFF_1ST         -0.147             0.748             
+HUFF_1ST         -0.145             0.804             
+HUFF_1ST         -0.122             0.860             
+HUFF_1ST         -0.076             0.875             
+HUFF_1ST         -0.010             0.895             
+HUFF_1ST         0.053              0.903             
+HUFF_1ST         0.093              0.895             
+HUFF_2           0.810              0.821             
+HUFF_2           1.160              0.793             
+HUFF_2           1.195              0.748             
+HUFF_2           1.089              0.643             
+HUFF_2           0.952              0.628             
+HUFF_2           0.885              0.617             
+HUFF_2           0.825              0.613             
+HUFF_2           0.664              0.654             
+HUFF_2           0.569              0.710             
+HUFF_2           0.547              0.778             
+HUFF_2           0.545              0.819             
+HUFF_2           0.554              0.875             
+HUFF_2           0.614              0.884             
+HUFF_2           0.670              0.862             
+HUFF_2           0.799              0.828             
+HUFF_3RD         0.767              0.479             
+HUFF_3RD         0.844              0.419             
+HUFF_3RD         1.025              0.353             
+HUFF_3RD         1.113              0.305             
+HUFF_3RD         1.137              0.273             
+HUFF_3RD         1.134              0.239             
+HUFF_3RD         1.096              0.204             
+HUFF_3RD         1.001              0.153             
+HUFF_3RD         0.779              0.146             
+HUFF_3RD         0.579              0.183             
+HUFF_3RD         0.552              0.215             
+HUFF_3RD         0.580              0.391             
+HUFF_4TH         0.156              0.411             
+HUFF_4TH         0.380              0.303             
+HUFF_4TH         0.416              0.206             
+HUFF_4TH         0.412              0.073             
+HUFF_4TH         0.377              0.086             
+HUFF_4TH         0.274              0.108             
+HUFF_4TH         0.214              0.118             
+HUFF_4TH         0.175              0.120             
+HUFF_4TH         0.094              0.131             
+HUFF_4TH         0.100              0.273             
+HUFF_4TH         0.132              0.346             
+HUFF_4TH         0.156              0.404             
+
+[SYMBOLS]
+;;Gage           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+HUFF_1ST_QUARTER 0.059              0.723             
+HUFF_2ND_QUARTER 0.694              0.740             
+HUFF_3RD_QUARTER 0.207              0.366             
+HUFF_4TH_QUARTER 0.693              0.407             
+
