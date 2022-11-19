@@ -14,9 +14,9 @@ SKIP_STEADY_STATE    NO
 START_DATE           06/14/2021
 START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
-REPORT_START_TIME    00:00:00
+REPORT_START_TIME    01:00:00
 END_DATE             06/14/2021
-END_TIME             02:00:00
+END_TIME             03:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -26,7 +26,7 @@ DRY_STEP             01:00:00
 ROUTING_STEP         0:00:30 
 RULE_STEP            00:00:00
 
-INERTIAL_DAMPING     PARTIAL
+INERTIAL_DAMPING     NONE
 NORMAL_FLOW_LIMITED  BOTH
 FORCE_MAIN_EQUATION  H-W
 VARIABLE_STEP        0.75
@@ -48,28 +48,28 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-N1                13.129     0          1          0          0         
-N2                8.7523     0          1          0          0         
-N3                4.3762     0          1          0          0         
+N1                13.129     0          2          0          0         
+N2                8.7523     0          2          0          0         
+N3                4.3762     0          2          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-O4                0          FIXED      1                NO                       
+O4                0         FIXED      1.0                  YES                         
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1                N1                N2                1000       0.03       0          0          4.6981     0         
-C2                N2                N3                1000       0.03       0          0          4.6981     0         
-C3                N3                O4                1000       0.03       0          0          4.6981     0         
+C1                N1                N2                1000       0.03       0          0          2.6981     0         
+C2                N2                N3                1000       0.03       0          0          2.6981     0         
+C3                N3                O4                1000       0.03       0          0          2.6981     0         
 
 [XSECTIONS]
 ;;Link           Shape        Diameter           Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1                CIRCULAR    2                   0           0          0           1                   
-C2                CIRCULAR    2                   0           0          0           1                   
-C3                CIRCULAR    2                   0           0          0           1        
+C1                CIRCULAR    4                   0           0          0           1                   
+C2                CIRCULAR    4                   0           0          0           1                   
+C3                CIRCULAR    4                   0           0          0           1        
 
 [LOSSES]
 ;; Conduit      Kentry      Kexit       Kavg        Flap       Seepage
@@ -81,7 +81,7 @@ C3                0.0       0.0         0.0          NO         0.0
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-N1                FLOW             ""               FLOW     1.0      1.0      4.6981   
+N1                FLOW             ""               FLOW     1.0      1.0      2.6981   
 
 [REPORT]
 ;;Reporting Options

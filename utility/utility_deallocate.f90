@@ -241,8 +241,11 @@ contains
 
         !==== elem deallocation ====
         !print *, 'elemR'
-        deallocate(elemR, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'elemR')
+        !% HACK: the deallocation of elemR is causing a segmentation fault
+        !% for the arch geometry type. So, it has been commented out on 
+        !% 11182022. Revisit and fix later
+        ! deallocate(elemR, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'elemR')
 
         !print *, 'elemI'
         deallocate(elemI, stat=deallocation_status, errmsg=emsg)
