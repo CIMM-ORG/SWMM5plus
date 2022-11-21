@@ -1,0 +1,149 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           09/09/2016
+START_TIME           00:00:00
+REPORT_START_DATE    09/09/2016
+REPORT_START_TIME    00:00:00
+END_DATE             09/09/2016
+END_TIME             06:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:01:00
+WET_STEP             00:05:00
+DRY_STEP             00:05:00
+ROUTING_STEP         0:00:01 
+
+INERTIAL_DAMPING     PARTIAL
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         1.167
+MAX_TRIALS           15
+HEAD_TOLERANCE       0.0015
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              2
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+1                8.326      11.674     0          0          0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+2                5.437      FREE                        NO                       
+9                0.4        FREE                        NO                       
+
+[STORAGE]
+;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
+;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
+ST1              1.797    20         0          TABULAR    STORAGE                      0        0       
+ST2              0.587    20         0          TABULAR    STORAGE                      0        0       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+IN               1                ST1              100        0.013      0          6.154      0          0         
+OUT              ST1              2                100        0.013      6.15       0          0          0         
+TUNNEL           ST1              ST2              500        0.013      0          0          0          0         
+
+[ORIFICES]
+;;Name           From Node        To Node          Type         Offset     Qcoeff     Gated    CloseTime 
+;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- ----------
+GATE             ST2              9                SIDE         0          0          NO       0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+IN               CIRCULAR     1                0          0          0          1                    
+OUT              CIRCULAR     1                0          0          0          1                    
+TUNNEL           RECT_CLOSED  2                2          0          0          1                    
+GATE             CIRCULAR     0.3              0          0          0
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+1                FLOW             ""               FLOW     1.0      1        1       
+
+[CURVES]
+;;Name           Type       X-Value    Y-Value   
+;;-------------- ---------- ---------- ----------
+Slot1mm_10m      Shape      0          0.2       
+Slot1mm_10m                 0.1        0.2       
+Slot1mm_10m                 .1000001   .0001     
+Slot1mm_10m                 1          .0001     
+;
+STORAGE          Storage    0          4         
+STORAGE                     20         4         
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+;Calgary_1h-5y design storm, rain interval = 5 minutes, rain units = mm/hr.
+Calgary_1h-5y               0:00       0         
+Calgary_1h-5y               0:05       7.622     
+Calgary_1h-5y               0:10       10.866    
+Calgary_1h-5y               0:15       23.029    
+Calgary_1h-5y               0:20       87.477    
+Calgary_1h-5y               0:25       30.772    
+Calgary_1h-5y               0:30       18.142    
+Calgary_1h-5y               0:35       13.306    
+Calgary_1h-5y               0:40       10.695    
+Calgary_1h-5y               0:45       9.04      
+Calgary_1h-5y               0:50       7.887     
+Calgary_1h-5y               0:55       7.032     
+Calgary_1h-5y               1:00       6.371     
+
+[REPORT]
+;;Reporting Options
+INPUT      YES
+CONTROLS   NO
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS -651.314 -100.285 233.831 208.944
+Units      Meters
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+1                -376.095           -19.525           
+2                -320.792           173.084           
+9                193.597            70.561            
+ST1              -346.511           76.260            
+ST2              154.008            73.840            
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+TUNNEL           -246.408           75.776            
+TUNNEL           -146.304           75.292            
+TUNNEL           -46.200            74.808            
+TUNNEL           53.904             74.324            
+TUNNEL           149.002            73.865            
+

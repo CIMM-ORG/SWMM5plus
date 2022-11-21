@@ -1,0 +1,345 @@
+[TITLE]
+;;Project Title/Notes
+PCSWMM 3.2 EXERCISE 1C
+SINGLE SUBCATCHMENT WITH STEEPER SLOPE AND A UNIFORM RAINFALL
+SW  1  9  8
+MM  6  21 20 30 31 32 33
+# SWMM5_CALIBRATION_FILE
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CFS
+INFILTRATION         GREEN_AMPT
+FLOW_ROUTING         KINWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           05/23/1985
+START_TIME           12:00:00
+REPORT_START_DATE    05/23/1985
+REPORT_START_TIME    12:00:00
+END_DATE             05/24/1985
+END_TIME             22:10:00
+SWEEP_START          1/1
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:15:00
+WET_STEP             00:05:00
+DRY_STEP             00:05:00
+ROUTING_STEP         0:00:30 
+
+INERTIAL_DAMPING     PARTIAL
+NORMAL_FLOW_LIMITED  SLOPE
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         12.566
+MAX_TRIALS           0
+HEAD_TOLERANCE       0
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+MONTHLY          0.1    0.1    0.1    0.1    0.1    0.1    0.1    0.1    0.1    0.1    0.1    0.1   
+DRY_ONLY         NO
+
+[RAINGAGES]
+;;Name           Format    Interval SCF      Source    
+;;-------------- --------- ------ ------ ----------
+GAGE1            INTENSITY 0.08333  1.0      TIMESERIES RainSeries1     
+
+[SUBCATCHMENTS]
+;;Name           Rain Gage        Outlet           Area     %Imperv  Width    %Slope   CurbLen  SnowPack        
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- -------- ----------------
+; *  NO SIMULATED CHANNEL/PIPES *                                   SLOPE CHANGED FROM 0.02 TO 0.20 *  JK  NAMEW  NGTO WIDTH  AREA   %IMP  SLP   IMPN   PERVN   IDS    PDS   MAX   MIN  DECAY
+101              GAGE1            301              10.0     40.0     997.0    20.0     0                        
+
+[SUBAREAS]
+;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     PctZero    RouteTo    PctRouted 
+;;-------------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+101              0.017      0.025      0.05       0.2        25         OUTLET    
+
+[INFILTRATION]
+;;Subcatchment   Suction    Ksat       IMD       
+;;-------------- ---------- ---------- ----------
+101              3.0        0.3        0.00112   
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+;subcatchment outlet (when no sewer network in SWMM4 file)
+301              0          FREE                        NO                       
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+RainSeries1      05/23/1985 12:00      1.00000   
+RainSeries1                 12:05      1.00000   
+RainSeries1                 12:10      1.00000   
+RainSeries1                 12:15      1.00000   
+RainSeries1                 12:20      1.00000   
+RainSeries1      05/23/1985 12:25      1.00000   
+RainSeries1                 12:30      1.00000   
+RainSeries1                 12:35      1.00000   
+RainSeries1                 12:40      1.00000   
+RainSeries1                 12:45      1.00000   
+RainSeries1      05/23/1985 12:50      1.00000   
+RainSeries1                 12:55      1.00000   
+RainSeries1                 13:00      0.00000   
+RainSeries1                 13:05      0.00000   
+RainSeries1                 13:10      0.00000   
+RainSeries1      05/23/1985 13:15      0.00000   
+RainSeries1                 13:20      0.00000   
+RainSeries1                 13:25      0.00000   
+RainSeries1                 13:30      0.00000   
+RainSeries1                 13:35      0.00000   
+RainSeries1      05/23/1985 13:40      0.00000   
+RainSeries1                 13:45      0.00000   
+RainSeries1                 13:50      0.00000   
+RainSeries1                 13:55      0.00000   
+RainSeries1                 14:00      0.00000   
+RainSeries1      05/23/1985 14:05      0.00000   
+RainSeries1                 14:10      0.00000   
+RainSeries1                 14:15      0.00000   
+RainSeries1                 14:20      0.00000   
+RainSeries1                 14:25      0.00000   
+RainSeries1      05/23/1985 14:30      0.00000   
+RainSeries1                 14:35      0.00000   
+RainSeries1                 14:40      0.00000   
+RainSeries1                 14:45      0.00000   
+RainSeries1                 14:50      0.00000   
+RainSeries1      05/23/1985 14:55      0.00000   
+RainSeries1                 15:00      0.00000   
+RainSeries1                 15:05      0.00000   
+RainSeries1                 15:10      0.00000   
+RainSeries1                 15:15      0.00000   
+RainSeries1      05/23/1985 15:20      0.00000   
+RainSeries1                 15:25      0.00000   
+RainSeries1                 15:30      0.00000   
+RainSeries1                 15:35      0.00000   
+RainSeries1                 15:40      0.00000   
+RainSeries1      05/23/1985 15:45      0.00000   
+RainSeries1                 15:50      0.00000   
+RainSeries1                 15:55      0.00000   
+RainSeries1                 16:00      0.00000   
+RainSeries1                 16:05      0.00000   
+RainSeries1      05/23/1985 16:10      0.00000   
+RainSeries1                 16:15      0.00000   
+RainSeries1                 16:20      0.00000   
+RainSeries1                 16:25      0.00000   
+RainSeries1                 16:30      0.00000   
+RainSeries1      05/23/1985 16:35      0.00000   
+RainSeries1                 16:40      0.00000   
+RainSeries1                 16:45      0.00000   
+RainSeries1                 16:50      0.00000   
+RainSeries1                 16:55      0.00000   
+RainSeries1      05/23/1985 17:00      0.00000   
+RainSeries1                 17:05      0.00000   
+RainSeries1                 17:10      0.00000   
+RainSeries1                 17:15      0.00000   
+RainSeries1                 17:20      0.00000   
+RainSeries1      05/23/1985 17:25      0.00000   
+RainSeries1                 17:30      0.00000   
+RainSeries1                 17:35      0.00000   
+RainSeries1                 17:40      0.00000   
+RainSeries1                 17:45      0.00000   
+RainSeries1      05/23/1985 17:50      0.00000   
+RainSeries1                 17:55      0.00000   
+RainSeries1                 18:00      0.00000   
+RainSeries1                 18:05      0.00000   
+RainSeries1                 18:10      0.00000   
+RainSeries1      05/23/1985 18:15      0.00000   
+RainSeries1                 18:20      0.00000   
+RainSeries1                 18:25      0.00000   
+RainSeries1                 18:30      0.00000   
+RainSeries1                 18:35      0.00000   
+RainSeries1      05/23/1985 18:40      0.00000   
+RainSeries1                 18:45      0.00000   
+RainSeries1                 18:50      0.00000   
+RainSeries1                 18:55      0.00000   
+RainSeries1                 19:00      0.00000   
+RainSeries1      05/23/1985 19:05      0.00000   
+RainSeries1                 19:10      0.00000   
+RainSeries1                 19:15      0.00000   
+RainSeries1                 19:20      0.00000   
+RainSeries1                 19:25      0.00000   
+RainSeries1      05/23/1985 19:30      0.00000   
+RainSeries1                 19:35      0.00000   
+RainSeries1                 19:40      0.00000   
+RainSeries1                 19:45      0.00000   
+RainSeries1                 19:50      0.00000   
+RainSeries1      05/23/1985 19:55      0.00000   
+RainSeries1                 20:00      0.00000   
+RainSeries1                 20:05      0.00000   
+RainSeries1                 20:10      0.00000   
+RainSeries1                 20:15      0.00000   
+RainSeries1      05/23/1985 20:20      0.00000   
+RainSeries1                 20:25      0.00000   
+RainSeries1                 20:30      0.00000   
+RainSeries1                 20:35      0.00000   
+RainSeries1                 20:40      0.00000   
+RainSeries1      05/23/1985 20:45      0.00000   
+RainSeries1                 20:50      0.00000   
+RainSeries1                 20:55      0.00000   
+RainSeries1                 21:00      0.00000   
+RainSeries1                 21:05      0.00000   
+RainSeries1      05/23/1985 21:10      0.00000   
+RainSeries1                 21:15      0.00000   
+RainSeries1                 21:20      0.00000   
+RainSeries1                 21:25      0.00000   
+RainSeries1                 21:30      0.00000   
+RainSeries1      05/23/1985 21:35      0.00000   
+RainSeries1                 21:40      0.00000   
+RainSeries1                 21:45      0.00000   
+RainSeries1                 21:50      0.00000   
+RainSeries1                 21:55      0.00000   
+RainSeries1      05/23/1985 22:00      0.00000   
+RainSeries1                 22:05      0.00000   
+RainSeries1                 22:10      0.00000   
+RainSeries1                 22:15      0.00000   
+RainSeries1                 22:20      0.00000   
+RainSeries1      05/23/1985 22:25      0.00000   
+RainSeries1                 22:30      0.00000   
+RainSeries1                 22:35      0.00000   
+RainSeries1                 22:40      0.00000   
+RainSeries1                 22:45      0.00000   
+RainSeries1      05/23/1985 22:50      0.00000   
+RainSeries1                 22:55      0.00000   
+RainSeries1                 23:00      0.00000   
+RainSeries1                 23:05      0.00000   
+RainSeries1                 23:10      0.00000   
+RainSeries1      05/23/1985 23:15      0.00000   
+RainSeries1                 23:20      0.00000   
+RainSeries1                 23:25      0.00000   
+RainSeries1                 23:30      0.00000   
+RainSeries1                 23:35      0.00000   
+RainSeries1      05/23/1985 23:40      0.00000   
+RainSeries1                 23:45      0.00000   
+RainSeries1                 23:50      0.00000   
+RainSeries1                 23:55      0.00000   
+RainSeries1      05/24/1985 00:00      0.00000   
+RainSeries1                 00:05      0.00000   
+RainSeries1                 00:10      0.00000   
+RainSeries1                 00:15      0.00000   
+RainSeries1                 00:20      0.00000   
+RainSeries1      05/24/1985 00:25      0.00000   
+RainSeries1                 00:30      0.00000   
+RainSeries1                 00:35      0.00000   
+RainSeries1                 00:40      0.00000   
+RainSeries1                 00:45      0.00000   
+RainSeries1      05/24/1985 00:50      0.00000   
+RainSeries1                 00:55      0.00000   
+RainSeries1                 01:00      0.00000   
+RainSeries1                 01:05      0.00000   
+RainSeries1                 01:10      0.00000   
+RainSeries1      05/24/1985 01:15      0.00000   
+RainSeries1                 01:20      0.00000   
+RainSeries1                 01:25      0.00000   
+RainSeries1                 01:30      0.00000   
+RainSeries1                 01:35      0.00000   
+RainSeries1      05/24/1985 01:40      0.00000   
+RainSeries1                 01:45      0.00000   
+RainSeries1                 01:50      0.00000   
+RainSeries1                 01:55      0.00000   
+RainSeries1                 02:00      0.00000   
+RainSeries1      05/24/1985 02:05      0.00000   
+RainSeries1                 02:10      0.00000   
+RainSeries1                 02:15      0.00000   
+RainSeries1                 02:20      0.00000   
+RainSeries1                 02:25      0.00000   
+RainSeries1      05/24/1985 02:30      0.00000   
+RainSeries1                 02:35      0.00000   
+RainSeries1                 02:40      0.00000   
+RainSeries1                 02:45      0.00000   
+RainSeries1                 02:50      0.00000   
+RainSeries1      05/24/1985 02:55      0.00000   
+RainSeries1                 03:00      0.00000   
+RainSeries1                 03:05      0.00000   
+RainSeries1                 03:10      0.00000   
+RainSeries1                 03:15      0.00000   
+RainSeries1      05/24/1985 03:20      0.00000   
+RainSeries1                 03:25      0.00000   
+RainSeries1                 03:30      0.00000   
+RainSeries1                 03:35      0.00000   
+RainSeries1                 03:40      0.00000   
+RainSeries1      05/24/1985 03:45      0.00000   
+RainSeries1                 03:50      0.00000   
+RainSeries1                 03:55      0.00000   
+RainSeries1                 04:00      0.00000   
+RainSeries1                 04:05      0.00000   
+RainSeries1      05/24/1985 04:10      0.00000   
+RainSeries1                 04:15      0.00000   
+RainSeries1                 04:20      0.00000   
+RainSeries1                 04:25      0.00000   
+RainSeries1                 04:30      0.00000   
+RainSeries1      05/24/1985 04:35      0.00000   
+RainSeries1                 04:40      0.00000   
+RainSeries1                 04:45      0.00000   
+RainSeries1                 04:50      0.00000   
+RainSeries1                 04:55      0.00000   
+RainSeries1      05/24/1985 05:00      0.00000   
+RainSeries1                 05:05      0.00000   
+RainSeries1                 05:10      0.00000   
+RainSeries1                 05:15      0.00000   
+RainSeries1                 05:20      0.00000   
+RainSeries1      05/24/1985 05:25      0.00000   
+RainSeries1                 05:30      0.00000   
+RainSeries1                 05:35      0.00000   
+RainSeries1                 05:40      0.00000   
+RainSeries1                 05:45      0.00000   
+RainSeries1      05/24/1985 05:50      0.00000   
+RainSeries1                 05:55      0.00000   
+RainSeries1                 06:00      1.00000   
+RainSeries1                 06:05      1.00000   
+RainSeries1                 06:10      1.00000   
+RainSeries1      05/24/1985 06:15      1.00000   
+RainSeries1                 06:20      1.00000   
+RainSeries1                 06:25      1.00000   
+RainSeries1                 06:30      1.00000   
+RainSeries1                 06:35      1.00000   
+RainSeries1      05/24/1985 06:40      1.00000   
+RainSeries1                 06:45      1.00000   
+RainSeries1                 06:50      1.00000   
+RainSeries1                 06:55      1.00000   
+
+[REPORT]
+;;Reporting Options
+INPUT      YES
+CONTROLS   NO
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 1657657657.658 -1281736281.736 3927927927.928 -651105651.106
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+301              3824733824.734     -679770679.771    
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+
+[Polygons]
+;;Subcatchment   X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+101              1760851760.852     -1253071253.071   
+101              1811265393.835     -1116774301.407   
+101              1966174890.487     -1289908444.725   
+101              1789135465.741     -1378428157.098   
+
+[SYMBOLS]
+;;Gage           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

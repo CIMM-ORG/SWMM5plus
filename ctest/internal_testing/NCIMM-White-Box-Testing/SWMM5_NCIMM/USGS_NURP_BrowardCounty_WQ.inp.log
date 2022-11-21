@@ -1,0 +1,99 @@
+
+
+*********************************************
+* Binary File Comparison Statistics Section *
+*********************************************
+
+   Flog.file                                                D:\SWMMandSoftware\SWMM5.013_June2018\EPASWMM5.1.013\Swmm5.1.013UpdateTests\SWMM5_NCIMM\USGS_NURP_BrowardCounty_WQ.inp.log
+   FoutCompare.file                                         D:\SWMMandSoftware\SWMM5.013_June2018\EPASWMM5.1.013\Swmm5.1.013UpdateTests\v12\USGS_NURP_BrowardCounty_WQ.out
+   Fout.file                                                D:\SWMMandSoftware\SWMM5.013_June2018\EPASWMM5.1.013\Swmm5.1.013UpdateTests\v13\USGS_NURP_BrowardCounty_WQ.out
+
+   Fout.file Version                                        51013
+   Fout.file MagicNumber                                    516114522
+   Fout.file Flow units                                     0
+   Fout.file Report Step                                    300
+   Fout.file Nperiods                                       45
+   Fout.file Starting file position of ID names             28
+   Fout.file Starting file position of input data           196
+   Fout.file Starting file position of output data          624
+   Fout.file number of bytes per time period                656
+   Fout.file Number of subcatchment output variables        13
+   Fout.file Number of node output variables                11
+   Fout.file Number of link output variables                10
+   Fout.file Number of subcatchments reported on            4
+   Fout.file Number of nodes reported on                    5
+   Fout.file Number of links reported on                    4
+   Fout.file Number of pollutants reported on               5
+
+   FoutCompare.file Version                                 51011
+   FoutCompare.file MagicNumber                             516114522
+   FoutCompare.file Flow units                              0
+   FoutCompare.file Nperiods                                45
+   FoutCompare.file Starting file position of ID names      28
+   FoutCompare.file Starting file position of input data    196
+   FoutCompare.file Starting file position of output data   624
+   FoutCompare.file number of bytes per time period         656
+   FoutCompare.file Number of subcatchment output variables 13
+   FoutCompare.file Number of node output variables         11
+   FoutCompare.file Number of link output variables         10
+   FoutCompare.file Number of subcatchments reported on     4
+   FoutCompare.file Number of nodes reported on             5
+   FoutCompare.file Number of links reported on             4
+   FoutCompare.file Number of pollutants reported on        5
+
+***********************************************
+*Subcatchment Runoff Statistics Comparisons   *
+***********************************************
+  Subcatchment ID                    Mean Sim   Mean Obs       RMSE        MAE      MSLSE    STD Sim    STD Obs Nash-Sutcliffe Nash-Sutcliffe Nash-Sutcliffe
+  CA-1                                 0.9754     0.9754     0.0000     0.0000     0.0000     0.2243     0.2243     1.0000
+  CA-7                                 0.3779     0.3779     0.0000     0.0000     0.0000     0.0877     0.0877     1.0000
+  CA-8                                 1.0333     1.0333     0.0000     0.0000     0.0000     0.2357     0.2357     1.0000
+  CA-11                                0.8378     0.8378     0.0000     0.0000     0.0000     0.1974     0.1974     1.0000
+
+************************************
+*Node Depth Statistics Comparisons *
+************************************
+  Node ID                            Mean Sim   Mean Obs       RMSE        MAE      MSLSE    STD Sim    STD Obs Nash-Sutcliffe     Log NSE    Index d Agreee
+  P001                                 3.7891     3.7753     0.0608     0.0240     0.0000     1.0490     1.0473     0.9999     0.0000
+  P005                                 3.6107     3.6019     0.0522     0.0225     0.0000     1.0277     1.0260     0.9999     0.0000
+  P009                                 3.0348     3.0273     0.0433     0.0135     0.0000     0.9321     0.9306     0.9999     0.0000
+  P011                                 3.1836     3.1780     0.0427     0.0159     0.0000     0.9662     0.9647     1.0000     0.0000
+  Outlet                               0.1716     0.1770     0.0172     0.0055     0.0000     0.0462     0.0476     0.9970     0.0000
+
+*******************************************
+*Node Lateral Flow Statistics Comparisons *
+*******************************************
+  Node ID                            Mean Sim   Mean Obs       RMSE        MAE      MSLSE    STD Sim    STD Obs Nash-Sutcliffe     Log NSE    Index d Agreee
+  P001                                 0.9832     0.9757     0.0909     0.0422     0.0020     0.2200     0.2243     0.9962
+  P005                                 0.3808     0.3779     0.0345     0.0161     0.0008     0.0854     0.0870     0.9963
+  P009                                 1.0411     1.0334     0.0919     0.0432     0.0020     0.2314     0.2356     0.9965
+  P011                                 0.8448     0.8379     0.0815     0.0376     0.0018     0.1931     0.1971     0.9960
+  Outlet                               0.0000     0.0000     0.0000     0.0000     0.0000     0.0000     0.0000     1.0000
+
+*****************************************
+*Node Total Flow Statistics Comparisons *
+*****************************************
+  Node ID                            Mean Sim   Mean Obs       RMSE        MAE      MSLSE    STD Sim    STD Obs Nash-Sutcliffe Nash-Sutcliffe Nash-Sutcliffe
+  P001                                 2.6600     2.7353     0.3586     0.1016     0.0080     0.5559     0.5806     0.9911
+  P005                                 2.1785     2.2051     0.1811     0.0644     0.0040     0.4241     0.4252     0.9958
+  P009                                 1.0411     1.0390     0.0199     0.0079     0.0004     0.2314     0.2304     0.9998
+  P011                                 0.9568     0.9516     0.0332     0.0109     0.0007     0.2372     0.2340     0.9995
+  Outlet                               1.4783     1.5705     0.4066     0.0922     0.0090     0.5510     0.5889     0.9889
+
+************************************
+*Link Flow Statistics  Comparisons *
+************************************
+  Link ID                            Mean Sim   Mean Obs       RMSE        MAE      MSLSE    STD Sim    STD Obs Nash-Sutcliffe
+  P001                                 1.4783     1.5705     0.4066     0.0922     0.0090     0.5510     0.5889     0.9889
+  P005                                 1.5516     1.6424     0.3983     0.1348     0.0089     0.4548     0.4837     0.9842
+  P009                                 0.9226     0.9435     0.1054     0.0294     0.0023     0.1854     0.1853     0.9925
+  P011                                 0.6378     0.6604     0.1077     0.0314     0.0024     0.1915     0.1943     0.9929
+
+*************************************
+*Link Depth Statistics  Comparisons *
+*************************************
+  Link ID                            Mean Sim   Mean Obs       RMSE        MAE      MSLSE    STD Sim    STD Obs Nash-Sutcliffe
+  P001                                 0.7456     0.7478     0.0193     0.0085     0.0004     0.1077     0.1074     0.9992
+  P005                                 1.0769     1.0788     0.0216     0.0100     0.0005     0.1668     0.1666     0.9996
+  P009                                 0.7725     0.7749     0.0182     0.0072     0.0004     0.1214     0.1212     0.9995
+  P011                                 0.8470     0.8487     0.0241     0.0102     0.0005     0.1371     0.1367     0.9993

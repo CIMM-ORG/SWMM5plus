@@ -1,0 +1,208 @@
+
+  EPA STORM WATER MANAGEMENT MODEL - VERSION 5.1 (Build 5.1.012)
+  --------------------------------------------------------------
+
+   Example 5 
+   A simple groundwater example. 
+  
+  
+  *************
+  Element Count
+  *************
+  Number of rain gages ...... 1
+  Number of subcatchments ... 2
+  Number of nodes ........... 1
+  Number of links ........... 0
+  Number of pollutants ...... 3
+  Number of land uses ....... 1
+  
+  
+  *****************
+  Pollutant Summary
+  *****************
+                               Ppt.      GW         Kdecay
+  Name                 Units   Concen.   Concen.    1/days    CoPollutant
+  -----------------------------------------------------------------------
+  TSS                   MG/L      0.00      0.00      0.00
+  TN                    MG/L      1.00      0.00      0.00
+  TP                    MG/L      0.10      0.00      0.00
+  
+  
+  ***************
+  Landuse Summary
+  ***************
+                         Sweeping   Maximum      Last
+  Name                   Interval   Removal     Swept
+  ---------------------------------------------------
+  URBAN                      0.00      0.00      0.00
+  
+  
+  ****************
+  Raingage Summary
+  ****************
+                                                      Data       Recording
+  Name                 Data Source                    Type       Interval 
+  ------------------------------------------------------------------------
+  1                    Rainfall                       INTENSITY   15 min.
+  
+  
+  ********************
+  Subcatchment Summary
+  ********************
+  Name                       Area     Width   %Imperv    %Slope Rain Gage            Outlet              
+  -----------------------------------------------------------------------------------------------------------
+  wRG                        5.00    100.00     50.00    1.0000 1                    2                   
+  woRG                       5.00    100.00     50.00    1.0000 1                    2                   
+
+
+  *******************
+  LID Control Summary
+  *******************
+                                   No. of        Unit        Unit      % Area    % Imperv
+  Subcatchment     LID Control      Units        Area       Width     Covered     Treated
+  ---------------------------------------------------------------------------------------
+  wRG              RG                 100       50.00       10.00        2.30       25.00
+  
+  
+  ************
+  Node Summary
+  ************
+                                           Invert      Max.    Ponded    External
+  Name                 Type                 Elev.     Depth      Area    Inflow  
+  -------------------------------------------------------------------------------
+  2                    OUTFALL               0.00      0.00       0.0
+  
+  
+  
+  *********************************************************
+  NOTE: The summary statistics displayed in this report are
+  based on results found at every computational time step,  
+  not just on results from each reporting time step.
+  *********************************************************
+  
+  ****************
+  Analysis Options
+  ****************
+  Flow Units ............... CFS
+  Process Models:
+    Rainfall/Runoff ........ YES
+    RDII ................... NO
+    Snowmelt ............... NO
+    Groundwater ............ NO
+    Flow Routing ........... NO
+    Water Quality .......... YES
+  Infiltration Method ...... HORTON
+  Starting Date ............ 09/13/2014 00:00:00
+  Ending Date .............. 09/15/2014 00:00:00
+  Antecedent Dry Days ...... 0.0
+  Report Time Step ......... 00:15:00
+  Wet Time Step ............ 00:05:00
+  Dry Time Step ............ 00:05:00
+  
+  
+  *********************
+  Control Actions Taken
+  *********************
+
+  
+  **************************        Volume         Depth
+  Runoff Quantity Continuity     acre-feet        inches
+  **************************     ---------       -------
+  Initial LID Storage ......         0.011         0.014
+  Total Precipitation ......         1.666         2.000
+  Evaporation Loss .........         0.000         0.000
+  Infiltration Loss ........         0.609         0.731
+  Surface Runoff ...........         1.027         1.232
+  Final Storage ............         0.042         0.051
+  Continuity Error (%) .....        -0.023
+  
+  
+  **************************           TSS            TN            TP
+  Runoff Quality Continuity            lbs           lbs           lbs
+  **************************    ----------    ----------    ----------
+  Initial Buildup ..........         0.000         0.000         0.000
+  Surface Buildup ..........         1.536         0.154         0.077
+  Wet Deposition ...........         0.000         4.529         0.453
+  Sweeping Removal .........         0.000         0.000         0.000
+  Infiltration Loss ........         0.000         1.430         0.143
+  BMP Removal ..............         0.574         0.645         0.087
+  Surface Runoff ...........         0.920         2.575         0.294
+  Remaining Buildup ........         0.000         0.042         0.004
+  Continuity Error (%) .....         2.735        -0.228         0.000
+  
+  
+  **************************        Volume        Volume
+  Flow Routing Continuity        acre-feet      10^6 gal
+  **************************     ---------     ---------
+  Dry Weather Inflow .......         0.000         0.000
+  Wet Weather Inflow .......         1.027         0.335
+  Groundwater Inflow .......         0.000         0.000
+  RDII Inflow ..............         0.000         0.000
+  External Inflow ..........         0.000         0.000
+  External Outflow .........         1.027         0.335
+  Flooding Loss ............         0.000         0.000
+  Evaporation Loss .........         0.000         0.000
+  Exfiltration Loss ........         0.000         0.000
+  Initial Stored Volume ....         0.000         0.000
+  Final Stored Volume ......         0.000         0.000
+  Continuity Error (%) .....         0.000
+  
+  
+  **************************           TSS            TN            TP
+  Quality Routing Continuity           lbs           lbs           lbs
+  **************************    ----------    ----------    ----------
+  Dry Weather Inflow .......         0.000         0.000         0.000
+  Wet Weather Inflow .......         0.919         2.570         0.294
+  Groundwater Inflow .......         0.000         0.000         0.000
+  RDII Inflow ..............         0.000         0.000         0.000
+  External Inflow ..........         0.000         0.000         0.000
+  External Outflow .........         0.919         2.570         0.294
+  Flooding Loss ............         0.000         0.000         0.000
+  Exfiltration Loss ........         0.000         0.000         0.000
+  Mass Reacted .............         0.000         0.000         0.000
+  Initial Stored Mass ......         0.000         0.000         0.000
+  Final Stored Mass ........         0.000         0.000         0.000
+  Continuity Error (%) .....         0.000         0.000         0.000
+  
+  
+  ***************************
+  Subcatchment Runoff Summary
+  ***************************
+  
+  --------------------------------------------------------------------------------------------------------
+                            Total      Total      Total      Total      Total       Total     Peak  Runoff
+                           Precip      Runon       Evap      Infil     Runoff      Runoff   Runoff   Coeff
+  Subcatchment                 in         in         in         in         in    10^6 gal      CFS
+  --------------------------------------------------------------------------------------------------------
+  wRG                        2.00       0.00       0.00       0.83       1.12        0.15     1.50   0.560
+  woRG                       2.00       0.00       0.00       0.64       1.34        0.18     1.86   0.672
+  
+
+  ***********************
+  LID Performance Summary
+  ***********************
+
+  --------------------------------------------------------------------------------------------------------------------
+                                         Total      Evap     Infil   Surface    Drain    Initial     Final  Continuity
+                                        Inflow      Loss      Loss   Outflow   Outflow   Storage   Storage       Error
+  Subcatchment      LID Control             in        in        in        in        in        in        in           %
+  --------------------------------------------------------------------------------------------------------------------
+  wRG               RG                   12.44      0.00      8.66      2.21      0.00      1.20      2.78       -0.05
+  
+  ****************************
+  Subcatchment Washoff Summary
+  ****************************
+  
+  --------------------------------------------------------------
+                                 TSS            TN            TP
+  Subcatchment                   lbs           lbs           lbs
+  --------------------------------------------------------------
+  wRG                          0.920         1.053         0.142
+  woRG                         0.000         1.522         0.152
+  --------------------------------------------------------------
+  System                       0.920         2.575         0.294
+  
+
+  Analysis begun on:  Mon Nov 19 20:41:40 2018
+  Analysis ended on:  Mon Nov 19 20:41:40 2018
+  Total elapsed time: < 1 sec
