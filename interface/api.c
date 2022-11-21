@@ -509,7 +509,7 @@ int DLLEXPORT api_get_flowBC(
         }
 
         // add the external inflows to the dry weather flows stored in flowBC
-         //printf("          flowBC = %g  \n ", total_extinflow);
+        //printf("          flowBC = %g  \n ", total_extinflow);
         *flowBC += total_extinflow; // already converted to cubic m/s
         
     }

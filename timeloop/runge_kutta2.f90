@@ -6,6 +6,7 @@ module runge_kutta2
     use define_settings, only: setting
     use update
     use face
+    use forcemain, only: forcemain_ManningsN
     use lowlevel_rk2
     use culvert_elements, only: culvert_toplevel
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
@@ -53,7 +54,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------
 
         ! print *, ' '
-        ! call util_CLprint ('======= AAA  start of RK2 ==============================')
+        !  call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -64,8 +65,8 @@ module runge_kutta2
             elemR(:,er_ManningsN_Dynamic) = elemR(:,er_ManningsN)
         end if
 
-        !% --- compute Force Main Manning's N for non-submerged FM elements
-        if (setting%Solver%ForceMain%UseForceMainTF) call rk2_ForceMain_ManningsN ()
+        !% --- compute Force Main Manning's N for force main elements
+        if (setting%Solver%ForceMain%AllowForceMainTF) call forcemain_ManningsN ()
 
         !% --- RK2 solution step -- single time advance step
         !%     CC advanced for continuity and momentum
@@ -549,7 +550,7 @@ module runge_kutta2
 
             !% --- handle force mains as Gamma terms
             !%     These overwrites the gamma from the CM roughness above
-            if (setting%Solver%ForceMain%UseForceMainTF) then 
+            if (setting%Solver%ForceMain%AllowForceMainTF) then 
                 !% --- surcharged Force main elements with Hazen-Williams roughness
                 FMPackCol => col_elemP(ep_FM_HW_PSsurcharged)
                 nFMpack   => npack_elemP(FMPackCol)
@@ -980,56 +981,7 @@ module runge_kutta2
        ! stop 398745
 
     end subroutine rk2_dynamic_ManningsN
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine rk2_ForceMain_ManningsN ()
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Calls lower-level subroutines to set the equivalent Mannings n
-        !% for face mains that have a free surface.
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, pointer :: thisPackCol, Npack, thisP(:)
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            if (.not. setting%Solver%ForceMain%UseForceMainTF) return
-        !%------------------------------------------------------------------
-        !% Aliases:
-        !%------------------------------------------------------------------
-        !%
-        !% --- for Hazen-Williams
-        if (.not. setting%Solver%ForceMain%HazenWilliams_equivalent_isSetTF) then
-            !% --- the HW equivalent only needs to be called once and the equivalent
-            !%     Manning's n is stored for re-use
-            thisPackCol => col_elemP(ep_FM_HW_all)
-            Npack       => npack_elemP(thisPackCol)
-            if (Npack > 0) then
-                call ll_ForceMain_equivalent_manningsN (thisPackCol,Npack,HazenWilliams)
-            endif
-            !% --- only check this once. The ep_FM_HW_all is a static pack, so
-            !%     if Npack = 0 on the first time through it will always be zero
-            setting%Solver%ForceMain%HazenWilliams_equivalent_isSetTF = .true.
-        else 
-            !% --- skip if already set
-        end if
 
-        !% --- for Darcy-Weisbach
-        !%     Equivalent Mannings n is function of friction factor, so needs 
-        !%     to be re-computed at each time step for the non-surcharged FM elements
-        thisPackCol => col_elemP(ep_FM_dw_PSnonSurcharged)
-        Npack       => npack_elemP(thisPackCol)
-        if (Npack > 0) then
-            call ll_ForceMain_dw_friction (thisPackCol, Npack)
-            call ll_ForceMain_equivalent_manningsN (thisPackCol,Npack,DarcyWeisbach)
-        endif
-
-        !%------------------------------------------------------------------
-        !% Closing
-        !%
-    end subroutine rk2_ForceMain_ManningsN
-!%
 !%==========================================================================
 !%==========================================================================
 !%

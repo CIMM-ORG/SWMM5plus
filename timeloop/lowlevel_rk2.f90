@@ -48,8 +48,6 @@ module lowlevel_rk2
     ! public :: ll_CC_slot_computation_ETM
     ! public :: ll_JM_slot_computation_ETM
     public :: ll_get_dynamic_ManningsN
-    public :: ll_ForceMain_equivalent_manningsN
-    public :: ll_ForceMain_dw_friction
 
     contains
 !%==========================================================================
@@ -757,124 +755,6 @@ module lowlevel_rk2
 
 
     end subroutine ll_minorloss_friction_gamma_CC
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_ForceMain_dw_friction (thisCol, Npack)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% computes the friction factor for Darcy-Weisbach force mains
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: thisCol, Npack
-            integer, pointer    :: thisP(:)
-            real(8), pointer    :: Re(:), Re2(:), hydradius(:), Afull(:), Pfull(:)
-            real(8), pointer    :: velocity(:), rough(:), Ffac(:), viscosity
-            real(8), parameter  :: eCoef = 1.08108d0 !% roughness multiplier in SI (4/3.7)
-            real(8), parameter  :: rCoef = 5.74d0  !% Reynolds number coef
-            real(8), parameter  :: rExpon = 0.9d0  !% Reynolds number exponent
-        !%--------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
-        !% Aliases
-            thisP     => elemP(1:Npack,thisCol)
-            Re        => elemR(:,er_Temp01)
-            Re2       => elemR(:,er_Temp02)
-            hydradius => elemR(:,er_HydRadius)
-            Afull     => elemR(:,er_FullArea)
-            Pfull     => elemR(:,er_FullPerimeter)
-            velocity  => elemR(:,er_Velocity)
-            rough     => elemSR(:,esr_Conduit_ForceMain_Coef)
-            Ffac      => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
-            viscosity => setting%Constant%water_kinematic_viscosity
-        !%------------------------------------------------------------------
-        !% --- for Reynolds number, use Hydraulic Diameter = 4 * hydraulic radius
-        !%     This uses the hydraulic radius associated with the full flow area
-        !%     for consistency in the friction factor computation for equivalent 
-        !%     manning's n computed at full pipe conditions.
-        Re(thisP) = velocity(thisP) * fourR * (Afull(thisP) / Pfull(thisP)) / viscosity
-
-        !% --- lower bound for Reynolds number following forcemain_getReynolds in EPA SWMM
-        Re(thisP) = min(Re(thisP),tenR)
-
-        !% --- setup for Re < 4000
-        Re2(thisP) = max(Re(thisP),4000.d0)
-     
-        !% --- compute the friction factor for fully turbulent flow
-        !%     This uses the full hydraulic radius for consistency in the derivation
-        !%     of the equivalent Manning's n
-        Ffac(thisP) = onefourthR                                             &
-            / ( log10(                                                       &
-                      (eCoef * rough(thisP) / (Afull(thisP) / Pfull(thisP))) &
-                       + (rCoef / (Re2(thisP)**rExpon))                       &
-                     )**2 ) 
-
-        !% --- handle low Re following approach in EPA SWMM forcemain_getFricFactor
-        where (Re(thisP) .le. 2000.d0)
-            Ffac(thisP) = 64.d0 / Re(thisP)
-        elsewhere ((Re(thisP) > 2000.d0) .and. (Re(thisP) < 4000.d0))
-            Ffac(thisP) = 0.032d0 + (Ffac(thisP) - 0.032d0) * (Re(thisP) - 2000.d0) / 2000.d0
-        elsewhere
-            !% -- accept the f from full turbulence
-        end where       
-        
-        !% --- reset temporary values
-        Re = nullvalueR
-        Re2 = nullvalueR
-
-    end subroutine ll_ForceMain_dw_friction
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_ForceMain_equivalent_manningsN (thisCol, Npack, fmMethod)  
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Computes the equivalent Mannings N used in force mains that are
-        !% not surcharged
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: thisCol, Npack, fmMethod
-            integer, pointer    :: thisP(:)
-            real(8), pointer    :: manningsN(:), slope(:), Afull(:), Pfull(:)
-            real(8), pointer    :: HWcoef(:), Ffactor(:)
-            real(8), pointer    :: slopeMin, grav
-            real(8), parameter  :: HWfactorD = 0.8492d0
-            real(8), parameter  :: HWslopeExp = 0.04d0
-            real(8), parameter  :: HWhydradExp = 0.03667d0
-            real(8), parameter  :: DWhydradExp = 0.1667d0 !% (1/6)
-        !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
-        !% Aliases
-            thisP      => elemP(1:Npack,thisCol)
-            HWcoef     => elemSR(:,esr_Conduit_ForceMain_Coef)
-            Ffactor    => elemSR(:,esr_Conduit_ForceMain_FrictionFactor)
-            manningsN  => elemR(:,er_ManningsN)
-            Afull      => elemR(:,er_FullArea)
-            Pfull      => elemR(:,er_FullPerimeter)
-            slope      => elemR(:,er_BottomSlope)
-            slopeMin   => setting%Solver%ForceMain%minimum_slope
-            grav       => setting%Constant%gravity
-        !%------------------------------------------------------------------
-        select case (fmMethod)
-        case (HazenWilliams)
-            !% N = Rh^0.037 / (0.85 * C * S^0.04)
-            manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**HWhydradExp ) &
-                / (HWfactorD * HWcoef(thisP) * (max( slope(thisP), slopeMin )**HWslopeExp) )
-        case (DarcyWeisbach)
-            !% N = Rh^1/6  * sqrt( f / 8g )
-            manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**DWhydradExp ) &
-                * sqrt( Ffactor(thisP) / (eightR * grav) )
-        case default
-            print *, 'CODE ERROR: unexpected case default'
-            call util_crashpoint(779834)
-        end select
-
-    end subroutine ll_ForceMain_equivalent_manningsN  
 !%
 !%==========================================================================
 !%==========================================================================

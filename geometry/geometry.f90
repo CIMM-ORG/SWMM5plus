@@ -709,22 +709,24 @@ module geometry
         
         !stop 2098374
 
+        ! print *, 'Qcrit Max ',uniformTableR(UT_idx,utr_QcritMax)
+
         !% --- normalize the critical flowrate
         QcritNormalized = abs(elemR(eIdx,er_Flowrate) / uniformTableR(UT_idx,utr_QcritMax))
         
-        ! print *, 'QcritNormalized',QcritNormalized
+        !  print *, 'QcritNormalized',QcritNormalized
 
         !% --- lookup the normalized critical depth for this critical flow
         outvalue = xsect_table_lookup_singular (QcritNormalized, thistable)
 
         ! print *, 'normalized critical depth',outvalue
 
-        ! print *, 'DepthMax ',uniformTableR(UT_idx,utr_DepthMax)
+        !  print *, 'DepthMax ',uniformTableR(UT_idx,utr_DepthMax)
 
         !% --- return depth to physical value
         outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
 
-        ! print *, 'critical depth ',outvalue
+        !  print *, 'critical depth ',outvalue
 
     end function geo_criticaldepth_singular
 !%
@@ -743,22 +745,24 @@ module geometry
             integer, pointer    :: eIdx
             real(8), pointer    :: thisTable(:)
             real(8)             :: sectionFactor, normSF
-
             character(64)       :: subroutine_name = 'geo_normaldepth_singular'
         !%------------------------------------------------------------------
         !% Aliases
-            !print *, 'here AAAA '
             eIdx      => uniformTableI(UT_idx,uti_elem_idx)
-            !print *, 'here BBBB '
             thisTable => uniformTableDataR(UT_idx,:,utd_SF_depth_nonuniform)  !% element index
         !%------------------------------------------------------------------
-        !% --- section factor for the associated element
-        sectionFactor = elemR(eIdx,er_Flowrate) * elemR(eIdx,er_ManningsN) / elemR(eIdx,er_BottomSlope)
+        !% --- section factor based on flowrate for the associated element
+        if (elemR(eIdx,er_BottomSlope) > setting%ZeroValue%Slope) then
+            sectionFactor = elemR(eIdx,er_Flowrate) * elemR(eIdx,er_ManningsN) / (sqrt(abs(elemR(eIdx,er_BottomSlope))))
+        else
+            sectionFactor = elemR(eIdx,er_Flowrate) * elemR(eIdx,er_ManningsN) / (sqrt(setting%ZeroValue%Slope))
+        end if
 
         ! print *, 'sectionFactor ',sectionFactor
         ! print *, 'flowrate   ',elemR(eIdx,er_Flowrate)
         ! print *, 'mannings n ',elemR(eIdx,er_ManningsN)
         ! print *, 'slope      ',elemR(eIdx,er_BottomSlope)
+        ! print *, 'beta       ',(elemR(eIdx,er_BottomSlope)**0.5) / elemR(eIdx,er_ManningsN)
 
         !% --- if flow is negative on a positive slope, or flow is positive on a negative slope,
         !%     then the section factor is negative, which implies an infinite normal depth
@@ -774,17 +778,17 @@ module geometry
         !% --- normalize the section factor
         normSF   = sectionFactor / uniformTableR(UT_idx,utr_SFmax)
 
-        !print *, 'normSF ',normSF
+        ! print *, 'normSF ',normSF
 
         !% --- lookup the normalized normal depth
         outvalue = xsect_table_lookup_singular(normSF,thisTable)
 
-        ! print *, 'outvalue 1 ',outvalue
+        ! print *, 'normalized normal depth ',outvalue
 
         !% --- return normal depth to physical value
         outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
 
-        ! print *, 'outvalue 2 ',outvalue
+        ! print *, 'normal depth ',outvalue
     
     end function geo_normaldepth_singular
 !%

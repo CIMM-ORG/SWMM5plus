@@ -18,6 +18,7 @@ module initial_condition
     use boundary_conditions
     use update
     use face
+    use forcemain, only : forcemain_ManningsN
     use diagnostic_elements
     use geometry 
     use arch_conduit
@@ -245,6 +246,9 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
         call pack_nodes()
         call util_allocate_bc()
+
+        !% --- initialize Manning's n for forcemain elements
+        if (setting%Solver%ForceMain%AllowForceMainTF) call forcemain_ManningsN ()
 
         !% --- initialize boundary conditions
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
@@ -944,7 +948,7 @@ contains
         !% only call for pipes
         if (linkType .eq. lpipe) then
             !% --- if UseForceMain
-            if (setting%Solver%ForceMain%UseForceMainTF) then
+            if (setting%Solver%ForceMain%AllowForceMainTF) then
                 !% --- if FMallClosedConduits
                 if (setting%Solver%ForceMain%FMallClosedConduitsTF) then
                     !% --- forcing all closed conduits to be Force Main
@@ -1707,7 +1711,7 @@ contains
 
             !% --- Get data for force main
             !%     NotethisP all force mains are circular pipes
-            if (setting%Solver%ForceMain%UseForceMainTF) then
+            if (setting%Solver%ForceMain%AllowForceMainTF) then
                 if (geometryType == lForce_main) then 
                     where (elemI(thisP,ei_link_Gidx_BIPquick) == thisLink)
                         elemYN(thisP,eYN_isForceMain)      = .TRUE.
@@ -1716,7 +1720,7 @@ contains
                     endwhere
                 endif
             else
-                !% -- if global UseForceMainTF is false, then
+                !% -- if global AllowForceMainTF is false, then
                 !%    make sure FM from the SWMM input are set to
                 !%    non-force-main.
                 if (geometryType == lForce_main) then 
@@ -4695,7 +4699,7 @@ contains
             character(64) :: subroutine_name = 'init_uniformtable_array'
         !%------------------------------------------------------------------
 
-        !print *, 'in ',trim(subroutine_name)
+        ! print *, 'in ',trim(subroutine_name)
         
         call util_allocate_uniformtable_array()
 
@@ -4717,6 +4721,7 @@ contains
             !stop 5509873
 
             !% --- uniformly-distributed section factor
+            ! print *, 'calling init_uniformtabledata_Uvalue for section factor'
             call init_uniformtabledata_Uvalue(ii,utr_SFmax, utd_SF_uniform)
 
             ! print *, ' '
@@ -4731,6 +4736,7 @@ contains
             !print *, uniformTableR(ii,utr_SFmax)
 
             !% -- uniformly-distributed critical flow
+            ! print *, 'calling for uniform table Uvalue for Q critical'
             call init_uniformtabledata_Uvalue(ii,utr_QcritMax, utd_Qcrit_uniform)
    
             !% --- nonuniform values mapping from section factors
@@ -4774,6 +4780,7 @@ contains
             ! stop 34987
         end do
 
+        ! stop 5559783
 
     end subroutine init_uniformtable_array    
 !%
@@ -5097,12 +5104,12 @@ contains
         !% --- maximum and mininum values of the uniform data
         uniformMax => uniformTableR(UT_idx,utr_max)
 
-        !print *, '----- uniformMax ',uniformMax
+        ! print *, '----- uniformMax ',uniformMax
 
         !% --- step sizes in the uniform table
         normDelta = uniformMax / real(N_uniformTableData_items-1,8)
 
-        !print *, '----- normDelta ',normDelta
+        ! print *, '----- normDelta ',normDelta
 
         !% --- store the zero as starting point for normalized table
         uniformTableDataR(UT_idx,1,utd_uniform) = zeroR
@@ -5115,11 +5122,11 @@ contains
             !% --- store the table data (normalized)    
             uniformTableDataR(UT_idx,jj,utd_uniform) = thisValue / uniformMax     
             
-           ! print *, '----- ',jj, thisValue,  uniformTableDataR(UT_idx,jj,utd_uniform)
+        !    print *, '----- ',jj, thisValue,  uniformTableDataR(UT_idx,jj,utd_uniform)
 
         end do
 
-        !stop 29873
+       ! stop 29873
         
     end subroutine init_uniformtabledata_Uvalue
 !%

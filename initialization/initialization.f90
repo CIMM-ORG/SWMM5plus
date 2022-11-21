@@ -940,6 +940,7 @@ contains
                 else
                     node%YN(ii, nYN_hasFlapGate) = .false.
                 end if
+
                 ! write(*,*) '... nYN_hasFlapGate = ',node%YN(ii,nYN_hasFlapGate)
                 ! write(*,*)
 
@@ -987,6 +988,7 @@ contains
                 ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
                  (node%I(ii,ni_N_link_d) > oneI))) then
                     !% ... switching to a 2 link nJm junction type'
+                    ! write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
                     node%I(ii, ni_node_type) = nJm
             end if
 
@@ -1017,6 +1019,7 @@ contains
             !%     can be treated as a face.
             !%     In general, existence of non-zero offsets require an nJm unless 
             !%     the offset is associated with a weir or orifice
+            ! print *, 'type at TTT:  ', trim(reverseKey(node%I(ii,ni_node_type)))
             if (node%I(ii, ni_node_type) == nJ2) then
                 !% --- aliases for the upstream and downstream links. These should
                 !%     be guaranteed to be in the u1 and d1 positions
@@ -1054,11 +1057,12 @@ contains
                         !% --- if both links are NOT open channel AND the SurchargeExtraDepth
                         !%     is equal to the InfiniteExtraDepthValue, then this is retained 
                         !%     as an nJ2 (unvented) face. Otherwise switched to a vented nJM element.
-                        !%     Offsets conditions on clus
+                        !%  
                         
                         !% --- no action: retain nJ2
                 else
                     !% --- switch to nJm
+                    ! write(*,*) '... switching nJ2 to nJm due to closed conduit with less than InfiniteExtraDepthValue for surcharge'
                     node%I(ii, ni_node_type) = nJm
                 end if
 
@@ -1084,6 +1088,7 @@ contains
                 ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
 
             end if
+            
             !% --- further check on offsets for any nJ2 that passed the prior
             !%     restrictions. In general, we have an nJm if there are 
             !%     any offsets, except if the offset is a weir or orifice.
@@ -1097,16 +1102,14 @@ contains
                     !% --- retain nJ2
                 else
                     !% --- switch to nJm
+                    !% write(*,*) '...switching nJ2 to nJm because of offsets upstream'
                     node%I(ii, ni_node_type) = nJm
                 end if
             end if
 
-            ! print *, ' at EEE'
-            ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
-
             if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
                  (link%R(linkDn,lr_InletOffset) .ne. zeroR) ) then
-                !% --- offsets are OK for upstream weir or orifice links  
+                !% --- offsets are OK for downstream weir or orifice links  
                 if (  (link%I(linkDn,li_link_type) .eq. lWeir)       &
                        .or.                                          &
                       (link%I(linkDn,li_link_type) .eq. lOrifice)    &
@@ -1114,9 +1117,11 @@ contains
                     !% --- retain nJ2
                 else
                     !% --- switch to nJm
+                    ! write(*,*) '.. switching to nJM because of offsets downstream'
                     node%I(ii, ni_node_type) = nJm
                 end if
             end if
+
             !% ==========================================================================
 
             !% --- set up the inflows (must be after nJ1, nJ2 are set)
@@ -1599,7 +1604,7 @@ contains
         integer       :: ii, jj,kk, offset, offset_profile,name_loc
         integer       :: error
 
-        print *, "inside of init_Profile"
+        ! print *, "inside of init_Profile"
         
         !allocate(character(50) :: choosen_name%str)
         open(10, file = setting%File%inp_file, status = "old", action = "read")
@@ -1608,8 +1613,6 @@ contains
         max_links_profile_N = 0
         !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
         !print *, "end of file(bytes):", end_of_file
-
-
 
         !read through the file looking for the profiles and then cound the amount of profiles and the max amount of links 
         do
@@ -1620,13 +1623,13 @@ contains
 
             if(line .eq. "[PROFILES]") then
                 
-                print *, 'profiles found'
+                ! print *, 'profiles found'
                 
-                print *, "offset_profile set:", offset_profile
+                ! print *, "offset_profile set:", offset_profile
                 read(10, "(A)", iostat = read_status) line
                 read(10, "(A)", iostat = read_status) line
                 offset_profile = FTELL(10)
-                print *, "offset_profile set:", offset_profile
+                ! print *, "offset_profile set:", offset_profile
                 max_profiles_N = 0
 
                 do
@@ -1638,7 +1641,7 @@ contains
                     ii = -1
                     max_profiles_N = max_profiles_N+1
                     name = line 
-                    print *, name
+                    ! print *, name
                     index_of_start = index(name,"""",.true.)
                     link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
                     do while (delimitator_loc > 1)
@@ -1649,15 +1652,11 @@ contains
                     end do 
                     if(max_links_profile_N < ii) then
                         max_links_profile_N = ii
-                        print *, "new max:", max_links_profile_N
+                        ! print *, "new max:", max_links_profile_N
                     end if
 
                 end do
-            ENDIF
-            
-
-
-            
+            endif
         end do
 
         max_links_profile_N = max_links_profile_N + max_links_profile_N + 1 
@@ -1668,8 +1667,8 @@ contains
         end if
 
         call util_allocate_output_profiles()
-        print *, "size of profiles", size(output_profile_ids)
-        print *, "offset_profile:", offset_profile
+        ! print *, "size of profiles", size(output_profile_ids)
+        ! print *, "offset_profile:", offset_profile
         rewind(10)
         error = fseek(10,offset_profile,0)
         output_profile_ids(:,:) = nullValueI
@@ -1706,12 +1705,12 @@ contains
 
     
                         if(jj > 2) then
-                            print *,"link%I(kk,li_Mnode_u):",link%I(kk,li_Mnode_u)
-                            print *,"link%I(output_profile_ids(ii,jj-1),li_Mnode_d):", link%I(output_profile_ids(ii,jj-1),li_Mnode_d)
+                            ! print *,"link%I(kk,li_Mnode_u):",link%I(kk,li_Mnode_u)
+                            ! print *,"link%I(output_profile_ids(ii,jj-1),li_Mnode_d):", link%I(output_profile_ids(ii,jj-1),li_Mnode_d)
                             if(link%I(kk,li_Mnode_u) .neqv. link%I(output_profile_ids(ii,jj-1),li_Mnode_d)) then
                                 print *, "Error with provides profiles not being continous"
                                 print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
-                                stop
+                                stop 558704
                             end if
 
                         end if
@@ -1728,7 +1727,7 @@ contains
                     end if
                     if (kk .eq. N_LINK ) then
                         print *, "Error with provided profiles: unknown link:,",trim(choosen_name), " added"   
-                        stop
+                        stop 6908734
                         exit
                     end if
 
@@ -1741,9 +1740,9 @@ contains
             end do
 
         end do
-        print *, "------------output_profile_ids---------"
-        print *, output_profile_ids(1,:)
-        print *, output_profile_ids(2,:)
+        ! print *, "------------output_profile_ids---------"
+        ! print *, output_profile_ids(1,:)
+        ! print *, output_profile_ids(2,:)
         !print *, output_profile_ids
         close (10)
         !% ALLOCATE THE ARRAYS AND THEN fill them with the correct indexs
@@ -2713,39 +2712,39 @@ contains
     subroutine init_ForceMain_setting ()
         !%------------------------------------------------------------------
         !% Description:
-        !% Sets the UseForceMainTF to false if no FM are found in the
+        !% Sets the AllowForceMainTF to false if no FM are found in the
         !% SWMMinput file links. 
         !%------------------------------------------------------------------
         !%
         !% --- check to see if any Force Main links exists
-        if (setting%Solver%ForceMain%UseForceMainTF) then
+        if (setting%Solver%ForceMain%AllowForceMainTF) then
             if (any(link%I(:,li_geometry) .eq. lForce_main)) then
-                !% --- maintain "true" for UseForceMainTF
+                !% --- maintain "true" for AllowForceMainTF
             else 
                 !% -- no force main found
-                setting%Solver%ForceMain%UseForceMainTF = .false.
+                setting%Solver%ForceMain%AllowForceMainTF = .false.
             end if
         end if
 
         !% --- check to see if user requests all closed conduits to be
         !%     treated as force mains. 
         if (setting%Solver%ForceMain%FMallClosedConduitsTF) then 
-            if (.not. setting%Solver%ForceMain%UseForceMainTF) then
+            if (.not. setting%Solver%ForceMain%AllowForceMainTF) then
                 !% --- inconsistent between using force main and
                 !%     setting all to closed conduits
                 if (this_image() == 1) then
                     print *, 'CONFIGURATION ERROR: Inconsistency in settings.'
-                    print *, 'setting.Solver.ForceMain.UseForceMainTF is false '
+                    print *, 'setting.Solver.ForceMain.AllowForceMainTF is false '
                     print *, 'setting.Solver.ForceMain.FMallClosedConduitsTF is true.'
                     print *, 'If you want to use Force main with all closed conduits then set '
-                    print *, 'setting.Solver.ForceMain.UseForceMainTF = true '
+                    print *, 'setting.Solver.ForceMain.AllowForceMainTF = true '
                     print *, 'otherwise set setting.Solver.ForceMain.FMallClosedConduits = false '
                 end if
                 call util_crashpoint(4298732)
             end if
         else 
             !% --- FMallClosedConduits = false is compatible with any value of
-            !%     UseForceMainTF
+            !%     AllowForceMainTF
         end if
 
     end subroutine init_ForceMain_setting

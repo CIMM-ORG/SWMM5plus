@@ -3246,7 +3246,7 @@ contains
 
         !% ep_FM_HW_all
         !% --- all force main (CC) elements that HW roughness method
-        if (setting%Solver%ForceMain%UseForceMainTF) then
+        if (setting%Solver%ForceMain%AllowForceMainTF) then
             !% print *, 'ForceMain Hazen-Williams ALL elements
             
             ptype => col_elemP(ep_FM_HW_all)
@@ -4026,7 +4026,7 @@ contains
                 (elemR(:,er_Setting) == zeroR ) )        
         end if
 
-        if (setting%Solver%ForceMain%UseForceMainTF) then
+        if (setting%Solver%ForceMain%AllowForceMainTF) then
             !% print *, 'ForceMain Hazen-Williams Preissmann Slot Surcharged elements
             !% ep_FM_HW_PSsurcharged
             !% --- all force main (CC) elements that are full pipe and HW roughness method

@@ -106,7 +106,7 @@
             "beta"                : 1.0
         },
         "ForceMain" : {
-            "UseForceMainTF"        : true,
+            "AllowForceMainTF"        : true,
             "UseSWMMinputMethodTF"  : true,
             "FMallClosedConduitsTF" : false,
             "errorCheck_RoughnessTF"     : true,

@@ -106,7 +106,7 @@
             "beta"                : 1.0
         },
         "ForceMain" : {
-            "UseForceMainTF"        : false,
+            "AllowForceMainTF"      : true,
             "UseSWMMinputMethodTF"  : true,
             "FMallClosedConduitsTF" : false,
             "errorCheck_RoughnessTF"     : true,
@@ -118,7 +118,7 @@
         },
         "PreissmannSlot" : {
             "Method" : "StaticSlot", 
-            "TargetCelerity" : 10.0
+            "TargetCelerity" : 100.0
         }
     },
     "VariableDT" : {

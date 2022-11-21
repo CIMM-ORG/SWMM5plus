@@ -1,4 +1,10 @@
-This is free and unencumbered software released into the public domain.
+This software, SWMM5+, is free and unencumbered software released i]
+into the public domain. This software consists of fortran code for the
+SWMM5+ hydraulic solver and associated C++ code for the application 
+programming interface with EPA SWMM.
+
+External dependencies (cmake, json, HDF5, EPA SWMM) have separate
+licenses.
 
 Anyone is free to copy, modify, publish, use, compile, sell, or
 distribute this software, either in source code form or as a compiled

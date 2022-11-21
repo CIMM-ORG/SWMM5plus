@@ -160,7 +160,7 @@ module define_settings
 
     !% setting%Solver%ForceMain
     type ForceMainType
-        logical :: UseForceMainTF        = .true.
+        logical :: AllowForceMainTF      = .true.  !% when false, FM is forced to standard pipe with default ManningsN
         logical :: UseSWMMinputMethodTF  = .true.
         logical :: FMallClosedConduitsTF = .false. 
         logical :: errorCheck_RoughnessTF     = .true. !% check scale of FM coef is consistent with HW or DW
@@ -168,7 +168,7 @@ module define_settings
         integer :: Default_method = HazenWilliams
         real(8) :: Default_HazenWilliams_coef = 120          !% 120  is concrete
         real(8) :: Default_DarcyWeisbach_roughness_mm = 0.36 !% 0.36 is concrete, good joints 
-        real(8) :: Default_ManningsN = 0.03  !% used on FM elements when UseForceMainTF = false
+        real(8) :: Default_ManningsN = 0.03  !% used on FM elements when AllowForceMainTF = false
         real(8) :: minimum_slope  = 1.0d-3  !% minimum slope in HW computation
     end type ForceMainType
 
@@ -231,7 +231,7 @@ module define_settings
         logical :: useSlotTF = .true.
         !% Allowable values: DynamicSlot, StaticSlot
         integer :: Method = DynamicSlot
-        real(8) :: TargetCelerity = 3.0d0
+        real(8) :: TargetCelerity = 100.0d0
         real(8) :: Alpha = 2.0d0
         real(8) :: DecayRate = 1.0
     end type PreissmannSlotType
@@ -1881,10 +1881,10 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.beta not found'
       
     !% Solver.ForceMain =====================================================================
-        !%                       Solver.ForceMain.UseForceMainTF
-        call json%get('Solver.ForceMain.UseForceMainTF', logical_value, found)
-        if (found) setting%Solver%ForceMain%UseForceMainTF = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.UseForceMainTF not found'
+        !%                       Solver.ForceMain.AllowForceMainTF
+        call json%get('Solver.ForceMain.AllowForceMainTF', logical_value, found)
+        if (found) setting%Solver%ForceMain%AllowForceMainTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMain.AllowForceMainTF not found'
 
         !%                       Solver.ForceMain.UseSWMMinputMethodTF
         call json%get('Solver.ForceMain.UseSWMMinputMethodTF', logical_value, found)

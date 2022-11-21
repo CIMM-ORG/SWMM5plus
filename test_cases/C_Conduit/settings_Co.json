@@ -95,7 +95,7 @@
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T10",
+        "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,
@@ -106,7 +106,7 @@
             "beta"                : 1.0
         },
         "ForceMain" : {
-            "UseForceMainTF"        : false,
+            "AllowForceMainTF"      : true,
             "UseSWMMinputMethodTF"  : true,
             "FMallClosedConduitsTF" : false,
             "errorCheck_RoughnessTF"     : true,
@@ -118,7 +118,9 @@
         },
         "PreissmannSlot" : {
             "Method" : "StaticSlot", 
-            "TargetCelerity" : 10.0
+            "TargetCelerity" : 50,
+            "Alpha"          : 2.0,
+            "DecayRate"      : 1
         }
     },
     "VariableDT" : {
