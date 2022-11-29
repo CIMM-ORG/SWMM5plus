@@ -290,7 +290,7 @@ module face
         !%------------------------------------------------------------------
         !% Declarations:
             logical, intent(in) :: isBConly
-            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+            integer :: fGeoSetU(2), fGeoSetD(2), eGeoSet(2)
             integer :: ii
             integer, pointer :: edn(:), idx_P(:), fdn(:)
             integer, pointer :: idx_fBC(:), idx_fJ1(:), idx_fBoth(:)
@@ -313,6 +313,9 @@ module face
         !% enforce stored inflow BC    
         faceR(idx_fBC, fr_Flowrate) = BC%flowR(idx_P,br_value)
 
+        ! print *, 'in face_interpolation_upBC'
+        ! print *, faceR(idx_fBC,fr_Area_d), faceR(idx_fBC, fr_Flowrate)
+
         !% enforce zero flow on J1 faces
         faceR(idx_fJ1, fr_Flowrate) = zeroR
         faceR(idx_fJ1, fr_Velocity_u) = zeroR
@@ -322,9 +325,13 @@ module face
         if (.not. isBConly) then
             !% Define sets of points for the interpolation, we are going from
             !% the elements to the faces.       
-            fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-            fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-            eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+            !fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+            !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+            !eGeoSet  = [er_Area,   er_Topwidth,   er_EllDepth]
+
+            fGeoSetU = [fr_Area_u, fr_Depth_u]
+            fGeoSetD = [fr_Area_d, fr_Depth_d]
+            eGeoSet  = [er_Area,   er_Depth]
 
             !% Copying geometric data from elements to the BC/J1 faces
             do ii = 1,size(fGeoSetU)
@@ -362,8 +369,9 @@ module face
         faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
         faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)  
 
-        !%  limit high velocities
-        if (setting%Limiter%Velocity%UseLimitMaxYN) then
+        !%  If an inflow has a high velocity, reset the value of the high velocity limiter
+        !%  
+        if (setting%Limiter%Velocity%UseLimitMaxYN) then            
             where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
                 faceR(idx_fBC,fr_Velocity_d) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
                     faceR(idx_fBC,fr_Velocity_d))
@@ -373,6 +381,8 @@ module face
                     faceR(idx_fBC,fr_Velocity_u))
             endwhere
         end if
+
+        !stop 209873
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -479,7 +489,8 @@ module face
 
         !% --- upstream face head is the BC
         !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
-        faceR(idx_fBC, fr_Head_u) = headBC(idx_P)
+        faceR(idx_fBC, fr_Head_u)  = headBC(idx_P)
+        faceR(idx_fBC, fr_Depth_u) = max(headBC(idx_P) - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth)
 
         ! print*, ' '
         ! print *, 'in ',trim(subroutine_name)
@@ -492,15 +503,18 @@ module face
         ! print *, 'BC depth',headBC(idx_P) - faceR(idx_fBC,fr_Zbottom)
 
         !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
-        faceR(idx_fBC, fr_Head_d) = faceR(idx_fBC, fr_Head_u)
+        faceR(idx_fBC, fr_Head_d)  = faceR(idx_fBC, fr_Head_u)
+        faceR(idx_fBC, fr_Depth_d) = faceR(idx_fBC, fr_Depth_u)
 
         ! print *, 'e head, head bc ', eHead(eup(idx_fBC)), headBC(idx_P)
         
         !% --- for a flap gate on a BC with higher head downstream
         where ( hasFlapGateBC(idx_P) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
             !% --- reset the head on the upstream and downstream side of face for closed gate
-            faceR(idx_fBC, fr_Head_u) = eHead(eup(idx_fBC))
-            faceR(idx_fBC, fr_Head_d) = headBC(idx_P)
+            faceR(idx_fBC, fr_Head_u)  = eHead(eup(idx_fBC))
+            faceR(idx_fBC, fr_Depth_u) = max(eHead(eup(idx_fBC)) - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth)
+            faceR(idx_fBC, fr_Head_d)  = headBC(idx_P)
+            faceR(idx_fBC, fr_Depth_d) = max(headBC(idx_P)       - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth)
         endwhere
 
         ! print *, 'faceR value head ',faceR(idx_fBC, fr_Head_u)
@@ -509,16 +523,20 @@ module face
         if (.not. isBConly) then
             !% --- get the depth on the face (upstream) from BC (temporary store)
             !%     this ensures that if gate is closed the depth is the upstream depth
-            depthBC(idx_P) = faceR(idx_fBC, fr_Head_u) - faceR(idx_fBC,fr_Zbottom)
+            depthBC(idx_P) = faceR(idx_fBC, fr_Depth_u) !faceR(idx_fBC, fr_Head_u) - faceR(idx_fBC,fr_Zbottom)
 
-            !% --- compute hyddepth, topwidth, area geometry from depth based on relationship for upstream element
+            !% --- compute elldepth, topwidth, area geometry from depth based on relationship for upstream element
             !%     but using the depthBC at the upstream side of the face (which may be closed gate)   
             do ii=1,size(idx_fBC)
                 elemUpstream => eup(idx_fBC(ii))
                 !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
-                faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
+                !faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
                 faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular    (elemUpstream,depthBC(idx_P(ii)))
-                faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_area_and_topwidth_singular(elemUpstream, faceR(idx_fBC(ii),fr_Area_u),faceR(idx_fBC(ii),fr_Topwidth_u) )
+                !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_area_and_topwidth_singular(elemUpstream, faceR(idx_fBC(ii),fr_Area_u),faceR(idx_fBC(ii),fr_Topwidth_u) )
+                ! faceR(idx_fBC(ii),fr_EllDepth_u) = geo_elldepth_singular &
+                !     (faceR(idx_fBC, fr_Head_u), faceR(idx_fBC(ii),fr_Area_u), faceR(idx_fBC(ii),fr_Topwidth_u), &
+                !      elemR(elemUpstream,er_AreaBelowBreadthMax), elemR(elemUpstream,er_BreadthMax), elemR(elemUpstream,er_ZbreadthMax))
+                
                 ! !% TEST 20220712--- apply simple linear interpolation to prevent large downstream area from causing numerical problems
                 ! !% 20220712brh
                 ! faceR(idx_fBC(ii),fr_Area_u)     =  (faceR(idx_fBC(ii),fr_Area_u)     + eArea(elemUpstream)    ) * onehalfR
@@ -526,9 +544,9 @@ module face
                 ! faceR(idx_fBC(ii),fr_Topwidth_u) =  (faceR(idx_fBC(ii),fr_Topwidth_u) + eTopWidth(elemUpstream)) * onehalfR
             end do
             !% --- store downstream side of face
-            faceR(idx_fBC,fr_Topwidth_d) = faceR(idx_fBC,fr_Topwidth_u) 
+            !faceR(idx_fBC,fr_Topwidth_d) = faceR(idx_fBC,fr_Topwidth_u) 
             faceR(idx_fBC,fr_Area_d)     = faceR(idx_fBC,fr_Area_u) 
-            faceR(idx_fBC,fr_HydDepth_d) = faceR(idx_fBC,fr_HydDepth_u)
+            !faceR(idx_fBC,fr_HydDepth_d) = faceR(idx_fBC,fr_HydDepth_u)
 
             ! print *, ' '
             ! print *, 'in face_interpolation_dnBC'
@@ -568,7 +586,8 @@ module face
                 headdif = faceR(idx_fBC(ii), fr_Head_u) - eHead(elemUpstream)
                 if (isZeroDepth(elemUpstream))then
                     !% --- for zero depth, limit headdif by 50% of the face depth as the driving head
-                    headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_HydDepth_d))
+                    !headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_HydDepth_d))
+                    headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_Depth_d))
                 end if
 
                 !  print *, 'ii, headdif ',ii, headdif
@@ -812,7 +831,7 @@ module face
         !%------------------------------------------------------------------
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, pointer    ::  Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+            integer :: fGeoSetU(2), fGeoSetD(2), eGeoSet(2)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
             integer :: fFlowSet(1), eFlowSet(1)
             integer :: fPreissmenSet(1), ePreissmenSet(1)
@@ -842,9 +861,13 @@ module face
         !% set the matching sets
         !% THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
         !% Note these can be expanded for other terms to be interpolated.
-        fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-        fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-        eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+        !fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+        !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        !eGeoSet  = [er_Area,   er_Topwidth,   er_EllDepth]
+
+        fGeoSetU = [fr_Area_u, fr_Depth_u]
+        fGeoSetD = [fr_Area_d, fr_Depth_d]
+        eGeoSet  = [er_Area,   er_Depth]
 
         fHeadSetU = [fr_Head_u]
         fHeadSetD = [fr_Head_d]
@@ -909,7 +932,7 @@ module face
         !% Declarations
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, pointer    :: Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(3), fGeoSetD(3), eGhostGeoSet(3)
+            integer :: fGeoSetU(2), fGeoSetD(2), eGhostGeoSet(2)
             integer :: fHeadSetU(1), fHeadSetD(1), eGhostHeadSet(1)
             integer :: fFlowSet(1), eGhostFlowSet(1)
             integer :: fPreissmenSet(1), eGhostPreissmenSet(1)
@@ -946,9 +969,13 @@ module face
         !% set the matching sets
         !% HACK THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
         !% Note these can be expanded for other terms to be interpolated.
-        fGeoSetU     = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-        fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-        eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
+        ! fGeoSetU     = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+        ! fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        ! eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
+
+        fGeoSetU     = [fr_Area_u, fr_Depth_u]
+        fGeoSetD     = [fr_Area_d, fr_Depth_d]
+        eGhostGeoSet = [ebgr_Area, ebgr_Depth]
 
         fHeadSetU     = [fr_Head_u]
         fHeadSetD     = [fr_Head_d]
@@ -1405,7 +1432,7 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
-            eColumns = [er_Area, er_Topwidth, er_HydDepth, er_Head, er_Flowrate, er_Preissmann_Number, er_Volume, &
+            eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number, er_Volume, &
                         er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH,   er_InterpWeight_uH, &
                         er_InterpWeight_dQ, er_InterpWeight_uQ, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP] 
 

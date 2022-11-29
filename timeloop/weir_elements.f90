@@ -468,7 +468,7 @@ module weir_elements
         integer, intent(in) :: eIdx
         real(8), pointer :: FullDepth, Head, Length, Zbottom,  Zcrown
         real(8), pointer :: Depth, Area, Volume, Topwidth, HydRadius
-        real(8), pointer :: Perimeter, HydDepth,  Zcrest, ell, CurrentSetting
+        real(8), pointer :: Perimeter,  Zcrest, ellDepth, CurrentSetting !, HydDepth
         real(8), pointer :: RectangularBreadth, TrapezoidalBreadth
         real(8), pointer :: TriangularSideSlope, TrapezoidalLeftSlope, TrapezoidalRightSlope
         integer, pointer :: SpecificWeirType
@@ -480,9 +480,9 @@ module weir_elements
         SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
         Area        => elemR(eIdx,er_Area)
         Depth       => elemR(eIdx,er_Depth)
-        ell         => elemR(eIdx,er_ell)
+        ellDepth    => elemR(eIdx,er_EllDepth)
         Head        => elemR(eIdx,er_Head)
-        HydDepth    => elemR(eIdx,er_HydDepth)
+        !HydDepth    => elemR(eIdx,er_HydDepth)
         HydRadius   => elemR(eIdx,er_HydRadius)
         Length      => elemR(eIdx,er_Length)
         Perimeter   => elemR(eIdx,er_Perimeter)
@@ -520,9 +520,9 @@ module weir_elements
                 Area      = RectangularBreadth * zY - RectangularBreadth * z
                 Volume    = Area * Length  !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
-                HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
-                ell       = Head - Zbottom
-                Perimeter = Topwidth + twoR * HydDepth
+                !HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
+                ellDepth  = Head - Zbottom
+                Perimeter = Topwidth + twoR * Depth
                 HydRadius = Area / Perimeter
             
             case (trapezoidal_weir)
@@ -531,8 +531,8 @@ module weir_elements
                 Volume    = Area * Length
                 Topwidth  = TrapezoidalBreadth + Depth &
                             * (TrapezoidalLeftSlope + TrapezoidalRightSlope)
-                HydDepth  = Area / Topwidth
-                ell       = Head - Zbottom
+                !HydDepth  = Area / Topwidth
+                ellDepth   = Head - Zbottom
                 Perimeter = TrapezoidalBreadth + Depth &
                                 * (sqrt(oneR + (TrapezoidalLeftSlope**twoR)) &
                                 + sqrt(oneR + (TrapezoidalRightSlope**twoR)))
@@ -542,7 +542,7 @@ module weir_elements
                 Area      = TriangularSideSlope * zY ** twoR - TriangularSideSlope * z ** twoR
                 Volume    = Area * Length
                 Topwidth  = twoR * TriangularSideSlope * Depth
-                HydDepth  = onehalfR * Depth
+                ellDepth  = onehalfR * Depth
                 Perimeter = twoR * Depth * sqrt(oneR + (TriangularSideSlope ** twoR))
                 HydRadius = (TriangularSideSlope * Depth) &
                                 / (twoR * sqrt(oneR + (TriangularSideSlope ** twoR)))
@@ -555,9 +555,9 @@ module weir_elements
         !% apply geometry limiters
         call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area,    .false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth,   .false.)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth,   .false.)
+        !call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth,   .false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth,   .false.)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_ell,       setting%ZeroValue%Depth,   .false.) 
+        call adjust_limit_by_zerovalues_singular (eIdx, er_EllDepth,  setting%ZeroValue%Depth,   .false.) 
         call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth,.false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth,.false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume,  .true.)

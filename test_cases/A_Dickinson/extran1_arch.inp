@@ -39,9 +39,6 @@ LAT_FLOW_TOL         5
 MINIMUM_STEP         0.5
 THREADS              1
 
-[FILES]
-;;Interfacing Files
-
 [EVAPORATION]
 ;;Data Source    Parameters
 ;;-------------- ----------------
@@ -64,7 +61,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-10208            89.9       FREE                        YES                       
+10208            89.9       FREE                        NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -82,15 +79,15 @@ DRY_ONLY         NO
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-8040             FILLED_CIRCULAR 1                .5         0          0          1                    
-8060             FILLED_CIRCULAR 1                .5         0          0          1                    
-8100             FILLED_CIRCULAR 1                .5         0          0          1                    
-8130             FILLED_CIRCULAR 1                .5         0          0          1                    
-1030             FILLED_CIRCULAR 1                .5         0          0          1                    
-1570             FILLED_CIRCULAR 1                .5         0          0          1                    
-1600             FILLED_CIRCULAR 1                .5         0          0          1                    
-1630             FILLED_CIRCULAR 1                .5         0          0          1                    
-1602             FILLED_CIRCULAR 1                .5         0          0          1                    
+8040             ARCH         1                1          0          0          1                    
+8060             ARCH         1                1          0          0          1                    
+8100             ARCH         1                1          0          0          1                    
+8130             ARCH         1                1          0          0          1                    
+1030             ARCH         1                1          0          0          1                    
+1570             ARCH         1                1          0          0          1                    
+1600             ARCH         1                1          0          0          1                    
+1630             ARCH         1                1          0          0          1                    
+1602             ARCH         1                1          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

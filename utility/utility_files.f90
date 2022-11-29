@@ -635,7 +635,7 @@ contains
         !% --- HACK -- need error handling for all the mkdir below
 
         !% --- debug and swmm output folders
-        if (setting%Debug%SetupYN) then
+        !  if (setting%Debug%SetupYN) then
 
             ! !% --- setup the subfolders for links and nodes
             ! setting%File%debug_setup_link_folder = trim(setting%File%output_timestamp_subfolder) &
@@ -656,7 +656,7 @@ contains
             !         ('mkdir '// trim(setting%File%debug_setup_node_folder)), cmdstat=istat, cmdmsg=cmsg)
             ! end if
 
-        end if
+        ! end if
             ! if (setting%Debug%OutputYN) then
 
             !     !% --- setup the subfolders for links and nodes

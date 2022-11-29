@@ -34,8 +34,8 @@ module geometry_lowlevel
     public :: llgeo_hydradius_from_area_and_perimeter_pure
     public :: llgeo_perimeter_from_hydradius_and_area_pure
     public :: llgeo_hyddepth_from_area_and_topwidth_pure
-    public :: llgeo_FullEll_pure
-    public :: llgeo_ell_pure
+    !public :: llgeo_FullEll_pure
+    public :: llgeo_elldepth_pure
     !public :: llgeo_pressure_head_from_hyddepth_pure
 
     !% --- table look-ups (subroutines for arrays)
@@ -209,30 +209,30 @@ module geometry_lowlevel
 !%==========================================================================
 !%==========================================================================
 !%
-    pure function llgeo_FullEll_pure &
-            (thisP)   
-        !%------------------------------------------------------------------
-        !% Description
-        !% computation of full value of ell as alternative hydraulic depth
-        !%------------------------------------------------------------------
-            integer, intent(in) :: thisP(:)
-            real(8), dimension(1:size(thisP)) :: llgeo_FullEll_pure
-        !%------------------------------------------------------------------
-        !%------------------------------------------------------------------
+    ! pure function llgeo_FullEll_pure &
+    !         (thisP)   
+    !     !%------------------------------------------------------------------
+    !     !% Description
+    !     !% computation of full value of ell as alternative hydraulic depth
+    !     !%------------------------------------------------------------------
+    !         integer, intent(in) :: thisP(:)
+    !         real(8), dimension(1:size(thisP)) :: llgeo_FullEll_pure
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
 
-        llgeo_FullEll_pure &
-                 = (                                                     &
-                    elemR(thisP,er_Zcrown) - elemR(thisP,er_ZbreadthMax) &
-                   )                                                     &
-                   * elemR(thisP,er_BreadthMax)                          &
-                   + elemR(thisP,er_AreaBelowBreadthMax) / elemR(thisP,er_BreadthMax) 
+    !     llgeo_FullEll_pure &
+    !              = (                                                     &
+    !                 elemR(thisP,er_Zcrown) - elemR(thisP,er_ZbreadthMax) &
+    !                )                                                     &
+    !                * elemR(thisP,er_BreadthMax)                          &
+    !                + elemR(thisP,er_AreaBelowBreadthMax) / elemR(thisP,er_BreadthMax) 
 
-    end function llgeo_FullEll_pure
+    ! end function llgeo_FullEll_pure
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    pure function llgeo_ell_pure (thisP)
+    pure function llgeo_elldepth_pure (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% computes the value of "ell" the modified hydraulic depth
@@ -242,7 +242,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisP(:)
-            real(8), dimension(size(thisP)) :: llgeo_ell_pure
+            real(8), dimension(size(thisP)) :: llgeo_elldepth_pure
             !real(8), pointer :: head, area, topwidth
             !real(8), pointer :: ZbreadthMax, breadthMax, areaBelowBreadthMax
         !%------------------------------------------------------------------    
@@ -255,11 +255,11 @@ module geometry_lowlevel
             ! areaBelowBreadthMax => elemR(indx,er_AreaBelowBreadthMax)
         !%------------------------------------------------------------------
 
-        where (elemR(thisP,er_Head) <  elemR(thisP,er_ZbreadthMax))
-            llgeo_ell_pure = elemR(thisP,er_Area) / elemR(thisP,er_Topwidth)
+        where (elemR(thisP,er_Head) .le.  elemR(thisP,er_ZbreadthMax))
+            llgeo_elldepth_pure = elemR(thisP,er_Area) / elemR(thisP,er_Topwidth)
 
         elsewhere
-            llgeo_ell_pure = &
+            llgeo_elldepth_pure = &
                        ( (elemR(thisP,er_Head) - elemR(thisP,er_ZbreadthMax)) &
                           * elemR(thisP,er_BreadthMax)                       &
                           + elemR(thisP,er_AreaBelowBreadthMax)             &
@@ -274,7 +274,7 @@ module geometry_lowlevel
         !                     + areaBelowBreadthMax ) / breadthMax
         ! end if
 
-    end function llgeo_ell_pure
+    end function llgeo_elldepth_pure
 !%
 !%==========================================================================
 !% TABLE LOOK-UP (PACKED)

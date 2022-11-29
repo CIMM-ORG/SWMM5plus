@@ -17,14 +17,14 @@ START_TIME           00:00:00
 REPORT_START_DATE    01/01/2002
 REPORT_START_TIME    00:00:00
 END_DATE             01/01/2002
-END_TIME             08:00:00
+END_TIME             00:35:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:15:00
+REPORT_STEP          00:00:02
 WET_STEP             00:15:00
 DRY_STEP             01:00:00
-ROUTING_STEP         0:00:20 
+ROUTING_STEP         0:00:01 
 
 INERTIAL_DAMPING     NONE
 NORMAL_FLOW_LIMITED  BOTH
@@ -41,6 +41,7 @@ THREADS              1
 
 [FILES]
 ;;Interfacing Files
+SAVE Outflows/Calibration "D:\SWMMandSoftware\SWMM5.013_June2018\EPASWMM5.1.013\Swmm5.1.013UpdateTests\OWA_EXTRAN\Extran1.txt"
 
 [EVAPORATION]
 ;;Data Source    Parameters
@@ -82,51 +83,51 @@ DRY_ONLY         NO
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-8040             FILLED_CIRCULAR 1                .5         0          0          1                    
-8060             FILLED_CIRCULAR 1                .5         0          0          1                    
-8100             FILLED_CIRCULAR 1                .5         0          0          1                    
-8130             FILLED_CIRCULAR 1                .5         0          0          1                    
-1030             FILLED_CIRCULAR 1                .5         0          0          1                    
-1570             FILLED_CIRCULAR 1                .5         0          0          1                    
-1600             FILLED_CIRCULAR 1                .5         0          0          1                    
-1630             FILLED_CIRCULAR 1                .5         0          0          1                    
-1602             FILLED_CIRCULAR 1                .5         0          0          1                    
+8040             CIRCULAR     1                0          0          0          1                    
+8060             CIRCULAR     1                0          0          0          1                    
+8100             CIRCULAR     1                0          0          0          1                    
+8130             CIRCULAR     1                0          0          0          1                    
+1030             CIRCULAR     1                0          0          0          1                    
+1570             CIRCULAR     1                0          0          0          1                    
+1600             CIRCULAR     1                0          0          0          1                    
+1630             CIRCULAR     1                0          0          0          1                    
+1602             CIRCULAR     1                0          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
 80408            FLOW             80408            FLOW     1.0      1.0              
-81009            FLOW             81009            FLOW     1.0      1.0              
-82309            FLOW             82309            FLOW     1.0      1.0              
+;;81009            FLOW             81009            FLOW     1.0      1.0              
+;;82309            FLOW             82309            FLOW     1.0      1.0              
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
-82309                       0          0         
-82309                       0.25       40        
-82309                       3.0        40        
-82309                       3.25       0         
-82309                       12.0       0         
+82309                       0          1         
+82309                       0.25       1        
+82309                       3.0        1        
+82309                       3.25       1         
+82309                       12.0       1         
 ;
-80408                       0          0         
-80408                       0.25       45        
-80408                       3.0        45        
-80408                       3.25       0         
-80408                       12         0         
+80408                       0          1         
+80408                       0.25       1        
+80408                       3.0        1        
+80408                       3.25       1         
+80408                       12         1         
 ;
-81009                       0          0         
-81009                       0.25       50        
-81009                       3.0        50        
-81009                       3.25       0         
-81009                       12         0         
+81009                       0          1         
+81009                       0.25       1        
+81009                       3.0        1        
+81009                       3.25       1         
+81009                       12         1         
 
 [REPORT]
 ;;Reporting Options
 INPUT      YES
 CONTROLS   YES
 SUBCATCHMENTS ALL
-NODES ALL
-LINKS ALL
+NODES 80408 80608
+LINKS 8040 8060
 
 [TAGS]
 

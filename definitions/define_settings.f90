@@ -110,7 +110,7 @@ module define_settings
     type AdjustHeadType
         logical :: ApplyYN = .true.
         integer :: Approach = vshape_surcharge_only
-        real(8) :: Coef = 1.0
+        real(8) :: Coef = 1.0d0
         real(8) :: FullDepthMultiplier = 1.0d0
     end type AdjustHeadType
 
@@ -122,7 +122,7 @@ module define_settings
     !% setting%Output%CommandLine
     type CommandLineType
         logical :: quietYN = .false.
-        integer :: interval = 1 !% steps between output
+        integer :: interval = 10 !% steps between output
     end type CommandLineType
 
     !% setting%Time%CPU
@@ -133,7 +133,7 @@ module define_settings
         real (8) :: EpochFinishSeconds  = 0.0d0
     end type CPUTimeType
 
-    !% setting%Output%DataLink
+    !% setting%Output%DataOut
     type DataOutType
         logical :: isAreaOut                = .false.
         logical :: isDepthOut               = .true.
@@ -141,7 +141,6 @@ module define_settings
         logical :: isFluxConsOut            = .true.
         logical :: isFroudeNumberOut        = .false.
         logical :: isHeadOut                = .true.
-        !logical :: isPressureHeadOut        = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
         logical :: isManningsNout           = .false.
@@ -152,7 +151,7 @@ module define_settings
         logical :: isVolumeOut              = .true.
         logical :: isVolumeConsOut          = .true.
         logical :: isVolumeOverflowOut      = .true.
-        logical :: isVolumePondedOut        = .false.
+        logical :: isVolumePondedOut        = .true.
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
@@ -308,6 +307,7 @@ module define_settings
     end type
 
     !% setting%Weir% ...Transverse, SideFlow, VNotch, Trapezoidal
+    !%      default values provided in define_settings_default
     type WeirConstantType
         real(8) :: WeirExponent
         real(8) :: WeirContractionFactor
@@ -359,17 +359,17 @@ module define_settings
     end type DebugFileYNType
 
     ! setting%Debug%FileGroup
-    type DebugFileGroupYNType
-        logical :: all              = .false.
-        logical :: definitions      = .false.
-        logical :: finalization     = .false.
-        logical :: geometry         = .false.
-        logical :: initialization   = .false.
-        logical :: interface        = .false.
-        logical :: output           = .false.
-        logical :: timeloop         = .false.
-        logical :: utility          = .false.
-    end type DebugFileGroupYNType
+    ! type DebugFileGroupYNType
+    !     logical :: all              = .false.
+    !     logical :: definitions      = .false.
+    !     logical :: finalization     = .false.
+    !     logical :: geometry         = .false.
+    !     logical :: initialization   = .false.
+    !     logical :: interface        = .false.
+    !     logical :: output           = .false.
+    !     logical :: timeloop         = .false.
+    !     logical :: utility          = .false.
+    ! end type DebugFileGroupYNType
 
     !%===================================================================
     ! Second Level Types
@@ -432,17 +432,16 @@ module define_settings
     ! setting%Control
     !% structure to setup a simple time-setting based controls for links
     !% NOT USER SETTINGS
-    type ControlType
-        integer              :: NumControl = 0          !% number of links controlled
-        integer, allocatable :: LinkIdx(:)              !% index of the links controlled             
-        integer, allocatable :: ElemIdx(:)              !% index of the elements controlled
-        real(8), allocatable :: TimeArray(:,:)          !% arrays of time to change setting. Each column is for a each of the links (has to be in ascending order)
-        real(8), allocatable :: SettingsArray(:,:)      !% arrays of settings. Each column is for a each of the links
-        character(len=:), allocatable :: Links(:)       !% link names from SWMM5 input file to be controlled
+    type ControlType !% NOT A USER SETTING
+        integer              :: NumControl = 0          !% number of links controlled  NOT A USER SETTING
+        integer, allocatable :: LinkIdx(:)              !% index of the links controlled  NOT A USER SETTING            
+        integer, allocatable :: ElemIdx(:)              !% index of the elements controlled  NOT A USER SETTING
+        real(8), allocatable :: TimeArray(:,:)          !% arrays of time to change setting. Each column is for a each of the links NOT A USER SETTING
+        real(8), allocatable :: SettingsArray(:,:)      !% arrays of settings. Each column is for a each of the links NOT A USER SETTING
+        character(len=:), allocatable :: Links(:)       !% link names from SWMM5 input file to be controlled NOT A USER SETTING
     end type ControlType
 
-    !% setting%Crash
-    !% NOT USER SETTING(see util_crash_initialize)
+    !% setting%Crash !% NOT USER SETTING(see util_crash_initialize)
     type CrashType
         real(8) :: DepthMax  !% maximum depth exceedence in 1 cell that causes crash
         real(8) :: HeadMax   !% maximum head exceedence in 1 cell that causes crash
@@ -458,9 +457,9 @@ module define_settings
     !% THESE WILL BE OBSOLETE
     type DebugType
         type(DebugFileYNType) :: File
-        type(DebugFileGroupYNType) :: FileGroup
-        logical :: SetupYN
-        logical :: OutputYN
+        !type(DebugFileGroupYNType) :: FileGroup
+        !logical :: SetupYN = .false.
+        !logical :: OutputYN = .false.
     end type DebugType
 
     !% setting%Discretization
@@ -522,9 +521,9 @@ module define_settings
         integer              :: outputML_Ncombined_file_written = 0
         integer              :: outputML_total_timelevels_written = 0
 
-        !% file handling
+        !% file handling !% NOT USER SETTINGS
         integer              :: last_unit = 1000 !% starting point for assigning unit numbers
-        type(UnitNumberType) :: UnitNumber
+        type(UnitNumberType) :: UnitNumber  
     end type FileType
 
     ! setting%Junction
@@ -638,10 +637,6 @@ module define_settings
         type(PreissmannSlotType) :: PreissmannSlot
     end type SolverType
 
-    type TestCaseType  !% NOT WORKING YET
-        logical       :: UseTestCaseYN = .false.
-        character(64) :: TestName
-    end type TestCaseType
 
     !% storage for data read from SWMM input file
     !% NOT USER SETTINGS
@@ -713,7 +708,13 @@ module define_settings
         integer :: N_groundwater = zeroI
         integer :: N_link_transect = zeroI
         integer :: N_transect_depth_items = zeroI
-    end type SWMMinputType    
+    end type SWMMinputType 
+    
+    !% setting%TestCase
+    type TestCaseType  !% NOT WORKING YET
+        logical       :: UseTestCaseYN = .false.
+        character(64) :: TestName
+    end type TestCaseType
 
     ! setting%Time
     type TimeType
@@ -734,7 +735,7 @@ module define_settings
         type(CPUTimeType)  :: CPU          !% NOT A USER SETTING
     end type TimeType
 
-    !% setting%Weir
+    !% setting%Weir  !% values set in define_settings_default
     type WeirType
         type(WeirConstantType) :: Transverse
         type(WeirConstantType) :: SideFlow
@@ -746,9 +747,9 @@ module define_settings
     type VariableDTType
         logical :: ApplyYN = .true.
         logical :: limitByBC_YN = .true.  !% limits time step by BC step for inflows/head
-        real(8) :: CFL_hi_max = 0.5d0
-        real(8) :: CFL_target = 0.4d0
-        real(8) :: CFL_lo_max = 0.2d0
+        real(8) :: CFL_hi_max = 0.6d0
+        real(8) :: CFL_target = 0.5d0
+        real(8) :: CFL_lo_max = 0.4d0
         real(8) :: CFL_inflow_max = 0.4d0
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2d0 
@@ -2423,62 +2424,62 @@ contains
 
     !% Debug.FileGroup =====================================================================
         !%                       
-        call json%get('Debug.FileGroup.all', logical_value, found)
-        if (found) setting%Debug%FileGroup%all = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.all not found'
+        ! call json%get('Debug.FileGroup.all', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%all = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.all not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.definitions', logical_value, found)
-        if (found) setting%Debug%FileGroup%definitions = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.definitions not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.definitions', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%definitions = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.definitions not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.finalization', logical_value, found)
-        if (found) setting%Debug%FileGroup%finalization = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.finalization not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.finalization', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%finalization = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.finalization not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.geometry', logical_value, found)
-        if (found) setting%Debug%FileGroup%geometry = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.geometry not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.geometry', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%geometry = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.geometry not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.initialization', logical_value, found)
-        if (found) setting%Debug%FileGroup%initialization = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.initialization not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.initialization', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%initialization = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.initialization not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.interface', logical_value, found)
-        if (found) setting%Debug%FileGroup%interface = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.interface not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.interface', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%interface = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.interface not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.output', logical_value, found)
-        if (found) setting%Debug%FileGroup%output = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.output not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.output', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%output = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.output not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.timeloop', logical_value, found)
-        if (found) setting%Debug%FileGroup%timeloop = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.timeloop not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.timeloop', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%timeloop = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.timeloop not found'
         
-        !%                       
-        call json%get('Debug.FileGroup.utility', logical_value, found)
-        if (found) setting%Debug%FileGroup%utility = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.utility not found'
+        ! !%                       
+        ! call json%get('Debug.FileGroup.utility', logical_value, found)
+        ! if (found) setting%Debug%FileGroup%utility = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.FileGroup.utility not found'
         
     !% Debug. =====================================================================
         !%                       'Debug.SetupYN
-        call json%get('Debug.SetupYN', logical_value, found)
-        if (found) setting%Debug%SetupYN = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.Setup not found'
+        ! call json%get('Debug.SetupYN', logical_value, found)
+        ! if (found) setting%Debug%SetupYN = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.Setup not found'
         
-        !%                       Debug.OutputYN
-        call json%get('Debug.OutputYN', logical_value, found)
-        if (found) setting%Debug%OutputYN = logical_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.Output not found'
+        ! !%                       Debug.OutputYN
+        ! call json%get('Debug.OutputYN', logical_value, found)
+        ! if (found) setting%Debug%OutputYN = logical_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.Output not found'
 
-        call define_settings_update_debug()
+        ! call define_settings_update_debug()
  
      !% finished
         call json%destroy()
@@ -2491,78 +2492,78 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine define_settings_update_debug()
-        !% -----------------------------------------------------------------
-        !% Description:
-        !% Uses the Debug%FileGroup... = true option to turn on the debug
-        !% for all the files in that group
-        !% -----------------------------------------------------------------
-        if (setting%Debug%FileGroup%all) then
-            setting%Debug%FileGroup%definitions = .true.
-            setting%Debug%FileGroup%finalization = .true.
-            setting%Debug%FileGroup%geometry = .true.
-            setting%Debug%FileGroup%initialization = .true.
-            setting%Debug%FileGroup%interface = .true.
-            setting%Debug%FileGroup%output  = .true.
-            setting%Debug%FileGroup%timeloop  = .true.
-            setting%Debug%FileGroup%utility = .true.
-        end if
-        if (setting%Debug%FileGroup%definitions) then
-            setting%Debug%File%define_globals = .true.
-            setting%Debug%File%define_indexes = .true.
-            setting%Debug%File%define_keys = .true.
-            setting%Debug%File%define_settings = .true.
-            setting%Debug%File%define_types = .true.
-        end if
-        if (setting%Debug%FileGroup%finalization) then
-            setting%Debug%File%finalization = .true.
-        end if
-        if (setting%Debug%FileGroup%geometry) then
-            setting%Debug%File%geometry = .true.
-            setting%Debug%File%rectangular_channel = .true.
-            setting%Debug%File%trapezoidal_channel = .true.
-        end if
-        if (setting%Debug%FileGroup%initialization) then
-            setting%Debug%File%discretization = .true.
-            setting%Debug%File%initial_condition = .true.
-            setting%Debug%File%initialization = .true.
-            setting%Debug%File%network_define = .true.
-            setting%Debug%File%partitioning = .true.
-            setting%Debug%File%BIPquick = .true.
-            setting%Debug%File%pack_mask_arrays = .true.
-        end if
-        if (setting%Debug%FileGroup%interface) then
-            setting%Debug%File%c_library = .true.
-            setting%Debug%File%interface = .true.
-        end if
-        if (setting%Debug%FileGroup%output) then
-            setting%Debug%File%output = .true.
-        end if
-        if (setting%Debug%FileGroup%timeloop) then
-            setting%Debug%File%adjust = .true.
-            setting%Debug%File%boundary_conditions = .true.
-            setting%Debug%File%diagnostic_elements = .true.
-            setting%Debug%File%face = .true.
-            setting%Debug%File%jump = .true.
-            setting%Debug%File%lowlevel_rk2 = .true.
-            setting%Debug%File%orifice_elements = .true.
-            setting%Debug%File%pump_elements = .true.
-            setting%Debug%File%runge_kutta2 = .true.
-            setting%Debug%File%timeloop = .true.
-            setting%Debug%File%update = .true.
-            setting%Debug%File%weir_elements = .true.
-        end if
-        if (setting%Debug%FileGroup%utility) then
-            setting%Debug%File%utility_allocate = .true.
-            setting%Debug%File%utility_deallocate = .true.
-            setting%Debug%File%utility_array = .true.
-            setting%Debug%File%utility_datetime = .true.
-            setting%Debug%File%utility_interpolate = .true.
-            setting%Debug%File%utility_output = .true.
-            setting%Debug%File%utility_string = .true.
-            setting%Debug%File%utility = .true.
-        end if
-    end subroutine define_settings_update_debug
+    ! subroutine define_settings_update_debug()
+    !     !% -----------------------------------------------------------------
+    !     !% Description:
+    !     !% Uses the Debug%FileGroup... = true option to turn on the debug
+    !     !% for all the files in that group
+    !     !% -----------------------------------------------------------------
+    !     if (setting%Debug%FileGroup%all) then
+    !         setting%Debug%FileGroup%definitions = .true.
+    !         setting%Debug%FileGroup%finalization = .true.
+    !         setting%Debug%FileGroup%geometry = .true.
+    !         setting%Debug%FileGroup%initialization = .true.
+    !         setting%Debug%FileGroup%interface = .true.
+    !         setting%Debug%FileGroup%output  = .true.
+    !         setting%Debug%FileGroup%timeloop  = .true.
+    !         setting%Debug%FileGroup%utility = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%definitions) then
+    !         setting%Debug%File%define_globals = .true.
+    !         setting%Debug%File%define_indexes = .true.
+    !         setting%Debug%File%define_keys = .true.
+    !         setting%Debug%File%define_settings = .true.
+    !         setting%Debug%File%define_types = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%finalization) then
+    !         setting%Debug%File%finalization = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%geometry) then
+    !         setting%Debug%File%geometry = .true.
+    !         setting%Debug%File%rectangular_channel = .true.
+    !         setting%Debug%File%trapezoidal_channel = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%initialization) then
+    !         setting%Debug%File%discretization = .true.
+    !         setting%Debug%File%initial_condition = .true.
+    !         setting%Debug%File%initialization = .true.
+    !         setting%Debug%File%network_define = .true.
+    !         setting%Debug%File%partitioning = .true.
+    !         setting%Debug%File%BIPquick = .true.
+    !         setting%Debug%File%pack_mask_arrays = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%interface) then
+    !         setting%Debug%File%c_library = .true.
+    !         setting%Debug%File%interface = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%output) then
+    !         setting%Debug%File%output = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%timeloop) then
+    !         setting%Debug%File%adjust = .true.
+    !         setting%Debug%File%boundary_conditions = .true.
+    !         setting%Debug%File%diagnostic_elements = .true.
+    !         setting%Debug%File%face = .true.
+    !         setting%Debug%File%jump = .true.
+    !         setting%Debug%File%lowlevel_rk2 = .true.
+    !         setting%Debug%File%orifice_elements = .true.
+    !         setting%Debug%File%pump_elements = .true.
+    !         setting%Debug%File%runge_kutta2 = .true.
+    !         setting%Debug%File%timeloop = .true.
+    !         setting%Debug%File%update = .true.
+    !         setting%Debug%File%weir_elements = .true.
+    !     end if
+    !     if (setting%Debug%FileGroup%utility) then
+    !         setting%Debug%File%utility_allocate = .true.
+    !         setting%Debug%File%utility_deallocate = .true.
+    !         setting%Debug%File%utility_array = .true.
+    !         setting%Debug%File%utility_datetime = .true.
+    !         setting%Debug%File%utility_interpolate = .true.
+    !         setting%Debug%File%utility_output = .true.
+    !         setting%Debug%File%utility_string = .true.
+    !         setting%Debug%File%utility = .true.
+    !     end if
+    ! end subroutine define_settings_update_debug
 !%
 !%==========================================================================
 !%==========================================================================

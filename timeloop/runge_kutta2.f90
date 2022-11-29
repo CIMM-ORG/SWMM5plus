@@ -190,7 +190,9 @@ module runge_kutta2
         
             !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
             !  print *, '==================================================='
-        
+            ! if (setting%Time%Step == 2) then
+            !     stop 6987588
+            ! end if
 
         !%-----------------------------------------------------------------
         !% closing

@@ -6,7 +6,7 @@ module orifice_elements
     use define_settings, only: setting
     use common_elements
     use adjust
-    use geometry_lowlevel, only: llgeo_ell_pure
+    use geometry_lowlevel, only: llgeo_elldepth_pure
     !use geometry, only: geo_ell_singular
     use define_xsect_tables
     use utility, only: util_sign_with_ones
@@ -336,8 +336,8 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         real(8), pointer :: Head, Length, Zbottom,  Zcrown
-        real(8), pointer :: Depth, Area, Volume, Topwidth, ell
-        real(8), pointer :: Perimeter, HydDepth, HydRadius,  Zcrest, EffectiveFullArea
+        real(8), pointer :: Depth, Area, Volume, Topwidth, ellDepth
+        real(8), pointer :: Perimeter, HydRadius,  Zcrest, EffectiveFullArea !, HydDepth
         real(8), pointer :: RectangularBreadth, EffectiveFullDepth
         integer, pointer :: GeometryType
         real(8)          :: YoverYfull
@@ -358,9 +358,9 @@ module orifice_elements
         Area               => elemR(eIdx,er_Area)
         Depth              => elemR(eIdx,er_Depth)
         Head               => elemR(eIdx,er_Head)
-        HydDepth           => elemR(eIdx,er_HydDepth)
+        !HydDepth           => elemR(eIdx,er_HydDepth)
         HydRadius          => elemR(eIdx,er_HydRadius)
-        ell                => elemR(eIdx,er_ell)
+        ellDepth           => elemR(eIdx,er_EllDepth)
         Length             => elemR(eIdx,er_Length)
         Perimeter          => elemR(eIdx,er_Perimeter)
         Topwidth           => elemR(eIdx,er_Topwidth)
@@ -386,14 +386,14 @@ module orifice_elements
         !% set geometry
 
         !% if the orifice is closed or depth is below crest, set all the geometry to zero
-        if ((EffectiveFullDepth <= zeroR) .or. (depth == zeroR)) then
+        if ((EffectiveFullDepth <= zeroR) .or. (Depth == zeroR)) then
             Area      = zeroR
             Volume    = zeroR
             Topwidth  = zeroR
-            HydDepth  = zeroR
+            !HydDepth  = zeroR
             Perimeter = zeroR
             HydRadius = zeroR
-            ell       = zeroR
+            ellDepth  = zeroR
         else
             select case (GeometryType)
 
@@ -401,9 +401,9 @@ module orifice_elements
                 Area      = RectangularBreadth * Depth
                 Volume    = Area * Length !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
-                HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
-                ell       = Depth
-                Perimeter = Topwidth + twoR * HydDepth
+                !HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
+                ellDepth  = Depth
+                Perimeter = Topwidth + twoR * Depth
                 HydRadius = Area / Perimeter
 
             case (circular)
@@ -415,15 +415,15 @@ module orifice_elements
                 Volume      = Area * Length
                 Topwidth    = EffectiveFullDepth * &
                         xsect_table_lookup_singular (YoverYfull, TCirc)
-                if (Topwidth > zeroR) then
-                    HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
-                else
-                    if (YoverYfull .ge. oneR) then
-                        HydDepth = EffectiveFullDepth
-                    else
-                        HydDepth = setting%ZeroValue%Depth
-                    end if
-                end if
+                ! if (Topwidth > zeroR) then
+                !     HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                ! else
+                !     if (YoverYfull .ge. oneR) then
+                !         HydDepth = EffectiveFullDepth
+                !     else
+                !         HydDepth = setting%ZeroValue%Depth
+                !     end if
+                ! end if
                 hydRadius   = onefourthR * EffectiveFullDepth * &
                         xsect_table_lookup_singular (YoverYfull, RCirc)
                 if (hydRadius > zeroR) then
@@ -435,8 +435,8 @@ module orifice_elements
 
                 !ell = geo_ell_singular(eIdx)
                 iA(1) = eIdx
-                outA = llgeo_ell_pure(iA)
-                ell = outA(1)
+                outA = llgeo_elldepth_pure(iA)
+                ellDepth = outA(1)
    
             case default
                 print *, 'CODE ERROR geometry type unknown for # ', GeometryType
@@ -448,7 +448,7 @@ module orifice_elements
         !% apply geometry limiters
         call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area,     .false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth,    .false.)
-        call adjust_limit_by_zerovalues_singular (eIdx, er_HydDepth,  setting%ZeroValue%Depth,    .false.)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_EllDepth,  setting%ZeroValue%Depth,    .false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_HydRadius, setting%ZeroValue%Depth,    .false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth, .false.)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth, .false.)

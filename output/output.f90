@@ -803,20 +803,20 @@ contains
             output_typeMultiplyByBarrels_faceR(ii) = zeroI
         end if
         !% --- TopWidth
-        if (setting%Output%DataOut%isTopWidthOut) then
-            ii = ii+1
-            output_types_faceR(ii) = fr_TopWidth_u
-            output_typeNames_faceR(ii) = 'FreeSurfaceTopWidthUpstream'
-            output_typeUnits_faceR(ii) = 'm'
-            output_typeProcessing_faceR(ii) = SingleValue
-            output_typeMultiplyByBarrels_faceR(ii) = oneI
-            ii = ii+1
-            output_types_faceR(ii) = fr_TopWidth_d
-            output_typeNames_faceR(ii) = 'FreeSurfaceTopWidthDownstream'
-            output_typeUnits_faceR(ii) = 'm'
-            output_typeProcessing_faceR(ii) = SingleValue
-            output_typeMultiplyByBarrels_faceR(ii) = oneI
-        end if
+        ! if (setting%Output%DataOut%isTopWidthOut) then
+        !     ii = ii+1
+        !     output_types_faceR(ii) = fr_TopWidth_u
+        !     output_typeNames_faceR(ii) = 'FreeSurfaceTopWidthUpstream'
+        !     output_typeUnits_faceR(ii) = 'm'
+        !     output_typeProcessing_faceR(ii) = SingleValue
+        !     output_typeMultiplyByBarrels_faceR(ii) = oneI
+        !     ii = ii+1
+        !     output_types_faceR(ii) = fr_TopWidth_d
+        !     output_typeNames_faceR(ii) = 'FreeSurfaceTopWidthDownstream'
+        !     output_typeUnits_faceR(ii) = 'm'
+        !     output_typeProcessing_faceR(ii) = SingleValue
+        !     output_typeMultiplyByBarrels_faceR(ii) = oneI
+        ! end if
         !% -- Velocity
         if (setting%Output%DataOut%isVelocityOut) then
             ii = ii+1

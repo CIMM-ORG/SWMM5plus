@@ -1,44 +1,6 @@
 {
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
-    "ACmethod" : {
-        "dtau" : 1.0,
-        "Anomaly" : {
-            "UseDensityCorrection" : false,
-            "DensityHighCutoff" : 0.1,
-            "DensityLowCutoff" : 1e-10,
-            "FullPipeFactor" : 1.0, 
-            "OpenPipeFactor" : 1.0 
-        },
-        "ImplicitCoef" : {
-            "a1" : 1.5,
-            "a2" : -2.0,
-            "a3" : 0.5
-        },
-        "CFL" : {
-            "CFLmax" : 2.0,
-            "CFLsmall" : 0.05
-        },
-        "Celerity" : {
-            "RC" : 1.0
-        },
-        "Convergence" : {
-            "Habsolute" : 1e-5,
-            "Hrelative" : 1e-2,
-            "Qabsolute" : 1e-5,
-            "Qrelative" : 1e-2
-        },
-        "Iter" : {
-            "Firststep" : 100,
-            "Max" : 100,
-            "Min" : 3
-        },
-        "Switch" : {
-            "Area" : 0.9,
-            "Buffer" : 0.05,
-            "Depth" : 0.9
-        }
-    },
     "Adjust" : {
         "Flowrate" : {
             "ApplyYN" : true,
@@ -61,21 +23,24 @@
         "Long"  : "test",
         "Short" : "test"
     },
+    "Climate" :{
+        "useHydraulicsEvaporationTF" : true,
+        "HydraulicsOnlyIntervalHours" : 1.0,
+        "EvapRate" : 0.0,
+    },
     "Constant" : {
         "gravity" : 9.81,
         "energy_correction_factor" : 1.0,
         "water_temprature" : 20.0
     },
-    "Culvert" : {
-        "UseCulvertsTF" : true
-    },
     "Discretization" : {
         "AllowChannelOverflowTF" : false,
         "AdustLinkLengthForJunctionBranchYN" : false,
-        "JunctionBranchLengthFactor" : 0.33,
+        "JunctionBranchLengthFactor" : 0.5,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 10.00,
+        "FullConduitTopwidthDepthFraction" : 0.95
     },
     "Eps" : {
         "FroudeJump" : 0.1,
@@ -101,6 +66,12 @@
     },
     "Limiter" : {
         "NormalDepthInfinite" : 1000.0,
+        "Dt" : {
+            "UseLimitMinYN" : true,
+            "Minimum"       : 1e-3,
+            "UseLimitMaxYN" : true,
+            "Maximum"       : 86400.0
+        },
         "InterpWeight" : {
             "Maximum" : 1e6,
             "Minimum" : 1e-6
@@ -108,18 +79,12 @@
         "Velocity" : {
             "UseLimitMaxYN" : true,
             "Maximum" : 10.0
-        },
-        "Dt" : {
-            "UseLimitMinYN" : true,
-            "Minimum"     : 1e-4,
-            "UseLimitMaxYN" : true,
-            "Maximum"       : 86400.0
         }
     },
     "Link" : {
         "DefaultInitDepthType"     : "Linear", 
         "OpenChannelLimitDepthYN"  : false,
-        "OpenChannelFullDepth"     :  20
+        "OpenChannelFullDepth"     :  100.0
     },    
     "Orifice" : {
         "SharpCrestedWeirCoefficient" : 0.414,
@@ -151,9 +116,9 @@
             "isTopWidthOut"           : false,
             "isVelocityOut"           : true,
             "isVolumeOut"             : true,
-            "isVolumeConsOut"         : false,
-            "isVolumeOverflowOut"     : false,
-            "isVolumePondedOut"       : false,
+            "isVolumeConsOut"         : true,
+            "isVolumeOverflowOut"     : true,
+            "isVolumePondedOut"       : true,
             "isWaveSpeedOut"          : false,
             "isPreissmannCelerityOut" : false,
             "isPreissmannNumberOut"   : false
@@ -213,8 +178,9 @@
         "PreissmannSlot" : {
             "useSlotTF"      : true,
             "Method"         : "DynamicSlot",
-            "TargetCelerity" : 3.0,
-            "Alpha"          : 2.0
+            "TargetCelerity" : 100.0,
+            "Alpha"          : 2.0,
+            "DecayRate"      : 1.0
         }
     },
     "TestCase" : {
@@ -261,12 +227,12 @@
     "VariableDT" : {
         "ApplyYN" : true,
         "limitByBC_YN" : true,
-        "CFL_hi_max" : 0.5,
-        "CFL_target" : 0.4,
-        "CFL_lo_max" : 0.2,
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.4,
         "CFL_inflow_max" : 0.4,
         "increaseFactor" : 1.2,
-        "InitialDt"      : 1.0,
+        "InitialDt"      : 10.0,
         "NstepsForCheck" : 10
     },
     "ZeroValue" : {
@@ -316,19 +282,6 @@
             "utility_output" : false,
             "utility_string" : false,
             "weir_elements" : false
-        },
-        "FileGroup" : {
-            "all" : false,
-            "definitions" : false,
-            "finalization" : false,
-            "geometry" : false,
-            "initialization" : false,
-            "interface" : false,
-            "output" : false,
-            "timeloop" : false,
-            "utility" : false
-        },
-        "SetupYN"  : true,
-        "OutputYN" : true
+        }
     }
 }

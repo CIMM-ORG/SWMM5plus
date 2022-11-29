@@ -336,7 +336,7 @@ USE HOTSTART "C:\Documents and Settings\Dickinsonre\Desktop\hrd.HSF"
 ;;Name           Elev.      Type       Time Series      Gate
 ;;-------------- ---------- ---------- ---------------- ----
 150              0.000000   FIXED      1.000000         NO
-300              0.000000   FREE                        NO
+300              0.000000   FREE                        YES
 
 [STORAGE]
 ;;               Invert   Max.     Init.    Shape      Shape                      Ponded   Evap.   

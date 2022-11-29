@@ -59,6 +59,33 @@ contains
         ! print *, 'calling face_interpolate_bc'
         call face_interpolate_bc(isBConly) 
 
+        !% --- check for inflow BC that imply a large velocity if the
+        !%     cross-section is full
+        if (setting%Limiter%Velocity%UseLimitMaxYN) then
+            do ii=1,N_flowBC
+                ! print *, '=============================='
+                ! print *, ii
+                ! print *, 'bi_idx         ',BC%flowI(ii,bi_idx) 
+                ! print *, 'bi_elem_idx    ',BC%flowI(ii,bi_elem_idx)
+                ! print *, 'br_value       ',BC%flowR(ii,br_value)
+                ! print *, 'full area      ',elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
+                ! print *, ''
+                if ((BC%flowR(ii,br_value) / elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)) &
+                    .ge. setting%Limiter%Velocity%Maximum) then
+                    print *, 'CODE CONFIGURATION ERROR'
+                    print *, 'Implied inflow velocity exceeds the setting.Limiter.Velocity.Maximum'
+                    print *, 'for one or more inflow elements'
+                    print *, 'Error at BC bi_idx ',BC%flowI(ii,bi_idx)
+                    print *, 'Node name  ', trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    print *, 'Inflow value (CMS) = ',BC%flowR(ii,br_value)
+                    print *, 'cross-sectional area of section ',elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
+                    print *, 'Velocity limiter to use this inflow must be > ',BC%flowR(ii,br_value) / elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
+                    print *, 'Current value of limiter ',setting%Limiter%Velocity%Maximum
+                    call util_crashpoint(6698723)
+                end if
+            end do
+        end if
+
         !  do ii=1,N_headBC
         !         print *, '=============================='
         !         print *, 'ii = ',ii
@@ -181,12 +208,15 @@ contains
         if (N_flowBC > 0) then
             !% --- cycle through all the flow BC
             do ii = 1, N_flowBC
+                !print *, 'BC ii ',ii
                 !% --- get the node index
                 nidx = BC%flowI(ii, bi_node_idx)
-                !% --- get the current location of theu pper index in time series
+                !print *, 'node ',nidx
+                !% --- get the current location of the upper index in time series
                 TS_upper_idx => BC%flowI(ii,bi_TS_upper_idx)
                 !% --- check that this BC has an input file
-                if (BC%flowYN(ii,bYN_read_input_file)) then
+                !print *, 'is inputfile ',BC%flowYN(ii,bYN_read_input_series)
+                if (BC%flowYN(ii,bYN_read_input_series)) then
                     if (TS_upper_idx == 0) then 
                         !% --- first fetch of data from file
                         call bc_fetch_flow(ii)
@@ -235,7 +265,8 @@ contains
                     !% --- get the size of the time interval
                     BC%flowR(ii, br_timeInterval) =   BC%flowTimeseries(ii, TS_upper_idx,   brts_time) &
                                                     - BC%flowTimeseries(ii, TS_upper_idx-1, brts_time)
-
+                    
+                    !print *, 'BC value ', BC%flowTimeseries(ii, TS_upper_idx, brts_value),  BC%flowTimeseries(ii, TS_upper_idx-1, brts_value)
                     ! print *, ' '
                     ! print *, 'BC flowR time interval ', ii, BC%flowR(ii, br_timeInterval)      
                     ! print *, ' '                             
@@ -243,11 +274,13 @@ contains
                     !% --- HACK-future expansions should include getting BC from a data structure
                     !%     or external code through API
                     call util_print_warning("Error (bc.f08): The flow boundary condition for node " &
-                    // node%Names(nidx)%str // " should always read from an input file")
+                    // node%Names(nidx)%str // " should always read from a time series")
                     call util_crashpoint( 87453)
                 end if                 
             end do
         end if
+
+       !stop 2098734
 
         !% --- Head BC (outfall)
         if (N_headBC > 0) then
@@ -255,8 +288,8 @@ contains
             do ii = 1, N_headBC
                 !print *, 'ii in HeadBC bc_step', ii
                 !% --- check that this BC has an input file
-                !print *, 'has file ',(BC%headYN(ii,bYN_read_input_file))
-                if (BC%headYN(ii,bYN_read_input_file)) then
+                !print *, 'has file ',(BC%headYN(ii,bYN_read_input_series))
+                if (BC%headYN(ii,bYN_read_input_series)) then
                     !% --- get the node index
                     nidx = BC%headI(ii, bi_node_idx)
                     !% --- get the upper index of the time series
@@ -544,7 +577,7 @@ contains
             !%       the absolute value is needed because of how max() handles very small differences.
             flowValue(ii) = abs(max(flowValue(ii),zeroR))
 
-           ! print *, 'in BC FLOW ',flowValue(ii)
+            !print *, 'in BC FLOW ',flowValue(ii)
             
             !% --- error checking
             ! if (lower_idx <= 0) then 
@@ -611,6 +644,7 @@ contains
             
         end do
     
+     !   stop 203987
 
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

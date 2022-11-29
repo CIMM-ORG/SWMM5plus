@@ -22,7 +22,7 @@ module irregular_channel
 
 
     public :: irregular_perimeter_from_hydradius_area
-    public :: irregular_hyddepth_from_topwidth_area
+    ! public :: irregular_hyddepth_from_topwidth_area
     public :: irregular_geometry_from_depth_singular
 
 contains
@@ -252,25 +252,25 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%  
-    subroutine irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)  
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Computes hydraulic depth as A/T
-        !%------------------------------------------------------------------
-        !% Declarations:
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP(:)
-        real(8), pointer :: topwidth(:), area(:), hyddepth(:)
-        !%------------------------------------------------------------------
-        !% Aliases
-            thisP     => elemPGx(1:Npack,thisCol)
-            topwidth  => elemR(:,er_TopWidth)
-            area      => elemR(:,er_area)
-            hyddepth  => elemR(:,er_HydDepth)
-        !%------------------------------------------------------------------
-            hyddepth(thisP) = area(thisP) / topwidth(thisP)
+    ! subroutine irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)  
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes hydraulic depth as A/T
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !     integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+    !     integer, pointer :: thisP(:)
+    !     real(8), pointer :: topwidth(:), area(:), hyddepth(:)
+    !     !%------------------------------------------------------------------
+    !     !% Aliases
+    !         thisP     => elemPGx(1:Npack,thisCol)
+    !         topwidth  => elemR(:,er_TopWidth)
+    !         area      => elemR(:,er_area)
+    !         hyddepth  => elemR(:,er_HydDepth)
+    !     !%------------------------------------------------------------------
+    !         hyddepth(thisP) = area(thisP) / topwidth(thisP)
 
-    end subroutine irregular_hyddepth_from_topwidth_area
+    ! end subroutine irregular_hyddepth_from_topwidth_area
 !%    
 !%==========================================================================
 !%==========================================================================

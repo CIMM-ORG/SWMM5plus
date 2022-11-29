@@ -41,6 +41,7 @@ THREADS              1
 
 [FILES]
 ;;Interfacing Files
+SAVE Outflows/Calibration "D:\SWMMandSoftware\SWMM5.013_June2018\EPASWMM5.1.013\Swmm5.1.013UpdateTests\OWA_EXTRAN\Extran1.txt"
 
 [EVAPORATION]
 ;;Data Source    Parameters
@@ -82,15 +83,15 @@ DRY_ONLY         NO
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-8040             FILLED_CIRCULAR 1                .5         0          0          1                    
-8060             FILLED_CIRCULAR 1                .5         0          0          1                    
-8100             FILLED_CIRCULAR 1                .5         0          0          1                    
-8130             FILLED_CIRCULAR 1                .5         0          0          1                    
-1030             FILLED_CIRCULAR 1                .5         0          0          1                    
-1570             FILLED_CIRCULAR 1                .5         0          0          1                    
-1600             FILLED_CIRCULAR 1                .5         0          0          1                    
-1630             FILLED_CIRCULAR 1                .5         0          0          1                    
-1602             FILLED_CIRCULAR 1                .5         0          0          1                    
+8040             CIRCULAR     1                0          0          0          1                    
+8060             CIRCULAR     1                0          0          0          1                    
+8100             CIRCULAR     1                0          0          0          1                    
+8130             CIRCULAR     1                0          0          0          1                    
+1030             CIRCULAR     1                0          0          0          1                    
+1570             CIRCULAR     1                0          0          0          1                    
+1600             CIRCULAR     1                0          0          0          1                    
+1630             CIRCULAR     1                0          0          0          1                    
+1602             CIRCULAR     1                0          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

@@ -586,10 +586,10 @@ module adjust
 
         elemR(thisP,er_Area)         = setting%ZeroValue%Area
         elemR(thisP,er_dHdA)         = oneR / setting%ZeroValue%TopWidth
-        elemR(thisP,er_ell)          = setting%ZeroValue%Depth
+        elemR(thisP,er_EllDepth)     = setting%ZeroValue%Depth
         elemR(thisP,er_Flowrate)     = zeroR
         elemR(thisP,er_FroudeNumber) = zeroR
-        elemR(thisP,er_HydDepth)     = setting%ZeroValue%Depth
+        !elemR(thisP,er_HydDepth)     = setting%ZeroValue%Depth
         elemR(thisP,er_Perimeter)    = setting%ZeroValue%TopWidth + setting%ZeroValue%Depth
         elemR(thisP,er_HydRadius)    = setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth)
         elemR(thisP,er_TopWidth)     = setting%ZeroValue%TopWidth
@@ -851,8 +851,6 @@ module adjust
         fVel_d(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_d(fdn(thisP))
         fVel_u(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_u(fdn(thisP))
 
-
-
         !% -----------------------------------------------------------------
     end subroutine adjust_zerodepth_face_fluxes_CC        
 !%  
@@ -1023,8 +1021,8 @@ module adjust
             faceHd    => faceR(:,fr_Head_d)
             faceAu    => faceR(:,fr_Area_u)
             faceAd    => faceR(:,fr_Area_d)
-            faceDu    => faceR(:,fr_HydDepth_u)
-            faceDd    => faceR(:,fr_HydDepth_d)
+            !faceDu    => faceR(:,fr_HydDepth_u)
+            !faceDd    => faceR(:,fr_HydDepth_d)
             fQCons    => faceR(:,fr_Flowrate_Conservative)
             elemQ     => elemR(:,er_Flowrate)
             elemH     => elemR(:,er_Head)
@@ -1288,7 +1286,7 @@ module adjust
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, multiplier, smallDepth
-            real(8), pointer :: elemCrown(:), Vvalue(:), elemEllMax(:), Zbottom(:)
+            real(8), pointer :: elemCrown(:), Vvalue(:), Zbottom(:) !, elemEllMax(:)
             real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
             real(8), pointer :: w_uH(:), w_dH(:)
             logical, pointer :: isSlot(:)  !% Preissman Slot logical
@@ -1334,7 +1332,7 @@ module adjust
             faceHeadDn => faceR(:,fr_Head_d)          
             elemHead   => elemR(:,er_Head)    
             elemCrown  => elemR(:,er_Zcrown)
-            elemEllMax => elemR(:,er_FullEll)
+            !elemEllMax => elemR(:,er_FullEllDepth)
             w_uH       => elemR(:,er_InterpWeight_uH)
             w_dH       => elemR(:,er_InterpWeight_dH)
             Vvalue     => elemR(:,er_Temp01)
@@ -1434,8 +1432,8 @@ module adjust
             faceHd    => faceR(:,fr_Head_d)
             faceAu    => faceR(:,fr_Area_u)
             faceAd    => faceR(:,fr_Area_d)
-            faceDu    => faceR(:,fr_HydDepth_u)
-            faceDd    => faceR(:,fr_HydDepth_d)
+            faceDu    => faceR(:,fr_Depth_u)
+            faceDd    => faceR(:,fr_Depth_d)
             faceQmax  => faceR(:,fr_FlowrateMax)
             faceQmin  => faceR(:,fr_FlowrateMin)
             !fQCons    => faceR(:,fr_Flowrate_Conservative)

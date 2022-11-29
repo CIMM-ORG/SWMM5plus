@@ -347,7 +347,7 @@ DRY_ONLY         NO
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
 150              0.000000   FIXED      1.000000         NO                       
-300              0.000000   FREE                        NO                       
+300              0.000000   FREE                        YES                      
 
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     

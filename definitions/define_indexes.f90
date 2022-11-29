@@ -260,7 +260,7 @@ module define_indexes
 
     !% Column indexes for BC%xYN(:,:)
     enum, bind(c)
-        enumerator :: bYN_read_input_file = 1
+        enumerator :: bYN_read_input_series = 1
         enumerator :: bYN_hasFlapGate
         enumerator :: bYN_lastplusone !% must be last enum item
     end enum
@@ -344,7 +344,7 @@ module define_indexes
         enumerator :: er_dSlotArea                  !% change in slot volume
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume
-        enumerator :: er_ell                        !% the ell (lower case L) modified hydraulic depth
+        enumerator :: er_EllDepth                        !% the ell (lower case L) modified hydraulic depth
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
@@ -354,8 +354,8 @@ module define_indexes
         enumerator :: er_FroudeNumber               !% froude number of flow
         enumerator :: er_FullArea                   !% cross-sectional area of a full conduit (static)
         enumerator :: er_FullDepth                  !% maximum possible flow depth in full conduit (static)
-        enumerator :: er_FullEll                    !% ell of  full pipe
-        enumerator :: er_FullHydDepth               !% hydraulic (average) depth of full conduit (static)
+        !enumerator :: er_FullEllDepth                    !% ell of  full pipe
+        !enumerator :: er_FullHydDepth               !% hydraulic (average) depth of full conduit (static)
         enumerator :: er_FullHydRadius              !% hydraulic radius of full conduit (static)
         enumerator :: er_FullPerimeter              !% wetted perimeter of full conduit or channel (static)
         enumerator :: er_FullTopwidth               !% Topwidth of full conduit or channel
@@ -367,7 +367,7 @@ module define_indexes
         !enumerator :: er_HeadAvg                    !% average of head on faces of an element.
         enumerator :: er_HeadLastAC                 !% piezometric head at start of last AC step
         enumerator :: er_HeadStore                  !% temporary storage used for adjacent AC and ETM elements
-        enumerator :: er_HydDepth                   !% hydraulic depth of flow
+        !enumerator :: er_HydDepth                   !% hydraulic depth of flow
         enumerator :: er_HydRadius                  !% hydraulic radius of flow
         enumerator :: er_InterpWeight_uG            !% interpolation Weight, upstream, for geometry
         enumerator :: er_InterpWeight_dG            !% interpolation Weight, downstream, for geometry
@@ -1192,7 +1192,8 @@ module define_indexes
     enum, bind(c)
         enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
         enumerator ::  ebgr_Topwidth                  !% topwidth of flow at free surfac boundary/ghost element
-        enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
+        !enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
+        enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
         enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
@@ -1257,6 +1258,8 @@ module define_indexes
     enum, bind(c)
         enumerator :: fr_Area_d = 1             !% cross-sectional area on downstream side of face
         enumerator :: fr_Area_u                 !% cross-sectional area on upstream side of face
+        enumerator :: fr_Depth_d 
+        enumerator :: fr_Depth_u
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
@@ -1266,10 +1269,13 @@ module define_indexes
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
         enumerator :: fr_Zbottom                !% zbottom of faces
-        enumerator :: fr_HydDepth_d             !% hydraulic Depth on downstream side of face
-        enumerator :: fr_HydDepth_u             !% hydraulic Depth on upstream side of face
-        enumerator :: fr_Topwidth_d             !% topwidth on downstream side of face
-        enumerator :: fr_Topwidth_u             !% topwidth on upstream side of face
+        !enumerator :: fr_ZbreadthMax            !% elevation of maximum breadth
+        !enumerator :: fr_HydDepth_d             !% hydraulic Depth on downstream side of face
+        !3numerator :: fr_HydDepth_u             !% hydraulic Depth on upstream side of face
+        !enumerator :: fr_EllDepth_d             !% modified hydraulic Depth on downstream side of face
+        !enumerator :: fr_EllDepth_u             !% modified hydraulic Depth on upstream side of face
+        !enumerator :: fr_Topwidth_d             !% topwidth on downstream side of face
+        !enumerator :: fr_Topwidth_u             !% topwidth on upstream side of face
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
         enumerator :: fr_Preissmann_Number      !% preissmann number at face

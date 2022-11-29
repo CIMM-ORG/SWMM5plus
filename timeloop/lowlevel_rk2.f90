@@ -262,7 +262,7 @@ module lowlevel_rk2
 
         ! Qnet => elemR(:,inoutCol) !% used and updated
 
-        ! ell => elemR(:,er_ell)
+        ! ell => elemR(:,er_EllDepth)
         ! area => elemR(:,er_Area)
         ! dHdA => elemR(:,er_dHdA)
         ! head => elemR(:,er_Head)
@@ -306,7 +306,7 @@ module lowlevel_rk2
 
         ! Qnet => elemR(:,inoutCol) !% used and updated
 
-        ! ell => elemR(:,er_ell)
+        ! ell => elemR(:,er_EllDepth)
         ! area => elemR(:,er_Area)
 
         ! where elemM(:,thisMaskCol)
@@ -343,7 +343,7 @@ module lowlevel_rk2
         ! a1 => setting%ACmethod%ImplicitCoef%a1
         ! Fr => setting%ACmethod%Froude
 
-        ! ell => elemR(:,er_ell)
+        ! ell => elemR(:,er_EllDepth)
         ! area => elemR(:,er_Area)
         ! dHdA => elemR(:,er_dHdA)
         ! head => elemR(:,er_Head)

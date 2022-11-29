@@ -54,11 +54,11 @@ module geometry
     public :: geo_criticaldepth_singular
     public :: geo_normaldepth_singular
     !public :: geo_topwidth_from_depth_by_type
-    public :: geo_hyddepth_from_area_and_topwidth_singular
+    ! public :: geo_hyddepth_from_area_and_topwidth_singular
     public :: geo_topwidth_from_depth_singular
     public :: geo_area_from_depth_singular
     public :: geo_perimeter_from_depth_singular
-    !public :: geo_ell_pure
+    !public :: geo_elldepth_pure
     !public :: geometry_table_initialize
 
     contains
@@ -203,7 +203,7 @@ module geometry
         !%     without adding Preissmann Slot depth.
         call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
-         !    call util_CLprint ('in geometry after depth_from_volume') 
+            ! call util_CLprint ('in geometry after depth_from_volume') 
 
         !% --- ZERO DEPTH CC JM
         !%     reset all zero or near-zero depths in aa CC and JM
@@ -211,7 +211,7 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
 
-            !call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
+            ! call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
 
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC and JM
@@ -352,34 +352,34 @@ module geometry
         !% --- compute hyddepth
         !call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
         !% 20220930 replace with unified call
-        Npack     => npack_elemP(thisColP_CC)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_CC)
-            elemR(thisP,er_HydDepth) = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                        (thisP, area(thisP), topwidth(thisP))
-        end if
+        ! Npack     => npack_elemP(thisColP_CC)
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack,thisColP_CC)
+        !     elemR(thisP,er_HydDepth) = llgeo_hyddepth_from_area_and_topwidth_pure &
+        !                                 (thisP, area(thisP), topwidth(thisP))
+        ! end if
         ! OBSOLETE call geo_hyddepth_from_area_and_topwidth (thisColP_CC)
 
-            ! call util_CLprint ('in geometry after hyddepth_from_depth')
+        !    call util_CLprint ('in geometry after hyddepth_from_depth')
 
         !% --- compute hydradius
         !%     Note: cannot be used for JM unless perimeter is defined prior.
         !OBSOLETE call geo_hydradius_from_area_perimeter (thisColP_CC)
 
-            ! call util_CLprint ('in geometry after hydradius_from_area_perimeter') 
+        !    call util_CLprint ('in geometry after hydradius_from_area_perimeter') 
 
         !% --- the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         !%     Note: ell for JM is undefined in this subroutine
-        call geo_ell_from_head (thisColP_CC)
+        call geo_elldepth_from_head (thisColP_CC)
 
         !% --- compute pressure head from the modified hydraulic depth
-        Npack     => npack_elemP(thisColP_CC)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_CC)
-            !elemR(thisP,er_Pressure_Head) = llgeo_pressure_head_from_hyddepth_pure (thisP)
-            !call geo_pressure_head_from_hyddepth (thisColP_CC)
-        end if
+        ! Npack     => npack_elemP(thisColP_CC)
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack,thisColP_CC)
+        !     !elemR(thisP,er_Pressure_Head) = llgeo_pressure_head_from_hyddepth_pure (thisP)
+        !     !call geo_pressure_head_from_hyddepth (thisColP_CC)
+        ! end if
 
             ! call util_CLprint ('in geometry after ell_from_head') 
 
@@ -552,9 +552,9 @@ module geometry
         elemR(thisP,er_Topwidth)  = elemR(thisP,er_FullTopwidth)
 
         !% --- standard functions using temporary store
-        elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
-        elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                            (thisP, fullarea(thisP), fulltopwidth(thisP))
+        !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP) 
+        !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+        !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
         elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                             (thisP, fullarea(thisP), fullperimeter(thisP))
         
@@ -623,7 +623,7 @@ module geometry
         !%--- clear the temp storage
         tempDepth(thisP) = nullvalueR
 
-        !% note that er_Perimeter, er_Topwidth, er_HydRadius,, er_Ell are NOT initialized
+        !% note that er_Perimeter, er_Topwidth, er_HydRadius,, er_EllDepth are NOT initialized
     end subroutine geo_common_initialize    
 !%
 !%==========================================================================
@@ -1196,11 +1196,11 @@ module geometry
             integer, intent(in) :: whichTM, thisColP_JM
 
             integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
-            real(8), pointer :: area(:), depth(:), head(:), hyddepth(:), hydradius(:)
+            real(8), pointer :: area(:), depth(:), head(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:)
-            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ell(:), ellMax(:)
+            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ellDepth(:) !, ellMax(:)
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
-            real(8), pointer :: fullhyddepth(:), sedimentDepth(:), thisTable(:,:)
+            real(8), pointer :: sedimentDepth(:), thisTable(:,:)
             real(8), pointer :: fulltopwidth(:), breadthmax(:)
             !real(8), pointer :: pressurehead(:)
             real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:), fullhydradius(:)
@@ -1228,10 +1228,10 @@ module geometry
             breadthmax    => elemR(:,er_BreadthMax)
             depth         => elemR(:,er_Depth)
             dHdA          => elemR(:,er_dHdA)
-            ell           => elemR(:,er_ell)
-            ellMax        => elemR(:,er_FullEll)
+            ellDepth      => elemR(:,er_EllDepth)
+            !ellMax        => elemR(:,er_FullEllDepth)
             head          => elemR(:,er_Head)
-            hyddepth      => elemR(:,er_HydDepth)
+            !hyddepth      => elemR(:,er_HydDepth)
             hydradius     => elemR(:,er_HydRadius)
             length        => elemR(:,er_Length)
             perimeter     => elemR(:,er_Perimeter)
@@ -1245,7 +1245,7 @@ module geometry
             fullArea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_FullDepth)
             fullTopWidth  => elemR(:,er_FullTopWidth)
-            fullhyddepth  => elemR(:,er_FullHydDepth)
+            !fullhyddepth  => elemR(:,er_FullHydDepth)
             fullhydradius => elemR(:,er_FullHydRadius)
             fullperimeter => elemR(:,er_FullPerimeter)
             !overflow      => elemR(:,er_VolumeOverFlow)
@@ -1330,12 +1330,12 @@ module geometry
                                 !% surcharged or incipient surcharged
                                 depth(tB)        = fulldepth(tB)
                                 area(tB)         = fullArea(tB)
-                                hyddepth(tB)     = fullhyddepth(tB)
+                                !hyddepth(tB)     = fullhyddepth(tB)
                                 perimeter(tB)    = fullperimeter(tB)
                                 topwidth(tB)     = setting%ZeroValue%Topwidth
                                 hydRadius(tB)    = fulldepth(tB) / fullperimeter(tB)
                                 dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
-                                ell(tBA)          = llgeo_ell_pure(tBA)
+                                ellDepth(tBA)    = llgeo_elldepth_pure(tBA)
                                 !pressurehead(tB) = zBtm(tB) + ell(tB)
 
                                 ! write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
@@ -1345,11 +1345,11 @@ module geometry
                                 depth(tB)        = setting%ZeroValue%Depth
                                 area(tB)         = setting%ZeroValue%Area
                                 topwidth(tB)     = setting%ZeroValue%Topwidth
-                                hyddepth(tB)     = setting%ZeroValue%Depth !% setting%ZeroValue%Area / topwidth(tB) 20220712brh
+                                !hyddepth(tB)     = setting%ZeroValue%Depth !% setting%ZeroValue%Area / topwidth(tB) 20220712brh
                                 perimeter(tB)    = topwidth(tB) + setting%ZeroValue%Depth
                                 hydRadius(tB)    = setting%ZeroValue%Area / perimeter(tB)
                                 dHdA(tB)         = oneR / topwidth(tB)
-                                ell(tB)          = setting%ZeroValue%Depth !%hydDepth(tB)  20220712 brh
+                                ellDepth(tB)     = setting%ZeroValue%Depth !%hydDepth(tB)  20220712 brh
                                 !pressurehead(tB) = zBtm(tB) + ell(tB)
 
                                 ! write(*,"(A,i5,10f12.5)"), 'BBB ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
@@ -1359,11 +1359,11 @@ module geometry
                                 depth(tB) = zeroR
                                 area(tB)  = zeroR
                                 topwidth(tB) = zeroR
-                                hydDepth(tB) = zeroR
+                                !hydDepth(tB) = zeroR
                                 perimeter(tB) = zeroR
                                 hydRadius(tB) = zeroR
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
-                                ell(tB)       = zeroR
+                                ellDepth(tB)  = zeroR
                                 !pressurehead(tB) = zBtm(tB) + ell(tB)
 
                                 ! write(*,"(A,i5,10f12.5)") 'CCC ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
@@ -1436,8 +1436,8 @@ module geometry
                                     perimeter(tBA)= llgeo_parabolic_perimeter_from_depth_pure    (tBA, depth(tBA))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_hyddepth_from_area_and_topwidth_pure   &
-                                                        (tBA, area(tBA), topwidth(tBA))
+                                    ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
+                                                         (tBA, area(tBA), topwidth(tBA))
  
                                 case (power_function) !% POSSIBLY LOOKUP
                                     print *, 'CODE ERROR power function x-section not finished'
@@ -1449,7 +1449,7 @@ module geometry
                                     perimeter(tBA)= llgeo_rectangular_perimeter_from_depth_pure  (tBA, depth(tBA))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_hyddepth_from_area_and_topwidth_pure  &
+                                    ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure  &
                                                         (tBA, area(tBA), topwidth(tBA))
 
                                 case (trapezoidal) !% analytical
@@ -1458,7 +1458,7 @@ module geometry
                                     perimeter(tBA)= llgeo_trapezoidal_perimeter_from_depth_pure  (tBA, depth(tBA))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_hyddepth_from_area_and_topwidth_pure   &
+                                    ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
                                                         (tBA, area(tBA), topwidth(tBA))
 
                                 case (triangular) !% analytical
@@ -1467,7 +1467,7 @@ module geometry
                                     perimeter(tBA)= llgeo_triangular_perimeter_from_depth_pure   (tBA, depth(tBA))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                          (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_hyddepth_from_area_and_topwidth_pure   &
+                                    ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
                                                         (tBA, area(tBA), topwidth(tBA))
 
                                 case (irregular)  !% lookup
@@ -1484,7 +1484,7 @@ module geometry
                                     !% --- perimeter is derived geometry for irregular
                                     perimeter(tB) = area(tB) / hydRadius(tB)
                                     !% --- irregular must be continuously-increasing in width
-                                    ell(tB)       = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB)) 
+                                    ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB)) 
 
                                 !% --- CLOSED CONDUITS
                                 !%     closed conduits typically have look-up functions for area, topwidth and hydraulic
@@ -1507,7 +1507,7 @@ module geometry
 
                                     perimeter(tBA)= llgeo_perimeter_from_hydradius_and_area_pure &
                                                         (tBA, hydradius(tBA), area(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
 
                                 !% --- lookups with SectionFactor stored
                                 case (catenary, gothic, semi_circular, semi_elliptical)    
@@ -1524,7 +1524,7 @@ module geometry
 
                                     perimeter(tBA)= llgeo_perimeter_from_hydradius_and_area_pure &
                                                         (tBA, hydradius(tBA), area(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
 
                                 !% --- lookup with sediment
                                 case (filled_circular)  
@@ -1533,7 +1533,7 @@ module geometry
                                     perimeter(tB) = llgeo_filled_circular_perimeter_from_depth_singular (tB,depth(tB))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
 
                                 !% --- analytical closed-conduit cases
                                 case (mod_basket)   !% analytical                                 
@@ -1542,7 +1542,7 @@ module geometry
                                     perimeter(tB) = llgeo_mod_basket_perimeter_from_depth_singular   (tB,depth(tB))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA)
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA)
 
                                 case (rectangular_closed) !% analytical
                                     area(tB)      = llgeo_rectangular_closed_area_from_depth_singular      (tB, depth(tB))
@@ -1550,7 +1550,7 @@ module geometry
                                     perimeter(tB) = llgeo_rectangular_closed_perimeter_from_depth_singular (tB, depth(tB))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
 
                                 case (rect_round)  !% analytical                                  
                                     area(tB)      = llgeo_rect_round_area_from_depth_singular       (tB,depth(tB))
@@ -1558,7 +1558,7 @@ module geometry
                                     perimeter(tB) = llgeo_rect_round_perimeter_from_depth_singular  (tB,depth(tB))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure&
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
 
                                 case (rect_triang) !% analytical                                   
                                     area(tB)      = llgeo_rectangular_triangular_area_from_depth_singular      (tB,depth(tB))
@@ -1566,7 +1566,7 @@ module geometry
                                     perimeter(tB) = llgeo_rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB))
                                     hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
                                                         (tBA, area(tBA), perimeter(tBA))
-                                    ell(tBA)      = llgeo_ell_pure (tBA) 
+                                    ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
                             
                                 case default
                                     print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
@@ -1577,8 +1577,8 @@ module geometry
                                     !stop 399848
                                 end select
                                 !% --- standard for all geometries
-                                hydDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                                    (tBA, area(tBA), topwidth(tBA))
+                                !hydDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure &
+                                !                    (tBA, area(tBA), topwidth(tBA))
                                 dHdA(tB)     = oneR / topwidth(tB)
                             end if
 
@@ -2571,36 +2571,36 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-!    subroutine geo_pressure_head_from_hyddepth (thisColP)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% calculates the pressure head
-!         !%------------------------------------------------------------------
-!         integer, intent(in) :: thisColP
-!         integer, pointer :: thisP(:), Npack
-!         real(8), pointer :: pressurehead(:), hyddepth(:), zbottom(:)
+    !    subroutine geo_pressure_head_from_hyddepth (thisColP)
+    !         !%------------------------------------------------------------------
+    !         !% Description:
+    !         !% calculates the pressure head
+    !         !%------------------------------------------------------------------
+    !         integer, intent(in) :: thisColP
+    !         integer, pointer :: thisP(:), Npack
+    !         real(8), pointer :: pressurehead(:), hyddepth(:), zbottom(:)
 
-!         character(64) :: subroutine_name = 'geo_pressure_head_from_hyddepth'
-!         !%------------------------------------------------------------------
-!         !% Preliminaries
-!             Npack     => npack_elemP(thisColP)
-!             if (Npack < 1) return
-!             if (setting%Debug%File%geometry) &
-!                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-!         !%-------------------------------------------------------------------
-!         !% Aliases:
-!             thisP        => elemP(1:Npack,thisColP)
-!             pressurehead => elemR(:,er_Pressure_Head)
-!             hyddepth     => elemR(:,er_HydDepth)
-!             zbottom      => elemR(:,er_Zbottom)
-!         !%------------------------------------------------------------------
-            
-!         pressurehead(thisP) = zbottom(thisP) + hyddepth(thisP)
+    !         character(64) :: subroutine_name = 'geo_pressure_head_from_hyddepth'
+    !         !%------------------------------------------------------------------
+    !         !% Preliminaries
+    !             Npack     => npack_elemP(thisColP)
+    !             if (Npack < 1) return
+    !             if (setting%Debug%File%geometry) &
+    !                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !         !%-------------------------------------------------------------------
+    !         !% Aliases:
+    !             thisP        => elemP(1:Npack,thisColP)
+    !             pressurehead => elemR(:,er_Pressure_Head)
+    !             hyddepth     => elemR(:,er_HydDepth)
+    !             zbottom      => elemR(:,er_Zbottom)
+    !         !%------------------------------------------------------------------
+                
+    !         pressurehead(thisP) = zbottom(thisP) + hyddepth(thisP)
 
-!         !%------------------------------------------------------------------
-!             if (setting%Debug%File%geometry) &
-!             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-!     end subroutine geo_pressure_head_from_hyddepth 
+    !         !%------------------------------------------------------------------
+    !             if (setting%Debug%File%geometry) &
+    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     end subroutine geo_pressure_head_from_hyddepth 
 !%
 !%==========================================================================  
 !%==========================================================================
@@ -2640,7 +2640,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_ell_from_head (thisColP)
+    subroutine geo_elldepth_from_head (thisColP)
         !%------------------------------------------------------------------
         !% Description:
         !% computes the value of "ell" -- the modified hydraulic depth
@@ -2649,7 +2649,7 @@ module geometry
         !% Declarations:
             integer, intent(in) :: thisColP
             integer, pointer :: thisP(:), Npack
-            real(8), pointer :: ell(:), head(:), area(:), topwidth(:), hydDepth(:)
+            real(8), pointer :: ellDepth(:), head(:), area(:), topwidth(:) !, hydDepth(:)
             real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
             integer :: ii
 
@@ -2663,9 +2663,9 @@ module geometry
         !%------------------------------------------------------------------
         !% Aliases:
             thisP               => elemP(1:Npack,thisColP)
-            ell                 => elemR(:,er_ell)
+            ellDepth            => elemR(:,er_EllDepth)
             head                => elemR(:,er_Head)
-            hydDepth            => elemR(:,er_HydDepth)
+            !hydDepth            => elemR(:,er_HydDepth)
             area                => elemR(:,er_Area)
             topwidth            => elemR(:,er_Topwidth)
             ZbreadthMax         => elemR(:,er_ZbreadthMax)
@@ -2674,16 +2674,17 @@ module geometry
         !%-------------------------------------------------------------------
 
         where (head(thisP) .le. ZbreadthMax(thisP))
-            ell(thisP) =  hydDepth(thisP)
+            !ell(thisP) =  hydDepth(thisP)
+            ellDepth(thisP) =  area(thisP) / topwidth(thisP)
         elsewhere
-            ell(thisP) = ( (head(thisP) - ZbreadthMax(thisP)) * breadthMax(thisP) &
+            ellDepth(thisP) = ( (head(thisP) - ZbreadthMax(thisP)) * breadthMax(thisP) &
                             + areaBelowBreadthMax(thisP) ) / breadthMax(thisP)
         endwhere
 
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_ell_from_head
+    end subroutine geo_elldepth_from_head
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2716,8 +2717,8 @@ module geometry
             thisP   => elemP(1:Npack,thisCol)
         !%------------------------------------------------------------------
         if (Npack > 0) then 
-            elemR(thisP,er_HydDepth)      = elemR(thisP,er_Depth)
-            elemR(thisP,er_ell)           = elemR(thisP,er_Depth)
+            !elemR(thisP,er_HydDepth)      = elemR(thisP,er_Depth)
+            elemR(thisP,er_EllDepth)       = elemR(thisP,er_Depth)
             !elemR(thisP,er_Pressure_Head) = elemR(thisP,er_Depth)
         end if
         !%------------------------------------------------------------------
@@ -3367,6 +3368,34 @@ module geometry
         outvalue = area / topwidth
         
     end function geo_hyddepth_from_area_and_topwidth_singular
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! real(8) function geo_elldepth_singular &
+    !     (head, area, topwidth, areaBelowMaxBreadth, maxBreadth, ZmaxBreadth) &
+    !     result (outvalue)   
+    !     !%------------------------------------------------------------------
+    !     !% Descriptions:
+    !     !% computes the modified hydraulic depth of a single
+    !     !% element
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, intent(in) :: idx
+    !         real(8), intent(in) :: head, area, topwidth, areaBelowMaxBreadth,
+    !         real(8), intent(in) :: maxBreadth, ZmaxBreadth
+    !     !%------------------------------------------------------------------
+        
+    !     if (head .le. ZmaxBreadth) then 
+    !         !% --- ell is simply the hydraulic depth below 
+    !         outvalue = area / topwidth
+    !     else
+    !         !% -- ell is the modified hydraulic depth
+    !         outvalue = (((head - ZmaxBreadth) * maxBreadth) + areaBelowMaxBreadth) &
+    !                    / maxBreadth
+    !     end if
+
+    ! end function geo_elldepth_from_area_topwidth_and_maxbreadth_singular
 !%
 !%==========================================================================
 !%==========================================================================

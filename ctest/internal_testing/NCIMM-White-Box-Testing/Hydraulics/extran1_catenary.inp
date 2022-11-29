@@ -4,7 +4,7 @@ Example 1 of Extran Manual
 
 [OPTIONS]
 ;;Option             Value
-FLOW_UNITS           CMS
+FLOW_UNITS           CFS
 INFILTRATION         HORTON
 FLOW_ROUTING         DYNWAVE
 LINK_OFFSETS         DEPTH

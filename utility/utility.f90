@@ -87,9 +87,13 @@ module utility
 
         ! do ii=1,N_elem(this_image())
         !     write(*,"(i5,10e12.5)") ii, elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Head)
-        ! end do
+        ! ! end do
         ! do ii=1,size(elemI,1)
         !     print *, '======== element ',ii
+        !     print *, 'link # ',elemI(ii,ei_link_Gidx_SWMM)
+        !     if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
+        !         print *, ' name ',trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+        !     end if
         !     print *, 'type ', elemI(ii,ei_elementType), ' ',trim(reverseKey(elemI(ii,ei_elementType)))
         !     if (elemI(ii,ei_Mface_uL) < size(faceI,1)) then
         !         print *,  'next elem up',faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL), 'type ', trim(reverseKey(elemI(faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL),ei_elementType)))
@@ -107,24 +111,48 @@ module utility
 
     
         print *, ' '
-        print *, '                face        elem       face        elem       face         '
-        write(*,"(A,10f12.5)") '     Q    ',  faceR(ift(1),fr_Flowrate),        &
-                                        elemR(iet(1),er_Flowrate),        &
-                                        faceR(ift(2),fr_Flowrate),        &
-                                        elemR(iet(2),er_Flowrate),        &
-                                        faceR(ift(3),fr_Flowrate)
+        print *, '                face        elem       face        elem       face  ' 
+        write(*,"(A,10f12.5)") ' Velocity '  ,  faceR(ift(1),fr_Velocity_d),        &
+                                                elemR(iet(1),er_Velocity),        &
+                                                faceR(ift(2),fr_Velocity_u),        &
+                                                elemR(iet(2),er_Velocity),        &
+                                                faceR(ift(3),fr_Velocity_u)   
 
-        write(*,"(A,10f12.5)") '     H    ',  faceR(ift(1),fr_Head_d),        &
-                                        elemR(iet(1),er_Head),        &
-                                        faceR(ift(2),fr_Head_u),        &
-                                        elemR(iet(2),er_Head),        &
-                                        faceR(ift(3),fr_Head_u)
+        write(*,"(A,10f12.5)") '     Q    '  ,  faceR(ift(1),fr_Flowrate),        &
+                                                elemR(iet(1),er_Flowrate),        &
+                                                faceR(ift(2),fr_Flowrate),        &
+                                                elemR(iet(2),er_Flowrate),        &
+                                                faceR(ift(3),fr_Flowrate)
 
-        write(*,"(A,10f12.5)") 'PreissN   ',  0.0,        &
-                                        elemR(iet(1),er_Preissmann_Number),        &
-                                        0.0,        &
-                                        elemR(iet(2),er_Preissmann_Number),        &
-                                        0.0          
+        write(*,"(A,10f12.5)") '     H    '  ,  faceR(ift(1),fr_Head_d),        &
+                                                elemR(iet(1),er_Head),        &
+                                                faceR(ift(2),fr_Head_u),        &
+                                                elemR(iet(2),er_Head),        &
+                                                faceR(ift(3),fr_Head_u)
+
+        write(*,"(A,10f12.5)") ' Area     '  ,  faceR(ift(1),fr_Area_d),        &
+                                                elemR(iet(1),er_Area),        &
+                                                faceR(ift(2),fr_Area_u),        &
+                                                elemR(iet(2),er_Area),        &
+                                                faceR(ift(3),fr_Area_u)
+
+        write(*,"(A,10f12.5)") '    Depth '  ,  faceR(ift(1),fr_Depth_d),        &
+                                                elemR(iet(1),er_Depth),        &
+                                                faceR(ift(2),fr_Depth_u),        &
+                                                elemR(iet(2),er_Depth),        &
+                                                faceR(ift(3),fr_Depth_u)
+
+        ! write(*,"(A,10f12.5)") 'FULL depth'  ,  0.0,        &
+        !                                         elemR(iet(1),er_FullDepth),        &
+        !                                         0.0,        &
+        !                                         elemR(iet(2),er_FullDepth),        &
+        !                                         0.0                                        
+
+        ! write(*,"(A,10f12.5)") 'PreissN   ',  0.0,        &
+        !                                 elemR(iet(1),er_Preissmann_Number),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_Preissmann_Number),        &
+        !                                 0.0          
 
         write(*,"(A,10f12.5)") '     Vol  ',  0.0,        &
                                         elemR(iet(1),er_Volume),        &
@@ -132,17 +160,41 @@ module utility
                                         elemR(iet(2),er_Volume),        &
                                         0.0
 
+        write(*,"(A,10f12.5)") ' VolFull  ',  0.0,        &
+                                        elemR(iet(1),er_FullVolume),        &
+                                        0.0,        &
+                                        elemR(iet(2),er_FullVolume),        &
+                                        0.0
+
+        ! write(*,"(A,10f12.5)") ' area     ',  0.0,        &
+        !                                 elemR(iet(1),er_Area),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_Area),        &
+        !                                 0.0
+
+        !  write(*,"(A,10f12.5)") 'AREA full ',  0.0,        &
+        !                                 elemR(iet(1),er_FullArea),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_FullArea),        &
+        !                                 0.0                                
+
+        ! write(*,"(A,10f12.5)") ' length   ',  0.0,        &
+        !                                 elemR(iet(1),er_Length),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_Length),        &
+        !                                 0.0    
+
         write(*,"(A,10f12.5)") 'Slot Vol  ',  0.0,        &
                                         elemR(iet(1),er_SlotVolume),        &
                                         0.0,        &
                                         elemR(iet(2),er_SlotVolume),        &
                                         0.0    
 
-        write(*,"(A,10f12.5)") '     V-F  ',  0.0,        &
-                                        elemR(iet(1),er_Volume) - elemR(iet(1),er_FullVolume),        &
-                                        0.0,        &
-                                        elemR(iet(2),er_Volume) - elemR(iet(2),er_FullVolume),        &
-                                        0.0                                
+        ! write(*,"(A,10f12.5)") '     V-F  ',  0.0,        &
+        !                                 elemR(iet(1),er_Volume) - elemR(iet(1),er_FullVolume),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_Volume) - elemR(iet(2),er_FullVolume),        &
+        !                                 0.0                                
 
         write(*,"(A,10f12.5)") 'Slot Frac ',  0.0,        &
                                         elemR(iet(1),er_SlotVolume)/elemR(iet(1),er_Volume),        &
@@ -150,9 +202,14 @@ module utility
                                         elemR(iet(2),er_SlotVolume)/elemR(iet(2),er_Volume),        &
                                         0.0                                
 
-        write(*,"(A,10f12.5)") 'SF' ,(elemR(iet(1),er_Flowrate)**2) * (elemR(iet(1),er_ManningsN)**2) &
-                             / ( (elemR(iet(1),er_Area)**2)     * (elemR(iet(1),er_HydRadius)**(4.d0/3.d0))  ) 
-   
+        ! write(*,"(A,10f12.5)") 'SF' ,(elemR(iet(1),er_Flowrate)**2) * (elemR(iet(1),er_ManningsN)**2) &
+        !                      / ( (elemR(iet(1),er_Area)**2)     * (elemR(iet(1),er_HydRadius)**(4.d0/3.d0))  ) 
+
+        ! write(*,"(A,10f12.5)") 'breadthmax',  0.0,        &
+        !                                 elemR(iet(1),er_BreadthMax),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_BreadthMax),        &
+        !                                 0.0       
 
 
     end subroutine util_CLprint    

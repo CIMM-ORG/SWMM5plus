@@ -287,10 +287,13 @@ module storage_geometry
         select case(elemSI(idx,esi_JunctionMain_Type))
         case (ImpliedStorage)
             outvalue = storage_implied_volume_from_depth_singular(idx, indepth)
+           ! print *, 'implied storage ',outvalue
         case (TabularStorage)
             outvalue = storage_tabular_volume_from_depth_singular(idx, indepth)
+           ! print *, 'tabular storage ',outvalue
         case (FunctionalStorage)
             outvalue = storage_functional_volume_from_depth_singular(idx, indepth)
+           ! print *, 'functional storage ',outvalue
         case default
             print *, 'CODE ERROR: unexpected case default for storage '
             print *, 'problem in (elemSI(idx,esi_JunctionMain_Type) '
@@ -315,6 +318,7 @@ module storage_geometry
             real(8), intent(in) :: indepth
         !%-------------------------------------------------------------------
         outvalue = elemSR(idx,esr_Storage_Plane_Area) * indepth
+        !print *, 'in storage ',elemSR(idx,esr_Storage_Plane_Area), indepth
             
     end function storage_implied_volume_from_depth_singular
 !%    

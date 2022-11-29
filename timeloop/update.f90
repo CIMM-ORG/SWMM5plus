@@ -171,19 +171,19 @@ module update
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol
         integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: Froude(:), velocity(:), depth(:), grav
+        real(8), pointer :: Froude(:), velocity(:), ellDepth(:), grav
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
-        depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
+        ellDepth    => elemR(:,er_EllDepth)  !% Use the ell value (modified hydraulic depth)
         grav     => setting%constant%gravity
         !%-----------------------------------------------------------------------------
 
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol)
-            Froude(thisP) = velocity(thisP) / sqrt(grav * depth(thisP))
+            Froude(thisP) = velocity(thisP) / sqrt(grav * ellDepth(thisP))
         end if
 
     end subroutine update_Froude_number_element
@@ -200,13 +200,13 @@ module update
         character(64) :: subroutine_name = 'update_Froude_number_JB'
         integer, intent(in) :: thisCol_JM
         integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
-        real(8), pointer :: Froude(:), velocity(:), depth(:), grav
+        real(8), pointer :: Froude(:), velocity(:), ellDepth(:), grav
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
-        depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
+        ellDepth    => elemR(:,er_EllDepth)  !% Use the ell value (modified hydraulic depth)
         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         grav     => setting%constant%gravity
         !%-----------------------------------------------------------------------------
@@ -221,7 +221,7 @@ module update
                 do kk=1,max_branch_per_node
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
-                        Froude(tB) = velocity(tB) / sqrt(grav * depth(tB))
+                        Froude(tB) = velocity(tB) / sqrt(grav * ellDepth(tB))
                         !print *, kk, tB, Froude(tB), velocity(tB),'  Froude JB'
                     end if
                 end do
@@ -243,19 +243,19 @@ module update
         !% Declarations:
             integer, intent(in) :: thisCol
             integer, pointer :: Npack, thisP(:)
-            real(8), pointer :: wavespeed(:), ell(:), grav
+            real(8), pointer :: wavespeed(:), ellDepth(:), grav
         !%------------------------------------------------------------------
         !% Aliases:
             Npack     => npack_elemP(thisCol)
             if (Npack < 1) return
             thisP     => elemP(1:Npack,thisCol)
             wavespeed => elemR(:,er_WaveSpeed)
-            ell       => elemR(:,er_ell)
+            ellDepth  => elemR(:,er_EllDepth)
             grav      => setting%constant%gravity
         !%------------------------------------------------------------------
 
         !% wavespeed at modified hydraulic depth (ell) 
-        wavespeed(thisP) = sqrt(grav * ell(thisP))
+        wavespeed(thisP) = sqrt(grav * ellDepth(thisP))
 
     end subroutine update_wavespeed_element    
 !%
@@ -271,7 +271,7 @@ module update
         character(64) :: subroutine_name = 'update_interpweights_CC'
         integer, intent(in) :: thisCol, whichTM
         integer, pointer :: Npack, Npack2, thisCol_AC,  thisCol_ClosedElems, thisP(:), thisP2(:), fUp(:), fDn(:)
-        real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:), QLateral(:)
+        real(8), pointer :: velocity(:), wavespeed(:), ellDepth(:), length(:), QLateral(:)
         real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), w_uP(:), w_dP(:), Area(:)
         real(8), pointer :: Fr(:), grav !BRHbugfix20210811 test
@@ -285,7 +285,7 @@ module update
         Qlateral  => elemR(:,er_FlowrateLateral)
         velocity  => elemR(:,er_Velocity)
         wavespeed => elemR(:,er_WaveSpeed)
-        depth     => elemR(:,er_ell)  !% modified hydraulic depth!
+        ellDepth  => elemR(:,er_EllDepth)  !% modified hydraulic depth!
         length    => elemR(:,er_Length)
         w_uQ      => elemR(:,er_InterpWeight_uQ)
         w_dQ      => elemR(:,er_InterpWeight_dQ)
@@ -336,7 +336,7 @@ module update
         thisP => elemP(1:Npack,thisCol)
 
         !% wavespeed at modified hydraulic depth (ell)
-        wavespeed(thisP) = sqrt(grav * depth(thisP))
+        wavespeed(thisP) = sqrt(grav * EllDepth(thisP))
     
         !% modify wavespeed for surcharged AC cells
         if (whichTM .ne. ETM) then
@@ -434,7 +434,7 @@ module update
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
             PCelerity => elemR(:,er_Preissmann_Celerity)
-            depth     => elemR(:,er_ell)  !% modified hydraulic depth!
+            depth     => elemR(:,er_EllDepth)  !% modified hydraulic depth!
             length    => elemR(:,er_Length)
             w_uQ      => elemR(:,er_InterpWeight_uQ)
             w_dQ      => elemR(:,er_InterpWeight_dQ)

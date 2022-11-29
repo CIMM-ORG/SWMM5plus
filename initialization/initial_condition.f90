@@ -402,7 +402,8 @@ contains
             print*, elemR(:,er_Area), 'area'
             print*, elemR(:,er_Head), 'head'
             print*, elemR(:,er_Topwidth), 'topwidth'
-            print*, elemR(:,er_HydDepth), 'hydraulic depth'
+            print*, elemR(:,er_EllDepth), 'L depth'
+            !print*, elemR(:,er_HydDepth), 'hydraulic depth'
             print*, elemR(:,er_HydRadius), 'hydraulic radius'
             print*, elemR(:,er_Perimeter), 'wetted perimeter'
             print*, elemR(:,er_Volume),'volume'
@@ -418,8 +419,8 @@ contains
             print*, faceR(:,fr_Head_u), 'face head up'
             print*, faceR(:,fr_Head_d), 'face head dn'
             print*, faceR(:,fr_Flowrate), 'face flowrate'
-            print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
-            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
+            !print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
+            !print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
             ! call execute_command_line('')
         end if
 
@@ -1314,10 +1315,10 @@ contains
             elemR(thisP,er_FullPerimeter) = llgeo_perimeter_from_hydradius_and_area_pure &
                                                 (thisP, fullhydradius(thisP), fullarea(thisP))
 
-            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
-            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)    
+            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP)    
 
             !% --- dependent data
             elemR(thisP,er_Zcrown)        = elemR(thisP,er_Zbottom)  + elemR(thisP,er_FullDepth)
@@ -1357,13 +1358,13 @@ contains
             elemR(thisP,er_FullTopwidth)  = llgeo_parabolic_topwidth_from_depth_pure &
                                                 (thisP, fulldepth(thisP))
             
-            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
             elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
 
-            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
+            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP) 
             
             !% --- dependent  
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea) 
@@ -1427,13 +1428,13 @@ contains
             ! end do
 
             !% --- full conditions
-            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
             elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
 
-            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)  
+            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP)  
 
             !% --- dependent data
             elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
@@ -1467,16 +1468,23 @@ contains
             elemSGR(thisP,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
             elemR(thisP,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
 
+            ! print *, 'here in init_IC_get_channel_geometry'
+            ! print *, thisP, elemR(thisP,er_FullDepth), elemSGR(thisP,esgr_Trapezoidal_Breadth)
+
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_LeftSlope)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_RightSlope)   .le. zeroR) .or. &
-                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
+                (link%R(thisLink,lr_BreadthScale)  < zeroR)) then 
                 print *, 'USER CONFIGURATION ERROR'
                 print *, 'Trapezoidal open cross section has zero specified for Full Height,'
                 print *, 'Base Width, Left Slope, or Right Slope'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
+                print *, 'FullDepth ',link%R(thisLink,lr_FullDepth) 
+                print *, 'LeftSlope ',link%R(thisLink,lr_LeftSlope)
+                print *, 'RightSlope',link%R(thisLink,lr_RightSlope)
+                print *, 'Breadthscale ',link%R(thisLink,lr_BreadthScale)
                 call util_crashpoint(6987042)
             end if
 
@@ -1488,15 +1496,15 @@ contains
                                                 (thisP, fulldepth(thisP))
 
             elemR(thisP,er_FullTopwidth)  = llgeo_trapezoidal_topwidth_from_depth_pure &
-                                                (thisP, fulltopwidth(thisP))
+                                                (thisP, fulldepth(thisP))
             
-            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
             elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
 
-            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP) 
+            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP) 
             
             !% --- dependent data
             elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
@@ -1512,8 +1520,8 @@ contains
             elemR(thisP,er_Area_N1)      = elemR(thisP,er_Area)
             elemR(thisP,er_Volume)       = elemR(thisP,er_Area) * elemR(thisP,er_Length)
             elemR(thisP,er_Volume_N0)    = elemR(thisP,er_Volume)
-            elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)                      
-        
+            elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)           
+            
         case (lTriangular)
 
             elemI(thisP,ei_geometryType) = triangular
@@ -1546,13 +1554,13 @@ contains
             elemR(thisP,er_FullTopwidth)  = llgeo_triangular_topwidth_from_depth_pure &
                                                 (thisP, fulldepth(thisP))
   
-            elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                                (thisP, fullarea(thisP), fulltopwidth(thisP))
+            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
+            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
             elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
 
-            elemR(thisP,er_FullEll)       = llgeo_FullEll_pure(thisP)
+            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP)
             
             !% --- dependent data
             
@@ -2628,14 +2636,14 @@ contains
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
             elemI(:,ei_geometryType)            = geoType
             elemR(:,er_Length)                  = setting%Discretization%NominalElemLength
-            elemR(:,er_FullHydDepth)            = elemR(:,er_FullDepth)
+            !elemR(:,er_FullHydDepth)            = elemR(:,er_FullDepth)
             elemR(:,er_FullPerimeter)           = elemR(:,er_BreadthMax) + twoR * elemR(:,er_FullDepth)
             elemR(:,er_ZbreadthMax)             = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)  
             elemR(:,er_Zcrown)                  = elemR(:,er_Zbottom)   + elemR(:,er_FullDepth)
             elemR(:,er_FullArea)                = elemR(:,er_FullDepth) * elemR(:,er_BreadthMax)
             elemR(:,er_FullVolume)              = elemR(:,er_FullArea)  * elemR(:,er_Length)
             elemR(:,er_AreaBelowBreadthMax)     = elemR(:,er_FullArea)
-            elemR(:,er_FullEll)                 = elemR(:,er_FullDepth)
+           ! elemR(:,er_FullEllDepth)                 = elemR(:,er_FullDepth)
             
             !% store IC data
             elemR(:,er_Area)          = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
@@ -2644,8 +2652,8 @@ contains
             elemR(:,er_Volume)        = elemR(:,er_Area) * elemR(:,er_Length)
             elemR(:,er_Volume_N0)     = elemR(:,er_Volume)
             elemR(:,er_Volume_N1)     = elemR(:,er_Volume)
-            elemR(:,er_ell)           = elemR(:,er_Depth)
-            elemR(:,er_HydDepth)      = elemR(:,er_Depth)
+            elemR(:,er_EllDepth)      = elemR(:,er_Depth)
+            !elemR(:,er_HydDepth)      = elemR(:,er_Depth)
             elemR(:,er_Perimeter)     = twoR * elemR(:,er_Depth) + elemR(:,er_BreadthMax)
             elemR(:,er_HydRadius)     = elemR(:,er_Area) / elemR(:,er_Perimeter)
             elemR(:,er_TopWidth)      = elemR(:,er_BreadthMax)
@@ -2695,10 +2703,10 @@ contains
             ii=1
             thisCol(ii) = er_AreaBelowBreadthMax; ii=ii+1
             thisCol(ii) = er_BreadthMax;          ii=ii+1
-            thisCol(ii) = er_FullEll;             ii=ii+1
+            !thisCol(ii) = er_FullEllDepth;             ii=ii+1
             thisCol(ii) = er_FullArea;            ii=ii+1
             thisCol(ii) = er_FullDepth;           ii=ii+1
-            thisCol(ii) = er_FullHydDepth;        ii=ii+1
+            !thisCol(ii) = er_FullHydDepth;        ii=ii+1
             thisCol(ii) = er_FullPerimeter;       ii=ii+1
 
         !%-----------------------------------------------------------------
@@ -2941,7 +2949,8 @@ contains
         !% masked on the global node number for this node.
         JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
 
-        !print *, 'JMidx ',JMidx
+        ! print *, '    ============================================='
+        ! print *, 'JMidx ',JMidx
 
         !% the first element index is a junction main
         elemI(JMidx,ei_elementType)  = JM
@@ -2976,7 +2985,7 @@ contains
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
-        elemR(JMidx,er_FullEll)   = node%R(thisJunctionNode,nr_FullDepth)
+        !elemR(JMidx,er_FullEllDepth)   = node%R(thisJunctionNode,nr_FullDepth)
         elemR(JMidx,er_Zcrown)    = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
         
         !% --- overflow volume accumulator
@@ -3033,8 +3042,7 @@ contains
             ! end if
         end if    
 
-
-        ! print *, 'JMidx',JMidx
+        !print *, 'JMidx',JMidx
         ! print *, elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)
         ! print *, elemSR(JMidx,esr_JunctionMain_PondedArea)
         ! print *, elemYN(JMidx,eYN_canSurcharge)
@@ -3065,8 +3073,7 @@ contains
         !% --- self index
         !elemI(JMidx,ei_main_idx_for_branch) = JMidx
         elemSI(JMidx,esi_JunctionBranch_Main_Index ) = JMidx
-
-        
+   
         !%................................................................
         !% Junction Branches
         !%................................................................
@@ -3076,7 +3083,7 @@ contains
         !% adjacent element.
         do ii = 1,max_branch_per_node
 
-            !print *, ii, 'in branch'
+            ! print *, ii, 'in branch'
 
             !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
 
@@ -3087,7 +3094,7 @@ contains
             !elemI(JBidx,ei_main_idx_for_branch) = JMidx
             elemSI(JBidx,esi_JunctionBranch_Main_Index) = JMidx
 
-            !print *, 'JBidx ',JBidx
+            ! print *, 'JBidx ',JBidx
 
             !% --- set the adjacent element id where elemI and elemR data can be extracted
             !%     note that elemSGR etc are not yet assigned
@@ -3220,7 +3227,7 @@ contains
                 elemR(JBidx,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)[Ci]
                 elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
                 elemR(JBidx,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
-                elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
+                !elemR(JBidx,er_FullHydDepth)        = elemR(Aidx,er_FullHydDepth)[Ci]
                 elemR(JBidx,er_FullHydRadius)       = elemR(Aidx,er_FullHydRadius)[Ci]
                 elemR(JBidx,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
                 elemR(JBidx,er_FullTopwidth)        = elemR(Aidx,er_FullTopwidth)[Ci]
@@ -3233,11 +3240,6 @@ contains
                 elemI(JBidx,ei_link_transect_idx)   = elemI(Aidx,ei_link_transect_idx)[Ci]
                 !% copy the entire row of the elemSGR array
                 elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
-
-                ! print *, ' here in init_IC_get_junction_data'
-                ! print *, JBidx, Aidx, elemR(JBidx,er_FullDepth)
-                ! print *, JBidx, Aidx, elemR(JBidx,er_ZbreadthMax)
-                ! if (JBidx == 3) stop 39874
 
             case (undefinedKey)
                 print *, 'in ',trim(subroutine_name)
@@ -3323,9 +3325,11 @@ contains
 
                 case (lTrapezoidal)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                  * elemR(  JBidx,er_Length)                                  &
-                                  * elemSGR(JBidx,esgr_Trapezoidal_Breadth) )
+                             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                  &
+                                  * elemR(  JBidx,er_Length)                                     &
+                                  * ( elemSGR(JBidx,esgr_Trapezoidal_Breadth)                    &
+                                     +elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)                  &
+                                     +elemSGR(JBidx,esgr_Trapezoidal_RightSlope)))
 
                 case (lTriangular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
@@ -3444,6 +3448,12 @@ contains
                     !return
                 end select
             end do
+
+            ! print *, ' '
+            ! print *, 'here in initial_condition at 60987 for implied storage plane area'
+            ! print *, trim(reverseKey(JBgeometryType))
+            ! print *, JMidx, elemSR(JMidx,esr_Storage_Plane_Area), elemR(JBidx,er_BreadthMax)
+            ! print *, ' '
 
             !% Breadth is consistent with length and plane area
             elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plane_Area) &
@@ -3607,7 +3617,7 @@ contains
             integer, allocatable :: tpack(:)
             integer :: npack, ii
             real(8), pointer :: area(:), area0(:), area1(:)
-            real(8), pointer :: depth(:), fulldepth(:), ell(:), length(:)
+            real(8), pointer :: depth(:), fulldepth(:), length(:), ellDepth(:)
             real(8), pointer :: hydDepth(:), hydRadius(:), perimeter(:)
             real(8), pointer :: topwidth(:)
             real(8), pointer :: volume(:), volume0(:), volume1(:)
@@ -3619,8 +3629,8 @@ contains
             area1     => elemR(:,er_Area_N1)
             depth     => elemR(:,er_Depth)
             fulldepth => elemR(:,er_FullDepth)
-            ell       => elemR(:,er_ell)
-            hydDepth  => elemR(:,er_HydDepth)
+            ellDepth  => elemR(:,er_EllDepth)
+            !hydDepth  => elemR(:,er_HydDepth)
             hydRadius => elemR(:,er_HydRadius)
             length    => elemR(:,er_Length)
             perimeter => elemR(:,er_Perimeter)
@@ -3661,8 +3671,8 @@ contains
         !% --- derived data
         area0(tpack)     = area(tpack)
         area1(tpack)     = area(tpack)
-        hydDepth(tpack)  = area(tpack) / topwidth(tpack)
-        ell(tpack)       = hydDepth(tpack)  !% HACK -- assumes x-sect is continually increasing in width with depth
+        !hydDepth(tpack)  = area(tpack) / topwidth(tpack)
+        !ell(tpack)       = hydDepth(tpack)  !% HACK -- assumes x-sect is continually increasing in width with depth
         perimeter(tpack) = area(tpack) / hydRadius(tpack)
         volume(tpack)    = area(tpack) * length(tpack)
         volume0(tpack)   = volume(tpack)
@@ -3791,7 +3801,8 @@ contains
             !% when the code is finalized
             elemR(:,er_Area)     = setting%ZeroValue%Area  ! 1.0e-6
             elemR(:,er_Topwidth) = setting%ZeroValue%Topwidth !1.0e-6
-            elemR(:,er_HydDepth) = setting%ZeroValue%Depth  ! 1.0e-6
+            !elemR(:,er_HydDepth) = setting%ZeroValue%Depth  ! 1.0e-6
+            elemR(:,er_EllDepth) = setting%ZeroValue%Depth  ! 1.0e-6
             elemR(:,er_Flowrate) = zeroR
             elemR(:,er_Head)     = setting%ZeroValue%Depth + elemR(:,er_Zbottom) !1.0e-6
         endwhere
@@ -4230,7 +4241,7 @@ contains
         elemR(1:size(elemR,1)-1,er_Surcharge_Time)        = zeroR      
         elemR(1:size(elemR,1)-1,er_SlotDepth_N0)          = elemR(1:size(elemR,1)-1,er_SlotDepth)    
         elemR(1:size(elemR,1)-1,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
-                                                              * elemR(1:size(elemR,1)-1,er_FullEll)))
+                                                              * elemR(1:size(elemR,1)-1,er_FullDepth)))
         !% only calculate slots for ETM time-march
         if (setting%Solver%SolverSelect == ETM) then
             select case (SlotMethod)
@@ -4248,7 +4259,7 @@ contains
 
             case (DynamicSlot, DynamicSlotTest)
 
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_FullEll)))
+                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_FullDepth)))
                 elemR(1:size(elemR,1)-1,er_Preissmann_Number_N0)  = elemR(1:size(elemR,1)-1,er_Preissmann_Number)
                 where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
@@ -4490,7 +4501,7 @@ contains
 
                     BC%flowI(ii, bi_node_idx) = nidx
                     BC%flowI(ii, bi_idx)      = ii
-                    BC%flowYN(ii,bYN_read_input_file) = .true.
+                    BC%flowYN(ii,bYN_read_input_series) = .true.
                     BC%flowI(ii, bi_face_idx) = node%I(nidx,ni_face_idx)
                     BC%flowI(ii, bi_elem_idx) = node%I(nidx,ni_elem_idx)
 
@@ -4561,26 +4572,26 @@ contains
             end do
         end if
 
-    !     print *, ' '
-    !     print *, ' in ',trim(subroutine_name)
-    !     do ii=1,N_flowBC
-    !         print *, ii, node%P%have_flowBC(ii)
-    !         print *, 'node type ', node%I(nidx, ni_node_type), trim(reverseKey(node%I(nidx, ni_node_type)))
-    !         print *, BC%flowI(ii,bi_idx),BC%flowI(ii,bi_node_idx)
-    !         print *, 'elem, face : ',BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_face_idx)
-    !         print *, 'face up of elem ', elemI(BC%flowI(ii,bi_elem_idx),ei_Mface_uL)
-    !         print *, 'elem dn of face ', faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL)
-    !     end do
-    !     print *, ' '
-    !     print *,'dummy idx is ',dummyIdx
-    !     do ii=1,N_elem(1)
-    !         print *, ' '
-    !         print *, faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
-    !         print *, elemI(ii,ei_Mface_uL), ii, elemI(ii,ei_Mface_dL)
-    !         print *, faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
-    !     end do
+        !     print *, ' '
+        !     print *, ' in ',trim(subroutine_name)
+        !     do ii=1,N_flowBC
+        !         print *, ii, node%P%have_flowBC(ii)
+        !         print *, 'node type ', node%I(nidx, ni_node_type), trim(reverseKey(node%I(nidx, ni_node_type)))
+        !         print *, BC%flowI(ii,bi_idx),BC%flowI(ii,bi_node_idx)
+        !         print *, 'elem, face : ',BC%flowI(ii,bi_elem_idx), BC%flowI(ii,bi_face_idx)
+        !         print *, 'face up of elem ', elemI(BC%flowI(ii,bi_elem_idx),ei_Mface_uL)
+        !         print *, 'elem dn of face ', faceI(BC%flowI(ii,bi_face_idx),fi_Melem_dL)
+        !     end do
+        !     print *, ' '
+        !     print *,'dummy idx is ',dummyIdx
+        !     do ii=1,N_elem(1)
+        !         print *, ' '
+        !         print *, faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
+        !         print *, elemI(ii,ei_Mface_uL), ii, elemI(ii,ei_Mface_dL)
+        !         print *, faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
+        !     end do
 
-    !    stop 2098734
+        !    stop 2098734
 
         !% --- Initialize Head BCs
         if (N_headBC > 0) then
@@ -4616,27 +4627,27 @@ contains
                 case (API_FREE_OUTFALL)
                     !% debug test 20220725brh
                     BC%headI(ii, bi_subcategory) = BCH_free
-                    BC%headYN(ii, bYN_read_input_file) = .false.
+                    BC%headYN(ii, bYN_read_input_series) = .false.
 
                 case (API_NORMAL_OUTFALL)
                     !% debug tested 20220729brh
                     BC%headI(ii, bi_subcategory) = BCH_normal
-                    BC%headYN(ii, bYN_read_input_file) = .false.
+                    BC%headYN(ii, bYN_read_input_series) = .false.
 
                 case (API_FIXED_OUTFALL) 
                     !% debug tested 20220729brh
                     BC%headI(ii, bi_subcategory) = BCH_fixed
-                    BC%headYN(ii, bYN_read_input_file) = .false.
+                    BC%headYN(ii, bYN_read_input_series) = .false.
 
                 case (API_TIDAL_OUTFALL)
                     !% debug tested 20220729brh
                     BC%headI(ii, bi_subcategory) = BCH_tidal
-                    BC%headYN(ii, bYN_read_input_file) = .true.
+                    BC%headYN(ii, bYN_read_input_series) = .true.
 
                 case (API_TIMESERIES_OUTFALL)
                     !% debug tested 2020729brh
                     BC%headI(ii, bi_subcategory) = BCH_tseries
-                    BC%headYN(ii, bYN_read_input_file) = .true.
+                    BC%headYN(ii, bYN_read_input_series) = .true.
 
                 case default
                     print *, 'CODE ERROR: unexpected case default'
@@ -5238,11 +5249,13 @@ contains
                     call util_crashpoint(6629873)
                 end select
 
-                ! print *, ' '
-                ! print *, thisP
-                ! print *, 'topwidth = ',elemR(thisP,er_Temp01)
-                ! print *, 'area     = ',elemR(thisP,er_Temp02)
-                ! print *, 'volume   = ',elemR(thisP,er_Temp03)
+                !  print *, ' ' 
+                !  print *, thisP
+                !  print *, trim(reverseKey(elemI(thisP,ei_elementType)))
+                !  print *, 'depth0    = ',depth0
+                !  print *, 'topwidth = ',elemR(thisP,er_Temp01)
+                !  print *, 'area     = ',elemR(thisP,er_Temp02)
+                !  print *, 'volume   = ',elemR(thisP,er_Temp03)
 
                             
             end do
@@ -5271,11 +5284,11 @@ contains
                 volume0 = onehundredR * tiny(volume0)
             end if
 
-            ! print *, ' '
-            ! print *, 'depth0   ',depth0
-            ! print *, 'topwidth0',topwidth0
-            ! print *, 'area0    ',area0
-            ! print *, 'volume0  ',volume0   
+            !  print *, ' '
+            !  print *, 'depth0   ',depth0
+            !  print *, 'topwidth0',topwidth0
+            !  print *, 'area0    ',area0
+            !  print *, 'volume0  ',volume0   
 
 
             ! stop 598723
