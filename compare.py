@@ -5,6 +5,7 @@ from datetime import datetime
 from tkinter import TRUE
 import h5py
 import csv
+import re
 import numpy as np
 from swmmtoolbox import swmmtoolbox
 from numpy import inf
@@ -153,6 +154,13 @@ swmm5_plus_dir = swmm5_plus_dir + '/' + x
 h5_file = h5py.File(swmm5_plus_dir+'/output.h5','r')
 all_dset_names=h5_file.keys()
 
+# read the report file (rpt) to get the units in swmm5c
+file = open(rpt_path, 'r')
+
+for line in file.readlines():
+    if re.search('Flow Units', line, re.I):
+        unit = line[29:32]
+
 # this will be used to keep a running list of which links and nodes are now within given tolerances
 list_of_errors =[]
 
@@ -162,17 +170,37 @@ if unit == 'CFS':
     Yunit = '(ft)'
     Qunit = '(cfs)'
     Htolerance = Htolerance * Yf
-elif unit == 'SI':
+elif unit == 'GPM':
+    Yf = 3.28084
+    Qf = 15850.37
+    Yunit = '(ft)'
+    Qunit = '(gpm)'
+    Htolerance = Htolerance * Yf
+elif unit == 'MGD': 
+    Yf = 3.28084
+    Qf = 22.8245
+    Yunit = '(ft)'
+    Qunit = '(mgd)'
+    Htolerance = Htolerance * Yf  
+elif unit == 'CMS':
     Yf = 1.
     Qf = 1.
     Yunit = '(m)'
     Qunit = '(cms)'
+elif unit == 'LPS':
+    Yf = 1.
+    Qf = 1000.000
+    Yunit = '(m)'
+    Qunit = '(lps)'
+elif unit == 'MLD':
+    Yf = 1.
+    Qf = 84.6000
+    Yunit = '(m)'
+    Qunit = '(mld)'
 else:
-    print('Worng unit type seletced. Only allowables are CFS and SI')
+    print('Worng unit type seletced')
+    exit(1)
     
-#Qtol = Qtolerance / 100.
-#Ytol = Ytolerance / 100.
-
 # Loop through all of the data set names 
 for x in all_dset_names:
     
@@ -311,7 +339,7 @@ for x in all_dset_names:
 
 print(' ')
 if(len(list_of_errors) == 0):
-    print("no links or nodes are out of rangee given tolerance", Qtolerance, Ytolerance, Htolerance)
+    print("no links or nodes are out of rangee given % tolerance", Qtolerance, Ytolerance, Htolerance)
 else:
     print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for givem tolerance", Qtolerance, Ytolerance, Htolerance)
     print(list_of_errors)
