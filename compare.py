@@ -51,6 +51,7 @@ def convert_dset_to_csv(file_name,dset_name):
 # USER SETTING CONTROL
 Qtolerance = 25.0            # percentage flow tolerance for comparing between the norms
 Ytolerance = 25.0            # percentage depth tolerance
+Q_balance_error_tol = 10.0   # mass balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
@@ -156,10 +157,41 @@ all_dset_names=h5_file.keys()
 
 # read the report file (rpt) to get the units in swmm5c
 file = open(rpt_path, 'r')
-
+# set the line counter to zero
+ii = 0
 for line in file.readlines():
+    # counter for line number
+    ii = ii+1
     if re.search('Flow Units', line, re.I):
         unit = line[29:32]
+    elif re.search('Node Inflow Summary', line, re.I):
+        # node summary data starts from the 8th line from 'Node Inflow Summary'
+        node_summary_start = ii + 9
+        print(node_summary_start,line)
+    elif re.search('Node Surcharge Summary', line, re.I):
+        node_summary_end = ii - 4
+        print(node_summary_end,line)
+
+# Go back to position 0
+# Or beginning of file
+file.seek(0, 0)
+# go through line by line again
+jj = 0
+# empty list for the problematic nodes
+problem_nodes = []
+flow_balance_error_percents = []
+for line in file.readlines():
+    # counter for line number
+    jj = jj+1
+    if jj >= node_summary_start and jj <= node_summary_end:
+        # remove the linespace at the right side and convert last 6
+        # strings to float
+        line = line.strip()
+        flow_balance_error = float(line[-6:])
+
+        if abs(flow_balance_error) >= Q_balance_error_tol:
+            problem_nodes.append(line.split()[0])
+            flow_balance_error_percents.append(flow_balance_error)
 
 # this will be used to keep a running list of which links and nodes are now within given tolerances
 list_of_errors =[]
@@ -246,7 +278,7 @@ for x in all_dset_names:
         print('Flowrate   RMSE:',"%.3f" %rmse_link_Q,Qunit,'; or ',"%.2f%%" %norm_rmse_link_Q, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(swmmC_link_Q)),Qunit)
         print('Flow depth RMSE:',"%.3f" %rmse_link_Y,Yunit,' ; or ',"%.2f%%" %norm_rmse_link_Y, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(swmmC_link_Y)),Yunit)
         print('-------------------------------------------------------------------------------')
-
+        print(' ')
         # ... Calculate the norms
         # calculate L1,L2,Linf norms for the swmm_c link flowrates
         swmmC_link_Q_l1   = np.linalg.norm(swmmC_link_Q,1)
@@ -290,52 +322,58 @@ for x in all_dset_names:
         # ... store node name
         node_name = x[10::]
 
-        # ... extract swmmC node data
-        # extract the depths from the swmm5_C .out file and convert to numpy array to store
-        swmmC_node_H = swmmtoolbox.extract(out_path,"node,"+node_name+',Hydraulic_head').to_numpy().ravel()
-
-        # ... extract swmm5plus node data
-        # extract the flowrates from the swmm5_plus .h5 file
-        z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-        if is_nJ2:  
-            swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        # find if any of the nodes exceeds the mass balance tolerance
+        if any([node in node_name for node in problem_nodes]):
+            idx = problem_nodes.index(node_name)
+            print(node_name, 'has a flow balance percent error of', flow_balance_error_percents[idx], 'which is greater than the given tolerance',Q_balance_error_tol)
+            print(' ')
         else:
-            swmmF_node_H = (z[:,5]) * Yf # take the JM peizometric head
-        # extract the timestamp
-        time = z[:,0]
+            # ... extract swmmC node data
+            # extract the depths from the swmm5_C .out file and convert to numpy array to store
+            swmmC_node_H = swmmtoolbox.extract(out_path,"node,"+node_name+',Hydraulic_head').to_numpy().ravel()
 
-        array_len_H = len(swmmC_node_H)
+            # ... extract swmm5plus node data
+            # extract the flowrates from the swmm5_plus .h5 file
+            z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
+            if is_nJ2:  
+                swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+            else:
+                swmmF_node_H = (z[:,5]) * Yf # take the JM peizometric head
+            # extract the timestamp
+            time = z[:,0]
 
-        # --- RMSE of head
-        rmse_node_H = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
-        print(' ')
-        print('-------------------------------------------------------------------------------')
-        print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
-        # print node depth data
-        if print_timeseries:
-            node_col_headers = ["Time (hrs.)", "SWMMC H "+Yunit, "SWMM5+ H "+Yunit]
-            node_merged_array = np.array([time[:array_len_H],swmmC_node_H, swmmF_node_H[:array_len_H]]).T
-            node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
+            array_len_H = len(swmmC_node_H)
+
+            # --- RMSE of head
+            rmse_node_H = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
             print(' ')
-            print(node_table)
-            print(' ')
-        print('Head RMSE:',"%.3f" %rmse_node_H,Yunit)
-        print('-------------------------------------------------------------------------------')
+            print('-------------------------------------------------------------------------------')
+            print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
+            # print node depth data
+            if print_timeseries:
+                node_col_headers = ["Time (hrs.)", "SWMMC H "+Yunit, "SWMM5+ H "+Yunit]
+                node_merged_array = np.array([time[:array_len_H],swmmC_node_H, swmmF_node_H[:array_len_H]]).T
+                node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
+                print(' ')
+                print(node_table)
+                print(' ')
+            print('Head RMSE:',"%.3f" %rmse_node_H,Yunit)
+            print('-------------------------------------------------------------------------------')
 
-        # calculate L1,L2,Linf norms for the swmm_c output
-        swmmC_node_Y_l1 = np.linalg.norm(swmmC_node_H,1)
-        swmmC_node_Y_l2 = np.linalg.norm(swmmC_node_H)
-        swmmC_node_Y_linf = np.linalg.norm(swmmC_node_H,inf)
+            # calculate L1,L2,Linf norms for the swmm_c output
+            swmmC_node_Y_l1 = np.linalg.norm(swmmC_node_H,1)
+            swmmC_node_Y_l2 = np.linalg.norm(swmmC_node_H)
+            swmmC_node_Y_linf = np.linalg.norm(swmmC_node_H,inf)
 
-        # calculate L1,L2,Linf norms for the swmm_plus output
-        swmmF_node_Y_l1 = np.linalg.norm(swmmF_node_H[:array_len_H],1)
-        swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H[:array_len_H])
-        swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H[:array_len_H],inf)
+            # calculate L1,L2,Linf norms for the swmm_plus output
+            swmmF_node_Y_l1 = np.linalg.norm(swmmF_node_H[:array_len_H],1)
+            swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H[:array_len_H])
+            swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H[:array_len_H],inf)
 
-        # Fail check (uses absolute error for head)
-        if(rmse_node_H > Htolerance):
-            print('Failed node',node_name,'. RSME Head = ',rmse_node_H, Yunit)
-            list_of_errors.append('node: '+node_name+" head errors are not within given tolerance range")  
+            # Fail check (uses absolute error for head)
+            if(rmse_node_H > Htolerance):
+                print('Failed node',node_name,'. RSME Head = ',rmse_node_H, Yunit)
+                list_of_errors.append('node: '+node_name+" head errors are not within given tolerance range")  
 
 print(' ')
 if(len(list_of_errors) == 0):
