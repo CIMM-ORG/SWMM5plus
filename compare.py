@@ -51,7 +51,7 @@ def convert_dset_to_csv(file_name,dset_name):
 # USER SETTING CONTROL
 Qtolerance = 25.0            # percentage flow tolerance for comparing between the norms
 Ytolerance = 25.0            # percentage depth tolerance
-Q_balance_error_tol = 10.0   # mass balance tolerance error for nodes
+Q_balance_error_tol = 10.0   # flow balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
@@ -165,12 +165,22 @@ for line in file.readlines():
     if re.search('Flow Units', line, re.I):
         unit = line[29:32]
     elif re.search('Node Inflow Summary', line, re.I):
-        # node summary data starts from the 8th line from 'Node Inflow Summary'
+        # node summary data starts from the 9th line from 'Node Inflow Summary'
         node_summary_start = ii + 9
-        print(node_summary_start,line)
     elif re.search('Node Surcharge Summary', line, re.I):
+        # node summary data ends at the 4th line above 'Node Surcharge Summary'
         node_summary_end = ii - 4
-        print(node_summary_end,line)
+        # node surcharge data starts from the 9th line from 'Node Surcharge Summary'
+        node_surcharge_start = ii + 9
+    elif re.search('Node Flooding Summary', line, re.I):
+        # node summary data ends at the 4th line above 'Node Flooding Summary'
+        node_surcharge_end = ii - 4
+    elif re.search('Conduit Surcharge Summary', line, re.I):
+        # conduit surcharge data starts from the 8th line from 'Conduit Surcharge Summary'
+        link_surcharge_start = ii + 8
+    elif re.search('Analysis begun on', line, re.I):
+        # conduit surcharge data ends at the 3th line above 'Analysis begun on'
+        link_surcharge_end = ii - 3
 
 # Go back to position 0
 # Or beginning of file
@@ -179,19 +189,28 @@ file.seek(0, 0)
 jj = 0
 # empty list for the problematic nodes
 problem_nodes = []
+surcharged_links = []
+surcharged_nodes = []
 flow_balance_error_percents = []
 for line in file.readlines():
     # counter for line number
     jj = jj+1
-    if jj >= node_summary_start and jj <= node_summary_end:
-        # remove the linespace at the right side and convert last 6
-        # strings to float
-        line = line.strip()
-        flow_balance_error = float(line[-6:])
+    # remove the whitespace from the start and end of the line
+    line = line.strip()
 
+    # appending nodes with mass balance error
+    if jj >= node_summary_start and jj <= node_summary_end:
+        # convert last 6 strings to float
+        flow_balance_error = float(line[-6:])
         if abs(flow_balance_error) >= Q_balance_error_tol:
             problem_nodes.append(line.split()[0])
             flow_balance_error_percents.append(flow_balance_error)
+    # appending surcharged nodes
+    elif jj >= node_surcharge_start and jj <= node_surcharge_end:
+        surcharged_nodes.append(line.split()[0])
+    # appending surcharged links
+    elif jj >= link_surcharge_start and jj <= link_surcharge_end:
+        surcharged_links.append(line.split()[0])
 
 # this will be used to keep a running list of which links and nodes are now within given tolerances
 list_of_errors =[]
@@ -241,76 +260,85 @@ for x in all_dset_names:
 
         # ... store link name 
         link_name = x[5::]
-        # ... extract SWMM5-C data
-        # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
-        swmmC_link_Q = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_rate').to_numpy().ravel()
-        # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
-        swmmC_link_Y = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_depth').to_numpy().ravel()
-
-        # ... extract SWMM5+ data
-        z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-        # extract the flowrates from the swmm5_plus .h5 file
-        swmmF_link_Q = z[:,3] * Qf
-        # extract the depths from the swmm5_plus .h5 file
-        swmmF_link_Y = z[:,2] * Yf
-        # extract the timestamp
-        time = z[:,0]
-        array_len_Q = len(swmmC_link_Q)
-        array_len_Y = len(swmmC_link_Y)
-        # print link flowrate and depth data
-
-        # RMSE
-        rmse_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
-        rmse_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
-        # ... RMSE % error normalized by either the maximum flowrate, depth or 0.1
-        norm_rmse_link_Q = 100*rmse_link_Q  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Q), np.amax(swmmC_link_Q)))
-        norm_rmse_link_Y = 100*rmse_link_Y  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Y), np.amax(swmmC_link_Y)))
-        print(' ')
-        print('-------------------------------------------------------------------------------')
-        print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
-        if print_timeseries:
-            link_col_headers = ["Time (hrs.)","SWMM-C Q "+Qunit, "SWMM5+ Q "+Qunit, "SWMM-C Y "+Yunit, "SWMM5+ Y "+Yunit]
-            link_merged_array = np.array([time[:array_len_Q],swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
-            link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
-            print(' ') 
-            print(link_table)
+        # find if any of the nodes exceeds the mass balance tolerance
+        if any([link in link_name for link in surcharged_links]):
+            idx = surcharged_links.index(link_name)
             print(' ')
-        print('Flowrate   RMSE:',"%.3f" %rmse_link_Q,Qunit,'; or ',"%.2f%%" %norm_rmse_link_Q, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(swmmC_link_Q)),Qunit)
-        print('Flow depth RMSE:',"%.3f" %rmse_link_Y,Yunit,' ; or ',"%.2f%%" %norm_rmse_link_Y, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(swmmC_link_Y)),Yunit)
-        print('-------------------------------------------------------------------------------')
-        print(' ')
-        # ... Calculate the norms
-        # calculate L1,L2,Linf norms for the swmm_c link flowrates
-        swmmC_link_Q_l1   = np.linalg.norm(swmmC_link_Q,1)
-        swmmC_link_Q_l2   = np.linalg.norm(swmmC_link_Q)
-        swmmC_link_Q_linf = np.linalg.norm(swmmC_link_Q,inf)
-        # calculate L1,L2,Linf norms for the swmm_plus link flowrates
-        swmmF_link_Q_l1   = np.linalg.norm(swmmF_link_Q[:array_len_Q],1)
-        swmmF_link_Q_l2   = np.linalg.norm(swmmF_link_Q[:array_len_Q])
-        swmmF_link_Q_linf = np.linalg.norm(swmmF_link_Q[:array_len_Q],inf)
-        # calculate L1,L2,Linf norms for the swmm_c link depths
-        swmmC_link_Y_l1   = np.linalg.norm(swmmC_link_Y,1)
-        swmmC_link_Y_l2   = np.linalg.norm(swmmC_link_Y)
-        swmmC_link_Y_linf = np.linalg.norm(swmmC_link_Y,inf)
-        # calculate L1,L2,Linf norms for the swmm_plus link flowrate
-        swmmF_link_Y_l1 = np.linalg.norm(swmmF_link_Y[:array_len_Y],1)
-        swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y[:array_len_Y])
-        swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y[:array_len_Y],inf)
+            print('-------------------------------------------------------------------------------')
+            print(link_name, 'is surcharged and has been excluded from comparison')
+            print('-------------------------------------------------------------------------------')
+            print(' ')
+        else:
+            # ... extract SWMM5-C data
+            # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
+            swmmC_link_Q = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_rate').to_numpy().ravel()
+            # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
+            swmmC_link_Y = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_depth').to_numpy().ravel()
 
-        # ... Find the normalized errors for fail detection MOVED UP BY BRH
-        #norm_rmse_link_Q = np.linalg.norm(1 - abs(swmmF_link_Q[:array_len_Q]/swmmC_link_Q)) / np.sqrt(len(swmmC_link_Q))
+            # ... extract SWMM5+ data
+            z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
+            # extract the flowrates from the swmm5_plus .h5 file
+            swmmF_link_Q = z[:,3] * Qf
+            # extract the depths from the swmm5_plus .h5 file
+            swmmF_link_Y = z[:,2] * Yf
+            # extract the timestamp
+            time = z[:,0]
+            array_len_Q = len(swmmC_link_Q)
+            array_len_Y = len(swmmC_link_Y)
+            # print link flowrate and depth data
 
-        # Fail check
-        if(norm_rmse_link_Q > Qtolerance):
-            print('Failed link',link_name,'. Normalized rmse Q = ',norm_rmse_link_Q,'%')
-            list_of_errors.append('link: '+link_name+" flowrates are not within given error tolerance range")
+            # RMSE
+            rmse_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
+            rmse_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
+            # ... RMSE % error normalized by either the maximum flowrate, depth or 0.1
+            norm_rmse_link_Q = 100*rmse_link_Q  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Q), np.amax(swmmC_link_Q)))
+            norm_rmse_link_Y = 100*rmse_link_Y  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Y), np.amax(swmmC_link_Y)))
+            print(' ')
+            print('-------------------------------------------------------------------------------')
+            print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
+            if print_timeseries:
+                link_col_headers = ["Time (hrs.)","SWMM-C Q "+Qunit, "SWMM5+ Q "+Qunit, "SWMM-C Y "+Yunit, "SWMM5+ Y "+Yunit]
+                link_merged_array = np.array([time[:array_len_Q],swmmC_link_Q, swmmF_link_Q[:array_len_Q], swmmC_link_Y, swmmF_link_Y[:array_len_Y]]).T
+                link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
+                print(' ') 
+                print(link_table)
+                print(' ')
+            print('Flowrate   RMSE:',"%.3f" %rmse_link_Q,Qunit,'; or ',"%.2f%%" %norm_rmse_link_Q, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(swmmC_link_Q)),Qunit)
+            print('Flow depth RMSE:',"%.3f" %rmse_link_Y,Yunit,' ; or ',"%.2f%%" %norm_rmse_link_Y, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(swmmC_link_Y)),Yunit)
+            print('-------------------------------------------------------------------------------')
+            print(' ')
+            # ... Calculate the norms
+            # calculate L1,L2,Linf norms for the swmm_c link flowrates
+            swmmC_link_Q_l1   = np.linalg.norm(swmmC_link_Q,1)
+            swmmC_link_Q_l2   = np.linalg.norm(swmmC_link_Q)
+            swmmC_link_Q_linf = np.linalg.norm(swmmC_link_Q,inf)
+            # calculate L1,L2,Linf norms for the swmm_plus link flowrates
+            swmmF_link_Q_l1   = np.linalg.norm(swmmF_link_Q[:array_len_Q],1)
+            swmmF_link_Q_l2   = np.linalg.norm(swmmF_link_Q[:array_len_Q])
+            swmmF_link_Q_linf = np.linalg.norm(swmmF_link_Q[:array_len_Q],inf)
+            # calculate L1,L2,Linf norms for the swmm_c link depths
+            swmmC_link_Y_l1   = np.linalg.norm(swmmC_link_Y,1)
+            swmmC_link_Y_l2   = np.linalg.norm(swmmC_link_Y)
+            swmmC_link_Y_linf = np.linalg.norm(swmmC_link_Y,inf)
+            # calculate L1,L2,Linf norms for the swmm_plus link flowrate
+            swmmF_link_Y_l1 = np.linalg.norm(swmmF_link_Y[:array_len_Y],1)
+            swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y[:array_len_Y])
+            swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y[:array_len_Y],inf)
 
-        if(norm_rmse_link_Y > Ytolerance):
-            if (swmmC_link_Q_l2 < 0.001):
-                print('near-zero flow, so depth in links is not valid in SWMM-C')
-            else:
-                print('Failed link',link_name,'. Normalized rmse Y = ',norm_rmse_link_Y,'%')
-                list_of_errors.append('link: '+link_name+" depths are not within given error tolerance range")    
+            # ... Find the normalized errors for fail detection MOVED UP BY BRH
+            #norm_rmse_link_Q = np.linalg.norm(1 - abs(swmmF_link_Q[:array_len_Q]/swmmC_link_Q)) / np.sqrt(len(swmmC_link_Q))
+
+            # Fail check
+            if(norm_rmse_link_Q > Qtolerance):
+                print('Failed link',link_name,'. Normalized rmse Q = ',norm_rmse_link_Q,'%')
+                list_of_errors.append('link: '+link_name+" flowrates are not within given error tolerance range")
+
+            if(norm_rmse_link_Y > Ytolerance):
+                if (swmmC_link_Q_l2 < 0.001):
+                    print('near-zero flow, so depth in links is not valid in SWMM-C')
+                else:
+                    print('Failed link',link_name,'. Normalized rmse Y = ',norm_rmse_link_Y,'%')
+                    list_of_errors.append('link: '+link_name+" depths are not within given error tolerance range")    
 
     # Check if the data set is a node
     if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
@@ -325,7 +353,17 @@ for x in all_dset_names:
         # find if any of the nodes exceeds the mass balance tolerance
         if any([node in node_name for node in problem_nodes]):
             idx = problem_nodes.index(node_name)
+            print(' ')
+            print('-------------------------------------------------------------------------------')
             print(node_name, 'has a flow balance percent error of', flow_balance_error_percents[idx], 'which is greater than the given tolerance',Q_balance_error_tol)
+            print('Thus node, ', node_name, 'has been excluded from the compariosn')
+            print('-------------------------------------------------------------------------------')
+            print(' ')
+        elif any([node in node_name for node in surcharged_nodes]):
+            print(' ')
+            print('-------------------------------------------------------------------------------')
+            print(node_name, 'is surcharged and has been excluded from comparison')
+            print('-------------------------------------------------------------------------------')
             print(' ')
         else:
             # ... extract swmmC node data
