@@ -3167,13 +3167,6 @@ contains
             elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
             elemR(JBidx,er_FroudeNumber) = zeroR
 
-            !% --- Set the face flowrates such that it does not blowup the initial interpolation
-            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
-                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
-            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
-                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
-            end if
-
             !% --- Set the geometry from the adjacent elements
             !%     Must evaluate across connected images
             !%     JB inherits geometry type from connected branch
@@ -3181,6 +3174,15 @@ contains
 
             !% --- branch has same number of barrels as the connected element
             elemI(JBidx,ei_barrels)             = elemI(Aidx,ei_barrels)[Ci]
+
+            !% --- Set the face flowrates and barrels such that it does not blowup
+            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
+                faceI(elemI(JBidx, ei_Mface_uL),fi_barrels)  = elemI(JBidx,ei_barrels) 
+            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
+                faceI(elemI(JBidx, ei_Mface_dL),fi_barrels)  = elemI(JBidx,ei_barrels)  
+            end if
 
             !% --- Ability to surcharge is set by JM
             !%     Note that JB (if surcharged) isn't subject to the max surcharge depth 
