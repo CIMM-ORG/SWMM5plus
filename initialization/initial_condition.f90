@@ -1786,7 +1786,7 @@ contains
             elemI(thisP,ei_geometryType) = filled_circular
 
 
-            !% HACK -- THIS ASSUMES THAT INPUT VALUES OF FULLDEPTH IS FOR PIPE WITHOUT SEDIMENT -- NEED TO CHECK THIS
+            !% HACK -- THIS ASSUMES THAT INPUT VALUES OF FULLDEPTH IS FOR PIPE WITHOUT SEDIMENT
 
             !% --- independent data
 
@@ -1808,7 +1808,9 @@ contains
             elemR(thisP,er_Depth) = elemR(thisP,er_Depth) - elemR(thisP,er_SedimentDepth)
 
             elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)    &
-                 = link%R(thisLink,lr_FullDepth) !% + elemR(thisLink,er_SedimentDepth)    !% HACK -- check what link full depth means
+                 = link%R(thisLink,lr_FullDepth) + elemR(thisP,er_SedimentDepth)    !% HACK -- check what link full depth means
+
+            
 
             elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)        &
                 = (onefourthR * pi) * (elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)**2)
@@ -1819,14 +1821,20 @@ contains
             elemSGR(thisP,esgr_Filled_Circular_TotalPipeHydRadius)     &
                 =   elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)  &
                   / elemSGR(thisP,esgR_Filled_Circular_TotalPipePerimeter)
-            
+
+
+            !% FOR INITIAL FILLED AREA CALCULATION, RESET THE FULL DEPTH TO TOTAL DIA OF THE PIPE
+            elemR(thisP,er_BreadthMax) = elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)
+
+            elemR(thisP,er_FullDepth)  =  elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter) 
+
             do ii=1,size(thisP)
                 mm = thisP(ii)
                 if (elemR(mm,er_SedimentDepth) >= setting%ZeroValue%Depth) then
 
                     elemSGR(mm,esgr_Filled_Circular_bottomArea)               &
                         = llgeo_tabular_from_depth_singular                   &
-                            (mm, elemR(mm,er_SedimentDepth), fullArea(mm),    &
+                            (mm, elemR(mm,er_SedimentDepth), elemSGR(mm,esgR_Filled_Circular_TotalPipeArea),    &
                             setting%ZeroValue%Depth, ACirc )
 
                     elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)           &
