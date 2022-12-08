@@ -1817,7 +1817,7 @@ contains
             elemI(thisP,ei_geometryType) = filled_circular
 
 
-            !% HACK -- THIS ASSUMES THAT INPUT VALUES OF FULLDEPTH IS FOR PIPE WITHOUT SEDIMENT -- NEED TO CHECK THIS
+            !% HACK -- THIS ASSUMES THAT INPUT VALUES OF FULLDEPTH IS FOR PIPE WITHOUT SEDIMENT
 
             !% --- independent data
 
@@ -1839,7 +1839,9 @@ contains
             elemR(thisP,er_Depth) = elemR(thisP,er_Depth) - elemR(thisP,er_SedimentDepth)
 
             elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)    &
-                 = link%R(thisLink,lr_FullDepth) !% + elemR(thisLink,er_SedimentDepth)    !% HACK -- check what link full depth means
+                 = link%R(thisLink,lr_FullDepth) + elemR(thisP,er_SedimentDepth)    !% HACK -- check what link full depth means
+
+            
 
             elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)        &
                 = (onefourthR * pi) * (elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)**2)
@@ -1850,14 +1852,20 @@ contains
             elemSGR(thisP,esgr_Filled_Circular_TotalPipeHydRadius)     &
                 =   elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)  &
                   / elemSGR(thisP,esgR_Filled_Circular_TotalPipePerimeter)
-            
+
+
+            !% FOR INITIAL FILLED AREA CALCULATION, RESET THE FULL DEPTH TO TOTAL DIA OF THE PIPE
+            elemR(thisP,er_BreadthMax) = elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)
+
+            elemR(thisP,er_FullDepth)  =  elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter) 
+
             do ii=1,size(thisP)
                 mm = thisP(ii)
                 if (elemR(mm,er_SedimentDepth) >= setting%ZeroValue%Depth) then
 
                     elemSGR(mm,esgr_Filled_Circular_bottomArea)               &
                         = llgeo_tabular_from_depth_singular                   &
-                            (mm, elemR(mm,er_SedimentDepth), fullArea(mm),    &
+                            (mm, elemR(mm,er_SedimentDepth), elemSGR(mm,esgR_Filled_Circular_TotalPipeArea),    &
                             setting%ZeroValue%Depth, ACirc )
 
                     elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)           &
@@ -3198,13 +3206,6 @@ contains
             elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
             elemR(JBidx,er_FroudeNumber) = zeroR
 
-            !% --- Set the face flowrates such that it does not blowup the initial interpolation
-            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
-                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
-            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
-                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
-            end if
-
             !% --- Set the geometry from the adjacent elements
             !%     Must evaluate across connected images
             !%     JB inherits geometry type from connected branch
@@ -3212,6 +3213,15 @@ contains
 
             !% --- branch has same number of barrels as the connected element
             elemI(JBidx,ei_barrels)             = elemI(Aidx,ei_barrels)[Ci]
+
+            !% --- Set the face flowrates and barrels such that it does not blowup
+            if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
+                faceI(elemI(JBidx, ei_Mface_uL),fi_barrels)  = elemI(JBidx,ei_barrels) 
+            else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
+                faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
+                faceI(elemI(JBidx, ei_Mface_dL),fi_barrels)  = elemI(JBidx,ei_barrels)  
+            end if
 
             !% --- Ability to surcharge is set by JM
             !%     Note that JB (if surcharged) isn't subject to the max surcharge depth 
