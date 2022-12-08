@@ -94,8 +94,8 @@ module define_globals
 
     !integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
-    integer :: iet(2) =     (/1, 2 /)
-    integer :: ift(3) =   (/1, 2, 3/)
+    integer :: iet(2) =     (/14, 16 /)
+    integer :: ift(3) =   (/15, 16, 17/)
 
     integer(kind=8) :: irecCount = 0
 
@@ -124,6 +124,11 @@ module define_globals
     !% Number of maximum branches for a junction
     !% note that these must always be matched with the same
     !% number of up and down nodes. 
+    !% NOTE: element branch indexes in (e.g.) elemR arrays
+    !%  are always sequential after the Junction Main index, 
+    !% i.e. JBidx = JMidx + n, where odd n are upstream branches and even n are
+    !% dnstream. IMPORTANT: this convention is different from column numbers used for
+    !% node%I(:,ni_Mlink_u1), etc.
     integer, parameter :: max_up_branch_per_node = 5   !% ADDBRANCH
     integer, parameter :: max_dn_branch_per_node = 5   !% ADDBRANCH
     integer, parameter :: max_branch_per_node = 10      !% ADDBRANCH
@@ -422,7 +427,7 @@ module define_globals
     !integer :: SWMM_N_pollutant
     !integer :: SWMM_N_control
     !integer :: SWMM_N_divider
-    !integer :: setting%SWMMinput%N_link_transect  ! # of irregular cross-section transects defined for links
+    !integer :: setting%SWMMinput%N_transect  ! # of irregular cross-section transects defined for links
     !integer :: SWMM_N_transect_depth_items
     integer :: N_transect            ! # of irregular cross-section transects for elements
     integer :: N_transect_depth_items

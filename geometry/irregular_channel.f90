@@ -173,6 +173,8 @@ contains
             fulldepth      => elemR(:,er_FullDepth)
             hydradius      => elemR(:,er_HydRadius)
             perimeter      => elemR(:,er_Perimeter)
+            volume         => elemR(:,er_Volume)
+            fullvolume     => elemR(:,er_FullVolume)
             area           => elemR(:,er_Area)
             normInput      => elemR(:,er_Temp01)
             thisTable      => transectTableDepthR(:,:,tt_width)
@@ -195,7 +197,7 @@ contains
         if (setting%Discretization%AllowChannelOverflowTF) then
             !% --- depth is already limited to full depth
             !%     so no correction needed to hydradius
-            perimeter = llgeo_perimeter_from_hydradius_and_area_pure &
+            perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                             (thisP, hydradius(thisP), area(thisP))
         else
             !% --- if overflow is not allowed, then volume > full volume is possible
@@ -219,11 +221,6 @@ contains
     end subroutine irregular_perimeter_and_hydradius_from_depth
 !%    
 !%==========================================================================
-
-
-
-
-
 !%==========================================================================
 !%
     subroutine irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)

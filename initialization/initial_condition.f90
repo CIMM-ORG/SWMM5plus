@@ -464,31 +464,33 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
+            print *, 'link ',ii
+
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
-            ! print *, 'calling get barrels'
+            print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
 
-            ! print *, 'calling get depth'
+            print *, 'calling get depth'
             call init_IC_get_depth (thisLink)
 
-            ! print *, 'calling get flow and roughness'
+            print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
-            !  print *, 'calling get elemtype'
+             print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
 
-            !  print *, 'calling get geometry'
+             print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            ! print *, 'calling get flapgate'
+            print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
-            ! print *, 'calling get forcemain'
+            print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)      
 
-            ! print *, 'calling get culvert'
+            print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
@@ -547,6 +549,8 @@ contains
         !% --- note that default for setting%Output%BarrelsExist is false, so
         !%     only need a single multi-barrel to make this true.
         if (any(eBarrels(firstE:lastE) > 1)) setting%Output%BarrelsExist = .true.
+
+        NEED TO LOOK THROUGH THE ABOVE -- NOT WORKING FOR BRANCHES
 
     end subroutine init_IC_get_barrels_from_linkdata
 !%
@@ -1176,9 +1180,9 @@ contains
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
 
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, thisLink, linkType
-        ! print *, trim(reverseKey(linkType))
+        print *, 'in ',trim(subroutine_name)
+        print *, thisLink, linkType
+        print *, trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -1293,27 +1297,49 @@ contains
         select case (geometryType)
 
         case (lIrregular)
-              
+             
+            print *, 'lIrregular'
+            print *, 'thisLink ',thisLink
+
             !% --- transect index for this link
             link_tidx => link%I(thisLink,li_transect_idx)
+
+            print *, 'link_tidx ',link_tidx
+
+            print *, 'thisP ',thisP
             
             !% --- assign non-table transect data
             elemI(thisP,ei_geometryType)  = irregular
             elemI(thisP,ei_link_transect_idx)  = link_tidx
+
+            print *, 'tr_widthMax ', tr_widthMax
+            print *, 'link_tidx   ', link_tidx
+            print *, size(link%transectR,1), size(link%transectR,2)
+
+            print *, 'link%transectR(link_tidx,tr_widthMax)',link%transectR(link_tidx,tr_widthMax)
             
             !% --- independent data
             elemR(thisP,er_BreadthMax)          = link%transectR(link_tidx,tr_widthMax)
+            print *, 'elemR(thisP,er_BreadthMax)',elemR(thisP,er_BreadthMax)
             elemR(thisP,er_AreaBelowBreadthMax) = link%transectR(link_tidx,tr_areaBelowBreadthMax)
+            print *, 'elemR(thisP,er_AreaBelowBreadthMax)',elemR(thisP,er_AreaBelowBreadthMax)
             !% --- note, do not apply the full depth limiter function to transects!
             elemR(thisP,er_FullDepth)           = link%transectR(link_tidx,tr_depthFull)
+            print *, 'elemR(thisP,er_FullDepth) ',elemR(thisP,er_FullDepth) 
             elemR(thisP,er_FullArea)            = link%transectR(link_tidx,tr_areaFull)
+            print *, 'elemR(thisP,er_FullArea)  ',elemR(thisP,er_FullArea)  
             elemR(thisP,er_FullTopwidth)        = link%transectR(link_tidx,tr_widthFull)
+            print *, 'elemR(thisP,er_FullTopwidth) ',elemR(thisP,er_FullTopwidth) 
             elemR(thisP,er_ZbreadthMax)         = link%transectR(link_tidx,tr_depthAtBreadthMax) + elemR(thisP,er_Zbottom)
+            print *, 'elemR(thisP,er_ZbreadthMax) ',elemR(thisP,er_ZbreadthMax)
             elemR(thisP,er_FullHydRadius)       = link%transectR(link_tidx,tr_hydRadiusFull)
+            print *, 'elemR(thisP,er_FullHydRadius)',elemR(thisP,er_FullHydRadius)
             
+            print *, 'before perimeter '
             !% --- full conditions
             elemR(thisP,er_FullPerimeter) = llgeo_perimeter_from_hydradius_and_area_pure &
                                                 (thisP, fullhydradius(thisP), fullarea(thisP))
+            print *, 'after perimeter'
 
             !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
             !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
@@ -1329,7 +1355,8 @@ contains
             !%     delayed until after the JB are initialized.
 
         case (lParabolic)
-
+            ! print *, 'lParabolic'
+            
             elemI(thisP,ei_geometryType) = parabolic
 
             !% --- independent data
@@ -1382,11 +1409,13 @@ contains
             elemR(thisP,er_Volume_N1)     = elemR(thisP,er_Volume)
 
         case (lPower_function)
+            ! print *, 'lPower_function'
 
             print *, 'CODE/CONFIGURATION ERROR: power function cross-sections not supported in SWMM5+'
             call util_crashpoint(4589723)
 
         case (lRectangular)
+            ! print *, 'lRectangular'
 
             elemI(thisP,ei_geometryType) = rectangular
 
@@ -1459,6 +1488,7 @@ contains
             ! stop 298374
 
         case (lTrapezoidal)
+            ! print *, 'lTrapezoidal'
 
             elemI(thisP,ei_geometryType) = trapezoidal
 
@@ -1523,6 +1553,7 @@ contains
             elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)           
             
         case (lTriangular)
+            ! print *, 'lTriangular'
 
             elemI(thisP,ei_geometryType) = triangular
 

@@ -595,7 +595,7 @@ module geometry
                 elemR(mm,er_Area) = llgeo_rect_round_area_from_depth_singular &
                                     (mm, depth(mm))
             end do
-            print*, elemR(thisP,er_Area), 'elemR(thisP,er_Area)'
+            !print*, elemR(thisP,er_Area), 'elemR(thisP,er_Area)'
 
         case (rect_triang)
             do ii=1,size(thisP)
@@ -860,7 +860,7 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call irregular_depth_from_volume (elemPGx, Npack, thisCol)
-        end if        
+        end if    
                 
         !% -- POWER FUNCTION
         thisCol => col_elemPGx(epg_CC_power_function)

@@ -2289,7 +2289,7 @@ contains
 
         !% --- irregular channels --------------------------------------------
         ptype => col_elemPGetm(epg_CC_irregular)
-        npack => npack_elemPGalltm(ptype)
+        npack => npack_elemPGetm(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
@@ -2298,7 +2298,7 @@ contains
                 (elemI(:,ei_tmType) == ETM) &
                 )
         if (npack > 0) then
-            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == CC)  &
                 .and. &
                 (elemI(:,ei_geometryType) == irregular) &
@@ -2306,6 +2306,7 @@ contains
                 (elemI(:,ei_tmType) == ETM) &
                 )
         end if
+
 
         !% -----------------
         !% CLOSED CONDUITS

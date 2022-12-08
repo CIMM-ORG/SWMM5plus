@@ -281,6 +281,8 @@ module adjust
             ! end if
         end if    
 
+        print *, 'in adjust_limit_by_zerovalues ',overflow(14)
+
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_limit_by_zerovalues

@@ -32,10 +32,10 @@ FORCE_MAIN_EQUATION  D-W
 VARIABLE_STEP        0.00
 LENGTHENING_STEP     0
 MIN_SURFAREA         12.557
-MAX_TRIALS           80
+MAX_TRIALS           8
 HEAD_TOLERANCE       0.005
-SYS_FLOW_TOL         0.5
-LAT_FLOW_TOL         0.5
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
 MINIMUM_STEP         0.5
 THREADS              1
 
@@ -79,39 +79,39 @@ DRY_ONLY         NO
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-8040             RECT_TRIANGULAR 4                4          1          0          1                    
-8060             RECT_TRIANGULAR 4                4          1          0          1                    
-8100             RECT_TRIANGULAR 4.5              4.5        1          0          1                    
-8130             RECT_TRIANGULAR 4.5              4.5        1          0          1                    
-1030             TRAPEZOIDAL     9.0              0          3          3          1                    
-1570             RECT_TRIANGULAR 5.5              5.5        1          0          1                    
-1600             RECT_TRIANGULAR 6                6          1          0          1                    
-1630             TRAPEZOIDAL     9.0              0          3          3          1                     
-1602             RECT_TRIANGULAR 5.5              5.5        1          0          1                        
+8040             RECT_ROUND   4                4          1          0          1                    
+8060             RECT_ROUND   4                4          1          0          1                    
+8100             RECT_ROUND   4.5              4.5        1          0          1                    
+8130             RECT_ROUND   4.5              4.5        1          0          1                    
+1030             TRAPEZOIDAL  9.0              0          3          3          1                   
+1570             RECT_ROUND   5.5              5.5        1          0          1                    
+1600             RECT_ROUND   6                6          1          0          1                    
+1630             TRAPEZOIDAL  9.0              0          3          3          1                   
+1602             RECT_ROUND   6                5          1          0          1                       
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
 80408            FLOW             80408            FLOW     1.0      1.0              
 81009            FLOW             81009            FLOW     1.0      1.0              
-82309            FLOW             82309            FLOW     1.0      1.0              
+82309            FLOW             82309            FLOW     1.0      1.0                   
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
-82309                       0          0         
+82309                       0          10         
 82309                       0.25       20        
 82309                       3.0        20        
 82309                       3.25       0         
 82309                       12.0       0         
 ;
-80408                       0          0         
+80408                       0          10         
 80408                       0.25       25        
 80408                       3.0        25        
 80408                       3.25       0         
 80408                       12         0         
 ;
-81009                       0          0         
+81009                       0          10         
 81009                       0.25       50        
 81009                       3.0        50        
 81009                       3.25       0         

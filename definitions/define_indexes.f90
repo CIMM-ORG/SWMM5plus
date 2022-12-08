@@ -161,7 +161,7 @@ module define_indexes
 
     !% column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
-    integer, parameter :: ni_Mlink_u2   = ni_idx_base1+2 ! map to link up dowstream branch 1
+    integer, parameter :: ni_Mlink_u2   = ni_idx_base1+2 
     integer, parameter :: ni_Mlink_u3   = ni_idx_base1+3
     integer, parameter :: ni_Mlink_u4   = ni_idx_base1+4               !% ADDBRANCH
     integer, parameter :: ni_Mlink_u5   = ni_idx_base1+5               !% ADDBRANCH

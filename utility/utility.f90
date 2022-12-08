@@ -40,8 +40,6 @@ module utility
     public :: util_find_neighbors_of_CC_element
     public :: util_find_neighbors_of_JM_element
 
-  
-
     public :: util_unique_rank
 
     public :: util_kinematic_viscosity_from_temperature
@@ -83,6 +81,11 @@ module utility
         write(*,"(A)") trim(inputstring)
         write(*,"(A,i7,A, f12.5, A, f12.5, A)") 'step = ',setting%Time%Step,'; dt = ',setting%Time%Hydraulics%Dt,'; time = ',setting%Time%Now/3600.d0, ' hs'
         print *, '   ' 
+        print *, 'faceR Qcons ',faceR(15,fr_Flowrate_Conservative)
+        print *, ' '
+        print *, 'f barrels ',faceI(ift,fi_barrels)
+        print *, 'e barrels ',elemI(iet,ei_barrels)
+        print *, ' '
 
 
         ! do ii=1,N_elem(this_image())
@@ -109,34 +112,41 @@ module utility
 
         ! stop 293874
 
-    
+        print *, ' '
+        print *, 'Depth ' ,elemR(iet(1),er_Depth)
         print *, ' '
         print *, '                face        elem       face        elem       face  ' 
-        write(*,"(A,10f12.5)") ' Velocity '  ,  faceR(ift(1),fr_Velocity_d),        &
+        write(*,"(A,10e12.5)") ' Velocity '  ,  faceR(ift(1),fr_Velocity_d),        &
                                                 elemR(iet(1),er_Velocity),        &
                                                 faceR(ift(2),fr_Velocity_u),        &
                                                 elemR(iet(2),er_Velocity),        &
                                                 faceR(ift(3),fr_Velocity_u)   
 
-        write(*,"(A,10f12.5)") '     Q    '  ,  faceR(ift(1),fr_Flowrate),        &
+        write(*,"(A,10e12.5)") '     Q    '  ,  faceR(ift(1),fr_Flowrate),        &
                                                 elemR(iet(1),er_Flowrate),        &
                                                 faceR(ift(2),fr_Flowrate),        &
                                                 elemR(iet(2),er_Flowrate),        &
                                                 faceR(ift(3),fr_Flowrate)
 
-        write(*,"(A,10f12.5)") '     H    '  ,  faceR(ift(1),fr_Head_d),        &
+        write(*,"(A,10e12.5)") '     Qcons'  ,  faceR(ift(1),fr_Flowrate_Conservative),        &
+                                                elemR(iet(1),er_Flowrate),        &
+                                                faceR(ift(2),fr_Flowrate_Conservative),        &
+                                                elemR(iet(2),er_Flowrate),        &
+                                                faceR(ift(3),fr_Flowrate_Conservative)                                                
+
+        write(*,"(A,10e12.5)") '     H    '  ,  faceR(ift(1),fr_Head_d),        &
                                                 elemR(iet(1),er_Head),        &
                                                 faceR(ift(2),fr_Head_u),        &
                                                 elemR(iet(2),er_Head),        &
                                                 faceR(ift(3),fr_Head_u)
 
-        write(*,"(A,10f12.5)") ' Area     '  ,  faceR(ift(1),fr_Area_d),        &
+        write(*,"(A,10e12.5)") ' Area     '  ,  faceR(ift(1),fr_Area_d),        &
                                                 elemR(iet(1),er_Area),        &
                                                 faceR(ift(2),fr_Area_u),        &
                                                 elemR(iet(2),er_Area),        &
                                                 faceR(ift(3),fr_Area_u)
 
-        write(*,"(A,10f12.5)") '    Depth '  ,  faceR(ift(1),fr_Depth_d),        &
+        write(*,"(A,10e12.5)") '    Depth '  ,  faceR(ift(1),fr_Depth_d),        &
                                                 elemR(iet(1),er_Depth),        &
                                                 faceR(ift(2),fr_Depth_u),        &
                                                 elemR(iet(2),er_Depth),        &
@@ -154,13 +164,13 @@ module utility
         !                                 elemR(iet(2),er_Preissmann_Number),        &
         !                                 0.0          
 
-        write(*,"(A,10f12.5)") '     Vol  ',  0.0,        &
+        write(*,"(A,10e12.5)") '     Vol  ',  0.0,        &
                                         elemR(iet(1),er_Volume),        &
                                         0.0,        &
                                         elemR(iet(2),er_Volume),        &
                                         0.0
 
-        write(*,"(A,10f12.5)") ' VolFull  ',  0.0,        &
+        write(*,"(A,10e12.5)") ' VolFull  ',  0.0,        &
                                         elemR(iet(1),er_FullVolume),        &
                                         0.0,        &
                                         elemR(iet(2),er_FullVolume),        &
@@ -184,11 +194,11 @@ module utility
         !                                 elemR(iet(2),er_Length),        &
         !                                 0.0    
 
-        write(*,"(A,10f12.5)") 'Slot Vol  ',  0.0,        &
-                                        elemR(iet(1),er_SlotVolume),        &
-                                        0.0,        &
-                                        elemR(iet(2),er_SlotVolume),        &
-                                        0.0    
+        ! write(*,"(A,10f12.5)") 'Slot Vol  ',  0.0,        &
+        !                                 elemR(iet(1),er_SlotVolume),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_SlotVolume),        &
+        !                                 0.0    
 
         ! write(*,"(A,10f12.5)") '     V-F  ',  0.0,        &
         !                                 elemR(iet(1),er_Volume) - elemR(iet(1),er_FullVolume),        &
@@ -196,11 +206,11 @@ module utility
         !                                 elemR(iet(2),er_Volume) - elemR(iet(2),er_FullVolume),        &
         !                                 0.0                                
 
-        write(*,"(A,10f12.5)") 'Slot Frac ',  0.0,        &
-                                        elemR(iet(1),er_SlotVolume)/elemR(iet(1),er_Volume),        &
-                                        0.0,        &
-                                        elemR(iet(2),er_SlotVolume)/elemR(iet(2),er_Volume),        &
-                                        0.0                                
+        ! write(*,"(A,10f12.5)") 'Slot Frac ',  0.0,        &
+        !                                 elemR(iet(1),er_SlotVolume)/elemR(iet(1),er_Volume),        &
+        !                                 0.0,        &
+        !                                 elemR(iet(2),er_SlotVolume)/elemR(iet(2),er_Volume),        &
+        !                                 0.0                                
 
         ! write(*,"(A,10f12.5)") 'SF' ,(elemR(iet(1),er_Flowrate)**2) * (elemR(iet(1),er_ManningsN)**2) &
         !                      / ( (elemR(iet(1),er_Area)**2)     * (elemR(iet(1),er_HydRadius)**(4.d0/3.d0))  ) 
@@ -211,6 +221,7 @@ module utility
         !                                 elemR(iet(2),er_BreadthMax),        &
         !                                 0.0       
 
+        !stop 40978334
 
     end subroutine util_CLprint    
 !%
@@ -436,6 +447,10 @@ module utility
         !% --- for the CC elements
         npack   => npack_elemP(thisColCC)
 
+        print *, 'volume overflow at top ', VolOver(14)
+        print *, faceR(15,fr_Flowrate_Conservative)
+
+
 
         if (npack > 0) then
             thisP => elemP(1:npack,thisColCC)
@@ -472,34 +487,42 @@ module utility
         if (npack > 0) then
             thisP => elemP(1:npack,thisColJM)
 
-            ! print *, 'printing stuff'
-            ! do ii=1,npack
-            !     if (thisP(ii) == 47) then
-            !         print *, thisP(ii), eCons(thisP(ii)), eQlat(thisP(ii))
-            !         print *, VolNew(thisP(ii)), VolOld(thisP(ii))
-            !         print *, VolOver(thisP(ii)), VolSlot(thisP(ii))
-            !     end if
-            ! end do
-            ! print *, 'xxx   ',eCons(47)
-            ! print *, 'Vlat  ',dt * eQlat(47)
-            ! print *, 'Vnew  ',VolNew(47)
-            ! print *, 'Vold  ',VolOld(47)
-            ! print *, 'Vover ',VolOver(47)
-            ! print *, 'Vslt  ',VolSlot(47)
-            ! print *, 'inV1  ',dt * fQ(fup(48))
-            ! print *, 'inV2  ',dt * fQ(fup(50))
-            ! print *, 'ouV1  ',dt * fQ(fdn(49))
+            print *, 'printing stuff'
+            do ii=1,npack
+                if (thisP(ii) == 14) then
+                    print *, 'this JM        ',thisP(ii)
+                    print *, 'upstream JB  ',thisP(ii)+1
+                    print *, 'upstream face',fup(thisP(ii)+1), fQ(fup(thisP(ii)+1))
+                    print *, 'dnstream JB    ',thisP(ii)+2
+                    print *, 'dnstream face  ',fdn(thisP(ii)+2), fQ(fdn(thisP(ii)+2))
+                    print *, 'upstream JB    ',thisP(ii)+3
+                    print *, 'upstream face  ',fup(thisP(ii)+3), fQ(fup(thisP(ii)+3))
+                    print *, 'Econs ', eCons(thisP(ii))
+                    print *, 'Qlat  ', eQlat(thisP(ii))
+                    print *, 'Vol   ', VolNew(thisP(ii)), VolOld(thisP(ii))
+                    print *, 'Over  ',VolOver(thisP(ii)), VolSlot(thisP(ii))
+                end if
+            end do
+            ! print *, 'xxx   ',eCons(14)
+            ! print *, 'Vlat  ',dt * eQlat(14)
+            ! print *, 'Vnew  ',VolNew(14)
+            ! print *, 'Vold  ',VolOld(14)
+            ! print *, 'Vover ',VolOver(14)
+            ! print *, 'Vslt  ',VolSlot(14)
+            ! print *, 'inV1  ',dt * fQ(fup(15))
+            ! print *, 'inV2  ',dt * fQ(fup(17))
+            ! print *, 'ouV1  ',dt * fQ(fdn(16))
             ! print *, ' '
-            ! print *, 'eCons ',eCons(47)
+            ! print *, 'eCons ',eCons(14)
             ! print *, ' '
 
             ! print *, ' '
             ! print *, ' top ===='
-            ! print *, 'econs                  ', eCons(21)
-            ! print *, 'vol in                 ',dt * fQ(fup(22))
-            ! print *, 'vol out                ',dt * fQ(fdn(23))
-            ! print *, 'volume in - volume out ',dt * (fQ(fup(22))- fQ(fdn(23)))
-            ! print *, 'vol change             ',VolNew(21) - VolOld(21)
+            ! print *, 'econs                  ', eCons(14)
+            ! print *, 'vol in                 ',dt * fQ(fup(14))
+            ! print *, 'vol out                ',dt * fQ(fdn(15))
+            ! print *, 'volume in - volume out ',dt * (fQ(fup(14))- fQ(fdn(15)))
+            ! print *, 'vol change             ',VolNew(14) - VolOld(21)
             ! print *, 'residual without slot  ',dt * (fQ(fup(22))- fQ(fdn(23))) - (VolNew(21) - VolOld(21))
             ! print *, 'vol over               ',VolOver(21)
             ! print *, ' '
@@ -555,8 +578,9 @@ module utility
                     print *,  'volume overflow ', VolOver(thisP(ii))
                     print *,  'net cons ',eCons(thisP(ii))
                     do kk = 1,max_branch_per_node,2
-                        print *, 'branch Q up',kk,   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(thisP(ii)+kk  ),8)
-                        print *, 'branch Q dn',kk+1, fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(thisP(ii)+kk+1),8)
+                        print *, 'branch Q up',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) !* real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(thisP(ii)+kk  ),8)
+                        print *, 'branch Q dn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) !* real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(thisP(ii)+kk+1),8)
+                        print *, BranchExists(thisP(ii)+kk+1), fBarrels(thisP(ii)+kk+1)
                     end do
                     do kk = 1,max_branch_per_node,2
                         print *, 'branch VolOver up',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)

@@ -6,11 +6,14 @@
         "Short" : "WhiteBoxTesting_Hydraulics"
     },
     "Discretization" : {
-        "NominalElemLength" : 91.00
+        "NominalElemLength" : 1000.00
     },
     "Limiter" : {
         "Dt" : {
             "Minimum"     : 1e-4
+        },
+        "Velocity" : {
+            "Maximum"     : 20.0
         }
     },    
     "Output" : {
@@ -35,7 +38,7 @@
     },
     "Solver" : {
         "PreissmannSlot" : {
-            "Method" : "StaticSlot"
+            "Method" : "DynamicSlot"
         }
     }
 }

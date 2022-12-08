@@ -954,7 +954,7 @@ contains
 
         ! setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
 
-        ! setting%SWMMinput%N_link_transect = get_num_objects(API_TRANSECT)
+        ! setting%SWMMinput%N_transect = get_num_objects(API_TRANSECT)
 
         !% --- get the time start, end, and interval data from SWMM-C input file
         call interface_get_SWMM_times()
@@ -1148,7 +1148,7 @@ contains
         character(64) :: subroutine_name = "interface_update_transectID_names"
         !%-----------------------------------------------------------------------------
 
-        do ii = 1, setting%SWMMinput%N_link_transect
+        do ii = 1, setting%SWMMinput%N_transect
 
             !print *, ii, 'API_TRANSECT ',API_TRANSECT, trim(transectID(ii))
             call load_api_procedure("api_get_object_name")
@@ -2515,7 +2515,7 @@ contains
             character(64) :: subroutine_name = 'interface_get_transectf_attribute'
         !%-----------------------------------------------------------------------------
 
-        if ((transect_idx > setting%SWMMinput%N_link_transect) .or. (transect_idx < 1)) then
+        if ((transect_idx > setting%SWMMinput%N_transect) .or. (transect_idx < 1)) then
             print *, "error: unexpected tranect index value", transect_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(992255)
@@ -2615,7 +2615,7 @@ contains
 
         !print *, 'in interface_get_transect_table'
         
-        do ii=1,setting%SWMMinput%N_link_transect
+        do ii=1,setting%SWMMinput%N_transect
 
             error = ptr_api_get_transect_table(&
                 ii-1, setting%SWMMInput%N_transect_depth_items,    &
@@ -3494,7 +3494,8 @@ contains
         setting%SWMMinput%N_curve       = get_num_objects(API_CURVE)
         setting%SWMMinput%N_tseries     = get_num_objects(API_TSERIES)
         setting%SWMMinput%N_control     = get_num_objects(API_CONTROL)
-        setting%SWMMinput%N_transect    = get_num_objects(API_TRANSECT)
+        !setting%SWMMinput%N_transect    = get_num_objects(API_TRANSECT)
+        setting%SWMMinput%N_transect = get_num_objects(API_TRANSECT)
         setting%SWMMinput%N_aquifer     = get_num_objects(API_AQUIFER)
         setting%SWMMinput%N_unithyd     = get_num_objects(API_UNITHYD)
         setting%SWMMinput%N_snowmelt    = get_num_objects(API_SNOWMELT)

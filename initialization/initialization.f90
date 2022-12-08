@@ -172,7 +172,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
         call util_crashstop(42873)
-        
+
         !% --- initialize globals that are run-time dependent
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
@@ -185,7 +185,7 @@ contains
         else    
             !% continue without hydrology    
         end if
-
+        
         !% --- store the SWMM-C curves in equivalent Fortran arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
@@ -369,8 +369,7 @@ contains
 
         !% --- wait for all processors before exiting to the time loop
         sync all
-
-
+ 
         !%------------------------------------------------------------------- 
         !% Closing
             call init_check_setup_conditions()
@@ -1214,7 +1213,7 @@ contains
         !% Note that the transect index number DOES NOT correspond to the link
         !% index number. There are generally more links than transects, and a
         !% transect may be assigned to more than one link.
-        !% Note that setting%SWMMinput%N_link_transect is set from EPA-SWMM in interface_init()
+        !% Note that setting%SWMMinput%N_transect is set from EPA-SWMM in interface_init()
         !%------------------------------------------------------------------
         !% Declarations     
             integer :: ii, jj, kk
@@ -1230,7 +1229,8 @@ contains
             real(8)              :: depthIncrement, areaIncrement
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (setting%SWMMinput%N_link_transect < 1) return
+            
+            if (setting%SWMMinput%N_transect < 1) return
 
              !% --- get the number of depth levels in the SWMM-C transect tables from EPA-SWMM
             setting%SWMMInput%N_transect_depth_items = interface_get_N_TRANSECT_TBL()
@@ -1248,7 +1248,7 @@ contains
             Aarray(:) = (/ (jj,jj=0,N_transect_area_items-1)/)
 
             !% --- a temporary width array
-            allocate(Warray2(setting%SWMMinput%N_link_transect, N_transect_depth_items))
+            allocate(Warray2(setting%SWMMinput%N_transect, N_transect_depth_items))
 
             !% --- allocation transect storage
             call util_allocate_link_transect()
@@ -1277,7 +1277,7 @@ contains
         !%------------------------------------------------------------------
 
         !% --- get transect scalar date from EPA-SWMM
-        do ii=1,setting%SWMMinput%N_link_transect
+        do ii=1,setting%SWMMinput%N_transect
             link%transectI(ii,ti_idx) = ii
             link%transectR(ii,tr_depthFull)         = interface_get_transectf_attribute(ii,api_transectf_yFull)
             link%transectR(ii,tr_areaFull)          = interface_get_transectf_attribute(ii,api_transectf_aFull)
@@ -1307,7 +1307,7 @@ contains
         !%     EPA-SWMM only stores width, area, and hydraulic radius for irregular
         !%     cross-sections with uniform depth discretization. SWMM5+ stores
         !%     the actual depth discretization as well.
-        do ii=1,setting%SWMMinput%N_link_transect
+        do ii=1,setting%SWMMinput%N_transect
             !% --- EPA-SWMM assigns linear depth increment 
             !%     see function transect_validate in transect.c
             !%     Compute and store the uniformly-discretized depth
@@ -1339,7 +1339,7 @@ contains
                 Warray2 = oneR
             endwhere
             !% --- find the depth at max breadth
-            do ii=1,setting%SWMMinput%N_link_transect
+            do ii=1,setting%SWMMinput%N_transect
                 !% --- get the index for the flip from increasing to decreasing width
                 nflip = findloc(Warray2(ii,:),-oneR)
                 !% --- if width never decreases, use max depth
@@ -1351,7 +1351,7 @@ contains
         !% ------------------------------------------------------------------------
 
         !% --- update the area below the maximum width
-        do ii=1,setting%SWMMinput%N_link_transect
+        do ii=1,setting%SWMMinput%N_transect
             !% --- lookup the area below the max breadth
             areaBelowBreadthMax(ii) = xsect_table_lookup_singular ( &
                                     depthAtBreadthMax(ii), areaForDepthU(ii,:))
@@ -1359,7 +1359,7 @@ contains
 
         !% --- compute the uniform area transect tables by using the
         !%     nonuniform area as a lookup table for the uniform depth
-        do ii=1,setting%SWMMinput%N_link_transect
+        do ii=1,setting%SWMMinput%N_transect
             !% --- get the uniform increments of area
             areaIncrement = areaFull(ii) / ( dble(N_transect_area_items - 1) )
             areaU(ii,:) = areaIncrement * Aarray
@@ -1515,21 +1515,34 @@ contains
         if (Total_Curves > setting%SWMMinput%N_curve) N_Curve = setting%SWMMinput%N_curve + additional_storage_curves
         !% allocate the number of curve objets from SWMM5
         call util_allocate_curves()
-
+   
         do ii = 1, setting%SWMMinput%N_curve
             curve(ii)%ID = ii
+            
             curve(ii)%Type = interface_get_table_attribute(ii, api_table_type)
+            
             !% get the number of entries in a curve
             curve(ii)%NumRows = interface_get_num_table_entries(ii)
+            
+            print *, ii, curve(ii)%NumRows 
+            
             !% allocate the value space
             call util_allocate_curve_entries (ii,curve(ii)%NumRows)
             !% get the first entry of the curve
+            
+            stop 24449782
+
             curve(ii)%ValueArray(1,:) = interface_get_first_entry_table(ii)
             !% populate the rest of the curves
+            
             do jj = 2,curve(ii)%NumRows
                 curve(ii)%ValueArray(jj,:) = interface_get_next_entry_table(ii, API_CURVE)
             end do
+            
         end do
+
+        
+     
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1540,15 +1553,15 @@ contains
 !%==========================================================================
 !%
     subroutine init_simulation_controls()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%   initialize simulation controls from SWMM5+ settings file
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer              :: ii, jj, lIdx
         integer, pointer     :: nControls
         integer, allocatable :: packedElemArray(:)
         character(64)        :: subroutine_name = 'init_simulation_controls'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         ! if (crashYN) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1596,17 +1609,21 @@ contains
 !%==========================================================================
 !%
     subroutine init_profiles
-        character(50) :: line, name, link_names, num_links
-        character(50) :: choosen_name
-        !type(string)  :: choosen_name  
-        integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
-        integer       :: read_status, debt, line_number = 1
-        integer       :: ii, jj,kk, offset, offset_profile,name_loc
-        integer       :: error
-
-        ! print *, "inside of init_Profile"
+        !%------------------------------------------------------------------
+        !% Description:
+        !%------------------------------------------------------------------
+        !% Declarations:
+            character(50) :: line, name, link_names, num_links
+            character(50) :: choosen_name
+            integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
+            integer       :: read_status, debt, line_number = 1
+            integer       :: ii, jj,kk, offset, offset_profile,name_loc
+            integer       :: error
+        !%------------------------------------------------------------------
+        !print *, "inside of init_Profile"
+        ! print *, setting%File%inp_file
+        ! print *, setting%File%UnitNumber%inp_file
         
-        !allocate(character(50) :: choosen_name%str)
         open(10, file = setting%File%inp_file, status = "old", action = "read")
         delimitator_loc = 2
         offset = 1
@@ -1624,7 +1641,6 @@ contains
             if(line .eq. "[PROFILES]") then
                 
                 ! print *, 'profiles found'
-                
                 ! print *, "offset_profile set:", offset_profile
                 read(10, "(A)", iostat = read_status) line
                 read(10, "(A)", iostat = read_status) line
@@ -1645,7 +1661,6 @@ contains
                     index_of_start = index(name,"""",.true.)
                     link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
                     do while (delimitator_loc > 1)
-
                         delimitator_loc = index(link_names," ")
                         link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
                         ii = ii + 1

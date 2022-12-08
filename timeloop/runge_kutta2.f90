@@ -53,8 +53,8 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-        ! print *, ' '
-        !  call util_CLprint ('======= AAA  start of RK2 ==============================')
+        print *, ' '
+        call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -82,8 +82,6 @@ module runge_kutta2
         call update_auxiliary_variables (whichTM)
 
             ! call util_CLprint ('CCC  after update aux step 1-----------------------')
-
-            !stop 293704
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
         !%     This does not reset the zero/small depth packing
@@ -188,8 +186,8 @@ module runge_kutta2
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
         
-            !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
-            !  print *, '==================================================='
+             call util_CLprint ('ZZZ  after accumulate overflow step 2')
+             print *, '==================================================='
             ! if (setting%Time%Step == 2) then
             !     stop 6987588
             ! end if

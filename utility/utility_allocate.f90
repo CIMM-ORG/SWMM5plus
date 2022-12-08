@@ -302,32 +302,32 @@ contains
         integer :: ii
 
         !% 2D transectI
-        allocate(link%transectI(setting%SWMMinput%N_link_transect,Ncol_transectI),stat=allocation_status,errmsg=emsg)
+        allocate(link%transectI(setting%SWMMinput%N_transect,Ncol_transectI),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'transectI')
         link%transectI(:,:) = nullvalueI
 
         !% 2D transectR
-        allocate(link%transectR(setting%SWMMinput%N_link_transect,Ncol_transectR),stat=allocation_status,errmsg=emsg)
+        allocate(link%transectR(setting%SWMMinput%N_transect,Ncol_transectR),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'transectR')
         link%transectR(:,:) = nullvalueR
 
         !% 3D transectTableDepthR -- data by uniform depth depth
-        allocate(link%transectTableDepthR(setting%SWMMinput%N_link_transect,N_transect_depth_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        allocate(link%transectTableDepthR(setting%SWMMinput%N_transect,N_transect_depth_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'transectTableDepthR')
         link%transectTableDepthR(:,:,:) = nullvalueR
         
         !% 3D transectTableAreaA -- data by uniform area discretization
-        allocate(link%transectTableAreaR(setting%SWMMinput%N_link_transect,N_transect_area_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
+        allocate(link%transectTableAreaR(setting%SWMMinput%N_transect,N_transect_area_items,Ncol_transectTable),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'transectTableAreaR')
         link%transectTableAreaR(:,:,:) = nullvalueR
 
         !% 1D transectID
-        allocate(link%transectID(setting%SWMMinput%N_link_transect),stat=allocation_status,errmsg=emsg)
+        allocate(link%transectID(setting%SWMMinput%N_transect),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'transectID')
         
         !% --- HACK -- using fixed len=16 for transectID. Should be changed
         !%     similar to allocation of link%Names to get length of ID
-        do ii = 1,setting%SWMMinput%N_link_transect
+        do ii = 1,setting%SWMMinput%N_transect
             allocate(character(16) :: link%transectID(ii)%str, stat=allocation_status, errmsg=emsg)
             call util_allocate_check(allocation_status, emsg, 'character(32) :: link%transectID%str')
             link%transectID(ii)%str = '0'
@@ -2096,14 +2096,12 @@ contains
 !%
     subroutine util_allocate_curves ()
         !-----------------------------------------------------------------------------
-        !
-        !
+        ! Description:
+        ! Allocates the curve type
         !-----------------------------------------------------------------------------
-
-        character(64)       :: subroutine_name = 'util_allocate_curves'
-
+        !% Declarations
+            character(64)       :: subroutine_name = 'util_allocate_curves'
         !-----------------------------------------------------------------------------
-        !if (crashYN) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -2180,6 +2178,10 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
                 
+        ! print *, 'num_entries ',num_entries 
+        ! print *, 'Ncol_curve  ',Ncol_curve 
+        ! print *, 'curve_idx   ',curve_idx      
+
         !% allocate the value array of curve of the given curve_idx
         allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'curve entries')
