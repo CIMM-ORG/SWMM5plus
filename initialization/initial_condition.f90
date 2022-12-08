@@ -464,33 +464,33 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
-            print *, 'link ',ii
+            !print *, 'link ',ii
 
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
-            print *, 'calling get barrels'
+            !print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
 
-            print *, 'calling get depth'
+            !print *, 'calling get depth'
             call init_IC_get_depth (thisLink)
 
-            print *, 'calling get flow and roughness'
+            !print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
-             print *, 'calling get elemtype'
+            ! print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
 
-             print *, 'calling get geometry'
+            ! print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            print *, 'calling get flapgate'
+            !print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
-            print *, 'calling get forcemain'
+            !print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)      
 
-            print *, 'calling get culvert'
+            !print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
@@ -549,8 +549,6 @@ contains
         !% --- note that default for setting%Output%BarrelsExist is false, so
         !%     only need a single multi-barrel to make this true.
         if (any(eBarrels(firstE:lastE) > 1)) setting%Output%BarrelsExist = .true.
-
-        NEED TO LOOK THROUGH THE ABOVE -- NOT WORKING FOR BRANCHES
 
     end subroutine init_IC_get_barrels_from_linkdata
 !%
@@ -1180,9 +1178,9 @@ contains
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
 
-        print *, 'in ',trim(subroutine_name)
-        print *, thisLink, linkType
-        print *, trim(reverseKey(linkType))
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, thisLink, linkType
+        ! print *, trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -1298,48 +1296,48 @@ contains
 
         case (lIrregular)
              
-            print *, 'lIrregular'
-            print *, 'thisLink ',thisLink
+            ! print *, 'lIrregular'
+            ! print *, 'thisLink ',thisLink
 
             !% --- transect index for this link
             link_tidx => link%I(thisLink,li_transect_idx)
 
-            print *, 'link_tidx ',link_tidx
+            ! print *, 'link_tidx ',link_tidx
 
-            print *, 'thisP ',thisP
+            ! print *, 'thisP ',thisP
             
             !% --- assign non-table transect data
             elemI(thisP,ei_geometryType)  = irregular
             elemI(thisP,ei_link_transect_idx)  = link_tidx
 
-            print *, 'tr_widthMax ', tr_widthMax
-            print *, 'link_tidx   ', link_tidx
-            print *, size(link%transectR,1), size(link%transectR,2)
+            ! print *, 'tr_widthMax ', tr_widthMax
+            ! print *, 'link_tidx   ', link_tidx
+            ! print *, size(link%transectR,1), size(link%transectR,2)
 
-            print *, 'link%transectR(link_tidx,tr_widthMax)',link%transectR(link_tidx,tr_widthMax)
+            ! print *, 'link%transectR(link_tidx,tr_widthMax)',link%transectR(link_tidx,tr_widthMax)
             
             !% --- independent data
             elemR(thisP,er_BreadthMax)          = link%transectR(link_tidx,tr_widthMax)
-            print *, 'elemR(thisP,er_BreadthMax)',elemR(thisP,er_BreadthMax)
+            ! print *, 'elemR(thisP,er_BreadthMax)',elemR(thisP,er_BreadthMax)
             elemR(thisP,er_AreaBelowBreadthMax) = link%transectR(link_tidx,tr_areaBelowBreadthMax)
-            print *, 'elemR(thisP,er_AreaBelowBreadthMax)',elemR(thisP,er_AreaBelowBreadthMax)
+            ! print *, 'elemR(thisP,er_AreaBelowBreadthMax)',elemR(thisP,er_AreaBelowBreadthMax)
             !% --- note, do not apply the full depth limiter function to transects!
             elemR(thisP,er_FullDepth)           = link%transectR(link_tidx,tr_depthFull)
-            print *, 'elemR(thisP,er_FullDepth) ',elemR(thisP,er_FullDepth) 
+            ! print *, 'elemR(thisP,er_FullDepth) ',elemR(thisP,er_FullDepth) 
             elemR(thisP,er_FullArea)            = link%transectR(link_tidx,tr_areaFull)
-            print *, 'elemR(thisP,er_FullArea)  ',elemR(thisP,er_FullArea)  
+            ! print *, 'elemR(thisP,er_FullArea)  ',elemR(thisP,er_FullArea)  
             elemR(thisP,er_FullTopwidth)        = link%transectR(link_tidx,tr_widthFull)
-            print *, 'elemR(thisP,er_FullTopwidth) ',elemR(thisP,er_FullTopwidth) 
+            ! print *, 'elemR(thisP,er_FullTopwidth) ',elemR(thisP,er_FullTopwidth) 
             elemR(thisP,er_ZbreadthMax)         = link%transectR(link_tidx,tr_depthAtBreadthMax) + elemR(thisP,er_Zbottom)
-            print *, 'elemR(thisP,er_ZbreadthMax) ',elemR(thisP,er_ZbreadthMax)
+            ! print *, 'elemR(thisP,er_ZbreadthMax) ',elemR(thisP,er_ZbreadthMax)
             elemR(thisP,er_FullHydRadius)       = link%transectR(link_tidx,tr_hydRadiusFull)
-            print *, 'elemR(thisP,er_FullHydRadius)',elemR(thisP,er_FullHydRadius)
+            ! print *, 'elemR(thisP,er_FullHydRadius)',elemR(thisP,er_FullHydRadius)
             
-            print *, 'before perimeter '
+            ! print *, 'before perimeter '
             !% --- full conditions
             elemR(thisP,er_FullPerimeter) = llgeo_perimeter_from_hydradius_and_area_pure &
                                                 (thisP, fullhydradius(thisP), fullarea(thisP))
-            print *, 'after perimeter'
+            ! print *, 'after perimeter'
 
             !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
             !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
@@ -2979,7 +2977,7 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !print *, 'inside ',trim(subroutine_name)
+        print *, 'inside ',trim(subroutine_name)
 
         !%................................................................
         !% Junction main
@@ -3122,18 +3120,21 @@ contains
         !% adjacent element.
         do ii = 1,max_branch_per_node
 
-            ! print *, ii, 'in branch'
+            ! print *, '================================',trim(subroutine_name)
+            ! print *, ii, 'in branch for JMidx ',JMidx
+            ! print *, 'node ',elemI(JMidx,ei_node_Gidx_SWMM)
+            ! print *, 'node name ',trim(node%Names(elemI(JMidx,ei_node_Gidx_SWMM))%str)
 
             !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
 
             !% --- find the element id of junction branches
             JBidx = JMidx + ii
+
+            ! print *, 'JBidx ',JBidx
             
             !% --- main index associated with branch
             !elemI(JBidx,ei_main_idx_for_branch) = JMidx
             elemSI(JBidx,esi_JunctionBranch_Main_Index) = JMidx
-
-            ! print *, 'JBidx ',JBidx
 
             !% --- set the adjacent element id where elemI and elemR data can be extracted
             !%     note that elemSGR etc are not yet assigned
@@ -3162,6 +3163,8 @@ contains
             !% --- set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
 
+            ! print *, 'exist ', elemSI(JBidx,esi_JunctionBranch_Exists)
+
             !% --- set the geometry for existing branches
             !%     Note that elemSI(,...Exists) is set in init_network_handle_nJm
             if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
@@ -3169,7 +3172,7 @@ contains
             BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
             JBgeometryType => link%I(BranchIdx,li_geometry)
 
-            !print *, 'linkgeo', link%I(BranchIdx,li_geometry), reverseKey(link%I(BranchIdx,li_geometry))
+            ! print *, 'linkgeo', link%I(BranchIdx,li_geometry), reverseKey(link%I(BranchIdx,li_geometry))
 
             !% --- set the JB to time_march for use with splitting between AC
             !%     and ETM in rk2_extrapolate_to_fullstep_ETM, rk2_restore_to_midstep_ETM
@@ -3215,12 +3218,18 @@ contains
             elemI(JBidx,ei_barrels)             = elemI(Aidx,ei_barrels)[Ci]
 
             !% --- Set the face flowrates and barrels such that it does not blowup
+
             if (elemI(JBidx, ei_Mface_uL) /= nullvalueI) then
+                !print *, elemI(JBidx, ei_Mface_uL), faceI(elemI(JBidx, ei_Mface_uL),fi_barrels)
                 faceR(elemI(JBidx, ei_Mface_uL),fr_flowrate) = elemR(JBidx,er_Flowrate) 
                 faceI(elemI(JBidx, ei_Mface_uL),fi_barrels)  = elemI(JBidx,ei_barrels) 
             else if (elemI(JBidx, ei_Mface_dL) /= nullvalueI) then
+                !print *, elemI(JBidx, ei_Mface_dL), faceI(elemI(JBidx, ei_Mface_dL),fi_barrels)
                 faceR(elemI(JBidx, ei_Mface_dL),fr_flowrate) = elemR(JBidx,er_Flowrate)
                 faceI(elemI(JBidx, ei_Mface_dL),fi_barrels)  = elemI(JBidx,ei_barrels)  
+            else 
+                print *, 'JBidx null face both down and up ',JBidx
+                stop 298734
             end if
 
             !% --- Ability to surcharge is set by JM
@@ -3314,6 +3323,8 @@ contains
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
 
         end do
+
+        !stop 2098734
         
         !% --- set a JM length based on longest branches (20220711brh)
         LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
@@ -3557,6 +3568,7 @@ contains
         case (FunctionalStorage, TabularStorage)
             elemR(JMidx,er_FullArea) = sqrt(elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth))
         end select
+        
         !stop 2397840
 
         if (setting%Debug%File%initial_condition) &

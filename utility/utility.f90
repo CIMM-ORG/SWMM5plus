@@ -447,8 +447,8 @@ module utility
         !% --- for the CC elements
         npack   => npack_elemP(thisColCC)
 
-        print *, 'volume overflow at top ', VolOver(14)
-        print *, faceR(15,fr_Flowrate_Conservative)
+        ! print *, 'volume overflow at top ', VolOver(14)
+        ! print *, 'face flowrate cons ',faceR(15,fr_Flowrate_Conservative)
 
 
 
@@ -487,22 +487,26 @@ module utility
         if (npack > 0) then
             thisP => elemP(1:npack,thisColJM)
 
-            print *, 'printing stuff'
-            do ii=1,npack
-                if (thisP(ii) == 14) then
-                    print *, 'this JM        ',thisP(ii)
-                    print *, 'upstream JB  ',thisP(ii)+1
-                    print *, 'upstream face',fup(thisP(ii)+1), fQ(fup(thisP(ii)+1))
-                    print *, 'dnstream JB    ',thisP(ii)+2
-                    print *, 'dnstream face  ',fdn(thisP(ii)+2), fQ(fdn(thisP(ii)+2))
-                    print *, 'upstream JB    ',thisP(ii)+3
-                    print *, 'upstream face  ',fup(thisP(ii)+3), fQ(fup(thisP(ii)+3))
-                    print *, 'Econs ', eCons(thisP(ii))
-                    print *, 'Qlat  ', eQlat(thisP(ii))
-                    print *, 'Vol   ', VolNew(thisP(ii)), VolOld(thisP(ii))
-                    print *, 'Over  ',VolOver(thisP(ii)), VolSlot(thisP(ii))
-                end if
-            end do
+            ! print *, 'printing stuff'
+            ! do ii=1,npack
+            !     if (thisP(ii) == 14) then
+            !         print *, 'this JM        ',thisP(ii)
+            !         print *, 'upstream JB  ',thisP(ii)+1
+            !         print *, 'upstream face',fup(thisP(ii)+1), fQ(fup(thisP(ii)+1))
+            !         print *, 'dnstream JB    ',thisP(ii)+2
+            !         print *, 'dnstream face  ',fdn(thisP(ii)+2), fQ(fdn(thisP(ii)+2))
+            !         print *, 'upstream JB    ',thisP(ii)+3
+            !         print *, 'upstream face  ',fup(thisP(ii)+3), fQ(fup(thisP(ii)+3))
+            !         print *, 'dnstream JB    ',thisP(ii)+4
+            !         print *, 'dnstream face  ',fdn(thisP(ii)+4), fQ(fdn(thisP(ii)+4))
+            !         print *, 'Econs ', eCons(thisP(ii))
+            !         print *, 'Qlat  ', eQlat(thisP(ii))
+            !         print *, 'Vol   ', VolNew(thisP(ii)), VolOld(thisP(ii))
+            !         print *, 'Over  ',VolOver(thisP(ii)), VolSlot(thisP(ii))
+            !         print *, 'zeroD ',elemYN(thisP(ii),eYN_isZeroDepth)
+            !         print *, 'smalD ',elemYN(thisP(ii),eYN_isSmallDepth)
+            !     end if
+            ! end do
             ! print *, 'xxx   ',eCons(14)
             ! print *, 'Vlat  ',dt * eQlat(14)
             ! print *, 'Vnew  ',VolNew(14)
@@ -551,9 +555,14 @@ module utility
             ! print *, dt * (fQ(fup(48)) + fQ(fup(50)) - fQ(fdn(49)) )
 
             do ii=1,max_branch_per_node,2
-                eCons(thisP) = eCons(thisP)                                                                                        &
-                             + dt * ( real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(fBarrels(fup(thisP+ii  )),8)   &
-                                    - real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8) )  !&
+                where (fup(thisP+ii) /= nullvalueI) 
+                    eCons(thisP) = eCons(thisP)                                                                                   &
+                        + dt * real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(fBarrels(fup(thisP+ii  )),8)  
+                endwhere
+                where (fdn((thisP+ii+1)) /= nullvalueI) 
+                    eCons(thisP) = eCons(thisP)                                                                                   &
+                        - dt * real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8) 
+                endwhere
                             !  - VolOver(thisP+ii  ) * real(BranchExists(thisP+ii  ),8)                                              !&
                             !  - VolOver(thisP+ii+1) * real(BranchExists(thisP+ii+1),8)                              
             end do
@@ -571,34 +580,54 @@ module utility
 
 
             do ii = 1,size(thisP)
-                if (abs(eCons(thisP(ii))) > 1.0e-4) then
+                !% HACK we need a face limiter on fluxes out of junctions to prevent non-conservation with zero depth
+                if ((abs(eCons(thisP(ii))) > 1.0e-4) .and. ( .not. elemYN(thisP(ii),eYN_isZeroDepth))) then
                     print *, ' '
                     print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
                     print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
                     print *,  'volume overflow ', VolOver(thisP(ii))
                     print *,  'net cons ',eCons(thisP(ii))
-                    do kk = 1,max_branch_per_node,2
-                        print *, 'branch Q up',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) !* real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(thisP(ii)+kk  ),8)
-                        print *, 'branch Q dn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) !* real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(thisP(ii)+kk+1),8)
-                        print *, BranchExists(thisP(ii)+kk+1), fBarrels(thisP(ii)+kk+1)
-                    end do
-                    do kk = 1,max_branch_per_node,2
-                        print *, 'branch VolOver up',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)
-                        print *, 'branch VolOver dn',thisP(ii)+kk+1, VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
-                    end do
-                    print *, 'thisP ii ',thisP(ii)
-                    print *, 'VolNew   ',VolNew(thisP(ii))
-                    print *, 'VolOld   ',VolOld(thisP(ii))
-                    print *, 'VolSlot  ',VolSlot(thisP(ii))
-                    print *, ' vol '  , VolNew(thisP(ii)),  VolOld(thisP(ii)),   VolSlot(thisP(ii))
-                    print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii))) + VolSlot(thisP(ii))
-                    netQ = eQlat(thisP(ii))
-                    do kk = 1,max_branch_per_node,2
-                        netQ = netQ + fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8) * real(fBarrels(thisP(ii)+kk  ),8) &
-                                     -fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8) * real(fBarrels(thisP(ii)+kk+1),8)
-                    end do
-                    !print *, ' netQ ',netQ
-                    print *, ' netVol ', netQ * dt
+                    ! do kk = 1,max_branch_per_node,2
+                    !     if (fup(thisP(ii)+kk) /= nullvalueI) then
+                    !         print *, 'branch Q up',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) !* real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
+                    !     end if
+                    !     if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
+                    !         print *, 'branch Q dn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) !* real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
+                    !     endif
+                    ! end do
+                    ! do kk = 1,max_branch_per_node,2
+                    !     print *, 'branch VolOver up',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)
+                    !     print *, 'branch VolOver dn',thisP(ii)+kk+1, VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
+                    ! end do
+                    ! print *, 'thisP ii ',thisP(ii)
+                    ! print *, 'VolNew   ',VolNew(thisP(ii))
+                    ! print *, 'VolOld   ',VolOld(thisP(ii))
+                    ! print *, 'VolSlot  ',VolSlot(thisP(ii))
+                    ! print *, ' vol '  , VolNew(thisP(ii)),  VolOld(thisP(ii)),   VolSlot(thisP(ii))
+                    ! print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii))) + VolSlot(thisP(ii))
+                    ! netQ = eQlat(thisP(ii))
+                    ! print *, 'computing net Q'
+                    ! print *, 'start value ',netQ
+                    ! do kk = 1,max_branch_per_node,2
+                    !     ! print *, thisP(ii)+kk, thisP(ii)+kk+1
+                    !     ! print *, real(BranchExists(thisP(ii)+kk  ),8)
+                    !     ! print *, real(fup(fBarrels(thisP(ii)+kk)  ),8)
+                    !     ! print *, real(BranchExists(thisP(ii)+kk+1),8)
+                    !     ! print *, thisP(ii)+kk+1
+                    !     ! print *, fdn(thisP(ii)+kk+1)
+                    !     ! print *, real(fdn(fBarrels(thisP(ii)+kk+1)),8)
+                    !     ! print *, kk, fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8) * real(fBarrels(fup(thisP(ii)+kk)  ),8), &
+                    !     !              fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8) * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
+                    !     ! print *, 'kk+1 values : ', real(BranchExists(thisP(ii)+kk+1),8), real(fdn(fBarrels(thisP(ii)+kk+1)),8)       
+                    !     if (fup(thisP(ii)+kk) /= nullvalueI) then   
+                    !         netQ = netQ + fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8) * real(fBarrels(fup(thisP(ii)+kk ) ),8)
+                    !     end if
+                    !     if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
+                    !         netQ = netQ - fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8) * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
+                    !     end if
+                    ! end do
+                    ! print *, ' netQ ',netQ
+                    ! print *, ' netVol ', netQ * dt
 
                     
                     call util_crashpoint(3587832)

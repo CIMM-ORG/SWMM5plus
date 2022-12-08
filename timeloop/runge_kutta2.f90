@@ -53,8 +53,8 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-        print *, ' '
-        call util_CLprint ('======= AAA  start of RK2 ==============================')
+        ! print *, ' '
+        ! call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -186,8 +186,8 @@ module runge_kutta2
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
 
         
-             call util_CLprint ('ZZZ  after accumulate overflow step 2')
-             print *, '==================================================='
+            !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
+            !  print *, '==================================================='
             ! if (setting%Time%Step == 2) then
             !     stop 6987588
             ! end if
