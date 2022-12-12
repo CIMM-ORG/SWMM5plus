@@ -264,6 +264,32 @@ for x in all_dset_names:
 
         # ... store link name 
         link_name = x[5::]
+        
+        # ... extract SWMM5-C data
+        # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
+        swmmC_link_Q = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_rate').to_numpy().ravel()
+        # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
+        swmmC_link_Y = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_depth').to_numpy().ravel()
+
+        # ... extract SWMM5+ data
+        z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
+        # extract the flowrates from the swmm5_plus .h5 file
+        swmmF_link_Q = z[:,3] * Qf
+        # extract the depths from the swmm5_plus .h5 file
+        swmmF_link_Y = z[:,2] * Yf
+        # extract the timestamp
+        time = z[:,0]
+        array_len_Q = len(swmmC_link_Q)
+        array_len_Y = len(swmmC_link_Y)
+        # print link flowrate and depth data
+
+        # RMSE
+        rmse_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
+        rmse_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
+        # ... RMSE % error normalized by either the maximum flowrate, depth or 0.1
+        norm_rmse_link_Q = 100*rmse_link_Q  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Q), np.amax(swmmC_link_Q)))
+        norm_rmse_link_Y = 100*rmse_link_Y  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Y), np.amax(swmmC_link_Y)))
+
         # find if any of the nodes exceeds the mass balance tolerance
         if any([link in link_name for link in surcharged_links]):
             idx = surcharged_links.index(link_name)
@@ -273,30 +299,6 @@ for x in all_dset_names:
             print('-------------------------------------------------------------------------------')
             print(' ')
         else:
-            # ... extract SWMM5-C data
-            # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
-            swmmC_link_Q = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_rate').to_numpy().ravel()
-            # extract the flowrates from the swmm5_C .out file and convert to numpy array to store
-            swmmC_link_Y = swmmtoolbox.extract(out_path,"link,"+link_name+',Flow_depth').to_numpy().ravel()
-
-            # ... extract SWMM5+ data
-            z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-            # extract the flowrates from the swmm5_plus .h5 file
-            swmmF_link_Q = z[:,3] * Qf
-            # extract the depths from the swmm5_plus .h5 file
-            swmmF_link_Y = z[:,2] * Yf
-            # extract the timestamp
-            time = z[:,0]
-            array_len_Q = len(swmmC_link_Q)
-            array_len_Y = len(swmmC_link_Y)
-            # print link flowrate and depth data
-
-            # RMSE
-            rmse_link_Q = np.linalg.norm(swmmC_link_Q - swmmF_link_Q[:array_len_Q]) / np.sqrt(len(swmmC_link_Q))
-            rmse_link_Y = np.linalg.norm(swmmC_link_Y - swmmF_link_Y[:array_len_Y]) / np.sqrt(len(swmmC_link_Y))
-            # ... RMSE % error normalized by either the maximum flowrate, depth or 0.1
-            norm_rmse_link_Q = 100*rmse_link_Q  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Q), np.amax(swmmC_link_Q)))
-            norm_rmse_link_Y = 100*rmse_link_Y  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Y), np.amax(swmmC_link_Y)))
             print(' ')
             print('-------------------------------------------------------------------------------')
             print('*** SWMM5-C to SWMM5+ link :', link_name,' result comparison ***')
@@ -329,44 +331,44 @@ for x in all_dset_names:
             swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y[:array_len_Y])
             swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y[:array_len_Y],inf)
 
-            if print_plots:
-                Q_plot_name = plot_dir+'/'+'link_'+link_name+'_Q.png'
-                Y_plot_name = plot_dir+'/'+'link_'+link_name+'_Y.png'
-                # link flowrate plot
-                plt.figure(1)
-                plt.plot(figsize=(8,6))
-                plt.plot(time[:array_len_Q],swmmC_link_Q[:array_len_Q],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
-                plt.plot(time[:array_len_Q],swmmF_link_Q[:array_len_Q],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
-                plt.xlabel('Time (hrs.)')
-                plt.ylabel('Flowrate '+Qunit)
-                plt.legend(loc='best',facecolor='white',framealpha=1.0)
-                plt.savefig(Q_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
-                plt.close()
-                # link depth plot
-                plt.figure(2)
-                plt.plot(figsize=(8,6))
-                plt.plot(time[:array_len_Y],swmmC_link_Y[:array_len_Y],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
-                plt.plot(time[:array_len_Y],swmmF_link_Y[:array_len_Y],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
-                plt.xlabel('Time (hrs.)')
-                plt.ylabel('Depth '+Yunit)
-                plt.legend(loc='best',facecolor='white',framealpha=1.0)
-                plt.savefig(Y_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
-                plt.close()
-
             # ... Find the normalized errors for fail detection MOVED UP BY BRH
             #norm_rmse_link_Q = np.linalg.norm(1 - abs(swmmF_link_Q[:array_len_Q]/swmmC_link_Q)) / np.sqrt(len(swmmC_link_Q))
 
             # Fail check
             if(norm_rmse_link_Q > Qtolerance):
-                print('Failed link',link_name,'. Normalized rmse Q = ',norm_rmse_link_Q,'%')
+                print('Failed link',link_name,'. Normalized rmse Q = ',"%.3f" %norm_rmse_link_Q,'%')
                 list_of_errors.append('link: '+link_name+" flowrates are not within given error tolerance range")
 
             if(norm_rmse_link_Y > Ytolerance):
                 if (swmmC_link_Q_l2 < 0.001):
                     print('near-zero flow, so depth in links is not valid in SWMM-C')
                 else:
-                    print('Failed link',link_name,'. Normalized rmse Y = ',norm_rmse_link_Y,'%')
-                    list_of_errors.append('link: '+link_name+" depths are not within given error tolerance range")    
+                    print('Failed link',link_name,'. Normalized rmse Y = ',"%.3f" %norm_rmse_link_Y,'%')
+                    list_of_errors.append('link: '+link_name+" depths are not within given error tolerance range")   
+
+        if print_plots:
+            Q_plot_name = plot_dir+'/'+'link_'+link_name+'_Q.png'
+            Y_plot_name = plot_dir+'/'+'link_'+link_name+'_Y.png'
+            # link flowrate plot
+            plt.figure(1)
+            plt.plot(figsize=(8,6))
+            plt.plot(time[:array_len_Q],swmmC_link_Q[:array_len_Q],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
+            plt.plot(time[:array_len_Q],swmmF_link_Q[:array_len_Q],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
+            plt.xlabel('Time (hrs.)')
+            plt.ylabel('Flowrate '+Qunit)
+            plt.legend(loc='best',facecolor='white',framealpha=1.0)
+            plt.savefig(Q_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
+            plt.close()
+            # link depth plot
+            plt.figure(2)
+            plt.plot(figsize=(8,6))
+            plt.plot(time[:array_len_Y],swmmC_link_Y[:array_len_Y],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
+            plt.plot(time[:array_len_Y],swmmF_link_Y[:array_len_Y],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
+            plt.xlabel('Time (hrs.)')
+            plt.ylabel('Depth '+Yunit)
+            plt.legend(loc='best',facecolor='white',framealpha=1.0)
+            plt.savefig(Y_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
+            plt.close() 
 
     # Check if the data set is a node
     if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
@@ -379,6 +381,26 @@ for x in all_dset_names:
         node_name = x[10::]
 
         # find if any of the nodes exceeds the mass balance tolerance
+        
+        # ... extract swmmC node data
+        # extract the depths from the swmm5_C .out file and convert to numpy array to store
+        swmmC_node_H = swmmtoolbox.extract(out_path,"node,"+node_name+',Hydraulic_head').to_numpy().ravel()
+
+        # ... extract swmm5plus node data
+        # extract the flowrates from the swmm5_plus .h5 file
+        z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
+        if is_nJ2:  
+            swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        else:
+            swmmF_node_H = (z[:,5]) * Yf # take the JM peizometric head
+        # extract the timestamp
+        time = z[:,0]
+
+        array_len_H = len(swmmC_node_H)
+
+        # --- RMSE of head
+        rmse_node_H = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
+
         if any([node in node_name for node in problem_nodes]):
             idx = problem_nodes.index(node_name)
             print(' ')
@@ -394,24 +416,6 @@ for x in all_dset_names:
             print('-------------------------------------------------------------------------------')
             print(' ')
         else:
-            # ... extract swmmC node data
-            # extract the depths from the swmm5_C .out file and convert to numpy array to store
-            swmmC_node_H = swmmtoolbox.extract(out_path,"node,"+node_name+',Hydraulic_head').to_numpy().ravel()
-
-            # ... extract swmm5plus node data
-            # extract the flowrates from the swmm5_plus .h5 file
-            z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
-            if is_nJ2:  
-                swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
-            else:
-                swmmF_node_H = (z[:,5]) * Yf # take the JM peizometric head
-            # extract the timestamp
-            time = z[:,0]
-
-            array_len_H = len(swmmC_node_H)
-
-            # --- RMSE of head
-            rmse_node_H = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
             print(' ')
             print('-------------------------------------------------------------------------------')
             print('*** SWMM5-C to SWMM5+ node :', node_name,' result comparison ***')
@@ -425,6 +429,10 @@ for x in all_dset_names:
                 print(' ')
             print('Head RMSE:',"%.3f" %rmse_node_H,Yunit)
             print('-------------------------------------------------------------------------------')
+            # Fail check (uses absolute error for head)
+            if(rmse_node_H > Htolerance):
+                print('Failed node',node_name,'. RSME Head = ',"%.3f" %rmse_node_H, Yunit)
+                list_of_errors.append('node: '+node_name+" head errors are not within given tolerance range") 
 
             # calculate L1,L2,Linf norms for the swmm_c output
             swmmC_node_Y_l1 = np.linalg.norm(swmmC_node_H,1)
@@ -436,23 +444,18 @@ for x in all_dset_names:
             swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H[:array_len_H])
             swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H[:array_len_H],inf)
 
-            if print_plots:
-                H_plot_name = plot_dir+'/'+'node_'+node_name+'_H.png'
-                # node head plot
-                plt.figure(3)
-                plt.plot(figsize=(8,6))
-                plt.plot(time[:array_len_H],swmmC_node_H[:array_len_H],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
-                plt.plot(time[:array_len_H],swmmF_node_H[:array_len_H],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
-                plt.xlabel('Time (hrs.)')
-                plt.ylabel('Head '+Yunit)
-                plt.legend(loc='best',facecolor='white',framealpha=1.0)
-                plt.savefig(H_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
-                plt.close()
-
-            # Fail check (uses absolute error for head)
-            if(rmse_node_H > Htolerance):
-                print('Failed node',node_name,'. RSME Head = ',rmse_node_H, Yunit)
-                list_of_errors.append('node: '+node_name+" head errors are not within given tolerance range")  
+        if print_plots:
+            H_plot_name = plot_dir+'/'+'node_'+node_name+'_H.png'
+            # node head plot
+            plt.figure(3)
+            plt.plot(figsize=(8,6))
+            plt.plot(time[:array_len_H],swmmC_node_H[:array_len_H],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
+            plt.plot(time[:array_len_H],swmmF_node_H[:array_len_H],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
+            plt.xlabel('Time (hrs.)')
+            plt.ylabel('Head '+Yunit)
+            plt.legend(loc='best',facecolor='white',framealpha=1.0)
+            plt.savefig(H_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
+            plt.close() 
 
 print(' ')
 if(len(list_of_errors) == 0):
