@@ -9,6 +9,7 @@ import re
 import numpy as np
 from swmmtoolbox import swmmtoolbox
 from numpy import inf
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 
 def get_array_from_dset(file_name,dset_name):
@@ -55,6 +56,7 @@ Q_balance_error_tol = 10.0   # flow balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
+print_plots      = True     # logical to print plots at the comparison results folder
 unit             = 'CFS'     # unit of original swmm-c input file. options 'CFS' or 'SI'
 #-----------------------------------------------------------------------------------
 
@@ -111,8 +113,9 @@ else:
 
 # allow for different find of output paths
 if has_output_path:
-    output_dir = output_path+'/'+inp_name+"_comparison"
+    output_dir = output_path+inp_name+"_comparison"
     output_dir_timestamped = output_dir+'/'+time_now+'/'
+    plot_dir = output_dir_timestamped+'/'+inp_name+'_plots'
 else:
     #setting the output directory
     output_dir = inp_name+"_comparison"
@@ -122,12 +125,12 @@ else:
 os.system('mkdir '+ output_dir)
 os.system('cd ' + output_dir)
 os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
+os.system('cd ' + output_dir_timestamped+ '\n mkdir '+inp_name+'_plots')
 
 #setting the input, output and report paths needed for running SWMM5_C 
 #inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
 out_path = output_dir_timestamped + inp_name +'.out'
 rpt_path = output_dir_timestamped + inp_name +'.rpt'
-
 
 #run the swmm5_C
 os.system('./swmm5_C '+inp_path+' '+rpt_path+' '+out_path)
@@ -325,6 +328,30 @@ for x in all_dset_names:
             swmmF_link_Y_l2 = np.linalg.norm(swmmF_link_Y[:array_len_Y])
             swmmF_link_Y_linf = np.linalg.norm(swmmF_link_Y[:array_len_Y],inf)
 
+            if print_plots:
+                Q_plot_name = plot_dir+'/'+'link_'+link_name+'_Q.png'
+                Y_plot_name = plot_dir+'/'+'link_'+link_name+'_Y.png'
+                # link flowrate plot
+                plt.figure(1)
+                plt.plot(figsize=(8,6))
+                plt.plot(time[:array_len_Q],swmmC_link_Q[:array_len_Q],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
+                plt.plot(time[:array_len_Q],swmmF_link_Q[:array_len_Q],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
+                plt.xlabel('Time (hrs.)')
+                plt.ylabel('Flowrate '+Qunit)
+                plt.legend(loc='best',facecolor='white',framealpha=1.0)
+                plt.savefig(Q_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
+                plt.close()
+                # link depth plot
+                plt.figure(2)
+                plt.plot(figsize=(8,6))
+                plt.plot(time[:array_len_Y],swmmC_link_Y[:array_len_Y],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
+                plt.plot(time[:array_len_Y],swmmF_link_Y[:array_len_Y],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
+                plt.xlabel('Time (hrs.)')
+                plt.ylabel('Depth '+Yunit)
+                plt.legend(loc='best',facecolor='white',framealpha=1.0)
+                plt.savefig(Y_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
+                plt.close()
+
             # ... Find the normalized errors for fail detection MOVED UP BY BRH
             #norm_rmse_link_Q = np.linalg.norm(1 - abs(swmmF_link_Q[:array_len_Q]/swmmC_link_Q)) / np.sqrt(len(swmmC_link_Q))
 
@@ -407,6 +434,19 @@ for x in all_dset_names:
             swmmF_node_Y_l1 = np.linalg.norm(swmmF_node_H[:array_len_H],1)
             swmmF_node_Y_l2 = np.linalg.norm(swmmF_node_H[:array_len_H])
             swmmF_node_Y_linf = np.linalg.norm(swmmF_node_H[:array_len_H],inf)
+
+            if print_plots:
+                H_plot_name = plot_dir+'/'+'node_'+node_name+'_H.png'
+                # node head plot
+                plt.figure(3)
+                plt.plot(figsize=(8,6))
+                plt.plot(time[:array_len_H],swmmC_node_H[:array_len_H],'o-',color='xkcd:red',markersize=4,label='SWMM-C')
+                plt.plot(time[:array_len_H],swmmF_node_H[:array_len_H],'o-',color='xkcd:blue',markersize=4,label='SWMM5+')
+                plt.xlabel('Time (hrs.)')
+                plt.ylabel('Head '+Yunit)
+                plt.legend(loc='best',facecolor='white',framealpha=1.0)
+                plt.savefig(H_plot_name,bbox_inches = 'tight',pad_inches=0, format='png')
+                plt.close()
 
             # Fail check (uses absolute error for head)
             if(rmse_node_H > Htolerance):
