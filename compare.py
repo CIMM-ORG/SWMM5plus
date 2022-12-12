@@ -125,7 +125,6 @@ else:
 os.system('mkdir '+ output_dir)
 os.system('cd ' + output_dir)
 os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
-os.system('cd ' + output_dir_timestamped+ '\n mkdir '+inp_name+'_plots')
 
 #setting the input, output and report paths needed for running SWMM5_C 
 #inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
@@ -153,7 +152,6 @@ for x in os.listdir(output_dir_timestamped):
 x = os.listdir(swmm5_plus_dir)[0]
 swmm5_plus_dir = swmm5_plus_dir + '/' + x
     
-     
 # now we have the location of the h5 file, and the list of all the datasets in the h5 file
 h5_file = h5py.File(swmm5_plus_dir+'/output.h5','r')
 all_dset_names=h5_file.keys()
@@ -254,7 +252,10 @@ elif unit == 'MLD':
 else:
     print('Worng unit type seletced')
     exit(1)
-    
+# make the plot directory if required
+if print_plots:
+    os.system('mkdir '+ plot_dir)  
+
 # Loop through all of the data set names 
 for x in all_dset_names:
     
