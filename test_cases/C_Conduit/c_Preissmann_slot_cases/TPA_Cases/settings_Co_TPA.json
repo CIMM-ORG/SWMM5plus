@@ -96,10 +96,10 @@
             "useDynamicManningsN" : false
         },
         "PreissmannSlot" : {
-            "Method" : "DynamicSlotTest",
+            "Method" : "DynamicSlot",
             "TargetCelerity" : 1000.00,
             "Alpha" : 3.0,
-            "DecayRate" : 0.05
+            "DecayRate" : 0.5
         }
     },
     "TestCase" : {

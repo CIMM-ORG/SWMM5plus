@@ -240,7 +240,7 @@ module preissmann_slot
 
         !% CC slot adjustment
         select case (SlotMethod)
-            case (StaticSlot, DynamicSlotTest)
+            case (StaticSlot)
                 where (isSlot(thisP)) 
                     volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
                     ! area(thisP)   = area(thisP)    + SlotArea(thisP) !% KEEP AREA BASED ON CONDUIT
@@ -650,80 +650,7 @@ module preissmann_slot
                 end where
 
                 !% find the new preissmann number for all the closed elements
-                PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp(- SurchargeTime(thisP) / DecayRate) + oneR
-
-
-            !% HACK: Testing a new interpetation of the DynamicSlot. Only of Dr. Hodges
-            !% --- for dynamic slot, preissmann number is adjusted
-            case (DynamicSlotTest)
-                !% --- initialize dynamic slot
-                dSlotVol          = zeroR
-                dSlotArea         = zeroR
-                dSlotDepth        = zeroR
-                !% ---find out the slot volume/ area/ and the faces that are surcharged
-                where (volume(thisP) > fullVolume(thisP))
-                    !% find slot properties
-                    SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
-                    !% find the total slot area
-                    SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)  
-                    !% logicals
-                    isfSlot(fUp(thisP)) = .true.
-                    isfSlot(fDn(thisP)) = .true.
-                    isSlot(thisP)       = .true.
-                    isSurcharge(thisP)  = .true.
-                    !% smooth out the preissmann number before celerity calculation
-                    PNumber(thisP) = max(onehalfR * (fPNumber(fUP(thisP)) + fPNumber(fDn(thisP))), oneR)
-                    !% find the preissmann celerity from the preissmann number
-                    PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-
-                    !% HACK: we dont need this for the test dynamic slot.
-                    !% But keeping it here anyway for the future
-                    !% find the change in slot volume
-                    dSlotVol(thisP)   = SlotVolume(thisP) - SlotVolN0(thisP)
-                    !% find the change in slot area
-                    dSlotArea(thisP)  = dSlotVol(thisP) / length(thisP)
-                    !% find the change in slot depth
-                    dSlotDepth(thisP) = (dSlotArea(thisP)  * (PCelerity(thisP) ** twoR)) / (grav * (fullArea(thisP)))
-
-                    !% use the entire slot area to calculate the surcharge head
-                    !% thus, this is the continious form
-                    SlotDepth(thisP) = ((PCelerity(thisP) ** twoR) * SlotArea(thisP)) / (grav * fullArea(thisP))
-
-                    !% HACK: the difference form is added here for testing
-                    ! dSlotDepth(thisP) = ((TargetPCelerity ** 2.0) / (grav * fullArea(thisP))) &
-                    !                   * ((dSlotArea(thisP) / (PNumber(thisP) ** 2.0) ) &
-                    !                   + ((oldSlotVol(thisP) / length(thisP)) * ((oneR / (PNumber(thisP) ** 2.0 )) - (oneR / (PNumberOld(thisP) ** 2.0)))))
-                end where
-
-                !% --- reset isfSlot to find ventilated positions
-                where (.not. isSlot(thisP))
-                    isfSlot(fUp(thisP)) = .false.
-                    isfSlot(fDn(thisP)) = .false.
-                end where
-
-                !% Test code: set any diagnostic face as venting point
-                !% thus not changing preissmann number here
-                where (faceYN(fUP(thisP),fYN_isDiag_adjacent))
-                    isfSlot(fUp(thisP)) = .false.
-                end where
-
-                where (faceYN(fDn(thisP),fYN_isDiag_adjacent))
-                    isfSlot(fDn(thisP)) = .false.
-                end where
-
-                where (isfSlot(fUp(thisP)) .and. isfSlot(fDn(thisP)))
-                    !% --- calculate surcharge time
-                    SurchargeTime(thisP) = SurchargeTime(thisP) + Dt / twoR 
-                elsewhere
-                    !% --- reset the surcharge timer
-                    SurchargeTime(thisP) = zeroR
-                end where
-                
-                !% store the previous preissmann number before changing
-                PNumberOld(thisP) = PNumber(thisP) 
-
-                !% find the new preissmann number for all the closed elements
-                PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp(- SurchargeTime(thisP) / DecayRate) + oneR
+                PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp((- SurchargeTime(thisP) * tenR)/ DecayRate) + oneR
 
             case default
                 !% --- should not reach this stage

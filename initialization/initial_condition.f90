@@ -4310,7 +4310,7 @@ contains
                     elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
                 end where
 
-            case (DynamicSlot, DynamicSlotTest)
+            case (DynamicSlot)
 
                 elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_FullDepth)))
                 elemR(1:size(elemR,1)-1,er_Preissmann_Number_N0)  = elemR(1:size(elemR,1)-1,er_Preissmann_Number)
