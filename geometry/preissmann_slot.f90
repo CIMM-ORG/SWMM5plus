@@ -646,7 +646,7 @@ module preissmann_slot
                 end where
 
                 !% find the new preissmann number for all the closed elements
-                PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp(- SurchargeTime(thisP) / DecayRate) + oneR
+                PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp((- SurchargeTime(thisP) * tenR) / DecayRate) + oneR
 
 
             !% HACK: Testing a new interpetation of the DynamicSlot. Only of Dr. Hodges
