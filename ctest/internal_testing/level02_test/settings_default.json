@@ -1,0 +1,41 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "WhiteBoxTesting_Hydraulics",
+        "Short" : "WhiteBoxTesting_Hydraulics"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 91.00
+    },
+    "Limiter" : {
+        "Dt" : {
+            "Minimum"     : 1e-4
+        }
+    },    
+    "Output" : {
+        "StoredLevels" : 4902,
+        "CommandLine" : {
+            "interval" : 500
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isHeadOut"         : true,
+            "isManningsNout"    : true,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : true,
+            "isPreissmannCelerityOut"   : true
+        }
+    },
+    "Simulation" : {
+        "useHydrology" : false
+    },
+    "Solver" : {
+        "PreissmannSlot" : {
+            "Method" : "StaticSlot"
+        }
+    }
+}
