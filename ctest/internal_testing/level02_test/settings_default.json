@@ -28,6 +28,16 @@
             "isVolumeOut"       : true,
             "isWaveSpeedOut"    : true,
             "isPreissmannCelerityOut"   : true
+        },
+        "Report" : {
+            "useSWMMinpYN" : true,
+            "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : false,
+            "suppress_MultiLevel_Output" : false,
+            "StartTime" : 0.0,
+            "TimeInterval" : 300.0,
+            "TimeUnits" : "Hours"
         }
     },
     "Simulation" : {

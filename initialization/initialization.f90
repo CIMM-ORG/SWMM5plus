@@ -771,6 +771,9 @@ contains
                 link%I(ii,li_link_type) = lChannel
             end if
 
+            !% --- retrieve if the weir can surcharge
+            link%YN(ii,lYN_weir_CanSurcharge) = (interface_get_linkf_attribute(ii,api_linkf_weir_can_surcharge,.true.) == 1)
+
             if (link%I(ii,li_link_type) == lWeir) then
                 !% --- set road surface types
                 if (link%I(ii,li_RoadSurface) == API_NOSURFACE) then
@@ -1524,14 +1527,10 @@ contains
             !% get the number of entries in a curve
             curve(ii)%NumRows = interface_get_num_table_entries(ii)
             
-            print *, ii, curve(ii)%NumRows 
-            
             !% allocate the value space
             call util_allocate_curve_entries (ii,curve(ii)%NumRows)
-            !% get the first entry of the curve
-            
-            stop 24449782
 
+            !% get the first entry of the curve
             curve(ii)%ValueArray(1,:) = interface_get_first_entry_table(ii)
             !% populate the rest of the curves
             

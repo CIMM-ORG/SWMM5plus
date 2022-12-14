@@ -1332,6 +1332,16 @@ int DLLEXPORT api_get_linkf_attribute(
                     *value = 0;
             }
             break;
+        
+        case linkf_weir_can_surcharge :
+            switch (Link[link_idx].type) {
+                case WEIR :
+                    *value = Weir[Link[link_idx].subIndex].canSurcharge;
+                    break;
+                default :
+                    *value = 0;
+            }
+            break;
 
         case linkf_curveid :
             switch (Link[link_idx].type) {

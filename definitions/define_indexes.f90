@@ -120,7 +120,7 @@ module define_indexes
     !% These are the for the full arrays of logical
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: lYN_CanSurcharge = 1
+        enumerator :: lYN_weir_CanSurcharge = 1
         enumerator :: lYN_isOutput
         enumerator :: lYN_isPhantomLink
         enumerator :: lYN_hasFlapGate

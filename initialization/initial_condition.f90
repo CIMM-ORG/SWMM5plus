@@ -131,7 +131,7 @@ contains
         call init_IC_from_linkdata ()
 
             ! call util_CLprint ('initial_condition after IC_from_linkdata')
-
+        sync all
         !% --- set up background geometry for weir, orifice, etc.
         !%     from adjacent elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
@@ -819,6 +819,7 @@ contains
 
             integer, intent(in) :: thisLink
             integer, pointer    :: linkType
+            integer             :: ii
 
             character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
         !--------------------------------------------------------------------------
@@ -852,7 +853,7 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)         = weir
                     elemI(:,ei_QeqType)             = diagnostic
-                    elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_CanSurcharge)
+                    elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_weir_CanSurcharge)
                 endwhere
 
             case (lOrifice)
@@ -2228,8 +2229,10 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)  
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff2)
+                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
+                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
+                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff2) * 0.5521
                     elemSR(:,esr_Weir_TrapezoidalBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_SideSlope)
                     elemSR(:,esr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_SideSlope)
@@ -2263,7 +2266,9 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
+                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
+                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
@@ -2287,7 +2292,9 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
+                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
+                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
@@ -2311,7 +2318,9 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1)
+                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
+                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1) * 0.5521 
                     elemSR(:,esr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_FullDepth) * elemSR(:, esr_Weir_FullDepth) &
                                                                 * elemSR(:,esr_Weir_TriangularSideSlope) 
@@ -2338,7 +2347,9 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
+                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
+                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
@@ -3363,19 +3374,19 @@ contains
                 if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
 
                 BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
-                JBgeometryType => link%I(BranchIdx,li_geometry)
+                JBgeometryType => elemI(JBidx,ei_geometryType)
 
                 !% -- get the full area by summation of full area branches
                 elemR(JMidx,er_FullArea) = elemR(JMidx,er_FullArea) + init_IC_get_branch_fullarea(JBidx)
 
                 select case (JBgeometryType)
-                case (lRectangular,lRectangular_closed)
+                case (rectangular,rectangular_closed)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Rectangular_Breadth) )
 
-                case (lTrapezoidal)
+                case (trapezoidal)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                              +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                  &
                                   * elemR(  JBidx,er_Length)                                     &
@@ -3383,107 +3394,107 @@ contains
                                      +elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)                  &
                                      +elemSGR(JBidx,esgr_Trapezoidal_RightSlope)))
 
-                case (lTriangular)
+                case (triangular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
-                case (lParabolic)
+                case (parabolic)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * elemSGR(JBidx,esgr_Parabolic_Breadth) )
 
-                case (lRect_triang)
+                case (rect_triang)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI(JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR( JBidx,er_BreadthMax)/twoR) )
 
-                case (lBasket_handle)
+                case (basket_handle)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
-                case (lArch)
+                case (arch)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
 
-                case (lHoriz_ellipse)
+                case (horiz_ellipse)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
-                case (lVert_ellipse)
+                case (vert_ellipse)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
 
-                case (lEggshaped)
+                case (eggshaped)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
 
-                case (lHorseshoe)
+                case (horseshoe)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
-                case (lCatenary)
+                case (catenary)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
 
-                case (lGothic)
+                case (gothic)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
-                case (lSemi_elliptical)
+                case (semi_elliptical)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                                     
-                case (lCircular,lForce_main)
+                case (circular,force_main)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
                           * elemR(  JBidx,er_Length)                                          &
                           * (elemR(JBidx,er_BreadthMax)/twoR) )
 
-                case (lSemi_circular)
+                case (semi_circular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
                 
-                case (lFilled_circular)
+                case (filled_circular)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
                           * elemR(  JBidx,er_Length)                                             &
                           * elemR(  JBidx,er_BreadthMax) )
                 
-                case (lMod_basket)
+                case (mod_basket)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                      +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
                           * elemR(  JBidx,er_Length)                                             &
                           * elemR(  JBidx,er_BreadthMax) )
                 
-                case (lRect_round)
+                case (rect_round)
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
                                 +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
                                     * elemR(  JBidx,er_Length)                                   &
                                     * (elemR(JBidx,er_BreadthMax)/twoR) )
 
-                case (lIrregular)    
+                case (irregular)    
                     !% --- for irregular geometry, we use the average breadth for the area below
                     !%     the maximum breadth as the characteristic width of the branch
                     elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
