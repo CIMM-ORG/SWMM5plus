@@ -36,13 +36,14 @@ Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
 unit             = 'CFS'     # unit of original swmm-c input file. options 'CFS' or 'SI'
+Verbose_output   = False
 #-----------------------------------------------------------------------------------
 
 # Getting current working directory and time when the script is ran so that we can create a new folder
 cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
-num_processors = [1,2,3,4]
+num_processors = [1,2,4]
 settings_path  = ""
 h5_file_lists = []
 
@@ -135,7 +136,269 @@ for ii in range(len(num_processors)):
     h5_file_name = 'processor_'+str(num_processors[ii])
     h5_file_lists.append(swmm5_plus_dir+'/output.h5')
     
-print(h5_file_lists)
+#print(h5_file_lists)
+
+#print(h5_file_lists[0])
+
+h5_file_num_image_1 = h5py.File(h5_file_lists[0],'r')
+
+#Creating dictionary with opened hdf5 for each number of processor 
+# "num_images" : file
+dict_of_h5_files = dict([])
+
+#Creating list of hdf5 for each processor and opening them
+ii = 0
+for ii in range(0,len(h5_file_lists)):
+    dict_of_h5_files[num_processors[ii]] = h5py.File(h5_file_lists[ii],'r')
+    
 
 
-   
+
+#get all of the data_set_names
+all_dset_names=dict_of_h5_files[1].keys()
+# this will be used to keep a running list of which links and nodes are now within given tolerances
+list_of_errors =[]
+
+#set units for comparison 
+if unit == 'CFS':
+    Yf = 3.28084
+    Qf = 35.3147
+    Yunit = '(ft)'
+    Qunit = '(cfs)'
+    Htolerance = Htolerance * Yf
+elif unit == 'GPM':
+    Yf = 3.28084
+    Qf = 15850.37
+    Yunit = '(ft)'
+    Qunit = '(gpm)'
+    Htolerance = Htolerance * Yf
+elif unit == 'MGD': 
+    Yf = 3.28084
+    Qf = 22.8245
+    Yunit = '(ft)'
+    Qunit = '(mgd)'
+    Htolerance = Htolerance * Yf  
+elif unit == 'CMS':
+    Yf = 1.
+    Qf = 1.
+    Yunit = '(m)'
+    Qunit = '(cms)'
+elif unit == 'LPS':
+    Yf = 1.
+    Qf = 1000.000
+    Yunit = '(m)'
+    Qunit = '(lps)'
+elif unit == 'MLD':
+    Yf = 1.
+    Qf = 84.6000
+    Yunit = '(m)'
+    Qunit = '(mld)'
+else:
+    print('Worng unit type seletced')
+    exit(1)
+
+
+Q_row_to_append = []
+Y_row_to_append = []
+QY_List_Final   = []
+H_row_to_append = []
+H_List_Final   = []
+
+for x in all_dset_names:
+
+    if(x[0:5]=='link_'):
+
+        link_name = x[5::]
+
+        Q_row_to_append.append("Q RMSE")
+        Q_row_to_append.append(link_name)
+        Q_row_to_append.append("1")
+
+        Y_row_to_append.append("Y RMSE")
+        Y_row_to_append.append(link_name)
+        Y_row_to_append.append("1")
+
+        #Store flow and depth data from the serial run of the code
+        z_serial = get_array_from_dset(h5_file_lists[0],x)
+        link_Q_serial = z_serial[:,3] 
+        link_Y_serial = z_serial[:,2]
+        time = z_serial[:,0]
+       
+        #loop through all of the parellel output files and perform link comparison 
+        for parallel_file in h5_file_lists[1:]:
+            z_parallel = get_array_from_dset(parallel_file,x)
+            link_Q_parallel = z_parallel[:,3] 
+            link_Y_parallel = z_parallel[:,2] 
+
+
+            rmse_link_Q = np.linalg.norm(link_Q_parallel - link_Q_serial) / np.sqrt(len(link_Q_parallel))
+            rmse_link_Y = np.linalg.norm(link_Y_parallel - link_Y_serial) / np.sqrt(len(link_Y_parallel))
+
+            norm_rmse_link_Q = 100*rmse_link_Q  / np.maximum(0.1, np.maximum( np.amax(link_Q_serial), np.amax(link_Q_parallel)))
+            norm_rmse_link_Y = 100*rmse_link_Y  / np.maximum(0.1, np.maximum( np.amax(link_Y_serial), np.amax(link_Y_parallel)))
+
+            Q_row_to_append.append(norm_rmse_link_Q)
+            Y_row_to_append.append(norm_rmse_link_Y)
+
+           
+            
+            #print(Q_row_to_append)
+
+            if(Verbose_output): 
+                print(' ')
+                print('-------------------------------------------------------------------------------')
+                print('*** Parallel SWMM5+(SWMM5+P) to Serial SWMM5+ NUM_Images :', num_processors[h5_file_lists.index(parallel_file)], 'link :', link_name,' result comparison ***')
+                if print_timeseries:
+                    link_col_headers = ["Time (hrs.)","SWMM5+P Q "+Qunit, "SWMM5+S Q "+Qunit, "SWMM5+P Y "+Yunit, "SWMM5+S Y "+Yunit]
+                    link_merged_array = np.array([time,link_Q_parallel, link_Q_serial, link_Y_parallel, link_Y_serial]).T
+                    link_table = tabulate(link_merged_array , link_col_headers,floatfmt = ".3f")
+                    print(' ') 
+                    print(link_table)
+                    print(' ')
+                print('Flowrate   RMSE:',"%.3f" %rmse_link_Q,Qunit,'; or ',"%.2f%%" %norm_rmse_link_Q, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(link_Q_parallel)),Qunit)
+                print('Flow depth RMSE:',"%.3f" %rmse_link_Y,Yunit,' ; or ',"%.2f%%" %norm_rmse_link_Y, ' normalized by ',"%.3f" %np.maximum(0.1, np.amax(link_Y_parallel)),Yunit)
+                print('-------------------------------------------------------------------------------')
+                print(' ')
+
+                # ... Calculate the norms
+                # calculate L1,L2,Linf norms for the swmm5+P link flowrates
+                link_Q_l1_parallel   = np.linalg.norm(link_Q_parallel,1)
+                link_Q_l2_parallel   = np.linalg.norm(link_Q_parallel)
+                link_Q_linf_parallel = np.linalg.norm(link_Q_parallel,inf)
+                # calculate L1,L2,Linf norms for the swmm5+S link flowrates
+                link_Q_l1_serial   = np.linalg.norm(link_Q_serial,1)
+                link_Q_l2_serial   = np.linalg.norm(link_Q_serial)
+                link_Q_linf_serial = np.linalg.norm(link_Q_serial,inf)
+                # calculate L1,L2,Linf norms for the swmm5+P link depths
+                link_Y_l1_parallel   = np.linalg.norm(link_Y_parallel,1)
+                link_Y_l2_parallel   = np.linalg.norm(link_Y_parallel)
+                link_Y_linf_parallel = np.linalg.norm(link_Y_parallel,inf)
+                # calculate L1,L2,Linf norms for the swmm5+S link flowrate
+                link_Y_l1_serial = np.linalg.norm(link_Y_serial,1)
+                link_Y_l2_serial = np.linalg.norm(link_Y_serial)
+                link_Y_linf_serial = np.linalg.norm(link_Y_serial,inf)
+        
+                # ... Find the normalized errors for fail detection MOVED UP BY BRH
+                #norm_rmse_link_Q = np.linalg.norm(1 - abs(swmmF_link_Q[:array_len_Q]/swmmC_link_Q)) / np.sqrt(len(swmmC_link_Q))
+
+                # Fail check
+                if(norm_rmse_link_Q > Qtolerance):
+                    print('Failed link',link_name,'. Normalized rmse Q = ',norm_rmse_link_Q,'%')
+                    list_of_errors.append('link: '+link_name+" flowrates are not within given error tolerance range")
+
+                if(norm_rmse_link_Y > Ytolerance):
+                    if (link_Q_l2_parallel < 0.001):
+                        print('near-zero flow, so depth in links is not valid in SWMM-C')
+                    else:
+                        print('Failed link',link_name,'. Normalized rmse Y = ',norm_rmse_link_Y,'%')
+                        list_of_errors.append('link: '+link_name+" depths are not within given error tolerance range")   
+     
+        QY_List_Final.append(Q_row_to_append[:])
+        QY_List_Final.append(Y_row_to_append[:])
+        del Q_row_to_append[:]
+        del Y_row_to_append[:]        
+
+    # Check if the data set is a node
+    if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
+        
+        if (x[0:10]=='node_face_'):
+            is_nJ2 = True
+        else:
+            is_nJ2 = False
+        # ... store node name
+        node_name = x[10::]
+
+        z_serial = get_array_from_dset(h5_file_lists[0],x)
+        if is_nJ2:  
+                node_H_serial = ((z_serial[:,5] + z_serial[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        else:
+            node_H_serial = (z_serial[:,5]) * Yf # take the JM peizometric head
+        
+        # extract the timestamp
+        time = z_serial[:,0]
+        H_row_to_append.append("H RMSE")
+        H_row_to_append.append(node_name)
+        H_row_to_append.append("1")
+
+        #loop through all of the parellel output files and perform link comparison 
+        for parallel_file in h5_file_lists[1:]:
+
+            z_parallel = get_array_from_dset(parallel_file,x)
+            if is_nJ2:  
+                node_H_parallel = ((z_parallel[:,5] + z_parallel[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+            else:
+                node_H_parallel = (z_parallel[:,5]) * Yf # take the JM peizometric head
+
+            # --- RMSE of head
+            rmse_node_H = np.linalg.norm(node_H_parallel - node_H_serial) / np.sqrt(len(node_H_parallel))
+            H_row_to_append.append(rmse_node_H)
+
+            if(Verbose_output): 
+                print(' ')
+                print('-------------------------------------------------------------------------------')
+                print('*** SWMM5+P to SWMM5+S NUM_Images :', num_processors[h5_file_lists.index(parallel_file)], 'node :', node_name,' result comparison ***')
+                # print node depth data
+                if print_timeseries:
+                    node_col_headers = ["Time (hrs.)", "SWMM5+P H "+Yunit, "SWMM5+S H "+Yunit]
+                    node_merged_array = np.array([time, node_H_parallel, node_H_serial]).T
+                    node_table = tabulate(node_merged_array , node_col_headers,floatfmt = ".3f")
+                    print(' ')
+                    print(node_table)
+                    print(' ')
+                print('Head RMSE:',"%.3f" %rmse_node_H,Yunit)
+                print('-------------------------------------------------------------------------------')
+                
+                # calculate L1,L2,Linf norms for the swmm_c output ** should this be H instead of Y?
+                node_Y_l1_parallel = np.linalg.norm(node_H_parallel,1)
+                node_Y_l2_parallel = np.linalg.norm(node_H_parallel)
+                node_Y_linf_parallel = np.linalg.norm(node_H_parallel,inf)
+
+                # calculate L1,L2,Linf norms for the swmm_plus output
+                node_Y_l1_serial   = np.linalg.norm(node_H_serial,1)
+                node_Y_l2_serial   = np.linalg.norm(node_H_serial)
+                node_Y_linf_serial = np.linalg.norm(node_H_serial,inf)
+
+                # Fail check (uses absolute error for head)
+                if(rmse_node_H > Htolerance):
+                    print('Failed node',node_name,'. RSME Head = ',rmse_node_H, Yunit)
+                    list_of_errors.append('node: '+node_name+" head errors are not within given tolerance range")  
+        H_List_Final.append(H_row_to_append[:])
+        del H_row_to_append[:]
+
+
+
+if(Verbose_output):
+    print(' ')
+    if(len(list_of_errors) == 0):
+        print("no links or nodes are out of rangee given % tolerance", Qtolerance, Ytolerance, Htolerance)
+    else:
+        print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for givem tolerance", Qtolerance, Ytolerance, Htolerance)
+        print(list_of_errors)
+
+    print(' ')
+    print("-------------------------------End of comparison-------------------------------")
+    print(' ')
+    print(' ')
+
+    if(len(list_of_errors) == 0):
+        print("no links or nodes are out of range for given % tolerance", Qtolerance, Ytolerance)
+        sys.stdout.write("no links or nodes are out of the L0, L1, and Linf norm range for given tolerance {Qtolerance,Ytolerance}")
+        exit(0)
+    else:
+        print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance {Qtol,Ytol}")
+        print(list_of_errors)
+        sys.stderr.write(list_of_errors)
+        exit(1)
+else: 
+    #np.set_printoptions(threshold=sys.maxsize)
+    QYH_headers = ["Type of Value", "Link/Node Name"]
+    for processor in num_processors:
+        QYH_headers.append(str(processor) + " RMSE")
+
+    print(np.array(QY_List_Final))
+    QY_table_final = tabulate(QY_List_Final,QYH_headers,floatfmt = ".3f")
+    H_table_final  = tabulate(H_List_Final,QYH_headers,floatfmt = ".3f")
+    print(QY_table_final)
+    print("--------------------------------------------------------------------")
+    print(H_table_final)
+    exit(0)
