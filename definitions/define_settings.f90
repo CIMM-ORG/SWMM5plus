@@ -617,6 +617,7 @@ module define_settings
     type SmallDepthType
         real(8) :: DepthCutoff = 0.03d0 ! m
         real(8) :: ManningsN = 0.1d0
+        real(8) :: PumpVolumeFactor = 0.5d0  !% 
     end type SmallDepthType
 
     ! setting%Solver

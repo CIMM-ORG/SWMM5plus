@@ -930,6 +930,9 @@ contains
         setting%File%out_file = trim(setting%File%out_file) // c_null_char
         c_lib%filename = trim(setting%File%library_folder) // "/libswmm5.so"
 
+        ! write(*,"(A)") 'input file ',trim(setting%File%inp_file)
+        ! stop 39874
+
         !% --- initialize the api between SWMM-C and SWMM5+
         !%     This returns and stores the SWMM-C input and output filenames
         call load_api_procedure("api_initialize")

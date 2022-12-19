@@ -70,10 +70,11 @@ enable_testing()
 # )
 
 # FAILED (SWMM5+ SEGMENTATION) 20221201
-add_test(NAME extran1_irregular_mod
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_irregular_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/temp
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# OK based on figures 20221219
+# add_test(NAME extran1_irregular_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_irregular_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/temp
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 # add_test(NAME extran1_modified_baskethandle_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_modified_baskethandle_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/temp
@@ -138,3 +139,7 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # # )
 
+add_test(NAME extran6_type2_pump
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_type2_pump.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)

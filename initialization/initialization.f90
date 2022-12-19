@@ -832,6 +832,9 @@ contains
                 call util_crashpoint(86752)
             end if
         end do
+
+        !% --- Store the Link/Node names (moved here 20221216)
+        call interface_update_linknode_names()
     
         !% -----------------------
         !% --- NODE DATA
@@ -839,7 +842,8 @@ contains
         do ii = 1, N_node
             ! print *, ' '
             ! write(*,*) '==============================starting node ',ii
-            ! write(*,*)
+            ! write(*,*) 'name ',trim(node%Names(ii)%str)
+
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
 
@@ -1028,6 +1032,8 @@ contains
                 linkUp => node%I(ii,ni_Mlink_u1)
                 linkDn => node%I(ii,ni_Mlink_d1)
 
+                ! write(*,*) 'is nJ2'
+
                 !% --- special channels and conduits that allow nJ2
                 if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)    &
                         .or.                                           &
@@ -1048,6 +1054,7 @@ contains
                     !%     overflow above the Surcharge Extra Depth
 
                     !% --- no action: retain nJ2
+                    ! write(*,*) 'retain nJ2 as open channel face'
 
                 elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)      &
                          .and.                                            &
@@ -1062,6 +1069,7 @@ contains
                         !%  
                         
                         !% --- no action: retain nJ2
+                        ! write(*,*) 'retain nJ2 as closed conduit face'
                 else
                     !% --- switch to nJm
                     ! write(*,*) '... switching nJ2 to nJm due to closed conduit with less than InfiniteExtraDepthValue for surcharge'
@@ -1074,7 +1082,9 @@ contains
                         .or.                                  &
                         (link%I(linkDn,li_barrels) > oneI)    &
                     ) then       
+                    ! write(*,*) 'switch to nJm as multibarrel'
                     node%I(ii, ni_node_type) = nJm   
+                    
                 end if
 
                 !% --- regardless of the above, if either link up or down
@@ -1083,7 +1093,9 @@ contains
                         .or.                                     &
                         (link%I(linkDn,li_culvertCode) > 0)      &
                     ) then
+                    ! write(*,*) 'switch to nJm because culvert'
                     node%I(ii, ni_node_type) = nJm 
+                    
                 end if   
 
                 ! print *, ' at CCC'
@@ -1102,9 +1114,10 @@ contains
                       (link%I(linkUp,li_link_type) .eq. lOrifice)    &
                     ) then    
                     !% --- retain nJ2
+                    ! write(*,*) 'retain nJ2 as weir or orifice connecting with offset upstream'
                 else
                     !% --- switch to nJm
-                    !% write(*,*) '...switching nJ2 to nJm because of offsets upstream'
+                    ! write(*,*) '...switching nJ2 to nJm because of offsets upstream'
                     node%I(ii, ni_node_type) = nJm
                 end if
             end if
@@ -1117,6 +1130,7 @@ contains
                       (link%I(linkDn,li_link_type) .eq. lOrifice)    &
                     ) then    
                     !% --- retain nJ2
+                    ! write(*,*) 'retain nJ2 as weir or orifice connecting with offset downstream'
                 else
                     !% --- switch to nJm
                     ! write(*,*) '.. switching to nJM because of offsets downstream'
@@ -1145,8 +1159,10 @@ contains
 
         end do
 
-        !% --- Store the Link/Node names
-        call interface_update_linknode_names()
+        ! stop 2908734
+
+        !% --- Store the Link/Node names (moved up 20221215)
+       !  call interface_update_linknode_names()
 
         !% --- ERROR CHECK connections for outfalls
         do ii = 1,N_node
@@ -1492,34 +1508,47 @@ contains
 !%==========================================================================
 !%
     subroutine init_curves()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%   Retrieves data from EPA-SWMM interface and populates curve curves
-        !%-----------------------------------------------------------------------------
-        integer       :: ii, jj, additional_storage_curves, Total_curves
-        character(64) :: subroutine_name = 'init_curves'
-        !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%initialization) &
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer       :: ii, jj, additional_storage_curves
+            character(64) :: subroutine_name = 'init_curves'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (.not. api_is_initialized) then
-            print *, "ERROR: API is not initialized"
-            !stop 
-            call util_crashpoint(84785)
-            !return
-        end if
+            if (.not. api_is_initialized) then
+                print *, "ERROR: API is not initialized"
+                stop 2309874 
+                call util_crashpoint(84785)
+                !return
+            end if
+        !%------------------------------------------------------------------
+            ! print *, 'at top of ',trim(subroutine_name)
 
-        !% we create additional curves for functional storage as well
-        !% this allocates the space for functional storage curve
+        !% --- we create additional curves for functional storage as well
+        !%     this allocates the space for functional storage curve
         additional_storage_curves = count((node%YN(:,nYN_has_storage)) .and. &
                                           (node%I(:,ni_curve_ID) == 0))
 
-        Total_Curves = additional_storage_curves + setting%SWMMinput%N_curve
-        if (Total_Curves > setting%SWMMinput%N_curve) N_Curve = setting%SWMMinput%N_curve + additional_storage_curves
-        !% allocate the number of curve objets from SWMM5
+        !% --- assign the global total number of storage curves
+        N_Total_Curves = additional_storage_curves + setting%SWMMinput%N_curve
+
+        ! print *, 'SWMM Curves ',setting%SWMMinput%N_curve
+        ! print *, 'total curves',N_Total_Curves
+
+        !% --- allocate the number of curve objetcs from SWMM5
+        ! print *, 'calling util_allocate_curves'
         call util_allocate_curves()
    
         do ii = 1, setting%SWMMinput%N_curve
+
+            ! print *, 'ii = ',ii
+            ! print *, 'api_table_type ',api_table_type
+
             curve(ii)%ID = ii
             
             curve(ii)%Type = interface_get_table_attribute(ii, api_table_type)
@@ -1540,8 +1569,7 @@ contains
             
         end do
 
-        
-     
+        ! print *, 'at end of ',trim(subroutine_name)
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1617,22 +1645,53 @@ contains
             integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
             integer       :: read_status, debt, line_number = 1
             integer       :: ii, jj,kk, offset, offset_profile,name_loc
-            integer       :: error
+            integer       :: error, mm
+            integer       :: thisUnit, assignedUnit
+            logical       :: doesExist,isOpen
+            character(20) :: accessType
         !%------------------------------------------------------------------
-        !print *, "inside of init_Profile"
-        ! print *, setting%File%inp_file
-        ! print *, setting%File%UnitNumber%inp_file
+        ! print *, "inside of init_Profile"
+        ! write(*,"(A)"), 'input file name   ', trim(setting%File%inp_file)
+        ! print *, 'input file number ',setting%File%UnitNumber%inp_file
+        ! print *, ' '
+
+        !% --- alias for the unit number
+        thisUnit = setting%File%UnitNumber%inp_file
+
+        !% --- check that file exists
+        inquire(unit=thisUnit,EXIST=doesExist)
+        if (.not. doesExist) then 
+            write(*,"(A)")   'USER OR CODE ERROR: trying to open *.inp file that does not exist'
+            write(*,"(A,A)") 'Filename: ',trim(setting%File%inp_file)
+            call util_crashpoint(5509877)
+        end if
+
+        !% --- check to see that file is not open
+        inquire(FILE=trim(setting%File%inp_file),OPENED=isOpen)
+        if (isOpen) then 
+            write(*,"(A)") 'CODE ERROR: input file should not be open when processing profiles'
+            write(*,"(A,A)") 'Filename: ',trim(setting%File%inp_file)
+            call util_crashpoint(3385782)
+        end if
         
-        open(10, file = setting%File%inp_file, status = "old", action = "read")
+        open(thisUnit, file = trim(setting%File%inp_file), STATUS = 'OLD', ACTION = 'READ')
+
+        !print *, 'file opened'
+
         delimitator_loc = 2
         offset = 1
         max_links_profile_N = 0
+
         !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
         !print *, "end of file(bytes):", end_of_file
 
         !read through the file looking for the profiles and then cound the amount of profiles and the max amount of links 
+        mm=0
         do
-            read(10, "(A)", iostat = read_status) line
+            mm=mm+1 
+            !print *, 'mm ',mm
+
+            read(thisUnit, "(A)", iostat = read_status) line
             if (read_status /= 0) then 
                 exit
             endif
@@ -1641,14 +1700,15 @@ contains
                 
                 ! print *, 'profiles found'
                 ! print *, "offset_profile set:", offset_profile
-                read(10, "(A)", iostat = read_status) line
-                read(10, "(A)", iostat = read_status) line
+
+                read(thisUnit, "(A)", iostat = read_status) line
+                read(thisUnit, "(A)", iostat = read_status) line
                 offset_profile = FTELL(10)
                 ! print *, "offset_profile set:", offset_profile
                 max_profiles_N = 0
 
                 do
-                    read(10, "(A)", iostat = read_status) line
+                    read(thisUnit, "(A)", iostat = read_status) line
                     if (line .eq. "" .or. read_status /= 0 ) then
                         exit
                     end if
@@ -1656,7 +1716,9 @@ contains
                     ii = -1
                     max_profiles_N = max_profiles_N+1
                     name = line 
-                    ! print *, name
+
+                    ! print *, 'name ',name
+
                     index_of_start = index(name,"""",.true.)
                     link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
                     do while (delimitator_loc > 1)
@@ -1666,7 +1728,7 @@ contains
                     end do 
                     if(max_links_profile_N < ii) then
                         max_links_profile_N = ii
-                        ! print *, "new max:", max_links_profile_N
+                        !  print *, "new max:", max_links_profile_N
                     end if
 
                 end do
@@ -1676,22 +1738,24 @@ contains
         max_links_profile_N = max_links_profile_N + max_links_profile_N + 1 
         
         if(max_links_profile_N .eq. 1) then
-            print *, "no profiles found"
+            print *, "...no profiles found"
             return
         end if
 
         call util_allocate_output_profiles()
+
         ! print *, "size of profiles", size(output_profile_ids)
         ! print *, "offset_profile:", offset_profile
-        rewind(10)
+
+        rewind(thisUnit)
         error = fseek(10,offset_profile,0)
         output_profile_ids(:,:) = nullValueI
-        read(10, "(A)", iostat = read_status) line
+        read(thisUnit, "(A)", iostat = read_status) line
 
         !Loop through this time storing the profiles
         ii = 0  
         do  
-            read(10, "(A)", iostat = read_status) line
+            read(thisUnit, "(A)", iostat = read_status) line
             
             
             if (read_status /= 0 ) then
@@ -1712,15 +1776,15 @@ contains
                 end if
                 jj = jj + 1
                 choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
-                link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+                link_names   = trim(ADJUSTL(link_names(delimitator_loc+1:)))
                 do kk = 1 , N_Link
                     if(link%names(kk)%str == choosen_name) then
 
-
-    
                         if(jj > 2) then
+
                             ! print *,"link%I(kk,li_Mnode_u):",link%I(kk,li_Mnode_u)
                             ! print *,"link%I(output_profile_ids(ii,jj-1),li_Mnode_d):", link%I(output_profile_ids(ii,jj-1),li_Mnode_d)
+
                             if(link%I(kk,li_Mnode_u) .neqv. link%I(output_profile_ids(ii,jj-1),li_Mnode_d)) then
                                 print *, "Error with provides profiles not being continous"
                                 print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
@@ -1729,7 +1793,6 @@ contains
 
                         end if
 
-                   
                         output_profile_ids(ii,(jj*2)+1) = link%I(kk,li_Mnode_d)
                         output_profile_ids(ii,jj*2) = kk 
 
@@ -1754,11 +1817,14 @@ contains
             end do
 
         end do
+
         ! print *, "------------output_profile_ids---------"
         ! print *, output_profile_ids(1,:)
         ! print *, output_profile_ids(2,:)
-        !print *, output_profile_ids
-        close (10)
+        ! print *, output_profile_ids
+
+        close (thisUnit)
+
         !% ALLOCATE THE ARRAYS AND THEN fill them with the correct indexs
 
 

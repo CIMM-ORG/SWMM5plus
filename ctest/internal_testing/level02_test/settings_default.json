@@ -2,8 +2,8 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "WhiteBoxTesting_Hydraulics",
-        "Short" : "WhiteBoxTesting_Hydraulics"
+        "Long"  : "level02_test",
+        "Short" : "level02_test"
     },
     "Discretization" : {
         "NominalElemLength" : 91.00
@@ -14,7 +14,7 @@
         }
     },    
     "Output" : {
-        "StoredLevels" : 4902,
+        "StoredLevels" : 10000,
         "CommandLine" : {
             "interval" : 500
         },
@@ -33,7 +33,7 @@
             "useSWMMinpYN" : true,
             "provideYN" : true,
             "useHD5F"   : true,
-            "useCSV"    : false,
+            "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
             "TimeInterval" : 300.0,

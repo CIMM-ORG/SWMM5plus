@@ -94,8 +94,8 @@ module define_globals
 
     !integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
-    integer :: iet(2) =     (/14, 16 /)
-    integer :: ift(3) =   (/15, 16, 17/)
+    integer :: iet(3) =     (/162, 173, 79 /)
+    integer :: ift(3) =   (/150, 151, 73/)
 
     integer(kind=8) :: irecCount = 0
 
@@ -452,7 +452,8 @@ module define_globals
     integer :: N_node_output
     integer :: N_monitor_types = 7 !% # of data types transferred from monitorR in monitorPassR
     !integer :: SWMM_N_curve
-    integer :: N_Curve
+    !integer :: N_Curve
+    integer :: N_Total_Curves !% sum of swmm input curves and additional storage curves
     integer :: N_subcatch_runon
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace

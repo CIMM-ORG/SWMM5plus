@@ -2095,18 +2095,24 @@ contains
 !%==========================================================================
 !%
     subroutine util_allocate_curves ()
-        !-----------------------------------------------------------------------------
+        !-------------------------------------------------------------------
         ! Description:
         ! Allocates the curve type
-        !-----------------------------------------------------------------------------
+        !-------------------------------------------------------------------
         !% Declarations
             character(64)       :: subroutine_name = 'util_allocate_curves'
-        !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !-------------------------------------------------------------------
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !-------------------------------------------------------------------        
+
+        if (N_Total_Curves < 1) then
+            print *, '...No curves found'
+            return 
+        end if
 
         !% allocate curves
-        allocate( curve(N_curve), stat=allocation_status, errmsg= emsg)
+        allocate( curve(N_Total_Curves), stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'curve')
 
         curve%ID = nullvalueI
@@ -2182,10 +2188,19 @@ contains
         ! print *, 'Ncol_curve  ',Ncol_curve 
         ! print *, 'curve_idx   ',curve_idx      
 
-        !% allocate the value array of curve of the given curve_idx
+        ! print *, 'size(curve) ',size(curve)
+
+        if (curve_idx > size(curve)) then 
+            print *, 'CODE ERROR: in ',trim(subroutine_name)
+            print *, 'trying to read more curves than the number of allocated curves'
+            print *, 'allocated curves: ',size(curve)
+            print *, 'this curve index  ',curve_idx
+            stop 550987
+        end if
+ 
+        !% --- allocate the value array of curve of the given curve_idx
         allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'curve entries')
-
         curve(curve_idx)%ValueArray = nullvalueR
 
         if (setting%Debug%File%utility_allocate) &

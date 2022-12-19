@@ -2,8 +2,8 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "WhiteBoxTesting_Hydraulics",
-        "Short" : "WhiteBoxTesting_Hydraulics"
+        "Long"  : "default",
+        "Short" : "default"
     },
     "Discretization" : {
         "NominalElemLength" : 91.00

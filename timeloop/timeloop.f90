@@ -272,6 +272,7 @@ contains
                 ! print * , '==========================================================================='
                 ! print *, 'top of tl_outerloop loop at time ',setting%Time%Now
                 ! print *, ' '
+                    ! call util_CLprint ('top of tl_outerloop')
 
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
@@ -323,7 +324,7 @@ contains
                     end if
                 end if
 
-
+                ! call util_CLprint ('1111 of tl_outerloop')
                 ! print *, '1 nextHydrologyTime ', setting%Time%Hydrology%NextTime
                 ! print *, "doHydraulicsStepYN",doHydraulicsStepYN
                 ! if (.not. doHydraulicsStepYN) then 
@@ -333,7 +334,8 @@ contains
                 !call util_CLprint ('-1111 after hydrology step in timeloop---------------------------')
 
                 
-    
+                
+
                 !% --- main hydraulics time step
                 if (doHydraulicsStepYN) then    
 
@@ -360,7 +362,7 @@ contains
                     !     stop 2
                     ! end if
 
-                    !call util_CLprint ('1111 after BC update in timeloop---------------------------')
+                    ! call util_CLprint ('1111 after BC update in timeloop---------------------------')
 
                     ! print *, 'calling controls'
                     !% --- perform control rules
@@ -383,7 +385,7 @@ contains
                     !     stop 3
                     ! end if
 
-                    !call util_CLprint ('2222 after controls in timeloop---------------------------')
+                    ! call util_CLprint ('2222 after controls in timeloop---------------------------')
 
                     !% --- add subcatchment inflows
                     !%     note, this has "useHydrology" and not "doHydrologyStepYN" because the
@@ -403,7 +405,7 @@ contains
                         call interface_get_groundwater_inflow ()
                     end if
     
-                    !call util_CLprint ('3333 after subcatchment lateral inflow in timeloop---------------------------')
+                    ! call util_CLprint ('3333 after subcatchment lateral inflow in timeloop---------------------------')
 
                     !% --- perform hydraulic routing
                     !  print *, '3A nextHydrologyTime ', setting%Time%Hydrology%NextTime
@@ -419,7 +421,7 @@ contains
                     !     stop 4
                     ! end if
 
-                    !call util_CLprint ('in time_loop after tl_hydraulics')
+                    ! call util_CLprint ('in time_loop after tl_hydraulics')
 
                     !% --- accumulate RunOn from hydraulic elements to subcatchments
                     if ((setting%Simulation%useHydrology) .and. (any(subcatchYN(:,sYN_hasRunOn)))) then 
@@ -432,6 +434,7 @@ contains
                     !     stop 5
                     ! end if
 
+                    ! call util_CLprint ('in time_loop after subcatchment_accumulate_runon')
     
                     !% --- close the clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -657,6 +660,7 @@ contains
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
+                ! call util_CLprint ('top of tl_hydraulics')
 
         !% ---check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) call tl_solver_select()
@@ -699,6 +703,8 @@ contains
             print *, 'which has key ',trim(reverseKey(setting%Solver%SolverSelect))
             stop 497895
         end select    
+
+            ! call util_CLprint ('before accumulate volume conservation')
 
         call util_accumulate_volume_conservation () 
 

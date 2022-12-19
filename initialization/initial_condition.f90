@@ -135,7 +135,7 @@ contains
         !% --- set up background geometry for weir, orifice, etc.
         !%     from adjacent elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
-        call init_IC_diagnostic_geometry_from_adjacent ()
+        call init_IC_diagnostic_geometry_from_adjacent (.true.)
 
             ! call util_CLprint ('initial_condition after diagnostic_geoemtry_from_adjacent')
 
@@ -149,6 +149,28 @@ contains
         call init_IC_for_nJm_from_nodedata ()
 
             ! call util_CLprint ('initial_condition afer IC_from_nodedata')
+
+        !% --- second call for diagnostic that was next to JM/JB
+        sync all
+        call init_IC_diagnostic_geometry_from_adjacent (.false.)
+
+        do ii=1,N_elem(1)
+            if ((elemI(ii,ei_geometryType) == nullvalueI) .or. &
+                (elemI(ii,ei_geometryType) == undefinedKey)) then
+
+                if (    ((elemI(ii,ei_elementType) .eq. JB) .and.    &
+                          elemSI(ii,esi_JunctionBranch_Exists)     ) &
+                    .or.                                             &
+                        (elemI(ii,ei_elementType) .ne. JB) ) then
+                    print *, 'ii ',ii, elemI(ii,ei_geometryType)
+                    print *, 'link id ',elemI(ii,ei_link_Gidx_BIPquick)
+                    print *, 'node id ',elemI(ii,ei_node_Gidx_BIPquick)
+                    if (elemI(ii,ei_link_Gidx_BIPquick) .ne. nullvalueI) then 
+                        print *, trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str)
+                    end if
+                end if
+            end if
+        end do
 
         !% --- set up the transect arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
@@ -853,6 +875,7 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)         = weir
                     elemI(:,ei_QeqType)             = diagnostic
+                    elemI(:,ei_HeqType)             = notused
                     elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_weir_CanSurcharge)
                 endwhere
 
@@ -860,6 +883,7 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)            = orifice
                     elemI(:,ei_QeqType)                = diagnostic
+                    elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
 
@@ -867,6 +891,7 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)            = pump
                     elemI(:,ei_QeqType)                = diagnostic
+                    elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
 
@@ -874,6 +899,7 @@ contains
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)            = outlet
                     elemI(:,ei_QeqType)                = diagnostic
+                    elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
 
@@ -2712,11 +2738,11 @@ contains
 !%=========================================================================
 !%=========================================================================
 !%
-    subroutine init_IC_diagnostic_geometry_from_adjacent ()
+    subroutine init_IC_diagnostic_geometry_from_adjacent (isFirstCall)
         !%-----------------------------------------------------------------
         !% Description:   20220511brh
         !% Provides the additional "background" geometry of
-        !% diagnostic elements based on its surroundings. This is the
+        !% diagnostic (pump, outlet only) elements based on its surroundings. This is the
         !% geometry of the channel/conduit in which the diagnostic element exists.  
         !% This ensures that a diagnostic element next to
         !% a JB branch has a valid geometry that can be used for the JB branch.
@@ -2728,15 +2754,19 @@ contains
         !%   downstream CC element. If the downstream element is also other than 
         !%   CC then an error is returned
         !% Outlet -- requires an upstream CC element
+        !%
+        !% Called initially for CC adjacent only, then for CC and JB when
+        !% after JB have been updated in init_IC_for_nJm_from_nodedata
         !%-----------------------------------------------------------------
         !% Declarations
+            logical, intent(in) :: isFirstCall !% true for first time through
             integer, dimension(:), allocatable, target :: packIdx
             integer, pointer :: Fidx, Aidx, thisP
             integer, pointer :: linkIdx
             integer :: ii, jj, Ci
-            integer :: thisCol(7)
+            
 
-            character(64) :: subroutine_name = 'init_IC_diagnostic_geometry'
+            character(64) :: subroutine_name = 'init_IC_diagnostic_geometry_from_adjacent'
         !%-----------------------------------------------------------------
         !% Preliminaries:
             !% --- get the set of pumps, and outlets
@@ -2744,30 +2774,41 @@ contains
                     ((elemI(:,ei_elementType) .eq. pump) &
                     .or. &
                     (elemI(:,ei_elementType) .eq. outlet) ) )
-
-            !% --- set the column indexes of the fixed geometry data that are
-            !%     independent of Z bottom and length that
-            !%     are needed in a diagnostic element
-            ii=1
-            thisCol(ii) = er_AreaBelowBreadthMax; ii=ii+1
-            thisCol(ii) = er_BreadthMax;          ii=ii+1
-            !thisCol(ii) = er_FullEllDepth;             ii=ii+1
-            thisCol(ii) = er_FullArea;            ii=ii+1
-            thisCol(ii) = er_FullDepth;           ii=ii+1
-            !thisCol(ii) = er_FullHydDepth;        ii=ii+1
-            thisCol(ii) = er_FullPerimeter;       ii=ii+1
-
         !%-----------------------------------------------------------------
+
+        print *, ' '
+        print *, '+++++++++++++++++++++++++++++++++++++++++++++++'
+        print *, 'in ',trim(subroutine_name)
+
         !% --- cycle through to set geometry of diagnostic element
         !%     use the upstream geometry if it is CC
         do ii=1,size(packIdx)
             !% --- the present point
             thisP  => packIdx(ii)
+            
+
+                print *, '=========================='
+                print *, 'thisP ',thisP
+                print *, 'this elem type ',trim(reverseKey(elemI(thisP,ei_elementType)))
+                print *, 'geometry type #',elemI(thisP,ei_geometryType)
+                if (elemI(thisP,ei_geometryType) .ne. nullvalueI) then
+                    print *, 'geometry type name ',trim(reverseKey(elemI(thisP,ei_geometryType)))
+                end if
+
+            !% --- cycle if not a nullvalue geometry type
+            if (elemI(thisP,ei_geometryType) .ne. undefinedKey) cycle 
+
             !% --- the link
             linkIdx => elemI(thisP,ei_link_Gidx_SWMM)
+                print *, 'linkIdx  ' ,linkIdx
+                print *, 'linkname ' ,trim(link%Names(linkIdx)%str)
+
+            !% --- UPSTREAM ELEMENTS ----------------------------------------
             !% --- the upstream face
             Fidx => elemI(thisP,ei_Mface_uL)
-            !% --- the upstream element
+                print *, 'up face ',Fidx
+
+            !% --- identify the upstream element
             !%     which may be on a different image
             if (elemYN(thisP,eYN_isBoundary_up)) then
                 Ci   =  faceI(Fidx,fi_Connected_image)
@@ -2777,71 +2818,98 @@ contains
                 Aidx => faceI(Fidx,fi_Melem_uL)
             end if
 
-            !% --- the element type upstream
-            if (elemI(Aidx,ei_elementType)[Ci] == CC) then
-                !% --- if an upstream element is a channel/conduit, use this for the background channel
-                !%     geometry of the diagnostic element in which the weir/orifice/pump/outlet is embeded
-                elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
-                elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
-                !% --- initialize other consistent terms based on local length and zbottom
-                elemR(thisP,er_FullVolume)   = elemR(thisP,er_FullArea) * elemR(thisP,er_Length)
-                elemR(thisP,er_ZbreadthMax)  = elemR(thisP,er_Zbottom) &
-                                             + elemR(Aidx,er_ZbreadthMax) - elemR(Aidx,er_Zbottom)
-                elemR(thisP,er_Zcrown)       = elemR(thisP,er_Zbottom) &
-                                             + elemR(Aidx,er_Zcrown) - elemR(Aidx,er_Zbottom)
-                !% --- copy special geometry
-                call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
-                
-            else
-                !% --- if the upstream element is not CC, use the downstream element CC geometry
-                if (elemI(thisP,ei_elementType) == outlet) then
-                    !% --- outlets are required to have upstream CC
-                    print *, 'USER SYSTEM CONFIGURATION ERROR'
-                    print *, 'An outlet requires at least one upstream link that is a'
-                    print *, 'conduit or channel. This condition violated for'
-                    print *, 'outlet with name ',trim(link%Names(linkIdx)%str)
-                    call util_crashpoint(92873)
-                end if
+                print *, 'Ci ',Ci
+                print *, 'Up element  ',Aidx
+                print *, 'Up elememtType ',trim(reverseKey(elemI(Aidx,ei_elementType)[Ci]))
 
-                !%--- remainder only applicable to pumps
+                print *, 'is first call ',isFirstCall
 
-                !% --- the downstream face
-                Fidx => elemI(thisP,ei_Mface_dL)
-                !% --- the downstream element
-                !%     which may be on a different image
-                if (elemYN(thisP,eYN_isBoundary_dn)) then
-                    Ci   =  faceI(Fidx,fi_Connected_image)
-                    Aidx => faceI(Fidx,fi_GhostElem_dL)
+            !% --- set geometry for thisP based on upstream elements where possible
+            if (isFirstCall) then
+                if (elemI(Aidx,ei_elementType)[Ci] == CC) then
+                    call init_IC_set_implied_geometry (thisP, Aidx, Ci)
                 else
-                    Ci   =  this_image()
-                    Aidx => faceI(Fidx,fi_Melem_dL)
+                    !% --- if the upstream element is not CC, use the downstream element CC geometry
+                    !%     for pumps, but fail for outlets
+                    if (elemI(thisP,ei_elementType) == outlet) then
+                        !% --- outlets are required to have upstream CC
+                        print *, 'USER SYSTEM CONFIGURATION ERROR'
+                        print *, 'An outlet requires at least one upstream link that is a'
+                        print *, 'conduit or channel. This condition violated for'
+                        print *, 'outlet with name ',trim(link%Names(linkIdx)%str)
+                        call util_crashpoint(92873)
+                    end if
+                end if
+            else 
+                if ((elemI(Aidx,ei_elementType)[Ci] == CC) .or.        &
+                    (elemI(Aidx,ei_elementType)[Ci] == JB)      ) then
+                    call init_IC_set_implied_geometry (thisP, Aidx, Ci) 
+                else
+                    print *, 'NOT CC OR JB'
+                    stop 590873 
+                end if
+            end if
+
+            print *, 'new type ',trim(reverseKey(elemI(thisP,ei_geometryType)))
+            print *, ' '
+
+            !% --- Look downstream if this element still undefined
+            if (elemI(thisP,ei_geometryType) .ne. undefinedKey) cycle 
+
+            !% --- the downstream face
+            Fidx => elemI(thisP,ei_Mface_dL)
+                print *, 'dn face ',Fidx
+
+            !% --- the downstream element
+            !%     which may be on a different image
+            if (elemYN(thisP,eYN_isBoundary_dn)) then
+                Ci   =  faceI(Fidx,fi_Connected_image)
+                Aidx => faceI(Fidx,fi_GhostElem_dL)
+            else
+                Ci   =  this_image()
+                Aidx => faceI(Fidx,fi_Melem_dL)
+            end if
+
+                print *, 'Ci ',Ci
+                print *, 'Dn element  ',Aidx
+                print *, 'Dn elememtType ',trim(reverseKey(elemI(Aidx,ei_elementType)[Ci]))
+
+                print *, 'downstream link     ',elemI(Aidx,ei_link_Gidx_BIPquick)
+                if (elemI(Aidx,ei_link_Gidx_BIPquick) .ne. nullvalueI) then
+                    print *, 'downstream linkname ' ,trim(link%Names(elemI(Aidx,ei_link_Gidx_BIPquick))%str)
+                endif
+                print *, 'downstream node   ',elemI(Aidx,ei_node_Gidx_BIPquick)
+                if (elemI(Aidx,ei_node_Gidx_BIPquick) .ne. nullvalueI) then
+                    print *, 'downstream nodename ',trim(node%Names(elemI(Aidx,ei_node_Gidx_BIPquick))%str)
                 end if
 
+            if (isFirstCall) then    
                 !% --- the element type downstream
                 if (elemI(Aidx,ei_elementType)[Ci] == CC) then
-                    !% --- if a downstream element is a channel/conduit, use this for the
-                    !%     geometry of the element in which the weir/orifice/pump is embeded
-                    elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
-                    elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
-
-                    !% --- initialize other consistent terms based on local length and zbottom
-                    elemR(thisP,er_FullVolume)   = elemR(thisP,er_FullArea) * elemR(thisP,er_Length)
-                    elemR(thisP,er_ZbreadthMax)  = elemR(thisP,er_Zbottom) &
-                                                 + elemR(Aidx,er_ZbreadthMax) - elemR(Aidx,er_Zbottom)
-                    elemR(thisP,er_Zcrown)       = elemR(thisP,er_Zbottom) &
-                                                 + elemR(Aidx,er_Zcrown) - elemR(Aidx,er_Zbottom)
-
-                    !% --- copy over special geometry
-                    call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)  
-
+                    call init_IC_set_implied_geometry (thisP, Aidx, Ci) 
                 else
-                    !% --- pumps do not have default channel geometry, so they must
-                    !%     have a CC element upstream or downstream.
-                    print *, 'USER SYSTEM CONFIGURATION ERROR'
-                    print *, 'A pump requires at least one upstream or downstream link that is a'
-                    print *, 'conduit or channel. This condition violated for'
-                    print *, 'pump with name ',trim(link%Names(linkIdx)%str)
-                    call util_crashpoint(23987)
+                    ! if (elemI(Aidx,ei_elementType)[Ci] == JB) then
+                    !     !% --- pump with both upstream and downstream not CC
+                    !     !%     downstream is JB and upstream may be JB
+                    !     !%     must wait to resolve geometry after JB assigned
+                    !     !%     Assign nullvalueI to find this pump later.
+                    !     elemI(thisP,ei_geometryType) = nullvalueI
+                    ! else  
+                    !     print *, ' '
+
+                    !     !% --- pumps do not have default channel geometry, so they must
+                    !     !%     have a CC element upstream or downstream.
+                    !     print *, 'USER SYSTEM CONFIGURATION ERROR'
+                    !     print *, 'A pump requires at least one upstream or downstream link that is a'
+                    !     print *, 'conduit or channel or junction. This condition violated for'
+                    !     print *, 'pump with name ',trim(link%Names(linkIdx)%str)
+                    !     call util_crashpoint(2398789)
+                    ! end if
+                end if
+            else 
+                if ((elemI(Aidx,ei_elementType)[Ci] == CC) .or.        &
+                    (elemI(Aidx,ei_elementType)[Ci] == JB)      ) then
+                    call init_IC_set_implied_geometry (thisP, Aidx, Ci) 
                 end if
             end if
         end do
@@ -2851,6 +2919,49 @@ contains
             deallocate(packIdx)
 
     end subroutine init_IC_diagnostic_geometry_from_adjacent
+!%
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine init_IC_set_implied_geometry (thisP, Aidx, Ci)    
+        !%-----------------------------------------------------------------
+        !% Description
+        !% Copies geometry from adjacent element Aidx in connected image Ci
+        !% to thisP element
+        !%-----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP, Aidx, Ci
+            integer             :: thisCol(5), ii
+        !%-----------------------------------------------------------------
+        !% Preliminaries:
+        !% --- set the column indexes of the fixed geometry data that are
+        !%     independent of Z bottom and length that
+        !%     are needed in a diagnostic element
+            ii=1
+            thisCol(ii) = er_AreaBelowBreadthMax; ii=ii+1
+            thisCol(ii) = er_BreadthMax;          ii=ii+1
+            !thisCol(ii) = er_FullEllDepth;             ii=ii+1
+            thisCol(ii) = er_FullArea;            ii=ii+1
+            thisCol(ii) = er_FullDepth;           ii=ii+1
+            !thisCol(ii) = er_FullHydDepth;        ii=ii+1
+            thisCol(ii) = er_FullPerimeter;       ii=ii+1
+        !%-----------------------------------------------------------------
+        
+        !% --- if an adjacent element is a channel/conduit, use this for the background channel
+        !$     geometry of the diagnostic element in which the weir/orifice/pump/outlet is embeded
+        elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
+        elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
+
+        !% --- initialize other consistent terms based on local length and zbottom
+        elemR(thisP,er_FullVolume)   = elemR(thisP,er_FullArea) * elemR(thisP,er_Length)
+        elemR(thisP,er_ZbreadthMax)  = elemR(thisP,er_Zbottom) &
+                                        + elemR(Aidx,er_ZbreadthMax) - elemR(Aidx,er_Zbottom)
+        elemR(thisP,er_Zcrown)       = elemR(thisP,er_Zbottom) &
+                                             + elemR(Aidx,er_Zcrown) - elemR(Aidx,er_Zbottom)
+        !% --- copy special geometry
+        call init_IC_diagnostic_special_geometry (thisP, Aidx, Ci)
+
+    end subroutine init_IC_set_implied_geometry
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2932,6 +3043,8 @@ contains
             call init_IC_get_junction_data (thisJunctionNode)
         end do
 
+        !stop 5097834
+
         !% deallocate the temporary array
         deallocate(packed_nJm_idx)
 
@@ -2971,24 +3084,28 @@ contains
 !
     subroutine init_IC_get_junction_data (thisJunctionNode)        
         !%-----------------------------------------------------------------
+        !% Description:
         !% get data for the multi branch junction elements
         !%-----------------------------------------------------------------
-        integer, intent(in) :: thisJunctionNode
+        !% Declarations
+            integer, intent(in) :: thisJunctionNode
 
-        integer              :: ii, jj, JMidx, JBidx, Aidx, Ci
-        integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, NumRows
-        integer, pointer     :: Fidx, F2idx
-        integer              :: nbranches
-        real(8), allocatable :: integrated_volume(:)
-        real(8)              :: LupMax, LdnMax
-        real(8) :: aa,bb,cc
+            integer              :: ii, jj, JMidx, JBidx, Aidx, Ci
+            integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, NumRows
+            integer, pointer     :: Fidx, F2idx
+            integer              :: nbranches
+            real(8), allocatable :: integrated_volume(:)
+            real(8)              :: LupMax, LdnMax
+            real(8)              :: aa,bb,cc
+            logical              :: isupstream
 
-        character(64) :: subroutine_name = 'init_IC_get_junction_data'
+            character(64) :: subroutine_name = 'init_IC_get_junction_data'
         !%--------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Preliminaries
+            if (setting%Debug%File%initial_condition) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        print *, 'inside ',trim(subroutine_name)
+            print *, 'inside ',trim(subroutine_name)
 
         !%................................................................
         !% Junction main
@@ -3131,27 +3248,28 @@ contains
         !% adjacent element.
         do ii = 1,max_branch_per_node
 
-            ! print *, '================================',trim(subroutine_name)
-            ! print *, ii, 'in branch for JMidx ',JMidx
-            ! print *, 'node ',elemI(JMidx,ei_node_Gidx_SWMM)
-            ! print *, 'node name ',trim(node%Names(elemI(JMidx,ei_node_Gidx_SWMM))%str)
+            print *, '================================',trim(subroutine_name)
+            print *, ii, 'in branch for JMidx ',JMidx
+            print *, 'node ',elemI(JMidx,ei_node_Gidx_SWMM)
+            print *, 'node name ',trim(node%Names(elemI(JMidx,ei_node_Gidx_SWMM))%str)
 
             !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
 
             !% --- find the element id of junction branches
             JBidx = JMidx + ii
 
-            ! print *, 'JBidx ',JBidx
+            print *, 'JBidx ',JBidx
             
             !% --- main index associated with branch
             !elemI(JBidx,ei_main_idx_for_branch) = JMidx
             elemSI(JBidx,esi_JunctionBranch_Main_Index) = JMidx
 
-            !% --- set the adjacent element id where elemI and elemR data can be extracted
+            !% --- set the adjacent element id (Aidx) where elemI and elemR data can be extracted
             !%     note that elemSGR etc are not yet assigned
             if (mod(ii,2) == zeroI) then
                 Fidx => elemI(JBidx,ei_MFace_dL)
-                !% even are downstream branches
+                !% --- even are downstream branches
+                isupstream = .false.
                 if (elemYN(JBidx,eYN_isBoundary_dn)) then
                     Ci   = faceI(Fidx,fi_Connected_image)
                     Aidx = faceI(Fidx,fi_GhostElem_dL)
@@ -3159,8 +3277,9 @@ contains
                     Ci   = this_image()
                     Aidx = faceI(Fidx,fi_Melem_dL)
                 end if
-            !% --- odd are upstream branches
             else
+                !% --- odd are upstream branches
+                isupstream = .true.
                 Fidx => elemI(JBidx,ei_MFace_uL)
                 if (elemYN(JBidx,eYN_isBoundary_up)) then
                     Ci   = faceI(Fidx,fi_Connected_image)
@@ -3224,6 +3343,14 @@ contains
             !%     Must evaluate across connected images
             !%     JB inherits geometry type from connected branch
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
+
+            !% --- handle nullvalue geometry (can occur when adjacent element is diagnostic)
+            !%     Looks for the next link upstream. If it is a channel or
+            !%     conduit then its geometry can be assigned to the JB.
+            if (elemI(Aidx,ei_geometryType)[Ci] == undefinedKey) then 
+                call init_IC_JB_nullvalue_geometry &
+                    (Aidx, Ci, thisJunctionNode, JBidx, isupstream)
+            end if
 
             !% --- branch has same number of barrels as the connected element
             elemI(JBidx,ei_barrels)             = elemI(Aidx,ei_barrels)[Ci]
@@ -3334,8 +3461,6 @@ contains
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
 
         end do
-
-        !stop 2098734
         
         !% --- set a JM length based on longest branches (20220711brh)
         LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
@@ -3589,6 +3714,193 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine init_IC_JB_nullvalue_geometry  &
+         (Aidx, Ci, thisJunctionNode, JBidx, isupstream)
+        !%------------------------------------------------------------------
+        !% Description: 
+        !% handles cases where JB is adjacent to a diagnostic element
+        !% without inherently-defined geometry
+        !% Returns the Aidx and Ci of an element whose geometry can be used
+        !% for inferring geometry of JB
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(inout) :: Aidx !% adjacent element index
+            integer, intent(inout) :: Ci   !% adjacent element connected image 
+            integer, intent(in)    :: thisJunctionNode !% node being handled
+            integer, intent(in)    :: JBidx !% junction branch being handled
+            logical, intent(in)    :: isupstream !% if JB is an upstream branch
+            integer                :: adjLink, nextNode, farLink
+
+            character(64)  :: subroutine_name = 'init_IC_JB_nullvalue_geometry'
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------      
+            print *, 'in ',trim(subroutine_name)
+
+        !% --- define the adjacent link
+        adjLink = elemI(Aidx,ei_link_Gidx_BIPquick)[Ci]
+        
+            print *, 'adjLink ',adjLink
+
+        !% --- DOWNSTREAM INFERENCE -----------------------------------
+        if (.not. isupstream) then 
+            !% --- get the next downstream node
+            nextnode = link%I(adjLink,li_Mnode_d)
+
+                print *, 'next node dn',nextnode
+                print *, 'node name    ',trim(node%Names(nextnode)%str)
+
+            !% --- check if only one link connected downstream
+            if (node%I(nextnode,ni_N_link_d) == 1) then 
+                farLink = node%I(nextnode,ni_Mlink_d1)
+
+                    print *, 'far link dn',farLink
+                    print *, 'link name   ', trim(link%Names(farLink)%str)
+                    print *, 'link type   ', link%I(farLink,li_link_type)
+                    print *, 'reverseKey  ',reverseKey(link%I(farLink,li_link_type))
+
+                !% --- check if link type can be used to infer geometry    
+                if ((link%I(farLink,li_link_type) .eq. lPipe) .or. &
+                    (link%I(farLink,li_link_type) .eq. lChannel)) then 
+                    !% --- set the connected image and adjacent element to
+                    !%     the far link to use for JB geometry
+                    Ci   = link%I(farLink,li_P_image)
+                    Aidx = link%I(farLink,li_last_elem_idx)
+                    elemI(JBidx,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]   
+                else
+                    !% --- far link cannot be used because wrong type
+                    !%     set to null
+                    Ci   = nullvalueI
+                    Aidx = nullvalueI
+                end if
+            else 
+                !% --- far link cannot be used because more than 1 connection
+                !%     set to null
+                Ci   = nullvalueI
+                Aidx = nullvalueI
+            end if 
+
+            !% --- in case a pipe/channel not found downstream of adjacent link
+            if ((Ci == nullvalueI) .or. (Aidx == nullvalueI)) then
+                !% -- check for a single link upstream that could be used
+                !%    to assign geometry. Only applicable if there is
+                !%    only 1 upstream link, otherwise we cannot infer a
+                !%    geometry.
+                if (node%I(thisJunctionNode,ni_N_link_u) == 1) then
+                    !% --- get the upstream link
+                    farLink = node%I(thisJunctionNode,ni_Mlink_u1)
+
+                    !% --- check if link type can be used to infer geometry  
+                    if ((link%I(farLink,li_link_type) .eq. lPipe) .or. &
+                        (link%I(farLink,li_link_type) .eq. lChannel)) then 
+                        !% --- set the connected image and adjacent element to
+                        !%     the far link to use for JB geometry
+                        Ci   = link%I(farLink,li_P_image)
+                        Aidx = link%I(farLink,li_last_elem_idx)
+                        elemI(JBidx,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]  
+                    else 
+                        !% no change, Ci=nullvalueI
+                    end if
+                else 
+                    !% no change, Ci=nullvalueI
+                end if
+            else 
+                !% no change, Ci and Aidx have been found    
+            end if
+
+        !% --- UPSTREAM INFERENCE ---------------------------------------
+        else
+            !% --- get the next upstream node
+            nextnode = link%I(adjLink,li_Mnode_u)
+
+                print *, 'next node up ',nextnode
+                print *, 'node name    ',trim(node%Names(nextnode)%str)
+
+            !% --- check if only one link connected upstream
+            if (node%I(nextnode,ni_N_link_u) == 1) then 
+                farLink = node%I(nextnode,ni_Mlink_u1)
+
+                    print *, 'far link up ',farLink
+                    print *, 'link name   ', trim(link%Names(farLink)%str)
+                    print *, 'link type   ', link%I(farLink,li_link_type)
+                    print *, 'reverseKey  ',reverseKey(link%I(farLink,li_link_type))
+
+                !% --- check if link type can be used to infer geometry  
+                if ((link%I(farLink,li_link_type) .eq. lPipe) .or. &
+                    (link%I(farLink,li_link_type) .eq. lChannel)) then 
+                    !% --- set the connected image and adjacent element to
+                    !%     the far link to use for JB geometry
+                    Ci   = link%I(farLink,li_P_image)
+                    Aidx = link%I(farLink,li_last_elem_idx)
+                    elemI(JBidx,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]   
+                else
+                    !% --- far link cannot be used because wrong type
+                    !%     set to null
+                    Ci   = nullvalueI
+                    Aidx = nullvalueI
+                end if
+            else 
+                !% --- far link cannot be used becuase there are multiple links
+                !%     set to null
+                Ci   = nullvalueI
+                Aidx = nullvalueI
+            end if
+
+            !% --- in case a pipe/channel not found upstream of adjacent link
+            if ((Ci == nullvalueI) .or. (Aidx == nullvalueI)) then
+                !% -- check for a single link downstream that could be used
+                !%    to assign geometry. Only applicable if there is
+                !%    only 1 downstream link, otherwise we cannot infer a
+                !%    geometry.
+                if (node%I(thisJunctionNode,ni_N_link_d) == 1) then
+                    farLink = node%I(thisJunctionNode,ni_Mlink_d1)
+
+                    !% --- check if link type can be used to infer geometry  
+                    if ((link%I(farLink,li_link_type) .eq. lPipe) .or. &
+                        (link%I(farLink,li_link_type) .eq. lChannel)) then 
+                        !% --- set the connected image and adjacent element to
+                        !%     the far link to use for JB geometry
+                        Ci   = link%I(farLink,li_P_image)
+                        Aidx = link%I(farLink,li_last_elem_idx)
+                        elemI(JBidx,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]  
+                    else 
+                        !% no change, Ci=nullvalueI  
+                    end if
+                else 
+                    !% no change, Ci=nullvalueI  
+                end if
+            else 
+                !% no change, Ci and Aidx have been found
+            end if
+        end if
+
+
+        !% --- check for error remaining:
+        if ((Ci == nullvalueI) .or. (Aidx == nullvalueI)) then
+            print *, 'USER SYSTEM CONFIGURATION ERROR'
+            print *, 'located at node index ',thisJunctionNode,' named: ',trim(node%Names(thisJunctionNode)%str)
+            if (isupstream) then 
+                print *, 'with the upstream link index   ',adjLink,' named: ',trim(link%Names(adjLink)%str)
+            else 
+                print *, 'with the downstream link index ',adjLink,' named: ',trim(link%Names(adjLink)%str)
+            end if
+            print *, 'PROBLEM: Cannot define geometry of the junction branch.'
+            if ((node%I(thisJunctionNode,ni_N_link_d) + node%I(thisJunctionNode,ni_N_link_u)) == 2) then
+                print *, 'SWMM5+ requires either a channel/conduit link connected upstream/downstream '
+                print *, 'of this link or a channel/conduit link on the opposite side of the node'
+                print *, '(e.g., the downstream side if this is an upstream link on the node).'
+
+            else
+                print *, 'SWMM5+ requires a channel/conduit link connected upstream/downstream to this link.'
+            end if
+            print *, 'This configuration is required to set implied geometry of junction branches'
+            call util_crashpoint(6798723)
+        end if
+
+    end subroutine init_IC_JB_nullvalue_geometry
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
     real(8) function init_IC_get_branch_fullarea (JBidx) result(outvalue)  
         !%------------------------------------------------------------------
         !% Description
