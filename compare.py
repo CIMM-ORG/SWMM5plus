@@ -179,9 +179,14 @@ for line in file.readlines():
     elif re.search('Conduit Surcharge Summary', line, re.I):
         # conduit surcharge data starts from the 8th line from 'Conduit Surcharge Summary'
         link_surcharge_start = ii + 8
+    elif re.search('Pumping Summary', line, re.I):
+        # if there are pumps in the network, the surcharge summary will end above the 4th line of pump summary
+        link_surcharge_end = ii - 4
+        break
     elif re.search('Analysis begun on', line, re.I):
-        # conduit surcharge data ends at the 3th line above 'Analysis begun on'
+        # else conduit surcharge data ends at the 3th line above 'Analysis begun on'
         link_surcharge_end = ii - 3
+        break
 
 # Go back to position 0
 # Or beginning of file
@@ -193,6 +198,7 @@ problem_nodes = []
 surcharged_links = []
 surcharged_nodes = []
 flow_balance_error_percents = []
+
 for line in file.readlines():
     # counter for line number
     jj = jj+1
@@ -201,11 +207,23 @@ for line in file.readlines():
 
     # appending nodes with mass balance error
     if jj >= node_summary_start and jj <= node_summary_end:
-        # convert last 6 strings to float
-        flow_balance_error = float(line[-6:])
+        
+        # SWMM5 report file has a weird quirk on flow balance error reporting in junctions.
+        # When the lateral and total inflow volume to a junction is zero, the flow balance 
+        # error is also zero however, SWMM5 includes a unit gal/ltr after the zero flow
+        # balance error. Thus, when encounters these unit at the end of the node summary 
+        # table, the flow balance error is set to zero.
+        if line[-3:] == 'gal' or line[-3:] == 'ltr':
+            flow_balance_error = 0.
+        else:
+            # else convert last 6 strings to float
+            flow_balance_error = float(line[-6:])
+
+        # append the junction nodes that exceed given flow balance error tolerance     
         if abs(flow_balance_error) >= Q_balance_error_tol:
             problem_nodes.append(line.split()[0])
             flow_balance_error_percents.append(flow_balance_error)
+
     # appending surcharged nodes
     elif jj >= node_surcharge_start and jj <= node_surcharge_end:
         surcharged_nodes.append(line.split()[0])
@@ -476,5 +494,6 @@ if(len(list_of_errors) == 0):
 else:
     print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance {Qtol,Ytol}")
     print(list_of_errors)
-    sys.stderr.write(list_of_errors)
+    print(' ')
+    sys.stderr.write(",\n".join(list_of_errors))
     exit(1)
