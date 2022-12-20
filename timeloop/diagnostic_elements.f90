@@ -105,6 +105,9 @@ module diagnostic_elements
             !% replace with do concurrent if every procedure called in this loop can be PURE
             thisType => elemI(thisP(ii),ei_elementType)
 
+            ! print *, 'in diagnostic by type ',ii, thisP(ii)
+            ! print *, 'case ',reverseKey(thisType)
+
             !% -- store the old flowrate for use in first step of an RK2
             FlowRateOld = FlowRate(thisP(ii))
 

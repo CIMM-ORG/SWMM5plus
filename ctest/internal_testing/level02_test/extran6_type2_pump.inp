@@ -109,9 +109,9 @@ DRY_ONLY         NO
 [CURVES]
 ;;Name           Type       X-Value    Y-Value   
 ;;-------------- ---------- ---------- ----------
-Curve1           Pump2      200        5         
-Curve1                      600        10        
-Curve1                      1200       20        
+Curve1           Pump2      10          5         
+Curve1                      20          10        
+Curve1                      30          20        
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     

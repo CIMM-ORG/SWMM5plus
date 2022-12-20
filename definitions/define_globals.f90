@@ -94,8 +94,8 @@ module define_globals
 
     !integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
-    integer :: iet(3) =     (/162, 173, 79 /)
-    integer :: ift(3) =   (/150, 151, 73/)
+    integer :: iet(5) =     (/121, 123, 122, 124, 133 /)
+    integer :: ift(2) =   (/112, 113/)
 
     integer(kind=8) :: irecCount = 0
 

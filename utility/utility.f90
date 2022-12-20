@@ -81,6 +81,58 @@ module utility
         write(*,"(A)") trim(inputstring)
         write(*,"(A,i7,A, f12.5, A, f12.5, A)") 'step = ',setting%Time%Step,'; dt = ',setting%Time%Hydraulics%Dt,'; time = ',setting%Time%Now/3600.d0, ' hs'
 
+        ! print *, 123
+        ! print *, 'face Up', elemI(123,ei_Mface_uL)
+        ! print *, 'elem up ', faceI(elemI(123,ei_Mface_uL),fi_Melem_uL)
+        !stop 2098374
+
+
+        write(*,"(A,10f12.4)") '     H    '  ,  elemR(iet(1),er_Head),        &
+                                                faceR(ift(1),fr_Head_d),        &
+                                                elemR(iet(2),er_Head),        &
+                                                elemR(iet(3),er_Head),        &
+                                                elemR(iet(4),er_Head), &
+                                                faceR(ift(2),fr_Head_u),&
+                                                elemR(iet(5),er_Head)
+
+        write(*,"(A,10f12.4)") '     Z    '  ,  elemR(iet(1),er_Zbottom),        &
+                                                faceR(ift(1),fr_Zbottom),        &
+                                                elemR(iet(2),er_Zbottom),        &
+                                                elemR(iet(3),er_Zbottom),        &
+                                                elemR(iet(4),er_Zbottom), &
+                                                faceR(ift(2),fr_Zbottom),&
+                                                elemR(iet(5),er_Zbottom)
+
+        write(*,"(A,10f12.4)") '     D    '  ,  elemR(iet(1),er_Depth),        &
+                                                faceR(ift(1),fr_Depth_d),        &
+                                                elemR(iet(2),er_Depth),        &
+                                                elemR(iet(3),er_Depth),        &
+                                                elemR(iet(4),er_Depth), &
+                                                faceR(ift(2),fr_Depth_u),&
+                                                elemR(iet(5),er_Depth)
+
+        ! print *, 133,124,122
+        ! print *, 'face Up', elemI(133,ei_Mface_uL)
+        ! print *, 'elem up ', faceI(elemI(133,ei_Mface_uL),fi_Melem_uL)
+        ! print *, 'elem type ',trim(reverseKey(elemI(133,ei_elementType))), &
+        !                 ', ', trim(reverseKey(elemI(124,ei_elementType))), &
+        !                 ', ', trim(reverseKey(elemI(122,ei_elementType)))
+
+        ! print *, 'link, node', elemI(133,ei_link_Gidx_BIPquick),  elemI(124,ei_node_Gidx_BIPquick)
+        ! print *, 'name ',trim(link%Names(9)%str), ' ',trim(node%Names(8)%str)
+        ! print *, 'depth ',elemR(133,er_Depth), elemR(124,er_Depth)
+        ! print *, 'z bot ',elemR(133,er_Zbottom),elemR(124,er_Zbottom)
+        ! print *, 'head  ',elemR(133,er_Head), elemR(124,er_Head)
+
+        ! print *, 124, reverseKey(elemI(124,ei_elementType))
+        ! print *, 'JB up ',125
+        ! print *, 'JB dn ',126
+        ! print *, 'face up ',elemI(125,ei_Mface_uL)
+        ! print *, 'elem Up ',faceI(elemI(125,ei_Mface_uL),fi_Melem_uL)
+        ! print *, 'link up ',elemI(134,ei_link_Gidx_BIPquick)
+        !print *, 'link name up ',trim(link%Names(elemI(134,ei_link_Gidx_BIPquick))%str)
+        !stop 2908374
+
         ! print *, 162
         ! print *, 'face up ',elemI(163,ei_Mface_uL)
         ! print *, 'face dn ',elemI(164,ei_Mface_dL)
@@ -134,11 +186,11 @@ module utility
 
         ! stop 293874
 
-        print *, 'type ',trim(reverseKey(elemI(iet(1),ei_elementType))), ' ', &
-                         trim(reverseKey(elemI(iet(2),ei_elementType))), ' ', &
-                         trim(reverseKey(elemI(iet(3),ei_elementType)))
-        print *, 'small depth ',elemYN(iet(:),eYN_isSmallDepth)
-        print *, 'zero  depth ',elemYN(iet(:),eYN_isZeroDepth)
+        ! print *, 'type ',trim(reverseKey(elemI(iet(1),ei_elementType))), ' ', &
+        !                  trim(reverseKey(elemI(iet(2),ei_elementType))), ' ', &
+        !                  trim(reverseKey(elemI(iet(3),ei_elementType)))
+        ! print *, 'small depth ',elemYN(iet(:),eYN_isSmallDepth)
+        ! print *, 'zero  depth ',elemYN(iet(:),eYN_isZeroDepth)
 
 
         ! print *, ' '
@@ -151,12 +203,12 @@ module utility
         !                                         elemR(iet(2),er_Velocity),        &
         !                                         faceR(ift(3),fr_Velocity_u)   
 
-        write(*,"(A,10e12.5)") '     Q    '  ,  faceR(ift(1),fr_Flowrate),        &
-                                                elemR(iet(1),er_Flowrate),        &
-                                                faceR(ift(2),fr_Flowrate),        &
-                                                elemR(iet(2),er_Flowrate),        &
-                                                faceR(ift(3),fr_Flowrate),        &
-                                                elemR(iet(3),er_Flowrate)
+        ! write(*,"(A,10e12.5)") '     Q    '  ,  faceR(ift(1),fr_Flowrate),        &
+        !                                         elemR(iet(1),er_Flowrate),        &
+        !                                         faceR(ift(2),fr_Flowrate),        &
+        !                                         elemR(iet(2),er_Flowrate),        &
+        !                                         faceR(ift(3),fr_Flowrate),        &
+        !                                         elemR(iet(3),er_Flowrate)
 
         ! write(*,"(A,10e12.5)") '     Qcons'  ,  faceR(ift(1),fr_Flowrate_Conservative),        &
         !                                         elemR(iet(1),er_Flowrate),        &

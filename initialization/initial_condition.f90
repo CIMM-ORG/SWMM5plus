@@ -348,7 +348,7 @@ contains
         call init_IC_oneVectors ()
 
 
-
+        
           !  call util_CLprint ('initial_condition at end')
 
         ! print *, trim(reverseKey(elemI(14,ei_elementType))),' ', trim(reverseKey(elemI(14,ei_geometryType)))
@@ -2569,6 +2569,25 @@ contains
                 elemSR(ii,esr_Pump_yOff)    = link%R(thisLink,lr_yOff)
                 elemR(ii,er_Setting)        = link%R(thisLink,lr_initSetting)
 
+                ! print *, 'pump_yOn     ', elemSR(ii,esr_Pump_yOn)
+                ! print *, 'pump_yOff    ', elemSR(ii,esr_Pump_yOff)
+                ! print *, 'pump setting ',elemR(ii,er_Setting) 
+
+                ! print *, 'link ',elemI(ii,ei_link_Gidx_BIPquick)
+                ! print *, 'pump link name  ',trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str)
+
+                if ((elemSR(ii,esr_Pump_yOff) > elemSR(ii,esr_Pump_yOn)) &
+                    .and. (elemSR(ii,esr_Pump_yOff) > zeroR)) then 
+                    print *, 'USER CONFIGURATION ERROR:'
+                    print *, 'depth/head at which pumps shuts off is larger than'
+                    print *, 'the depth/head at which pumps turns on, which provides'
+                    print *, 'illogical behavior.'
+                    print *, 'Pump at link # ',elemI(ii,ei_link_Gidx_BIPquick)
+                    !print *, link%Names(1)%str
+                    print *, 'pump link name  ',trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str)
+                    call util_crashpoint(6439872)
+                end if
+
                 !% --- set nominal element length
                 elemR(ii,er_Length)         = setting%Discretization%NominalElemLength
 
@@ -2776,9 +2795,9 @@ contains
                     (elemI(:,ei_elementType) .eq. outlet) ) )
         !%-----------------------------------------------------------------
 
-        print *, ' '
-        print *, '+++++++++++++++++++++++++++++++++++++++++++++++'
-        print *, 'in ',trim(subroutine_name)
+        ! print *, ' '
+        ! print *, '+++++++++++++++++++++++++++++++++++++++++++++++'
+        ! print *, 'in ',trim(subroutine_name)
 
         !% --- cycle through to set geometry of diagnostic element
         !%     use the upstream geometry if it is CC
@@ -2787,26 +2806,26 @@ contains
             thisP  => packIdx(ii)
             
 
-                print *, '=========================='
-                print *, 'thisP ',thisP
-                print *, 'this elem type ',trim(reverseKey(elemI(thisP,ei_elementType)))
-                print *, 'geometry type #',elemI(thisP,ei_geometryType)
-                if (elemI(thisP,ei_geometryType) .ne. nullvalueI) then
-                    print *, 'geometry type name ',trim(reverseKey(elemI(thisP,ei_geometryType)))
-                end if
+                ! print *, '=========================='
+                ! print *, 'thisP ',thisP
+                ! print *, 'this elem type ',trim(reverseKey(elemI(thisP,ei_elementType)))
+                ! print *, 'geometry type #',elemI(thisP,ei_geometryType)
+                ! if (elemI(thisP,ei_geometryType) .ne. nullvalueI) then
+                !     print *, 'geometry type name ',trim(reverseKey(elemI(thisP,ei_geometryType)))
+                ! end if
 
             !% --- cycle if not a nullvalue geometry type
             if (elemI(thisP,ei_geometryType) .ne. undefinedKey) cycle 
 
             !% --- the link
             linkIdx => elemI(thisP,ei_link_Gidx_SWMM)
-                print *, 'linkIdx  ' ,linkIdx
-                print *, 'linkname ' ,trim(link%Names(linkIdx)%str)
+                ! print *, 'linkIdx  ' ,linkIdx
+                ! print *, 'linkname ' ,trim(link%Names(linkIdx)%str)
 
             !% --- UPSTREAM ELEMENTS ----------------------------------------
             !% --- the upstream face
             Fidx => elemI(thisP,ei_Mface_uL)
-                print *, 'up face ',Fidx
+                ! print *, 'up face ',Fidx
 
             !% --- identify the upstream element
             !%     which may be on a different image
@@ -2818,11 +2837,11 @@ contains
                 Aidx => faceI(Fidx,fi_Melem_uL)
             end if
 
-                print *, 'Ci ',Ci
-                print *, 'Up element  ',Aidx
-                print *, 'Up elememtType ',trim(reverseKey(elemI(Aidx,ei_elementType)[Ci]))
+                ! print *, 'Ci ',Ci
+                ! print *, 'Up element  ',Aidx
+                ! print *, 'Up elememtType ',trim(reverseKey(elemI(Aidx,ei_elementType)[Ci]))
 
-                print *, 'is first call ',isFirstCall
+                ! print *, 'is first call ',isFirstCall
 
             !% --- set geometry for thisP based on upstream elements where possible
             if (isFirstCall) then
@@ -2850,15 +2869,15 @@ contains
                 end if
             end if
 
-            print *, 'new type ',trim(reverseKey(elemI(thisP,ei_geometryType)))
-            print *, ' '
+            ! print *, 'new type ',trim(reverseKey(elemI(thisP,ei_geometryType)))
+            ! print *, ' '
 
             !% --- Look downstream if this element still undefined
             if (elemI(thisP,ei_geometryType) .ne. undefinedKey) cycle 
 
             !% --- the downstream face
             Fidx => elemI(thisP,ei_Mface_dL)
-                print *, 'dn face ',Fidx
+                ! print *, 'dn face ',Fidx
 
             !% --- the downstream element
             !%     which may be on a different image
@@ -2870,18 +2889,18 @@ contains
                 Aidx => faceI(Fidx,fi_Melem_dL)
             end if
 
-                print *, 'Ci ',Ci
-                print *, 'Dn element  ',Aidx
-                print *, 'Dn elememtType ',trim(reverseKey(elemI(Aidx,ei_elementType)[Ci]))
+                ! print *, 'Ci ',Ci
+                ! print *, 'Dn element  ',Aidx
+                ! print *, 'Dn elememtType ',trim(reverseKey(elemI(Aidx,ei_elementType)[Ci]))
 
-                print *, 'downstream link     ',elemI(Aidx,ei_link_Gidx_BIPquick)
-                if (elemI(Aidx,ei_link_Gidx_BIPquick) .ne. nullvalueI) then
-                    print *, 'downstream linkname ' ,trim(link%Names(elemI(Aidx,ei_link_Gidx_BIPquick))%str)
-                endif
-                print *, 'downstream node   ',elemI(Aidx,ei_node_Gidx_BIPquick)
-                if (elemI(Aidx,ei_node_Gidx_BIPquick) .ne. nullvalueI) then
-                    print *, 'downstream nodename ',trim(node%Names(elemI(Aidx,ei_node_Gidx_BIPquick))%str)
-                end if
+                ! print *, 'downstream link     ',elemI(Aidx,ei_link_Gidx_BIPquick)
+                ! if (elemI(Aidx,ei_link_Gidx_BIPquick) .ne. nullvalueI) then
+                !     print *, 'downstream linkname ' ,trim(link%Names(elemI(Aidx,ei_link_Gidx_BIPquick))%str)
+                ! endif
+                ! print *, 'downstream node   ',elemI(Aidx,ei_node_Gidx_BIPquick)
+                ! if (elemI(Aidx,ei_node_Gidx_BIPquick) .ne. nullvalueI) then
+                !     print *, 'downstream nodename ',trim(node%Names(elemI(Aidx,ei_node_Gidx_BIPquick))%str)
+                ! end if
 
             if (isFirstCall) then    
                 !% --- the element type downstream

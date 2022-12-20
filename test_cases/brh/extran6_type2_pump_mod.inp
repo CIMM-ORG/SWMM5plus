@@ -81,9 +81,9 @@ DRY_ONLY         NO
 8061             82309            82310            300        0.004      0          38.7       0          0         
 
 [PUMPS]
-;;Name           From Node        To Node          Pump Curve       Status   Sartup Shutoff 
+;;Name           From Node        To Node          Pump Curve       Status   Startup Shutoff 
 ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
-90011            82310            15009            Curve1           ON       0        0       
+90011            82310            15009            Curve1           OFF       10        5       
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -107,18 +107,18 @@ DRY_ONLY         NO
 82309            FLOW             82309            FLOW     1.0      1.0              
 
 [CURVES]
-;;Name           Type       X-Value    Y-Value   
-;;-------------- ---------- ---------- ----------
-Curve1           Pump2      200        5         
-Curve1                      600        10        
-Curve1                      1200       20        
+;;Name           Type       X-Value          Y-Value   
+;;-------------- ---------- ----------       ----------
+Curve1           Pump2         10                  5         
+Curve1                         20                 10        
+Curve1                         30                 20        
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
 82309                       0          0         
-82309                       0.25       0        
-82309                       3.0        0        
+82309                       0.25       20        
+82309                       3.0        20       
 82309                       3.25       0         
 82309                       12.0       0         
 ;
@@ -126,11 +126,11 @@ Curve1                      1200       20
 80408                       0.25       25        
 80408                       3.0        25        
 80408                       3.25       0         
-80408                       12         0         
+80408                       12         0        
 ;
 81009                       0          0         
-81009                       0.25       0        
-81009                       3.0        0        
+81009                       0.25       50       
+81009                       3.0        50       
 81009                       3.25       0         
 81009                       12         0         
 
