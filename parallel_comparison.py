@@ -43,7 +43,7 @@ Verbose_output   = False
 cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
-num_processors = [1,2,4]
+num_processors = [1,2,3,4]
 settings_path  = ""
 h5_file_lists = []
 
@@ -150,9 +150,6 @@ dict_of_h5_files = dict([])
 ii = 0
 for ii in range(0,len(h5_file_lists)):
     dict_of_h5_files[num_processors[ii]] = h5py.File(h5_file_lists[ii],'r')
-    
-
-
 
 #get all of the data_set_names
 all_dset_names=dict_of_h5_files[1].keys()
@@ -200,7 +197,8 @@ else:
 
 Q_row_to_append = []
 Y_row_to_append = []
-QY_List_Final   = []
+Q_List_Final   = []
+Y_List_Final    = []
 H_row_to_append = []
 H_List_Final   = []
 
@@ -210,13 +208,13 @@ for x in all_dset_names:
 
         link_name = x[5::]
 
-        Q_row_to_append.append("Q RMSE")
+        # Q_row_to_append.append("Q RMSE")
         Q_row_to_append.append(link_name)
-        Q_row_to_append.append("1")
+        Q_row_to_append.append("0")
 
-        Y_row_to_append.append("Y RMSE")
+        # Y_row_to_append.append("Y RMSE")
         Y_row_to_append.append(link_name)
-        Y_row_to_append.append("1")
+        Y_row_to_append.append("0")
 
         #Store flow and depth data from the serial run of the code
         z_serial = get_array_from_dset(h5_file_lists[0],x)
@@ -239,10 +237,6 @@ for x in all_dset_names:
 
             Q_row_to_append.append(norm_rmse_link_Q)
             Y_row_to_append.append(norm_rmse_link_Y)
-
-           
-            
-            #print(Q_row_to_append)
 
             if(Verbose_output): 
                 print(' ')
@@ -293,8 +287,9 @@ for x in all_dset_names:
                         print('Failed link',link_name,'. Normalized rmse Y = ',norm_rmse_link_Y,'%')
                         list_of_errors.append('link: '+link_name+" depths are not within given error tolerance range")   
      
-        QY_List_Final.append(Q_row_to_append[:])
-        QY_List_Final.append(Y_row_to_append[:])
+        Q_List_Final.append(Q_row_to_append[:])
+        # Q_List_Final.append(Y_row_to_append[:])
+        Y_List_Final.append(Y_row_to_append[:])
         del Q_row_to_append[:]
         del Y_row_to_append[:]        
 
@@ -316,9 +311,9 @@ for x in all_dset_names:
         
         # extract the timestamp
         time = z_serial[:,0]
-        H_row_to_append.append("H RMSE")
+        # H_row_to_append.append("H RMSE")
         H_row_to_append.append(node_name)
-        H_row_to_append.append("1")
+        H_row_to_append.append("0")
 
         #loop through all of the parellel output files and perform link comparison 
         for parallel_file in h5_file_lists[1:]:
@@ -365,8 +360,6 @@ for x in all_dset_names:
         H_List_Final.append(H_row_to_append[:])
         del H_row_to_append[:]
 
-
-
 if(Verbose_output):
     print(' ')
     if(len(list_of_errors) == 0):
@@ -391,14 +384,32 @@ if(Verbose_output):
         exit(1)
 else: 
     #np.set_printoptions(threshold=sys.maxsize)
-    QYH_headers = ["Type of Value", "Link/Node Name"]
+    link_headers = ["Link Name"]
+    node_headers = ["Node Name"]
     for processor in num_processors:
-        QYH_headers.append(str(processor) + " RMSE")
+        link_headers.append("Processor "+str(processor) + " (%)")
+        node_headers.append("Processor "+str(processor) + " (%)")
 
-    print(np.array(QY_List_Final))
-    QY_table_final = tabulate(QY_List_Final,QYH_headers,floatfmt = ".3f")
-    H_table_final  = tabulate(H_List_Final,QYH_headers,floatfmt = ".3f")
-    print(QY_table_final)
+    # print(np.array(Q_List_Final))
+    Q_table_final = tabulate(Q_List_Final,link_headers,floatfmt = ".3f")
+    Y_table_final  = tabulate(Y_List_Final,link_headers,floatfmt = ".3f")
+    H_table_final  = tabulate(H_List_Final,node_headers,floatfmt = ".3f")
+    print(' ')
+    print("--------------------------------------------------------------------")
+    print('Link FLows -- Normalized Root Mean Square Error (%)')
+    print("--------------------------------------------------------------------")
+    print(Q_table_final)
+    print("--------------------------------------------------------------------")
+    print(' ')
+    print("--------------------------------------------------------------------")
+    print('Link Depths -- Normalized Root Mean Square Error (%)')
+    print("--------------------------------------------------------------------")
+    print(Y_table_final)
+    print("--------------------------------------------------------------------")
+    print(' ')
+    print("--------------------------------------------------------------------")
+    print('Node Heads -- Normalized Root Mean Square Error (%)')
     print("--------------------------------------------------------------------")
     print(H_table_final)
+    print("--------------------------------------------------------------------")
     exit(0)

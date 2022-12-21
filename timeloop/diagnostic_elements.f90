@@ -53,7 +53,7 @@ module diagnostic_elements
         thisCol => col_elemP(ep_Diag)
         Npack   => npack_elemP(thisCol)
 
-        if (Npack > 0) then
+        ! if (Npack > 0) then
             !print *, 'calling diagnostic by type'
             call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
 
@@ -63,7 +63,7 @@ module diagnostic_elements
             !% --- reset the zero and small depth fluxes
             call adjust_zero_and_small_depth_face (ETM, .false.)
 
-        end if
+        ! end if
        
         if (setting%Profile%useYN) call util_profiler_stop (pfc_diagnostic_toplevel)
 
