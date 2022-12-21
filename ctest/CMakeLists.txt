@@ -139,7 +139,20 @@ enable_testing()
 # # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # # )
 
-add_test(NAME extran6_type2_pump
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_type2_pump.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
+# # FAILED (SWMM5+) 20221221
+# add_test(NAME extran6_type1_pump_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_type1_pump_mod.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILED (SWMM5+) 20221221
+# add_test(NAME extran6_type2_pump_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_type2_pump_mod.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+add_test(NAME extran6_storage_mod
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_storage_mod.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+

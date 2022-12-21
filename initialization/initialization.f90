@@ -1009,6 +1009,7 @@ contains
             !%        the SurchargeExtraDepth = 0
             !%     2. both sides are NOT open channel AND the junction extra
             !%        surcharge depth == Junction.InfiniteExtraDepthValue
+            !%     3. Downstream link may not be a Type1 Pump
             !%     In addition, the offsets of connected links must be zero, unless
             !%     the connected link is a weir or orifice (their offset has a different
             !%     meaning.)
@@ -1035,14 +1036,14 @@ contains
                 ! write(*,*) 'is nJ2'
 
                 !% --- special channels and conduits that allow nJ2
-                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)    &
-                        .or.                                           &
-                        (link%I(linkDn,li_link_type) .eq. lChannel)    &
-                      )                                                &
-                      .and.                                            &
-                      (node%R(ii,nr_PondedArea) == zeroR)              &
-                      .and.                                            &
-                      (node%R(ii,nr_SurchargeExtraDepth) == zeroR)     & 
+                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)          &
+                        .or.                                                 &
+                        (link%I(linkDn,li_link_type) .eq. lChannel)          &
+                      )                                                      &
+                      .and.                                                  &
+                      (node%R(ii,nr_PondedArea) == zeroR)                    &
+                      .and.                                                  &
+                      (node%R(ii,nr_SurchargeExtraDepth) == zeroR)           & 
                     ) then
                     !% nJ2 OPEN CHANNEL FACE
                     !% --- if either link is an open channel AND the ponded area
@@ -1056,16 +1057,17 @@ contains
                     !% --- no action: retain nJ2
                     ! write(*,*) 'retain nJ2 as open channel face'
 
-                elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)      &
-                         .and.                                            &
-                         (link%I(linkDn,li_link_type) .ne. lChannel)      &
-                         .and.                                            &
-                         (node%R(ii,nr_SurchargeExtraDepth)               &
-                          == setting%Junction%InfiniteExtraDepthValue) ) then
+                elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)         &
+                         .and.                                               &
+                         (link%I(linkDn,li_link_type) .ne. lChannel)         &
+                         .and.                                               &
+                         (node%R(ii,nr_SurchargeExtraDepth)                  &
+                          == setting%Junction%InfiniteExtraDepthValue)       &
+                          ) then
                         !% nJ2 CLOSED CONDUIT FACE
                         !% --- if both links are NOT open channel AND the SurchargeExtraDepth
                         !%     is equal to the InfiniteExtraDepthValue, then this is retained 
-                        !%     as an nJ2 (unvented) face. Otherwise switched to a vented nJM element.
+                        !%     as an nJ2 (unvented)  face. Otherwise switched to a vented nJM element.
                         !%  
                         
                         !% --- no action: retain nJ2
@@ -1087,6 +1089,16 @@ contains
                     
                 end if
 
+                !% --- regardless of the above, if the downstream link is
+                !%     at type 1 pump, then the node must be nJm
+                if (  (link%I(linkDn,li_link_type) .eq. lPump)      &
+                       .and.                                        &
+                      (link%I(linkDn,li_link_sub_type)  .eq. lType1Pump) &
+                    ) then
+                    ! write(*,*) 'switch to nJm as type 1 pump downstream'
+                    node%I(ii, ni_node_type) = nJm 
+                end if
+
                 !% --- regardless of the above, if either link up or down
                 !%     is a culvert then the node must be nJm
                 if (    (link%I(linkUp,li_culvertCode) > 0)      &
@@ -1094,8 +1106,7 @@ contains
                         (link%I(linkDn,li_culvertCode) > 0)      &
                     ) then
                     ! write(*,*) 'switch to nJm because culvert'
-                    node%I(ii, ni_node_type) = nJm 
-                    
+                    node%I(ii, ni_node_type) = nJm             
                 end if   
 
                 ! print *, ' at CCC'

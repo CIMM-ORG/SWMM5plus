@@ -154,23 +154,26 @@ contains
         sync all
         call init_IC_diagnostic_geometry_from_adjacent (.false.)
 
-        do ii=1,N_elem(1)
-            if ((elemI(ii,ei_geometryType) == nullvalueI) .or. &
-                (elemI(ii,ei_geometryType) == undefinedKey)) then
+        !% --- error checking for nullvalues
+        !%     keep for future debugging use.
+        ! do ii=1,N_elem(1)
+        !     if ((elemI(ii,ei_geometryType) == nullvalueI) .or. &
+        !         (elemI(ii,ei_geometryType) == undefinedKey)) then
 
-                if (    ((elemI(ii,ei_elementType) .eq. JB) .and.    &
-                          elemSI(ii,esi_JunctionBranch_Exists)     ) &
-                    .or.                                             &
-                        (elemI(ii,ei_elementType) .ne. JB) ) then
-                    print *, 'ii ',ii, elemI(ii,ei_geometryType)
-                    print *, 'link id ',elemI(ii,ei_link_Gidx_BIPquick)
-                    print *, 'node id ',elemI(ii,ei_node_Gidx_BIPquick)
-                    if (elemI(ii,ei_link_Gidx_BIPquick) .ne. nullvalueI) then 
-                        print *, trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str)
-                    end if
-                end if
-            end if
-        end do
+        !         if (    ((elemI(ii,ei_elementType) .eq. JB) .and.    &
+        !                   elemSI(ii,esi_JunctionBranch_Exists)     ) &
+        !             .or.                                             &
+        !                 (elemI(ii,ei_elementType) .ne. JB) ) then
+        !             print *, 'POSSIBLE PROBLEM IN link/node with nullvalue or undefined geometry Type'
+        !             print *, 'ii ',ii, elemI(ii,ei_geometryType)
+        !             print *, 'link id ',elemI(ii,ei_link_Gidx_BIPquick)
+        !             print *, 'node id ',elemI(ii,ei_node_Gidx_BIPquick)
+        !             if (elemI(ii,ei_link_Gidx_BIPquick) .ne. nullvalueI) then 
+        !                 print *, trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str)
+        !             end if
+        !         end if
+        !     end if
+        ! end do
 
         !% --- set up the transect arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
@@ -179,6 +182,9 @@ contains
 
             ! call util_CLprint ('initial_condition after transect_arrays and _geometry')
 
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
+        call init_IC_error_check ()
+        
         !% --- identify the small and zero depths (must be done before pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
         call adjust_smalldepth_identify_all ()
@@ -300,7 +306,6 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
 
-
             ! call util_CLprint ('initial_condition after update_auxiliary_variables')
 
         !% --- initialize old head 
@@ -348,7 +353,6 @@ contains
         call init_IC_oneVectors ()
 
 
-        
           !  call util_CLprint ('initial_condition at end')
 
         ! print *, trim(reverseKey(elemI(14,ei_elementType))),' ', trim(reverseKey(elemI(14,ei_geometryType)))
@@ -3124,7 +3128,7 @@ contains
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-            print *, 'inside ',trim(subroutine_name)
+            !print *, 'inside ',trim(subroutine_name)
 
         !%................................................................
         !% Junction main
@@ -3267,17 +3271,17 @@ contains
         !% adjacent element.
         do ii = 1,max_branch_per_node
 
-            print *, '================================',trim(subroutine_name)
-            print *, ii, 'in branch for JMidx ',JMidx
-            print *, 'node ',elemI(JMidx,ei_node_Gidx_SWMM)
-            print *, 'node name ',trim(node%Names(elemI(JMidx,ei_node_Gidx_SWMM))%str)
+            ! print *, '================================',trim(subroutine_name)
+            ! print *, ii, 'in branch for JMidx ',JMidx
+            ! print *, 'node ',elemI(JMidx,ei_node_Gidx_SWMM)
+            ! print *, 'node name ',trim(node%Names(elemI(JMidx,ei_node_Gidx_SWMM))%str)
 
             !% 20220406brh Rewritten to use adjacent element geometry initialization where possible.
 
             !% --- find the element id of junction branches
             JBidx = JMidx + ii
 
-            print *, 'JBidx ',JBidx
+            ! print *, 'JBidx ',JBidx
             
             !% --- main index associated with branch
             !elemI(JBidx,ei_main_idx_for_branch) = JMidx
@@ -3753,29 +3757,29 @@ contains
             character(64)  :: subroutine_name = 'init_IC_JB_nullvalue_geometry'
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------      
-            print *, 'in ',trim(subroutine_name)
+            ! print *, 'in ',trim(subroutine_name)
 
         !% --- define the adjacent link
         adjLink = elemI(Aidx,ei_link_Gidx_BIPquick)[Ci]
         
-            print *, 'adjLink ',adjLink
+            ! print *, 'adjLink ',adjLink
 
         !% --- DOWNSTREAM INFERENCE -----------------------------------
         if (.not. isupstream) then 
             !% --- get the next downstream node
             nextnode = link%I(adjLink,li_Mnode_d)
 
-                print *, 'next node dn',nextnode
-                print *, 'node name    ',trim(node%Names(nextnode)%str)
+                ! print *, 'next node dn',nextnode
+                ! print *, 'node name    ',trim(node%Names(nextnode)%str)
 
             !% --- check if only one link connected downstream
             if (node%I(nextnode,ni_N_link_d) == 1) then 
                 farLink = node%I(nextnode,ni_Mlink_d1)
 
-                    print *, 'far link dn',farLink
-                    print *, 'link name   ', trim(link%Names(farLink)%str)
-                    print *, 'link type   ', link%I(farLink,li_link_type)
-                    print *, 'reverseKey  ',reverseKey(link%I(farLink,li_link_type))
+                    ! print *, 'far link dn',farLink
+                    ! print *, 'link name   ', trim(link%Names(farLink)%str)
+                    ! print *, 'link type   ', link%I(farLink,li_link_type)
+                    ! print *, 'reverseKey  ',reverseKey(link%I(farLink,li_link_type))
 
                 !% --- check if link type can be used to infer geometry    
                 if ((link%I(farLink,li_link_type) .eq. lPipe) .or. &
@@ -3831,17 +3835,17 @@ contains
             !% --- get the next upstream node
             nextnode = link%I(adjLink,li_Mnode_u)
 
-                print *, 'next node up ',nextnode
-                print *, 'node name    ',trim(node%Names(nextnode)%str)
+                ! print *, 'next node up ',nextnode
+                ! print *, 'node name    ',trim(node%Names(nextnode)%str)
 
             !% --- check if only one link connected upstream
             if (node%I(nextnode,ni_N_link_u) == 1) then 
                 farLink = node%I(nextnode,ni_Mlink_u1)
 
-                    print *, 'far link up ',farLink
-                    print *, 'link name   ', trim(link%Names(farLink)%str)
-                    print *, 'link type   ', link%I(farLink,li_link_type)
-                    print *, 'reverseKey  ',reverseKey(link%I(farLink,li_link_type))
+                    ! print *, 'far link up ',farLink
+                    ! print *, 'link name   ', trim(link%Names(farLink)%str)
+                    ! print *, 'link type   ', link%I(farLink,li_link_type)
+                    ! print *, 'reverseKey  ',reverseKey(link%I(farLink,li_link_type))
 
                 !% --- check if link type can be used to infer geometry  
                 if ((link%I(farLink,li_link_type) .eq. lPipe) .or. &
@@ -5781,6 +5785,58 @@ contains
         end if
 
     end function init_IC_limited_fulldepth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_error_check ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Configuration error checking
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer            :: ii 
+            integer, pointer   :: fUp, eUp, JMidx
+        !%------------------------------------------------------------------
+    
+        do ii=1,N_elem(this_image())
+            !% --- check that type 1 pump has upstream nJm that does NOT have implied storage
+            if (elemI(ii,ei_elementType) == pump) then 
+                ! print *, 'pump element ',ii
+                ! print *, 'link # ',elemI(ii,ei_link_Gidx_BIPquick)
+                ! print *, 'link name ',trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str)
+                if (elemSI(ii,esi_Pump_SpecificType) == type1_Pump) then 
+                    fUp => elemI(ii,ei_Mface_uL)
+                    ! print *, 'face up ',fUp
+                    eUp => faceI(fUp,fi_Melem_uL)
+                    ! print *, 'elem up ',eUp
+                    ! print *, 'elem up type # ',elemI(eUp,ei_elementType)
+                    ! print *, 'elem up type name ',trim(reversekey(elemI(eUp,ei_elementType)))
+                    if (elemI(eUp,ei_elementType) .ne. JB) then 
+                        print *, 'CODE ERROR: upstream of a type1 pump should be JB'
+                        call util_crashpoint(4429873)
+                    else
+                        ! print *, elemSI(eUp,esi_JunctionBranch_Main_Index)
+                        JMidx => elemSI(eUp,esi_JunctionBranch_Main_Index)
+                        if (elemSI(JMidx,esi_JunctionMain_Type) == ImpliedStorage) then 
+                            print *, 'USER CONFIGURATION ERROR'
+                            print *, 'Pump Type 1 requires a node that has either defined '
+                            print *, 'tabular storage or functional storage. '
+                            print *, 'SWMM5+ does not replicate the implied storage approach'
+                            print *, 'used in EPA SWMM for type 1 pumps when storage is not'
+                            print *, 'formally defined.'
+                            print *, 'link number ',elemI(ii,ei_link_Gidx_SWMM)
+                            print *, 'link name   ',trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+                            call util_crashpoint(788734)
+                        else
+                            !% upstream element of pump has defined storage
+                        end if
+                    end if
+                end if
+            end if
+        end do
+
+    end subroutine  init_IC_error_check
 !%
 !%==========================================================================    
 !% END MODULE

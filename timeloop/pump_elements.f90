@@ -49,7 +49,7 @@ module pump_elements
             FlowRate => elemR(eIdx,er_Flowrate)
             PSetting => elemR(eIdx,er_Setting)
         !%-------------------------------------------------------------------
-
+   
         select case (PumpType)
 
             case (type1_Pump)
@@ -119,8 +119,8 @@ module pump_elements
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: eIdx  !% pump index
-            integer, pointer    :: Aidx, CurveID,  Fidx
-            integer             :: Ci, JMidx
+            integer, pointer    :: CurveID
+            integer             :: Ci, Aidx
             real(8), pointer    :: FlowRate, Volume, Head, Depth
             real(8)             :: upDepth, upHead, upVolume, upFlowrate, maxFlowrate
         !%------------------------------------------------------------------
@@ -132,18 +132,23 @@ module pump_elements
             Volume   => elemR(eIdx,er_Volume)
         !%------------------------------------------------------------------
         !% Preliminaries
-            upDepth=zeroR; upHead = zeroR; upVolume=zeroR; upFlowrate=zeroR
+            upDepth=zeroR; upHead=zeroR; upVolume=zeroR; upFlowrate=zeroR
             maxFlowrate=zeroR
+            Ci=1; Aidx=eIdx
         !%------------------------------------------------------------------
 
-        print *, 'NEED TO CHECK PUMP1 -- must be an upstream junction with defined storage'
-        print *, 'SWMM5+ cannot get correct volume if link or implied storage used'
-        print *, 'Read virtual wet well, pg 106 of Hydraulics manual'
-        stop 509873
+        ! print *, 'NEED TO CHECK PUMP1 -- must be an upstream junction with defined storage'
+        ! print *, 'SWMM5+ cannot get correct volume if link or implied storage used'
+        ! print *, 'Read virtual wet well, pg 106 of Hydraulics manual'
 
         !% -- get upstream data
         call pump_upstream_data &
             (type1_Pump, eIdx, Ci, Aidx, upDepth, upHead, upVolume, upFlowrate, maxFlowrate)
+
+        ! print *, 'elem type ',Aidx, reverseKey(elemI(Aidx,ei_elementType))
+        !stop 1098734
+
+
 
         !% --- store the upstream element depth as the pump depth
         Depth = upDepth
@@ -172,6 +177,10 @@ module pump_elements
 
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
+
+        !% --- reset pump depth and head to zero (no meaning)
+        Depth = zeroR
+        Head  = zeroR
 
     end subroutine pump_type1
 !%
@@ -231,6 +240,11 @@ module pump_elements
 
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
+
+        !% --- reset pump depth and head to zero (no meaning)
+        Depth = zeroR
+        Head  = zeroR
+
 
     end subroutine pump_type2
 !%
@@ -430,9 +444,9 @@ module pump_elements
             Fidx     => elemI(eIdx,ei_Mface_uL) !% face upstream
         !%------------------------------------------------------------------
         !%  
-            ! print *, 'eIdx, Fidx ',eIdx,Fidx
+             !print *, 'eIdx, Fidx ',eIdx,Fidx
 
-            !% --- identify the upstream adjacent element and its image
+        !% --- identify the upstream adjacent element and its image
         if (elemYN(eIdx,eYN_isBoundary_up)) then 
             Ci   = faceI(Fidx,fi_Connected_image)
             Aidx = faceI(Fidx,fi_GhostElem_uL)
