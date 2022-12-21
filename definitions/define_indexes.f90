@@ -1192,7 +1192,6 @@ module define_indexes
     enum, bind(c)
         enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
         enumerator ::  ebgr_Topwidth                  !% topwidth of flow at free surfac boundary/ghost element
-        !enumerator ::  ebgr_HydDepth                  !% hydraulic depth of flow boundary/ghost element
         enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element

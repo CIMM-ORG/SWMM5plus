@@ -1434,7 +1434,7 @@ module face
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
             eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number, er_Volume, &
                         er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH,   er_InterpWeight_uH, &
-                        er_InterpWeight_dQ, er_InterpWeight_uQ, ebgr_InterpWeight_dP, ebgr_InterpWeight_uP] 
+                        er_InterpWeight_dQ, er_InterpWeight_uQ, er_InterpWeight_dP, er_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces

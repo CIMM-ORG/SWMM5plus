@@ -4942,7 +4942,9 @@ contains
                 end if
             end do
         end if
-        faceYN(faceP(1:npack, ptype),fYN_isDiag_adjacent) = .true.
+        
+        if (npack > 0) faceYN(facePS(1:npack, ptype),fYN_isDiag_adjacent) = .true.
+            
         !% stop the shared timer
         sync all
         ! if (this_image()==1) then
