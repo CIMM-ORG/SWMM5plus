@@ -763,11 +763,11 @@ module define_settings
     !% Note that Depth is the setting users should change
     type ZerovalueType
         logical :: UseZeroValues = .true.
-        real(8) :: Area = 1.d-3 ! m^2 -- NOT A USER SETTING
+        real(8) :: Area = 1.d-12 ! m^2 -- NOT A USER SETTING
         real(8) :: Depth = 1.d-6 ! m
         real(8) :: Slope = 1.e-6 ! prevents zero values (may be + or -)
-        real(8) :: Topwidth = 1.d-3 ! m -- NOT A USER SETTING
-        real(8) :: Volume = 1.d-2 ! m^3 -- NOT A USER SETTING
+        real(8) :: Topwidth = 1.d-12 ! m -- NOT A USER SETTING
+        real(8) :: Volume = 1.d-12 ! m^3 -- NOT A USER SETTING
         real(8) :: VolumeResetLevel !m^3 -- NOT A USER SETTING
         real(8) :: Velocity = 1.d-3
     end type ZerovalueType

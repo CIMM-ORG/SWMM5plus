@@ -273,7 +273,7 @@ contains
 !%==========================================================================
 !%   
     real(8) function irregular_geometry_from_depth_singular &
-                (indx, table_idx, depth, zerovalue) result (outvalue)
+                (indx, table_idx, depth, ZeroValueGeometry) result (outvalue)
         !%----------------------------------------------------------------------
         !% Description:
         !%  Computes cross-sectional geometry for a given depth for a single element (indx)
@@ -283,7 +283,7 @@ contains
         !%----------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx, table_idx
-            real(8), intent(in) :: depth, zerovalue
+            real(8), intent(in) :: depth, ZeroValueGeometry
             real(8), pointer    :: fullDepth(:), thisTable(:)
             real(8)             :: depthnorm
         !%----------------------------------------------------------------------
@@ -296,7 +296,7 @@ contains
         depthnorm     = depth/fulldepth(indx)
 
         !% --- max is used because xsect quadratic interp for small values can produce zero
-        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)),zerovalue)
+        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)),ZeroValueGeometry)
 
     end function irregular_geometry_from_depth_singular    
 !%    

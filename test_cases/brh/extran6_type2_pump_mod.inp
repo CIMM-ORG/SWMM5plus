@@ -83,7 +83,7 @@ DRY_ONLY         NO
 [PUMPS]
 ;;Name           From Node        To Node          Pump Curve       Status   Startup Shutoff 
 ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
-90011            82310            15009            Curve1           OFF       10        5       
+90011            82310            15009            Curve1           OFF       5        4       
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   

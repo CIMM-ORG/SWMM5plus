@@ -692,6 +692,7 @@ module define_indexes
         enumerator :: esi_Pump_FlowDirection = 1     !% pump flow direction (-1, +1)
         enumerator :: esi_Pump_SpecificType          !% KEY specific pump type
         enumerator :: esi_Pump_CurveID               !% pump curve id
+        enumerator :: esi_Pump_IsControlled          !% 1 for external control, 0 for upstream control
         !enumerator :: esi_Pump_Status                !% 1 = on, 0 =off !% 20220625brh removed -- use er_Setting
         enumerator :: esi_Pump_lastplusone !% must be last enum item
     end enum

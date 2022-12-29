@@ -1,7 +1,7 @@
 [TITLE]
 ;;Project Title/Notes
 Example 6 of Extran Manual -
-Type 1 Pump
+Type 3 Pump
 
 [OPTIONS]
 ;;Option             Value
@@ -22,11 +22,11 @@ END_TIME             08:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:15:00
+REPORT_STEP          00:10:00
 WET_STEP             00:15:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:30 
-RULE_STEP            00:05:00
+RULE_STEP            00:01:00
 
 INERTIAL_DAMPING     NONE
 NORMAL_FLOW_LIMITED  BOTH
@@ -64,7 +64,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-10208            89.9       FREE                        NO                       
+10208            89.9       FREE                       YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -81,9 +81,9 @@ DRY_ONLY         NO
 8061             82309            82310            300        0.004      0          38.7       0          0         
 
 [PUMPS]
-;;Name           From Node        To Node          Pump Curve       Status   Sartup Shutoff 
+;;Name           From Node        To Node          Pump Curve       Status   Startup Shutoff 
 ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
-90011            82310            15009            Curve1           ON       0        0       
+90011            82310            15009            Curve1           OFF       5        4       
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -109,22 +109,22 @@ DRY_ONLY         NO
 [CURVES]
 ;;Name           Type       X-Value    Y-Value   
 ;;-------------- ---------- ---------- ----------
-Curve1           Pump3      200        5         
-Curve1                      600        10        
-Curve1                      1200       20        
+Curve1           Pump3      5          60         
+Curve1                      10         20        
+Curve1                      20          5        
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
 82309                       0          0         
-82309                       0.25       40        
-82309                       3.0        40        
+82309                       0.25       20        
+82309                       3.0        20        
 82309                       3.25       0         
 82309                       12.0       0         
 ;
 80408                       0          0         
-80408                       0.25       45        
-80408                       3.0        45        
+80408                       0.25       25        
+80408                       3.0        25        
 80408                       3.25       0         
 80408                       12         0         
 ;
@@ -136,8 +136,6 @@ Curve1                      1200       20
 
 [REPORT]
 ;;Reporting Options
-INPUT      YES
-CONTROLS   YES
 SUBCATCHMENTS ALL
 NODES ALL
 LINKS ALL

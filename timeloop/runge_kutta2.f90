@@ -53,8 +53,8 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-        ! print *, ' '
-        ! call util_CLprint ('======= AAA  start of RK2 ==============================')
+        !      print *, ' '
+        !    call util_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
         if (setting%Solver%ManningsN%useDynamicManningsN) then
@@ -84,12 +84,14 @@ module runge_kutta2
             ! call util_CLprint ('CCC  after update aux step 1-----------------------')
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
-        !%     This does not reset the zero/small depth packing
-        call adjust_zero_and_small_depth_elem (whichTM, .false.)
+        !%     This does not reset the zero/small depth packing as we allow negative
+        !%     volume values in first RK2 step (but not in final step)
+        !%     TESTING MAKING THIS RESET 20221227 to solve problem with fr_Flowrate_Conservative
+        call adjust_zero_and_small_depth_elem (whichTM, .true.)
         call util_crashstop(340927)
 
             ! call util_CLprint ('DDD  after adjust zero/small elem-----------------')
-     
+
         !% --- RK2 solution step  -- all face interpolation
         sync all
         call face_interpolation(fp_all,whichTM)
@@ -97,6 +99,7 @@ module runge_kutta2
             ! call util_CLprint ('EEE  after face interpolation step 1---------------')
 
         !% --- set the zero and small depth fluxes
+        !%     This resets the faces that are zero
         call adjust_zero_and_small_depth_face (whichTM, .true.)
         call util_crashstop(440223)
 
@@ -106,7 +109,7 @@ module runge_kutta2
         call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
 
-            ! call util_CLprint ('GGG  after diagnostic step 1')
+            ! call util_CLprint ('GGG  after diagnostic step 1 before adjust Vfilter')
 
         !% --- RK2 solution step -- check culverts
         call culvert_toplevel()
@@ -144,7 +147,9 @@ module runge_kutta2
             ! call util_CLprint ('KKK  after update aux step 2 --------------------------')
 
         !% --- set the flagged zero and small depth cells (allow depth to change)
-        call adjust_zero_and_small_depth_elem (whichTM, .false.)
+        !%     This DOES reset the packing 20221227brh
+        !%     Reset is required so that we don't get negative volumes in final RK2 step
+        call adjust_zero_and_small_depth_elem (whichTM, .true.)
         call util_crashstop(12973)
 
             ! call util_CLprint ('LLL  after zero/small elem step 2 -------------------')
@@ -156,9 +161,10 @@ module runge_kutta2
             ! call util_CLprint ('MMM  after face interp step 2 --------------------------')
 
         !% --- set the zero and small depth fluxes
+        !%     ifixQcons = false to prevent conservation issues (cannot change Qcons after 2nd RK2 step)
         call adjust_zero_and_small_depth_face (whichTM, .false.)
 
-            ! call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
+            !  call util_CLprint ('NNN  after zero/small face step 2 ---------------------')
 
         !% --- RK2 solution step -- update diagnostic elements and faces
         call diagnostic_toplevel (.false.)
@@ -171,8 +177,10 @@ module runge_kutta2
         call util_crashstop(669742)        
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
+        ! print *, 'vfilter before ',elemR(54,er_Flowrate)
         call adjust_Vfilter (whichTM)
         call util_crashstop(449872)
+        ! print *, 'vfilter after ',elemR(54,er_Flowrate)
 
             ! call util_CLprint ('PPP  after Vfilter step 2-----------------------------')
 
@@ -341,7 +349,7 @@ module runge_kutta2
         integer, intent(in) :: istep
         integer :: tmType
         !%-----------------------------------------------------------------------------
-        !%
+        !%       
         !% perform the continuity step of the rk2 for ETM CC and JM
         call rk2_continuity_step_ETM(istep)
 

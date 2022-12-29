@@ -6,7 +6,7 @@
         "Short" : "level02_test"
     },
     "Discretization" : {
-        "NominalElemLength" : 91.00
+        "NominalElemLength" : 61.00
     },
     "Limiter" : {
         "Dt" : {
@@ -36,7 +36,7 @@
             "useCSV"    : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 300.0,
+            "TimeInterval" : 500.0,
             "TimeUnits" : "Hours"
         }
     },

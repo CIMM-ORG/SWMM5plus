@@ -89,6 +89,9 @@ module face
 
             ! call util_CLprint ('    face after face_interpolate_BC')
 
+        !% --- Force face areas and depths to zero for Head <= Zbottom
+        call face_head_limited (faceCol)
+
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Profile%useYN) call util_profiler_stop (pfc_face_interpolation)
@@ -531,7 +534,8 @@ module face
                 elemUpstream => eup(idx_fBC(ii))
                 !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
                 !faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
-                faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular    (elemUpstream,depthBC(idx_P(ii)))
+                faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular   &
+                    (elemUpstream, depthBC(idx_P(ii)), setting%ZeroValue%Area)
                 !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_area_and_topwidth_singular(elemUpstream, faceR(idx_fBC(ii),fr_Area_u),faceR(idx_fBC(ii),fr_Topwidth_u) )
                 ! faceR(idx_fBC(ii),fr_EllDepth_u) = geo_elldepth_singular &
                 !     (faceR(idx_fBC, fr_Head_u), faceR(idx_fBC(ii),fr_Area_u), faceR(idx_fBC(ii),fr_Topwidth_u), &
@@ -633,7 +637,7 @@ module face
 
                         if (thisDepth > zeroR) then
                             !% --- get the volume of the upstream element if filled to the BC head level
-                            thisVolume = geo_area_from_depth_singular(elemUpstream,thisDepth) * eLength(elemUpstream)
+                            thisVolume = geo_area_from_depth_singular(elemUpstream, thisDepth, setting%ZeroValue%Area) * eLength(elemUpstream)
                             !% --- flowrate to fill to this volume in one time step
                             thisQ      = (thisVolume - eVolume(elemUpstream)) / setting%Time%Hydraulics%Dt
 
@@ -1917,6 +1921,39 @@ module face
 
 
     end subroutine face_flowrate_limits_shared
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine face_head_limited (facePackCol)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% Finds where Head < Zbottom on face and sets Depth and Area to zero
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: facePackCol
+            integer, pointer :: Npack
+            integer, pointer :: thisP(:)
+        !%-------------------------------------------------------------------
+        !% Aliases
+            Npack => npack_faceP(facePackCol)
+            if (Npack < 1) return
+            thisP   => faceP(1:Npack,facePackCol)
+        !%-------------------------------------------------------------------
+
+        where ((onehalfR * (faceR(thisP,fr_Head_u) + faceR(thisP,fr_Head_d))) &
+                .le. faceR(thisP,fr_Zbottom))
+            faceR(thisP,fr_Depth_d)    = setting%ZeroValue%Depth
+            faceR(thisP,fr_Depth_u)    = setting%ZeroValue%Depth
+            faceR(thisP,fr_Area_d)     = setting%ZeroValue%Area
+            faceR(thisP,fr_Area_u)     = setting%ZeroValue%Area
+            faceR(thisP,fr_Velocity_d) = zeroR
+            faceR(thisP,fr_Velocity_u) = zeroR
+            faceR(thisP,fr_Flowrate)   = zeroR
+        end where
+
+
+    end subroutine face_head_limited
 !%
 !%==========================================================================
 !% END OF MODULE

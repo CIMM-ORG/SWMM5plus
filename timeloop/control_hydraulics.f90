@@ -48,6 +48,9 @@ contains
             character(64) :: subroutine_name = 'control_update'
         !%------------------------------------------------------------------
 
+        ! print *, 'in control update '
+        ! print *, 'pump ',elemR(143,er_Flowrate), elemR(143,er_Setting)
+
         !% --- store monitoring element data across all images
         call control_update_monitor_across_images()
 
@@ -64,10 +67,15 @@ contains
         !% --- adjust settings
         !%     here we need to change the elemR(:,er_settings) for orifices, 
         !%     weirs, pumps, outlets and conduits.
+        ! print *, 'pump AAAA',elemR(143,er_Flowrate), elemR(143,er_Setting)
         call control_update_setting ()
+        ! print *, 'pump ZZZZ',elemR(143,er_Flowrate), elemR(143,er_Setting)
 
         !% --- adjust the values in the elemR array for new elemR(:,er_Setting)
         call control_update_element_values ()
+
+        ! print *, 'pump ',elemR(143,er_Flowrate), elemR(143,er_Setting)
+        ! print *, 'leaving control update'
 
         !%------------------------------------------------------------------
 
@@ -85,6 +93,7 @@ contains
             integer :: nRules, nPremise, nThenAction, nElseAction, ii, rr
             integer :: iLeft, iRight, thisPremiseLevel, success, numUnique
             integer :: npoint
+            integer, pointer :: thisElem
             integer, allocatable :: location(:), linknodesimType(:), attribute(:)
             integer, allocatable :: irank(:)
             character(64) :: subroutine_name = 'control_init_monitoring_and_action_from_EPASWMM'
@@ -110,12 +119,24 @@ contains
         !% --- set the elements and images for the action points
         call control_init_action_elements()
 
+        !% --- set flag for externally-controlled pumps
+        do ii=1,N_actionPoint
+            if ((actionI(ii,ai_image)) .eq. this_image()) then 
+                thisElem => actionI(ii,ai_elem_idx)
+                if (elemI(thisElem,ei_ElementType) .eq. pump) then
+                    !% --- set pump to external control
+                    elemSI(thisElem,esi_Pump_IsControlled) = oneI 
+                end if
+            end if
+        end do
+
         ! do ii=1,N_actionPoint
         !     print *, ii, actionI(ii,ai_idx)
         !     print *, 'elem idx   ',actionI(ii,ai_elem_idx)
         !     print *, 'image      ',actionI(ii,ai_image)
         !     print *, 'link idx   ',actionI(ii,ai_link_idx)
         !     print *, 'haschanged ',actionI(ii,ai_hasChanged)
+
         ! end do
         ! stop 298734
 

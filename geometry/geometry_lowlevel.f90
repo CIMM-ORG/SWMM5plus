@@ -129,6 +129,17 @@ module geometry_lowlevel
                  + elemR(thisP,er_SedimentDepth)  &
                  + elemR(thisP,er_Zbottom)
 
+            ! !print *, size(thisP)
+            ! !print *, size(depth)
+            ! print *, ' '
+            ! print *, thisP(24)
+            ! print *, ' '
+            ! print *, depth(24)
+            ! print *, ' '
+            ! !print *, elemR(thisP,er_SedimentDepth)
+            ! print *, ' '
+            ! print *, elemR(thisP(24),er_Zbottom)     
+
     end function llgeo_head_from_depth_pure
 !%
 !%==========================================================================    
@@ -328,7 +339,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     subroutine llgeo_tabular_area_from_depth &
-        (elemPGx, Npack, thisCol, Atable)
+        (elemPGx, Npack, thisCol, Atable, ZeroValueArea)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups 
@@ -337,7 +348,7 @@ module geometry_lowlevel
         !%-------------------------------------------------------------------
             integer, target, intent(in)   :: elemPGx(:,:)
             integer,  intent(in)   :: Npack, thisCol
-            real(8),  intent(in)    :: Atable(:)
+            real(8),  intent(in)    :: Atable(:), ZeroValueArea
             integer, pointer :: thisP(:)
             real(8), pointer :: depth(:), volume(:),   area(:)
             real(8), pointer :: YoverYfull(:), AoverAfull(:)
@@ -369,6 +380,9 @@ module geometry_lowlevel
 
         !% ensure the full area is not exceeded
         area(thisP) = min(area(thisP),fullarea(thisP))
+
+        !% set minimum
+        area(thisP) = max(area(thisP),ZeroValueArea)
         
     end subroutine llgeo_tabular_area_from_depth 
 !%
@@ -376,7 +390,7 @@ module geometry_lowlevel
 !%========================================================================== 
 !%
     subroutine llgeo_tabular_topwidth_from_depth &
-        (elemPGx, Npack, thisCol, Ytable )
+        (elemPGx, Npack, thisCol, Ytable, ZeroValueTopwidth )
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
@@ -385,7 +399,7 @@ module geometry_lowlevel
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            real(8),         intent(in) :: Ytable(:)
+            real(8),         intent(in) :: Ytable(:), ZeroValueTopwidth
             integer, pointer :: thisP(:)
             real(8), pointer :: depth(:), topwidth(:), breadthMax(:)
             real(8), pointer :: YoverYfull(:), fulldepth(:)
@@ -414,7 +428,7 @@ module geometry_lowlevel
             (topwidth, YoverYfull, YTable, thisP) 
 
         !% --- get the topwidth by multiplying the T/Tmax with maximum breadth
-        topwidth(thisP) = max(topwidth(thisP) * breadthMax(thisP), setting%ZeroValue%Topwidth)
+        topwidth(thisP) = max(topwidth(thisP) * breadthMax(thisP), ZeroValueTopwidth)
     
     end subroutine llgeo_tabular_topwidth_from_depth
 !%  
@@ -422,7 +436,7 @@ module geometry_lowlevel
 !%==========================================================================      
 !%
     subroutine llgeo_tabular_hydradius_from_depth &
-        (elemPGx, Npack, thisCol, Ytable )
+        (elemPGx, Npack, thisCol, Ytable, ZeroValueHydRadius )
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
@@ -431,7 +445,7 @@ module geometry_lowlevel
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            real(8),         intent(in) :: Ytable(:)
+            real(8),         intent(in) :: Ytable(:), ZeroValueHydRadius
             integer, pointer :: thisP(:)
             real(8), pointer :: depth(:), HydRadius(:), fullHydRadius(:)
             real(8), pointer :: YoverYfull(:), fulldepth(:)
@@ -460,7 +474,7 @@ module geometry_lowlevel
             (HydRadius, YoverYfull, YTable, thisP) 
 
         !% --- get the hydraulic radius by multiplying the R/Rfull with full hydraulic radius
-        HydRadius(thisP) = max (HydRadius(thisP) * fullHydRadius(thisP), setting%ZeroValue%Depth)
+        HydRadius(thisP) = max (HydRadius(thisP) * fullHydRadius(thisP), ZeroValueHydRadius)
     
     end subroutine llgeo_tabular_hydradius_from_depth
 !%
@@ -468,7 +482,7 @@ module geometry_lowlevel
 !%==========================================================================      
 !%
     subroutine llgeo_tabular_hydradius_from_sectionfactor_and_area &
-        (elemPGx, Npack, thisCol, Stable, SoverScol )
+        (elemPGx, Npack, thisCol, Stable, SoverScol, ZeroValueHydRadius, ZeroValueArea )
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
@@ -478,7 +492,7 @@ module geometry_lowlevel
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer,         intent(in) :: SoverScol
-            real(8),         intent(in) :: Stable(:)
+            real(8),         intent(in) :: Stable(:), ZeroValueHydRadius, ZeroValueArea
             integer, pointer :: thisP(:)
             real(8), pointer :: area(:), fullarea(:), fulldepth(:), fullhydradius(:)
             real(8), pointer :: AoverAfull(:), SoverSfull(:), HydRadius(:)
@@ -506,7 +520,7 @@ module geometry_lowlevel
         AoverAfull(thisP) = min(AoverAfull(thisP),oneR)
 
         !% --- prevent underfull
-        AoverAfull(thisP) = max(AoverAfull(thisP), setting%ZeroValue%Area/fullarea(thisP))
+        AoverAfull(thisP) = max(AoverAfull(thisP), ZeroValueArea/fullarea(thisP))
 
         !% --- retrieve the normalized section factor
         call xsect_table_lookup (SoverSfull, AoverAfull, STable, thisP) 
@@ -524,6 +538,8 @@ module geometry_lowlevel
 
         !% --- clear temporary storage
         SectionFactor(thisP) = nullvalueR
+
+        HydRadius(thisP) = max(HydRadius(thisP), ZeroValueHydRadius)
        
     end subroutine llgeo_tabular_hydradius_from_sectionfactor_and_area
 !%
@@ -532,7 +548,7 @@ module geometry_lowlevel
 !%========================================================================== 
 !%
     real(8) function llgeo_tabular_from_depth_singular &
-            (indx, depth, maxValue, zeroValue, Xtable) result (outvalue)
+            (indx, depth, maxValue, zeroValueDepth, ZeroValueThis, Xtable) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) as
@@ -545,7 +561,7 @@ module geometry_lowlevel
         !%-------------------------------------------------------------------
             integer, intent(in) :: indx
             real(8), intent(in) :: Xtable(:)
-            real(8), intent(in) :: maxValue, zeroValue, depth
+            real(8), intent(in) :: maxValue, depth, ZeroValueDepth, ZeroValueThis
             real(8), pointer    :: fulldepth, breadthMax
             real(8)             :: YoverYfull
         !%--------------------------------------------------------------------
@@ -561,10 +577,13 @@ module geometry_lowlevel
         YoverYfull = min(YoverYfull, oneR)
 
         !% --- prevent underfull
-        YoverYfull = max(YoverYfull, zeroValue/fulldepth)
+        YoverYfull = max(YoverYfull, ZeroValueDepth/fulldepth)
 
         !% --- look up
         outvalue = maxValue * xsect_table_lookup_singular(YoverYfull, XTable)
+
+        !% --- ensure minimum
+        outvalue = max(outvalue,ZeroValueThis)
     
     end function llgeo_tabular_from_depth_singular
 !%  
@@ -572,18 +591,18 @@ module geometry_lowlevel
 !%==========================================================================  
 !%   
     real(8) function llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
-            (indx, area, fullHydRadius, zeroValue, Stable) result(outvalue)
+            (indx, area, fullHydRadius, ZeroValueArea, Stable) result(outvalue)
         !%------------------------------------------------------------------
         !% Description
         !% Computes the hydraulic radius using the section factor lookup
         !% table. This is the singular funciton version of the subroutine
         !% llgeo_tabular_hydradius_from_sectionfactor_and_area()    
-        !% The argument zerovalue is for later use with sediment-filled elements
+        !% The argument zerovalueArea is for later use with sediment-filled elements
         !% to ensure the depth is at or above the sediment layer.
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: indx
-            real(8), intent(in) :: Stable(:),  area, fullHydRadius, zeroValue
+            real(8), intent(in) :: Stable(:),  area, fullHydRadius, ZeroValueArea
             real(8), pointer    :: fullarea
             real(8)             :: AoverAfull, SoverSfull, SFfull
         !%------------------------------------------------------------------  
@@ -597,7 +616,7 @@ module geometry_lowlevel
             AoverAfull = min(AoverAfull,oneR)
 
             !% --- prevent underfull
-            AoverAfull = max(AoverAfull, zeroValue/fullarea)
+            AoverAfull = max(AoverAfull, ZeroValueArea/fullarea)
     
             !% --- retrieve the normalized section factor
             SoverSfull =  xsect_table_lookup_singular(AoverAfull, STable) 
@@ -929,7 +948,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_filled_circular_area_from_depth_singular &
-        (indx, depth) result (outvalue)
+        (indx, depth, ZeroValueArea) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for filled_circular cross section 
@@ -938,7 +957,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueArea
             real(8), pointer    :: fullArea, fullDepth
             real(8), pointer    :: sedimentDepth, sedimentArea
             real(8)             :: AoverAfull, YoverYfull
@@ -965,13 +984,16 @@ module geometry_lowlevel
         !%     and subtracting the sediment area
         outvalue = AoverAfull * totalFullArea - sedimentArea
 
+        !% --- set minimum
+        outvalue = max(outvalue,ZeroValueArea)
+
     end function llgeo_filled_circular_area_from_depth_singular
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     real(8) function llgeo_mod_basket_area_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueArea) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for mod_basket cross section of a single element
@@ -979,7 +1001,7 @@ module geometry_lowlevel
         !%-----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueArea
             real(8), pointer :: fulldepth, fullArea
             real(8), pointer :: depthAtBreadthMax, breadthMax, rTop
             real(8) :: emptyDepth, emptyTheta, emptyArea
@@ -993,7 +1015,7 @@ module geometry_lowlevel
         !%-----------------------------------------------------------------
         
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Area
+            outvalue = ZeroValueArea
         
         elseif ((depth > setting%ZeroValue%Depth) .and. &
                 (depth <= depthAtBreadthMax)) then
@@ -1016,7 +1038,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_closed_area_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueArea) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for rectangular cross section of a single element
@@ -1024,7 +1046,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueArea
             real(8), pointer ::  breadth, fulldepth
         !%------------------------------------------------------------------
         !% Aliases:
@@ -1033,7 +1055,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
 
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Area
+            outvalue = ZeroValueArea
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth < fulldepth)) then
             outvalue = depth * breadth
@@ -1047,14 +1069,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rect_round_area_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueArea) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for rectangular_round cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%-----------------------------------------------------------------
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueArea
             real(8), pointer :: yBot, rBot, aBot, breadth, fulldepth, fullArea
             real :: theta
         !%------------------------------------------------------------------
@@ -1067,7 +1089,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
 
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Area
+            outvalue = ZeroValueArea
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= yBot)) then
             theta    = twoR * acos(oneR - depth / rBot)
@@ -1088,14 +1110,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_triangular_area_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueArea) result (outvalue)
         !%-------------------------------------------------------------------
         !% Description:
         !% Computes area from known depth for rectangular_triangular cross section of a single element
         !% The input indx is the row index in full data 2D array.
         !%------------------------------------------------------------------
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueArea
             real(8), pointer :: bottomDepth, bottomSlope, bottomArea, breadth
             real(8), pointer :: fulldepth, fullArea
         !%------------------------------------------------------------------
@@ -1108,7 +1130,7 @@ module geometry_lowlevel
         !%-----------------------------------------------------------------
         
         if (depth <= setting%ZeroValue%Depth) then    
-            outvalue = setting%ZeroValue%Area
+            outvalue = ZeroValueArea
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= bottomDepth)) then
             outvalue = depth * depth * bottomSlope
@@ -1301,14 +1323,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_filled_circular_topwidth_from_depth_singular &
-            (indx,depth) result (outvalue)
+            (indx,depth,ZeroValueTopwidth) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a filled_circular cross section of a single element
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueTopwidth
             real(8), pointer    :: fullDepth, sedimentDepth, breadthMax
             real(8), pointer    :: totalFullDepth
             real(8)             :: YoverYfull
@@ -1333,7 +1355,7 @@ module geometry_lowlevel
         outvalue =  breadthMax * xsect_table_lookup_singular (YoverYfull, TCirc) 
 
         !% --- if topwidth < zero value, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
+        outvalue = max(outvalue, ZeroValueTopwidth)
 
     end function llgeo_filled_circular_topwidth_from_depth_singular
 !%
@@ -1341,14 +1363,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_mod_basket_topwidth_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueTopwidth) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a mod_basket cross section of a single element
         !%-------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx 
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueTopwidth
             real(8), pointer    :: breadthMax, fullDepth
             real(8), pointer    :: depthAtBreadthMax, rTop
             real(8)             :: emptyDepth, depthlimit
@@ -1363,7 +1385,7 @@ module geometry_lowlevel
         depthlimit = fullDepth * setting%Discretization%FullConduitTopwidthDepthFraction
 
         if (depth <=  setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue = ZeroValueTopwidth
 
         elseif ((depth > setting%ZeroValue%Depth) .and. &
                 (depth <= depthAtBreadthMax) ) then
@@ -1381,7 +1403,7 @@ module geometry_lowlevel
         endif
 
         !% --- if topwidth <= zero value, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
+        outvalue = max(outvalue, ZeroValueTopwidth)
 
     end function llgeo_mod_basket_topwidth_from_depth_singular
 !%
@@ -1389,18 +1411,18 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_closed_topwidth_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueTopwidth) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a rectangular cross section of a single element
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: indx 
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueTopwidth
         !%------------------------------------------------------------------
 
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue = ZeroValueTopwidth
         else
             !% --- rectangular all the way to top (use breadth at full)
             outvalue = elemSGR(indx,esgr_Rectangular_Breadth)
@@ -1412,14 +1434,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rect_round_topwidth_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueTopwidth) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a rectangular_round cross section of a single element
         !%-----------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx 
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueTopwidth
             real(8), pointer :: breadth, yBot, rBot
         !%------------------------------------------------------------------
         !% Aliases:
@@ -1429,7 +1451,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
 
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue = ZeroValueTopwidth
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth < yBot)) then
             !% --- bottom circular section
@@ -1446,14 +1468,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_triangular_topwidth_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValueTopwidth) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a rectangular_triangular cross section of a single element
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx 
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValueTopwidth
             real(8), pointer :: bottomDepth, bottomSlope, breadth
         !%------------------------------------------------------------------
         !% Aliases:
@@ -1463,7 +1485,7 @@ module geometry_lowlevel
         !%-------------------------------------------------------------------
          
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth    
+            outvalue = ZeroValueTopwidth  
 
         elseif (( depth > setting%ZeroValue%Depth) .and. (depth < bottomDepth)) then
             outvalue = twoR * bottomSlope * depth
@@ -1728,14 +1750,14 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_filled_circular_perimeter_from_depth_singular &
-        (indx, depth) result (outvalue)   
+        (indx, depth, ZeroValuePerimeter) result (outvalue)   
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth for a filled_circular cross section of a single element
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValuePerimeter
             real(8), pointer    :: fullDepth, sedimentDepth, breadthMax
             real(8), pointer    :: sedimentPerimeter, sedimentTopwidth
             real(8), pointer    :: totalFullDepth, totalFullArea, totalFullHydRadius
@@ -1777,7 +1799,7 @@ module geometry_lowlevel
                     - sedimentPerimeter + sedimentTopwidth
 
         !% ensure perimeter is greater than zero
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)            
+        outvalue = max(outvalue, ZeroValuePerimeter)            
 
     end function llgeo_filled_circular_perimeter_from_depth_singular
 !%
@@ -1785,7 +1807,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_mod_basket_perimeter_from_depth_singular &
-            (indx, depth) result (outvalue)  
+            (indx, depth, ZeroValuePerimeter) result (outvalue)  
         !%------------------------------------------------------------------
         !% Description:
         !% Computes wetted perimeter from known depth for a mod_basket cross section of
@@ -1793,7 +1815,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Deckarations:
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValuePerimeter
             real(8), pointer :: fullDepth, breadth, yBreadthMax, rTop, thetaTop
             real(8), pointer :: fullPerimeter
             real(8) :: emptyDepth, emptyTheta
@@ -1808,7 +1830,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue = ZeroValuePerimeter
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= yBreadthMax)) then
             outvalue = twoR * depth + breadth
@@ -1832,7 +1854,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_closed_perimeter_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth, ZeroValuePerimeter) result (outvalue)
         !%  
         !%------------------------------------------------------------------
         !% Description:
@@ -1841,7 +1863,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth,  ZeroValuePerimeter
             real(8), pointer    ::  breadth, fulldepth
         !%-----------------------------------------------------------------
         !% Aliases:
@@ -1850,7 +1872,7 @@ module geometry_lowlevel
         !%-----------------------------------------------------------------
 
         if (depth < setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue = ZeroValuePerimeter
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth < fulldepth)) then
             outvalue = twoR * depth + breadth
@@ -1867,7 +1889,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rect_round_perimeter_from_depth_singular &
-            (indx, depth) result (outvalue)
+            (indx, depth,  ZeroValuePerimeter) result (outvalue)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes wetted perimeter from known depth for a rectangular_round cross section of
@@ -1875,7 +1897,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth,  ZeroValuePerimeter
             real(8), pointer :: breadth
             real(8), pointer :: fullDepth, yBot, rBot
             real(8) :: theta
@@ -1888,7 +1910,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue =  ZeroValuePerimeter
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth < yBot)) then
             !% --- bottom circular section
@@ -1912,7 +1934,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_triangular_perimeter_from_depth_singular &
-            (indx, depth) result (outvalue) 
+            (indx, depth, ZeroValuePerimeter) result (outvalue) 
         !%------------------------------------------------------------------
         !% Description:
         !% Computes wetted perimeter from known depth for a rectangular_triangular cross section of
@@ -1920,7 +1942,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx
-            real(8), intent(in) :: depth
+            real(8), intent(in) :: depth, ZeroValuePerimeter
             real(8), pointer :: bottomDepth, bottomSlope, breadth, fulldepth
         !%------------------------------------------------------------------
         !% Aliases:
@@ -1931,7 +1953,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         
         if (depth <= setting%ZeroValue%Depth) then
-            outvalue = setting%ZeroValue%Topwidth
+            outvalue = ZeroValuePerimeter
 
         elseif ((depth > setting%ZeroValue%Depth) .and. (depth <= bottomDepth) ) then
             outvalue = twoR * depth * sqrt(oneR + bottomSlope**twoI)

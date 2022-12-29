@@ -52,6 +52,8 @@ module update
 
             !  call util_CLprint ('in update before adjust_limit_velocity_max')
 
+             !stop 1098734
+
         !% --- adjust velocity with limiters
         call adjust_limit_velocity_max (whichTM)
         call util_crashstop(21987)

@@ -43,7 +43,7 @@ module storage_geometry
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP, curveID
         real(8), pointer :: depth, fulldepth, volume
-        real(8), pointer :: aConst, aCoeff, aExpon, bb, cc
+        real(8), pointer :: aConst, aCoeff, aExpon, bb, vv
         real(8) :: aa
         integer :: ii
         !%-----------------------------------------------------------------------------
@@ -76,13 +76,13 @@ module storage_geometry
                         !% --- for aExpon = 1 we have a quadratic relationship
                         aa =  aCoeff/(aExpon + oneR)
                         bb => aConst
-                        cc => volume
-                        !% --- quadratic formula, Note that the b^2 - 4ac is written
-                        !%     as b^2 + 4ac because c (the volume) is negative in the
-                        !%     derivation but the pointer cc is to a positive value.
+                        vv => volume
+                        !% --- quadratic formula, Note that the b^2 - 4av is written
+                        !%     as b^2 + 4ac because v (the volume) is negative in the
+                        !%     derivation but the pointer vv is to a positive value.
                         !%     This is guaranteed to be positive as long as aCoeff,
                         !%     aExpon, and volume are positive
-                        depth = (- bb + sqrt(bb**2 + fourR * aa * cc) ) / (twoR * aa)
+                        depth = (- bb + sqrt(bb**2 + fourR * aa * vv) ) / (twoR * aa)
                     else            
                         !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
                         !      using storage_create_curve()

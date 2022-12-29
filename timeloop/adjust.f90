@@ -113,7 +113,7 @@ module adjust
         !% Aliases:   
         !%------------------------------------------------------------------
      
-            !  call util_CLprint('-------------0000')
+            !   call util_CLprint('-------------0000')
 
         if (isreset) then
             call adjust_zerodepth_identify_all ()
@@ -123,22 +123,23 @@ module adjust
             call pack_small_and_zero_depth_elements (whichTM)
             
         end if
+                ! call util_CLprint('-------------1111')
 
         call adjust_zerodepth_element_values (whichTM, CC) 
 
-            ! call util_CLprint('-------------AAAA')
+            !  call util_CLprint('-------------AAAA')
         
         call adjust_zerodepth_element_values (whichTM, JM) 
 
-            ! call util_CLprint('-------------BBBB')
+            !  call util_CLprint('-------------BBBB')
         
         call adjust_smalldepth_element_fluxes (whichTM)
 
-            ! call util_CLprint('-------------CCCC')
+            !  call util_CLprint('-------------CCCC')
         
         call adjust_limit_velocity_max (whichTM) 
 
-            ! call util_CLprint('-------------DDDD')
+            !  call util_CLprint('-------------DDDD')
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -198,6 +199,7 @@ module adjust
                 
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%ApplyYN) then   
+            !print *, 'Adjusting flowrate'
             select case (setting%Adjust%Flowrate%Approach)
             case (vshape)
                 !% suppress v-shape over face/element/face
@@ -602,7 +604,7 @@ module adjust
 
         !% only reset volume when it gets too small
         where (elemR(thisP,er_Volume) < setting%ZeroValue%Volume)
-            elemR(thisP,er_Volume) = (oneR + onetenthR) * setting%ZeroValue%Volume 
+            elemR(thisP,er_Volume) = setting%ZeroValue%Volume 
         end where
     
     end subroutine adjust_zerodepth_element_values 
@@ -903,10 +905,16 @@ module adjust
             fQ    => faceR(:,fr_Flowrate)
             fQCons=> faceR(:,fr_Flowrate_Conservative)
         !%------------------------------------------------------------------
+            ! print *, 'in adjust_zerodepth_face_fluxes_JMJB'
+            ! print *, thisP
         do ii=1,max_branch_per_node,2
+            !print *, 'above ', fup(thisP+ii  ), fQ(fup(thisP+ii  ))
             fQ(fup(thisP+ii  )) = max(fQ(fup(thisP+ii  )),zeroR) * real(isbranch(thisP+ii  ),8)
             fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)    
+            !print *, 'below ',fup(thisP+ii  ), fQ(fup(thisP+ii  ))
         end do
+
+            !print *, 'Q ',faceR(50,fr_Flowrate), faceR(51,fr_Flowrate)
         
         if (ifixQCons) then
             do ii=1,max_branch_per_node,2
@@ -1211,8 +1219,16 @@ module adjust
         !% Vcoef is the coefficient adjusted for local conditions
         Vcoef(thisP) = coef    
 
+        ! print *, ' '
+        ! print *, 'in adjust '
+        ! print *, 'Q before ', elemFlow(54)
+        !print *, 'vCoef ',Vcoef(54)
+
         !% find the cells that are deep enough to use the V filter
         Vvalue(thisP) = elemDepth(thisP) / (multiplier * smallDepth)
+
+        ! print *, 'VValue0',Vvalue(54)
+
         where (Vvalue(thisP) > oneR)
             Vvalue(thisP) = oneR
         elsewhere
@@ -1220,10 +1236,15 @@ module adjust
             Vcoef(thisP)  = zeroR
         endwhere
 
+        !  print *, 'VVlaue ',Vvalue(54)
+        ! print *, 'Vcoef2 ',Vcoef(54)
+
         !% --- eliminate cells that have no upstream inflow  !% TEST 20221021 brh
         where (faceR(mapUp(thisP),fr_Flowrate) .eq. zeroR)
             Vcoef(thisP) = zeroR
         end where
+
+        ! print *, 'Vcoef3 ',Vcoef(54)
 
         !% --- Reducing V-filter when Qlateral is large  20220524brh
         !%     HACK the fraction below should be replaced with a coefficient
@@ -1241,16 +1262,26 @@ module adjust
                         *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))      &
                         * Vvalue(thisP)     
 
+        !  print *, 'Vvalue2', Vvalue(54)                
+
         where (Vvalue(thisP) .le. zeroR)
             Vcoef(thisP) = zeroR
         endwhere
+
+        ! print *, 'Vcoef4',Vcoef(54)
 
         !% blend the element and face-average flow rates
         elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
                 + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
 
+        ! print *, faceflow(mapDn(54)), faceflow(mapUp(54))
+        ! print *, mapUp(54), faceR(mapUp(54),fr_flowrate)
+        ! print *, 'elemFlow ',elemFlow(54)      
+
         !% reset the velocity      
         elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+
+        ! print *, 'elemVel ',elemVel(54)
 
         ! where (Vvalue(thisP) > zeroR)
         !     !% simple linear interpolation
@@ -1266,6 +1297,9 @@ module adjust
             elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
         endwhere 
         
+        ! print *, 'elemVel2 ',elemVel(54)
+        ! print *, 'eleFlow2 ',elemFlow(54)
+
         !%------------------------------------------------------------------
         !% Closing
             !% clear the temporary Vvalue array

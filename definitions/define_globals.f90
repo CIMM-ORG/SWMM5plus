@@ -94,8 +94,21 @@ module define_globals
 
     !integer :: iet(12) = (/1,20,22,21,23,32,51,53,52,54,63,82 /)
 
-    integer :: iet(5) =     (/121, 123, 122, 124, 133 /)
-    integer :: ift(2) =   (/112, 113/)
+    ! integer :: iet(5) =     (/98, 89, 87, 88, 154/)
+    ! integer :: ift(4) =   (/91, 82, 81, 123/)
+
+    !integer :: iet(3) = (/38, 37, 39 /)
+    !integer :: ift(2) =  (/33, 34 /)
+
+    !integer :: iet(4) = (/48, 50, 49, 51 /)
+    !integer :: ift(2) =  (/  43,        44 /)
+
+ 
+    !integer :: iet(4) = (/43, 45, 54, 56 /)
+    !integer :: ift(2) =   (/40, 49/)
+
+    integer :: iet(5) = (/42, 44, 43, 45,  54 /)
+    integer :: ift(2) =    (/39,        40/)
 
     integer(kind=8) :: irecCount = 0
 
