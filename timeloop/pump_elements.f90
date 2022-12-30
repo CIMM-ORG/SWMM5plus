@@ -163,12 +163,24 @@ module pump_elements
             return 
         end if
 
+        ! print *, ' '
+        ! print *, 'in pump '
+        ! ! print *, 'CurveID ',CurveID
+        ! ! print *, 'element ',eIdx, curve(CurveID)%ElemIdx
+        ! print *, 'flowrate before ', Flowrate
+        ! print *, 'volume before   ', Volume
+
         !% --- use the curve without interpolation
         call util_curve_lookup_singular( &
             CurveID, er_Volume, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,0)
 
+         
+        ! print *, 'flowrate after ', Flowrate
+
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
+
+        ! print *, 'flowrate limit ', Flowrate
 
         !% --- reset pump depth and head to zero (no meaning)
         Depth = zeroR

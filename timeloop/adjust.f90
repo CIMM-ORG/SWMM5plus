@@ -123,7 +123,7 @@ module adjust
             call pack_small_and_zero_depth_elements (whichTM)
             
         end if
-                ! call util_CLprint('-------------1111')
+               ! call util_CLprint('-------------1111')
 
         call adjust_zerodepth_element_values (whichTM, CC) 
 
@@ -174,7 +174,7 @@ module adjust
             ! call util_CLprint ('FFF03  after zero/small face step C-----------------')
 
         call adjust_JB_elem_flux_to_equal_face (whichTM) !% 20220123brh
-            ! call util_CLprint ('FFF04  after zero/small face step D-----------------')
+          !  call util_CLprint ('FFF04  after zero/small face step D-----------------')
     
         !%------------------------------------------------------------------
         !% Closing:
@@ -965,14 +965,24 @@ module adjust
             isbranch => elemSI(:,esi_JunctionBranch_Exists)
         !%------------------------------------------------------------------
         
-        !% assign the upstream face flux to the JB
+        !% --- assign the upstream face flux to the JB 
+        !%     note that JB and face must have consistent fluxes or we
+        !%     get conservation errors
         do ii=1,max_branch_per_node,2
-            eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
+            !where (fQ(fup(thisP+ii)) > zeroR)  !% 20221230brh
+                eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
+            !elsewhere
+            !    fQ(fup(thisP+ii)) = eQ(thisP + ii) * real(isbranch(thisP+ii),8)
+            !endwhere
         end do
 
-        !% assign the downstream face flux to the JB
+        !% assign the downstream face flux to the JB 
         do ii=2,max_branch_per_node,2
-            eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
+           ! where (fQ(fdn(thisP+ii)) < zeroR )  !% 20221230brh
+                eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
+           ! elsewhere
+           !     fQ(fdn(thisP+ii)) =  eQ(thisP + ii) * real(isbranch(thisP+ii),8)
+           ! endwhere
         end do
         
 

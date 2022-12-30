@@ -67,13 +67,27 @@ contains
             y       => elemR(ElemIdx,er_outCol) !% this is the curve output
         !%---------------------------------------------------------------------
 
+        ! print *, ' '
+        ! print *, 'this curve x', elemR(ElemIdx,er_inCol)
+        ! print *, 'this curve y', elemR(ElemIdx,er_outCol)
+
         !% --- starting position of the curve (these pointers change)
         x1 => curve(curveID)%ValueArray(1,xVal_col)
         y1 => curve(curveID)%ValueArray(1,yVal_col)
 
+        ! print *, ' '
+        ! print *, 'curve X '
+        ! print *, curve(curveID)%ValueArray(:,xVal_col)
+        ! print *, 'curve Y '
+        ! print *, curve(curveID)%ValueArray(:,yVal_col)
+
+        ! print *, 'x1, y1',x1,y1
+
         !% --- maximum x, y values (these pointers change)
         x2 => curve(curveID)%ValueArray(nRows,xVal_col)
         y2 => curve(curveID)%ValueArray(nRows,yVal_col)
+
+        ! print *, 'x2, y2',x2,y2
 
         !% --- parse for where x falls in range (x1,x2)
         if (x < x1) then
@@ -84,6 +98,7 @@ contains
                 case (0)
                     !% --- stepwise:use lowest value
                     y = y1
+                    ! print *, 'low value ', y
                 case (1)
                     !% --- interpolation: set output by interpolating towards zero
                     y = (x/x1)*y1

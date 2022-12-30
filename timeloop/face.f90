@@ -89,8 +89,8 @@ module face
 
             ! call util_CLprint ('    face after face_interpolate_BC')
 
-        !% --- Force face areas and depths to zero for Head <= Zbottom
-        call face_head_limited (faceCol)
+        ! !% --- Force face areas and depths to zero for Head <= Zbottom TEST -- DOES NOT WORK 20221230 brh
+        ! call face_head_limited (faceCol)
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -1941,16 +1941,16 @@ module face
             thisP   => faceP(1:Npack,facePackCol)
         !%-------------------------------------------------------------------
 
-        where ((onehalfR * (faceR(thisP,fr_Head_u) + faceR(thisP,fr_Head_d))) &
-                .le. faceR(thisP,fr_Zbottom))
-            faceR(thisP,fr_Depth_d)    = setting%ZeroValue%Depth
-            faceR(thisP,fr_Depth_u)    = setting%ZeroValue%Depth
-            faceR(thisP,fr_Area_d)     = setting%ZeroValue%Area
-            faceR(thisP,fr_Area_u)     = setting%ZeroValue%Area
-            faceR(thisP,fr_Velocity_d) = zeroR
-            faceR(thisP,fr_Velocity_u) = zeroR
-            faceR(thisP,fr_Flowrate)   = zeroR
-        end where
+        ! where ((onehalfR * (faceR(thisP,fr_Head_u) + faceR(thisP,fr_Head_d))) &
+        !         .le. faceR(thisP,fr_Zbottom))
+        !     faceR(thisP,fr_Depth_d)    = setting%ZeroValue%Depth
+        !     faceR(thisP,fr_Depth_u)    = setting%ZeroValue%Depth
+        !     faceR(thisP,fr_Area_d)     = setting%ZeroValue%Area
+        !     faceR(thisP,fr_Area_u)     = setting%ZeroValue%Area
+        !     faceR(thisP,fr_Velocity_d) = zeroR
+        !     faceR(thisP,fr_Velocity_u) = zeroR
+        !     faceR(thisP,fr_Flowrate)   = zeroR
+        ! end where
 
 
     end subroutine face_head_limited

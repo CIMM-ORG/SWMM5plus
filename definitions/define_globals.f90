@@ -107,8 +107,15 @@ module define_globals
     !integer :: iet(4) = (/43, 45, 54, 56 /)
     !integer :: ift(2) =   (/40, 49/)
 
-    integer :: iet(5) = (/42, 44, 43, 45,  54 /)
-    integer :: ift(2) =    (/39,        40/)
+    !integer :: iet(5) = (/42, 44, 43, 45,  54 /)
+    !integer :: ift(2) =    (/39,        40/)
+
+    !integer :: iet(5) = (/31, 33,      42,       44, 43 /)
+    !integer :: ift(2) = (/        30,       39        /)
+
+    !%                    90011  JB 15009  JB   1570
+    integer :: iet(5) = (/ 54,   56,  55,   57   , 66  /)
+    integer :: ift(2) = (/    49     ,       50  /)
 
     integer(kind=8) :: irecCount = 0
 

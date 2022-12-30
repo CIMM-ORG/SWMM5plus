@@ -116,6 +116,8 @@ contains
         elemR(:,er_VolumeOverFlow) = zeroR
         elemR(:,er_VolumeOverFlowTotal) = zeroR
 
+        elemR(:,er_VolumeArtificialInflowTotal) = zeroR
+
         !% --- initialize barrels
         setting%Output%BarrelsExist = .false. !% will be set to true if barrels > 1 detected
         elemI(:,ei_barrels) = oneR
@@ -3235,6 +3237,8 @@ contains
         !% --- overflow volume accumulator
         elemR(JMidx,er_VolumeOverFlowTotal) = zeroR
 
+        elemR(JMidx,er_VolumeArtificialInflowTotal) = zeroR
+
         !% --- ponded area is stored in elemSR array
         if (setting%SWMMinput%AllowPonding) then
             elemSR(JMidx,esr_JunctionMain_PondedArea) = node%R(thisJunctionNode,nr_PondedArea)
@@ -3412,6 +3416,8 @@ contains
 
             elemR(JBidx,er_VolumeOverFlow) = zeroR
             elemR(JBidx,er_VolumeOverFlowTotal) = zeroR
+
+            elemR(JBidx,er_VolumeArtificialInflowTotal) = zeroR
 
             !% --- JB elements initialized for momentum
             elemR(JBidx,er_Flowrate)     = elemR(Aidx,er_Flowrate)[Ci] !% flowrate of adjacent element

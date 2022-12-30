@@ -80,11 +80,9 @@ module utility
         print *, ' '
         write(*,"(A)") trim(inputstring)
         write(*,"(A,i7,A, f12.5, A, f12.5, A)") 'step = ',setting%Time%Step,'; dt = ',setting%Time%Hydraulics%Dt,'; time = ',setting%Time%Now/3600.d0, ' hs'
+     
 
-        ! print *, ' '
-        ! print *, elemYN(49,eYN_isZeroDepth), elemYN(49,eYN_isSmallDepth)
-        ! print *, ' '
-      
+
         ! do ii = 1,N_elem(1)
         !     if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then 
         !         if (elemI(ii,ei_elementType) .eq. JM) then 
@@ -103,16 +101,16 @@ module utility
         !     end if
         ! end do
 
-        ! stop 298734
+       ! stop 298734
 
         ! print *, 'upface', elemI(iet,ei_Mface_uL)
         ! print *, 'dnface', elemI(iet,ei_Mface_dL)
-        ! ! ! stop 2908734
+
 
         ! print *, 'upelem ',faceI(ift,fi_Melem_uL)
         ! print *, 'dnelem ',faceI(ift,fi_Melem_dL)
 
-        ! stop 298734
+        !  stop 298734
 
         ! do ii=1,4
         !     print *, iet(ii), trim(reverseKey(elemI(iet(ii),ei_elementType))), elemI(iet(ii),ei_link_Gidx_SWMM)
@@ -129,14 +127,20 @@ module utility
         write(*,"(13A)")              '                 ', trim(reverseKey(elemI(iet(1),ei_elementType))),&
                    '          ','                       ', trim(reverseKey(elemI(iet(2),ei_elementType))),&
                    '          ',                           trim(reverseKey(elemI(iet(3),ei_elementType))),&
-                   '          ',                           trim(reverseKey(elemI(iet(4),ei_elementType))), &
+                   '          ',                           trim(reverseKey(elemI(iet(4),ei_elementType))),&
                    '          ','                       ', trim(reverseKey(elemI(iet(5),ei_elementType)))
 
-        ! write(*,"(A,L3,A, L3,A,A,L3,A,A,L3)"), &
-        !            '                ', elemYN(iet(1),eYN_isZeroDepth), &
-        !            '         ',elemYN(iet(2),eYN_isZeroDepth),&
-        !            '                ', '                ', elemYN(iet(3),eYN_isZeroDepth),  &
-        !            '                ', '                ', elemYN(iet(3),eYN_isZeroDepth)       
+
+        write(*,"(A,L3,A, A, L3, A, L3, A,  L3, A,A,L3)"), &
+        '                ',                    elemYN(iet(1),eYN_isZeroDepth),&
+        '          ','                      ', elemYN(iet(2),eYN_isZeroDepth),&
+        '          ',                          elemYN(iet(3),eYN_isZeroDepth),&
+        '          ',                          elemYN(iet(4),eYN_isZeroDepth),&
+        '          ','                      ', elemYN(iet(5),eYN_isZeroDepth)
+
+
+
+    
 
         write(*,"(11A)")         &
                    '            ','    elem    ','    face    ','    face    ','    elem    ','    elem    ','    elem    ','    face    ','    face    ','    elem    '
@@ -151,15 +155,16 @@ module utility
                                                 faceR(ift(2),fr_Head_d),        &
                                                 elemR(iet(5),er_Head)
 
-        ! write(*,"(A,10f12.4)") '     Z    '  ,          &
-        !                                         elemR(iet(1),er_Zbottom),        &
-        !                                         elemR(iet(2),er_Zbottom),        &
-        !                                         faceR(ift(1),fr_Zbottom),        &
-        !                                         faceR(ift(1),fr_Zbottom),        &
-        !                                         elemR(iet(3),er_Zbottom),        &
-        !                                         faceR(ift(2),fr_Zbottom),        &
-        !                                         faceR(ift(2),fr_Zbottom),        &
-        !                                         elemR(iet(4),er_Zbottom)            
+        write(*,"(A,10f12.4)") '     Z    '  ,          &
+                                                elemR(iet(1),er_Zbottom),        &
+                                                faceR(ift(1),fr_Zbottom),        &
+                                                faceR(ift(1),fr_Zbottom),        &
+                                                elemR(iet(2),er_Zbottom),        &
+                                                elemR(iet(3),er_Zbottom),        &
+                                                elemR(iet(4),er_Zbottom),        &
+                                                faceR(ift(2),fr_Zbottom),        &
+                                                faceR(ift(2),fr_Zbottom),        &
+                                                elemR(iet(5),er_Zbottom)            
                                                 
         ! write(*,"(A,10e12.4)") '   H-Z    '  ,          &
         !                                         elemR(iet(1),er_Head)   - elemR(iet(1),er_Zbottom),        &
@@ -638,7 +643,7 @@ module utility
         !%------------------------------------------------------------------
         !% Declarations:
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
-            real(8), pointer :: VolOver(:), VolSlot(:)
+            real(8), pointer :: VolOver(:), VolSlot(:), VolArtInflow(:), tempCons(:)
             integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
             integer, pointer :: fdn(:), fup(:), BranchExists(:), fBarrels(:)
             integer :: ii,kk
@@ -652,12 +657,14 @@ module utility
             fQ      => faceR(:,fr_Flowrate_Conservative)
             fBarrels=> faceI(:,fi_barrels)
             eCons   => elemR(:,er_VolumeConservation)
+            tempCons=> elemR(:,er_Temp01)
             eQLat   => elemR(:,er_FlowrateLateral)
             !nBarrels=> elemI(:,ei_barrels)
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow)
             VolSlot => elemR(:,er_SlotVolume) 
+            VolArtInflow => elemR(:,er_VolumeArtificialInflow)
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
@@ -666,209 +673,124 @@ module utility
         !% --- for the CC elements
         npack   => npack_elemP(thisColCC)
 
-        ! print *, 'volume overflow at top ', VolOver(14)
-        ! print *, 'face flowrate cons ',faceR(15,fr_Flowrate_Conservative)
+        tempCons = zeroR
 
-        ! print *, ' '
-        ! print *, 'at top eCons ',eCons(49)
-
-
+        !% --- CONDUIT ELEMENTS =========================================
         if (npack > 0) then
             thisP => elemP(1:npack,thisColCC)
 
-            !where (.not. elemYN(thisP,eYN_isZeroDepth))
             !% --- sum of the net inflow and lateral flow should be the change in volume from head
             !% --- for output, use an accumulator
-            eCons(thisP) = eCons(thisP)                                            &
+            tempCons(thisP) =                                                      &
                          + dt * ( fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP) ) &
                          - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)
 
-
-            ! print *, ' '
-            ! print *, 'after eCons ',eCons(1)
-
-            !endwhere             
-            !% --- for debugging, switch to using non-cumulative            
-            !eCons(thisP) = dt * (fQ(fup(thisP)) - fQ(fdn(thisP)) + eQlat(thisP)) &
-            !              - (VolNew(thisP) - VolOld(thisP))  - VolOver(thisP)      
-                          
+            eCons(thisP) = eCons(thisP) + tempCons(thisP)
+                      
+            !% --- check conservation
             do ii = 1,size(thisP)
-                if (abs(eCons(thisP(ii))) > 1.0e-4) then
-                    print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
-                    print *,  eCons(thisP(ii))
-                    print *, fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
-                    print *, ' vol ',VolNew(thisP(ii)), VolOld(thisP(ii))
-                    print *, 'Delta Vol - fluxes', VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
-                            - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
-                    print *, 'vol overflow ',elemR(thisP(ii),er_VolumeOverFlow)
-                    call util_crashpoint(358783)
+                if (abs(tempCons(thisP(ii))) > 1.0e-4) then
+                    if (elemYN(thisP(ii),eYN_isZeroDepth)) then
+                        !% --- more volume out than exists in small depth cell,
+                        !%     artificial inflow caused by zero depth
+                        VolArtInflow(thisP(ii)) = - tempCons(thisP(ii))
+                    else
+                        print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
+                        print *, 'exceeding limit in one time step'
+                        print *, 'Mass gain/loss = ',tempCons(thisP(ii))
+                        print *, 'fluxes  ',fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
+                        print *, 'volumes ',VolNew(thisP(ii)), VolOld(thisP(ii))
+                        print *, 'Delta Vol - fluxes', VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
+                                - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
+                        print *, 'vol overflow ',elemR(thisP(ii),er_VolumeOverFlow)
+                        call util_crashpoint(358783)
+                    end if
                 end if
             end do  
 
+            !% comprehensive error checking
+            ! print *, ' '
+            ! print *, 'eCons CC'
+            ! print *, eCons(thisP)
+            ! print *, ' '
+            ! print *, 'thisP CC'
+            ! print *, thisP
+            ! print *, ' '
+            ! if (any(abs(eCons(thisP)) > 1.d-4)) then 
+            !     print *, 'eCons error'
+            !     stop 529875
+            ! end if
         end if
 
-        ! print *, ' '
-        ! print *, 'at mid eCons ',eCons(49)
-
-        !% for the JM elements
+        !% --- JM elements ====================================
         npack   => npack_elemP(thisColJM)
         if (npack > 0) then
             thisP => elemP(1:npack,thisColJM)
 
-            ! print *, ' '
-            ! print *, ' ============================'
-            ! print *, 'printing stuff'
-            ! do ii=1,npack
-            !     if (thisP(ii) == 162) then
-            !         print *, 'this JM        ',thisP(ii)
-            !         print *, 'upstream JB    ',thisP(ii)+1
-            !         print *, 'upstream face  ',fup(thisP(ii)+1), fQ(fup(thisP(ii)+1))
-            !         print *, 'dnstream JB    ',thisP(ii)+2
-            !         print *, 'dnstream face  ',fdn(thisP(ii)+2), fQ(fdn(thisP(ii)+2))
-            !         print *, 'upstream JB    ',thisP(ii)+3
-            !         print *, 'upstream face  ',fup(thisP(ii)+3), fQ(fup(thisP(ii)+3))
-            !         print *, 'dnstream JB    ',thisP(ii)+4
-            !         print *, 'dnstream face  ',fdn(thisP(ii)+4), fQ(fdn(thisP(ii)+4))
-            !         print *, 'Econs ', eCons(thisP(ii))
-            !         print *, 'Qlat  ', eQlat(thisP(ii))
-            !         print *, 'Vol   ', VolNew(thisP(ii)), VolOld(thisP(ii))
-            !         print *, 'Over  ',VolOver(thisP(ii)), VolSlot(thisP(ii))
-            !         print *, 'zeroD ',elemYN(thisP(ii),eYN_isZeroDepth)
-            !         print *, 'smalD ',elemYN(thisP(ii),eYN_isSmallDepth)
-            !     end if
-            ! end do
-            ! print *, 'xxx   ',eCons(14)
-            ! print *, 'Vlat  ',dt * eQlat(14)
-            ! print *, 'Vnew  ',VolNew(14)
-            ! print *, 'Vold  ',VolOld(14)
-            ! print *, 'Vover ',VolOver(14)
-            ! print *, 'Vslt  ',VolSlot(14)
-            ! print *, 'inV1  ',dt * fQ(fup(15))
-            ! print *, 'inV2  ',dt * fQ(fup(17))
-            ! print *, 'ouV1  ',dt * fQ(fdn(16))
-            ! print *, ' '
-            ! print *, 'eCons ',eCons(14)
-            ! print *, ' '
-
-            ! print *, ' '
-            ! print *, ' top ===='
-            ! print *, 'econs                  ', eCons(14)
-            ! print *, 'vol in                 ',dt * fQ(fup(14))
-            ! print *, 'vol out                ',dt * fQ(fdn(15))
-            ! print *, 'volume in - volume out ',dt * (fQ(fup(14))- fQ(fdn(15)))
-            ! print *, 'vol change             ',VolNew(14) - VolOld(21)
-            ! print *, 'residual without slot  ',dt * (fQ(fup(22))- fQ(fdn(23))) - (VolNew(21) - VolOld(21))
-            ! print *, 'vol over               ',VolOver(21)
-            ! print *, ' '
-           
-
-            eCons(thisP) = eCons(thisP) + dt * eQlat(thisP) &
+            !% --- volume and lateral flux terms on JM
+            tempCons(thisP) =  dt * eQlat(thisP)                      &
                     - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
 
-            ! print *, ' '
-            ! print *, 'before JB eCons ',eCons(49)
-
-
-
-            !% debug, compute just this time step conservation
-            !eCons(thisP) = dt * eQlat(thisP) - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
-
-            ! print *, 'yyy ',eCons(47)
-
-            ! print *, 'Vol Over ', VolOver(48), VolOver(49)
-            ! print *, dt * (fQ(fup(48)) + fQ(fup(50)) - fQ(fdn(49)) )
-
+            !% --- get fluxes on branches for JM
             do ii=1,max_branch_per_node,2
                 where (fup(thisP+ii) /= nullvalueI) 
-                    eCons(thisP) = eCons(thisP)                                                                                   &
+                    tempCons(thisP) = tempCons(thisP)                                                                                &
                         + dt * real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(fBarrels(fup(thisP+ii  )),8)  
                 endwhere
                 where (fdn((thisP+ii+1)) /= nullvalueI) 
-                    eCons(thisP) = eCons(thisP)                                                                                   &
-                        - dt * real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8) 
-                endwhere
-                            !  - VolOver(thisP+ii  ) * real(BranchExists(thisP+ii  ),8)                                              !&
-                            !  - VolOver(thisP+ii+1) * real(BranchExists(thisP+ii+1),8)                              
+                    tempCons(thisP) = tempCons(thisP)                                                                                  &
+                        - dt * real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8)    
+                endwhere                         
             end do
 
-            ! print *, ' '
-            ! print *, 'after JB eCons ',eCons(49)
-
-            ! print *, ' '
-            ! print *, ' in conservation check'
-            ! print *, 'elem ', 49
-            ! print *, 'fup , fdn  ',fup(50), fdn(51)
-            ! print *, 'econs,     ', eCons(49)
-            ! print *, 'vol in     ',dt * fQ(fup(50)) * real(fBarrels(fup(50)),8)
-            ! print *, 'vol out    ',dt * fQ(fdn(51)) * real(fBarrels(fdn(51)),8)
-            ! print *, 'vol Lat    ',dt * eQlat(49)
-            ! print *, 'vol new/old',VolNew(49), VolOld(49)
-            ! print *, 'vol change ',VolNew(49) - VolOld(49)
-            ! print *, 'vol over   ',VolOver(49)
-            ! print *, 'vol slot   ',VolSlot(49)
-            ! print *, ' '
-
-            ! print *, 'is zeroDepth ',elemYN(49,eYN_isZeroDepth)
-            ! print *, ' '
+            eCons(thisP) = eCons(thisP) + tempCons(thisP)
 
             do ii = 1,size(thisP)
-                !% HACK we need a face limiter on fluxes out of junctions to prevent non-conservation with zero depth
-                !if ((abs(eCons(thisP(ii))) > 1.0e-4) .and. ( .not. elemYN(thisP(ii),eYN_isZeroDepth))) then
-                if (abs(eCons(thisP(ii))) > 1.0e-4) then
-                    print *, ' '
-                    print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
-                    print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
-                    print *,  'volume overflow ', VolOver(thisP(ii))
-                    print *,  'net cons ',eCons(thisP(ii))
-                    print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
-                    print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
-                    do kk = 1,max_branch_per_node,2
-                        if (fup(thisP(ii)+kk) /= nullvalueI) then
-                            print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
-                        end if
-                        if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
-                            print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
-                        endif
-                    end do
+                if (abs(tempCons(thisP(ii))) > 1.0e-4) then
 
-                    ! do kk = 1,max_branch_per_node,2
-                    !     print *, 'branch VolOver up',thisP(ii)+kk,   VolOver(thisP(ii)+kk  ) * real(BranchExists(thisP(ii)+kk  ),8)
-                    !     print *, 'branch VolOver dn',thisP(ii)+kk+1, VolOver(thisP(ii)+kk+1) * real(BranchExists(thisP(ii)+kk+1),8) 
-                    ! end do
-                    ! print *, 'thisP ii ',thisP(ii)
-                    ! print *, 'VolNew   ',VolNew(thisP(ii))
-                    ! print *, 'VolOld   ',VolOld(thisP(ii))
-                    ! print *, 'VolSlot  ',VolSlot(thisP(ii))
-                    ! print *, ' vol '  , VolNew(thisP(ii)),  VolOld(thisP(ii)),   VolSlot(thisP(ii))
-                    ! print *, 'd vol' , (VolNew(thisP(ii)) - VolOld(thisP(ii))) + VolSlot(thisP(ii))
-                    ! netQ = eQlat(thisP(ii))
-                    ! print *, 'computing net Q'
-                    ! print *, 'start value ',netQ
-                    ! do kk = 1,max_branch_per_node,2
-                    !     ! print *, thisP(ii)+kk, thisP(ii)+kk+1
-                    !     ! print *, real(BranchExists(thisP(ii)+kk  ),8)
-                    !     ! print *, real(fup(fBarrels(thisP(ii)+kk)  ),8)
-                    !     ! print *, real(BranchExists(thisP(ii)+kk+1),8)
-                    !     ! print *, thisP(ii)+kk+1
-                    !     ! print *, fdn(thisP(ii)+kk+1)
-                    !     ! print *, real(fdn(fBarrels(thisP(ii)+kk+1)),8)
-                    !     ! print *, kk, fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8) * real(fBarrels(fup(thisP(ii)+kk)  ),8), &
-                    !     !              fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8) * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
-                    !     ! print *, 'kk+1 values : ', real(BranchExists(thisP(ii)+kk+1),8), real(fdn(fBarrels(thisP(ii)+kk+1)),8)       
-                    !     if (fup(thisP(ii)+kk) /= nullvalueI) then   
-                    !         netQ = netQ + fQ(fup(thisP(ii)+kk))  * real(BranchExists(thisP(ii)+kk  ),8) * real(fBarrels(fup(thisP(ii)+kk ) ),8)
-                    !     end if
-                    !     if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
-                    !         netQ = netQ - fQ(fdn(thisP(ii)+kk+1))* real(BranchExists(thisP(ii)+kk+1),8) * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
-                    !     end if
-                    ! end do
-                    ! print *, ' netQ ',netQ
-                    ! print *, ' netVol ', netQ * dt
+                    if (elemYN(thisP(ii),eYN_isZeroDepth)) then
+                        !% --- more volume out than exists in small depth cell,
+                        !%     artificial inflow caused by zero depth
+                        VolArtInflow(thisP(ii)) = -tempCons(thisP(ii))
+                        ! print *, ' '
+                        ! print *, 'VolArtInflow', VolArtInflow(thisP(ii)) 
+                        ! print *, ' '
+                    else
+                        print *, ' '
+                        print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
+                        print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
+                        print *,  'volume overflow ', VolOver(thisP(ii))
+                        print *,  'mass gain/loss ',tempCons(thisP(ii))
+                        print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
+                        print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
+                        do kk = 1,max_branch_per_node,2
+                            if (fup(thisP(ii)+kk) /= nullvalueI) then
+                                print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
+                            end if
+                            if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
+                                print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
+                            endif
+                        end do
+                        call util_crashpoint(3587832)
 
-                    
-                    call util_crashpoint(3587832)
+                    end if    
                 end if
             end do   
+
+       
+
+            !% comprehensive error checking
+            ! print *, ' '
+            ! print *, 'eCons JM'
+            ! print *, eCons(thisP)
+            ! print *, ' '
+            ! print *, 'thisP JM'
+            ! print *, thisP
+            ! print *, ' '
+            ! if (any(abs(eCons(thisP)) > 1.d-4)) then 
+            !     print *, 'eCons error'
+            !     stop 5298723
+            ! end if
 
         end if
 

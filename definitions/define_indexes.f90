@@ -428,6 +428,8 @@ module define_indexes
         enumerator :: er_VolumeLastAC               !% volume at start of last AC step
         enumerator :: er_VolumeOverFlow             !% volume lost for overflow in this time step.  20220124brh
         enumerator :: er_VolumeOverFlowTotal        !% total volume lost to overflow       20220124brh 
+        enumerator :: er_VolumeArtificialInflow     !% artificial inflow in transition to zero depth in this step
+        enumerator :: er_VolumeArtificialInflowTotal
         enumerator :: er_VolumePonded               !% total volume in ponding
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_WaveSpeed                  !% wave speed in element

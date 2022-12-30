@@ -48,7 +48,8 @@ module runge_kutta2
             !% --- set the time-marching type for this routine
             whichTM = ETM
             !% --- reset the overflow counter for this time level
-            elemR(:,er_VolumeOverFlow) = zeroR        
+            elemR(:,er_VolumeOverFlow) = zeroR     
+            elemR(:,er_VolumeArtificialInflow) = zeroR   
         !%-----------------------------------------------------------------
         !% Aliases
         !%-----------------------------------------------------------------
@@ -128,6 +129,7 @@ module runge_kutta2
 
         !% --- reset the overflow counter (we only save conservation in the 2nd step)
         elemR(:,er_VolumeOverFlow) = zeroR
+        elemR(:,er_VolumeArtificialInflow) = zeroR
 
         !% --------------------------------------------------------------------------
         !% --- RK2 solution step -- RK2 second step for ETM 
@@ -192,7 +194,7 @@ module runge_kutta2
 
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
-
+        elemR(:,er_VolumeArtificialInflowTotal) = elemR(:,er_VolumeArtificialInflowTotal) + elemR(:,er_VolumeArtificialInflow)
         
             !  call util_CLprint ('ZZZ  after accumulate overflow step 2')
             !  print *, '==================================================='
