@@ -23,7 +23,7 @@ module initialization
     use pack_mask_arrays
     use utility_crash
     use xsect_tables
-    use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
+    ! use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
     
 
     implicit none
@@ -309,6 +309,8 @@ contains
         end if    
         call init_report()
 
+        !call util_CLprint ('before IC toplevel')
+           !print *, 'zero depth ',setting%ZeroValue%Depth
 
         !%=======================================================================
         !%---INITIAL CONDITIONS ON ELEMENTS
@@ -358,10 +360,17 @@ contains
         end if
         call util_crashstop(103897)
 
+           !call util_CLprint ('at end of initialization')
+           !print *, 'zero depth ',setting%ZeroValue%Depth
+          ! stop 298374
+
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
-        call control_init_monitoring_and_action_from_EPASWMM()
-        call util_crashstop(62873)
+        !% MOVED 20221223 brh to just above diagnostic_toplevel call in
+        !% init_IC_toplevel so that controls for pumps are known before
+        !% pumps are initialized.
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
+        ! call control_init_monitoring_and_action_from_EPASWMM()
+        ! call util_crashstop(62873)
 
         !% --- temporary testing
         ! print *, 'CALLING INTERFACE_TESTSTUFF'
@@ -596,35 +605,34 @@ contains
             ! print *, '================================================='
             ! print *, 'AAA in ',trim(subroutine_name), ii
             ! print *, 'api_linkf_geometry ', api_linkf_geometry
-            ! print *, trim(reverseKey_api(api_linkf_geometry))
 
             !% --- store the basic link data
             link%I(ii,li_idx) = ii
                 ! print *, ' '
                 ! print *, 'calling for link direction'
             link%I(ii,li_link_direction) = interface_get_linkf_attribute(ii, api_linkf_direction,.true.)
-                ! print *, '     link_direction ',link%I(ii,li_link_direction)
+              !   print *, '     link_direction ',link%I(ii,li_link_direction)
                 ! print *, ' '
                 ! print *, 'calling for link type'
             link%I(ii,li_link_type)      = interface_get_linkf_attribute(ii, api_linkf_type,     .true.)
-                ! print *, '     link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
+             !    print *, '     link_type       ', trim(reverseKey(link%I(ii,li_link_type)))
                 ! print *, ' '
                 ! print *, 'calling for sub type'
             link%I(ii,li_link_sub_type)  = interface_get_linkf_attribute(ii, api_linkf_sub_type, .true.)
-                !  print *, '     link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
+               !   print *, '     link_sub_type   ', trim(reverseKey(link%I(ii,li_link_sub_type)))
                 ! print *, ' '
                 ! print *, 'calling for geometry'
             link%I(ii,li_geometry)       = interface_get_linkf_attribute(ii, api_linkf_geometry, .true.)
-                !  print *, '     link_geometry   ',trim(reverseKey(link%I(ii,li_geometry)))
+               ! print *, '     link_geometry   ',trim(reverseKey(link%I(ii,li_geometry)))
                 ! print *, ' '
                 ! print *, 'calling for barrels'
             link%I(ii,li_barrels)        = interface_get_linkf_attribute(ii, api_linkf_conduit_barrels, .true.)
-                !  print *, '     link_barrels   ', link%I(ii,li_barrels) 
+              !    print *, '     link_barrels   ', link%I(ii,li_barrels) 
                 ! print *, ' ' 
                 ! print *, 'calling for culvertcode'
                 ! print *, ii, 'api_linkf_xsect_culvertCode ',api_linkf_culvertCode
             link%I(ii,li_culvertCode)    = interface_get_linkf_attribute(ii, api_linkf_culvertCode, .true.)
-                ! print *, '     link_culvertCode  ', link%I(ii,li_culvertCode) 
+               !  print *, '     link_culvertCode  ', link%I(ii,li_culvertCode) 
                 
             !% --- identify the upstream and downstream node indexes
             if (link%I(ii,li_link_direction) == 1) then
@@ -676,11 +684,11 @@ contains
                 ! print *, ' '
                 ! print *, 'calling for Length'
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
-                !  print *, '     link_Length            ',link%R(ii,lr_Length)
+               !  print *, '     link_Length            ',link%R(ii,lr_Length)
                 !  print *, ' '
                 !  print *, 'calling for BreadthScale'
             link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
-                !  print *, '     link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
+                !   print *, '     link_BreadthScale       ',link%R(ii,lr_BreadthScale) 
                 !  print *, ' '
                 !  print *, 'calling for LeftSlope'
             link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
@@ -704,25 +712,25 @@ contains
                 !  print *, ' '
                 !  print *, 'calling for'
             link%R(ii,lr_FullHydRadius)      = interface_get_linkf_attribute(ii, api_linkf_xsect_rFull,      .false.)
-                ! print *, 'link_FullHydRadius     ', link%R(ii,lr_FullHydRadius)
+                ! print *, '      link_FullHydRadius     ', link%R(ii,lr_FullHydRadius)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
-                ! print *, 'link_BottomDepth        ', link%R(ii,lr_BottomDepth)
+                ! print *, '      link_BottomDepth        ', link%R(ii,lr_BottomDepth)
             link%R(ii,lr_BottomRadius)        = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
                 ! print *, 'lr_BottomRadius        ', link%R(ii,lr_BottomRadius)
             link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
-                ! print *, 'link_FlowrateInitial    ', link%R(ii,lr_FlowrateInitial)
+                ! print *, '      link_FlowrateInitial    ', link%R(ii,lr_FlowrateInitial)
             link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
-                ! print *, 'link_FlowrateLimit      ', link%R(ii,lr_FlowrateLimit)
+                ! print *, '      link_FlowrateLimit      ', link%R(ii,lr_FlowrateLimit)
             link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
-                ! print *, 'link_Kconduit_MinorLoss ', link%R(ii,lr_Kconduit_MinorLoss)
+                ! print *, '      link_Kconduit_MinorLoss ', link%R(ii,lr_Kconduit_MinorLoss)
             link%R(ii,lr_Kentry_MinorLoss)   = interface_get_linkf_attribute(ii, api_linkf_cLossInlet,       .false.)
-                ! print *, 'link_Kentry_MinorLoss   ', link%R(ii,lr_Kentry_MinorLoss)
+                ! print *, '      link_Kentry_MinorLoss   ', link%R(ii,lr_Kentry_MinorLoss)
             link%R(ii,lr_Kexit_MinorLoss)    = interface_get_linkf_attribute(ii, api_linkf_cLossOutlet,      .false.)
-                ! print *, 'link_Kexit_MinorLoss    ', link%R(ii,lr_Kexit_MinorLoss)
+                ! print *, '      link_Kexit_MinorLoss    ', link%R(ii,lr_Kexit_MinorLoss)
             link%R(ii,lr_SeepRate)           = interface_get_linkf_attribute(ii, api_linkf_seepRate,         .false.)
-                ! print *, 'link_SeepRate           ', link%R(ii,lr_SeepRate)
+                ! print *, '      link_SeepRate           ', link%R(ii,lr_SeepRate)
             link%R(ii,lr_ForceMain_Coef)     = interface_get_linkf_attribute(ii, api_linkf_forcemain_coef,    .false.)
-            ! print *, 'link_ForceMain_Coef           ', link%R(ii,lr_ForceMain_Coef)
+                ! print *, '      link_ForceMain_Coef           ', link%R(ii,lr_ForceMain_Coef)
             !% link%R(ii,lr_Slope): defined in network_define.f08 because SWMM5 reverses negative slope
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
 
@@ -899,16 +907,23 @@ contains
             ! write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
             ! write(*,*)
 
+            ! write(*,*) 'call api_nodef_StorageExponent == ', reverseKey_api(api_nodef_StorageExponent)
+            node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
+            ! write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
+            ! write(*,*)
+
             ! write(*,*) 'call api_nodef_StorageCoeff == ', reverseKey_api(api_nodef_StorageCoeff)
             node%R(ii,nr_StorageCoeff)      = interface_get_nodef_attribute(ii, api_nodef_StorageCoeff)
             ! write(*,*) '... nr_StorageCoeff = ',node%R(ii,nr_StorageCoeff)
             ! write(*,*)
             
-            ! write(*,*) 'call api_nodef_StorageExponent == ', reverseKey_api(api_nodef_StorageExponent)
-            node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
-            ! write(*,*) '... nr_StorageExponent = ',node%R(ii,nr_StorageExponent)
-            ! write(*,*)
-            node%R(ii,nr_StorageCoeff) = (0.3048 ** (2.0-node%R(ii,nr_StorageExponent))) * node%R(ii,nr_StorageCoeff)
+            !% --- convert the storage coefficient to SI (US units read from EPA SWMM)
+            !%     Most conversions are done in the interface call into api.c
+            !%     However, the storage coefficient in SI depends on the storage exponent in US units
+            !%     and it is difficult to read them both within the interface
+            node%R(ii,nr_StorageCoeff)  = node%R(ii,nr_StorageCoeff) * (0.3048d0**(twoR - node%R(ii,nr_StorageExponent)))
+
+
             ! write(*,*) 'call api_nodef_StorageCurveID == ', reverseKey_api(api_nodef_StorageCurveID)
             node%I(ii,ni_curve_ID)          = interface_get_nodef_attribute(ii, api_nodef_StorageCurveID)
             ! write(*,*) '... ni_curve_ID = ',node%I(ii,ni_curve_ID)
@@ -1173,8 +1188,6 @@ contains
             !write(*,*)  
 
         end do
-
-        ! stop 2908734
 
         !% --- Store the Link/Node names (moved up 20221215)
        !  call interface_update_linknode_names()

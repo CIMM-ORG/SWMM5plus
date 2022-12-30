@@ -108,7 +108,7 @@ module lowlevel_rk2
         !% downstream branches
         elemR(thisP,outCol) = eQlat(thisP)
 
-        ! print *, 'in ll_continuity_netflowrate_JM'
+        !  print *, 'in ll_continuity_netflowrate_JM'
         ! print *, elemR(iet(1),outCol)
         ! do ii=1,max_branch_per_node,2
         !     print *, fQ(fup(iet(1)+ii)), real(isbranch(iet(1)+ii  ),8)
@@ -122,6 +122,14 @@ module lowlevel_rk2
         !         - real(isbranch(thisP+ii+1),8) * branchQ(thisP+ii+1)
         ! end do
 
+        ! do ii=1,size(thisP)
+        !     print *, thisP(ii),  fQ(fup(thisP(ii)+1  )) ,fQ(fdn(thisP(ii)+2))
+        ! end do
+
+        ! do ii=1,size(thisP)
+        !     print *, thisP(ii), elemR(thisP(ii),outCol)
+        ! end do
+
         !% --- using face Q up/dn of branch (mass conservative)
         !%     multiply Q by number of barrels of branch
         do ii = 1,max_branch_per_node,2
@@ -129,6 +137,10 @@ module lowlevel_rk2
                 + real(isbranch(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(nBarrel(thisP+ii  ),8)  &
                 - real(isbranch(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(nBarrel(thisP+ii+1),8) 
         end do
+
+        ! do ii=1,size(thisP)
+        !     print *, thisP(ii), elemR(thisP(ii),outCol)
+        ! end do
 
         ! if (this_image() == 2) then
         !     do ii=1,max_branch_per_node,2

@@ -784,8 +784,8 @@ module culvert_elements
                     outvalue = sqrt(grav * (Avalue**3) / Tvalue)
 
                 case (mod_basket)
-                    Tvalue = llgeo_mod_basket_topwidth_from_depth_singular (eIn,Psi*Dfull)
-                    Avalue = llgeo_mod_basket_area_from_depth_singular     (eIn,Psi*Dfull)
+                    Tvalue = llgeo_mod_basket_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
+                    Avalue = llgeo_mod_basket_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
                     outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
                 case (rectangular_closed)
@@ -793,14 +793,14 @@ module culvert_elements
 
                 case (rect_round)
                     !% --- using physical values
-                    Tvalue = llgeo_rect_round_topwidth_from_depth_singular (eIn,Psi*Dfull)
-                    Avalue = llgeo_rect_round_area_from_depth_singular     (eIn,Psi*Dfull)
+                    Tvalue = llgeo_rect_round_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
+                    Avalue = llgeo_rect_round_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
                     outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
                 case (rect_triang)
                     !% --- using physical values
-                    Tvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular (eIn,Psi*Dfull)
-                    Avalue = llgeo_rectangular_triangular_area_from_depth_singular     (eIn,Psi*Dfull)
+                    Tvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
+                    Avalue = llgeo_rectangular_triangular_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
                     outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
                 case default
@@ -906,9 +906,9 @@ end function culvert_QIC_transition
                          ) / (xsect_table_lookup_singular(Psi,Ttable))
 
             case (mod_basket)
-                Atemp = (llgeo_mod_basket_area_from_depth_singular (eIn,Psi*FullDepth)) &
+                Atemp = (llgeo_mod_basket_area_from_depth_singular (eIn, Psi*FullDepth, setting%ZeroValue%Area)) &
                         / FullDepth
-                Ttemp = (llgeo_mod_basket_topwidth_from_depth_singular(eIn,Psi*FullDepth)) &
+                Ttemp = (llgeo_mod_basket_topwidth_from_depth_singular(eIn, Psi*FullDepth, setting%ZeroValue%Topwidth)) &
                         / MaxTopwidth
                 Omega = Atemp / Ttemp
 
@@ -917,16 +917,16 @@ end function culvert_QIC_transition
                 Omega = Psi
 
             case (rect_round)
-                Atemp = (llgeo_rect_round_area_from_depth_singular (eIn,Psi*FullDepth)) &
+                Atemp = (llgeo_rect_round_area_from_depth_singular (eIn, Psi*FullDepth, setting%ZeroValue%Area)) &
                         / FullDepth
-                Ttemp = (llgeo_rect_round_topwidth_from_depth_singular(eIn,Psi*FullDepth)) &
+                Ttemp = (llgeo_rect_round_topwidth_from_depth_singular(eIn, Psi*FullDepth, setting%ZeroValue%Topwidth)) &
                         / MaxTopwidth
                 Omega = Atemp / Ttemp
 
             case (rect_triang)
-                Atemp = (llgeo_rectangular_triangular_area_from_depth_singular (eIn,Psi*FullDepth)) &
+                Atemp = (llgeo_rectangular_triangular_area_from_depth_singular (eIn,Psi*FullDepth, setting%ZeroValue%Area)) &
                         / FullDepth
-                Ttemp = (llgeo_rectangular_triangular_topwidth_from_depth_singular(eIn,Psi*FullDepth)) &
+                Ttemp = (llgeo_rectangular_triangular_topwidth_from_depth_singular(eIn,Psi*FullDepth, setting%ZeroValue%Topwidth)) &
                         / MaxTopwidth
                 Omega = Atemp / Ttemp
 

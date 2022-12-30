@@ -364,7 +364,10 @@ contains
 
                     ! call util_CLprint ('1111 after BC update in timeloop---------------------------')
 
-                    ! print *, 'calling controls'
+                    ! print *, 'calling controls from timeloop'
+                    ! print *, setting%SWMMinput%N_control
+                    ! print *,  setting%Time%Now , setting%Time%ControlRule%NextTime
+
                     !% --- perform control rules
                     if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
                         if (setting%Time%Now .ge. setting%Time%ControlRule%NextTime) then

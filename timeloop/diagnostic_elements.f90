@@ -54,7 +54,7 @@ module diagnostic_elements
         Npack   => npack_elemP(thisCol)
 
         ! if (Npack > 0) then
-            !print *, 'calling diagnostic by type'
+            ! print *, 'calling diagnostic by type'
             call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
 
             !% reset any face values affected

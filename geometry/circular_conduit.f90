@@ -60,6 +60,7 @@ module circular_conduit
         !% Preliminaries
             if (Npack < 1) return
         !%------------- --------------------------------------------------------
+        !% Aliases
             thisP       => elemPGx(1:Npack,thisCol)
             depth       => elemR(:,er_Depth)
             volume      => elemR(:,er_Volume)

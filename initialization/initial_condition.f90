@@ -45,6 +45,7 @@ module initial_condition
     use preissmann_slot, only: slot_initialize
     use adjust
     use xsect_tables
+    use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
     use interface_, only: interface_get_nodef_attribute
     use utility_profiler
     use utility_allocate
@@ -131,13 +132,14 @@ contains
         call init_IC_from_linkdata ()
 
             ! call util_CLprint ('initial_condition after IC_from_linkdata')
+
         sync all
         !% --- set up background geometry for weir, orifice, etc.
         !%     from adjacent elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.true.)
 
-            ! call util_CLprint ('initial_condition after diagnostic_geoemtry_from_adjacent')
+            ! call util_CLprint ('initial_condition after diagnostic_geometry_from_adjacent')
 
         !% --- sync after all the link data has been extracted
         !%     the junction branch data is read in from the elemR arrays which
@@ -184,7 +186,7 @@ contains
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
-        
+       
         !% --- identify the small and zero depths (must be done before pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
         call adjust_smalldepth_identify_all ()
@@ -209,11 +211,10 @@ contains
         call pack_mask_arrays_all ()
   
             ! call util_CLprint ('initial_condition after pack_mask_arrays_all')
-    
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
-        call init_IC_ZeroValues_nondepth ()
+        call init_IC_ZeroValues_nondepth (whichTM)
 
             ! call util_CLprint ('initial_condition after IC_ZeroValues_nondepth')
 
@@ -256,7 +257,7 @@ contains
         ! !% --- need geometry defined before BC processing  --- 20221024 brh
         ! call geometry_toplevel (whichTM)
 
-        !      call util_CLprint ('initial_condition after geometry_toplevel')
+            !  call util_CLprint ('initial_condition after geometry_toplevel')
 
         !% --- set the reference head (based on Zbottom values)
         !%     this must be called before bc_update() so that
@@ -281,7 +282,6 @@ contains
         !% --- initialize boundary conditions
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
-        if (crashI==1) return
 
             ! call util_CLprint ('initial_condition after init_bc')
 
@@ -336,37 +336,28 @@ contains
 
             ! call util_CLprint ('initial_condition after face_interpolation')
 
+        !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
+        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
+        call control_init_monitoring_and_action_from_EPASWMM()
+
         !% --- update the initial condition in all diagnostic elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel (.false.)
 
-         !   call util_CLprint ('initial_condition after diagnostic_toplevel')
+        !    call util_CLprint ('initial_condition after diagnostic_toplevel')
 
         !% --- ensure that small and zero depth faces are correct
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
-           ! call util_CLprint ('initial_condition after adjust_zero_and_small_depth_face')
+        !    call util_CLprint ('initial_condition after adjust_zero_and_small_depth_face')
 
         !% ---populate er_ones columns with ones
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-
-          !  call util_CLprint ('initial_condition at end')
-
-        ! print *, trim(reverseKey(elemI(14,ei_elementType))),' ', trim(reverseKey(elemI(14,ei_geometryType)))
-        ! print *, 'face up,dn ',elemI(14,ei_MFace_uL), elemI(14,ei_MFace_dL)
-        ! print *, 'face bctype down ',trim(reverseKey(faceI(elemI(14,ei_MFace_dL),fi_BCtype)))
-        !stop 598743
-
-
-        ! !% TEMPORARY TEST
-        ! print *, '**************************************************************************'
-        ! print *, 'TEMPORARY TEST INCREASING MANNINGS N'
-        ! print *, '**************************************************************************'
-        ! elemR(:,er_ManningsN) = tenR * elemR(:,er_ManningsN) 
-    
+        !call util_CLprint ('initial_condition at end')
+        !stop 598734
 
         ! !% --- initialized the max face flowrate
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_flowrate_max...'
@@ -375,45 +366,38 @@ contains
         ! call face_flowrate_max_interior (fp_all)
         ! call face_flowrate_max_shared   (fp_all)
 
-        !stop 5098734
+        ! print *, elemI(143,ei_elementType),trim(reverseKey(elemI(143,ei_elementType)))
+        ! print *, 'pump ',elemR(143,er_Flowrate), elemR(143,er_Setting)
+        ! stop 5098734
 
         !% Notes on initial conditions brh20211215
         !% dHdA is not initialized in channels except where timemarch is AC
 
 
         ! do ii=1,N_elem(this_image())
-        !     print *, elemI(ii,ei_Mface_uL), ii, elemI(ii,ei_Mface_dL)
+        !     if (elemI(ii,ei_node_Gidx_BIPquick) .ne. nullvalueI ) then
+        !         if (elemI(ii,ei_elementType) .eq. JM) then
+        !          print *, ii, elemI(ii,ei_node_Gidx_BIPquick), &
+        !             trim(node%Names(elemI(ii,ei_node_Gidx_BIPquick))%str) &
+        !             ,' ',trim(reverseKey(elemI(ii,ei_elementType)))
+            
+        !         end if
+        !     end if
         ! end do
 
-        ! print *, 'f', elemI(1,ei_Mface_uL)
-        ! print *, 'e',       1
-        ! print *, 'f', elemI(1,ei_Mface_dL)
-        ! print *, 'f', elemI(2,ei_Mface_uL)
-        ! print *, 'e',       2
-        ! print *, 'f', elemI(2,ei_Mface_dL)
-        ! print *, 'f', elemI(3,ei_Mface_uL)
-        ! print *, 'e',       3
-        ! print *, 'f', elemI(3,ei_Mface_dL)
-        ! print *, '--------------------'
-        ! print *, 'EUp', faceI(4,fi_Melem_uL)
-        ! print *, 'F  ',       4
-        ! print *, 'Edn', faceI(4,fi_Melem_dL)
-        ! print *, '--------------------'
-        ! print *, 'f', elemI(4,ei_Mface_uL)
-        ! print *, 'e',       4
-        ! print *, 'f', elemI(4,ei_Mface_dL)
-        ! print *, 'f', elemI(5,ei_Mface_uL)
-        ! print *, 'e',       5
-        ! print *, 'f', elemI(5,ei_Mface_dL)
-        ! print *, 'f', elemI(6,ei_Mface_uL)
-        ! print *, 'e',       6
-        ! print *, 'f', elemI(6,ei_Mface_dL)
+        ! do ii=1,N_elem(this_image())
+        !     if (elemI(ii,ei_link_Gidx_BIPquick) .ne. nullvalueI ) then
+        !         if (elemI(ii,ei_elementType) .eq. pump) then
+        !             print *, ii, elemI(ii,ei_link_Gidx_BIPquick), &
+        !             trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str) &
+        !             ,' ',trim(reverseKey(elemI(ii,ei_elementType)))
+        !         end if
+        !     end if
+        ! end do 
+        ! stop 49734
+      
 
-
-
-
-
-        ! stop 293704
+   
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -495,29 +479,37 @@ contains
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
-            !print *, 'calling get barrels'
+        !    print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
+        !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            !print *, 'calling get depth'
+            !    print *, 'calling get depth'
             call init_IC_get_depth (thisLink)
+            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            !print *, 'calling get flow and roughness'
+            !    print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
+            ! print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            ! print *, 'calling get elemtype'
+            !    print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
+            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            ! print *, 'calling get geometry'
+            !print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
+            !print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            !print *, 'calling get flapgate'
+            !    print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
+            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            !print *, 'calling get forcemain'
-            call init_IC_get_ForceMain_from_linkdata (thisLink)      
+            !    print *, 'calling get forcemain'
+            call init_IC_get_ForceMain_from_linkdata (thisLink)     
+            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume) 
 
-            !print *, 'calling get culvert'
+            !    print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
+            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
                 if (mod(ii,1000) == 0) then
@@ -782,6 +774,17 @@ contains
                 call util_crashpoint(83753)
                 !return
         end select
+
+        !% --- set zero values to zerodepth
+        where (eDepth(pElem) < setting%ZeroValue%Depth)
+            eDepth(pElem) = setting%ZeroValue%Depth 
+        endwhere
+
+        ! print *, ' '
+        ! print *, 'in init_IC_get_depth'
+        ! print *, 'pElem ',pElem
+        ! print *, 'depth ',eDepth(pElem)
+        ! print *, ' '
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1253,6 +1256,8 @@ contains
 
         end select
 
+        
+
         !call geometry_table_initialize ()
 
         if (setting%Debug%File%initial_condition) &
@@ -1280,7 +1285,8 @@ contains
             real(8), dimension(1) :: Rarg
         
 
-            real(8), pointer    :: depth(:), fullarea(:), fullperimeter(:)
+            real(8), pointer    :: depth(:)
+            real(8), pointer    :: fullarea(:), fullperimeter(:)
             real(8), pointer    :: fulltopwidth(:), initialDepth(:)
             real(8), pointer    :: fullhydradius(:), fulldepth(:)
 
@@ -1349,38 +1355,29 @@ contains
             
             !% --- independent data
             elemR(thisP,er_BreadthMax)          = link%transectR(link_tidx,tr_widthMax)
-            ! print *, 'elemR(thisP,er_BreadthMax)',elemR(thisP,er_BreadthMax)
+
             elemR(thisP,er_AreaBelowBreadthMax) = link%transectR(link_tidx,tr_areaBelowBreadthMax)
-            ! print *, 'elemR(thisP,er_AreaBelowBreadthMax)',elemR(thisP,er_AreaBelowBreadthMax)
+
             !% --- note, do not apply the full depth limiter function to transects!
             elemR(thisP,er_FullDepth)           = link%transectR(link_tidx,tr_depthFull)
-            ! print *, 'elemR(thisP,er_FullDepth) ',elemR(thisP,er_FullDepth) 
+ 
             elemR(thisP,er_FullArea)            = link%transectR(link_tidx,tr_areaFull)
-            ! print *, 'elemR(thisP,er_FullArea)  ',elemR(thisP,er_FullArea)  
+
             elemR(thisP,er_FullTopwidth)        = link%transectR(link_tidx,tr_widthFull)
-            ! print *, 'elemR(thisP,er_FullTopwidth) ',elemR(thisP,er_FullTopwidth) 
+
             elemR(thisP,er_ZbreadthMax)         = link%transectR(link_tidx,tr_depthAtBreadthMax) + elemR(thisP,er_Zbottom)
-            ! print *, 'elemR(thisP,er_ZbreadthMax) ',elemR(thisP,er_ZbreadthMax)
+
             elemR(thisP,er_FullHydRadius)       = link%transectR(link_tidx,tr_hydRadiusFull)
-            ! print *, 'elemR(thisP,er_FullHydRadius)',elemR(thisP,er_FullHydRadius)
-            
-            ! print *, 'before perimeter '
+
             !% --- full conditions
             elemR(thisP,er_FullPerimeter) = llgeo_perimeter_from_hydradius_and_area_pure &
-                                                (thisP, fullhydradius(thisP), fullarea(thisP))
-            ! print *, 'after perimeter'
-
-            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
-
-            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP)    
+                                                (thisP, fullhydradius(thisP), fullarea(thisP))  
 
             !% --- dependent data
             elemR(thisP,er_Zcrown)        = elemR(thisP,er_Zbottom)  + elemR(thisP,er_FullDepth)
             elemR(thisP,er_FullVolume)    = elemR(thisP,er_FullArea) * elemR(thisP,er_Length)
             
-
-            !% ---NOTE the IC data for area and volume cannot be initialized until the transect tables are setup, which is
+            !% ---NOTE the IC data for area, volume, etc cannot be initialized until the transect tables are setup, which is
             !%     delayed until after the JB are initialized.
 
         case (lParabolic)
@@ -1413,14 +1410,9 @@ contains
 
             elemR(thisP,er_FullTopwidth)  = llgeo_parabolic_topwidth_from_depth_pure &
                                                 (thisP, fulldepth(thisP))
-            
-            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
             elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
-
-            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP) 
             
             !% --- dependent  
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea) 
@@ -1430,12 +1422,20 @@ contains
              
 
             !% --- store IC data
+            elemR(thisP,er_Perimeter)     = llgeo_parabolic_perimeter_from_depth_pure (thisP, depth(thisP))
+            elemR(thisP,er_Topwidth)      = llgeo_parabolic_topwidth_from_depth_pure (thisP, depth(thisP))
             elemR(thisP,er_Area)          = llgeo_parabolic_area_from_depth_pure(thisP, depth(thisP))
             elemR(thisP,er_Area_N0)       = elemR(thisP,er_Area)
             elemR(thisP,er_Area_N1)       = elemR(thisP,er_Area)
             elemR(thisP,er_Volume)        = elemR(thisP,er_Area) * elemR(thisP,er_Length)
             elemR(thisP,er_Volume_N0)     = elemR(thisP,er_Volume)
             elemR(thisP,er_Volume_N1)     = elemR(thisP,er_Volume)
+
+            where (elemR(thisP,er_Perimeter) > zeroR) 
+                elemR(thisP,er_HydRadius) = elemR(thisP,er_Area) / elemR(thisP,er_Perimeter)
+            elsewhere
+                elemR(thisP,er_HydRadius) = zeroR
+            endwhere
 
         case (lPower_function)
             ! print *, 'lPower_function'
@@ -1503,12 +1503,20 @@ contains
            
 
             !% --- store IC data
+            elemR(thisP,er_Perimeter)     = llgeo_rectangular_perimeter_from_depth_pure (thisP, depth(thisP))
+            elemR(thisP,er_Topwidth)      = llgeo_rectangular_topwidth_from_depth_pure (thisP, depth(thisP))
             elemR(thisP,er_Area)          = llgeo_rectangular_area_from_depth_pure(thisP,depth(thisP))
             elemR(thisP,er_Area_N0)       = elemR(thisP,er_Area)
             elemR(thisP,er_Area_N1)       = elemR(thisP,er_Area)
             elemR(thisP,er_Volume)        = elemR(thisP,er_Area) * elemR(thisP,er_Length)
             elemR(thisP,er_Volume_N0)     = elemR(thisP,er_Volume)
             elemR(thisP,er_Volume_N1)     = elemR(thisP,er_Volume)
+
+            where (elemR(thisP,er_Perimeter) > zeroR) 
+                elemR(thisP,er_HydRadius) = elemR(thisP,er_Area) / elemR(thisP,er_Perimeter)
+            elsewhere
+                elemR(thisP,er_HydRadius) = zeroR
+            endwhere
 
             ! print *, 'thisP ',thisP
             ! print *, 'full area ',elemR(thisP,er_FullArea)
@@ -1517,7 +1525,7 @@ contains
             ! stop 298374
 
         case (lTrapezoidal)
-            ! print *, 'lTrapezoidal'
+             !print *, 'lTrapezoidal'
 
             elemI(thisP,ei_geometryType) = trapezoidal
 
@@ -1527,17 +1535,23 @@ contains
             elemSGR(thisP,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
             elemR(thisP,er_FullDepth)                  = init_IC_limited_fulldepth(link%R(thisLink,lr_FullDepth),thisLink)
 
+            ! print *, 'link trapezoidal breadth scale ',link%R(thisLink,lr_BreadthScale)
+            ! print *, 'left slope ',link%R(thisLink,lr_LeftSlope)
+            ! print *, 'rightslope ',link%R(thisLink,lr_RightSlope)
             ! print *, 'here in init_IC_get_channel_geometry'
             ! print *, thisP, elemR(thisP,er_FullDepth), elemSGR(thisP,esgr_Trapezoidal_Breadth)
 
+            
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_LeftSlope)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_RightSlope)   .le. zeroR) .or. &
-                (link%R(thisLink,lr_BreadthScale)  < zeroR)) then 
+                (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
                 print *, 'USER CONFIGURATION ERROR'
                 print *, 'Trapezoidal open cross section has zero specified for Full Height,'
-                print *, 'Base Width, Left Slope, or Right Slope'
+                print *, 'Base Width, Left Slope, or Right Slope. Note that a base width of '
+                print *, 'zero should use a triangular cross section. Left/Right slopes of '
+                print *, 'zero should be rectangular cross section.'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
                 print *, 'FullDepth ',link%R(thisLink,lr_FullDepth) 
@@ -1556,14 +1570,9 @@ contains
 
             elemR(thisP,er_FullTopwidth)  = llgeo_trapezoidal_topwidth_from_depth_pure &
                                                 (thisP, fulldepth(thisP))
-            
-            !elemR(thisP,er_FullHydDepth)  = llgeo_hyddepth_from_area_and_topwidth_pure &
-            !                                    (thisP, fullarea(thisP), fulltopwidth(thisP))
 
             elemR(thisP,er_FullHydRadius) = llgeo_hydradius_from_area_and_perimeter_pure &
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
-
-            !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP) 
             
             !% --- dependent data
             elemR(thisP,er_BreadthMax)              = elemR(thisP,er_FullTopwidth)
@@ -1574,12 +1583,29 @@ contains
             
         
             !% --- store IC data
+            elemR(thisP,er_Perimeter)    = llgeo_trapezoidal_perimeter_from_depth_pure (thisP, depth(thisP))
+            elemR(thisP,er_Topwidth)     = llgeo_trapezoidal_topwidth_from_depth_pure (thisP, depth(thisP))
             elemR(thisP,er_Area)         = llgeo_trapezoidal_area_from_depth_pure (thisP, depth(thisP))
             elemR(thisP,er_Area_N0)      = elemR(thisP,er_Area)
             elemR(thisP,er_Area_N1)      = elemR(thisP,er_Area)
             elemR(thisP,er_Volume)       = elemR(thisP,er_Area) * elemR(thisP,er_Length)
             elemR(thisP,er_Volume_N0)    = elemR(thisP,er_Volume)
-            elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)           
+            elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)     
+            
+            where (elemR(thisP,er_Perimeter) > zeroR) 
+                elemR(thisP,er_HydRadius) = elemR(thisP,er_Area) / elemR(thisP,er_Perimeter)
+            elsewhere
+                elemR(thisP,er_HydRadius) = zeroR
+            endwhere
+
+            ! print *, 'trapezoidal link'
+            ! print *, 'thisP ',thisP
+            ! print *, 'this depth ',depth(thisP)
+            ! print *, 'breadth ',elemSGR(thisP,esgr_Trapezoidal_Breadth)
+            ! print *, 'thisTopwidth ',elemR(thisP,er_Topwidth)
+            ! stop 59874
+
+
             
         case (lTriangular)
             ! print *, 'lTriangular'
@@ -1630,12 +1656,20 @@ contains
             elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)
             
             !% store IC data
+            elemR(thisP,er_Perimeter)    = llgeo_triangular_perimeter_from_depth_pure (thisP, depth(thisP))
+            elemR(thisP,er_Topwidth)     = llgeo_triangular_topwidth_from_depth_pure (thisP, depth(thisP))
             elemR(thisP,er_Area)         = llgeo_triangular_area_from_depth_pure(thisP, depth(thisP)) 
             elemR(thisP,er_Area_N0)      = elemR(thisP,er_Area)
             elemR(thisP,er_Area_N1)      = elemR(thisP,er_Area)
             elemR(thisP,er_Volume)       = elemR(thisP,er_Area) * elemR(thisP,er_Length)
             elemR(thisP,er_Volume_N0)    = elemR(thisP,er_Volume)
             elemR(thisP,er_Volume_N1)    = elemR(thisP,er_Volume)
+
+            where (elemR(thisP,er_Perimeter) > zeroR) 
+                elemR(thisP,er_HydRadius) = elemR(thisP,er_Area) / elemR(thisP,er_Perimeter)
+            elsewhere
+                elemR(thisP,er_HydRadius) = zeroR
+            endwhere
 
         case default
 
@@ -1676,8 +1710,8 @@ contains
             integer, pointer    :: geometryType, eIdx(:), thisP(:)
             real(8), pointer    :: fullDepth(:), breadthMax(:), fullArea(:)
             real(8), pointer    :: depth(:), fullHydRadius(:)
-            real(8), pointer :: pi, topwidthDepth
-            real(8)          :: bottomHydRadius, dummyA(1)
+            real(8), pointer    :: pi, topwidthDepth
+            real(8)             :: bottomHydRadius, dummyA(1)
             character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -1732,7 +1766,7 @@ contains
                 call util_crashpoint(6987044)
             end if
   
-            call geo_common_initialize (thisP, arch, AArch, TArch)
+            call geo_common_initialize (thisP, arch, AArch, TArch, RArch, dummyA)
 
         case (lBasket_handle) !% TABULAR
 
@@ -1751,7 +1785,7 @@ contains
                 call util_crashpoint(6987045)
             end if
 
-            call geo_common_initialize (thisP, basket_handle, ABasketHandle, TBasketHandle)
+            call geo_common_initialize (thisP, basket_handle, ABasketHandle, TBasketHandle, RBasketHandle, dummyA)
     
         case (lCatenary)  !% TABULAR
 
@@ -1770,7 +1804,7 @@ contains
                 call util_crashpoint(6987046)
             end if
 
-            call geo_common_initialize (thisP, catenary, ACatenary, TCatenary)
+            call geo_common_initialize (thisP, catenary, ACatenary, TCatenary, dummyA, SCatenary)
 
         case (lCircular,lForce_main) !% TABULAR
 
@@ -1815,7 +1849,16 @@ contains
                 call util_crashpoint(6987047)
             end if
 
-            call geo_common_initialize (thisP, circular, ACirc, TCirc)    
+                ! print *, 'calling geo_common_initialize for circular'
+            call geo_common_initialize (thisP, circular, ACirc, TCirc, RCirc, dummyA)    
+                ! print *, 'thisP,:',thisP
+                ! print *, 'elemR volume:', elemR(54,er_Volume)
+
+            ! print *, 'Circular link at 49874'
+            ! print *, 'thisP ',thisP
+            ! print *, 'thisDepth ',depth(thisP)
+            ! print *, 'thisTopwidth ',elemR(thisP,er_Topwidth)
+
          
         case (lCustom)  !% TABULAR
             print *, 'CODE/CONFIGURATION ERROR: Custom conduit cross-sections not supported in SWMM5+'
@@ -1838,7 +1881,7 @@ contains
                 call util_crashpoint(6987048)
             end if
 
-            call geo_common_initialize (thisP, eggshaped, AEgg, TEgg)
+            call geo_common_initialize (thisP, eggshaped, AEgg, TEgg, REgg, dummyA)
         
         case (lFilled_circular)  !% ANALYTICAL
             !% --- note, Zbottom is always the bottom of the filled section (not the top of it)
@@ -1870,8 +1913,6 @@ contains
             elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)    &
                  = link%R(thisLink,lr_FullDepth) + elemR(thisP,er_SedimentDepth)    !% HACK -- check what link full depth means
 
-            
-
             elemSGR(thisP,esgR_Filled_Circular_TotalPipeArea)        &
                 = (onefourthR * pi) * (elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)**2)
 
@@ -1895,30 +1936,31 @@ contains
                     elemSGR(mm,esgr_Filled_Circular_bottomArea)               &
                         = llgeo_tabular_from_depth_singular                   &
                             (mm, elemR(mm,er_SedimentDepth), elemSGR(mm,esgR_Filled_Circular_TotalPipeArea),    &
-                            setting%ZeroValue%Depth, ACirc )
+                            setting%ZeroValue%Depth, zeroR, ACirc )
 
                     elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)           &
                         = llgeo_tabular_from_depth_singular                   &
                             (mm, elemR(mm,er_SedimentDepth), breadthMax(mm),  &
-                            setting%ZeroValue%Topwidth, TCirc )
+                            setting%ZeroValue%Depth, zeroR, TCirc )
 
                     bottomHydRadius                                             &
                         = llgeo_tabular_from_depth_singular                     &
                             (mm, elemR(mm,er_SedimentDepth), fullHydRadius(mm), &
-                            setting%ZeroValue%Depth, RCirc )   
+                            setting%ZeroValue%Depth, zeroR, RCirc )   
 
                     if (bottomHydRadius <= setting%ZeroValue%Depth) then
                         !% -- near zero hydraulic radius
-                        elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) = setting%ZeroValue%Topwidth
+                        elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) = zeroR
                     else
                         elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) &
                             = elemSGR(mm,esgr_Filled_Circular_bottomArea) / bottomHydRadius
                     end if
                 else 
                     !% --- near zero sediment depths
-                    elemSGR(mm,esgr_Filled_Circular_bottomArea)      = setting%ZeroValue%Area
-                    elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)  = setting%ZeroValue%Topwidth
-                    elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) = setting%ZeroValue%Topwidth
+                    !%     the setting%ZeroValues%... are not yet assigned.
+                    elemSGR(mm,esgr_Filled_Circular_bottomArea)      = zeroR
+                    elemSGR(mm,esgr_Filled_Circular_bottomTopwidth)  = zeroR
+                    elemSGR(mm,esgr_Filled_Circular_bottomPerimeter) = zeroR
                 end if
 
 
@@ -1957,7 +1999,7 @@ contains
                                                                - elemSGR(thisP,esgr_Filled_Circular_bottomArea) 
             endwhere
 
-            call geo_common_initialize (thisP, filled_circular, dummyA, dummyA)
+            call geo_common_initialize (thisP, filled_circular, dummyA, dummyA, dummyA, dummyA)
         
         case (lGothic) !% TABULAR
 
@@ -1976,7 +2018,7 @@ contains
                 call util_crashpoint(698701)
             end if
 
-            call geo_common_initialize (thisP, gothic, AEgg, TEgg)
+            call geo_common_initialize (thisP, gothic, AGothic, TGothic, dummyA, SGothic)
           
         case (lHoriz_ellipse) !% TABULAR
 
@@ -1996,7 +2038,7 @@ contains
                 call util_crashpoint(698702)
             end if
 
-            call geo_common_initialize (thisP, horiz_ellipse, AHorizEllip, THorizEllip)
+            call geo_common_initialize (thisP, horiz_ellipse, AHorizEllip, THorizEllip, RHorizEllip, dummyA)
 
         case (lHorseshoe) !% TABULAR
 
@@ -2015,7 +2057,7 @@ contains
                 call util_crashpoint(698703)
             end if
 
-            call geo_common_initialize (thisP, horseshoe, AHorseShoe, THorseShoe)
+            call geo_common_initialize (thisP, horseshoe, AHorseShoe, THorseShoe, RHorseShoe, dummyA)
 
         case (lIrregular) !% ERROR
             print *, 'In ', trim(subroutine_name)
@@ -2056,7 +2098,7 @@ contains
                 call util_crashpoint(698704)
             end if
 
-            call geo_common_initialize (thisP, mod_basket, dummyA, dummyA)
+            call geo_common_initialize (thisP, mod_basket, dummyA, dummyA, dummyA, dummyA)
 
         case (lRectangular_closed)  !% ANALYTICAL
 
@@ -2077,7 +2119,7 @@ contains
                     call util_crashpoint(698705)
                 end if               
 
-                call geo_common_initialize (thisP, rectangular_closed, dummyA, dummyA)
+                call geo_common_initialize (thisP, rectangular_closed, dummyA, dummyA, dummyA, dummyA)
                     
         case (lRect_round)
 
@@ -2114,7 +2156,7 @@ contains
                                     - sin(elemSGR(thisP,esgr_Rectangular_Round_ThetaBot)) &
                                     )
 
-            call geo_common_initialize (thisP, rect_round, dummyA, dummyA)                
+            call geo_common_initialize (thisP, rect_round, dummyA, dummyA, dummyA, dummyA)                
 
         case (lRect_triang) !% ANALYTICAL
 
@@ -2144,7 +2186,7 @@ contains
                  = onehalfR * elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth) &
                             * elemR(thisP,er_BreadthMax)  
                             
-            call geo_common_initialize (thisP, rect_triang, dummyA, dummyA)             
+            call geo_common_initialize (thisP, rect_triang, dummyA, dummyA, dummyA, dummyA)             
             
         case (lSemi_circular) !% TABULAR
 
@@ -2162,7 +2204,7 @@ contains
                 call util_crashpoint(698706)
             end if
 
-            call geo_common_initialize (thisP, semi_circular, ASemiCircular, TSemiCircular)
+            call geo_common_initialize (thisP, semi_circular, ASemiCircular, TSemiCircular, dummyA, SSemiCircular)
         
 
         case (lSemi_elliptical) !% TABULAR
@@ -2173,7 +2215,7 @@ contains
             elemR(thisP,er_BreadthMax)        = link%R(thisLink,lr_BreadthScale) 
             elemR(thisP,er_DepthAtBreadthMax) = 0.24d0 * elemR(thisP,er_FullDepth)
 
-            call geo_common_initialize (thisP, semi_elliptical, ASemiEllip, TSemiEllip)
+            call geo_common_initialize (thisP, semi_elliptical, ASemiEllip, TSemiEllip, dummyA, SSemiEllip)
     
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
@@ -2202,7 +2244,7 @@ contains
                 call util_crashpoint(698708)
             end if
 
-            call geo_common_initialize (thisP, vert_ellipse, AVertEllip, TVertEllip)
+            call geo_common_initialize (thisP, vert_ellipse, AVertEllip, TVertEllip, RVertEllip, dummyA)
 
         case default
 
@@ -2572,6 +2614,19 @@ contains
                 elemSR(ii,esr_Pump_yOn)     = link%R(thisLink,lr_yOn)
                 elemSR(ii,esr_Pump_yOff)    = link%R(thisLink,lr_yOff)
                 elemR(ii,er_Setting)        = link%R(thisLink,lr_initSetting)
+                elemSI(ii,esi_Pump_IsControlled) = zeroI
+
+                print *, '........pump initial condition setting ',elemR(ii,er_Setting)
+
+                !% --- ensure pump ON depth is greater than zero.
+                if (elemSR(ii,esr_Pump_yOn) == zeroR) then
+                    elemSR(ii,esr_Pump_yOn) = setting%ZeroValue%Depth
+                end if
+
+                !% --- ensure pump OFF depth is greater than zero.
+                if (elemSR(ii,esr_Pump_yOff) == zeroR) then
+                    elemSR(ii,esr_Pump_yOff) = setting%ZeroValue%Depth
+                end if
 
                 ! print *, 'pump_yOn     ', elemSR(ii,esr_Pump_yOn)
                 ! print *, 'pump_yOff    ', elemSR(ii,esr_Pump_yOff)
@@ -3119,7 +3174,7 @@ contains
             integer              :: nbranches
             real(8), allocatable :: integrated_volume(:)
             real(8)              :: LupMax, LdnMax
-            real(8)              :: aa,bb,cc
+            real(8)              :: aa,bb
             logical              :: isupstream
 
             character(64) :: subroutine_name = 'init_IC_get_junction_data'
@@ -3152,7 +3207,8 @@ contains
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
-                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)          
+                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)    
+                
             else
                 !% --- tabular storage
                 elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
@@ -4434,7 +4490,7 @@ contains
             if (npack > 0) then
                 tPack(1:npack,1) = pack(eIdx,geoType == tabXsectType(ii))
                 !% --- get area associated with small volume
-                call llgeo_tabular_area_from_depth(tpack, Npack,1, Atable)
+                call llgeo_tabular_area_from_depth(tpack, Npack,1, Atable, zeroR)
                 !% --- small volume = A * length
                 smallvolume(tPack(1:npack,1)) = area(tPack(1:npack,1)) &
                                                 * length(tpack(1:npack,1))
@@ -4511,7 +4567,7 @@ contains
             tPack(1:npack,1) = pack(eIdx,geoType == filled_circular)
             do kk=1,npack 
                 smallvolume(tpack(kk,1)) = llgeo_filled_circular_area_from_depth_singular &
-                                            (tpack(kk,1), depth(tpack(kk,1)))
+                                            (tpack(kk,1), depth(tpack(kk,1)), setting%ZeroValue%Area)
             end do
         end if
     
@@ -4522,7 +4578,7 @@ contains
             tPack(1:npack,1) = pack(eIdx,geoType == mod_basket)
             do kk=1,npack 
                 smallvolume(tpack(kk,1)) = llgeo_mod_basket_area_from_depth_singular &
-                                            (tpack(kk,1), depth(tpack(kk,1)))
+                                            (tpack(kk,1), depth(tpack(kk,1)), setting%ZeroValue%Area)
             end do
         end if
 
@@ -4533,7 +4589,7 @@ contains
             tPack(1:npack,1) = pack(eIdx,geoType == rectangular_closed)
             do kk=1,npack 
                 smallvolume(tpack(kk,1)) = llgeo_rectangular_closed_area_from_depth_singular &
-                                            (tpack(kk,1), depth(tpack(kk,1)))
+                                            (tpack(kk,1), depth(tpack(kk,1)), setting%ZeroValue%Area)
             end do
         end if
 
@@ -4544,7 +4600,7 @@ contains
             tPack(1:npack,1) = pack(eIdx,geoType == rect_round)
             do kk=1,npack
                 smallvolume(tpack(kk,1)) = llgeo_rect_round_area_from_depth_singular &
-                                            (tpack(kk,1), depth(tpack(kk,1)))
+                                            (tpack(kk,1), depth(tpack(kk,1)), setting%ZeroValue%Area)
             end do
         end if
 
@@ -4555,7 +4611,7 @@ contains
             tPack(1:npack,1) = pack(eIdx,geoType == rect_triang)
             do kk=1,npack 
                 smallvolume(tpack(kk,1)) = llgeo_rectangular_triangular_area_from_depth_singular &
-                                            (tpack(kk,1), depth(tpack(kk,1)))
+                                            (tpack(kk,1), depth(tpack(kk,1)), setting%ZeroValue%Area)
             end do
         end if
     
@@ -5263,7 +5319,7 @@ contains
                   !print *, '----- thisDepth     ',thisDepth 
 
                 !% --- section factor at this depth
-                sf = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
+                sf = geo_sectionfactor_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
 
                  !print *, jj,'----- sectionfactor ',sf
 
@@ -5271,7 +5327,7 @@ contains
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
 
                 !% -- critical flowrwate at this depth
-                qcrit = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
+                qcrit = geo_Qcritical_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area)
 
                 !  print *, '----- qcrit        ',qcrit
                 
@@ -5399,13 +5455,13 @@ contains
                 oldtestPerimeter = testPerimeter
                 !% --- increment the test depth
                 testDepth     = testDepth + deltaDepth
-                testArea      = geo_area_from_depth_singular (eIdx, testDepth)
+                testArea      = geo_area_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area)
                 !% --- compute values for incremented depth
                 select case (Utype)
                 case (SectionFactorData)
-                    testUvalue    = geo_sectionfactor_from_depth_singular (eIdx,testDepth)
+                    testUvalue    = geo_sectionfactor_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
                 case (QcriticalData)
-                    testUvalue    = geo_Qcritical_from_depth_singular (eIdx,testDepth)
+                    testUvalue    = geo_Qcritical_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area)
                 case default
                     print *, 'CODE ERROR: unexpected case default'
                     call util_crashpoint(608723)
@@ -5453,9 +5509,9 @@ contains
             case (SectionFactorData)
                 ! print*, '**************************************'
                 ! print*, thisDepth, 'thisDepth'
-                testUvalue    = geo_sectionfactor_from_depth_singular (eIdx,thisDepth)
+                testUvalue    = geo_sectionfactor_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
             case (QcriticalData)
-                testUvalue    = geo_Qcritical_from_depth_singular (eIdx,thisDepth)
+                testUvalue    = geo_Qcritical_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area)
             case default
                 print *, 'CODE ERROR: unexpected case default'
             end select
@@ -5577,24 +5633,37 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_IC_ZeroValues_nondepth ()
+    subroutine init_IC_ZeroValues_nondepth (whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% ensures consistent initialization of zero values. 
         !% The ZeroValue%Depth must already be set
         !%------------------------------------------------------------------
         !% Declarations
+            integer, intent(in) :: whichTM
             real(8), pointer :: area0, topwidth0, volume0, depth0, slope0, lengthNominal
             integer, pointer :: Npack, thisP, allP(:)
+            integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer :: ii
+            real(8) :: volumeIncrease, volume0a
         !%------------------------------------------------------------------
         !% Aliases
             area0     => setting%ZeroValue%Area
             topwidth0 => setting%ZeroValue%Topwidth
             volume0   => setting%ZeroValue%Volume
-            depth0    => setting%ZeroValue%Depth  !%
+            depth0    => setting%ZeroValue%Depth  !% already set
             slope0    => setting%ZeroValue%Slope
             lengthNominal => setting%Discretization%NominalElemLength
+
+            !% --- used for computing depth by type
+            select case (whichTM)
+            case (ETM)
+                elemPGx                => elemPGetm(:,:)
+                npack_elemPGx          => npack_elemPGetm(:)
+                col_elemPGx            => col_elemPGetm(:)
+            case default 
+                print *, 'CODE ERROR, additional TM methods needed'
+            end select
         !%------------------------------------------------------------------
         if (.not. setting%ZeroValue%UseZeroValues) return
 
@@ -5631,8 +5700,8 @@ contains
                 select case (elemI(thisP,ei_elementType))
                 case (CC)
                     !% temporary store a values for zero depth
-                    elemR(thisP,er_Temp01) = geo_topwidth_from_depth_singular (thisP,depth0)
-                    elemR(thisP,er_Temp02) = geo_area_from_depth_singular     (thisP,depth0) 
+                    elemR(thisP,er_Temp01) = geo_topwidth_from_depth_singular (thisP, depth0, zeroR)
+                    elemR(thisP,er_Temp02) = geo_area_from_depth_singular     (thisP, depth0, zeroR) 
                     !% volume is area * length
                     elemR(thisP,er_Temp03) = elemR(thisP,er_Temp02) * elemR(thisP,er_Length)
                 case (JM)
@@ -5648,6 +5717,9 @@ contains
                     call util_crashpoint(6629873)
                 end select
 
+                ! print *, thisP, trim(reverseKey(elemI(thisP,ei_elementType))), &
+                !  elemI(thisP,ei_geometryType), trim(reverseKey(elemI(thisP,ei_geometryType))), &
+                !   elemR(thisP,er_Temp01)
                 !  print *, ' ' 
                 !  print *, thisP
                 !  print *, trim(reverseKey(elemI(thisP,ei_elementType)))
@@ -5658,8 +5730,6 @@ contains
 
                             
             end do
-            !% --- reset the depth
-            elemR(:,er_Depth) = elemR(:,er_Temp04)
 
             !% --- get the minimum values, use 1/2 to ensure
             !%     that a zerovalue for depth will have a larger
@@ -5669,6 +5739,10 @@ contains
             topwidth0 = minval( elemR(allP,er_Temp01)) * onehalfR
             area0     = minval( elemR(allP,er_Temp02)) * onehalfR
             volume0   = minval( elemR(allP,er_Temp03)) * onehalfR
+
+            !% --- checking scale consistency
+            area0   = min(area0,   topwidth0 * depth0)
+            volume0 = min(volume0, area0 * setting%Discretization%NominalElemLength)
 
             !% Ensure zero values are not too small
             if (topwidth0 .le. tenR * tiny(topwidth0)) then
@@ -5683,6 +5757,46 @@ contains
                 volume0 = onehundredR * tiny(volume0)
             end if
 
+            !% --- reset temporary arrays used above
+            elemR(:,er_Temp01) = nullvalueR
+            elemR(:,er_Temp02) = nullvalueR
+            elemR(:,er_Temp03) = nullvalueR
+            
+            !% --- temporary store of original volume and
+            !%     overwrite with volume0
+            elemR(:,er_Temp03) = elemR(:,er_Volume)
+            elemR(:,er_Volume) = volume0
+
+            !% --- temporary store of original 
+            elemR(:,er_Temp02) = elemR(:,er_Area)
+        
+            !% --- check the predicted depth0 from volume0--------------------------------
+            !%     Goal is to ensure that D = f(V) returns D < D0 when V = V0
+            !% --- store the base level volume0
+            volume0a = volume0
+            !% --- get the depth predicted from volume0 -- output stored in elemR(:,er_Depth)    
+            call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
+
+            !% --- cycle through elements to ensure that depth0 obtained from volume0
+            !%     is smaller than the volume obtained by from depth0
+            !%     If volume0 returns a depth larger than depth0, then reset volume0
+            do ii = 1,N_elem(1)
+                !print *, ii, elemR(ii,er_Depth),  depth0 - elemR(ii,er_Depth), elemR(ii,er_Volume)
+                if (elemR(ii,er_Depth) > depth0) then
+                    !% --- depth for volume0 is larger than depth0
+                    volumeIncrease = (elemR(ii,er_Depth) - depth0) * elemR(ii,er_Topwidth) * elemR(ii,er_Length)
+                    volume0 = min(volume0, min(volume0a - volumeIncrease, onehundredR*tiny(volume0)) )
+                end if
+            end do
+
+            !% --- reset the depth from depth0 to IC value
+            elemR(:,er_Depth) = elemR(:,er_Temp04)
+
+            !% --- reset the volume from volume0 to IC value
+            elemR(:,er_Volume) = elemR(:,er_Temp03)
+
+            elemR(:,er_Temp03) = nullvalueR
+            elemR(:,er_Temp04) = nullvalueR
             !  print *, ' '
             !  print *, 'depth0   ',depth0
             !  print *, 'topwidth0',topwidth0

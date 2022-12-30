@@ -958,7 +958,7 @@ int DLLEXPORT api_get_nodef_attribute(
         case nodef_StorageConstant  :
             switch (Node[node_idx].type) {
                 case STORAGE :
-                    *value = Storage[Node[node_idx].subIndex].aConst;
+                    *value = FT2TOM2(Storage[Node[node_idx].subIndex].aConst);
                     break;
                 default :
                     *value = -1;

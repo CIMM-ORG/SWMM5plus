@@ -77,7 +77,7 @@ module trapezoidal_channel
                                  (thisP, volume(thisP))
             end where
         end if
-
+ 
     end subroutine trapezoidal_depth_from_volume
 !%  
 !%==========================================================================
