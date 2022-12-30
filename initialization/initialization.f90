@@ -640,6 +640,10 @@ contains
                 !%     higher bottom elevation than downstream
                 link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node1,.true.) + 1 ! node1 in C starts from 0
                 link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node2,.true.) + 1 ! node2 in C starts from 0
+                !% offset 1 is upstream for link with positive slope
+                link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
+                !% offset 2 is downstream for link with positive slope
+                link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
             else if (link%I(ii,li_link_direction) == -1) then
                 !% --- when upstream has lower bottom elevation than downstream,
                 !%     EPA-SWMM swaps the connectionso prevent a negative slope. 
@@ -647,6 +651,10 @@ contains
                 !%     nodes back tocorrect orientation
                 link%I(ii,li_Mnode_u) = interface_get_linkf_attribute(ii, api_linkf_node2,.true.) + 1 ! node2 in C starts from 0
                 link%I(ii,li_Mnode_d) = interface_get_linkf_attribute(ii, api_linkf_node1,.true.) + 1 ! node1 in C starts from 0
+                !% offset 2 is upstream for link with negative/zero slope
+                link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
+                !% offset 1 is downstream for link with positive slope
+                link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
             else
                 write(*,*) 'Fatal error: link direction should be 1 or -1'
                 stop 794564
@@ -708,11 +716,7 @@ contains
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
                 ! print *, '      link_BottomDepth        ', link%R(ii,lr_BottomDepth)
             link%R(ii,lr_BottomRadius)        = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
-                ! print *, '      lr_BottomRadius        ', link%R(ii,lr_BottomRadius)
-            link%R(ii,lr_InletOffset)        = interface_get_linkf_attribute(ii, api_linkf_offset1,          .false.)
-                ! print *, '      link_InletOffset        ', link%R(ii,lr_InletOffset)
-            link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset2,          .false.)
-                ! print *, '      link_OutletOffset       ', link%R(ii,lr_OutletOffset)
+                ! print *, 'lr_BottomRadius        ', link%R(ii,lr_BottomRadius)
             link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
                 ! print *, '      link_FlowrateInitial    ', link%R(ii,lr_FlowrateInitial)
             link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
@@ -899,7 +903,7 @@ contains
             ! write(*,*)
 
             ! write(*,*) 'call api_nodef_StorageConstant == ', reverseKey_api(api_nodef_StorageConstant)
-            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
+            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant) * (0.3048**2.0)
             ! write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
             ! write(*,*)
 
