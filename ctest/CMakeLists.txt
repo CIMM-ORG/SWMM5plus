@@ -140,12 +140,6 @@ enable_testing()
 # # )
 
 # # FAILED (splitting downstream mismatch)  20221221
-# add_test(NAME extran6_type1_pump_mod
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_type1_pump_mod.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
-
-# # FAILED (splitting downstream mismatch)  20221221
 # add_test(NAME extran6_type2_pump_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_type2_pump_mod.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -175,8 +169,15 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+# # Failed, but should be fixed with python head fix at junction 20221230
+# add_test(NAME extran6_storage_functional_final
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_storage_functional_final.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
 # # 
-add_test(NAME extran6_storage_mod2
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_storage_mod2.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
+add_test(NAME extran6_pump_type1_mod
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_pump_type1_mod.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/temp
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+

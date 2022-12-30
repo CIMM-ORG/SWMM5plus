@@ -917,7 +917,8 @@ contains
             !%     Most conversions are done in the interface call into api.c
             !%     However, the storage coefficient in SI depends on the storage exponent in US units
             !%     and it is difficult to read them both within the interface
-            node%R(ii,nr_StorageCoeff)  = node%R(ii,nr_StorageCoeff) * (0.3048d0**(twoR - node%R(ii,nr_StorageExponent)))
+            !% 20221230 --- moved to api, delete all this
+            !node%R(ii,nr_StorageCoeff)  = node%R(ii,nr_StorageCoeff) * (0.3048d0**(twoR - node%R(ii,nr_StorageExponent)))
 
 
             ! write(*,*) 'call api_nodef_StorageCurveID == ', reverseKey_api(api_nodef_StorageCurveID)

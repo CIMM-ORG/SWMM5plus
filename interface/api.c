@@ -574,7 +574,7 @@ int DLLEXPORT api_get_headBC(
             //     CFS, GPM and MGD have FlowUnits of 0,1,2;  CMS, LPS, MLD have FlowUnits of 3,4,5
 
             kidx = Outfall[ii].stageSeries;
-            if (FlowUnits < MGD)
+            if (FlowUnits < CMS)
             {
                 *headBC     = FTTOM(table_tseriesLookup(&Tseries[kidx], current_datetime, TRUE)); 
             }
@@ -958,7 +958,15 @@ int DLLEXPORT api_get_nodef_attribute(
         case nodef_StorageConstant  :
             switch (Node[node_idx].type) {
                 case STORAGE :
-                    *value = FT2TOM2(Storage[Node[node_idx].subIndex].aConst);
+                    if (FlowUnits < CMS)
+                    // for US Flow units (CFS, GPM, MGD) convert to m^2
+                    {
+                        *value = FT2TOM2(Storage[Node[node_idx].subIndex].aConst);
+                    }
+                    else
+                    {
+                        *value = Storage[Node[node_idx].subIndex].aConst;
+                    }
                     break;
                 default :
                     *value = -1;
@@ -968,7 +976,16 @@ int DLLEXPORT api_get_nodef_attribute(
         case nodef_StorageCoeff :
             switch (Node[node_idx].type) {
                 case STORAGE :
-                    *value = Storage[Node[node_idx].subIndex].aCoeff;
+                    if (FlowUnits < CMS)
+                    // for US Flow units (CFS, GPM, MGD) need conversion
+                    {
+                        *value = Storage[Node[node_idx].subIndex].aCoeff 
+                                 * pow(FTTOM(1.0),(2.0 - Storage[Node[node_idx].subIndex].aExpon));
+                    }
+                    else
+                    {
+                        *value = Storage[Node[node_idx].subIndex].aCoeff;
+                    }                
                     break;
                 default :
                     *value = -1;
@@ -978,6 +995,7 @@ int DLLEXPORT api_get_nodef_attribute(
         case nodef_StorageExponent  :
             switch (Node[node_idx].type) {
                 case STORAGE :
+                    // note that no conversion is needed
                     *value = Storage[Node[node_idx].subIndex].aExpon;
                     break;
                 default :
