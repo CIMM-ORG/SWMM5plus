@@ -390,27 +390,28 @@ for x in all_dset_names:
 
     # Check if the data set is a node
     if((x[0:10]=='node_face_') or (x[0:10]=='node_elem_')):
-        
-        if (x[0:10]=='node_face_'):
-            is_nJ2 = True
-        else:
-            is_nJ2 = False
+
         # ... store node name
         node_name = x[10::]
-
-        # find if any of the nodes exceeds the mass balance tolerance
-        
+        if (x[0:10]=='node_face_'):
+            is_nJ2 = True
+            data_set_name = x
+        else:
+            is_nJ2 = False
+            data_set_name = 'nodeFV_'+node_name+'_PiezometricHead'
+            
         # ... extract swmmC node data
         # extract the depths from the swmm5_C .out file and convert to numpy array to store
         swmmC_node_H = swmmtoolbox.extract(out_path,"node,"+node_name+',Hydraulic_head').to_numpy().ravel()
 
         # ... extract swmm5plus node data
         # extract the flowrates from the swmm5_plus .h5 file
-        z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
+        z = get_array_from_dset(swmm5_plus_dir+'/output.h5',data_set_name)
+
         if is_nJ2:  
             swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
         else:
-            swmmF_node_H = (z[:,5]) * Yf # take the JM peizometric head
+            swmmF_node_H = (z[:,1]) * Yf # take the JM peizometric head
         # extract the timestamp
         time = z[:,0]
 
