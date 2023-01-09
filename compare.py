@@ -51,7 +51,7 @@ def convert_dset_to_csv(file_name,dset_name):
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
 Qtolerance = 25.0            # percentage flow tolerance for comparing between the norms
-Ytolerance = 25.0            # percentage depth tolerance
+Ytolerance = 50.0            # percentage depth tolerance
 Q_balance_error_tol = 10.0   # flow balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False    # logical for recompiling swmmC

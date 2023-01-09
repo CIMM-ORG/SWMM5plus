@@ -45,6 +45,7 @@ module update
             if (setting%Profile%useYN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%------------------------------------------------------------------
         !%
+
             !  call util_CLprint ('in update before geometry toplevel')
 
         !% --- update the head (non-surcharged) and geometry
@@ -87,11 +88,16 @@ module update
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
-            !  call util_CLprint ('in update before CC interpweights in update')
+            !  call util_CLprint ('in update before CC wavespeed')
 
         !% --- compute the wave speeds
         call update_wavespeed_element(thisCol_CC)
+
+            ! call util_CLprint ('in update before JM wavespeed')
+
         call update_wavespeed_element(thisCol_JM)
+
+            ! call util_CLprint ('in update before CC interpweights')
 
         !% --- compute element-face interpolation weights on CC
         call update_interpweights_CC(thisCol_CC, whichTM)
@@ -147,15 +153,20 @@ module update
         ! print *, 'in ',trim(subroutine_name)
         ! print *, flowrate(1), area(1), velocity(1)
 
+        ! call util_CLprint ('in update element Flowrate A')
+
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
+
+            ! call util_CLprint ('in update element Flowrate B')
 
             !% --- limit flowrate by the full value (if it exists)
             where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
                 flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
             end where
-
+            
+            ! call util_CLprint ('in update element Flowrate C')
         end if
 
         ! print *, flowrate(139), area(139), velocity(139)
@@ -256,6 +267,7 @@ module update
             grav      => setting%constant%gravity
         !%------------------------------------------------------------------
 
+        
         !% wavespeed at modified hydraulic depth (ell) 
         wavespeed(thisP) = sqrt(grav * ellDepth(thisP))
 

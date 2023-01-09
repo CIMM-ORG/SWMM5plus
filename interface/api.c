@@ -962,10 +962,13 @@ int DLLEXPORT api_get_nodef_attribute(
                     // for US Flow units (CFS, GPM, MGD) convert to m^2
                     {
                         *value = FT2TOM2(Storage[Node[node_idx].subIndex].aConst);
+                        //printf(" \n US Storage raw %e \n ",Storage[Node[node_idx].subIndex].aConst);
+                        //printf(" \n converted Storage raw %e \n ",*value);
                     }
                     else
                     {
                         *value = Storage[Node[node_idx].subIndex].aConst;
+                        //printf(" \n SI Storage raw %e \n ",Storage[Node[node_idx].subIndex].aConst);
                     }
                     break;
                 default :

@@ -230,9 +230,9 @@ module define_settings
         logical :: useSlotTF = .true.
         !% Allowable values: DynamicSlot, StaticSlot
         integer :: Method = DynamicSlot
-        real(8) :: TargetCelerity = 100.0d0
-        real(8) :: Alpha = 2.0d0
-        real(8) :: DecayRate = 1.0
+        real(8) :: TargetCelerity = 15.0d0
+        real(8) :: Alpha = 3.0d0
+        real(8) :: DecayRate = 5.0
     end type PreissmannSlotType
 
     !% setting%Output%Report
@@ -464,6 +464,7 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
+        logical :: Force_nodes_to_nJM = .true.
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
         logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
@@ -475,6 +476,8 @@ module define_settings
 
     ! setting%Eps
     type EpsilonType
+        !% epsilon relative to machine precision
+        real(8) :: Machine = 0.d0  !% computed in code
         !% +- small non-dimensional range for hyd jump discrimination
         real(8) :: FroudeJump = 0.1d0
         !% Fractional increase in depth under froude limitation
@@ -606,11 +609,11 @@ module define_settings
     !% setting%Simulation
     type SimulationType
         logical :: stopAfterInitializationYN = .false.
-        logical :: useHydrology = .true.
-        logical :: useHydraulics = .true.
-        logical :: useSpinUp     = .false.
+        logical :: useHydrology    = .true.
+        logical :: useHydraulics   = .true.
+        logical :: useSpinUp       = .false.
         logical :: stopAfterSpinUp = .false.
-        real(8) :: SpinUpDays    = 10.d0
+        real(8) :: SpinUpDays      = 10.d0
     end type SimulationType
 
     ! setting%SmallDepth

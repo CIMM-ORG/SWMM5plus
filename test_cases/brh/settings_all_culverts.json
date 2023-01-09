@@ -6,7 +6,7 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 30.00
+        "NominalElemLength" : 25.00
     },
     "Limiter" : {
         "Dt" : {
@@ -14,7 +14,7 @@
         }
     },    
     "Output" : {
-        "StoredLevels" : 4000,
+        "StoredLevels" : 10000,
         "CommandLine" : {
             "interval" : 500
         },
@@ -28,24 +28,14 @@
             "isVolumeOut"       : true,
             "isWaveSpeedOut"    : true,
             "isPreissmannCelerityOut"   : true
-        },
-        "Report" : {
-            "useSWMMinpYN" : true,
-            "provideYN" : true,
-            "useHD5F"   : true,
-            "useCSV"    : true,
-            "suppress_MultiLevel_Output" : false,
-            "StartTime" : 0.0,
-            "TimeInterval" : 500.0,
-            "TimeUnits" : "Hours"
         }
     },
     "Simulation" : {
-        "useHydrology" : true
+        "useHydrology" : false
     },
     "Solver" : {
         "PreissmannSlot" : {
-            "Method" : "DynamicSlot"
+            "Method" : "StaticSlot"
         }
     }
 }

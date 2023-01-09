@@ -20,9 +20,9 @@ module storage_geometry
     public :: storage_functional_depth_from_volume
     public :: storage_tabular_depth_from_volume
     public :: storage_implied_depth_from_volume
-    public :: storage_integrate_area_vs_depth_curve
+    public :: storage_create_integrated_volume_curve
     public :: storage_interpolate_volume_from_depth_singular
-    public :: storage_create_curve
+    public :: storage_create_curve_from_function
     public :: storage_volume_from_depth_singular
     public :: storage_implied_volume_from_depth_singular
     public :: storage_functional_volume_from_depth_singular
@@ -85,7 +85,7 @@ module storage_geometry
                         depth = (- bb + sqrt(bb**2 + fourR * aa * vv) ) / (twoR * aa)
                     else            
                         !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
-                        !      using storage_create_curve()
+                        !      using storage_create_curve_from_function()
                         call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
                             curve_storage_depth, 1)
                     end if
@@ -174,7 +174,7 @@ module storage_geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine storage_integrate_area_vs_depth_curve (CurveID)
+    subroutine storage_create_integrated_volume_curve (CurveID)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Intigrate the SWMM5 area vs depth curve into volume vs depth curve
@@ -190,18 +190,24 @@ module storage_geometry
         integrated_volume => curve(curveID)%ValueArray(:,curve_storage_volume)
         integrated_volume = nullvalueR
 
+        ! print *, 'Curve'
+        ! print *, 'depth ',curve(curveID)%ValueArray(:,curve_storage_depth)
+        ! print *, ' '
+        ! print *, 'area ',curve(curveID)%ValueArray(:,curve_storage_area)
+
         do ii = 1,size(curve(curveID)%ValueArray,1)
+            !print *, 'ii=',ii, depth(ii), area(ii)
             if (ii == 1) then
                 integrated_volume(ii) = onehalfR * depth(ii) * area(ii)
-                
             else
-                integrated_volume(ii) = integrated_volume(ii-oneI) + onehalfR * (depth(ii) - depth(ii-1)) * &
-                    (area(ii) + area(ii-1))
+                integrated_volume(ii) = integrated_volume(ii-oneI) &
+                         + onehalfR * (depth(ii) - depth(ii-1)) * (area(ii) + area(ii-1))
             end if
+            !print *, 'integrated volume ',integrated_volume(ii)
         end do 
 
 
-    end subroutine storage_integrate_area_vs_depth_curve
+    end subroutine storage_create_integrated_volume_curve
 !%  
 !%==========================================================================
 !%==========================================================================
@@ -228,7 +234,7 @@ module storage_geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine storage_create_curve (StorageIdx)
+    subroutine storage_create_curve_from_function (StorageIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% create an artificial storage curve for the functional storage
@@ -238,7 +244,7 @@ module storage_geometry
         real(8), pointer :: fullDepth, aConst, aCoeff, aExpon
         integer, pointer :: CurveID, nRow
 
-        character(64) :: subroutine_name = 'storage_create_curve'
+        character(64) :: subroutine_name = 'storage_create_curve_from_function'
         !%-----------------------------------------------------------------------------
         !% pointer allocation
         fullDepth => elemR(StorageIdx,er_FullDepth)
@@ -268,7 +274,7 @@ module storage_geometry
         Curve(CurveID)%ValueArray(:,curve_storage_volume) =  aConst * Curve(CurveID)%ValueArray(:,curve_storage_depth) + &
                     (aCoeff/(aExpon+oneR)) * Curve(CurveID)%ValueArray(:,curve_storage_depth) ** (aExpon+oneR)
 
-    end subroutine storage_create_curve
+    end subroutine storage_create_curve_from_function
 !%  
 !%==========================================================================
 !%==========================================================================

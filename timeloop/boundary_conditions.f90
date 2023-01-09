@@ -14,6 +14,7 @@ module boundary_conditions
     use xsect_tables
     use utility_crash
     use utility_datetime, only: util_datetime_seconds_precision
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -48,16 +49,24 @@ contains
         ! print *, 'calling bc_step'
         call bc_step()
 
+            ! call util_utest_CLprint ('0000 after bc_step')
+
         !% --- interpolate the BC to the present time
         ! print *, 'calling bc_interpolate_flow'
         call bc_interpolate_flow()
 
+            ! call util_utest_CLprint ('1111 after bc_interpolate_flow')
+
         ! print *, 'calling bc_interpolate_head'
         call bc_interpolate_head()
+
+            ! call util_utest_CLprint ('2222 after bc_interpolate_head')
 
         !% --- store the BC value in face arrays
         ! print *, 'calling face_interpolate_bc'
         call face_interpolate_bc(isBConly) 
+
+            ! call util_utest_CLprint ('3333 after face_interpolate_bc')
 
         !% --- check for inflow BC that imply a large velocity if the
         !%     cross-section is full
@@ -279,8 +288,6 @@ contains
                 end if                 
             end do
         end if
-
-       !stop 2098734
 
         !% --- Head BC (outfall)
         if (N_headBC > 0) then
@@ -711,7 +718,7 @@ contains
 
             case (BCH_tidal)
                 print *, 'ALGORITHM NEEDED FOR BCH_tidal ',trim(subroutine_name)
-                call util_crashpoint(2098734)
+                call util_crashpoint(90222387)
 
             case (BCH_tseries)
                 !% --- get the index below the current upper index
@@ -779,8 +786,8 @@ contains
 
                 if (elemI(eIdx,ei_elementType) == CC) then
                     !% --- Error check, normal depth is infinite for adverse slope
-                    !%     Use tiny() so that slope must be greater than precision 
-                    if (elemR(eIdx,er_BottomSlope) .le. onehundredR*tiny(oneR)) then
+                    !%     Use setting%Eps%Machine so that slope must be greater than precision 
+                    if (elemR(eIdx,er_BottomSlope) .le. onehundredR*setting%Eps%Machine) then
                         print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must be connected to an...'
                         print *, '...conduit/channel element with non-zero, positive bottom slope.'
                         print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
@@ -808,6 +815,27 @@ contains
                     !% the depth in the node is zero
                     !headValue(ii) =  faceR(fIdx,fr_Zbottom)
                 end if
+
+                ! % --- Set final BC elevation following EPA SWMM in node.c/outfall_setOutletDepth
+                ! %     Note that outfall z should already be included in zbottom
+                ! %     and depth is already bounded on the low end by a min value    
+                ! %     The BC must be larger than the smaller of the critical depth or normal depth
+
+                ! print *, 'in ',trim(subroutine_name)
+                ! print *, thisDepth, critDepth, normDepth
+
+                smallDepth = min(critDepth,normDepth)
+                if (thisDepth < smallDepth) then
+                    !% --- Head should not be larger than the upstream
+                    !%     to prohibit backwater and inflow when critical or normal depth controls.
+                    headValue(ii) = min(smallDepth + zbottom - setting%Solver%ReferenceHead, &
+                                        elemR(eIdx,er_Head)) 
+                else
+                    !% --- otherwise head based on thisDepth
+                    headValue(ii) = thisDepth + zbottom - setting%Solver%ReferenceHead
+                end if
+    
+                ! print *, 'head value ',headValue(ii)  !%- zbottom + setting%Solver%ReferenceHead
 
             case (BCH_free)
                 !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
@@ -851,27 +879,8 @@ contains
                 call util_crashpoint(86474)
             end select
 
-        
-            !% --- Set final BC elevation following EPA SWMM in node.c/outfall_setOutletDepth
-            !%     Note that outfall z should already be included in zbottom
-            !%     and depth is already bounded on the low end by a min value    
-            !%     The BC must be larger than the smaller of the critical depth or normal depth
-
-            ! print *, 'in ',trim(subroutine_name)
-            ! print *, thisDepth, critDepth, normDepth
-
-            smallDepth = min(critDepth,normDepth)
-            if (thisDepth < smallDepth) then
-                !% --- Head should not be larger than the upstream
-                !%     to prohibit backwater and inflow when critical or normal depth controls.
-                headValue(ii) = min(smallDepth + zbottom - setting%Solver%ReferenceHead, &
-                                    elemR(eIdx,er_Head)) 
-            else
-                !% --- otherwise head based on thisDepth
-                headValue(ii) = thisDepth + zbottom - setting%Solver%ReferenceHead
-            end if
-
-            ! print *, headValue(ii) - zbottom + setting%Solver%ReferenceHead
+            ! print *, 'here in bc_interpolate_head '
+            ! print *, 'headvalue ',headValue(ii)
 
         end do
 

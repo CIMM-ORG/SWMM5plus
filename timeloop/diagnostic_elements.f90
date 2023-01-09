@@ -55,13 +55,19 @@ module diagnostic_elements
 
         ! if (Npack > 0) then
             ! print *, 'calling diagnostic by type'
+            ! call util_CLprint ('in diagnostic_toplevel  AAAA')
+
             call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
 
+            ! call util_CLprint ('in diagnostic_toplevel  BBB')
             !% reset any face values affected
             call face_interpolation (fp_Diag, dummy)
 
+            ! call util_CLprint ('in diagnostic_toplevel  CCC')
             !% --- reset the zero and small depth fluxes
             call adjust_zero_and_small_depth_face (ETM, .false.)
+
+            ! call util_CLprint ('in diagnostic_toplevel  DDD')
 
         ! end if
        

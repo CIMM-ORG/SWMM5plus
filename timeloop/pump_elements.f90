@@ -494,7 +494,7 @@ module pump_elements
 
         !% --- get upstream flowrate if needed
         select case (pumpType)
-        case (type_IdealPump) !% ideal pump (use AidxJB)
+        case (type_IdealPump) !% ideal pump (use AidxJB when upstream is junction)
             Flowrate = elemR(AidxJB,er_Flowrate)[Ci]
         case default
             !% dummy return

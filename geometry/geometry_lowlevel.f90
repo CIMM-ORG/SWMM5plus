@@ -127,18 +127,7 @@ module geometry_lowlevel
             llgeo_head_from_depth_pure &
                  = depth                          &
                  + elemR(thisP,er_SedimentDepth)  &
-                 + elemR(thisP,er_Zbottom)
-
-            ! !print *, size(thisP)
-            ! !print *, size(depth)
-            ! print *, ' '
-            ! print *, thisP(24)
-            ! print *, ' '
-            ! print *, depth(24)
-            ! print *, ' '
-            ! !print *, elemR(thisP,er_SedimentDepth)
-            ! print *, ' '
-            ! print *, elemR(thisP(24),er_Zbottom)     
+                 + elemR(thisP,er_Zbottom)  
 
     end function llgeo_head_from_depth_pure
 !%

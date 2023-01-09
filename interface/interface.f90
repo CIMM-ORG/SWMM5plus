@@ -1339,7 +1339,7 @@ contains
             !%     and define_api_keys
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
-            call util_crashpoint(20987341)
+            call util_crashpoint(27287422)
             !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
@@ -3090,6 +3090,7 @@ contains
                         !% --- failure to read time later than tnow from file
                         print *, ' '
                         write(*,"(A)") 'INPUT FILE FAILURE'
+                        write(*,"(A,i8,A,A,A)") 'at node ',nidx, ' ',trim(node%Names(nidx)%str)
                         write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
                         tnext = util_datetime_secs_to_epoch(tnow)
                         call util_datetime_decodedate(tnext, year, month, day)
@@ -3103,7 +3104,7 @@ contains
                         write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
                         print *, ' '
                         
-                        call util_crashpoint(2098734)
+                        call util_crashpoint(6698734)
                     end if
                 else
                     !% --- if no external file, use the end time
@@ -3252,7 +3253,7 @@ contains
         !% TEMPORARY!
         ! if (bc_value < zeroR) then
         !     print *,'     negative value ',bc_value
-        !     stop 448723
+        !     stop 4487231
         ! end if
 
         !print *,'     ...leaving interface_get_flowBC================='

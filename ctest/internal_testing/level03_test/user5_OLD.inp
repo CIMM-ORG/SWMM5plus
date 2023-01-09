@@ -17,7 +17,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    08/11/1998
 REPORT_START_TIME    00:00:00
 END_DATE             08/11/1998
-END_TIME             01:00:00
+END_TIME             23:59:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -2493,9 +2493,6 @@ RainSeries1                 00:48      0.02930
 RainSeries1                 00:51      0.02930   
 RainSeries1                 00:54      0.05860   
 RainSeries1                 00:57      0.02930   
-RainSeries1                 01:00      0.0
-RainSeries1                 04:12      0.0 
-
 
 [REPORT]
 ;;Reporting Options

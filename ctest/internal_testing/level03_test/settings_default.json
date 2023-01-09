@@ -2,8 +2,8 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "WhiteBoxTesting_Hydraulics",
-        "Short" : "WhiteBoxTesting_Hydraulics"
+        "Long"  : "level03_test",
+        "Short" : "level03_test"
     },
     "Discretization" : {
         "NominalElemLength" : 30.00
@@ -28,14 +28,24 @@
             "isVolumeOut"       : true,
             "isWaveSpeedOut"    : true,
             "isPreissmannCelerityOut"   : true
+        },
+        "Report" : {
+            "useSWMMinpYN" : true,
+            "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
+            "suppress_MultiLevel_Output" : false,
+            "StartTime" : 0.0,
+            "TimeInterval" : 500.0,
+            "TimeUnits" : "Hours"
         }
     },
     "Simulation" : {
-        "useHydrology" : false
+        "useHydrology" : true
     },
     "Solver" : {
         "PreissmannSlot" : {
-            "Method" : "StaticSlot"
+            "Method" : "DynamicSlot"
         }
     }
 }

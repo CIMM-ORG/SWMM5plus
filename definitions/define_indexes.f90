@@ -153,7 +153,8 @@ module define_indexes
         enumerator :: ni_elem_idx      !% this is the element of an nJM node, upstream element of BCdn, downstream element of BCup
         enumerator :: ni_face_idx      !% for nJ2, BCup, BCdn, nJ1, this is the face associated with the node, not defined for nJM
         enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
-        enumerator :: ni_routeTo       !% subcatchment that node outfall is routed to
+        enumerator :: ni_routeTo       !% subcatchment indx that node outfall is routed to
+        enumerator :: ni_routeFrom     !% subcatchment indx with outlet to this node
         enumerator :: ni_SWMMoutfallIdx !% Outfall index in EPA SWMM for an outfall node
         enumerator :: ni_lastplusone !% must be last enum item
     end enum

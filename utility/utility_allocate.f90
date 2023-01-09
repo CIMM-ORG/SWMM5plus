@@ -1226,7 +1226,7 @@ contains
                 write(*,"(A,L)") '... setting%Output%FacesExist_byImage =', setting%Output%FacesExist_global
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop 448723
+                stop 4487232
             end if
 
             !% allocate the multi-level element storage for each image

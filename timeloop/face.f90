@@ -883,9 +883,13 @@ module face
         fPreissmenSet = [fr_Preissmann_Number]
         ePreissmenSet = [er_Preissmann_Number]
 
+        ! call util_CLprint ('     face_interpolation_interior at start')
+
         !% two-sided interpolation to using the upstream face set
         call face_interp_interior_set &
             (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack) 
+
+            ! call util_CLprint ('     face_interpolation_interior at AAAA')
 
         call face_interp_interior_set &
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
@@ -896,14 +900,21 @@ module face
         call face_interp_interior_set &
             (fPreissmenSet, ePreissmenSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
 
+
+            ! call util_CLprint ('     face_interpolation_interior at BBBB')
+
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
         !% note that these might be reset by hydraulic jump
         call face_copy_upstream_to_downstream_interior &
             (fGeoSetD, fGeoSetU, facePackCol, Npack)
 
+            ! call util_CLprint ('     face_interpolation_interior at CCCC')
+
         call face_copy_upstream_to_downstream_interior &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
+
+            ! call util_CLprint ('     face_interpolation_interior at DDDD')
         
         !% NOTE the following have their own Npack computations
 
@@ -1851,6 +1862,7 @@ module face
             integer, intent(in) :: facePackCol
             integer, pointer :: Npack
             integer, pointer :: thisP(:), eup(:), edn(:)
+            integer, pointer :: idx_fBCdn(:), idx_fBCup(:)
             real(8), pointer :: dt, eVolume(:)
         !%------------------------------------------------------------------
         !% Aliases
@@ -1861,10 +1873,21 @@ module face
             edn     => faceI(:,fi_Melem_dL)
             eVolume => elemR(:,er_Volume)
             dt      => setting%Time%Hydraulics%Dt
+
+            !% --- downstream BC on faces
+            idx_fBCdn       => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+            !% --- upstream BC on faces
+            idx_fBCup       => faceP(1:npack_faceP(fp_BCup),fp_BCup)
         !%------------------------------------------------------------------ 
 
         faceR(thisP,fr_FlowrateMax) =  eVolume(eup(thisP)) / dt
         faceR(thisP,fr_FlowrateMin) = -eVolume(edn(thisP)) / dt
+
+        !% --- set downstream BC to allow any level of inflow
+        faceR(idx_fBCdn,fr_FlowrateMin) = -nullvalueR
+
+        !% --- set upstream BC face to allow any level of inflow
+        faceR(idx_fBCup,fr_FlowrateMax) = nullvalueR
 
         ! print *, 'thisP ',thisP
         ! print *, 'eup(thisP)', eup(thisP)
@@ -1872,6 +1895,8 @@ module face
         ! print *, faceR(thisP,fr_FlowrateMax)
         ! print *, faceR(thisP,fr_FlowrateMin)
         ! stop 43534
+        
+   
 
     end subroutine face_flowrate_limits_interior
 !%

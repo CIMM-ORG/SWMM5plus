@@ -7,6 +7,7 @@ module adjust
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements
     use utility
     use utility_crash
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -123,7 +124,7 @@ module adjust
             call pack_small_and_zero_depth_elements (whichTM)
             
         end if
-               ! call util_CLprint('-------------1111')
+            !    call util_CLprint('-------------1111')
 
         call adjust_zerodepth_element_values (whichTM, CC) 
 
@@ -158,24 +159,27 @@ module adjust
         !% Declarations:
             integer, intent(in) :: whichTM
             logical, intent(in) :: ifixQcons
-            integer, pointer :: thisCol_CC, thisCol_JM
+            !integer, pointer :: thisCol_CC, thisCol_JM
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------
         !% Aliases:
         !%------------------------------------------------------------------
+            ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
+
         call adjust_smalldepth_face_fluxes     (whichTM,ifixQCons)
-            ! call util_CLprint ('FFF01  after zero/small face step A-----------------')
+            ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
 
         call adjust_zerodepth_face_fluxes_CC   (whichTM,ifixQCons)
-            ! call util_CLprint ('FFF02  after zero/small face step B-----------------')
+            ! call util_utest_CLprint ('FFF02  after zero/small face step B-----------------')
 
         call adjust_zerodepth_face_fluxes_JMJB (whichTM,ifixQCons)
-            ! call util_CLprint ('FFF03  after zero/small face step C-----------------')
+            ! call util_utest_CLprint ('FFF03  after zero/small face step C-----------------')
+        
 
         call adjust_JB_elem_flux_to_equal_face (whichTM) !% 20220123brh
-          !  call util_CLprint ('FFF04  after zero/small face step D-----------------')
-    
+            ! call util_utest_CLprint ('FFF04  after zero/small face step D-----------------')
+       
         !%------------------------------------------------------------------
         !% Closing:
  
@@ -848,6 +852,10 @@ module adjust
             fQCons(fdn(thisP)) = fQ(fdn(thisP))
         end if
 
+        ! print *,'A333',elemR(58,er_Flowrate), elemR(59,er_Flowrate)
+        ! print *, faceR(elemI(58,ei_Mface_uL),fr_Flowrate), faceR(elemI(59,ei_Mface_dL),fr_Flowrate)
+
+
         !% --- reset velocities
         fVel_d(fup(thisP)) = fQ(fup(thisP)) /  fArea_d(fup(thisP))
         fVel_u(fup(thisP)) = fQ(fup(thisP)) /  fArea_u(fup(thisP))
@@ -1062,6 +1070,15 @@ module adjust
         npack => npack_elemP(thisCol)
         if (npack > 0) then
             thisP  => elemP(1:npack,thisCol)
+            
+            ! print *, ' '
+            ! print *, 'in adjust_smalldepth_face_fluxes'
+            ! print *, 'thisP '
+            ! print *, thisP
+            ! print *, ' '
+            ! print *, 'face Q at top'
+            ! print *, faceQ(fdn(thisP))
+
             where (elemQ(thisP) .ge. zeroR)
                 !% --- flow in downstream direction
                 !%     downstream face value is minimum of the face value or element value
@@ -1081,10 +1098,16 @@ module adjust
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
             endwhere
 
+            ! print *, 'face Q after first step'
+            ! print *, faceQ(fdn(thisP))
+
             !% 20220531brh
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
             call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+
+            ! print *, 'face Q after second step'
+            ! print *, faceQ(fdn(thisP))
 
             if (ifixQCons) then
                 !% update the conservative face Q
@@ -1100,6 +1123,9 @@ module adjust
             fVel_u(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAu(fdn(thisP))
 
         
+            ! print *, 'face Q at end'
+            ! print *, faceQ(fdn(thisP))
+
         else
             !% no CC elements
         end if
@@ -1108,6 +1134,7 @@ module adjust
         npackJM => npack_elemP(thisColJM)
         if (npackJM > 0) then
             thisJM => elemP(1:npackJM,thisColJM)
+
             do ii = 1,max_branch_per_node,2
                 where (elemQ(thisJM+ii) .ge. zeroR)
                     !% --- flow in downstream direction in upstream branch
@@ -1148,6 +1175,8 @@ module adjust
             end do
         end if
         
+        
+
         !%------------------------------------------------------------------
         !% Closing:
     end subroutine adjust_smalldepth_face_fluxes
@@ -1498,6 +1527,11 @@ module adjust
         !%     Only applies where head gradient implies flow into the small volume and the
         !%     depth at the face is twice the small depth cutoff
 
+        ! print *, 'first where '
+        ! print *, elemH(51), faceHu(fdn(51))   
+        ! print *, faceDu(fdn(51)), twoR * thisDepthCutoff
+        ! print *, ' '
+
         where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
                 .and. &
                 (faceDu(fdn(thisP)) > twoR * thisDepthCutoff) )
@@ -1512,6 +1546,15 @@ module adjust
             !% --- limit by available volume flowrate that empties downstream element
             faceQ(fdn(thisP)) = max( faceQ(fdn(thisP)), faceQmin(fdn(thisP)))   
         end where
+
+        ! print *, ' '
+        ! print *, 'faceQ   ',faceQ(fdn(51))
+        ! print *, 'faceAu  ',faceAu(fdn(51))
+        ! print *, 'elemH   ',elemH(51)
+        ! print *, 'faceHu  ',faceHu(fdn(51))
+        ! print *, 'elemL   ',elemL(51)
+        ! print *, 'faceQmin',faceQmin(fdn(51))
+        ! print *, ' '
 
         !% --- for the upstream face dH/dx > 0 leads to a positive Q
         !%     Only applies where head gradient implies flow into the small volume and the
@@ -1530,8 +1573,6 @@ module adjust
            !% --- limit by available volume flowrate that empties upstream element
             faceQ(fup(thisP)) = min( faceQ(fup(thisP)), faceQmax(fup(thisP)))
         end where
-
-
 
     end subroutine adjust_faceflux_for_headgradient
 !%

@@ -398,6 +398,15 @@ module lowlevel_rk2
         grav => setting%constant%gravity
         !%-----------------------------------------------------------------------------
 
+        ! if (setting%Time%Step > 37466) then 
+        !     print *, 'in ll_momentum_Ksource_CC '
+        !     !print *, setting%Solver%MomentumSourceMethod, trim(reverseKey(setting%Solver%MomentumSourceMethod))
+            
+        !     print *, idn(1623), iup(1623), faceI(idn(1623),fi_Melem_dL)
+        !     print *, fAup(idn(1623)), fAdn(iup(1623))
+        !     print *, fHdn(iup(1623)), fHup(idn(1623))
+        ! end if
+
         select case (setting%Solver%MomentumSourceMethod)
         case (T00)
             elemR(thisP,outCol) = grav * ( &
@@ -407,6 +416,7 @@ module lowlevel_rk2
             elemR(thisP,outCol) = grav * onehalfR *  ( &
                 +fAup(idn(thisP)) * fHdn(iup(thisP))   &
                 -fAdn(iup(thisP)) * fHup(idn(thisP)) )
+
         case (T20)
             elemR(thisP,outCol) = grav * onesixthR *  (                       &
                 +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
@@ -820,8 +830,6 @@ module lowlevel_rk2
         ! print *, volumeLast(139), velocityLast(139), Msource(139)
         ! print *, crk(istep), delt, GammaM(139)  
 
-        !stop 2098734
-
     end subroutine ll_momentum_solve_CC
 !%
 !%==========================================================================
@@ -1133,7 +1141,13 @@ module lowlevel_rk2
                                       + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
                                     ) / gamma        
 
+                        !% --- prevent outflow is zero depth JM
                         if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
+                            eFlow(tB) = zeroR
+                        end if
+
+                        !% --- prevent outflow if head JM < head JB
+                        if (eHead(tM) < eHead(tB) .and. (eFlow(tB) < zeroR )) then 
                             eFlow(tB) = zeroR
                         end if
 
@@ -1169,7 +1183,13 @@ module lowlevel_rk2
                                      +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
                                     ) / gamma
 
+                        !% --- prevent outflow from zero depth JM
                         if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
+                            eFlow(tB) = zeroR
+                        end if
+
+                        !% --- prevent outflow if head JM < head JB
+                        if (eHead(tM) < eHead(tB) .and. (eFlow(tB) > zeroR )) then 
                             eFlow(tB) = zeroR
                         end if
 

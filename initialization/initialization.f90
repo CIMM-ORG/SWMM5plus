@@ -63,6 +63,7 @@ contains
             integer :: ii,jj
             integer, pointer :: Npack, thisP(:)
             integer, allocatable :: tempP(:)
+            real(8) :: arbitraryreal = 0.d0
             character(64) :: subroutine_name = 'initialize_toplevel'
             !% temporary debugging
             integer    :: elemInLink(100), nEleminLink, iset(5)
@@ -77,7 +78,13 @@ contains
         !% Preliminaries
             if (setting%Debug%File%initialization) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-------------------------------------------------------------------    
+        !%-------------------------------------------------------------------  
+        !% --- set a small rea based on machine precision
+        !%     produces a number that is significantly larger than machine
+        !%     precision so that it can be a usable number, but small enough
+        !%     to be irrelevant.
+        setting%Eps%Machine = tenR**(-floor(sqrt(-log10(tiny(arbitraryreal)))))
+
         !% --- set the CPU and wall-clock timers
         call init_model_timer()
 
@@ -177,14 +184,15 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
 
-        !% --- allocate storage for subcatchment arrays
-        !%     NOTE must be after init_globals
-        if (setting%Simulation%useHydrology) then 
-            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment allocation"
-            call util_allocate_subcatch()
-        else    
-            !% continue without hydrology    
-        end if
+                !% OBSOLETE
+                !% --- allocate storage for subcatchment arrays
+                !% MOVED INTO init_LinkNode_Arrays 20230105
+                ! if (setting%Simulation%useHydrology) then 
+                !     if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment allocation"
+                !     call util_allocate_subcatch()
+                ! else    
+                !     !% continue without hydrology    
+                ! end if
         
         !% --- store the SWMM-C curves in equivalent Fortran arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
@@ -221,7 +229,7 @@ contains
         elemI(:,ei_HeqType)      = undefinedKey
         elemI(:,ei_QeqType)      = undefinedKey
         !elemI(:,ei_specificType) = undefinedKey
-        
+      
         !% --- error checking
         if (.not. setting%Simulation%useHydraulics) then 
             if (this_image() == 1) then
@@ -248,7 +256,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
-
+        
         !% --- initialize the time variables
         if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
@@ -277,7 +285,7 @@ contains
         !% --- OUTPUT
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
 
-       
+
         !% --- ERROR CHECK
         !%     fail SWMM5+ for simulation that does NOT require hydraulics
         if (.not. setting%Simulation%useHydraulics) then !% brh20211208 -- only if N_link > 0
@@ -587,6 +595,13 @@ contains
         !% --- Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        !% --- Allocate subcatchment storage
+        if (setting%Simulation%useHydrology) then 
+            call util_allocate_subcatch()
+        else    
+            !% continue without hydrology    
+        end if
+
         !% --- Set default for all link and node keys
         call util_key_default_linknode()
 
@@ -847,6 +862,26 @@ contains
 
         !% --- Store the Link/Node names (moved here 20221216)
         call interface_update_linknode_names()
+
+        !% -----------------------
+        !% --- SUBCATCHMENT -- see also init_subcatchment
+        !% -----------------------
+        node%I(:,ni_routeFrom) = nullvalueI !% initialization 
+        if (setting%Simulation%useHydrology) then
+            do ii=1,setting%SWMMinput%N_subcatch
+                !% --- Subtract 1 from the SWMM5+ subcatchment index to get the 
+                !%     EPA SWMM subcatchment index; Add 1 to the EPA SWMM node index
+                !%     for the SWMM5+ node index
+                subcatchI(ii,si_runoff_nodeIdx) = interface_get_subcatch_runoff_nodeIdx(ii-1)+oneI
+                if (subcatchI(ii,si_runoff_nodeIdx) < 1) then !% not a runoff node (EPA SWMM flag)
+                    subcatchYN(ii,sYN_hasRunoff) = .false.
+                    subcatchI(ii,si_runoff_nodeIdx) = nullvalueI
+                else
+                    subcatchYN(ii,sYN_hasRunoff) = .true.
+                    node%I(subcatchI(ii,si_runoff_nodeIdx),ni_routeFrom) = ii
+                end if  
+            end do
+        end if
     
         !% -----------------------
         !% --- NODE DATA
@@ -902,10 +937,12 @@ contains
             ! write(*,*) '... nr_SurchargeExtraDepth = ',node%R(ii,nr_SurchargeExtraDepth) 
             ! write(*,*)
 
+            !% --- Note that Storage Constant is converted for correct units in api.c/api_get_nodef_attribute
             ! write(*,*) 'call api_nodef_StorageConstant == ', reverseKey_api(api_nodef_StorageConstant)
-            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant) * (0.3048**2.0)
+            node%R(ii,nr_StorageConstant)   = interface_get_nodef_attribute(ii, api_nodef_StorageConstant)
             ! write(*,*) '... nr_StorageConstant = ',node%R(ii,nr_StorageConstant)
             ! write(*,*)
+
 
             ! write(*,*) 'call api_nodef_StorageExponent == ', reverseKey_api(api_nodef_StorageExponent)
             node%R(ii,nr_StorageExponent)   = interface_get_nodef_attribute(ii, api_nodef_StorageExponent)
@@ -1007,12 +1044,16 @@ contains
                 end select
             end if 
             
-            !% nJ2 strictly has one upstream and one downstream link
-            !% other cases where an nJ2 has only (i) two upstream and no downstream links,
-            !% or (ii) two downstream and no upstream links, will both be considered as a nJm
-            if ((node%I(ii, ni_node_type) == nJ2) .and. &
-                ((node%I(ii,ni_N_link_u) > oneI)  .or.  &
-                 (node%I(ii,ni_N_link_d) > oneI))) then
+            !% --- nJ2 strictly has one upstream and one downstream link and
+            !%     cannot be a subcatchment outlet  
+            !%     other cases where an nJ2 has only (i) two upstream and no downstream links,
+            !%     or (ii) two downstream and no upstream links, will both be considered as a nJm
+            if ( (node%I(ii,ni_node_type)  ==  nJ2)  &
+                .and. &
+                ((node%I(ii,ni_N_link_u)   >   oneI)  .or.  &
+                 (node%I(ii,ni_N_link_d)   >   oneI)  .or.  &
+                 (node%I(ii,ni_routeFrom) .ne. nullvalueI) &
+                )) then
                     !% ... switching to a 2 link nJm junction type'
                     ! write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
                     node%I(ii, ni_node_type) = nJm
@@ -1953,7 +1994,7 @@ contains
             integer :: ii, kk
             integer, pointer :: nodeIdx(:), elemIdx(:), nodeType(:)
             integer, pointer :: tface, subRunon, thisSub, thisRunon
-            logical, pointer :: isToNode(:)
+            !logical, pointer :: isToNode(:)
             character(64) :: subroutine_name = 'init_subcatchment'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -1964,24 +2005,32 @@ contains
         !% Aliases
             nodeIdx  => subcatchI(:,si_runoff_nodeIdx) 
             elemIdx  => subcatchI(:,si_runoff_elemIdx)
-            isToNode => subcatchYN(:,sYN_hasRunoff)
+            !isToNode => subcatchYN(:,sYN_hasRunoff)
             nodeType => node%I(:,ni_node_type)
         !%------------------------------------------------------------------
 
+            !print *, 'in init_subcatchment'
+
         !% --- cycle through subcatchments to set connections to runoff nodes in EPA SWMM
         do ii=1,setting%SWMMinput%N_subcatch
+                
+                !print *, 'ii= ',ii, nodeIdx(ii)
+
+            if (nodeIdx(ii) .eq. nullvalueI) cycle
+            !% -- the following was moved to init_linknode_arras 20230105
+            !%    so that nJM at outlet can be enforced.
             !% --- Subtract 1 from the SWMM5+ subcatchment index to get the 
             !%     EPA SWMM subcatchment index; Add 1 to the EPA SWMM node index
             !%     for the SWMM5+ node index
-            nodeIdx(ii) = interface_get_subcatch_runoff_nodeIdx(ii-1)+oneI
-            if (nodeIdx(ii) < 1) then !% not a runoff node (EPA SWMM flag)
-                isToNode(ii) = .false.
-            else
-                isToNode(ii) = .true.
-            end if   
+            ! nodeIdx(ii) = interface_get_subcatch_runoff_nodeIdx(ii-1)+oneI
+            ! if (nodeIdx(ii) < 1) then !% not a runoff node (EPA SWMM flag)
+            !     isToNode(ii) = .false.
+            ! else
+            !     isToNode(ii) = .true.
+            ! end if   
 
-            !print *, 'in ',trim(subroutine_name)
-            !print *, ii, nodeIdx(ii), trim(reverseKey(nodeType(nodeIdx(ii))))
+            ! !print *, 'in ',trim(subroutine_name)
+            ! !print *, ii, nodeIdx(ii), trim(reverseKey(nodeType(nodeIdx(ii))))
 
             !% --- the runoff image (partition) is the node image (partition)
             subcatchI(ii,si_runoff_P_image) = node%I(nodeIdx(ii), ni_P_image)
@@ -2039,7 +2088,6 @@ contains
                 case (nBCup,nJ1)
                     !% --- for a node that is an upstream BC or dead end the subcatch connects 
                     !%     into the first element downstream of the face
-                   ! tface => node%I(nodeIdx(ii),ni_elemface_idx) OBSOLETE 
                     tface => node%I(nodeIdx(ii),ni_face_idx) 
                     if (tface .ne. nullvalueI) then 
                         elemIdx(ii) = faceI(tface,fi_Melem_dL)
@@ -2101,10 +2149,13 @@ contains
                         call util_crashpoint(1098245)
                     end if
                 case default 
+                    print *, ii, nodeIdx(ii)
                     write(*,*) 'CODE ERROR: unexpected case default in '//trim(subroutine_name)
+                    print *, 'node index ',nodeIdx(ii)
+                    print *, 'ID ', trim(node%Names(nodeIdx(ii))%str)
                     print *, 'Node Type # of ',nodeType(nodeIdx(ii))
                     print *, 'which has key of ',trim(reverseKey(nodeType(nodeIdx(ii))))
-                    !stop 
+                    !print *, 'allowable node types ',nJ2,nJm, nBCup, nJ1, nBCdn
                     call util_crashpoint(3758974)
                     !return
                 end select
@@ -2116,16 +2167,15 @@ contains
             end if
         end do
 
+        !% --- initialize the runon counter for each subcatchment
+        subcatchI (:,si_RunOn_count) = zeroI
+        subcatchYN(:,sYN_hasRunOn)   = .false.  
+
         !% --- cycle through nodes if there are runons to subcatchments.
         !%     Outfalls store the runon connections from nodes to subcatchments 
         if (N_subcatch_runon > 0) then
-            !% --- initialize the counter for runons to each subcatchment
-            subcatchI (:,si_RunOn_count) = zeroI
-            subcatchYN(:,sYN_hasRunOn)   = .false.    
-
             !% --- cycle through the nodes
             do ii=1,N_node
-                ! print *, 'routeTo for ',ii,' is ', node%I(ii,ni_routeTo)
 
                 !% --- look for nodes with valid routeTo data
                 if  ( (node%I(ii,ni_routeTo) > 0)                               &
@@ -2156,6 +2206,8 @@ contains
                 end if
 
             end do
+        else
+            !% --- no action, initialization already done.
         end if
         
         ! do ii = 1,setting%SWMMinput%N_subcatch
@@ -2249,7 +2301,6 @@ contains
         setting%Time%End = ttime
        ! print *, 'time end ',setting%Time%End
 
-       ! stop 2098734
 
         ! print *, ' '
         ! print *, ' '

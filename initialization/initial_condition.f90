@@ -223,7 +223,6 @@ contains
         !% --- set all the zero and small volumes
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
         call adjust_zero_and_small_depth_elem (ETM, .true.)
-        call adjust_zero_and_small_depth_face (ETM, .false.)
 
             ! call util_CLprint ('initial_condition after adjust_zero_and_small_depth_elem and _face')
 
@@ -359,7 +358,15 @@ contains
         call init_IC_oneVectors ()
 
         !call util_CLprint ('initial_condition at end')
-        !stop 598734
+
+        ! print *, trim(reverseKey(elemI(iet(3),ei_geometryType)))
+        ! print *, 'z bottom          ',elemR(iet(3),er_Zbottom)
+        ! print *, 'zbreadtmax        ',elemR(iet(3),er_ZbreadthMax)
+        ! print *, 'zcrown            ',elemR(iet(3),er_Zcrown)
+        ! print *, 'DepthAtBreadthMax ',elemR(iet(3),er_DepthAtBreadthMax)
+        ! print *, 'full depth        ',elemR(iet(3),er_FullDepth)
+        ! print *, 'full topwidth     ',elemR(iet(3),er_FullTopWidth)
+        ! stop 598734
 
         ! !% --- initialized the max face flowrate
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_flowrate_max...'
@@ -476,7 +483,7 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
-            !print *, 'link ',ii
+            ! print *, 'link ',ii
 
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
@@ -497,7 +504,7 @@ contains
             call init_IC_get_elemtype_from_linkdata (thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
-            !print *, 'calling get geometry'
+            ! print *, 'calling get geometry'
             call init_IC_get_geometry_from_linkdata (thisLink)
             !print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
@@ -1221,6 +1228,7 @@ contains
         select case (linkType)
 
             case (lChannel)
+                
                 !% get geometry data for channels
                 call init_IC_get_channel_geometry (thisLink)
 
@@ -1621,6 +1629,9 @@ contains
             elemSGR(thisP,esgr_Triangular_Slope)       = elemSGR(thisP,esgr_Triangular_TopBreadth) &
                                                          / (twoR * elemR(thisP,er_FullDepth))
 
+            ! print *, 'triangular topbreadth ',   elemSGR(thisP,esgr_Triangular_TopBreadth), &
+            ! 2.d0 * elemSGR(thisP,esgr_Triangular_Slope) * elemR(thisP,er_FullDepth)
+
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
@@ -1649,7 +1660,7 @@ contains
                                                 (thisP, fullarea(thisP), fullperimeter(thisP))
 
             !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP)
-            
+                                         
             !% --- dependent data
             
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea)
@@ -1747,6 +1758,11 @@ contains
         elemR(thisP,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
         elemR(thisP,er_FullArea)      = link%R(thisLink,lr_FullArea)
         elemR(thisP,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+        ! print *, ' '
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, 'geometry type ',geometryType,trim(reverseKey(geometryType))
+        ! print *, ' '
 
         select case (geometryType)
 
@@ -2108,7 +2124,7 @@ contains
 
                 !% --- independent data
                 elemR(thisP,er_BreadthMax)              = link%R(thisLink,lr_BreadthScale)
-                elemR(thisP,er_DepthAtBreadthMax)       = elemR(thisP,er_FullDepth)
+                elemR(thisP,er_DepthAtBreadthMax)       = onehalfR * elemR(thisP,er_FullDepth)
                 elemSGR(thisP,esgr_Rectangular_Breadth) = elemR(thisP,er_BreadthMax) 
 
                 !% --- error checking
@@ -2119,7 +2135,7 @@ contains
                     print *, 'Problem with link # ',thisLink
                     print *, 'which is named ',trim(link%Names(thisLink)%str)
                     call util_crashpoint(698705)
-                end if               
+                end if   
 
                 call geo_common_initialize (thisP, rectangular_closed, dummyA, dummyA, dummyA, dummyA)
                     
@@ -2131,7 +2147,8 @@ contains
             elemSGR(thisP,esgr_Rectangular_Round_Ybot)   = link%R(thisLink,lr_BottomDepth)
             elemSGR(thisP,esgr_Rectangular_Round_Rbot)   = link%R(thisLink,lr_BottomRadius)
             elemR( thisP,er_BreadthMax)                  = link%R(thisLink,lr_BreadthScale)
-            elemR( thisP,er_DepthAtBreadthMax)           = elemR(thisP,er_FullDepth)
+            elemR( thisP,er_DepthAtBreadthMax)           = elemSGR(thisP,esgr_Rectangular_Round_Ybot) &
+                                                         + elemSGR(thisP,esgr_Rectangular_Round_Rbot)
 
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
@@ -3184,9 +3201,6 @@ contains
         !% Preliminaries
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-            !print *, 'inside ',trim(subroutine_name)
-
         !%................................................................
         !% Junction main
         !%................................................................
@@ -3209,8 +3223,7 @@ contains
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
-                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)    
-                
+                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)                    
             else
                 !% --- tabular storage
                 elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
@@ -3220,10 +3233,10 @@ contains
             elemSR(JMidx,esr_Storage_FractionEvap)= node%R(thisJunctionNode,nr_StorageFevap)
         else
             !%-----------------------------------------------------------------------
-            !% HACK: Junction main with implied storage are rectangular
+            !% Junction main with implied storage is rectangular
             !%-----------------------------------------------------------------------
             elemSI(JMidx,esi_JunctionMain_Type)    = ImpliedStorage
-            elemI(JMidx,ei_geometryType)           = rectangular
+            elemI (JMidx,ei_geometryType)          = rectangular
             elemSR(JMidx,esr_Storage_FractionEvap) = zeroR  !% --- no evap from implied storage junction
         end if
 
@@ -3231,7 +3244,6 @@ contains
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
-        !elemR(JMidx,er_FullEllDepth)   = node%R(thisJunctionNode,nr_FullDepth)
         elemR(JMidx,er_Zcrown)    = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
         
         !% --- overflow volume accumulator
@@ -3290,12 +3302,6 @@ contains
             ! end if
         end if    
 
-        !print *, 'JMidx',JMidx
-        ! print *, elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)
-        ! print *, elemSR(JMidx,esr_JunctionMain_PondedArea)
-        ! print *, elemYN(JMidx,eYN_canSurcharge)
-        ! print *, ' '
-
         !% JM elements are not solved for momentum.
         elemR(JMidx,er_Flowrate)     = zeroR
         elemR(JMidx,er_Velocity)     = zeroR
@@ -3307,19 +3313,7 @@ contains
         elemR(JMidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JMidx,er_Depth))
         elemR(JMidx,er_FroudeNumber) = zeroR
 
-
-        !% REPLACED THIS WITH STUFF ABOVE 20220907brh
-        ! !% find if the node can surcharge
-        ! if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) .ne. nullValueR) then
-        !     elemYN(JMidx,eYN_canSurcharge)  = .true.
-        !     elemR(JMidx,er_FullDepth)       = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
-        !     ! elemI(JMidx,ei_geometryType)    = rectangular_closed
-        ! else
-        !     elemYN(JMidx,eYN_canSurcharge)  = .false.
-        ! end if
-
         !% --- self index
-        !elemI(JMidx,ei_main_idx_for_branch) = JMidx
         elemSI(JMidx,esi_JunctionBranch_Main_Index ) = JMidx
    
         !%................................................................
@@ -3560,236 +3554,225 @@ contains
         end do
         elemR(JMidx,er_Length) = LupMax + LdnMax   
         
-        !% get junction main geometry based on type
+        !% --- get junction main geometry based on type
         JmType => elemSI(JMidx,esi_JunctionMain_Type)
 
         select case (JmType)
 
-        case (ImpliedStorage)
+            case (ImpliedStorage)
 
-            !% --- Plane area is the sum of the branch plane area 
-            !%     This uses simplified geometry approximations as the junction main is only
-            !%     mass conservation only, which means its volume change can be approximated
-            !%     as if it is a rectangular box of Storage_Plane_Area x Depth
-            elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
+                !% --- Plane area is the sum of the branch plane area 
+                !%     This uses simplified geometry approximations as the junction main is only
+                !%     mass conservation only, which means its volume change can be approximated
+                !%     as if it is a rectangular box of Storage_Plane_Area x Depth
+                elemSR(JMidx,esr_Storage_Plane_Area) = zeroR
 
-            !% --- Full area is the sum of the branch full area
-            !%     PRESENTLY ONLY AVAILABLE FOR IMPLIED STORAGE 
-            !%     NEEDED FOR FUNCTIONAL AND TABULAR IF PREISSMANN SLOT
-            !%     SURCHARGE ON FUNCTIONAL OR TABULAR IS DESIRED
-            elemR(JMidx,er_FullArea) = zeroR
+                !% --- Full area (cross-sectional) is the sum of the branch full area for implied storage
+                elemR(JMidx,er_FullArea) = zeroR
 
-            do ii=1,max_branch_per_node
-                JBidx = JMidx + ii
-                if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+                do ii=1,max_branch_per_node
+                    JBidx = JMidx + ii
+                    if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
 
-                BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
-                JBgeometryType => elemI(JBidx,ei_geometryType)
+                    BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
+                    JBgeometryType => elemI(JBidx,ei_geometryType)
 
-                !% -- get the full area by summation of full area branches
-                elemR(JMidx,er_FullArea) = elemR(JMidx,er_FullArea) + init_IC_get_branch_fullarea(JBidx)
+                    !% -- get the full area by summation of full area branches
+                    elemR(JMidx,er_FullArea) = elemR(JMidx,er_FullArea) + init_IC_get_branch_fullarea(JBidx)
 
-                select case (JBgeometryType)
-                case (rectangular,rectangular_closed)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                          * elemR(  JBidx,er_Length)                                          &
-                          * elemSGR(JBidx,esgr_Rectangular_Breadth) )
+                    !% --- compute the storage plane area by accumulation from branches
+                    select case (JBgeometryType)
+                        case (rectangular,rectangular_closed)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                                * elemR(  JBidx,er_Length)                                          &
+                                * elemSGR(JBidx,esgr_Rectangular_Breadth) )
 
-                case (trapezoidal)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                  &
-                                  * elemR(  JBidx,er_Length)                                     &
-                                  * ( elemSGR(JBidx,esgr_Trapezoidal_Breadth)                    &
-                                     +elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)                  &
-                                     +elemSGR(JBidx,esgr_Trapezoidal_RightSlope)))
+                        case (trapezoidal)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                    +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                  &
+                                        * elemR(  JBidx,er_Length)                                     &
+                                        * ( elemSGR(JBidx,esgr_Trapezoidal_Breadth)                    &
+                                            +elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)                  &
+                                            +elemSGR(JBidx,esgr_Trapezoidal_RightSlope)))
 
-                case (triangular)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
-                case (parabolic)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                          * elemR(  JBidx,er_Length)                                          &
-                          * elemSGR(JBidx,esgr_Parabolic_Breadth) )
+                        case (triangular)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
+                        case (parabolic)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                                * elemR(  JBidx,er_Length)                                          &
+                                * elemSGR(JBidx,esgr_Parabolic_Breadth) )
 
-                case (rect_triang)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI(JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR( JBidx,er_BreadthMax)/twoR) )
+                        case (rect_triang)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI(JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR( JBidx,er_BreadthMax)/twoR) )
 
-                case (basket_handle)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
+                        case (basket_handle)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+                        
+                        case (arch)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                        case (horiz_ellipse)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+                        
+                        case (vert_ellipse)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                        case (eggshaped)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                        case (horseshoe)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+                        case (catenary)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                        case (gothic)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+                        
+                        case (semi_elliptical)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+                                            
+                        case (circular,force_main)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                                * elemR(  JBidx,er_Length)                                          &
+                                * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                        case (semi_circular)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+                        
+                        case (filled_circular)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
+                                * elemR(  JBidx,er_Length)                                             &
+                                * elemR(  JBidx,er_BreadthMax) )
+                        
+                        case (mod_basket)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
+                                * elemR(  JBidx,er_Length)                                             &
+                                * elemR(  JBidx,er_BreadthMax) )
+                        
+                        case (rect_round)
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                                            * elemR(  JBidx,er_Length)                                   &
+                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                        case (irregular)    
+                            !% --- for irregular geometry, we use the average breadth for the area below
+                            !%     the maximum breadth as the characteristic width of the branch
+                            elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
+                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                                * elemR(  JBidx,er_Length)                                          &
+                                * elemR(  JBidx,er_AreaBelowBreadthMax) / elemR(JBidx,er_ZbreadthMax))
+
+                        case default
+                            print *, 'In, ', subroutine_name
+                            print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
+                            print *, 'which has key ',trim(reverseKey(JBgeometryType))
+                            !stop 
+                            call util_crashpoint(308974)
+                            !return
+                    end select
+                end do
+
+                !% Breadth is consistent with length and plane area
+                elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plane_Area) &
+                                                        /   elemR(JMidx,er_Length)
+                elemR(JMidx,er_BreadthMax) =  elemSGR(JMidx,esgr_Rectangular_Breadth)                                      
+
+            case (FunctionalStorage)     
+                !% --- create a storage curve from the function
+                call storage_create_curve_from_function (JMidx)
+                !% --- get this curveID
+                CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+                elemR(JMidx,er_FullVolume) = maxval(curve(CurveID)%ValueArray(:,curve_storage_volume))
+                !% --- Computing the Full (cross-sectional) Area for storage as
+                !%     Area = FullDepth * AverageTopwidth
+                !%          = FullDepth * sqrt(Average(PlaneArea))
+                !%          = FullDepth * sqrt(FullVolume/FullDepth)
+                !%          = sqrt(FullDepth * Full Volume) 
+                !%     which would be simply sqrt(FullVolume * FullDepth)
+                !%     This would allow the preissmann slot to be set for surcharged
+                !%      on storage elements.
+                elemR(JMidx,er_FullArea)   = sqrt( elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth) )
+                !% --- max breadth approximated as sqrt of max planar area
+                elemR(JMidx,er_BreadthMax) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
+
+            case (TabularStorage)
+                CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+                !% --- set the element index for the curve
+                Curve(CurveID)%ElemIdx = JMidx
+
+                !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
+                !% to get to integrate the area vs depth curve
+                call storage_create_integrated_volume_curve (CurveID)
                 
-                case (arch)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
+                !% --- set full values based on curve
+                elemR(JMidx,er_FullVolume) = maxval(curve(CurveID)%ValueArray(:,curve_storage_volume))
+                !% --- see note in Functional Storage
+                elemR(JMidx,er_FullArea)   = sqrt( elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth) )
+                !% --- max breadth approximated as sqrt of max planar area
+                elemR(JMidx,er_BreadthMax) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
 
-                case (horiz_ellipse)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-                
-                case (vert_ellipse)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                case (eggshaped)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                case (horseshoe)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-                case (catenary)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                case (gothic)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-                
-                case (semi_elliptical)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-                                    
-                case (circular,force_main)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                          * elemR(  JBidx,er_Length)                                          &
-                          * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                case (semi_circular)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-                
-                case (filled_circular)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
-                          * elemR(  JBidx,er_Length)                                             &
-                          * elemR(  JBidx,er_BreadthMax) )
-                
-                case (mod_basket)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
-                          * elemR(  JBidx,er_Length)                                             &
-                          * elemR(  JBidx,er_BreadthMax) )
-                
-                case (rect_round)
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                                +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                    * elemR(  JBidx,er_Length)                                   &
-                                    * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                case (irregular)    
-                    !% --- for irregular geometry, we use the average breadth for the area below
-                    !%     the maximum breadth as the characteristic width of the branch
-                    elemSR(JMidx,esr_Storage_Plane_Area) = elemSR(JMidx,esr_Storage_Plane_Area)  &
-                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                          * elemR(  JBidx,er_Length)                                          &
-                          * elemR(  JBidx,er_AreaBelowBreadthMax) / elemR(JBidx,er_ZbreadthMax))
-
-                case default
-                    print *, 'In, ', subroutine_name
-                    print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
-                    print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                    !stop 
-                    call util_crashpoint(308974)
-                    !return
-                end select
-            end do
-
-            ! print *, ' '
-            ! print *, 'here in initial_condition at 60987 for implied storage plane area'
-            ! print *, trim(reverseKey(JBgeometryType))
-            ! print *, JMidx, elemSR(JMidx,esr_Storage_Plane_Area), elemR(JBidx,er_BreadthMax)
-            ! print *, ' '
-
-            !% Breadth is consistent with length and plane area
-            elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plane_Area) &
-                                                    /   elemR(JMidx,er_Length)
-
-        case (FunctionalStorage)
-            ! !elemR(JMidx,er_Volume)     = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth)      &
-            ! !   + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
-            ! !        * elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
-            ! elemR(JMidx,er_Volume) = storage_functional_volume_from_depth_singular (JMidx,elemR(JMidx,er_Depth))      
-            ! elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
-            ! elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
-            ! !elemR(JMidx,er_FullVolume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_FullDepth)  &
-            ! !    + (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR))  &
-            ! !        * elemR(JMidx,er_FullDepth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
-            ! elemR(JMidx,er_FullVolume) = storage_functional_volume_from_depth_singular (JMidx,elemR(JMidx,er_FullDepth))       
-            !% create a storage curve
-            call storage_create_curve (JMidx)
-
-        case (TabularStorage)
-            CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
-            !NumRows => curve(CurveID)%NumRows 
-            !% --- set the element index for the curve
-            Curve(CurveID)%ElemIdx = JMidx
-
-            !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
-            !% to get to integrate the area vs depth curve
-            call storage_integrate_area_vs_depth_curve (CurveID)
-
-            ! !% now interpolate from the cure to get the volume
-            ! call storage_interpolate_volume_from_depth_singular (JMidx)
-
-            ! elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
-            ! elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
-            ! elemR(JMidx,er_FullVolume) = Curve(CurveID)%ValueArray(NumRows,curve_storage_volume)
-
-        case default
-            !% IMPORTANT -- if any other new type is defined, make sure that
-            !% subroutine geo_depth_from_volume is updated
-            print *, 'In, ', subroutine_name
-            print *, 'CODE ERROR junction main type unknown for # ', JmType
-            print *, 'which has key ',trim(reverseKey(JmType))
-            !stop 
-            call util_crashpoint(54895)
-            !return
+            case default
+                !% IMPORTANT -- if any other new type is defined, make sure that
+                !% subroutine geo_depth_from_volume is updated
+                print *, 'In, ', subroutine_name
+                print *, 'CODE ERROR junction main type unknown for # ', JmType
+                print *, 'which has key ',trim(reverseKey(JmType))
+                !stop 
+                call util_crashpoint(54895)
+                !return
 
         end select
 
-        elemR(JMidx,er_Volume)     = storage_volume_from_depth_singular (JMidx,elemR(JMidx,er_Depth))
-        elemR(JMidx,er_FullVolume) = storage_volume_from_depth_singular (JMidx,elemR(JMidx,er_FullDepth))      
+        !% -- initial conditions
+        elemR(JMidx,er_Volume)     = storage_volume_from_depth_singular (JMidx,elemR(JMidx,er_Depth))  
         elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
         elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
 
-        !% HACK Consider computing the Full Area for storage by taking
-        !%   FullDepth * sqrt(FullVolume/FullDepth) 
-        !%   which would be simply sqrt(FullVolume * FullDepth)
-        !%   This would allow the preissmann slot to be set for surcharged
-        !%   on storage elements.
-        select case (JmType)
-        case (FunctionalStorage, TabularStorage)
-            elemR(JMidx,er_FullArea) = sqrt(elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth))
-        end select
+
         
+        !print *, 'JM ',JMidx, elemR(JMidx,er_BreadthMax)
         !stop 2397840
 
         if (setting%Debug%File%initial_condition) &
@@ -5052,7 +5035,6 @@ contains
         !         print *, faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
         !     end do
 
-        !    stop 2098734
 
         !% --- Initialize Head BCs
         if (N_headBC > 0) then
@@ -5354,7 +5336,6 @@ contains
         end do
 
         !print *,uniformTableR(1,utr_SFmax)
-        !stop 2098734
 
     end subroutine init_BChead_uniformtable
 !%
@@ -5421,15 +5402,14 @@ contains
         ! print *,'Umax ',uniformTableR(UT_idx,utr_max)
         ! print *, 'by depth ',geo_sectionfactor_from_depth_singular (eIdx,20.d0)
         ! print *, 'UT_idx ',UT_idx
-
-        !stop 2098734
+ 
         
         !% --- Get delta step for stepping through the non-uniform computation
         !%     looking for at least 3 digits of precision in cycling through nonuniform
         !%     values
         !%     Note: We ALWAYS step through in depth
         deltaDepth = uniformTableR(UT_idx,utr_DepthMax) / real(1000*(N_uniformTableData_items-1),8)
-        if (deltaDepth < onehundredR*tiny(deltaDepth)) then
+        if (deltaDepth < setting%Eps%Machine) then
             print *, 'CONFIGURATION OR CODE ERROR: too small of a depth step in ',trim(subroutine_name)
         end if
 
@@ -5674,19 +5654,19 @@ contains
         if (.not. setting%ZeroValue%UseZeroValues) return
 
         !% --- depth zero is used as set by json file
-        if (depth0 < tenR * tiny(depth0)) then
+        if (depth0 .le. onethousandR * setting%Eps%Machine) then
             print *, 'USER ERROR: setting.ZeroValue.Depth is too small '
             print *, 'selected value is   ',depth0
-            print *, 'minimum required is ', tenR * depth0
+            print *, 'minimum required is ', onethousandR * setting%Eps%Machine
             call util_crashpoint(798523)
             return
         end if
 
         !% --- slope zero is used as set by json file
-        if (slope0 < tenR * tiny(slope0)) then
+        if (slope0 .le. onethousandR *setting%Eps%Machine) then
             print *, 'USER ERROR: setting.ZeroValue.Slope is too small '
             print *, 'selected value is   ',slope0
-            print *, 'minimum required is ', tenR * slope0
+            print *, 'minimum required is ', onethousandR * setting%Eps%Machine
             call util_crashpoint(7985237)
             return
         end if
@@ -5723,6 +5703,7 @@ contains
                     call util_crashpoint(6629873)
                 end select
 
+
                 ! print *, thisP, trim(reverseKey(elemI(thisP,ei_elementType))), &
                 !  elemI(thisP,ei_geometryType), trim(reverseKey(elemI(thisP,ei_geometryType))), &
                 !   elemR(thisP,er_Temp01)
@@ -5739,29 +5720,30 @@ contains
 
             !% --- get the minimum values, use 1/2 to ensure
             !%     that a zerovalue for depth will have a larger
-            !%     value of topwidth, area, and volume thant the
+            !%     value of topwidth, area, and volume than the
             !%     zerovalues of the respective terms
             allP => elemP(1:Npack,ep_ALLtm)
             topwidth0 = minval( elemR(allP,er_Temp01)) * onehalfR
             area0     = minval( elemR(allP,er_Temp02)) * onehalfR
             volume0   = minval( elemR(allP,er_Temp03)) * onehalfR
 
-            !% --- checking scale consistency
-            area0   = min(area0,   topwidth0 * depth0)
-            volume0 = min(volume0, area0 * setting%Discretization%NominalElemLength)
-
             !% Ensure zero values are not too small
-            if (topwidth0 .le. tenR * tiny(topwidth0)) then
-                topwidth0 = onehundredR * tiny(topwidth0)
+            if (topwidth0 .le. setting%Eps%Machine) then
+                topwidth0 = onethousandR * setting%Eps%Machine
             end if
 
-            if (area0 .le. tenR * tiny(area0)) then
-                area0 = onehundredR * tiny(area0)
+            if (area0 .le. setting%Eps%Machine) then
+                area0 = onethousandR * setting%Eps%Machine
             end if
 
-            if (volume0 .le. tenR * tiny(volume0)) then
-                volume0 = onehundredR * tiny(volume0)
+            if (volume0 .le. setting%Eps%Machine) then
+                volume0 = onethousandR * setting%Eps%Machine
             end if
+
+            !% --- checking scale consistency
+            topwidth0 = max(topwidth0, area0 / depth0)
+            volume0   = min(volume0, area0 * setting%Discretization%NominalElemLength)
+
 
             !% --- reset temporary arrays used above
             elemR(:,er_Temp01) = nullvalueR
@@ -5791,7 +5773,7 @@ contains
                 if (elemR(ii,er_Depth) > depth0) then
                     !% --- depth for volume0 is larger than depth0
                     volumeIncrease = (elemR(ii,er_Depth) - depth0) * elemR(ii,er_Topwidth) * elemR(ii,er_Length)
-                    volume0 = min(volume0, min(volume0a - volumeIncrease, onehundredR*tiny(volume0)) )
+                    volume0 = min(volume0, min(volume0a - volumeIncrease, onehundredR*setting%Eps%Machine) )
                 end if
             end do
 
@@ -5808,9 +5790,6 @@ contains
             !  print *, 'topwidth0',topwidth0
             !  print *, 'area0    ',area0
             !  print *, 'volume0  ',volume0   
-
-
-            ! stop 598723
 
             ! !% --- compute the topwidths for zero depth
             ! !%     temporary store initial condition topwidth
@@ -5841,34 +5820,37 @@ contains
             !return
         end if
 
-        if (depth0 < 1e-16) then
+        if (depth0 < setting%Eps%Machine) then
+            print *, depth0
             print *, 'error, setting%ZeroValue%Depth is too small'
             !stop 
-            call util_crashpoint(3987095)
+            call util_crashpoint(39870951)
             !return
         end if
 
-        if (topwidth0 < 1e-16) then
+        if (topwidth0 < setting%Eps%Machine) then
+            print *, topwidth0
             print *, 'error, setting%ZeroValue%TopWidth is too small'
             !stop 
-            call util_crashpoint(3987095)
+            call util_crashpoint(39870952)
             !return
         end if
 
-        if (area0 < 1e-16) then
+        if (area0 < setting%Eps%Machine) then
+            print *, area0
             print *, 'error, setting%ZeroValue%Area is too small'
             !stop 
             call util_crashpoint(93764)
             !return
         end if
 
-        if (volume0 < 1e-16) then
+        if (volume0 < setting%Eps%Machine) then
+            print *, volume0
             print *, 'error, setting%ZeroValue%Volume is too small'
             !stop 
             call util_crashpoint(77395)
             !return
         end if
-
 
         !%------------------------------------------------------------------
         !% Closing

@@ -165,6 +165,7 @@ module parabolic_channel
         else 
             !% no changes needed if channel overflow is allowed
         endif
+        
 
         !perimeter(thisP) = onehalfR * rbot(thisP) * rbot(thisP) * (xx(thisP) * tt(thisP) + log(xx(thisP) + tt(thisP)))
 

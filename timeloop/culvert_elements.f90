@@ -187,8 +187,11 @@ module culvert_elements
 
         !%------------------------------------------------------------------
 
+        !print *, 'starting culvert_toplevel'
+
         !% --- cycle through the culverts
         do ii=1,npack
+            !print *, 'ii ',ii, npack
             !% --- inlet and outlet
             eIn    => thisE(ii)
             fInlet => elemI(thisE(ii),ei_Mface_uL)
@@ -200,9 +203,11 @@ module culvert_elements
             !% --- geometry type
             geoType => elemI(eIn,ei_geometryType)
 
+            !print *, 'calling culvert table pointers'
             !% --- get the correct table pointers for the geometry types
             call culvert_table_pointers(geoType, isTabular, Atable, Ttable)
             
+            !print *, 'calling culvert_isReversedFlow'
             !% --- check for flow reversal (upstream flow) and reset eIn=eOut if 
             !%     reversed flow occurs.
             isReversedFlow = culvert_isReversedFlow(eIn, eOut, fInlet, isInconsistentFlow)
@@ -211,6 +216,7 @@ module culvert_elements
             !%     both ends, do not use culvert flow limitation
             if (isInconsistentFlow) cycle
                 
+            !print *, 'calling culvert_inlet_depth'
             !% --- effective inlet flow depth
             Dinlet = culvert_inlet_depth(eIn,isReversedFlow)
 
@@ -219,6 +225,7 @@ module culvert_elements
             !% --- if negative inlet depth then there is no QIC
             if (Dinlet .le. zeroR) cycle
 
+            !print *, 'calling culvert_isSubmerged'
             !% --- check for submerged culvert and store H1s
             call culvert_isSubmerged (eIn, isReversedFlow, isSubmerged, H1s)
             
@@ -227,6 +234,7 @@ module culvert_elements
                 !print *, 'isSubmerged ',isSubmerged
                 QIC =  culvert_QIC_submerged_eq (eIn, Dinlet, isReversedFlow)
             else
+                !print *, 'calling culvert_istransition'
                 !% --- check for transition status (between submerged and unsubmerged)
                 !%     and store H1u
                 call culvert_isTransition (eIn,Dinlet,isTransition,H1u)
@@ -250,15 +258,17 @@ module culvert_elements
                         (isTabular,isReversedFlow, EqForm, eIn, geoType, PsiOut, Dinlet, &
                          Atable, TTable)
          
+                !print *, 'out of culvert QIC_unsubmerged'
                 !% ---  handle transition
                 if (isTransition) then 
+                    !print *, 'calling culvert_QIC_tranistion'
                     QIC = culvert_QIC_transition (eIn, Dinlet, QIC, H1s, H1u, &
                                                   isTransition, isReversedFlow)
                 end if
 
             endif
 
-             !print *, 'QIC, flowrate: ',QIC, elemR(eIn,er_Flowrate)
+            ! print *, 'QIC, flowrate: ',QIC, elemR(eIn,er_Flowrate)
 
             !% --- reset the flowrate on element and upstrem face
             !%     if inlet control is less than time-advance flowrate
@@ -267,7 +277,6 @@ module culvert_elements
                 faceR(fInlet,fr_Flowrate) = QIC
             end if
             
-
         end do
 
 
@@ -623,10 +632,28 @@ module culvert_elements
         Khat = culvert_Khat (eIn, Bhat)
         Dhat = culvert_Dhat (eIn, Dinlet, isReversedFlow)
 
+        ! print *, ' '
+        ! print *, 'halfM ',halfM
+        ! print *, 'Bhat  ',Bhat 
+        ! print *, 'Khat  ',Khat 
+        ! print *, 'Dhat  ',Dhat
+        !print *, 'smalldepth ',smalldepth
+
         !% --- STEP 2: initial values
         !%     Psi is the nondimensionalized depth (solution variable)
         Psi(1) = smalldepth
         Psi(2) = min(oneR, Dinlet/elemR(eIn,er_FullDepth) )
+
+        !% --- for very small Dinlet/Dconduit, set Q = 0
+        if (Psi(2) < Psi(1)) then
+            outvalue = zeroR
+            return
+        end if
+
+        ! print *, 'Dinlet FullDepth ',Dinlet, elemR(eIn,er_FullDepth)
+
+        ! print *, 'Psi(1:2) ', Psi(1), Psi(2)
+
         if (geoType == filled_circular) then 
             !% --- Psi must be based on total pipe diameter, not full depth
             !%     This is needed for later table lookups
@@ -635,8 +662,12 @@ module culvert_elements
         end if
         Psi(3) = onehalfR * (Psi(1) + Psi(2))
 
+        ! print *, 'Psi(3) ',Psi(3)
+
         !% --- STEP 3: define Delta
         Delta = abs(Psi(1)-Psi(2))
+
+        ! print *, 'Delta ',Delta
 
         !% --- STEPS 4, 5, 6: define gamma, phi, omega, and residual
         do ii=1,2
@@ -644,15 +675,16 @@ module culvert_elements
             resid(ii) = culvert_residual_form1 (Psi(ii), Omega(ii), halfM, Dhat, Khat, Bhat)
         end do
 
-       ! print *, Omega(1), Omega(2)
-       ! print *, resid(1), resid(2)
+        ! print *, 'resid(1:2) ',resid(1), resid(2)
+        ! print *, 'Omega(:)   ',Omega(1), Omega(2)
+
 
         !% --- STEP 7: check to see if we're done
-        if ( abs(resid(1)) < 100.d0 * tiny(resid) ) then
+        if ( abs(resid(1)) < epsConverged ) then
             outvalue = Psi(1)
             return
         end if
-        if ( abs(resid(2)) < 100.d0 * tiny(resid) ) then 
+        if ( abs(resid(2)) < epsConverged ) then 
             outvalue = Psi(2)
             return
         end if
@@ -661,9 +693,10 @@ module culvert_elements
         !%     they must be opposite sign
         if ( resid(1) * resid(2) > zeroR ) then 
             outvalue = nullvalueR  !% failure
-            !print *, 'failure of residual '
-            !stop 298734
-            return
+            print *, resid(1), resid(2)
+            print *, 'CODE ERROR: failure of residual constraint in culvert_Psi_unsubmerged_form1 '
+            call util_crashpoint(62987662)
+            !return
         end if
 
         isConverged = .false.
@@ -673,8 +706,10 @@ module culvert_elements
             Omega(3) = culvert_omega (isTabular, geoType, eIn, Psi(3), Atable, Ttable)
             resid(3) = culvert_residual_form1 (Psi(3), Omega(3), halfM, Dhat, Khat, Bhat)
 
+            !print *, 'iteration Step 6 resid(3) ', resid(3)
+
             !% --- STEP 7: check for solution
-            if ( abs(resid(3)) < 100.d0 * tiny(resid) ) then 
+            if ( abs(resid(3)) < epsConverged ) then 
                 outvalue = Psi(3)
                 isConverged = .true.
                 return
@@ -684,6 +719,8 @@ module culvert_elements
             Psi(4) = Psi(3)                                                     &
                 + (resid(3) * (Psi(3) - Psi(1)) * sign(oneR,resid(1)-resid(2))) &
                 / sqrt( (resid(3)**2) - resid(1) * resid(2)  )
+
+            !print *, 'Psi(4) ',Psi(4)   
 
             !% --- STEP 10: check for solution
             if (abs(Psi(4)-Psi(3)) .le. epsConverged) then 
@@ -695,6 +732,16 @@ module culvert_elements
             !% --- STEP 12,13: Compute Omega(4) and resid(4)
             Omega(4) = culvert_omega (isTabular, geoType, eIn, Psi(4), Atable, Ttable)  
             resid(4) = culvert_residual_form1 (Psi(4), Omega(4), halfM, Dhat, Khat, Bhat)
+
+            !% --- STEP 13a: check for solution
+            if ( abs(resid(4)) < epsConverged) then 
+                outvalue = Psi(4)
+                isConverged = .true.
+                return
+            end if
+
+            ! print *, 'step 12, 13',Omega(4), resid(4)
+            ! print *, 'resid(3),resid(4)', resid(3), resid(4)
 
             !% --- STEPS 14,15,16,17,18
             if (resid(3) * resid(4) < zeroR) then 
@@ -711,7 +758,9 @@ module culvert_elements
             else
                 !% FAILURE -- should not reach this point
                 outvalue = nullvalueR ! 
-                return
+                print *, 'CODE ERROR: diverging solution in culvert'
+                call util_crashpoint(598734)
+                !return
             end if
 
             !% --- STEP 19: update Psi(3)
@@ -725,7 +774,9 @@ module culvert_elements
             elseif ((abs(Psi(1)- Psi(2)) > Delta)) then
                 !% FAILURE -- diverging solution
                 outvalue = nullvalueR
-                return
+                print *, 'CODE ERROR: Diverging solution in culvert'
+                call util_crashpoint(7798743)
+                !return
             else 
                 Delta = abs(Psi(1) - Psi(2))
                 !% continue do loop

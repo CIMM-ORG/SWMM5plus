@@ -21,7 +21,7 @@ module irregular_channel
     public :: irregular_perimeter_and_hydradius_from_depth
 
 
-    public :: irregular_perimeter_from_hydradius_area
+    ! public :: irregular_perimeter_from_hydradius_area
     ! public :: irregular_hyddepth_from_topwidth_area
     public :: irregular_geometry_from_depth_singular
 
@@ -123,6 +123,10 @@ contains
         !% --- normalize the input
         normInput(thisP) = depth(thisP) / fulldepth(thisP)
 
+        ! print *, ' '
+        ! print *, 'in irregular_topwidth_from_depth'
+        ! print *, 'norm input ',normInput(iet)
+
         !% --- lookup the topwidth
         call xsect_table_lookup_array (topwidth, normInput, thisTable, thisP)
 
@@ -143,6 +147,11 @@ contains
             endwhere
         end if
 
+        ! print *, ' '
+        ! print *, 'in irregular_topwidth_from_depth'
+        ! print *, topwidth(iet)
+        ! print *, ' '
+
         !%------------------------------------------------------------------
         !% Closing
         !% --- reset the temp array
@@ -153,7 +162,8 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine irregular_perimeter_and_hydradius_from_depth(elemPGx, Npack, thisCol)
+    subroutine irregular_perimeter_and_hydradius_from_depth &
+        (elemPGx, Npack, thisCol, ZeroValuePerimeter, ZeroValueHydRadius)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the hydraulic radius from depth for irregular channel
@@ -161,6 +171,7 @@ contains
         !% Assumes that volume > 0 is previuosly enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
+            real(8), intent(in) :: ZeroValuePerimeter, ZeroValueHydRadius
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP(:), tidx(:)
             real(8), pointer :: depth(:), fulldepth(:), hydradius(:)
@@ -193,6 +204,9 @@ contains
         !% --- convert to physical topwidth
         hydradius(thisP) = hydradius(thisP) * transectR(tidx(thisP),tr_hydRadiusFull)
 
+        !% --- limit small hydradius by zero value
+        hydradius(thisP) = max(hydradius(thisP), ZeroValueHydRadius)
+
         !% --- correct for overfull channel
         if (setting%Discretization%AllowChannelOverflowTF) then
             !% --- depth is already limited to full depth
@@ -213,6 +227,9 @@ contains
             endwhere
         end if
 
+        !% --- limit small perimeter by zero value
+        perimeter(thisP) = max(perimeter(thisP), ZeroValuePerimeter)
+
         !%------------------------------------------------------------------
         !% Closing
         !% --- reset the temp array
@@ -223,7 +240,7 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
+    ! subroutine irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from hydraulic radius and area for
@@ -232,19 +249,19 @@ contains
         !% perimeter and area before
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
-            real(8), pointer :: perimeter(:), area(:), hydradius(:)
-        !%------------------------------------------------------------------
-        !% Aliases
-            thisP     => elemPGx(1:Npack,thisCol)
-            perimeter => elemR(:,er_Perimeter)
-            area      => elemR(:,er_area)
-            hydradius => elemR(:,er_HydRadius)
-        !%------------------------------------------------------------------
-            perimeter(thisP) = hydradius(thisP) / area(thisP)
+        !     integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+        !     integer, pointer :: thisP(:)
+        !     real(8), pointer :: perimeter(:), area(:), hydradius(:)
+        ! !%------------------------------------------------------------------
+        ! !% Aliases
+        !     thisP     => elemPGx(1:Npack,thisCol)
+        !     perimeter => elemR(:,er_Perimeter)
+        !     area      => elemR(:,er_area)
+        !     hydradius => elemR(:,er_HydRadius)
+        ! !%------------------------------------------------------------------
+        !     perimeter(thisP) = hydradius(thisP) / area(thisP)
 
-    end subroutine irregular_perimeter_from_hydradius_area
+    ! end subroutine irregular_perimeter_from_hydradius_area
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -292,6 +309,7 @@ contains
             thisTable => transectTableDepthR(elemI(indx,ei_transect_idx),:,table_idx)
             fullDepth => elemR(:,er_FullDepth)
         !%----------------------------------------------------------------------
+
         !% --- normalized depth
         depthnorm     = depth/fulldepth(indx)
 

@@ -1,6 +1,6 @@
 [TITLE]
 ;;Project Title/Notes
-Example 1 of Extran Manual
+Example 1 of Extran Manual -- modified
 
 [OPTIONS]
 ;;Option             Value
@@ -21,7 +21,7 @@ END_TIME             08:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:15:00
+REPORT_STEP          00:01:00
 WET_STEP             00:15:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:20 
@@ -38,6 +38,9 @@ SYS_FLOW_TOL         5
 LAT_FLOW_TOL         5
 MINIMUM_STEP         0.5
 THREADS              1
+
+[FILES]
+;;Interfacing Files
 
 [EVAPORATION]
 ;;Data Source    Parameters
@@ -61,7 +64,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-10208            89.9       FIXED         91.0            YES                       
+10208            89.9       FIXED           91.0             YES                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -79,15 +82,15 @@ DRY_ONLY         NO
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-8040             MODBASKETHANDLE 3.5              4          1          0          1                    
-8060             MODBASKETHANDLE 3.5              4          1          0          1                    
-8100             MODBASKETHANDLE 3.5             4.5        1          0          1                    
-8130             MODBASKETHANDLE 3.5             4.5        1          0          1                    
-1030             TRAPEZOIDAL     9.0              0          3          3          1                    
-1570             MODBASKETHANDLE 3               5.5        1          0          1                    
-1600             MODBASKETHANDLE 3                6          1          0          1                    
-1630             TRAPEZOIDAL     9.0              0          3          3          1                     
-1602             MODBASKETHANDLE 4                5.0        1          0          1                    
+8040             FILLED_CIRCULAR 4.0             0.5         0          0          1                    
+8060             FILLED_CIRCULAR 4.0             0.5         0          0          1                    
+8100             FILLED_CIRCULAR 4.5             0.5         0          0          1                    
+8130             FILLED_CIRCULAR 4.5             0.5         0          0          1                    
+1030             TRAPEZOIDAL     9                 1         3          3          1                    
+1570             FILLED_CIRCULAR 5.5             0.5         0          0          1                    
+1600             FILLED_CIRCULAR 6.0             0.5         0          0          1                    
+1630             TRAPEZOIDAL     9                 1         3          3          1                    
+1602             FILLED_CIRCULAR 5.0             0.5         0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
@@ -100,22 +103,25 @@ DRY_ONLY         NO
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
 82309                       0          0         
-82309                       0.25       20        
-82309                       3.0        20        
-82309                       3.25       0         
+82309                       1.25       0        
+82309                       1.5        20
+82309                       3.5        20       
+82309                       3.75       0         
 82309                       12.0       0         
 ;
 80408                       0          0         
-80408                       0.25       25        
+80408                       0.75       25        
 80408                       3.0        25        
 80408                       3.25       0         
-80408                       12         0         
+80408                       12         0        
 ;
 81009                       0          0         
-81009                       0.25       50        
-81009                       3.0        50        
-81009                       3.25       0         
-81009                       12         0         
+81009                       0.25       0
+81009                       1.75       0    
+81009                       2.0        30 
+81009                       4.0        30      
+81009                       4.25       0        
+81009                       12         0       
 
 [REPORT]
 ;;Reporting Options

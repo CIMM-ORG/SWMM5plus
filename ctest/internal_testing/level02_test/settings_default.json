@@ -45,7 +45,7 @@
     },
     "Solver" : {
         "PreissmannSlot" : {
-            "Method" : "StaticSlot"
+            "Method" : "DynamicSlot"
         }
     }
 }

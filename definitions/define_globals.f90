@@ -114,12 +114,30 @@ module define_globals
     !integer :: ift(2) = (/        30,       39        /)
 
     !%                    90011  JB 15009  JB   1570
-    integer :: iet(5) = (/ 54,   56,  55,   57   , 66  /)
-    integer :: ift(2) = (/    49     ,       50  /)
+    ! integer :: iet(5) = (/ 54,   56,  55,   57   , 66  /)
+    !integer :: ift(2) = (/    49     ,       50  /)
 
+!    integer :: iet(6) = (/ 55,    56 ,  58,  57,  59,    68/)
+!    integer :: ift(3) = (/     52,   53,              54/)
+
+    ! integer :: iet(6)  = (/ 59,    68 ,  70,  69,  71,    80/)
+    !integer :: ift(3)  = (/     54,   63,              64/)
+
+    !integer :: iet(5)  =(/2072, 2074,   2083,   2085, 2084 /)
+    !integer :: ift(2)  = (/        1798   , 1807     /)
+    
+
+    ! integer :: iet(4)  =(/  2098,     2099,    2100,      2087  /)
+    ! integer :: ift(3)  = (/       1820,     1821   , 1809     /)
+
+    ! integer   :: iet(3) = (/50, 51, 52/)
+    ! integer   :: ift(2) = (/47, 48/)
+    
     integer(kind=8) :: irecCount = 0
 
     character (len=256) ::  outstring[*]
+
+    real(8) :: Qcumulative = 0.d0
 
 
 !% ===================================================================================
