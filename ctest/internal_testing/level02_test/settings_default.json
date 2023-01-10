@@ -6,7 +6,14 @@
         "Short" : "level02_test"
     },
     "Discretization" : {
-        "NominalElemLength" : 61.00
+        "AllowChannelOverflowTF" : false,
+        "AdustLinkLengthForJunctionBranchYN" : true,
+        "JunctionBranchLengthFactor" : 0.33,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "NominalElemLength" : 61.00,
+        "FullConduitTopwidthDepthFraction" : 0.95,
+        "Force_nodes_to_nJM" : true
     },
     "Limiter" : {
         "Dt" : {
