@@ -17,14 +17,14 @@ START_TIME           00:00:00
 REPORT_START_DATE    08/11/1998
 REPORT_START_TIME    00:00:00
 END_DATE             08/11/1998
-END_TIME             00:00:20
+END_TIME             04:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
 REPORT_STEP          00:01:00
 WET_STEP             00:01:00
 DRY_STEP             00:01:00
-ROUTING_STEP         00:00:01 
+ROUTING_STEP         0:00:30 
 
 INERTIAL_DAMPING     NONE
 NORMAL_FLOW_LIMITED  FROUDE
@@ -99,12 +99,11 @@ GAGE1            VOLUME    0.05000  1.0      TIMESERIES RainSeries1
 10SB14           652.00     48.00      .00        0          0      ;;  
 11SB14_OF        645.50     54.50      4.50        0          0      ;;    
 802              645.40     54.60      4.60        0          0      ;; 
-O.15_UP          644.00     56.00      6.00        0          0      ;;    
+O.15_UP          644.00     56.00      6.00        0          0      ;;  
 0.15_RM          643.90     56.10      6.10        0          0      ;; 
 0.10_UP          640.70     59.30      9.30        0          0      ;;   
 0.10_RM          640.60     59.40      9.40        0          0      ;;
-
-         
+           
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
@@ -1357,26 +1356,26 @@ INFLOW@102       08/11/1998 03:45      3.00000
 INFLOW@102                  03:50      1.00000   
 INFLOW@102                  04:12      1.00000   
 ;
-RainSeries1      08/11/1998 00:00      0.35100   
-RainSeries1                 00:03      0.41080   
-RainSeries1                 00:06      0.41020   
-RainSeries1                 00:09      0.32230   
-RainSeries1                 00:12      0.23440   
-RainSeries1      08/11/1998 00:15      0.17580   
-RainSeries1                 00:18      0.17580   
-RainSeries1                 00:21      0.11720   
-RainSeries1                 00:24      0.08790   
-RainSeries1                 00:27      0.11720   
-RainSeries1      08/11/1998 00:30      0.05860   
-RainSeries1                 00:33      0.08790   
-RainSeries1                 00:36      0.06060   
-RainSeries1                 00:39      0.05660   
-RainSeries1                 00:42      0.05800   
-RainSeries1      08/11/1998 00:45      0.05920   
-RainSeries1                 00:48      0.02930   
-RainSeries1                 00:51      0.02930   
-RainSeries1                 00:54      0.05860   
-RainSeries1                 00:57      0.02930   
+RainSeries1      08/11/1998 00:00      0 ; 0.35100   
+RainSeries1                 00:03      0 ; 0.41080   
+RainSeries1                 00:06      0 ; 0.41020   
+RainSeries1                 00:09      0 ; 0.32230   
+RainSeries1                 00:12      0 ; 0.23440   
+RainSeries1      08/11/1998 00:15      0 ;  0.17580   
+RainSeries1                 00:18      0 ; 0.17580   
+RainSeries1                 00:21      0 ; 0.11720   
+RainSeries1                 00:24      0 ; 0.08790   
+RainSeries1                 00:27      0 ; 0.11720   
+RainSeries1      08/11/1998 00:30      0 ; 0.05860   
+RainSeries1                 00:33      0 ; 0.08790   
+RainSeries1                 00:36      0 ; 0.06060   
+RainSeries1                 00:39      0 ; 0.05660   
+RainSeries1                 00:42      0 ; 0.05800   
+RainSeries1      08/11/1998 00:45      0 ; 0.05920   
+RainSeries1                 00:48      0 ; 0.02930   
+RainSeries1                 00:51      0 ; 0.02930   
+RainSeries1                 00:54      0 ; 0.05860   
+RainSeries1                 00:57      0 ; 0.02930   
 RainSeries1                 01:00      0.0
 RainSeries1                 04:12      0.0 
 

@@ -92,29 +92,29 @@ contains
 
     !     return
 
-      !   print *, 'JM nodes'
-      !   do ii = 1,N_elem(1)
-      !       !print *, ii, elemI(ii,ei_node_Gidx_SWMM)
-      !       if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then 
-      !           if (elemI(ii,ei_elementType) .eq. JM) then 
-      !               print *, ii, elemI(ii,ei_node_Gidx_SWMM), trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-      !           end if
-      !       end if
-      !   end do
+        print *, 'JM nodes'
+        do ii = 1,N_elem(1)
+            !print *, ii, elemI(ii,ei_node_Gidx_SWMM)
+            if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then 
+                if (elemI(ii,ei_elementType) .eq. JM) then 
+                    print *, ii, elemI(ii,ei_node_Gidx_SWMM), trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+                end if
+            end if
+        end do
 
-      !   print *, ' '
-      !   print *, 'CC elements'
-      !   do ii = 1,N_elem(1)
-      !       !print *, ii, elemI(ii,ei_link_Gidx_SWMM)
-      !       if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then 
-      !           !print *, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), CC
-      !           if (elemI(ii,ei_elementType) .eq. CC) then 
-      !               print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str), elemR(ii,er_Length)
-      !           end if
-      !       end if
-      !   end do
+        print *, ' '
+        print *, 'CC elements'
+        do ii = 1,N_elem(1)
+            !print *, ii, elemI(ii,ei_link_Gidx_SWMM)
+            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then 
+                !print *, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), CC
+                if (elemI(ii,ei_elementType) .eq. CC) then 
+                    print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str), elemR(ii,er_Length)
+                end if
+            end if
+        end do
 
-    !    stop 5587623
+       stop 5587623
 
     !     print *, ' '
     !     print *, 'all element Q'
