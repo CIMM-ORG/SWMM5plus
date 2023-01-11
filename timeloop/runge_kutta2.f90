@@ -55,8 +55,8 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-            !   print *, ' '
-            !  call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+               print *, ' '
+            call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
                !stop 40987
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)

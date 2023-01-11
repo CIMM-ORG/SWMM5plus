@@ -696,6 +696,10 @@ contains
             !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
+            print *, ' '
+            print *, 'getting inital depth type link # ',ii
+            print *, setting%Link%DefaultInitDepthType, trim(reverseKey(setting%Link%DefaultInitDepthType))
+            print *, ' '
                 ! print *, ' '
                 ! print *, 'calling for Length'
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)

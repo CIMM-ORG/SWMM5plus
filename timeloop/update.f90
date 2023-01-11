@@ -48,8 +48,13 @@ module update
 
             !  call util_CLprint ('in update before geometry toplevel')
 
+        print *, ' '
+        print *, 'ZZZZZ 01',elemR(73,er_Head)
+        
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
+
+        print *, 'ZZZZZ 02',elemR(73,er_Head)
 
             !  call util_CLprint ('in update before adjust_limit_velocity_max')
 

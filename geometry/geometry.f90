@@ -162,10 +162,11 @@ module geometry
         !%     adjust time-march volume for ponding inflow
         !%     This affects JM that have previous ponding but now have volumes
         !%     below the full volume
+            print *, 'ZZZZZ 01a ',elemR(73,er_Head), elemR(73,er_Depth)
         if (setting%SWMMinput%AllowPonding) then
             call geo_ponding_inflow (thisColP_JM)   
         end if
-
+        print *, 'ZZZZZ 01b ',elemR(73,er_Head), elemR(73,er_Depth)
             ! call util_CLprint ('in geometry after ponding inflow') 
            
         !% --- PREISSMAN SLOT    
@@ -190,6 +191,7 @@ module geometry
         !     call geo_ACsurcharged (thisColP_surcharged)
         ! end if
 
+        print *, 'ZZZZZ 01c ',elemR(73,er_Head), elemR(73,er_Depth)
         !% --- ZERO VOLUMES CC JM
         !%     reset all zero or near-zero volumes in all CC, JM
         !call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
@@ -198,6 +200,7 @@ module geometry
 
             ! call util_CLprint ('in geometry after limit_by_zerovalues (volume)') 
 
+            print *, 'ZZZZZ 01d ',elemR(73,er_Head), elemR(73,er_Depth)
         !% --- DEPTH
         !%     compute the depth on all elements of CC JM based on geometry.
         !%     If surcharged, this call returns the full depth of a closed conduit 
@@ -206,6 +209,7 @@ module geometry
 
             ! call util_CLprint ('in geometry after depth_from_volume') 
 
+        print *, 'ZZZZZ 01e ',elemR(73,er_Head), elemR(73,er_Depth)
         !% --- ZERO DEPTH CC JM
         !%     reset all zero or near-zero depths in aa CC and JM
         !call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
@@ -214,6 +218,7 @@ module geometry
 
             ! call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
 
+            print *, 'ZZZZZ 01f ',elemR(73,er_Head), elemR(73,er_Depth)
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC and JM
         !%     This sets head consistent with depth computed in geo_depth_from_volume
@@ -227,6 +232,7 @@ module geometry
             !call geo_head_from_depth (thisColP_all_TM)
         end if
  
+        print *, 'ZZZZZ 01g ',elemR(73,er_Head), elemR(73,er_Depth)
             ! call util_CLprint ('in geometry after head_from_depth')
 
         !% --- OPEN CHANNEL OVERFLOW
@@ -239,6 +245,7 @@ module geometry
             call geo_overflow_openchannels (thisColP_Open_CC)
         end if
 
+        print *, 'ZZZZZ 01h ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after overflow_openchannels')
 
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC JM
@@ -247,6 +254,7 @@ module geometry
         call geo_volumelimit_closed (thisColP_Closed_CC)
         call geo_volumelimit_closed (thisColP_JM)
 
+        print *, 'ZZZZZ 01i ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after volumelimit_closed')
 
         !% REMOVED 20220909 brh
@@ -272,6 +280,7 @@ module geometry
         !%     This is needed before JB are computed
         call slot_JM_head_PSadd (thisColP_JM)
 
+        print *, 'ZZZZZ 01j ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after JM_head_PSadd') 
            
         !% --- JB VALUES
@@ -279,6 +288,7 @@ module geometry
         !%    Values limited by full volume. Volume assigned is area * length
         call geo_assign_JB (whichTM, thisColP_JM)
 
+        print *, 'ZZZZZ 01k ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after assign_JB') 
 
         !% --- JB CLOSED CONDUIT VOLUME LIMIT
@@ -287,6 +297,7 @@ module geometry
         !%     with JB volume assigned by area * length.
         call geo_volumelimit_closed (thisColP_Closed_JB)
 
+        print *, 'ZZZZZ 01l ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after volumelimit_closed') 
 
         !% --- PREISSMANN SLOT HEAD REMOVE IN JM
@@ -294,6 +305,7 @@ module geometry
         !%     compute other geometry without full JM causing problems
         call slot_JM_head_PSremove (thisColP_JM)
 
+        print *, 'ZZZZZ 01m ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after JM_head_PSremove')  
 
         !% STATUS: at this point we have all geometry on CC, JM, JB that is
@@ -313,6 +325,7 @@ module geometry
             !call geo_area_from_volume (thisColP_all_TM)
         end if
 
+        print *, 'ZZZZZ 01n ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after area_from_volume') 
 
         ! !% --- ZERO AREA CC JM
@@ -370,11 +383,13 @@ module geometry
 
         !    call util_CLprint ('in geometry after hydradius_from_area_perimeter') 
 
+        print *, 'ZZZZZ 01o ',elemR(73,er_Head)
         !% --- the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         !%     Note: ell for JM is undefined in this subroutine
         call geo_elldepth_from_head (thisColP_CC)
 
+        print *, 'ZZZZZ 01p ',elemR(73,er_Head)
         !% --- compute pressure head from the modified hydraulic depth
         ! Npack     => npack_elemP(thisColP_CC)
         ! if (Npack > 0) then
@@ -391,7 +406,10 @@ module geometry
 
             ! call util_CLprint ('in geometry after slot_CC_adustments') 
 
+        print *, 'ZZZZZ 01q ',elemR(73,er_Head)
         call slot_JM_adjustments (thisColP_JM)
+
+        print *, 'ZZZZZ 01r ',elemR(73,er_Head)
 
             ! call util_CLprint ('in geometry after slot_JM_adjustments') 
 
@@ -400,6 +418,7 @@ module geometry
         !%     without surcharge is assigned in geo_assign_JB
         call slot_JB_computation (thisColP_JM)
         
+        print *, 'ZZZZZ 01s ',elemR(73,er_Head)
             ! call util_CLprint ('in geometry after slot_JB_computation') 
 
         !% Set JM values that are not otherwise defined
@@ -408,6 +427,7 @@ module geometry
 
             ! call util_CLprint ('in geometry after JM_values') 
 
+        print *, 'ZZZZZ 01t ',elemR(73,er_Head)
         !% HOLD UNTIL AC RE-VISITED
         ! !% compute the dHdA that are only for AC nonsurcharged
         ! if (whichTM .ne. ETM) then

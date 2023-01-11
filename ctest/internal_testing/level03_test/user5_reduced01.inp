@@ -21,10 +21,10 @@ END_TIME             04:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:01:00
+REPORT_STEP          00:01:0
 WET_STEP             00:01:00
 DRY_STEP             00:01:00
-ROUTING_STEP         0:00:30 
+ROUTING_STEP         0:00:01 
 
 INERTIAL_DAMPING     NONE
 NORMAL_FLOW_LIMITED  FROUDE

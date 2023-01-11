@@ -186,6 +186,22 @@ contains
 
             ! call util_CLprint ('initial_condition after transect_arrays and _geometry')
 
+        print *, ' '
+        print *, 'Temporary 20230111'
+        do ii=1,N_elem(1)
+            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
+                write(*,"(i4, 4f12.5, A, A, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume),' ',&
+                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+            elseif (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
+                write(*,"(i4, 4f12.5, A, A, A, A )") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume), ' ',&
+                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+            else 
+                write(*,"(i4, 4f12.5, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth),  elemR(ii,er_Volume), ' ',&
+                trim(reverseKey(elemI(ii,ei_elementType)))
+            end if
+        end do
+        print *, ' '
+
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
        
@@ -207,12 +223,15 @@ contains
         call init_IC_solver_select (whichSolver)
 
             ! call util_CLprint ('initial_condition after IC_solver_select')
-
+       
         !% --- set up all the static packs and masks
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
   
             ! call util_CLprint ('initial_condition after pack_mask_arrays_all')
+
+
+        
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
@@ -253,6 +272,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
+
             ! call util_CLprint ('initial_condition after IC_derived_data')
 
         ! !% --- need geometry defined before BC processing  --- 20221024 brh
@@ -271,6 +291,8 @@ contains
         call init_subtract_reference_head()
 
             ! call util_CLprint ('initial_condition after reference_head')
+
+
 
         !% --- create the packed set of nodes for BC
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
@@ -303,9 +325,43 @@ contains
 
             ! call util_CLprint ('initial_condition after IC_branch_dummy_values')
 
+        print *, ' '
+        print *, 'Temporary 20230111      XXXX'
+        do ii=1,N_elem(1)
+            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
+                write(*,"(i4, 4f12.5, A, A, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume),' ',&
+                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+            elseif (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
+                write(*,"(i4, 4f12.5, A, A, A, A )") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume), ' ',&
+                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+            else 
+                write(*,"(i4, 4f12.5, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth),  elemR(ii,er_Volume), ' ',&
+                trim(reverseKey(elemI(ii,ei_elementType)))
+            end if
+        end do
+        print *, ' '
+    
+
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
+
+        print *, ' '
+        print *, 'Temporary 20230111      YYYYX'
+        do ii=1,N_elem(1)
+            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
+                write(*,"(i4, 4f12.5, A, A, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume),' ',&
+                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+            elseif (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
+                write(*,"(i4, 4f12.5, A, A, A, A )") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume), ' ',&
+                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+            else 
+                write(*,"(i4, 4f12.5, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth),  elemR(ii,er_Volume), ' ',&
+                trim(reverseKey(elemI(ii,ei_elementType)))
+            end if
+        end do
+        print *, ' '
+        stop 298374
 
             ! call util_CLprint ('initial_condition after update_auxiliary_variables')
 
@@ -358,6 +414,9 @@ contains
         call init_IC_oneVectors ()
 
         !call util_CLprint ('initial_condition at end')
+
+
+
 
         ! print *, trim(reverseKey(elemI(iet(3),ei_geometryType)))
         ! print *, 'z bottom          ',elemR(iet(3),er_Zbottom)
@@ -627,14 +686,22 @@ contains
             eZbottom  => elemR(:,er_Zbottom)
         !%-----------------------------------------------------------------
 
+            ! print *, ' '
+            ! print *, 'in init_IC_get_depth: link ',trim(link%Names(thisLink)%str)
+
         !% --- Head upstream
         headUp = node%R(nUp,nr_Zbottom) + node%R(nUp,nr_InitialDepth)
         !% --- provisional head downstream
         headDn = node%R(nDn,nr_Zbottom) + node%R(nDn,nr_InitialDepth)
 
+        ! print *, 'headUp ', headUp
+        ! print *, 'headDn ', headDn
+
         !% --- set upstream link depths including effects of offsets
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
+
+        ! print *, 'DepthUp ',DepthUp
 
             ! print *, ' =================================== '
         !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
@@ -657,7 +724,7 @@ contains
         !%     where downstream head is less than zbottom, depth is zero
         DepthDn = max(headDn - zLinkDn, zeroR)
 
-        ! print *, 'Depth Dn AAA ',DepthDn
+        ! print *, 'Depth Dn ',DepthDn
 
         !% --- check for a downstream gate on the node
         !%     adjust depths and head as needed
@@ -714,7 +781,7 @@ contains
         !% --- total depth delta
         dDelta = DepthUp - DepthDn
 
-        !print *, 'Depth Delta ',dDelta
+        ! print *, 'Depth Delta ',dDelta
 
         !% --- total length of all elements in link
         linkLength = sum(eLength(pElem))
@@ -734,7 +801,7 @@ contains
             end select
         end if
 
-        !print *, 'Depth Type = ',reverseKey(LdepthType)
+        ! print *, 'Depth Type = ',reverseKey(LdepthType)
 
         !% ---set the depths in link elements from links
         !%    Note these depths are the combination of water and sediment

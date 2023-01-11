@@ -407,6 +407,6 @@ enable_testing()
 
 # FAIL 20230104 -- crash in subcatchment initialization
 add_test(NAME user5
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_reduced01.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_reduced02.inp -s ./ctest/internal_testing/level03_test/settings_user5reduced01.json -o ./ctest/output/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
