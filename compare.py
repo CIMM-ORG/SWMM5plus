@@ -54,16 +54,16 @@ Qtolerance = 25.0            # percentage flow tolerance for comparing between t
 Ytolerance = 50.0            # percentage depth tolerance
 Q_balance_error_tol = 10.0   # flow balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
-recompile_swmmC  = False    # logical for recompiling swmmC
-print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
-print_plots      = True     # logical to print plots at the comparison results folder
-unit             = 'CFS'     # unit of original swmm-c input file. options 'CFS' or 'SI'
+recompile_swmmC  = False     # logical for recompiling swmmC
+print_timeseries = True      # logical to print individual swmm5 vs swmm5+ link and node results
+print_plots      = True      # logical to print plots at the comparison results folder
 #-----------------------------------------------------------------------------------
 
 # Getting current working directory and time when the script is ran so that we can create a new folder
 cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
+# for general comparison, use 1 processor
 num_processors = 1
 settings_path  = ""
 
@@ -73,8 +73,7 @@ if  recompile_swmmC or os.system('find swmm5_C'):
     os.system('cd interface \n cp Makefile_swmm5 src/')
     os.system('cd interface/src \n make -f Makefile_swmm5 ')
 
-#checking if a input file is given
-
+# checking if a input file is given
 if(len(sys.argv) < 2):
     print('no local path to input file provided')
     exit(1)
@@ -88,6 +87,7 @@ if(sys.argv[1] == '-h'):
 
 has_output_path = False
 
+# check all the output and settings file path
 if((len(sys.argv)%2) != 0):
 
     for arg_id in range(1,len(sys.argv),2):
@@ -121,22 +121,23 @@ else:
     output_dir = inp_name+"_comparison"
     output_dir_timestamped = output_dir+'/'+time_now+'/'
 
-#creates new output_dir for the test_case and inside of it a timestamped version 
+# creates new output_dir for the test_case and inside of it a timestamped version 
 os.system('mkdir '+ output_dir)
 os.system('cd ' + output_dir)
 os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
 
-#setting the input, output and report paths needed for running SWMM5_C 
-#inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
+# setting the input, output and report paths needed for running SWMM5_C 
+# inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
 out_path = output_dir_timestamped + inp_name +'.out'
 rpt_path = output_dir_timestamped + inp_name +'.rpt'
 
-#run the swmm5_C
+# run the swmm5_C
 os.system('./swmm5_C '+inp_path+' '+rpt_path+' '+out_path)
 
-#build and run swmm5_plus
+# build and run swmm5_plus
 os.system("export FOR_COARRAY_NUM_IMAGES="+str(num_processors))
 os.system('cd build \n make \n mv SWMM ..')
+os.environ["FOR_COARRAY_NUM_IMAGES"] = str(num_processors)
 
 if(settings_path==""):
     os.system('./SWMM -i ' + inp_path + ' -o ' + output_dir_timestamped)
@@ -189,7 +190,7 @@ for line in file.readlines():
         break
 
 # Go back to position 0
-# Or beginning of file
+# Or beginning of file to start reading again
 file.seek(0, 0)
 # go through line by line again
 jj = 0
@@ -234,6 +235,7 @@ for line in file.readlines():
 # this will be used to keep a running list of which links and nodes are now within given tolerances
 list_of_errors =[]
 
+# get to unit conversion factors to change the units of SWMM5+ output to match SWMM5_c output
 if unit == 'CFS':
     Yf = 3.28084
     Qf = 35.3147
@@ -270,6 +272,7 @@ elif unit == 'MLD':
 else:
     print('Worng unit type seletced')
     exit(1)
+    
 # make the plot directory if required
 if print_plots:
     os.system('mkdir '+ plot_dir)  

@@ -1210,6 +1210,14 @@ contains
                 end if
             end if
 
+            !% force all the nJ2 to nJm if the user 
+            !% setting%Discretization%Force_nodes_to_nJM setting is true
+            if ((node%I(ii, ni_node_type) == nJ2)          .and.  &
+                setting%Discretization%Force_nodes_to_nJM ) then
+                !% --- switch to nJm
+                node%I(ii, ni_node_type) = nJm
+            end if
+
             !% ==========================================================================
 
             !% --- set up the inflows (must be after nJ1, nJ2 are set)
