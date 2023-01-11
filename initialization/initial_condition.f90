@@ -654,10 +654,10 @@ contains
             integer, pointer     :: thisP(:)
             logical, pointer     :: hasFlapGate
             real(8), pointer     :: DepthUp, DepthDn
-            real(8), pointer     :: zLinkUp, zLinkDn
-            real(8), pointer     :: eDepth(:), eLength(:), eZbottom(:)
+            real(8), pointer     :: zLinkUp, zLinkDn, Slope
+            real(8), pointer     :: eDepth(:), eHead(:), eLength(:), eZbottom(:)
             real(8)              :: kappa,  headUp, headDn, linkLength, length2Here
-            real(8)              :: dDelta
+            real(8)              :: dDelta, hDelta
             
             character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
         !%-----------------------------------------------------------------
@@ -677,12 +677,14 @@ contains
             !% --- link upstream and downstream bottom elevation
             zLinkUp  => link%R(thisLink,lr_ZbottomUp)
             zLinkDn  => link%R(thisLink,lr_ZbottomDn)
+            Slope    => link%R(thisLink,lr_Slope)
             !% --- depths upstream and downstream on link (not yet initialized)
             DepthUp     => link%R(thisLink,lr_InitialUpstreamDepth)
             DepthDn     => link%R(thisLink,lr_InitialDnstreamDepth)
             !% 
             eLength   => elemR(:,er_Length)
             eDepth    => elemR(:,er_Depth)
+            eHead     => elemR(:,er_Head)
             eZbottom  => elemR(:,er_Zbottom)
         !%-----------------------------------------------------------------
 
@@ -704,20 +706,21 @@ contains
         ! print *, 'DepthUp ',DepthUp
 
             ! print *, ' =================================== '
-        !     print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
-        !     print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
-        !     print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
-        !   !  print *, 'ZlinkUp  ',zLinkUp
-        !   !  print *, 'zlinkDn  ',zLinkDn
-        !   !  print *, 'DepthUp  ',DepthUp
-        !   !  print *, 'DepthDn  ',DepthDn
-        !     print *, 'HeadUp   ',headUp
-        !     print *, 'HeadDn   ',headDn
-        !     print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
-        !     print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
-        !     print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
-        !     print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
-        !     print *, ' '
+            ! print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
+            ! print *, 'node up  ',nUp, ' ',trim(node%Names(nUp)%str)
+            ! print *, 'node dn  ',nDn, ' ',trim(node%Names(nDn)%str)
+            ! print *, 'ZlinkUp  ',zLinkUp
+            ! print *, 'zlinkDn  ',zLinkDn
+            ! print *, 'DepthUp  ',node%R(nUp,nr_InitialDepth)
+            ! print *, 'DepthDn  ',node%R(nDn,nr_InitialDepth)
+            ! print *, 'HeadUp   ',headUp
+            ! print *, 'HeadDn   ',headDn
+            ! print *, 'Slope    ',Slope
+            ! print *, ' node up z bottom  ', node%R(nUp,nr_Zbottom)
+            ! print *, ' node dn z bototm  ', node%R(nDn,nr_Zbottom)
+            ! print *, ' node up init depth',node%R(nUp,nr_InitialDepth)
+            ! print *, ' node dn init depth',node%R(nDn,nr_InitialDepth)
+            ! print *, ' '
 
     
         !% --- set downstream link depths including effects of offsets
@@ -728,45 +731,45 @@ contains
 
         !% --- check for a downstream gate on the node
         !%     adjust depths and head as needed
-        if (node%YN(nDn,nYN_hasFlapGate)) then
-            !print *, 'has Flap Gate'
-            if (DepthUp == zeroR) then
-                !% --- if zero depth upstream, then downstream is also zero
-                !%     and we switch to a uniform depth interpolation scheme
-                !%     so that the entire link is dry
-                DepthDn = zeroR
-                headDn  = zLinkDn
-                LdepthType = UniformDepth
-            else
-                !% --- for positive upstream depth
-                !%     if upstream head is lower than downstream head
-                !%     then flap gate is closed
-                if (headUp < headDn) then
-                    !% --- closed flap gate
-                    !%     set downstream at the upstream head (ponding at gate)
-                    headDn  = headUp
-                    DepthDn = headDn - zLinkDn
-                    !% --- ensure the elements are handled by fixed head
-                    LdepthType = FixedHead
-                else
-                    !% --- for upstream head > downstream head
-                    !%     ensure interpolation over link
-                    select case (LdepthType)
-                    case (UniformDepth, FixedHead)
-                        LdepthType = LinearlyVaryingDepth
-                    case default 
-                        !% --- continue with selected interpolation type
-                    end select
-                end if
-            end if
-        end if
+        ! if (node%YN(nDn,nYN_hasFlapGate)) then
+        !     !print *, 'has Flap Gate'
+        !     if (DepthUp == zeroR) then
+        !         !% --- if zero depth upstream, then downstream is also zero
+        !         !%     and we switch to a uniform depth interpolation scheme
+        !         !%     so that the entire link is dry
+        !         DepthDn = zeroR
+        !         headDn  = zLinkDn
+        !         LdepthType = UniformDepth
+        !     else
+        !         !% --- for positive upstream depth
+        !         !%     if upstream head is lower than downstream head
+        !         !%     then flap gate is closed
+        !         if (headUp < headDn) then
+        !             !% --- closed flap gate
+        !             !%     set downstream at the upstream head (ponding at gate)
+        !             headDn  = headUp
+        !             DepthDn = headDn - zLinkDn
+        !             !% --- ensure the elements are handled by fixed head
+        !             LdepthType = FixedHead
+        !         else
+        !             !% --- for upstream head > downstream head
+        !             !%     ensure interpolation over link
+        !             select case (LdepthType)
+        !             case (UniformDepth, FixedHead)
+        !                 LdepthType = LinearlyVaryingDepth
+        !             case default 
+        !                 !% --- continue with selected interpolation type
+        !             end select
+        !         end if
+        !     end if
+        ! end if
 
        ! print *, 'Depth Dn BBB ',DepthDn
 
         !% --- pack the elements for this link
         pElem = pack(elemI(:,ei_Lidx), (elemI(:,ei_link_Gidx_BIPquick) == thisLink))
 
-        !print *, 'pElem ', pElem
+        print *, 'pElem ', pElem
 
         !% --- error checking, the upstream should be the first element in the pack
         firstidx = findloc(elemI(pElem,ei_link_Pos),1)
@@ -779,7 +782,8 @@ contains
         end if
 
         !% --- total depth delta
-        dDelta = DepthUp - DepthDn
+        ! dDelta = DepthUp - DepthDn
+        hDelta = headUp - headDn
 
         ! print *, 'Depth Delta ',dDelta
 
@@ -790,66 +794,85 @@ contains
         !%    to an interative element center
         length2Here = zeroR
 
+        !% saz 01/11/2023
+        !% in this new method head values in elements are linearly interpolated
+        !% then the depths are recovered from those heads.
+        do mm=1,size(pElem)
+            !% --- use the length from upstream face to center of this element
+            length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+            !% --- head by linear interpolation
+            ! eHead(pElem(mm)) = headUp - Slope * length2Here
+            eHead(pElem(mm)) = headUp - hDelta * length2Here / linkLength
+            !% --- depth from head
+            eDepth(pElem(mm)) = max(eHead(pElem(mm)) - eZbottom(pElem(mm)), zeroR) 
+            !% --- add the remainder of this element to the length
+            length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+        end do
+
+        !%------------------------------------------------------------------------------------
+        !% saz 01/11/2023
+        !% commented out to set up link depth based on node heads only 
+
         !% --- Single-length elements can only be UniformDepth or
         !%     FixedHead. Set interpolated schemes to UniformDepth
-        if (size(pElem) == 1) then
-            select case (LdepthType)
-            case (LinearlyVaryingDepth, ExponentialDepth)
-                LdepthType = UniformDepth
-            case (default)
-                !% no change
-            end select
-        end if
+        ! if (size(pElem) == 1) then
+        !     select case (LdepthType)
+        !     case (LinearlyVaryingDepth, ExponentialDepth)
+        !         LdepthType = UniformDepth
+        !     case (default)
+        !         !% no change
+        !     end select
+        ! end if
 
         ! print *, 'Depth Type = ',reverseKey(LdepthType)
 
         !% ---set the depths in link elements from links
         !%    Note these depths are the combination of water and sediment
-        select case (LdepthType)
+        ! select case (LdepthType)
 
-            case (UniformDepth)
-                !% --- uniform depth uses the average of upstream and downstream depths
-                eDepth(pElem) = onehalfR * (DepthUp + DepthDn)
+        !     case (UniformDepth)
+        !         !% --- uniform depth uses the average of upstream and downstream depths
+        !         eDepth(pElem) = onehalfR * (DepthUp + DepthDn)
         
 
-            case (LinearlyVaryingDepth)
-                !% --- linearly-varying depth distribution
-                do mm=1,size(pElem)
-                    !% --- use the length from upstream face to center of this element
-                    length2Here       = length2Here + onehalfR * eLength(pElem(mm))
-                    !% --- depth by linear interpolation
-                    eDepth(pElem(mm)) = DepthUp - dDelta * length2Here /linkLength
-                    !% --- add the remainder of this element to the length
-                    length2Here       = length2Here + onehalfR * eLength(pElem(mm))
-                end do
+        !     case (LinearlyVaryingDepth)
+        !         !% --- linearly-varying depth distribution
+        !         do mm=1,size(pElem)
+        !             !% --- use the length from upstream face to center of this element
+        !             length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+        !             !% --- depth by linear interpolation
+        !             eDepth(pElem(mm)) = DepthUp - dDelta * length2Here /linkLength
+        !             !% --- add the remainder of this element to the length
+        !             length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+        !         end do
 
-            case (ExponentialDepth)
-                !% --- if the link has exponentially increasing or decreasing depth
+        !     case (ExponentialDepth)
+        !         !% --- if the link has exponentially increasing or decreasing depth
 
-                do mm=1,size(pElem)
-                    !% --- use the length from upstream face to center of this element
-                    length2Here       = length2Here + onehalfR * eLength(pElem(mm))
-                    !% --- normalized exponential decay
-                    kappa = - exp(oneR) * length2Here / linkLength
-                    !% --- depth by linear interpolation
-                    eDepth(pElem(mm)) = DepthDn + dDelta * exp(-kappa)
-                    !% --- add the remainder of this element to the length
-                    length2Here       = length2Here + onehalfR * eLength(pElem(mm))
-                end do
+        !         do mm=1,size(pElem)
+        !             !% --- use the length from upstream face to center of this element
+        !             length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+        !             !% --- normalized exponential decay
+        !             kappa = - exp(oneR) * length2Here / linkLength
+        !             !% --- depth by linear interpolation
+        !             eDepth(pElem(mm)) = DepthDn + dDelta * exp(-kappa)
+        !             !% --- add the remainder of this element to the length
+        !             length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+        !         end do
 
-            case (FixedHead)    
-                !% --- set the downstream depth as a fixed head (ponding)
-                !%     over all the elements in the link.
-                eDepth(pElem) = max(headDn - eZbottom(pElem), zeroR)
+        !     case (FixedHead)    
+        !         !% --- set the downstream depth as a fixed head (ponding)
+        !         !%     over all the elements in the link.
+        !         eDepth(pElem) = max(headDn - eZbottom(pElem), zeroR)
             
-            case default
-                print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
-                print *, 'which has key ',trim(reverseKey(LdepthType)) 
-                !stop 
-                call util_crashpoint(83753)
-                !return
-        end select
+        !     case default
+        !         print *, 'In ', subroutine_name
+        !         print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
+        !         print *, 'which has key ',trim(reverseKey(LdepthType)) 
+        !         !stop 
+        !         call util_crashpoint(83753)
+        !         !return
+        ! end select
 
         !% --- set zero values to zerodepth
         where (eDepth(pElem) < setting%ZeroValue%Depth)
@@ -859,9 +882,11 @@ contains
         ! print *, ' '
         ! print *, 'in init_IC_get_depth'
         ! print *, 'pElem ',pElem
+        ! print *, 'head  ',eHead(pElem)
+        ! print *, 'zbottom ', eZbottom(pElem)
         ! print *, 'depth ',eDepth(pElem)
         ! print *, ' '
-
+    
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_depth
