@@ -10,9 +10,10 @@ module diagnostic_elements
     use orifice_elements
     use outlet_elements
     use adjust
-    use utility, only: util_CLprint
+    !use utility, only: util_CLprint
     use utility_profiler
     use utility_crash, only: util_crashpoint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -53,23 +54,30 @@ module diagnostic_elements
         thisCol => col_elemP(ep_Diag)
         Npack   => npack_elemP(thisCol)
 
-        ! if (Npack > 0) then
-            ! print *, 'calling diagnostic by type'
-            ! call util_CLprint ('in diagnostic_toplevel  AAAA')
+        !% --- HACK, this if (Npack > 0) was commented out by SS in late December
+        !%     but restored by BRH in 20230114
+        !%     This should not be called if there are no diagnostic elements
+        !%     Need to review this decision
+        if (Npack > 0) then
+            ! print *, 'calling diagnostic by type Npack = ',Npack
+
+                ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
 
             call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
 
-            ! call util_CLprint ('in diagnostic_toplevel  BBB')
+                ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
+
             !% reset any face values affected
             call face_interpolation (fp_Diag, dummy)
 
-            ! call util_CLprint ('in diagnostic_toplevel  CCC')
+                ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
+
             !% --- reset the zero and small depth fluxes
             call adjust_zero_and_small_depth_face (ETM, .false.)
 
-            ! call util_CLprint ('in diagnostic_toplevel  DDD')
+                ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
 
-        ! end if
+        end if
        
         if (setting%Profile%useYN) call util_profiler_stop (pfc_diagnostic_toplevel)
 

@@ -23,6 +23,8 @@ module initialization
     use pack_mask_arrays
     use utility_crash
     use xsect_tables
+    ! use utility_unit_testing, only: util_utest_CLprint
+    
     ! use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
     
 
@@ -368,9 +370,12 @@ contains
         end if
         call util_crashstop(103897)
 
-           !call util_CLprint ('at end of initialization')
+
+           ! call util_utest_CLprint ('at end of initialization')
            !print *, 'zero depth ',setting%ZeroValue%Depth
-          ! stop 298374
+
+
+
 
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         !% MOVED 20221223 brh to just above diagnostic_toplevel call in
@@ -389,7 +394,10 @@ contains
  
         !%------------------------------------------------------------------- 
         !% Closing
+            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_check_setup_conditions"
             call init_check_setup_conditions()
+
+            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_timer_stop"
             call init_timer_stop ()
 
             if (setting%Simulation%stopAfterInitializationYN) then
@@ -578,6 +586,7 @@ contains
         !% Declarations   
             integer          :: ii, total_n_links
             integer, pointer :: linkUp, linkDn
+            logical          :: noerrorfound
             character(64)    :: subroutine_name = 'init_linknode_arrays'
         !%--------------------------------------------------------------------
         !% Preliminaries
@@ -696,10 +705,11 @@ contains
             !%     setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
 
-            print *, ' '
-            print *, 'getting inital depth type link # ',ii
-            print *, setting%Link%DefaultInitDepthType, trim(reverseKey(setting%Link%DefaultInitDepthType))
-            print *, ' '
+            ! print *, ' '
+            ! print *, 'getting initial depth type link # ',ii
+            ! print *, setting%Link%DefaultInitDepthType, trim(reverseKey(setting%Link%DefaultInitDepthType))
+            ! print *, ' '
+
                 ! print *, ' '
                 ! print *, 'calling for Length'
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
@@ -994,28 +1004,28 @@ contains
             !%
             !% --- Assign node types nJm, nJ1, nJ2, nBCdn,
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
-                ! write(*,*) '... is outfall type '
+                    ! write(*,*) '... is outfall type '
                 node%I(ii, ni_node_type) = nBCdn
 
                 !% --- get the SWMMoutfall index (i.e. the 'k' in Outfall[k].vRouted in EPASWMM)
                 node%I(ii,ni_SWMMoutfallIdx) = interface_get_nodef_attribute(ii,api_nodef_outfall_idx)
 
                 !% --- check for a flap gate on an outfall
-                ! write(*,*) 'call api_nodef_hasFlapGate == ', reverseKey_api(api_nodef_hasFlapGate)
+                    ! write(*,*) 'call api_nodef_hasFlapGate == ', reverseKey_api(api_nodef_hasFlapGate)
                 if (interface_get_nodef_attribute(ii, api_nodef_hasFlapGate) == 1) then
                     node%YN(ii, nYN_hasFlapGate) = .true.
                 else
                     node%YN(ii, nYN_hasFlapGate) = .false.
                 end if
 
-                ! write(*,*) '... nYN_hasFlapGate = ',node%YN(ii,nYN_hasFlapGate)
-                ! write(*,*)
+                    ! write(*,*) '... nYN_hasFlapGate = ',node%YN(ii,nYN_hasFlapGate)
+                    ! write(*,*)
 
                 !% --- check for routeTo subcatchment
-                ! write(*,*) 'call api_nodef_routeTo == ', reverseKey_api(api_nodef_routeTo)
+                    ! write(*,*) 'call api_nodef_routeTo == ', reverseKey_api(api_nodef_routeTo)
                 node%I(ii,ni_routeTo) = interface_get_nodef_attribute(ii,api_nodef_RouteTo)
-                ! write(*,*) '... ni_routeTo = ',node%I(ii,ni_routeTo)
-                ! write(*,*)
+                    ! write(*,*) '... ni_routeTo = ',node%I(ii,ni_routeTo)
+                    ! write(*,*)
                 if (node%I(ii,ni_routeTo) == -1) then
                     node%I(ii,ni_routeTo) = nullvalueI
                 elseif ( (node%I(ii,ni_routeTo) > 0)                               &
@@ -1098,7 +1108,7 @@ contains
                 linkUp => node%I(ii,ni_Mlink_u1)
                 linkDn => node%I(ii,ni_Mlink_d1)
 
-                ! write(*,*) 'is nJ2'
+                ! write(*,*) '... is nJ2'
 
                 !% --- special channels and conduits that allow nJ2
                 if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)          &
@@ -1126,13 +1136,18 @@ contains
                          .and.                                               &
                          (link%I(linkDn,li_link_type) .ne. lChannel)         &
                          .and.                                               &
-                         (node%R(ii,nr_SurchargeExtraDepth)                  &
-                          == setting%Junction%InfiniteExtraDepthValue)       &
+                         ((node%R(ii,nr_SurchargeExtraDepth)                  &
+                           == setting%Junction%InfiniteExtraDepthValue)       &
+                           .or.                                               &
+                           (node%R(ii,nr_SurchargeExtraDepth)                     &
+                           == setting%Junction%InfiniteExtraDepthValue*0.3048d0)) & 
                           ) then
                         !% nJ2 CLOSED CONDUIT FACE
                         !% --- if both links are NOT open channel AND the SurchargeExtraDepth
                         !%     is equal to the InfiniteExtraDepthValue, then this is retained 
                         !%     as an nJ2 (unvented)  face. Otherwise switched to a vented nJM element.
+                        !%     HACK -- if 1000 ft is put in a CFS input file or 1000 m in an SI
+                        !%     input file this is treated as infinite depth.
                         !%  
                         
                         !% --- no action: retain nJ2
@@ -1140,6 +1155,8 @@ contains
                 else
                     !% --- switch to nJm
                     ! write(*,*) '... switching nJ2 to nJm due to closed conduit with less than InfiniteExtraDepthValue for surcharge'
+                    ! print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_SurchargeExtraDepth)
+
                     node%I(ii, ni_node_type) = nJm
                 end if
 
@@ -1219,6 +1236,7 @@ contains
             if ((node%I(ii, ni_node_type) == nJ2)          .and.  &
                 setting%Discretization%Force_nodes_to_nJM ) then
                 !% --- switch to nJm
+                ! write(*,*) 'Forced switch to nJM based on setting%Discretization%Force_nodes_to_nJM'
                 node%I(ii, ni_node_type) = nJm
             end if
 
@@ -1242,6 +1260,22 @@ contains
             !write(*,*)  
 
         end do
+
+        !% --- error checking for disconnected nodes
+        noerrorfound = .true.
+        do ii = 1,size(node%I,1)
+            if (node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d) == zeroI) then
+                noerrorfound = .false.
+                print *, 'USER CONFIGURATION ERROR: disconnected node.'
+                print *, 'A node has been found that does not connect to any links.'
+                print *, 'It must be commented out in the input file.'
+                print *, 'Node name is ',trim(node%Names(ii)%str)
+            end if
+        end do
+        if (.not. noerrorfound) then
+            call util_crashpoint(72813)
+        endif
+     
 
         !% --- Store the Link/Node names (moved up 20221215)
        !  call interface_update_linknode_names()
@@ -1456,7 +1490,10 @@ contains
             !% --- lookup the area below the max breadth
             areaBelowBreadthMax(ii) = xsect_table_lookup_singular ( &
                                     depthAtBreadthMax(ii), areaForDepthU(ii,:))
+            !print *, 'areabelowbreadthmax ',areaBelowBreadthMax(ii)
         end do
+
+        
 
         !% --- compute the uniform area transect tables by using the
         !%     nonuniform area as a lookup table for the uniform depth

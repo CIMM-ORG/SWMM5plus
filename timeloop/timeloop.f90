@@ -25,7 +25,7 @@ module timeloop
               interface_get_groundwater_inflow
     use utility_crash
     use control_hydraulics, only: control_update
-    !use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -267,14 +267,14 @@ contains
         !% --- initialize the time step counter
         thisStep = 1
 
-        ! print *, 'starting tl_outerloop'
+        !print *, 'starting tl_outerloop'
 
         do while (setting%Time%Now <= setting%Time%End - dtTol)
                 ! print *, ' '
                 ! print * , '==========================================================================='
                 ! print *, 'top of tl_outerloop loop at time ',setting%Time%Now
                 ! print *, ' '
-                !     call util_utest_CLprint ('top of tl_outerloop')
+                    ! call util_utest_CLprint ('top of tl_outerloop')
 
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
@@ -331,8 +331,10 @@ contains
 
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
+                        ! call util_utest_CLprint ('CCCCC_00 of tl_outerloop')
+
                         call bc_update() 
-                        ! print *, 'out of bc update'
+
                         ! call util_utest_CLprint ('CCCCC_01 of tl_outerloop ')
 
                         call tl_lateral_inflow()
@@ -382,6 +384,7 @@ contains
                     !  print *, '3A nextHydrologyTime ', setting%Time%Hydrology%NextTime
                     !  print *, 'calling tl_hydraulics'
 
+
                     call tl_hydraulics()
                 
                     ! print *, 'out of tl_hydraulics'
@@ -405,7 +408,7 @@ contains
                     !     stop 5
                     ! end if
 
-                    !     call util_utest_CLprint ('IIIII in time_loop after subcatchment_accumulate_runon')
+                        ! call util_utest_CLprint ('IIIII in time_loop after subcatchment_accumulate_runon')
     
                     !% --- close the clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -425,7 +428,7 @@ contains
     
                 end if         
     
-                !call util_CLprint ('before reporting')
+                call util_CLprint ('before reporting')
 
                 ! print *, '7 nextHydrologyTime ', setting%Time%Hydrology%NextTime
                 ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
@@ -488,7 +491,7 @@ contains
                 !     stop 9
                 ! end if
     
-                !call util_CLprint('before time step change')
+                call util_CLprint('before time step change')
         
                 sync all
                 !% ---increment the time step and counters for the next time loop
@@ -660,6 +663,8 @@ contains
 
                 ! print *, 'into rk2 ETM'
             !% ETM with Preissmann slot for surcharge
+
+    
             call rk2_toplevel_ETM()
             
                 ! print *, 'out of rk2_toplevel_ETM'

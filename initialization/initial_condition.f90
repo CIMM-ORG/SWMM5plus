@@ -52,7 +52,8 @@ module initial_condition
     use utility_deallocate
     use utility_key_default
     use utility_crash, only: util_crashpoint
-    use utility, only: util_CLprint
+    !use utility, only: util_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -127,13 +128,15 @@ contains
         !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
         elemR(:,er_SedimentDepth) = zeroR
 
-            ! call util_CLprint ('initial_condition near start')
+            ! call util_utest_CLprint ('initial_condition near start')
 
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
-            ! call util_CLprint ('initial_condition after IC_from_linkdata')
+            ! call util_utest_CLprint ('initial_condition after IC_from_linkdata')
+
+          !  stop 6398743
 
         sync all
         !% --- set up background geometry for weir, orifice, etc.
@@ -141,7 +144,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.true.)
 
-            ! call util_CLprint ('initial_condition after diagnostic_geometry_from_adjacent')
+            ! call util_utest_CLprint ('initial_condition after diagnostic_geometry_from_adjacent')
 
         !% --- sync after all the link data has been extracted
         !%     the junction branch data is read in from the elemR arrays which
@@ -149,13 +152,14 @@ contains
         sync all
         
         !% --- get data that can be extracted from nodes
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_nodedata'
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_for_nJM_from_nodedata'
         call init_IC_for_nJm_from_nodedata ()
 
-            ! call util_CLprint ('initial_condition afer IC_from_nodedata')
+            ! call util_utest_CLprint ('initial_condition afer IC_from_nodedata')
 
         !% --- second call for diagnostic that was next to JM/JB
         sync all
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.false.)
 
         !% --- error checking for nullvalues
@@ -184,23 +188,7 @@ contains
         call init_IC_elem_transect_arrays ()
         call init_IC_elem_transect_geometry ()
 
-            ! call util_CLprint ('initial_condition after transect_arrays and _geometry')
-
-        print *, ' '
-        print *, 'Temporary 20230111'
-        do ii=1,N_elem(1)
-            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
-                write(*,"(i4, 4f12.5, A, A, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume),' ',&
-                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
-            elseif (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
-                write(*,"(i4, 4f12.5, A, A, A, A )") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume), ' ',&
-                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-            else 
-                write(*,"(i4, 4f12.5, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth),  elemR(ii,er_Volume), ' ',&
-                trim(reverseKey(elemI(ii,ei_elementType)))
-            end if
-        end do
-        print *, ' '
+            ! call util_utest_CLprint ('initial_condition after transect_arrays and _geometry')
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
@@ -210,46 +198,43 @@ contains
         call adjust_smalldepth_identify_all ()
         call adjust_zerodepth_identify_all ()
 
-            ! call util_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
+            ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
 
         !% ---zero out the lateral inflow column
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
-            ! call util_CLprint ('initial_condition after IC_set_zero_lateral_inflow')
+            ! call util_utest_CLprint ('initial_condition after IC_set_zero_lateral_inflow')
 
         !% --- update time marching type
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
         call init_IC_solver_select (whichSolver)
 
-            ! call util_CLprint ('initial_condition after IC_solver_select')
+            ! call util_utest_CLprint ('initial_condition after IC_solver_select')
        
         !% --- set up all the static packs and masks
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
   
-            ! call util_CLprint ('initial_condition after pack_mask_arrays_all')
-
-
-        
+            ! call util_utest_CLprint ('initial_condition after pack_mask_arrays_all')
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
         call init_IC_ZeroValues_nondepth (whichTM)
 
-            ! call util_CLprint ('initial_condition after IC_ZeroValues_nondepth')
+            ! call util_utest_CLprint ('initial_condition after IC_ZeroValues_nondepth')
 
         !% --- set all the zero and small volumes
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
-        call adjust_zero_and_small_depth_elem (ETM, .true.)
+        call adjust_zero_and_small_depth_elem (ETM, .true., .true.)
 
-            ! call util_CLprint ('initial_condition after adjust_zero_and_small_depth_elem and _face')
+            ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_elem')
 
         !% --- get the bottom slope
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
         call init_IC_bottom_slope ()
 
-            ! call util_CLprint ('initial_condition after IC_bottom_slope')
+            ! call util_utest_CLprint ('initial_condition after IC_bottom_slope')
 
         !     !% --- get beta (S0/n, used for section factor)
         !    ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC beta'
@@ -259,26 +244,23 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
-            ! call util_CLprint ('initial_condition after IC_set_SmallVolumes')
+            ! call util_utest_CLprint ('initial_condition after IC_set_SmallVolumes')
 
         !% --- initialize Preissmann slots
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
-            ! call util_CLprint ('initial_condition after IC_slot')
+            ! call util_utest_CLprint ('initial_condition after IC_slot')
 
         !% --- get the velocity and any other derived data
         !%     These are data needed before bc and aux variables are updated
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
-
-            ! call util_CLprint ('initial_condition after IC_derived_data')
+            ! call util_utest_CLprint ('initial_condition after IC_derived_data')
 
         ! !% --- need geometry defined before BC processing  --- 20221024 brh
         ! call geometry_toplevel (whichTM)
-
-            !  call util_CLprint ('initial_condition after geometry_toplevel')
 
         !% --- set the reference head (based on Zbottom values)
         !%     this must be called before bc_update() so that
@@ -290,9 +272,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
         call init_subtract_reference_head()
 
-            ! call util_CLprint ('initial_condition after reference_head')
-
-
+            ! call util_utest_CLprint ('initial_condition after reference_head')
 
         !% --- create the packed set of nodes for BC
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
@@ -306,7 +286,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
 
-            ! call util_CLprint ('initial_condition after init_bc')
+            ! call util_utest_CLprint ('initial_condition after init_bc')
 
         !% --- setup the sectionfactor arrays needed for normal depth computation on outfall BC
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
@@ -317,53 +297,21 @@ contains
         call bc_update()
         if (crashI==1) return
 
-            ! call util_CLprint ('initial_condition after bc_update')
+            ! call util_utest_CLprint ('initial_condition after bc_update')
 
         !% --- storing dummy values for branches that are invalid
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
         call init_IC_branch_dummy_values ()
 
-            ! call util_CLprint ('initial_condition after IC_branch_dummy_values')
-
-        print *, ' '
-        print *, 'Temporary 20230111      XXXX'
-        do ii=1,N_elem(1)
-            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
-                write(*,"(i4, 4f12.5, A, A, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume),' ',&
-                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
-            elseif (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
-                write(*,"(i4, 4f12.5, A, A, A, A )") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume), ' ',&
-                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-            else 
-                write(*,"(i4, 4f12.5, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth),  elemR(ii,er_Volume), ' ',&
-                trim(reverseKey(elemI(ii,ei_elementType)))
-            end if
-        end do
-        print *, ' '
-    
+            ! call util_utest_CLprint ('initial_condition after IC_branch_dummy_values')
 
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables'
         call update_auxiliary_variables (whichTM)
 
-        print *, ' '
-        print *, 'Temporary 20230111      YYYYX'
-        do ii=1,N_elem(1)
-            if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
-                write(*,"(i4, 4f12.5, A, A, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume),' ',&
-                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
-            elseif (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
-                write(*,"(i4, 4f12.5, A, A, A, A )") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth), elemR(ii,er_Volume), ' ',&
-                trim(reverseKey(elemI(ii,ei_elementType))), ' ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-            else 
-                write(*,"(i4, 4f12.5, A, A)") ii, elemR(ii,er_Head), elemR(ii,er_Zbottom), elemR(ii,er_Depth),  elemR(ii,er_Volume), ' ',&
-                trim(reverseKey(elemI(ii,ei_elementType)))
-            end if
-        end do
-        print *, ' '
-        stop 298374
+            ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables')
 
-            ! call util_CLprint ('initial_condition after update_auxiliary_variables')
+            !stop 5509873
 
         !% --- initialize old head 
         !%     HACK - make into a subroutine if more variables need initializing
@@ -378,44 +326,46 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
         call init_IC_diagnostic_interpolation_weights()
 
-            ! call util_CLprint ('initial_condition after IC_diagnostic_interpolation_weights')
+            ! call util_utest_CLprint ('initial_condition after IC_diagnostic_interpolation_weights')
 
         !% --- set small values to diagnostic element interpolation sets
         !%     Needed so that junk values does not mess up the first interpolation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
-            ! call util_CLprint ('initial_condition after IC_small_values_diagnostic')
+            ! call util_utest_CLprint ('initial_condition after IC_small_values_diagnostic')
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_all,ALLtm)
 
-            ! call util_CLprint ('initial_condition after face_interpolation')
+            ! call util_utest_CLprint ('initial_condition after face_interpolation')
 
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
 
+            ! call util_utest_CLprint ('initial_condition after control_init_monitoring...')
+
         !% --- update the initial condition in all diagnostic elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel (.false.)
 
-        !    call util_CLprint ('initial_condition after diagnostic_toplevel')
+           ! call util_utest_CLprint ('initial_condition after diagnostic_toplevel')
 
         !% --- ensure that small and zero depth faces are correct
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
         call adjust_zero_and_small_depth_face (ETM, .false.)
 
-        !    call util_CLprint ('initial_condition after adjust_zero_and_small_depth_face')
+           ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_face')
 
         !% ---populate er_ones columns with ones
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-        !call util_CLprint ('initial_condition at end')
+        ! call util_utest_CLprint ('initial_condition at end')
 
-
+            !stop 666987
 
 
         ! print *, trim(reverseKey(elemI(iet(3),ei_geometryType)))
@@ -542,42 +492,54 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
-            ! print *, 'link ',ii
+            !  print *, ' '
+            !  print *, 'link ',ii
+            !  print *, ' '
 
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
         !    print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
-        !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
             !    print *, 'calling get depth'
-            call init_IC_get_depth (thisLink)
-            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
+            !% --- note that this does NOT adjust depth for closed conduit crown height
+            call init_IC_get_head_and_depth (thisLink)
+
+            ! print *, 'aaa ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
             !    print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
-            ! print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
+
+            ! print *, 'bbb ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
             !    print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
+            ! print *, 'ccc',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
+
             ! print *, 'calling get geometry'
+            !% --- note this adjusts depth for closed conduit crown height and sets surcharge
             call init_IC_get_geometry_from_linkdata (thisLink)
-            !print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
+
+            ! print *, 'ddd ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
             !    print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
-            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
+
+            ! print *, 'eee ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
             !    print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)     
-            !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume) 
+
+            ! print *, 'fff ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
             !    print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
+
+            ! print *, 'ggg ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
             if ((setting%Output%Verbose) .and. (this_image() == 1)) then
                 if (mod(ii,1000) == 0) then
@@ -586,7 +548,7 @@ contains
             end if
 
         end do
-        
+
         !%------------------------------------------------------------------
         !% Closing
             !% deallocate the temporary array
@@ -641,7 +603,7 @@ contains
 !%==========================================================================
 !==========================================================================
 !
-    subroutine init_IC_get_depth (thisLink)
+    subroutine init_IC_get_head_and_depth (thisLink)
         !%-----------------------------------------------------------------
         !% Description:
         !% get the initial depth data from links and nodes
@@ -698,6 +660,7 @@ contains
 
         ! print *, 'headUp ', headUp
         ! print *, 'headDn ', headDn
+
 
         !% --- set upstream link depths including effects of offsets
         !%     where head upstream is less than zbottom, depth is zero
@@ -769,7 +732,7 @@ contains
         !% --- pack the elements for this link
         pElem = pack(elemI(:,ei_Lidx), (elemI(:,ei_link_Gidx_BIPquick) == thisLink))
 
-        print *, 'pElem ', pElem
+        !print *, 'pElem ', pElem
 
         !% --- error checking, the upstream should be the first element in the pack
         firstidx = findloc(elemI(pElem,ei_link_Pos),1)
@@ -794,20 +757,97 @@ contains
         !%    to an interative element center
         length2Here = zeroR
 
-        !% saz 01/11/2023
-        !% in this new method head values in elements are linearly interpolated
-        !% then the depths are recovered from those heads.
-        do mm=1,size(pElem)
-            !% --- use the length from upstream face to center of this element
-            length2Here       = length2Here + onehalfR * eLength(pElem(mm))
-            !% --- head by linear interpolation
-            ! eHead(pElem(mm)) = headUp - Slope * length2Here
-            eHead(pElem(mm)) = headUp - hDelta * length2Here / linkLength
-            !% --- depth from head
-            eDepth(pElem(mm)) = max(eHead(pElem(mm)) - eZbottom(pElem(mm)), zeroR) 
-            !% --- add the remainder of this element to the length
-            length2Here       = length2Here + onehalfR * eLength(pElem(mm))
-        end do
+        !% ---- set the initial depths and heads in each element
+        if ((DepthUp > setting%ZeroValue%Depth) .and. &
+            (DepthDn > setting%ZeroValue%Depth) ) then
+            !% --- distribute head linearly along the link
+            !% saz 01/11/2023
+            !%     in this new method head values in elements are linearly interpolated
+            !%     then the depths are recovered from those heads.
+            do mm=1,size(pElem)
+                !% --- use the length from upstream face to center of this element
+                length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+                !% --- head by linear interpolation
+                ! eHead(pElem(mm)) = headUp - Slope * length2Here
+                eHead(pElem(mm)) = headUp - hDelta * length2Here / linkLength
+                !% --- depth from head
+                eDepth(pElem(mm)) = max(eHead(pElem(mm)) - eZbottom(pElem(mm)), zeroR) 
+                !% --- add the remainder of this element to the length
+                length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+            end do
+
+
+        elseif ((DepthUp > setting%ZeroValue%Depth) .and. &
+                (DepthDn .le. setting%ZeroValue%Depth)) then 
+                  
+            if (headUp .le. zLinkDn) then        
+                !% --- conduit sloping upwards
+                !%     upstream depth provides uniform head over the entire link  
+                eHead(pElem) = headUp 
+                eDepth(pElem) = eHead(pElem) - eZbottom(pElem)
+            else 
+                do mm=1,size(pElem)
+                    !% --- use the length from upstream face to center of this element
+                    length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+                    !% --- head by linear interpolation
+                    ! eHead(pElem(mm)) = headUp - Slope * length2Here
+                    eHead(pElem(mm)) = headUp - hDelta * length2Here / linkLength
+                    !% --- depth from head
+                    eDepth(pElem(mm)) = max(eHead(pElem(mm)) - eZbottom(pElem(mm)), zeroR) 
+                    !% --- add the remainder of this element to the length
+                    length2Here       = length2Here + onehalfR * eLength(pElem(mm))
+                end do
+                !% --- implies head upstream goes to zero depth downstream.
+                !%     which is an inconsistent initial condition
+                !%     This condition is allowed (needed for free overflow)
+                !%     but could cause issues!
+
+                ! print *, 'Inconsistent intial conditions at link '
+                ! print *, trim(link%Names(thisLink)%str)
+                ! print *, 'Depth at downstream node is zero and head'
+                ! print *, 'at upstream node would imply flow from a '
+                ! print *, 'non-zero depth to a zero depth, which is '
+                ! print *, 'not a valid starting conditions. Please check'
+                ! print *, 'the initial depths at the nodes connecting'
+                ! print *, 'to this link'
+                ! call util_crashpoint(7098234)
+            end if
+
+
+
+        elseif ((DepthDn > setting%ZeroValue%Depth) .and. &
+                (DepthUp .le. setting%ZeroValue%Depth)) then
+            !% --- downstream depth provides uniform head over the entire link
+            if (HeadDn .le. zLinkUp) then 
+                eHead(pElem) = HeadDn
+                eDepth(pElem) = eHead(pElem) - eZbottom(pElem)
+            else
+                !% --- implied reverse gradient is not allowed
+                print *, 'Inconsistent initial conditions at link '
+                print *, trim(link%Names(thisLink)%str)
+                print *, 'Depth at upstream node is zero and non-zero depth at'
+                print *, 'downstream noded implies upstream node depth'
+                print *, 'should be at least ',HeadDn - zLinkUp, ' meters.'
+                print *, 'Please check the initial depths at the nodes connecting'
+                print *, 'to this link.'
+                call util_crashpoint(40187339)
+            end if
+
+        elseif ((DepthDn .le. setting%ZeroValue%Depth) .and. &
+                (DepthUp .le. setting%ZeroValue%Depth)) then
+            !% --- zero depths everywhere along the element.        
+            eDepth(pElem) = setting%ZeroValue%Depth 
+            eHead (pElem) = eZBottom(pElem) + setting%ZeroValue%Depth         
+        else 
+            print *, 'CODE ERROR: unexpected else.'
+            print *, 'code should not have reached this point'
+            call util_crashpoint(8898723)
+        end if
+
+        where(eDepth(pElem) < setting%ZeroValue%Depth)
+            eDepth(pElem) = setting%ZeroValue%Depth
+            eHead(pElem)  = eZbottom(pElem) + setting%ZeroValue%Depth
+        endwhere
 
         !%------------------------------------------------------------------------------------
         !% saz 01/11/2023
@@ -876,7 +916,7 @@ contains
 
         !% --- set zero values to zerodepth
         where (eDepth(pElem) < setting%ZeroValue%Depth)
-            eDepth(pElem) = setting%ZeroValue%Depth 
+            eDepth(pElem) = setting%ZeroValue%Depth * 0.99d0 
         endwhere
 
         ! print *, ' '
@@ -889,7 +929,7 @@ contains
     
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine init_IC_get_depth
+    end subroutine init_IC_get_head_and_depth
 !
 !==========================================================================
 !==========================================================================
@@ -1808,6 +1848,10 @@ contains
         !% for the basket handle the max breadth occurs between 0.2 and
         !% 0.28 of the normalized depth, so we use 0.27 so that 
         !% lookup tables fall in between two values with max breadth
+        !%
+        !% NOTE if geo_common_initialize is NOT called for a type of
+        !% closed-conduit geometry, then the geometry MUST separately
+        !% call slot_initialize
         !%-----------------------------------------------------------------
         !% Declarations
             integer :: ii, mm, Npack
@@ -1960,15 +2004,7 @@ contains
             end if
 
                 ! print *, 'calling geo_common_initialize for circular'
-            call geo_common_initialize (thisP, circular, ACirc, TCirc, RCirc, dummyA)    
-                ! print *, 'thisP,:',thisP
-                ! print *, 'elemR volume:', elemR(54,er_Volume)
-
-            ! print *, 'Circular link at 49874'
-            ! print *, 'thisP ',thisP
-            ! print *, 'thisDepth ',depth(thisP)
-            ! print *, 'thisTopwidth ',elemR(thisP,er_Topwidth)
-
+            call geo_common_initialize (thisP, circular, ACirc, TCirc, RCirc, dummyA)   
          
         case (lCustom)  !% TABULAR
             print *, 'CODE/CONFIGURATION ERROR: Custom conduit cross-sections not supported in SWMM5+'
@@ -2684,7 +2720,7 @@ contains
         thisPack = pack(elemI(:,ei_Lidx),(elemI(:,ei_link_Gidx_BIPquick) == thisLink) ) 
         do ii=1,size(thisPack)
             elemSR(thisPack(ii),esr_Orifice_Zcrest) = &
-                max( elemSR(thisPack(ii),esr_Orifice_Zcrest), elemR(thisPack(ii),er_Zbottom) + setting%ZeroValue%Depth*1.d1  )
+                max( elemSR(thisPack(ii),esr_Orifice_Zcrest), elemR(thisPack(ii),er_Zbottom) + setting%ZeroValue%Depth*1.01d0 )
         end do
         deallocate(thisPack)
 
@@ -3218,21 +3254,26 @@ contains
         image = this_image()
 
         !% pack all the link indexes in an image
-        packed_nJm_idx = pack(node%I(:,ni_idx), &
+        packed_nJm_idx = pack( node%I(:,ni_idx), &
                              ((node%I(:,ni_P_image) == image) .and. &
                               (node%I(:,ni_node_type) == nJm) ) )
+
+        ! print *, 'packed ',packed_nJm_idx   
+        ! print *, node%I(:,ni_node_type)
+   
 
         !% find the number of links in an image
         pJunction = size(packed_nJm_idx)
 
+        ! print *, 'pJunction ',pJunction
+
         !% cycle through the links in an image
         do ii = 1,pJunction
+            !  print *, 'pJunction ',ii, packed_nJm_idx(ii)
             !% necessary pointers
             thisJunctionNode => packed_nJm_idx(ii)
             call init_IC_get_junction_data (thisJunctionNode)
         end do
-
-        !stop 5097834
 
         !% deallocate the temporary array
         deallocate(packed_nJm_idx)
@@ -3298,7 +3339,22 @@ contains
         !%................................................................
         !% find the first element ID associated with that nJm
         !% masked on the global node number for this node.
+
+        ! print *, 'thisJunctionNode ',thisJunctionNode
+        ! print *, ' '
+
+        ! print *, 'Lidx'
+        ! print *, elemI(:,ei_Lidx)
+
+        ! print *, ' '
+        ! print *, elemI(:,ei_node_Gidx_SWMM)
+
         JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
+
+        ! print *, ' '
+        ! do ii=1,N_elem(1)
+        !     print *, ii, elemI(ii,ei_Lidx), elemI(ii,ei_node_Gidx_SWMM)
+        ! end do
 
         ! print *, '    ============================================='
         ! print *, 'JMidx ',JMidx
@@ -4152,28 +4208,30 @@ contains
         !% Declarations
             integer, allocatable :: tpack(:)
             integer :: npack, ii
-            real(8), pointer :: area(:), area0(:), area1(:)
+            real(8), pointer :: area(:), area0(:), area1(:), fullarea(:)
             real(8), pointer :: depth(:), fulldepth(:), length(:), ellDepth(:)
-            real(8), pointer :: hydDepth(:), hydRadius(:), perimeter(:)
-            real(8), pointer :: topwidth(:)
+            real(8), pointer :: hydDepth(:), hydRadius(:),  fullHydRadius(:)
+            real(8), pointer :: topwidth(:), fullTopWidth(:), perimeter(:)
             real(8), pointer :: volume(:), volume0(:), volume1(:)
             real(8), pointer :: thisTable(:,:)
         !%------------------------------------------------------------------
         !% Aliases:
-            area      => elemR(:,er_Area)
-            area0     => elemR(:,er_Area_N0)
-            area1     => elemR(:,er_Area_N1)
-            depth     => elemR(:,er_Depth)
-            fulldepth => elemR(:,er_FullDepth)
-            ellDepth  => elemR(:,er_EllDepth)
-            !hydDepth  => elemR(:,er_HydDepth)
-            hydRadius => elemR(:,er_HydRadius)
-            length    => elemR(:,er_Length)
-            perimeter => elemR(:,er_Perimeter)
-            topwidth  => elemR(:,er_Topwidth)
-            volume    => elemR(:,er_Volume)
-            volume0   => elemR(:,er_Volume_N0)
-            volume1   => elemR(:,er_Volume_N1)
+            area          => elemR(:,er_Area)
+            area0         => elemR(:,er_Area_N0)
+            area1         => elemR(:,er_Area_N1)
+            fullarea      => elemR(:,er_FullArea)
+            depth         => elemR(:,er_Depth)
+            fulldepth     => elemR(:,er_FullDepth)
+            ellDepth      => elemR(:,er_EllDepth)
+            hydRadius     => elemR(:,er_HydRadius)
+            fullHydRadius => elemR(:,er_FullHydRadius)
+            length        => elemR(:,er_Length)
+            perimeter     => elemR(:,er_Perimeter)
+            topwidth      => elemR(:,er_Topwidth)
+            fullTopWidth  => elemR(:,er_FullTopWidth)
+            volume        => elemR(:,er_Volume)
+            volume0       => elemR(:,er_Volume_N0)
+            volume1       => elemR(:,er_Volume_N1)
         !%------------------------------------------------------------------
         !% Preliminaries
             npack = count(elemI(:,ei_geometryType) .eq. irregular)
@@ -4182,24 +4240,29 @@ contains
         !% --- get the packed irregular element list
         tpack = pack(elemI(:,ei_Lidx), elemI(:,ei_geometryType) .eq. irregular)
 
-        !print *, depth(tpack)
-        !print *, trim(reverseKey(elemI(tpack(1),ei_geometryType)))
-        !stop 29837
-
         !% --- temporary store of the normalized depth
         depth(tpack) = depth(tpack) / fulldepth(tpack)
 
-        !% --- get area from normalized depth
+        !% --- get normalized area from normalized depth
         thisTable => transectTableDepthR(:,:,tt_area)
         call xsect_table_lookup_array (area, depth, thisTable, tpack) 
 
-        !% --- get hydraulic radius from normalized depth
+        !% --- get physical area
+        area(tpack) = area(tpack) * fullarea(tpack)
+
+        !% --- get normalized hydraulic radius from normalized depth
         thisTable => transectTableDepthR(:,:,tt_hydradius)
         call xsect_table_lookup_array (hydRadius, depth, thisTable, tpack) 
 
-        !% --- get top width from normalized depth
+        !% --- get physical hydraulic radius
+        hydRadius(tpack) = hydRadius(tpack) * fullHydRadius(tpack)
+
+        !% --- get normalized top width from normalized depth
         thisTable => transectTableDepthR(:,:,tt_width)
         call xsect_table_lookup_array (topwidth, depth, thisTable, tpack) 
+
+        !% --- get physical topwidth
+        topwidth(tpack) = topwidth(tpack) * fullTopWidth(tpack)
 
         !% --- restore the physical depth
         depth(tpack) = depth(tpack) * fulldepth(tpack)
@@ -4635,7 +4698,7 @@ contains
             tPack(1:npack,1) = pack(eIdx,geoType == irregular)
             do kk=1,npack
                 smallvolume(tPack(kk,1)) = irregular_geometry_from_depth_singular &
-                    (tpack(kk,1),tt_area, depth(tpack(kk,1)),setting%ZeroValue%Area)
+                    (tpack(kk,1),tt_area, depth(tpack(kk,1)), elemR(tpack(kk,1),er_FullArea), setting%ZeroValue%Area)
             end do
         end if 
 
@@ -4778,8 +4841,17 @@ contains
         elemR(1:size(elemR,1)-1,er_SlotDepth_N0)          = elemR(1:size(elemR,1)-1,er_SlotDepth)    
         elemR(1:size(elemR,1)-1,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
                                                               * elemR(1:size(elemR,1)-1,er_FullDepth)))
+    
         !% only calculate slots for ETM time-march
         if (setting%Solver%SolverSelect == ETM) then
+
+            !% --- initialization where starting condition is surcharged
+            where (elemR(:,er_Head) > elemR(:,er_Zcrown))
+                elemYN(:,eYN_isPSsurcharged) = .true.
+                elemR (:,er_SlotDepth)      = elemR(:,er_Head) - elemR(:,er_Zcrown)
+            endwhere
+
+            !% --- initialize PS dependent variables
             select case (SlotMethod)
 
             case (StaticSlot)
@@ -4791,6 +4863,8 @@ contains
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
                     elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
+                    !% --- add slot volume to total volume (which was set to full volume)
+                    elemR(:,er_Volume)              = elemR(:,er_Volume) + elemR(:,er_SlotVolume)
                 end where
 
             case (DynamicSlot)
@@ -4802,6 +4876,8 @@ contains
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)
                     elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
+                    !% --- add slot volume to total volume (which was set to full volume)
+                    elemR(:,er_Volume)              = elemR(:,er_Volume) + elemR(:,er_SlotVolume)
                 end where
 
             case default
@@ -5771,7 +5847,7 @@ contains
 
             !% --- temporary store of initial depth and replace with zero depth
             elemR(:,er_Temp04) = elemR(:,er_Depth)
-            elemR(:,er_Depth)  = depth0
+            elemR(:,er_Depth)  = depth0 * 0.99d0
 
             do ii=1,Npack
                 thisP => elemP(ii,ep_ALLtm)

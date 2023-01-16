@@ -26,6 +26,7 @@ module pack_mask_arrays
     public :: pack_element_outputML
     public :: pack_face_outputML
     public :: pack_small_and_zero_depth_elements
+    public :: pack_zero_depth_interior_faces
 
 contains
 !
@@ -67,6 +68,7 @@ contains
 
         call pack_small_and_zero_depth_elements(ALLtm)
         call pack_small_and_zero_depth_elements(ETM)
+        call pack_zero_depth_interior_faces ()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -4436,76 +4438,6 @@ contains
         end select
         
 
-        !     % THE THE POS/NEG SLOPE SHOULD BE OBSOLETE
-        ! !% ep_SmallDepth_CC_ALLtm_posSlope
-        !     !% - all small depth that are CC and any time march with positive bottom slope
-        !     ptype => col_elemP(ep_SmallDepth_CC_ALLtm_posSlope)
-        !     npack => npack_elemP(ptype)
-
-        !     npack = count( &
-        !             (elemYN(:,eYN_isSmallDepth)) &
-        !             .and. &
-        !             (elemI(:,ei_elementType) == CC) &
-        !             .and. &
-        !             (elemR(:,er_BottomSlope) .ge. zeroR) &
-        !             .and. &
-        !             ( &
-        !                 (elemI(:,ei_tmType) == ETM) &
-        !                 .or. &
-        !                 (elemI(:,ei_tmType) == AC) &
-        !             ) )
-
-        !     if (npack > 0) then
-        !         elemP(1:npack,ptype) = pack(eIdx,  &
-        !             (elemYN(:,eYN_isSmallDepth)) &
-        !             .and. &
-        !             (elemI(:,ei_elementType) == CC) &
-        !             .and. &
-        !             (elemR(:,er_BottomSlope) .ge. zeroR) &
-        !             .and. &
-        !             ( &
-        !                 (elemI(:,ei_tmType) == ETM) &
-        !                 .or. &
-        !                 (elemI(:,ei_tmType) == AC) &
-        !             ) )
-        !     end if
-
-        !     !% ep_SmallDepth_CC_ALLtm_negSlope
-        !     !% - all small depth that are CC and any time march with negative (adverse) bottom slope
-        !     ptype => col_elemP(ep_SmallDepth_CC_ALLtm_negSlope)
-        !     npack => npack_elemP(ptype)
-
-        !     npack = count( &
-        !             (elemYN(:,eYN_isSmallDepth)) &
-        !             .and. &
-        !             (elemI(:,ei_elementType) == CC) &
-        !             .and. &
-        !             (elemR(:,er_BottomSlope) < zeroR) &
-        !             .and. &
-        !             ( &
-        !                 (elemI(:,ei_tmType) == ETM) &
-        !                 .or. &
-        !                 (elemI(:,ei_tmType) == AC) &
-        !             ) )
-
-        !     if (npack > 0) then
-        !         elemP(1:npack,ptype) = pack(eIdx,  &
-        !             (elemYN(:,eYN_isSmallDepth)) &
-        !             .and. &
-        !             (elemI(:,ei_elementType) == CC) &
-        !             .and. &
-        !             (elemR(:,er_BottomSlope) < zeroR) &
-        !             .and. &
-        !             ( &
-        !                 (elemI(:,ei_tmType) == ETM) &
-        !                 .or. &
-        !                 (elemI(:,ei_tmType) == AC) &
-        !             ) )
-        !     end if
-
-
-
-         
         !print *, 'CC_NOTsmalldepth'
         !% ep_CC_NOTsmalldepth  ====================================
         !% Flow solution that are NOT small volume or zero depth
@@ -4642,25 +4574,117 @@ contains
                 (.not. elemYN(:,eYN_isZeroDepth))     ) 
         end if
 
-        ! print *, 'ptype ',ptype
-        ! print *, 'ep...',ep_CCJM_NOTsmalldepth
-        ! print *, ' '
-        ! print *, 'npack ',npack
-        ! print *, ' '
-        ! print *, 'is small depth'
-        ! print *, elemYN(:,eYN_isSmallDepth)
-        ! print *, ' '
-        ! print *, 'is zero depth'
-        ! print *, elemYN(:,eYN_isZeroDepth)
-        ! print *, ' '
-        ! print *, 'element type'
-        ! print *, elemI(:,ei_elementType)
-        ! print *, ' '
-        ! print *, 'CM,JM ',CC, ' ', JM, ' ',reverseKey(68)
-        ! call util_CLprint('in pack small and zero')
-
 
     end subroutine pack_small_and_zero_depth_elements
+
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine pack_zero_depth_interior_faces ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Dynamic pack for faces that have zero depth elements on one or
+        !% both sides
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, pointer :: ptype, npack, npackAll
+            integer, pointer :: eUp(:), eDn(:), fAll(:)
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Aliases:
+            !% --- all the interior non-shared faces
+            npackAll => npack_faceP(fp_all)
+            fAll     => faceP(1:npackAll,fp_all)
+            !% --- upstream elements
+            eUp      => faceI(:,fi_Melem_uL)
+            !% --- downstream elements
+            eDn      => faceI(:,fi_Melem_dL)
+        !%------------------------------------------------------------------
+              
+        ! do ii=1,npackAll
+        !     !print *, ii, fAll(ii), faceI(fAll(ii),fi_Melem_uL), faceI(fAll(ii),fi_Melem_dL)
+        !     !print *, '                      ', eUp(fAll(ii)), eDn(fAll(ii))
+        !     print *, fAll(ii), elemYN(faceI(fAll(ii),fi_Melem_uL),eYN_isZeroDepth), elemYN(faceI(fAll(ii),fi_Melem_dL),eYN_isZeroDepth)
+        ! end do
+
+        ! print *, ' '
+        ! print *, 'fAll '
+        ! print *, fAll
+        ! print *, ' ' 
+        ! print *, 'eDn(fAll)'
+        ! print *, eDn(fAll)
+        ! print *, ' '
+        ! print *, 'ElemYN(eDn...'
+        ! print *, elemYN(eDn(fAll),eYN_isZeroDepth)
+        ! print *, ' '
+        ! print *, 'eUp(fAll)'
+        ! print *, eUp(fAll)
+        ! print *, ' '
+        ! print *, 'ElemYN(eUp...'
+        ! print *, elemYN(eUp(fAll),eYN_isZeroDepth)
+        ! print *, ' '
+
+        !% --- reset the face zerodepth array
+        faceI(:,fi_zeroDepth) = zeroI  !% default to no zerodepth
+
+        !% ---- fp_elem_upstream_is_zero
+        ptype => col_faceP(fp_elem_upstream_is_zero)
+        npack => npack_faceP(ptype)
+        npack = count(                                                 &
+                               elemYN(eUp(fAll),eYN_isZeroDepth)       &
+                        .and.                                          &
+                        (.not. elemYN(eDn(fAll),eYN_isZeroDepth))      &
+                    ) 
+        if (npack > 0) then 
+            faceP(1:npack,ptype) = pack(fAll ,                         &
+                               elemYN(eUp(fAll),eYN_isZeroDepth)       &
+                        .and.                                          &
+                        (.not. elemYN(eDn(fAll),eYN_isZeroDepth))      &
+                    )
+            !% -1 indicates zerodepth upstream of face        
+            faceI(faceP(1:npack,ptype),fi_zeroDepth) = -oneI        
+        end if
+
+        !% ---- fp_elem_downstream_is_zero
+        ptype => col_faceP(fp_elem_downstream_is_zero)
+        npack => npack_faceP(ptype)
+        npack = count(                                                 &
+                               elemYN(eDn(fAll),eYN_isZeroDepth)       &
+                        .and.                                          &
+                        (.not. elemYN(eUp(fAll),eYN_isZeroDepth))      &
+                    ) 
+        if (npack > 0) then 
+            faceP(1:npack,ptype) = pack(fAll ,                         &
+                               elemYN(eDn(fAll),eYN_isZeroDepth)       &
+                        .and.                                          &
+                        (.not. elemYN(eUp(fAll),eYN_isZeroDepth))      &
+                    )
+
+            !% +1 indicates zerodepth downstream of face
+            faceI(faceP(1:npack,ptype),fi_zeroDepth) = oneI       
+        end if  
+
+        !% ---- fp_elem_bothsides_are_zero
+        ptype => col_faceP(fp_elem_bothsides_are_zero)
+        npack => npack_faceP(ptype)
+        npack = count(                                                 &
+                               elemYN(eDn(fAll),eYN_isZeroDepth)       &
+                        .and.                                          &
+                               elemYN(eUp(fAll),eYN_isZeroDepth)       &
+                    ) 
+        if (npack > 0) then 
+            faceP(1:npack,ptype) = pack(fAll ,                         &
+                               elemYN(eDn(fAll),eYN_isZeroDepth)       &
+                        .and.                                          &
+                               elemYN(eUp(fAll),eYN_isZeroDepth)       &
+                    )
+            !% +2 indicates zerodepth both upstream and downstream        
+            faceI(faceP(1:npack,ptype),fi_zeroDepth) = twoI        
+        end if  
+
+
+    end subroutine pack_zero_depth_interior_faces
 !%
 !%==========================================================================
 !%==========================================================================

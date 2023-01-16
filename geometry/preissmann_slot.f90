@@ -5,7 +5,8 @@ module preissmann_slot
     use define_keys
     use define_settings, only: setting
     use utility_crash
-    use utility, only: util_CLprint
+    !use utility, only: util_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -55,7 +56,8 @@ module preissmann_slot
             !% --- compute Preissmann slot for conduits only if ETM solver is used
             if (.not. ((whichTM .eq. ETM) .or. (whichTM .eq. ALLtm))) return
         !%------------------------------------------------------------------
-            ! print *, 'at start of Slot_topleve'
+
+            ! call util_utest_CLprint ('======== at start of Slot_toplevel')
         !%    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
@@ -65,7 +67,7 @@ module preissmann_slot
             call slot_CC_ETM (thisPackCol, Npack)
         end if
 
-            ! print *, 'after slot_CC_ETM '
+            ! call util_utest_CLprint ('======== after slot_CC_ETM')
 
         !% --- Handle Preissmann Slot for all JM elements
         !%    (although SurchargeExtraDepth=0 is effectively open)
@@ -75,7 +77,9 @@ module preissmann_slot
             call slot_JM_ETM (thisPackCol, Npack)
         end if
 
-            ! print *, 'after slot_JM_ETM'
+            ! call util_utest_CLprint ('======== after slot_JM_ETM')
+
+        !stop 66823
   
     end subroutine slot_toplevel
 !%
@@ -87,17 +91,19 @@ module preissmann_slot
         !% Description:
         !% initializes slot depth, depth, and PS logicals for surcharge
         !% or non-surcharged conditions
+        !% 20230116 -- uses initial head for controlling value
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisP(:)
         !%------------------------------------------------------------------
 
-        where (elemR(thisP,er_Depth) < elemR(thisP,er_FullDepth))
+        where (elemR(thisP,er_Head) < elemR(thisP,er_Zcrown))
             elemR(thisP,er_SlotDepth)         = zeroR   
+            !% --- depth remains unchanged
             elemYN(thisP,eYN_isPSsurcharged)  = .false. 
             elemYN(thisP,eYN_isSurcharged)    = .false.    
         elsewhere
-            elemR(thisP,er_SlotDepth)         = elemR(thisP,er_Depth) - elemR(thisP,er_FullDepth)
+            elemR(thisP,er_SlotDepth)         = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
             elemR(thisP,er_Depth)             = elemR(thisP,er_FullDepth)
             elemYN(thisP,eYN_isPSsurcharged)  = .true.
             elemYN(thisP,eYN_isSurcharged)    = .true.
@@ -590,7 +596,11 @@ module preissmann_slot
                     isSlot(thisP)       = .true.
                     isSurcharge(thisP)  = .true.
                     PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-                    SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                    ! 20230116brh - HACK testing fixed slot width
+                    ! SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                    SlotWidth(thisP) = elemR(thisP,er_BreadthMax) * 0.1d0
+                    ! 20230116brh
+
                     SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 end where
             

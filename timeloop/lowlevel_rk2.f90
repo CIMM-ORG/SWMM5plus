@@ -7,6 +7,7 @@ module lowlevel_rk2
     use utility, only: util_sign_with_ones
     use utility_output
     use utility_crash, only: util_crashpoint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -417,6 +418,11 @@ module lowlevel_rk2
                 +fAup(idn(thisP)) * fHdn(iup(thisP))   &
                 -fAdn(iup(thisP)) * fHup(idn(thisP)) )
 
+            ! print *, ' '
+            ! print *, 'in momentum source '
+            ! print *, 'first term  ',   fAup(idn(61)) * fHdn(iup(61))
+            ! print *, 'second term ',  -fAdn(iup(61)) * fHup(idn(61)) 
+
         case (T20)
             elemR(thisP,outCol) = grav * onesixthR *  (                       &
                 +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
@@ -555,18 +561,19 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! print *, 'fQ  * fU up',fQ(iup(iet(3))) * fUdn(iup(iet(3)))
-        ! print *, 'fQ  * fU dn',fQ(idn(iet(3))) * fUup(idn(iet(3)))
-        ! print *, 'fAdn * Hdn ',fAdn(iup(iet(4))) * fHdn(iup(iet(4)))
-        ! print *, 'fAup * Hup ',fAup(idn(iet(4))) * fHup(idn(iet(4)))
-        ! ! ! print *, 'eksource ',eKsource(iet(7))
-        ! ! ! print *, 'out       ',elemR(iet(7),outCol)
-        ! print *, 'FQ term', fQ(iup(iet(4))) * fUdn(iup(iet(4))) - fQ(idn(iet(4))) * fUup(idn(iet(4)))
-        ! print *, 'A term ',grav*(oneR - delta) * (fAdn(iup(iet(4))) * fHdn(iup(iet(4))) - fAup(idn(iet(4))) * fHup(idn(iet(4))))
-        ! print *, 'fAdn , Hdn ',fAdn(iup(iet(4))) , fHdn(iup(iet(4)))
-        ! print *, 'fAup , Hup ',fAup(idn(iet(4))) , fHup(idn(iet(4)))
-        ! print *, 'eksource   ',eKsource(iet(3))
-        ! print *, 'out        ',elemR(iet(4),outCol)
+        ! print *, 'faces: ',iup(61), idn(61)
+        ! print *, '1st term ',fQ(iup(61)) * fUdn(iup(61))
+        ! print *, '2nd term ',-fQ(idn(61)) * fUup(idn(61))
+        ! print *, 'balance of 1-2 ',fQ(iup(61)) * fUdn(iup(61)) - fQ(idn(61)) * fUup(idn(61))
+        ! print *, 'pieces ',fQ(iup(61)), fUdn(iup(61))
+        ! print *, 'pieces ',fQ(idn(61)), fUup(idn(61))
+        ! print *, 'pieces ',fAdn(iup(61)) , fHdn(iup(61))
+        ! print *, 'pieces ',fAup(idn(61)) , fHup(idn(61))
+        ! print *, '3rd term ',fAdn(iup(61)) * fHdn(iup(61))
+        ! print *, '4th term ',-fAup(idn(61)) * fHup(idn(61))
+        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(61)) * fHdn(iup(61)) - fAup(idn(61)) * fHup(idn(61)))
+        ! print *, 'source ',eKsource(61)
+        ! print *, 'output ',elemR(61,outCol)
         ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
@@ -815,9 +822,10 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_solve_CC'
-        ! print *, ' Msource ', Msource(139)
-        ! print *, ' Gamma   ', GammaM(139)
-        ! print *, ' Vprod   ',volumeLast(139) * velocityLast(139)
+        ! print *, ' Msource ', Msource(61)
+        ! print *, ' Gamma   ', GammaM(61)
+        ! print *, 'velocity last ',velocityLast(61)
+        ! print *, ' Vprod   ',volumeLast(61) * velocityLast(61)
         ! print *, 'crk,delt ', crk(istep),delt
         ! print *, ' '
 
@@ -826,9 +834,11 @@ module lowlevel_rk2
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
         ! print *, 'in ll_momentum_solve_CC'
-        ! print *, elemR(139,outCol) 
-        ! print *, volumeLast(139), velocityLast(139), Msource(139)
+        ! print *, elemR(61,outCol) 
+        ! print *, volumeLast(61), velocityLast(61), Msource(61)
         ! print *, crk(istep), delt, GammaM(139)  
+        ! print *, volumeLast(61) * velocityLast(61), crk(istep) * delt * Msource(61) 
+        ! print *, ' '
 
     end subroutine ll_momentum_solve_CC
 !%
@@ -1107,7 +1117,7 @@ module lowlevel_rk2
         select case (whichTM)
         case (ALLtm)
             thisColP_JM            => col_elemP(ep_JM_ALLtm)
-         case (ETM)
+        case (ETM)
             thisColP_JM            => col_elemP(ep_JM_ETM)
         case (AC)
             thisColP_JM            => col_elemP(ep_JM_AC)
@@ -1136,18 +1146,44 @@ module lowlevel_rk2
                                   * abs(eFlow(tB)) * (eRough(tB)**2) &
                                   / (eArea(tB) * eRH(tB)**(fourthirdsR))
 
+                        !% --- CHANGED 20230113 to represent the flowrate associated
+                        !%     with the head gradient. This is later averaged
+                        !%     with the face flowrate to get the final JB and face flowrate
+
                         !% --- note that the dHead is upstream - downstream
                         eFlow(tB) = (   eFlow(tB)                                                &
                                       + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                    ) / gamma        
+                                    ) / gamma     
+                                    
+                        ! eFlow(tB) = (                                                   &
+                        !             + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+                        !           ) / gamma              
+                                    
+                                    ! if (tB == 51) then
+                                    !     print *, ' '
+                                    !     print *, '  here in JB lowlevel'
+                                    !     print *, 'flowrate ',eFlow(51)
+                                    !     print *, 'area     ' ,eArea(tB)
+                                    !     print *, 'dhead    ',dHead
+                                    !     print *, 'gamma    ',gamma
+                                    !     print *, 'depth    ',elemR(51,er_Depth)
+                                    !     print *, 'iszero   ',elemYN(51,eYN_isZeroDepth)
+                                    !     print *, ' '
+                                    ! end if           
+                                    
+                        !% --- no JB driven inflow if JB is zerodepth
+                        !%     note that flow across face can still be driven by upstream
+                        if (isZeroDepth(tB)) then 
+                            eFlow(tB) = zeroR
+                        end if
 
                         !% --- prevent outflow is zero depth JM
                         if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
                             eFlow(tB) = zeroR
                         end if
 
-                        !% --- prevent outflow if head JM < head JB
-                        if (eHead(tM) < eHead(tB) .and. (eFlow(tB) < zeroR )) then 
+                        !% --- prevent outflow driven by JB if head JM <= head JB upstream face
+                        if ((eHead(tM) .le. fHead_d(tFup)) .and. (eFlow(tB) < zeroR )) then 
                             eFlow(tB) = zeroR
                         end if
 
@@ -1181,17 +1217,35 @@ module lowlevel_rk2
    
                         eFlow(tB) = (   eFlow(tB)                                                &
                                      +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                    ) / gamma
+                                    ) / gamma      
+                                    
+                        ! eFlow(tB) = (                                                  &
+                        !             +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+                        !            ) / gamma    
+
+                        ! print *, 'tB and flow AAA',tB, eFlow(tB)            
+                                   
+                        !% --- no JB driven inflow if JB is zerodepth
+                        !%     note that flow across face can still be driven by upstream
+                        if (isZeroDepth(tB)) then 
+                            eFlow(tB) = zeroR
+                        end if
+
+                        ! print *, 'tB and flow BBB',tB, eFlow(tB)
 
                         !% --- prevent outflow from zero depth JM
                         if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
                             eFlow(tB) = zeroR
                         end if
 
-                        !% --- prevent outflow if head JM < head JB
-                        if (eHead(tM) < eHead(tB) .and. (eFlow(tB) > zeroR )) then 
+                        ! print *, 'tB and flow CCC',tB, eFlow(tB)
+
+                        !% --- prevent JB-driven outflow if head JM <= head JB downstream face
+                        if ((eHead(tM) .le. fHead_u(tFdn)) .and. (eFlow(tB) > zeroR )) then 
                             eFlow(tB) = zeroR
                         end if
+
+                        ! print *, 'tB and flow DDD',tB, eFlow(tB)
 
                         !% Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
@@ -1199,16 +1253,24 @@ module lowlevel_rk2
                         else
                             eVelocity(tB) = eFlow(tB) / eArea(tB)
                         end if
+                        ! print *, 'tB and flow DDD',tB, eFlow(tB)
 
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
+
+                        ! print *, 'tB and flow EEE',tB, eFlow(tB)    
 
                     end if
                 end do
 
             end do
         end if
+
+        ! print *, ' '
+        ! print *, 'in ll_flowrate_and_velocity at end'
+        ! print *, elemR(51,er_Flowrate)
+        ! print *, ' '
 
     end subroutine ll_flowrate_and_velocity_JB
 !%

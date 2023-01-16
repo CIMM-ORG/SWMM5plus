@@ -1242,6 +1242,7 @@ module define_indexes
         enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 
         enumerator ::  fi_node_idx_SWMM             !% if the face is originated from a node, then the SWMM idx
         enumerator ::  fi_link_idx_SWMM             !% face connected to a SWMM link element 
+        enumerator ::  fi_zeroDepth                 !% 0 is no zerodepth, -1 is zerodepth upstream, +1 is zerodepth downstream, +2 is both
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -1327,6 +1328,9 @@ module define_indexes
         enumerator :: fp_all = 1                !% all faces execpt boundary, null, and shared faces
         enumerator :: fp_AC                     !% face with adjacent AC element
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
+        enumerator :: fp_elem_downstream_is_zero
+        enumerator :: fp_elem_upstream_is_zero
+        enumerator :: fp_elem_bothsides_are_zero
         enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
         enumerator :: fp_BCup
