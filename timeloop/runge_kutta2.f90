@@ -66,7 +66,8 @@ module runge_kutta2
 
             ! print *, ' '
             ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
-            ! call util_utest_checkIsNan
+            ! call util_utest_checkIsNan ()
+
             !stop 40987
             
 
@@ -211,8 +212,8 @@ module runge_kutta2
         elemR(:,er_VolumeArtificialInflowTotal) = elemR(:,er_VolumeArtificialInflowTotal) + elemR(:,er_VolumeArtificialInflow)
         
             ! call util_utest_CLprint ('ZZZ  after accumulate overflow step 2')
-            ! print *, '==================================================='
-            ! call util_utest_checkIsNan
+            !print *, '==================================================='
+             call util_utest_checkIsNan ()
 
 
         !    if (setting%Time%Step == 1) then
@@ -553,6 +554,8 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at A'
                 ! print *, elemR(61,er_Ksource), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
+                ! call util_utest_CLprint (' after rk2 call ll_momentum_Ksource_CC')
+
 
             !% --- Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
@@ -560,13 +563,16 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at B'
                 ! print *, elemR(61,er_SourceMomentum), elemR(61,er_HydRadius), elemR(61,er_ManningsN), elemR(61,er_Flowrate)
 
+                ! call util_utest_CLprint (' after rk2 call ll_momentum_source_CC')
 
             !% --- Common Gamma for momentum on channels and conduits for  ETM
             !%     Here for all channels and conduits, assuming CM roughness
             call ll_momentum_gammaCM_CC (er_GammaM, thisPackCol, Npack)
 
                 ! print *, 'in rk2_momentum_step at C'
-                ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)          
+                ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)      
+            
+                ! call util_utest_CLprint (' after rk2 call ll_momentum_gammaCM_CC')
 
             !% --- handle force mains as Gamma terms
             !%     These overwrites the gamma from the CM roughness above
@@ -584,13 +590,16 @@ module runge_kutta2
 
                 ! print *, 'in rk2_momentum_step at D'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
- 
+
+
 
             !% --- add minor loss term to gamma for all conduits
             call ll_minorloss_friction_gamma_CC (er_GammaM, thisPackCol, Npack)   
 
                 ! print *, 'in rk2_momentum_step at E'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
+
+                ! call util_utest_CLprint (' after rk2 call ll_minorloss_friction_gamma_CC')
   
             !% --- Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
@@ -598,6 +607,8 @@ module runge_kutta2
 
                 ! print *, 'in rk2_momentum_step at F'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
+            
+                ! call util_utest_CLprint (' after rk2 call ll_momentum_solve_CC')
 
 
             !% --- velocity for ETM time march
@@ -606,6 +617,7 @@ module runge_kutta2
 
                 ! print *, 'in rk2_momentum_step at G'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
+                ! call util_utest_CLprint (' after rk2 call ll_momentum_velocity_CC')
 
 
             !% --- prevent backflow through flapgates
@@ -614,7 +626,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at H'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                !  ! call util_utest_CLprint (' after rk2 call ll_enforce_flapgate_CC')
+                ! call util_utest_CLprint (' after rk2 call ll_enforce_flapgate_CC')
 
         end if
 

@@ -305,6 +305,10 @@ module define_globals
     !logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
     real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
+    logical, allocatable, target :: faceIsNan(:,:)    !% used for checking values for NaN during runtime
+
+ 
+
     !% subcatchments -- NOT coarray
     real(8), allocatable, target :: subcatchR(:,:)[:]   !% subcatchment real data
     integer, allocatable, target :: subcatchI(:,:)      !% subcatchment integer data

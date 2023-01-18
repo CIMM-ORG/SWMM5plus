@@ -561,19 +561,20 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! print *, 'faces: ',iup(61), idn(61)
-        ! print *, '1st term ',fQ(iup(61)) * fUdn(iup(61))
-        ! print *, '2nd term ',-fQ(idn(61)) * fUup(idn(61))
-        ! print *, 'balance of 1-2 ',fQ(iup(61)) * fUdn(iup(61)) - fQ(idn(61)) * fUup(idn(61))
-        ! print *, 'pieces ',fQ(iup(61)), fUdn(iup(61))
-        ! print *, 'pieces ',fQ(idn(61)), fUup(idn(61))
-        ! print *, 'pieces ',fAdn(iup(61)) , fHdn(iup(61))
-        ! print *, 'pieces ',fAup(idn(61)) , fHup(idn(61))
-        ! print *, '3rd term ',fAdn(iup(61)) * fHdn(iup(61))
-        ! print *, '4th term ',-fAup(idn(61)) * fHup(idn(61))
-        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(61)) * fHdn(iup(61)) - fAup(idn(61)) * fHup(idn(61)))
-        ! print *, 'source ',eKsource(61)
-        ! print *, 'output ',elemR(61,outCol)
+        ! print *, 'faces: ',iup(2189), idn(2189)
+        ! print *,  fQ(iup(2189)), fUdn(iup(2189))
+        ! print *, '1st term ',fQ(iup(2189)) * fUdn(iup(2189))
+        ! print *, '2nd term ',-fQ(idn(2189)) * fUup(idn(2189))
+        ! print *, 'balance of 1-2 ',fQ(iup(2189)) * fUdn(iup(2189)) - fQ(idn(2189)) * fUup(idn(2189))
+        ! print *, 'pieces ',fQ(iup(2189)), fUdn(iup(2189))
+        ! print *, 'pieces ',fQ(idn(2189)), fUup(idn(2189))
+        ! print *, 'pieces ',fAdn(iup(2189)) , fHdn(iup(2189))
+        ! print *, 'pieces ',fAup(idn(2189)) , fHup(idn(2189))
+        ! print *, '3rd term ',fAdn(iup(2189)) * fHdn(iup(2189))
+        ! print *, '4th term ',-fAup(idn(2189)) * fHup(idn(2189))
+        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(2189)) * fHdn(iup(2189)) - fAup(idn(2189)) * fHup(idn(2189)))
+        ! print *, 'source ',eKsource(2189)
+        ! print *, 'output ',elemR(2189,outCol)
         ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
@@ -822,10 +823,10 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_solve_CC'
-        ! print *, ' Msource ', Msource(61)
-        ! print *, ' Gamma   ', GammaM(61)
-        ! print *, 'velocity last ',velocityLast(61)
-        ! print *, ' Vprod   ',volumeLast(61) * velocityLast(61)
+        ! print *, ' Msource ', Msource(2189)
+        ! print *, ' Gamma   ', GammaM(2189)
+        ! print *, 'velocity last ',velocityLast(2189)
+        ! print *, ' Vprod   ',volumeLast(61) * velocityLast(2189)
         ! print *, 'crk,delt ', crk(istep),delt
         ! print *, ' '
 
@@ -834,10 +835,10 @@ module lowlevel_rk2
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
         ! print *, 'in ll_momentum_solve_CC'
-        ! print *, elemR(61,outCol) 
-        ! print *, volumeLast(61), velocityLast(61), Msource(61)
-        ! print *, crk(istep), delt, GammaM(139)  
-        ! print *, volumeLast(61) * velocityLast(61), crk(istep) * delt * Msource(61) 
+        ! print *, elemR(2189,outCol) 
+        ! print *, volumeLast(2189), velocityLast(2189), Msource(2198)
+        ! print *, crk(istep), delt, GammaM(2189)  
+        ! print *, volumeLast(2189) * velocityLast(2189), crk(istep) * delt * Msource(2189) 
         ! print *, ' '
 
     end subroutine ll_momentum_solve_CC
@@ -1194,9 +1195,13 @@ module lowlevel_rk2
                             eVelocity(tB) = eFlow(tB) / eArea(tB)
                         end if
 
+                        !print *, 'AAAAAA ',tM, tB, eVelocity(tB)
+
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
+
+                        !print *, 'BBBBBB ',tM, tB, eVelocity(tB)
 
                     end if
                 end do
@@ -1255,10 +1260,13 @@ module lowlevel_rk2
                         end if
                         ! print *, 'tB and flow DDD',tB, eFlow(tB)
 
+                        !print *, 'CCCCCC ',tM, tB, eVelocity(tB)
+
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
                         end if
 
+                        !print *, 'DDDDDD ',tM, tB, eVelocity(tB)
                         ! print *, 'tB and flow EEE',tB, eFlow(tB)    
 
                     end if

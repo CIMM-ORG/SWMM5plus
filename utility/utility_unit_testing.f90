@@ -44,7 +44,7 @@ contains
 
             !% --- selected elements
             integer :: iet(2) = (/    2189,          2809/)
-            integer :: ift(4) = (/1993 ,   199,  2516,    2530/)
+            !integer :: ift(4) = (/1993 ,   199,  2516,    2530/)
 
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -94,9 +94,54 @@ contains
       !   !print *, ' '
 
 
+        !return
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' vel    ', &
+         ! elemR(iet(1),er_Velocity), &
+         ! elemR(iet(2),er_Velocity)
 
 
-        return
+         ! write(*,"(A,12(e12.4))") &
+         ! ' Froude ', &
+         ! elemR(iet(1),er_FroudeNumber), &
+         ! elemR(iet(2),er_FroudeNumber)
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' IW_uG  ', &
+         ! elemR(iet(1),er_InterpWeight_uG), &
+         ! elemR(iet(2),er_InterpWeight_uG)
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' IW_dG  ', &
+         ! elemR(iet(1),er_InterpWeight_dG), &
+         ! elemR(iet(2),er_InterpWeight_dG)
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' IW_uQ  ', &
+         ! elemR(iet(1),er_InterpWeight_uQ), &
+         ! elemR(iet(2),er_InterpWeight_uQ)
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' IW_dQ  ', &
+         ! elemR(iet(1),er_InterpWeight_dQ), &
+         ! elemR(iet(2),er_InterpWeight_dQ)
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' IW_uP  ', &
+         ! elemR(iet(1),er_InterpWeight_uP), &
+         ! elemR(iet(2),er_InterpWeight_uP)
+
+         ! write(*,"(A,12(e12.4))") &
+         ! ' IW_uP  ', &
+         ! elemR(iet(1),er_InterpWeight_dP), &
+         ! elemR(iet(2),er_InterpWeight_dP)
+
+         print *, ' '
+         print *, faceR(39,fr_Velocity_d)
+         print *, ' '
+
+         call util_utest_checkIsNan ()
 
          !   do ii=1,N_elem(1)
          !     if ((elemI(ii,ei_elementType) == CC) .or. &
@@ -609,15 +654,18 @@ contains
       !%--------------------------------------------------------------------
       !% Declarations
          integer :: thisCol, ii, mm
-         logical :: isThisNan(Ncol_elemIsNan) 
-         logical :: foundNan = .false.
+         logical :: isThisElemNan(Ncol_elemIsNan) 
+         logical :: isThisFaceNan(Ncol_faceIsNan)
+         logical :: foundNanElem = .false.
+         logical :: foundNanFace = .false.
          character (64)  :: colIndexName = ' '
       !%--------------------------------------------------------------------
 
       elemIsNan(:,:) = .false.
+      faceIsNan(:,:) = .false.
 
+      !% --- handle elements
       do ii = 1,Ncol_elemIsNan
-
          !% --- select the column in elemR(:,:)
          !%     this matches the eIsNan_... index to the er_... index
          thisCol = util_utest_get_elemR_col(ii)
@@ -626,23 +674,44 @@ contains
          call util_utest_get_elemR_indexName (ii, colIndexName)
 
          !% --- check for any NaN in the array
-         isThisNan(ii) = util_utest_isThisCol_Nan(thisCol)
+         isThisElemNan(ii) = util_utest_isThisCol_Nan(thisCol,.true.)
 
-         if (isThisNan(ii)) then 
+         if (isThisElemNan(ii)) then 
             !% ---- store locations of NaN
             elemIsNan(:,ii) = isnan(elemR(:,thisCol))
-            foundNan = .true.
+            foundNanElem = .true.
          else
             elemIsNan(:,ii) = .false.
          end if
-
       end do
 
+      !% --- handle faces
+      do ii = 1,Ncol_faceIsNan
+         !% --- select the column in faceR(:,:)
+         !%     this matches the fIsNan_... index to the fr_... index
+         thisCol = util_utest_get_faceR_col(ii)
+
+         !% --- get the data name for the column in faceR
+         call util_utest_get_faceR_indexName (ii, colIndexName)
+
+         !% --- check for any NaN in the array
+         isThisFaceNan(ii) = util_utest_isThisCol_Nan(thisCol, .false.)
+
+         if (isThisFaceNan(ii)) then 
+            !% ---- store locations of NaN
+            faceIsNan(:,ii) = isnan(faceR(:,thisCol))
+            foundNanFace = .true.
+         else
+            faceIsNan(:,ii) = .false.
+         end if
+      end do
+
+
       !% --- report Nan
-      if (foundNan) then 
+      if (foundNanElem) then 
          !% --- cycle through the checked columns
          do ii = 1,Ncol_elemIsNan
-            if (isThisNan(ii)) then 
+            if (isThisElemNan(ii)) then 
                !% --- get the column data name
                colIndexName = ' '
                call util_utest_get_elemR_indexName (ii, colIndexName)
@@ -656,10 +725,37 @@ contains
                      !% --- list the element numbers with NaN values
                      print *, 'elem = ', mm
                   end if
+                  print *, ' '
                end do
             end if
          end do
-         call util_crashpoint(7798743)
+      end if
+
+      if (foundNanFace) then 
+         !% --- cycle through the checked columns
+         do ii = 1,Ncol_faceIsNan
+            if (isThisFaceNan(ii)) then 
+               !% --- get the column data name
+               colIndexName = ' '
+               call util_utest_get_faceR_indexName (ii, colIndexName)
+               
+               print *, ' '
+               print *, 'CODE STOPPING DUE TO NaN in ',trim(colIndexName)
+               print *, 'On processor image = ',this_image()
+               print *, 'The following face indexes are involved '
+               do mm=1,N_face(this_image())
+                  if (faceIsNan(mm,ii)) then 
+                     !% --- list the face numbers with NaN values
+                     print *, 'face = ', mm
+                  end if
+               end do
+               print *, ' '
+            end if
+         end do
+      end if     
+
+      if ((foundNanFace) .or. (foundNanElem)) then
+         call util_crashpoint(729873)
       end if
       
     end subroutine util_utest_checkIsNan
@@ -718,6 +814,10 @@ contains
             elemRCol = er_SlotArea
          case (    eIsNan_SlotVolume)
             elemRCol = er_SlotVolume
+         case (    eIsNan_SourceContinuity)
+            elemRCol = er_SourceContinuity
+         case (    eIsNan_SourceMomentum)
+            elemRCol = er_SourceMomentum
          case (    eIsNan_Velocity)
             elemRCol = er_Velocity
          case (    eIsNan_Volume)
@@ -786,6 +886,10 @@ contains
             colIndexName = 'SlotArea'
          case (      eIsNan_SlotVolume)
             colIndexName = 'SlotVolume'
+         case (      eIsNan_SourceContinuity)
+            colIndexName = 'SourceContinuity'
+         case (      eIsNan_SourceMomentum)
+            colIndexName = 'SourceMomentum'
          case (      eIsNan_Velocity)
             colIndexName = 'Velocity'
          case (      eIsNan_Volume)
@@ -800,21 +904,117 @@ contains
    end subroutine util_utest_get_elemR_indexName 
 !%
 !%==========================================================================
+ !%==========================================================================
+!%   
+   integer function util_utest_get_faceR_col (fIsNanCol) result(faceRCol)
+      !%--------------------------------------------------------------------
+      !% Description:
+      !% gets the column in the elemR array corresponding to the column in
+      !% the elemIsNan array
+      !%--------------------------------------------------------------------
+      !% Declarations
+         integer, intent(in) :: fIsNanCol
+      !%--------------------------------------------------------------------
+
+      select case (fIsNanCol)
+         case (    fIsNan_Area_d)
+            faceRCol = fr_Area_d
+         case (    fIsNan_Area_u)
+            faceRCol = fr_Area_u
+         case (    fIsNan_Depth_d)
+            faceRCol = fr_Depth_d
+         case (    fIsNan_Depth_u)
+            faceRCol = fr_Depth_u
+         case (    fIsNan_Flowrate)
+            faceRCol = fr_Flowrate
+         case (    fIsNan_Flowrate_Conservative)
+            faceRCol = fr_Flowrate_Conservative
+         case (    fIsNan_Head_u)
+            faceRCol = fr_Head_u
+         case (    fIsNan_Head_d)
+            faceRCol = fr_Head_d
+         case (    fIsNan_Velocity_d)
+            faceRCol = fr_Velocity_d
+         case (    fIsNan_Velocity_u)
+            faceRCol = fr_Velocity_u
+         case (    fIsNan_Preissmann_Number)
+            faceRCol = fr_Preissmann_Number
+         case default
+            print *, 'CODE ERROR: unexpected case value'
+            call util_crashpoint(94023)
+      end select
+
+   end function util_utest_get_faceR_col 
+!%
+!%==========================================================================
+!%==========================================================================
+!%   
+   subroutine util_utest_get_faceR_indexName (eIsNanCol, colIndexName)
+      !%--------------------------------------------------------------------
+      !% Description:
+      !% gets the name of the data in the column in the elemR array corresponding 
+      !% to the column in the elemIsNan array
+      !%--------------------------------------------------------------------
+      !% Declarations
+         integer, intent(in)           :: eIsNanCol
+         character (64), intent(inout) :: colIndexName
+      !%--------------------------------------------------------------------
+
+      select case (eIsNanCol)
+         case (      fIsNan_Area_d)
+            colIndexName = 'Area_d'
+         case (      fIsNan_Area_u)
+            colIndexName = 'Area_u'
+         case (      fIsNan_Depth_d)
+            colIndexName = 'Depth_d'
+         case (      fIsNan_Depth_u)
+            colIndexName = 'Depth_u'
+         case (      fIsNan_Flowrate)
+            colIndexName = 'Flowrate'
+         case (      fIsNan_Flowrate_Conservative)
+            colIndexName = 'Flowrate_Conservative'
+         case (      fIsNan_Head_d)
+            colIndexName = 'Head_d'
+         case (      fIsNan_Head_u)
+            colIndexName = 'Head_'
+         case (      fIsNan_Velocity_d)
+            colIndexName = 'Velocity_d'
+         case (      fIsNan_Velocity_u)
+            colIndexName = 'Velocity_u'
+         case (      fIsNan_Preissmann_Number)
+            colIndexName = 'Preissmann_Number'
+         case default
+            print *, 'CODE ERROR: unexpected case value'
+            call util_crashpoint(6111837)
+      end select
+
+   end subroutine util_utest_get_faceR_indexName 
+!%
+!%==========================================================================  
 !%==========================================================================
 !%
-    logical function util_utest_isThisCol_Nan (thisCol) result(outvalue)
+    logical function util_utest_isThisCol_Nan (thisCol, isElem) result(outvalue)
       !%--------------------------------------------------------------------
       !% Description:
       !% tests if there are any NaN in elemR(:,thisCol) vector
       !%--------------------------------------------------------------------
       !% Declarations
          integer, intent(in) :: thisCol
+         logical, intent(in) :: isElem ! .true. if element, .false. if face
       !%--------------------------------------------------------------------
 
-      if (any(isnan(elemR(:,thisCol)))) then 
-         outvalue = .true.
+      if (isElem) then 
+         if (any(isnan(elemR(:,thisCol)))) then 
+            outvalue = .true.
+         else 
+            outvalue = .false.
+         end if
       else 
-         outvalue = .false.
+         if (any(isnan(faceR(:,thisCol)))) then 
+            outvalue = .true.
+         else 
+            outvalue = .false.
+         end if
       end if
 
     end function util_utest_isThisCol_Nan   

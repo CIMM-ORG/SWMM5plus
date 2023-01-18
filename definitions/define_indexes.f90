@@ -1196,12 +1196,37 @@ module define_indexes
         enumerator :: eIsNan_SlotDepth
         enumerator :: eIsNan_SlotArea
         enumerator :: eIsNan_SlotVolume
+        enumerator :: eIsNan_SourceContinuity
+        enumerator :: eIsNan_SourceMomentum
         enumerator :: eIsNan_Velocity
         enumerator :: eIsNan_Volume
         enumerator :: eIsNan_WaveSpeed
         enumerator :: eIsNan_lastplusone
     end enum
     integer, target :: Ncol_elemIsNan = eIsNan_lastplusone-1
+
+    !%-------------------------------------------------------------------------
+    !% Define column indexes for faceIsNan used for checking for Nan
+    !% in faceR if setting%Debug%checkIsNanTF = .true.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: fIsNan_Area_d = 1
+        enumerator :: fIsNan_Area_u
+        enumerator :: fIsNan_Depth_d
+        enumerator :: fIsNan_Depth_u
+        enumerator :: fIsNan_Flowrate
+        enumerator :: fIsNan_Flowrate_Conservative
+        enumerator :: fIsNan_Head_u
+        enumerator :: fIsNan_Head_d
+        enumerator :: fIsNan_Velocity_d
+        enumerator :: fIsNan_Velocity_u
+        enumerator :: fIsNan_Preissmann_Number
+        enumerator :: fIsNan_lastplusone
+    end enum
+    integer, target :: Ncol_faceIsNan = fIsNan_lastplusone - 1
+
+
+
     
 
 !%

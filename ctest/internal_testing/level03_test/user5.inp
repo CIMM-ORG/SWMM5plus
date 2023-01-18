@@ -17,11 +17,11 @@ START_TIME           00:00:00
 REPORT_START_DATE    08/11/1998
 REPORT_START_TIME    00:00:00
 END_DATE             08/11/1998
-END_TIME             01:00:00
+END_TIME             04:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:05:00
+REPORT_STEP          00:01:00
 WET_STEP             00:01:00
 DRY_STEP             00:01:00
 ROUTING_STEP         0:00:30 

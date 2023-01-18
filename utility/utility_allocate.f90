@@ -597,6 +597,11 @@ contains
             allocate(elemIsNan(max_caf_elem_N+N_dummy_elem, ncol), stat=allocation_status, errmsg=emsg)
             call util_allocate_check(allocation_status, emsg, 'elemIsNan')
             elemIsNan(:,:) = .false.
+
+            ncol => Ncol_faceIsNan
+            allocate(faceIsNan(max_caf_face_N, ncol), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'faceIsNan')
+            faceIsNan(:,:) = .false.
         end if
 
         !==== face allocation ====
