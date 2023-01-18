@@ -454,8 +454,10 @@ module define_settings
     end type CulvertType
 
     !% setting%Debug
-    !% THESE WILL BE OBSOLETE
+    
     type DebugType
+        logical :: checkIsNanTF = .true.
+        !% THESE debugFile WILL BE OBSOLETE
         type(DebugFileYNType) :: File
         !type(DebugFileGroupYNType) :: FileGroup
         !logical :: SetupYN = .false.

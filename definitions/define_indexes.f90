@@ -1170,6 +1170,40 @@ module define_indexes
     ! end enum
     ! integer, target :: Ncol_MonitoringPointYN = mpYN_lastplusone - 1
 
+
+    !%-------------------------------------------------------------------------
+    !% Define column indexes for elemIsNan used for checking for NaN
+    !% in elemR if setting%Debug%checkIsNanTF = .true.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: eIsNan_Area = 1
+        enumerator :: eIsNan_Depth
+        enumerator :: eIsNan_EllDepth
+        enumerator :: eIsNan_Flowrate
+        enumerator :: eIsNan_FlowrateLateral
+        enumerator :: eIsNan_FroudeNumber
+        enumerator :: eIsNan_Head
+        enumerator :: eIsNan_HydRadius
+        enumerator :: eIsNan_InterpWeight_uG
+        enumerator :: eIsNan_InterpWeight_dG
+        enumerator :: eIsNan_InterpWeight_uH
+        enumerator :: eIsNan_InterpWeight_dH
+        enumerator :: eIsNan_InterpWeight_uQ
+        enumerator :: eIsNan_InterpWeight_dQ
+        enumerator :: eIsNan_InterpWeight_uP
+        enumerator :: eIsNan_InterpWeight_dP
+        enumerator :: eIsNan_Perimeter
+        enumerator :: eIsNan_SlotDepth
+        enumerator :: eIsNan_SlotArea
+        enumerator :: eIsNan_SlotVolume
+        enumerator :: eIsNan_Velocity
+        enumerator :: eIsNan_Volume
+        enumerator :: eIsNan_WaveSpeed
+        enumerator :: eIsNan_lastplusone
+    end enum
+    integer, target :: Ncol_elemIsNan = eIsNan_lastplusone-1
+    
+
 !%
 !%==========================================================================
 !% INTER-IMAGE BOUNDARY/GHOST ELEMENTS

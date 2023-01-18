@@ -14,7 +14,7 @@ module runge_kutta2
     use diagnostic_elements
     use utility, only: util_CLprint, util_syncwrite
     use utility_crash
-    use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint, util_utest_checkIsNan
 
     implicit none
 
@@ -66,6 +66,7 @@ module runge_kutta2
 
             ! print *, ' '
             ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+            ! call util_utest_checkIsNan
             !stop 40987
             
 
@@ -209,8 +210,10 @@ module runge_kutta2
         elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
         elemR(:,er_VolumeArtificialInflowTotal) = elemR(:,er_VolumeArtificialInflowTotal) + elemR(:,er_VolumeArtificialInflow)
         
-            !  call util_utest_CLprint ('ZZZ  after accumulate overflow step 2')
-            !  print *, '==================================================='
+            ! call util_utest_CLprint ('ZZZ  after accumulate overflow step 2')
+            ! print *, '==================================================='
+            ! call util_utest_checkIsNan
+
 
         !    if (setting%Time%Step == 1) then
         !     print *, ' '
