@@ -69,6 +69,7 @@ contains
         call pack_small_and_zero_depth_elements(ALLtm)
         call pack_small_and_zero_depth_elements(ETM)
         call pack_zero_depth_interior_faces ()
+        call pack_zero_depth_shared_faces ()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -5111,6 +5112,111 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_shared_faces
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine pack_zero_depth_shared_faces ()
+        !%------------------------------------------------------------------
+            !% Description
+            !% Dynamic pack for shared faces that have zero depth elements 
+            !% on one or both sides
+            !%------------------------------------------------------------------
+            !% Declarations
+                integer, pointer :: N_shared_faces 
+                integer, pointer :: thisP, eup, edn, gup, gdn, c_image
+                integer, pointer :: ptype_up_zero, ptype_dn_zero, ptype_both_zero
+                integer, pointer :: npack_up_zero, npack_dn_zero, npack_both_zero
+                logical, pointer :: isUpGhost, isDnGhost
+                integer :: ii
+            !%------------------------------------------------------------------
+                !% start the shared timer    
+                sync all 
+            !%------------------------------------------------------------------
+            !% Aliases:
+                !% pointer towards the total number of shared faces in an image
+                N_shared_faces  => npack_facePS(fp_all)
+                ptype_up_zero   => col_facePS(fp_elem_upstream_is_zero)
+                npack_up_zero   => npack_facePS(ptype_up_zero)
+                ptype_dn_zero   => col_facePS(fp_elem_downstream_is_zero)
+                npack_dn_zero   => npack_facePS(col_facePS(ptype_dn_zero))
+                ptype_both_zero => col_facePS(fp_elem_bothsides_are_zero)
+                npack_both_zero => npack_facePS(col_facePS(ptype_both_zero))
+
+            if (N_shared_faces > 0) then
+
+                do ii = 1,N_shared_faces
+
+                    thisP       => facePS(ii,fp_all)
+                    eup         => faceI(thisP,fi_Melem_uL)
+                    edn         => faceI(thisP,fi_Melem_dL)
+                    isUpGhost   => faceYN(thisP,fYN_isUpGhost)
+                    gup         => faceI(thisP,fi_GhostElem_uL)
+                    isDnGhost   => faceYN(thisP,fYN_isDnGhost)
+                    gdn         => faceI(thisP,fi_GhostElem_dL)
+                    c_image     => faceI(thisP,fi_Connected_image)
+                    
+                    if (isUpGhost) then
+
+                        if ((elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
+                            (.not. elemYN(edn,eYN_isZeroDepth)   ))  then
+
+                            npack_up_zero = npack_up_zero + oneI
+                            facePS(npack_up_zero,ptype_up_zero) = thisP
+                            !% -1 indicates zerodepth upstream of face        
+                            faceI(thisP,fi_zeroDepth) = -oneI  
+
+                        else if ((.not. elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
+                                (elemYN(edn,eYN_isZeroDepth)               ))  then
+
+                                npack_dn_zero = npack_dn_zero + oneI
+                                facePS(npack_dn_zero,ptype_dn_zero) = thisP
+                                !% +1 indicates zerodepth downstream of face
+                                faceI(thisP,fi_zeroDepth)= oneI  
+                        
+                        else if ((elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
+                                (elemYN(edn,eYN_isZeroDepth)         ))  then 
+
+                                npack_both_zero = npack_both_zero + oneI
+                                facePS(npack_both_zero,ptype_both_zero) = thisP
+                                !% +2 indicates zerodepth both upstream and downstream        
+                                faceI(thisP,fi_zeroDepth) = twoI  
+                        end if
+
+                    else if (isDnGhost) then
+                    
+                        if ((elemYN(eup,eYN_isZeroDepth)               ) .and.  &
+                            (.not. elemYN(gdn,eYN_isZeroDepth)[c_image]))  then
+
+                            npack_up_zero = npack_up_zero + oneI
+                            facePS(npack_up_zero,ptype_up_zero) = thisP
+                            !% -1 indicates zerodepth upstream of face        
+                            faceI(thisP,fi_zeroDepth) = -oneI   
+                        
+                        else if ((.not. elemYN(eup,eYN_isZeroDepth)   ) .and.  &
+                                (elemYN(gdn,eYN_isZeroDepth)[c_image]))  then
+
+                                npack_dn_zero = npack_dn_zero + oneI
+                                facePS(npack_dn_zero,ptype_dn_zero) = thisP
+                                !% +1 indicates zerodepth downstream of face
+                                faceI(thisP,fi_zeroDepth)= oneI
+                        
+                        else if ((elemYN(eup,eYN_isZeroDepth)         ) .and.  &
+                                (elemYN(gdn,eYN_isZeroDepth)[c_image]))  then
+                                
+                                npack_both_zero = npack_both_zero + oneI
+                                facePS(npack_both_zero,ptype_both_zero) = thisP
+                                !% +2 indicates zerodepth both upstream and downstream        
+                                faceI(thisP,fi_zeroDepth) = twoI
+                        end if
+
+                    end if
+                
+                end do
+
+            end if
+            stop 121321
+    end subroutine pack_zero_depth_shared_faces
 !%
 !%==========================================================================
 !%==========================================================================
