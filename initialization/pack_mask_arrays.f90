@@ -5215,7 +5215,7 @@ contains
                 end do
 
             end if
-            stop 121321
+
     end subroutine pack_zero_depth_shared_faces
 !%
 !%==========================================================================
