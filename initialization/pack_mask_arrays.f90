@@ -69,7 +69,7 @@ contains
         call pack_small_and_zero_depth_elements(ALLtm)
         call pack_small_and_zero_depth_elements(ETM)
         call pack_zero_depth_interior_faces ()
-        call pack_zero_depth_shared_faces ()
+        ! call pack_zero_depth_shared_faces ()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
