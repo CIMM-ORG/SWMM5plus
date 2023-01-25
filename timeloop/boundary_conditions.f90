@@ -14,7 +14,7 @@ module boundary_conditions
     use xsect_tables
     use utility_crash
     use utility_datetime, only: util_datetime_seconds_precision
-    ! use utility_unit_testing, only: util_utest_CLprint
+   ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -46,7 +46,8 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% --- ensure that we have BC data that brackets the current time
-        ! print *, 'calling bc_step'
+        !print *, 'calling bc_step'
+
         call bc_step()
 
             ! call util_utest_CLprint ('0000 after bc_step')
@@ -689,6 +690,9 @@ contains
         !% --- cycle throuhg the head BC
         do ii=1, N_headBC
 
+            ! print *, 'in bc_interpolate_head'
+            ! print *, ii
+
             nIdx        => BC%headI(ii,bi_node_idx)
             fIdx        => BC%headI(ii,bi_face_idx)
             eIdx        => BC%headI(ii,bi_elem_idx) !% upstream or downstream element
@@ -710,8 +714,18 @@ contains
             !     call util_crashpoint(6098734)
             ! end if
 
+            ! print *, 'here at AAA '
+            ! print *, bi_UTidx
+            ! print *, size(BC%HeadI,1), size(BC%HeadI,2)
+            ! print *, BC%HeadI(ii,bi_UTidx)
+
             critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
+            
+            ! print *, 'crit depth ',critDepth 
+
             normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+
+            ! print *, 'here at BBBB', BC%headI(ii,bi_subcategory) , ' ', trim(reverseKey(BC%headI(ii,bi_subcategory)))
             
             !% --- select outfall type
             select case (BC%headI(ii,bi_subcategory))
@@ -857,14 +871,14 @@ contains
                     thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)
                 
 
-                    ! !% --- BC head is the depth + Zbottom - referencehead
-                    ! headValue(ii) = faceR(fIdx,fr_Zbottom)        &
-                    !               + thisDepth     &
-                    !               - setting%Solver%ReferenceHead
+                    !% --- BC head is the depth + Zbottom - referencehead
+                    headValue(ii) = faceR(fIdx,fr_Zbottom)        &
+                                  + thisDepth     &
+                                  - setting%Solver%ReferenceHead
 
-                    ! !% --- Head should not be larger than the upstream
-                    ! headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
-
+                    !% --- Head should not be larger than the upstream
+                    headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))   
+                
                 else
                     print *, 'CODE ERROR: NEED ALGORITHM FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                     call util_crashpoint(792873)
@@ -872,6 +886,10 @@ contains
                     !% the depth in the node is zero
                     !headValue(ii) =  faceR(fIdx,fr_Zbottom)
                 end if
+
+                ! print *, 'critdepth  ',critDepth
+                ! print *, 'normDepth  ',normDepth
+                ! print *, 'this depth ',thisDepth
 
             case default
                 call util_print_warning("CODE ERROR (bc_interpolate): Unknown downstream boundary condition type at " &

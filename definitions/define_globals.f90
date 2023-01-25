@@ -132,6 +132,8 @@ module define_globals
 
     ! integer   :: iet(3) = (/50, 51, 52/)
     ! integer   :: ift(2) = (/47, 48/)
+
+    
     
     integer(kind=8) :: irecCount = 0
 
@@ -270,6 +272,8 @@ module define_globals
     real(8), allocatable, target :: elemSGR(:,:)[:]     !% coarray for special element geometry Real
     real(8), allocatable, target :: elemGR(:,:)         !% array to copy required ghost element data (not a coarray)
 
+    logical, allocatable, target :: elemIsNan(:,:)    !% used for checking values for NaN during runtime
+
     ! integer, allocatable, target :: conmonI(:,:)        !% element data for control/monitoring points (not a coarray)
     ! real(8), allocatable, target :: conmonR(:,:)        !% real data for control/monitoring points (not a coarray)
     ! logical, allocatable, target :: conmonYN(:,:)       !% logical data for control/monitoring points (not a coarray)
@@ -300,6 +304,10 @@ module define_globals
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
     !logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
     real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
+
+    logical, allocatable, target :: faceIsNan(:,:)    !% used for checking values for NaN during runtime
+
+ 
 
     !% subcatchments -- NOT coarray
     real(8), allocatable, target :: subcatchR(:,:)[:]   !% subcatchment real data

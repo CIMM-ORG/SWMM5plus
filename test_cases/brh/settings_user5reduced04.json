@@ -6,7 +6,7 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 250.00
+        "NominalElemLength" : 200.00
     },
     "Limiter" : {
         "Dt" : {
@@ -44,9 +44,8 @@
         "useHydrology" : true
     },
     "Solver" : {
-        "MomentumSourceMethod" : "T10",
         "PreissmannSlot" : {
-            "Method" : "DynamicSlot"
+            "Method" : "StaticSlot"
         }
     }
 }

@@ -8,7 +8,8 @@ module update
     use adjust
     use utility_profiler
     use utility_crash
-    use utility, only: util_CLprint, util_syncwrite
+    !use utility, only: util_utest_CLprint, util_syncwrite
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -46,12 +47,12 @@ module update
         !%------------------------------------------------------------------
         !%
 
-            !  call util_CLprint ('in update before geometry toplevel')
-
+             ! call util_utest_CLprint ('in update before geometry toplevel')
+        
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
-            !  call util_CLprint ('in update before adjust_limit_velocity_max')
+             ! call util_utest_CLprint ('in update before adjust_limit_velocity_max')
 
              !stop 1098734
 
@@ -59,7 +60,7 @@ module update
         call adjust_limit_velocity_max (whichTM)
         call util_crashstop(21987)
 
-            ! call util_CLprint ('in update before update_CC_element_flowrate')
+            ! call util_utest_CLprint ('in update before update_CC_element_flowrate')
 
         !% --- set packed column for updated elements
         select case (whichTM)
@@ -83,36 +84,37 @@ module update
         !%     The JB flowrate is not updated until after face interpolation
         call update_element_flowrate (thisCol_CC)
 
-            ! call util_CLprint ('in update before update_Froude_number_element')
+            ! call util_utest_CLprint ('in update before update_Froude_number_element')
 
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
-            !  call util_CLprint ('in update before CC wavespeed')
+             ! call util_utest_CLprint ('in update before CC wavespeed')
 
         !% --- compute the wave speeds
         call update_wavespeed_element(thisCol_CC)
 
-            ! call util_CLprint ('in update before JM wavespeed')
+            ! call util_utest_CLprint ('in update before JM wavespeed')
 
         call update_wavespeed_element(thisCol_JM)
 
-            ! call util_CLprint ('in update before CC interpweights')
+            ! call util_utest_CLprint ('in update before CC interpweights')
 
         !% --- compute element-face interpolation weights on CC
         call update_interpweights_CC(thisCol_CC, whichTM)
 
-            ! call util_CLprint ('in update before JB interpweights')
+            ! call util_utest_CLprint ('in update before JB interpweights')
 
         !% --- compute element-face interpolation weights on JB
         call update_interpweights_JB (thisCol_JM)
 
-            ! call util_CLprint ('in update before update Froude Number Junction Branch')
+        
+            ! call util_utest_CLprint ('in update before update Froude Number Junction Branch')
 
         !% --- compute element Froude number for JB
         call update_Froude_number_JB (thisCol_JM) 
 
-            ! call util_CLprint ('in update before update BCoutlet_flowrate')
+            ! call util_utest_CLprint ('in update before update BCoutlet_flowrate')
 
         !% --- not needed 20220716brh
         !% --- flow values on an BC outlet face 20220714brh
@@ -153,20 +155,20 @@ module update
         ! print *, 'in ',trim(subroutine_name)
         ! print *, flowrate(1), area(1), velocity(1)
 
-        ! call util_CLprint ('in update element Flowrate A')
+        ! ! call util_utest_CLprint ('in update element Flowrate A')
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
 
-            ! call util_CLprint ('in update element Flowrate B')
+            ! ! call util_utest_CLprint ('in update element Flowrate B')
 
             !% --- limit flowrate by the full value (if it exists)
             where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
                 flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
             end where
             
-            ! call util_CLprint ('in update element Flowrate C')
+            ! ! call util_utest_CLprint ('in update element Flowrate C')
         end if
 
         ! print *, flowrate(139), area(139), velocity(139)
@@ -351,6 +353,10 @@ module update
 
         !% wavespeed at modified hydraulic depth (ell)
         wavespeed(thisP) = sqrt(grav * EllDepth(thisP))
+
+        ! print *, ' '
+        ! print *, 'in update interpweights CC'
+        ! print *, wavespeed(49),velocity(49), Fr(49)
     
         !% modify wavespeed for surcharged AC cells
         if (whichTM .ne. ETM) then
@@ -402,6 +408,11 @@ module update
         !% This shouldn't need limiters.
         w_uH(thisP) = onehalfR * length(thisP)
         w_dH(thisP) = onehalfR * length(thisP)
+
+        ! print *, ' '
+        ! print *, 'in update interpweights CC'
+        ! print *, 'G ',elemR(49,er_InterpWeight_uG),elemR(49,er_InterpWeight_dG)
+        ! print *, ' '
 
         !% adjust upstream interpolation weights for downstream flow in presence of lateral inflows
         !% so that upstream interpolation is used
@@ -460,9 +471,19 @@ module update
             w_dP      => elemR(:,er_InterpWeight_dP)
             isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
         !%------------------------------------------------------------------
+        ! print *, ' '
+        ! print *, ' in weight '
+  
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
             wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
+
+            ! print *, ' '
+            ! print *, ii
+            ! print *, 'wavespeed ',wavespeed(51)
+            ! print *, 'velocity  ',velocity(51)
+            ! print *, 'pcelerity ',PCelerity(51)
+            ! print *, ' '
 
             where (.not. isSlot(thisP+ii)) 
                 w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
@@ -504,6 +525,15 @@ module update
             w_uH(thisP+ii) = onehalfR * length(thisP+ii)
             w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
         end do
+
+        !print *, ' '
+        ! print *, 'at end '
+        ! print *, 'Weights '
+        ! print *, 'H ',w_uH(51), w_dH(51)
+        ! print *, 'G ', w_uG(51), w_dG(51)
+        ! print *, 'P ',w_uP(51), w_dP(51)
+        ! print *, 'Q ',w_uQ(51), w_dQ(51)
+
 
     end subroutine update_interpweights_JB
 !%

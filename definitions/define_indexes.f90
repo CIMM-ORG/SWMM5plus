@@ -1170,6 +1170,65 @@ module define_indexes
     ! end enum
     ! integer, target :: Ncol_MonitoringPointYN = mpYN_lastplusone - 1
 
+
+    !%-------------------------------------------------------------------------
+    !% Define column indexes for elemIsNan used for checking for NaN
+    !% in elemR if setting%Debug%checkIsNanTF = .true.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: eIsNan_Area = 1
+        enumerator :: eIsNan_Depth
+        enumerator :: eIsNan_EllDepth
+        enumerator :: eIsNan_Flowrate
+        enumerator :: eIsNan_FlowrateLateral
+        enumerator :: eIsNan_FroudeNumber
+        enumerator :: eIsNan_Head
+        enumerator :: eIsNan_HydRadius
+        enumerator :: eIsNan_InterpWeight_uG
+        enumerator :: eIsNan_InterpWeight_dG
+        enumerator :: eIsNan_InterpWeight_uH
+        enumerator :: eIsNan_InterpWeight_dH
+        enumerator :: eIsNan_InterpWeight_uQ
+        enumerator :: eIsNan_InterpWeight_dQ
+        enumerator :: eIsNan_InterpWeight_uP
+        enumerator :: eIsNan_InterpWeight_dP
+        enumerator :: eIsNan_Perimeter
+        enumerator :: eIsNan_SlotDepth
+        enumerator :: eIsNan_SlotArea
+        enumerator :: eIsNan_SlotVolume
+        enumerator :: eIsNan_SourceContinuity
+        enumerator :: eIsNan_SourceMomentum
+        enumerator :: eIsNan_Velocity
+        enumerator :: eIsNan_Volume
+        enumerator :: eIsNan_WaveSpeed
+        enumerator :: eIsNan_lastplusone
+    end enum
+    integer, target :: Ncol_elemIsNan = eIsNan_lastplusone-1
+
+    !%-------------------------------------------------------------------------
+    !% Define column indexes for faceIsNan used for checking for Nan
+    !% in faceR if setting%Debug%checkIsNanTF = .true.
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: fIsNan_Area_d = 1
+        enumerator :: fIsNan_Area_u
+        enumerator :: fIsNan_Depth_d
+        enumerator :: fIsNan_Depth_u
+        enumerator :: fIsNan_Flowrate
+        enumerator :: fIsNan_Flowrate_Conservative
+        enumerator :: fIsNan_Head_u
+        enumerator :: fIsNan_Head_d
+        enumerator :: fIsNan_Velocity_d
+        enumerator :: fIsNan_Velocity_u
+        enumerator :: fIsNan_Preissmann_Number
+        enumerator :: fIsNan_lastplusone
+    end enum
+    integer, target :: Ncol_faceIsNan = fIsNan_lastplusone - 1
+
+
+
+    
+
 !%
 !%==========================================================================
 !% INTER-IMAGE BOUNDARY/GHOST ELEMENTS
@@ -1242,6 +1301,7 @@ module define_indexes
         enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 
         enumerator ::  fi_node_idx_SWMM             !% if the face is originated from a node, then the SWMM idx
         enumerator ::  fi_link_idx_SWMM             !% face connected to a SWMM link element 
+        enumerator ::  fi_zeroDepth                 !% 0 is no zerodepth, -1 is zerodepth upstream, +1 is zerodepth downstream, +2 is both
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -1327,6 +1387,9 @@ module define_indexes
         enumerator :: fp_all = 1                !% all faces execpt boundary, null, and shared faces
         enumerator :: fp_AC                     !% face with adjacent AC element
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
+        enumerator :: fp_elem_downstream_is_zero
+        enumerator :: fp_elem_upstream_is_zero
+        enumerator :: fp_elem_bothsides_are_zero
         enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
         enumerator :: fp_BCup

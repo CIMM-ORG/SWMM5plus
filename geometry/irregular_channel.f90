@@ -198,10 +198,10 @@ contains
         !% --- normalize the input
         normInput(thisP) = depth(thisP) / fulldepth(thisP)
 
-        !% --- lookup the topwidth
+        !% --- lookup the hydraulic radius
         call xsect_table_lookup_array (hydradius, normInput, thisTable, thisP)
 
-        !% --- convert to physical topwidth
+        !% --- convert to physical hydraulic radius
         hydradius(thisP) = hydradius(thisP) * transectR(tidx(thisP),tr_hydRadiusFull)
 
         !% --- limit small hydradius by zero value
@@ -290,17 +290,18 @@ contains
 !%==========================================================================
 !%   
     real(8) function irregular_geometry_from_depth_singular &
-                (indx, table_idx, depth, ZeroValueGeometry) result (outvalue)
+                (indx, table_idx, depth, maxvalue, ZeroValueGeometry) result (outvalue)
         !%----------------------------------------------------------------------
         !% Description:
         !%  Computes cross-sectional geometry for a given depth for a single element (indx)
         !%  depth is the unormalized depth of interest
         !%  table_idx is in {tt_area, tt_width, tt_depth, tt_hydradius}
         !%  zerovalue is the result used in place of zeros
+        !%  Returns the physical geometry value if maxvalue .ne. 1
         !%----------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indx, table_idx
-            real(8), intent(in) :: depth, ZeroValueGeometry
+            real(8), intent(in) :: depth, maxvalue, ZeroValueGeometry
             real(8), pointer    :: fullDepth(:), thisTable(:)
             real(8)             :: depthnorm
         !%----------------------------------------------------------------------
@@ -314,7 +315,10 @@ contains
         depthnorm     = depth/fulldepth(indx)
 
         !% --- max is used because xsect quadratic interp for small values can produce zero
-        outvalue = max( xsect_table_lookup_singular (depthnorm, thisTable(:)),ZeroValueGeometry)
+        outvalue = maxvalue * max( xsect_table_lookup_singular (depthnorm, thisTable(:)),ZeroValueGeometry)
+
+        !% --- set minimum
+        outvalue = max(outvalue,ZeroValueGeometry)
 
     end function irregular_geometry_from_depth_singular    
 !%    

@@ -454,8 +454,10 @@ module define_settings
     end type CulvertType
 
     !% setting%Debug
-    !% THESE WILL BE OBSOLETE
+    
     type DebugType
+        logical :: checkIsNanTF = .true.
+        !% THESE debugFile WILL BE OBSOLETE
         type(DebugFileYNType) :: File
         !type(DebugFileGroupYNType) :: FileGroup
         !logical :: SetupYN = .false.
@@ -464,7 +466,7 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        logical :: Force_nodes_to_nJM = .true.
+        logical :: Force_nodes_to_nJM = .false.
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
         logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
@@ -767,7 +769,7 @@ module define_settings
     type ZerovalueType
         logical :: UseZeroValues = .true.
         real(8) :: Area = 1.d-12 ! m^2 -- NOT A USER SETTING
-        real(8) :: Depth = 1.d-6 ! m
+        real(8) :: Depth = 1.d-4 ! m
         real(8) :: Slope = 1.e-6 ! prevents zero values (may be + or -)
         real(8) :: Topwidth = 1.d-12 ! m -- NOT A USER SETTING
         real(8) :: Volume = 1.d-12 ! m^3 -- NOT A USER SETTING

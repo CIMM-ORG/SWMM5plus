@@ -4,10 +4,10 @@ module adjust
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use pack_mask_arrays, only: pack_small_and_zero_depth_elements
+    use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use utility
     use utility_crash
-    ! use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -99,14 +99,15 @@ module adjust
 !%==========================================================================
 !%==========================================================================  
 !%
-    subroutine adjust_zero_and_small_depth_elem (whichTM, isreset)
+    subroutine adjust_zero_and_small_depth_elem (whichTM, isReset, isZeroFlux)
         !%------------------------------------------------------------------
         !% Description:
         !% Top level adjustment routine for zero and small depth conditions
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: whichTM
-            logical, intent(in) :: isreset !% true means the zero/small packs are reset
+            logical, intent(in) :: isReset !% true means the zero/small packs are reset
+            logical, intent(in) :: isZeroFlux !% true means that flowrate and velocities are set to zero
             integer, pointer   :: thisCol_CC, thisCol_JM
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -114,33 +115,37 @@ module adjust
         !% Aliases:   
         !%------------------------------------------------------------------
      
-            !   call util_CLprint('-------------0000')
+              ! ! call util_utest_CLprint('-------------0000')
 
-        if (isreset) then
+        if (isReset) then
             call adjust_zerodepth_identify_all ()
            
             call adjust_smalldepth_identify_all ()
             
             call pack_small_and_zero_depth_elements (whichTM)
+
+            call pack_zero_depth_interior_faces ()
             
         end if
-            !    call util_CLprint('-------------1111')
+               ! ! call util_utest_CLprint('-------------1111')
 
         call adjust_zerodepth_element_values (whichTM, CC) 
 
-            !  call util_CLprint('-------------AAAA')
+             ! ! call util_utest_CLprint('-------------AAAA')
         
         call adjust_zerodepth_element_values (whichTM, JM) 
 
-            !  call util_CLprint('-------------BBBB')
-        
-        call adjust_smalldepth_element_fluxes (whichTM)
+             ! ! call util_utest_CLprint('-------------BBBB')
 
-            !  call util_CLprint('-------------CCCC')
+
+        call adjust_smalldepth_element_fluxes (whichTM, isZeroFlux)
+
+            ! ! call util_utest_CLprint('-------------CCCC')
         
         call adjust_limit_velocity_max (whichTM) 
 
-            !  call util_CLprint('-------------DDDD')
+            ! ! call util_utest_CLprint('-------------DDDD')
+
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -168,18 +173,22 @@ module adjust
             ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
 
         call adjust_smalldepth_face_fluxes     (whichTM,ifixQCons)
+
             ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
 
         call adjust_zerodepth_face_fluxes_CC   (whichTM,ifixQCons)
+
             ! call util_utest_CLprint ('FFF02  after zero/small face step B-----------------')
 
         call adjust_zerodepth_face_fluxes_JMJB (whichTM,ifixQCons)
+
             ! call util_utest_CLprint ('FFF03  after zero/small face step C-----------------')
-        
 
         call adjust_JB_elem_flux_to_equal_face (whichTM) !% 20220123brh
+
             ! call util_utest_CLprint ('FFF04  after zero/small face step D-----------------')
        
+
         !%------------------------------------------------------------------
         !% Closing:
  
@@ -274,8 +283,8 @@ module adjust
                     geovalue(thisP) = geozero
                 end where
             else
-                where (geovalue(thisP) < geozero)
-                    geovalue(thisP) = geozero
+                where (geovalue(thisP) .le. geozero)
+                    geovalue(thisP) = geozero * 0.99d0
                 endwhere
             end if
             ! if (isreset) then
@@ -315,13 +324,16 @@ module adjust
         geovalue => elemR(:,geocol)
         overflow => elemR(:,er_VolumeOverFlow)
         !%-----------------------------------------------------------------------------
-        if (geovalue(eIdx) < geozero) then
+        if (geovalue(eIdx) .le. geozero) then
             if (isVolume) then
                 !% --- we are gaining volume by resetting to the geozero (minimum),so
                 !%    count this as a negative overflow
                 overflow(eIdx) = overflow(eIdx) - (geozero - geovalue(eIdx))
+                geovalue(eIdx) = geozero
+            else
+                geovalue(eIdx) = geozero * 0.99d0
             end if
-            geovalue(eIdx) = geozero
+            
         end if
 
         if (setting%Debug%File%adjust) &
@@ -473,11 +485,13 @@ module adjust
 
         isZeroDepth = .false.
 
-        where (eDepth .le. depth0)
+        where (eDepth .le. depth0 )
             isZeroDepth   = .true.
             isSmallDepth = .false.
         endwhere
 
+        ! print *, 'in adjust_zerodepth_identify_all'
+        ! print *, 'depth ', elemR(52,er_Depth)
         !%----------------------------------------------------------------------
         !% Closing
     end subroutine adjust_zerodepth_identify_all
@@ -589,7 +603,7 @@ module adjust
 
         !% only reset the depth if it is too small
         where (elemR(thisP,er_Depth) .le. setting%ZeroValue%Depth)
-            elemR(thisP,er_Depth)    = setting%ZeroValue%Depth
+            elemR(thisP,er_Depth)    = setting%ZeroValue%Depth * 0.99d0
         end where
 
         elemR(thisP,er_Area)         = setting%ZeroValue%Area
@@ -603,9 +617,8 @@ module adjust
         elemR(thisP,er_TopWidth)     = setting%ZeroValue%TopWidth
         elemR(thisP,er_Velocity)     = zeroR
         elemR(thisP,er_WaveSpeed)    = zeroR
-        elemR(thisP,er_Head)    = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
-        !elemR(thisP,er_HeadAvg) = setting%ZeroValue%Depth + elemR(thisP,er_Zbottom)
-
+        elemR(thisP,er_Head)    = setting%ZeroValue%Depth*0.99d0 + elemR(thisP,er_Zbottom)
+    
         !% only reset volume when it gets too small
         where (elemR(thisP,er_Volume) < setting%ZeroValue%Volume)
             elemR(thisP,er_Volume) = setting%ZeroValue%Volume 
@@ -616,7 +629,7 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_smalldepth_element_fluxes(whichTM)
+    subroutine adjust_smalldepth_element_fluxes(whichTM, isZeroFlux)
         !% -----------------------------------------------------------------
         !% Description
         !% uses the ep_SmallDepth_CC_ALLtm pack to set the velocity and
@@ -624,6 +637,7 @@ module adjust
         !% -----------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: whichTM
+            logical, intent(in) :: isZeroFlux !% sets small depth fluxes to zero
             integer, pointer :: thisCol
             integer, pointer :: npack, thisP(:), fdn(:), fup(:)
             real(8), pointer :: Area(:), CMvelocity(:), CMvelocity2(:)
@@ -682,12 +696,20 @@ module adjust
         npack   => npack_elemP(thisCol)
         if (npack < 1) return 
         thisP   => elemP(1:npack,thisCol)
+
+        !% --- forced values to zero (typically for initial conditions)
+        if (isZeroFlux) then
+            elemR(thisP,er_Velocity) = zeroR
+            elemR(thisP,er_Flowrate) = zeroR
+            return 
+        end if
         
         !% --- define the small volume ratio, 
         !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
         svRatio(thisP) = min(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
 
-        !print *, 'svRatio ', svRatio(iet(1:2))
+        ! print *, 'thisP ',thisP
+        ! print *, 'svRatio ', svRatio(20)
     
         !% use the larger of available ManningsN values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
@@ -720,13 +742,22 @@ module adjust
         !% chezy-manning velocity in upper part of element using head slope
         CMvelocity(thisP) = sign( oneArray(thisP), fHead_d(fup(thisP)) - Head(thisP)) &
             * ( HydRadius(thisP)**(twothirdR) )                                              &
-            * sqrt(abs(fHead_d(fup(thisP)) - head(thisP)) / (onehalfR * Length(thisP)) )           &
+            * sqrt(abs(fHead_d(fup(thisP)) - Head(thisP)) / (onehalfR * Length(thisP)) )           &
             / ManningsN(thisP)
+
+        ! print *, 'CMvelocity ', CMvelocity(20)
+        ! print *, 'heads  ', fHead_d(fup(thisP)), Head(thisP)
+        ! print *, 'hydRad ', HydRadius(thisP)
+        ! print *, 'mann n ',ManningsN(thisP)
+        ! print *, 'length ',Length(thisP)
+
 
         CMvelocity2(thisP) = sign( oneArray(thisP), Head(thisP) - fHead_u(fdn(thisP))) &
                 * ( HydRadius(thisP)**(twothirdR) )                                              &
                 * sqrt(abs(Head(thisP) - fHead_u(fdn(thisP))) / (onehalfR * Length(thisP)) )           &
                 / ManningsN(thisP)    
+
+        ! print *, 'CMvelocity2 ',CMvelocity2(20)        
 
         !% if opposite signs use the sum, otherwise take the smaller magnitude
         where (CMvelocity(thisP) * CMvelocity(thisP) < zeroR)
@@ -735,6 +766,7 @@ module adjust
             CMvelocity(thisP) = sign(min(abs(CMVelocity(thisP)), abs(CMVelocity2(thisP))),CMvelocity(thisP))
         endwhere
                 
+        ! print *, 'CMvelocity3 ',CMvelocity(20)
                 
         ! print *, 'head dif  ',fHead_d(fup(iet(8))) - fHead_u(fdn(iet(8)))    
         ! print *, 'hydRadius ',HydRadius(iet(8))
@@ -745,6 +777,8 @@ module adjust
         !% blend the computed velocity with CM velocity
         VelocityBlend(thisP) = svRatio(thisP) * VelocityN0(thisP) &
                             + (oneR - svRatio(thisP)) * CMvelocity(thisP)
+
+        ! print *, 'VelocityBlend A', VelocityBlend(20)
 
         !% 20220716brh
         !% --- use original RK2 velocity when its magnitude is smaller than blended CM                          
@@ -759,6 +793,8 @@ module adjust
         endwhere   
 
         ! print *, 'Velblend ', VelocityBlend(iet(8))
+
+        ! print *, 'VelocityBlend C ',VelocityBlend(20)
 
         !% new flowrate
         Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
@@ -828,13 +864,17 @@ module adjust
             fArea_d => faceR(:,fr_Area_d)
         !% -----------------------------------------------------------------
 
+            ! print *, ' '
+            ! print *, 'in adjust_zerodepth_face-fluxes'
+
         !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
         fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
-        ! print *, 'thisP ',thisP
-        ! print *, 'fQ(fup) ',fQ(fup(thisP)) 
-        ! print *, 'fQ(fdn) ',fQ(fdn(thisP))
+
+        ! print *, 'AAA   fQ ',fQ(33), fQ(42)
+
+            ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- Set inflow from adjacent cell based on head gradient
         call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
@@ -844,7 +884,9 @@ module adjust
         ! print *, 'fQ(fup) ',fQ(fup(thisP)) 
         ! print *, 'fQ(fdn) ',fQ(fdn(thisP))
 
-            !call util_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
+        ! print *, 'BBB   fQ ',fQ(33), fQ(42)
+
+            ! ! ! call util_utest_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- reset the conservative fluxes
         if (ifixQCons) then
@@ -856,12 +898,33 @@ module adjust
         ! print *, faceR(elemI(58,ei_Mface_uL),fr_Flowrate), faceR(elemI(59,ei_Mface_dL),fr_Flowrate)
 
 
-        !% --- reset velocities
-        fVel_d(fup(thisP)) = fQ(fup(thisP)) /  fArea_d(fup(thisP))
-        fVel_u(fup(thisP)) = fQ(fup(thisP)) /  fArea_u(fup(thisP))
+        !% --- reset velocities 
+        !%     HACK: it would be better if we could enusre that all the
+        !%     areas are greater than zero so we wouldn't need the where
+        !%     statements. But as of 20230114 there were areas that lead
+        !%     to NAN values
+        where (fArea_d(fup(thisP)) > setting%ZeroValue%Area)
+            fVel_d(fup(thisP)) = fQ(fup(thisP)) /  fArea_d(fup(thisP))
+        elsewhere
+            fVel_d(fup(thisP)) = zeroR
+        endwhere
 
+        where (fArea_u(fup(thisP)) > setting%ZeroValue%Area)
+            fVel_u(fup(thisP)) = fQ(fup(thisP)) /  fArea_u(fup(thisP))
+        elsewhere
+            fVel_u(fup(thisP)) = zeroR
+        endwhere
+
+        where (fArea_d(fdn(thisP)) > setting%ZeroValue%Area)
         fVel_d(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_d(fdn(thisP))
-        fVel_u(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_u(fdn(thisP))
+        elsewhere
+            fVel_d(fdn(thisP)) = zeroR
+        endwhere
+        where ( fArea_u(fdn(thisP)) > setting%ZeroValue%Area)
+            fVel_u(fdn(thisP)) = fQ(fdn(thisP)) /  fArea_u(fdn(thisP))
+        elsewhere 
+            fVel_u(fdn(thisP)) = zeroR
+        endwhere
 
         !% -----------------------------------------------------------------
     end subroutine adjust_zerodepth_face_fluxes_CC        
@@ -977,20 +1040,31 @@ module adjust
         !%     note that JB and face must have consistent fluxes or we
         !%     get conservation errors
         do ii=1,max_branch_per_node,2
-            !where (fQ(fup(thisP+ii)) > zeroR)  !% 20221230brh
-                eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
-            !elsewhere
-            !    fQ(fup(thisP+ii)) = eQ(thisP + ii) * real(isbranch(thisP+ii),8)
-            !endwhere
+            where (fQ(fup(thisP+ii)) > zeroR)  !% 20221230brh
+               eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
+            elsewhere
+               fQ(fup(thisP+ii)) = eQ(thisP + ii) * real(isbranch(thisP+ii),8)
+            endwhere
+
+            !eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
+            !% TEST 2023013 USING AVERAGING
+            ! eQ(thisP + ii) = onehalfR * (fQ(fup(thisP+ii)) + eQ(thisP + ii)) * real(isbranch(thisP+ii),8)
+            ! fQ(fup(thisP+ii)) = eQ(thisP + ii)
         end do
 
         !% assign the downstream face flux to the JB 
         do ii=2,max_branch_per_node,2
-           ! where (fQ(fdn(thisP+ii)) < zeroR )  !% 20221230brh
+            where (fQ(fdn(thisP+ii)) < zeroR )  !% 20221230brh
                 eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
-           ! elsewhere
-           !     fQ(fdn(thisP+ii)) =  eQ(thisP + ii) * real(isbranch(thisP+ii),8)
-           ! endwhere
+            elsewhere
+                fQ(fdn(thisP+ii)) =  eQ(thisP + ii) * real(isbranch(thisP+ii),8)
+            endwhere
+
+            !eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
+
+            !% TEST 2023013 USING AVERAGING
+            ! eQ(thisP + ii) = onehalfR*(fQ(fdn(thisP+ii)) +eQ(thisP + ii)) * real(isbranch(thisP+ii),8)
+            ! fQ(fdn(thisP+ii)) = eq(thisP + ii)
         end do
         
 
@@ -1070,15 +1144,7 @@ module adjust
         npack => npack_elemP(thisCol)
         if (npack > 0) then
             thisP  => elemP(1:npack,thisCol)
-            
-            ! print *, ' '
-            ! print *, 'in adjust_smalldepth_face_fluxes'
-            ! print *, 'thisP '
-            ! print *, thisP
-            ! print *, ' '
-            ! print *, 'face Q at top'
-            ! print *, faceQ(fdn(thisP))
-
+        
             where (elemQ(thisP) .ge. zeroR)
                 !% --- flow in downstream direction
                 !%     downstream face value is minimum of the face value or element value
@@ -1098,9 +1164,6 @@ module adjust
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
             endwhere
 
-            ! print *, 'face Q after first step'
-            ! print *, faceQ(fdn(thisP))
-
             !% 20220531brh
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
@@ -1116,16 +1179,29 @@ module adjust
             end if
 
             !% --- reset velocities
-            fVel_d(fup(thisP)) = faceQ(fup(thisP)) /  faceAd(fup(thisP))
-            fVel_u(fup(thisP)) = faceQ(fup(thisP)) /  faceAu(fup(thisP))
+            where ( faceAd(fup(thisP)) > setting%ZeroValue%Area)
+                fVel_d(fup(thisP)) = faceQ(fup(thisP)) /  faceAd(fup(thisP))
+            elsewhere
+                fVel_d(fup(thisP)) = zeroR
+            endwhere
 
-            fVel_d(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAd(fdn(thisP))
-            fVel_u(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAu(fdn(thisP))
+            where (faceAu(fup(thisP)) > setting%ZeroValue%Area)
+                fVel_u(fup(thisP)) = faceQ(fup(thisP)) /  faceAu(fup(thisP))
+            elsewhere
+                fVel_u(fup(thisP)) = zeroR
+            endwhere
 
-        
-            ! print *, 'face Q at end'
-            ! print *, faceQ(fdn(thisP))
+            where (faceAd(fdn(thisP)) > setting%ZeroValue%Area)
+                fVel_d(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAd(fdn(thisP))
+            elsewhere 
+                fVel_d(fdn(thisP)) = zeroR
+            end where
 
+            where (faceAu(fdn(thisP)) > setting%ZeroValue%Area)
+                fVel_u(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAu(fdn(thisP))
+            elsewhere 
+                fVel_u(fdn(thisP)) = zeroR
+            endwhere
         else
             !% no CC elements
         end if
@@ -1147,6 +1223,8 @@ module adjust
                     !% --- outflow (-faceQ) is limited to 1/3 volume in junction
                     faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), -elemVol(thisJM+ii) / (threeR * dt) )
                 endwhere
+
+
                 where (elemQ(thisJM+1+ii) .ge. zeroR)
                     !% --- flow downstream direction in downstream branch 
                     !%     downstream face value is the smaller of the face or branch values
@@ -1166,16 +1244,31 @@ module adjust
                 end if
 
                 !% --- reset velocities
-                fVel_d(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAd(fup(thisJM+ii  ))  
-                fVel_u(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAu(fup(thisJM+ii  ))
+                where (faceAd(fup(thisJM+ii)) > setting%ZeroValue%Area)
+                    fVel_d(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAd(fup(thisJM+ii  )) 
+                elsewhere 
+                    fVel_d(fup(thisJM+ii  )) = zeroR
+                endwhere
 
-                fVel_d(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAd(fdn(thisJM+1+ii))
-                fVel_u(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAu(fdn(thisJM+1+ii))
+                where (faceAu(fup(thisJM+ii)) > setting%ZeroValue%Area)
+                    fVel_u(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAu(fup(thisJM+ii  ))
+                elsewhere
+                    fVel_u(fup(thisJM+ii  )) = zeroR
+                endwhere
 
+                where ( faceAd(fdn(thisJM+1+ii))> setting%ZeroValue%Area)
+                    fVel_d(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAd(fdn(thisJM+1+ii))
+                elsewhere
+                    fVel_d(fdn(thisJM+1+ii)) = zeroR
+                endwhere
+
+                where (faceAu(fdn(thisJM+1+ii)) > setting%ZeroValue%Area)
+                    fVel_u(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAu(fdn(thisJM+1+ii))
+                elsewhere
+                    fVel_u(fdn(thisJM+1+ii)) = zeroR
+                endwhere
             end do
         end if
-        
-        
 
         !%------------------------------------------------------------------
         !% Closing:

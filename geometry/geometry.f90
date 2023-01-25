@@ -35,7 +35,8 @@ module geometry
     use adjust
     use utility_profiler
     use utility_crash
-    use utility, only: util_CLprint, util_syncwrite
+    ! use utility, only: util_CLprint, util_syncwrite
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -153,7 +154,7 @@ module geometry
             end select
             call util_crashstop(49872)
         !%--------------------------------------------------------------------
-            !   call util_CLprint ('in geometry at top==========================================')  
+            ! call util_utest_CLprint ('in geometry at top==========================================')  
 
         !% STATUS: at this point we know volume and velocity on all elements
         !% from RK2 solution
@@ -165,8 +166,7 @@ module geometry
         if (setting%SWMMinput%AllowPonding) then
             call geo_ponding_inflow (thisColP_JM)   
         end if
-
-            ! call util_CLprint ('in geometry after ponding inflow') 
+            ! call util_utest_CLprint ('in geometry after ponding inflow') 
            
         !% --- PREISSMAN SLOT    
         !%     also adds to ponded volume or computes overflow volume for JM (only)
@@ -175,7 +175,9 @@ module geometry
         !%     (but not for the slot)
         call slot_toplevel (whichTM, thisColP_Closed_CC, thisColP_JM)
 
-            ! call util_CLprint ('in geometry after slot toplevel') 
+            ! call util_utest_CLprint ('in geometry after slot toplevel') 
+
+            !stop 29387488
 
         !% STATUS: The Preissmann Slot values have been assigned for all CC and JM
         !% Overflow and Ponding have been assigned for JM (only). 
@@ -196,7 +198,7 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Volume, setting%ZeroValue%Volume, thisColP_all_TM, .true.)
 
-            ! call util_CLprint ('in geometry after limit_by_zerovalues (volume)') 
+            ! call util_utest_CLprint ('in geometry after limit_by_zerovalues (volume)') 
 
         !% --- DEPTH
         !%     compute the depth on all elements of CC JM based on geometry.
@@ -204,15 +206,18 @@ module geometry
         !%     without adding Preissmann Slot depth.
         call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry after depth_from_volume') 
+        ! print *, 'after geo_depth_from_volume '
+        ! print *, elemR(50,er_Depth), elemR(51,er_Depth)
 
-        !% --- ZERO DEPTH CC JM
+            ! call util_utest_CLprint ('in geometry after depth_from_volume') 
+
+        !% --- ZERO DEPTH CC JM -- now done in geo_depth_from_volume_by_type 20230113
         !%     reset all zero or near-zero depths in aa CC and JM
         !call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
 
-            ! call util_CLprint ('in geometry after limit_by_zerovalues (depth)') 
+            ! call util_utest_CLprint ('in geometry after limit_by_zerovalues (depth)') 
 
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC and JM
@@ -227,7 +232,9 @@ module geometry
             !call geo_head_from_depth (thisColP_all_TM)
         end if
  
-            ! call util_CLprint ('in geometry after head_from_depth')
+        ! print *, 'after geo_head_from_depth '
+        ! print *, elemR(50,er_Head), elemR(51,er_Head)
+            ! call util_utest_CLprint ('in geometry after head_from_depth')
 
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
@@ -239,7 +246,7 @@ module geometry
             call geo_overflow_openchannels (thisColP_Open_CC)
         end if
 
-            ! call util_CLprint ('in geometry after overflow_openchannels')
+            ! call util_utest_CLprint ('in geometry after overflow_openchannels')
 
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC JM
         !%     limit the volume in closed element (CC, JM) to the full volume
@@ -247,14 +254,14 @@ module geometry
         call geo_volumelimit_closed (thisColP_Closed_CC)
         call geo_volumelimit_closed (thisColP_JM)
 
-            ! call util_CLprint ('in geometry after volumelimit_closed')
+            ! call util_utest_CLprint ('in geometry after volumelimit_closed')
 
         !% REMOVED 20220909 brh
         !% --- limit volume for incipient surcharge. This is done after depth is computed
         !%     so that the "depth" algorithm can include depths greater than fulldepth
         !%     as a way to handle head for incipient surcharge.
         !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
-            ! call util_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
+            ! call util_utest_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
         !% --- limit depth for surcharged on CC. This is done after head is computed
         !%     so that the depth algorithm can include depths greater than fulldepth where the 
         !%     geometry algorithm does not enforrce full depth
@@ -272,14 +279,14 @@ module geometry
         !%     This is needed before JB are computed
         call slot_JM_head_PSadd (thisColP_JM)
 
-            ! call util_CLprint ('in geometry after JM_head_PSadd') 
+            ! call util_utest_CLprint ('in geometry after JM_head_PSadd') 
            
         !% --- JB VALUES
         !%    assign the non-volume geometry on junction branches JB based on JM head
         !%    Values limited by full volume. Volume assigned is area * length
         call geo_assign_JB (whichTM, thisColP_JM)
 
-            ! call util_CLprint ('in geometry after assign_JB') 
+            ! call util_utest_CLprint ('in geometry after assign_JB') 
 
         !% --- JB CLOSED CONDUIT VOLUME LIMIT
         !%     further limiting the JB volume by full is probably not needed,
@@ -287,14 +294,14 @@ module geometry
         !%     with JB volume assigned by area * length.
         call geo_volumelimit_closed (thisColP_Closed_JB)
 
-            ! call util_CLprint ('in geometry after volumelimit_closed') 
+            ! call util_utest_CLprint ('in geometry after volumelimit_closed') 
 
         !% --- PREISSMANN SLOT HEAD REMOVE IN JM
         !%     we need to remove the PS and ponding from the JM cells so that we can easily
         !%     compute other geometry without full JM causing problems
         call slot_JM_head_PSremove (thisColP_JM)
 
-            ! call util_CLprint ('in geometry after JM_head_PSremove')  
+            ! call util_utest_CLprint ('in geometry after JM_head_PSremove')  
 
         !% STATUS: at this point we have all geometry on CC, JM, JB that is
         !% limited by the full volume values. The CC and JM have slot values stored
@@ -313,14 +320,14 @@ module geometry
             !call geo_area_from_volume (thisColP_all_TM)
         end if
 
-            ! call util_CLprint ('in geometry after area_from_volume') 
+            ! call util_utest_CLprint ('in geometry after area_from_volume') 
 
         ! !% --- ZERO AREA CC JM
         ! !%     reset all zero or near-zero areas in CC and JM
         ! call adjust_limit_by_zerovalues &
         !      (er_Area, setting%ZeroValue%Area, thisColP_all_TM, .false.)
 
-            ! call util_CLprint ('in geometry after adjust_limit_by_zeroValues area')   
+            ! call util_utest_CLprint ('in geometry after adjust_limit_by_zeroValues area')   
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
@@ -328,7 +335,7 @@ module geometry
         !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
         call geo_topwidth_from_depth_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry after topwidth_from_depth') 
+            ! call util_utest_CLprint ('in geometry after topwidth_from_depth') 
 
         ! !% --- ZERO TOPWIDTH CC
         ! !%     reset all zero or near-zero topwidth in CC 
@@ -336,7 +343,7 @@ module geometry
         ! call adjust_limit_by_zerovalues &
         !      (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_CC, .false.)
 
-            ! call util_CLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
+            ! call util_utest_CLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
@@ -349,7 +356,7 @@ module geometry
         ! %     Note: perimeter for JM is undefined in this subroutine
         !OBSOLETE  call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_CLprint ('in geometry after perimeter from depth') 
+            ! call util_utest_CLprint ('in geometry after perimeter from depth') 
 
         !% --- compute hyddepth
         !call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
@@ -362,13 +369,13 @@ module geometry
         ! end if
         ! OBSOLETE call geo_hyddepth_from_area_and_topwidth (thisColP_CC)
 
-        !    call util_CLprint ('in geometry after hyddepth_from_depth')
+        !    util_utest_CLprint ('in geometry after hyddepth_from_depth')
 
         !% --- compute hydradius
         !%     Note: cannot be used for JM unless perimeter is defined prior.
         !OBSOLETE call geo_hydradius_from_area_perimeter (thisColP_CC)
 
-        !    call util_CLprint ('in geometry after hydradius_from_area_perimeter') 
+        !    util_utest_CLprint ('in geometry after hydradius_from_area_perimeter') 
 
         !% --- the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
@@ -383,30 +390,30 @@ module geometry
         !     !call geo_pressure_head_from_hyddepth (thisColP_CC)
         ! end if
 
-            ! call util_CLprint ('in geometry after ell_from_head') 
+            ! call util_utest_CLprint ('in geometry after ell_from_head') 
 
         !% --- make adjustments for slots on closed elements only
         !%     These add slot values to volume, depth, head
         call slot_CC_adjustments (thisColP_Closed_CC)
 
-            ! call util_CLprint ('in geometry after slot_CC_adustments') 
+            ! call util_utest_CLprint ('in geometry after slot_CC_adustments') 
 
         call slot_JM_adjustments (thisColP_JM)
 
-            ! call util_CLprint ('in geometry after slot_JM_adjustments') 
+            ! call util_utest_CLprint ('in geometry after slot_JM_adjustments') 
 
         !% --- compute the SlotDepth, SlotArea, SlotVolume and update
         !%     elem volume and depth for JB. Note elem head on JB either with or
         !%     without surcharge is assigned in geo_assign_JB
         call slot_JB_computation (thisColP_JM)
         
-            ! call util_CLprint ('in geometry after slot_JB_computation') 
+            ! call util_utest_CLprint ('in geometry after slot_JB_computation') 
 
         !% Set JM values that are not otherwise defined
         !% HydDepth, ell. Note that topwidth, hydradius, perimeter are undefined.
         call geo_JM_values ()
 
-            ! call util_CLprint ('in geometry after JM_values') 
+            ! call util_utest_CLprint ('in geometry after JM_values') 
 
         !% HOLD UNTIL AC RE-VISITED
         ! !% compute the dHdA that are only for AC nonsurcharged
@@ -414,7 +421,10 @@ module geometry
         !     call geo_dHdA (ep_AC_ACnonSurcharged)
         ! end if
 
-            ! call util_CLprint ('in geometry at end') 
+            ! call util_utest_CLprint ('in geometry at end') 
+
+
+        !stop 2397843
 
         !% --- check for crashpoint and stop here
         call util_crashstop(322983)
@@ -811,9 +821,10 @@ module geometry
         ! print *, 'flowrate     ', elemR(eIdx,er_Flowrate)
         ! print *, 'utr_Qcritmax ',utr_QcritMax
         ! print *, 'table Qcritmax       ', uniformTableR(UT_idx,utr_QcritMax)
-        !do ii=1,N_Elem(this_image())
-        !   print *, ii, elemR(ii,er_Flowrate)
-        !end do
+        ! do ii=1,N_Elem(this_image())
+        !   print *, ii, elemR(ii,er_Flowrate), elemR(ii,er_Head)
+        ! end do
+        ! print *, ' '
         
         !stop 2098374
 
@@ -1405,7 +1416,7 @@ module geometry
                 tM => thisP(ii) !% junction main ID
 
                 ! write(chartemp,"(A,I8,A)") "        thisP_JM =",tM,'========================================='
-                ! if ((ii > 98) .and. (tM == 1606)) call util_CLprint(chartemp)
+                ! if ((ii > 98) .and. (tM == 1606)) util_utest_CLprint(chartemp)
 
                 !% moved 20220909brh
                 ! !% if a slot present, add the slot depth and volume back to JM
@@ -1426,7 +1437,7 @@ module geometry
                         tBA(1) = tB  !% array for pure array functions
 
                         ! write(chartemp,"(A,I8)") "        tB=",tB
-                        ! if ((ii > 98) .and. (tM == 1606)) call util_CLprint(chartemp)
+                        ! if ((ii > 98) .and. (tM == 1606)) util_utest_CLprint(chartemp)
                         ! print *, kk, tB
                         ! print *, BranchExists(tB)
 
@@ -1437,7 +1448,7 @@ module geometry
                             ! print *, velocity(tB)
                             ! print *, Kfac(tB)
                             if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
-                                ! if (ii > 98) call util_CLprint('AAAA')
+                                ! if (ii > 98) util_utest_CLprint('AAAA')
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
                                 !% the headloss is added to an inflow and subtracted at
@@ -1448,8 +1459,10 @@ module geometry
                                     + branchsign(kk) * sign(oneR,velocity(tB))         &
                                     * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
                                
+                                ! if (tB == 63) then 
+                                !      print *, 'AAAA in JB: head:',head(tB), zBtm(tB)
+                                ! end if
                             else
-                                ! if (ii > 98) call util_CLprint('BBBB')
                                 !% for main head below the branch bottom entrance we assign a
                                 !% Froude number of one on an inflow to the junction main. Note
                                 !% an outflow from a junction main for this case gets head
@@ -1459,9 +1472,13 @@ module geometry
                                 head(tB) = zBtm(tB) + sedimentDepth(tB)                            &
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
                                     *(velocity(tB)**twoR) / (grav) 
+
+                                ! if (tB == 53) then 
+                                !         print *, 'BBBB in JB: head:',head(tB), zBtm(tB)
+                                ! end if
                             end if
 
-                            ! if (ii > 98) call util_CLprint('CCCC')
+                            ! if (ii > 98) util_utest_CLprint('CCCC')
                             ! if (tB == 50) then
                             !     print *, 'head in JB ',head(tB)
                             ! end if
@@ -1472,28 +1489,15 @@ module geometry
                            
                             !% compute provisional depth
                             depth(tB) = head(tB) - (zBtm(tB) + sedimentDepth(tB))
-                            ! if ((ii > 98) .and. (setting%Time%Step > 37466)) then 
-                            !     if (tB == 1608) then
-                            !         call util_CLprint('       DDDD-0')
-                            !     !print *, '         tB ',tB
-                            !     ! print *, 'depth', depth(tB)
-                            !     ! print *, 'head ',head(tB)
-                            !     ! print *, 'zbtm ', zBtm(tB)
-                            !         print *, '         velocity ',velocity(tB)
-                            !     ! print *, 'kfac ',Kfac(tB)
-                            !     ! print *, 'branchsign ',branchsign(kk)
-                            !     ! print *, 'grav ',grav
-                            !     ! print *, sedimentDepth(tB)
-                            !     end if
+
+                            ! if (tB == 63) then 
+                            !     print *, 'CCCC in JB: depth:',depth(tB), setting%ZeroValue%Depth
                             ! end if
 
-                            ! print *, 'in geo_assign_JB  ',trim(reverseKey(elemI(tB,ei_geometryType)))
-                            ! print *, 'depth ',depth(tB), fulldepth(tB), setting%ZeroValue%Depth
-                            
-                            ! if (ii > 98) call util_CLprint('DDDD')
+                            ! if (ii > 98) util_utest_CLprint('DDDD')
 
                             if (depth(tB) .ge. fulldepth(tB)) then
-                                ! if (ii > 98) call util_CLprint('EEEE')
+                                ! if (ii > 98) util_utest_CLprint('EEEE')
                                 !% surcharged or incipient surcharged
                                 depth(tB)        = fulldepth(tB)
                                 area(tB)         = fullArea(tB)
@@ -1505,33 +1509,24 @@ module geometry
                                 ellDepth(tBA)    = llgeo_elldepth_pure(tBA)
                                 !pressurehead(tB) = zBtm(tB) + ell(tB)
                                 ! if ((ii > 98) .and. (setting%Time%Step > 37466)) then
-                                !     call util_CLprint('EEEE')
+                                !     util_utest_CLprint('EEEE')
                                 !     print *, depth(tB)
                                 ! end if
 
                                 ! write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
-                            elseif (depth(tB) < setting%ZeroValue%Depth) then
-                                ! if (ii > 98) call util_CLprint('FFFF')
+                            elseif (depth(tB) .le. setting%ZeroValue%Depth) then
+                                ! if (ii > 98) util_utest_CLprint('FFFF')
                                 !% negligible depth is treated with ZeroValues
-                                depth(tB)        = setting%ZeroValue%Depth
+                                depth(tB)        = setting%ZeroValue%Depth * 0.99d0
                                 area(tB)         = setting%ZeroValue%Area
                                 topwidth(tB)     = setting%ZeroValue%Topwidth
                                 perimeter(tB)    = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
                                 hydRadius(tB)    = setting%ZeroValue%Depth
                                 dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
-                                ellDepth(tB)     = setting%ZeroValue%Depth !%hydDepth(tB)  20220712 brh
-                                !pressurehead(tB) = zBtm(tB) + ell(tB)
-
-                                ! if ((ii > 98) .and. (setting%Time%Step > 37466)) then
-                                !     call util_CLprint('FFFF')
-                                !     print *, depth(tB)
-                                ! end if
-
-                                ! write(*,"(A,i5,10f12.5)"), 'BBB ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
+                                ellDepth(tB)     = setting%ZeroValue%Depth 
 
                             else
-                                ! if (ii > 98) call util_CLprint('HHHH')
                                 !% --- set lookup table names
                                 select case (elemI(tB,ei_geometryType))
                                     !% --- for tables using HydRadius
@@ -1583,7 +1578,7 @@ module geometry
                                         Ttable => TSemiEllip
                                 end select
 
-                                ! if (ii > 98) call util_CLprint('IIII')
+                                ! if (ii > 98) util_utest_CLprint('IIII')
                                 !% HACK --- dHdA, which is needed for AC method
                                 !% is not computed in the following
 
@@ -1595,7 +1590,7 @@ module geometry
                                 !%     with standard geo_ function for hydraulic radius, hydraulic depth and ell
 
                                 case (parabolic)   !% analytical
-                                    ! if (ii > 98) call util_CLprint('IIIIaa')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIaa')
                                     area(tBA)     = llgeo_parabolic_area_from_depth_pure         (tBA, depth(tBA))
                                     area(tB )     = max(area(tB),setting%ZeroValue%Area)
 
@@ -1618,7 +1613,7 @@ module geometry
                                     call util_crashpoint(6298349)
 
                                 case (rectangular) !% analytical
-                                    ! if (ii > 98) call util_CLprint('IIIIb')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIb')
                                     area(tBA)     = llgeo_rectangular_area_from_depth_pure       (tBA, depth(tBA))
                                     area(tB)      = max(area(tB),setting%ZeroValue%Area)
 
@@ -1637,7 +1632,7 @@ module geometry
                                     ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
 
                                 case (trapezoidal) !% analytical
-                                    ! if (ii > 98) call util_CLprint('IIIIc')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIc')
                                     area(tBA)     = llgeo_trapezoidal_area_from_depth_pure       (tBA, depth(tBA))
                                     area(tB)      = max(area(tB),setting%ZeroValue%Area)
 
@@ -1656,7 +1651,7 @@ module geometry
                                     ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
 
                                 case (triangular) !% analytical
-                                    ! if (ii > 98) call util_CLprint('IIIId')
+                                    ! if (ii > 98) util_utest_CLprint('IIIId')
                                     area(tBA)     = llgeo_triangular_area_from_depth_pure        (tBA, depth(tBA))
                                     area(tB)      = max(area(tB),setting%ZeroValue%Area)
 
@@ -1676,24 +1671,24 @@ module geometry
 
                                 case (irregular)  !% lookup
                                     area(tB)     = irregular_geometry_from_depth_singular ( &
-                                                        tB,tt_area, depth(tB), setting%ZeroValue%Area)
+                                                        tB,tt_area, depth(tB), elemR(tB,er_FullArea), setting%ZeroValue%Area)
 
-                                    ! if (ii > 98) call util_CLprint('IIIIe-1')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIe-1')
                                     topwidth(tB) = irregular_geometry_from_depth_singular ( &
-                                                        tB,tt_width, depth(tB), setting%ZeroValue%TopWidth)
+                                                        tB,tt_width, depth(tB), elemR(tB,er_FullTopWidth),setting%ZeroValue%TopWidth)
 
-                                    ! if (ii > 98) call util_CLprint('IIIIe-2')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIe-2')
                                     !% --- note the irregular stores hyd radius rather than perimeter
                                     hydRadius(tB) = irregular_geometry_from_depth_singular ( &
-                                                        tB,tt_hydradius, depth(tB),  setting%ZeroValue%Depth)    
+                                                        tB,tt_hydradius, depth(tB), elemR(tB,er_FullHydRadius), setting%ZeroValue%Depth)    
 
                                     !% --- perimeter is derived geometry for irregular
-                                    ! if (ii > 98) call util_CLprint('IIIIe-4')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIe-4')
                                     perimeter(tB) = area(tB) / hydRadius(tB)
                                     perimeter(tB)= max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
 
                                     !% --- irregular must be continuously-increasing in width
-                                    ! if (ii > 98) call util_CLprint('IIIIe-5')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIe-5')
                                     ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB), setting%ZeroValue%Depth) 
 
                                 !% --- CLOSED CONDUITS
@@ -1704,7 +1699,7 @@ module geometry
 
                                 !% --- lookups with Hydraulic Radius stored
                                 case (arch, basket_handle, circular, eggshaped, horiz_ellipse, horseshoe, vert_ellipse) 
-                                    ! if (ii > 98) call util_CLprint('IIIIf')                                   
+                                    ! if (ii > 98) util_utest_CLprint('IIIIf')                                   
                                     area(tB)     = llgeo_tabular_from_depth_singular &
                                         (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, setting%ZeroValue%Area, Atable)
 
@@ -1725,7 +1720,7 @@ module geometry
 
                                 !% --- lookups with SectionFactor stored
                                 case (catenary, gothic, semi_circular, semi_elliptical)   
-                                    ! if (ii > 98) call util_CLprint('IIIIg') 
+                                    ! if (ii > 98) util_utest_CLprint('IIIIg') 
                                     area(tB)     = llgeo_tabular_from_depth_singular &
                                          (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, setting%ZeroValue%Area, Atable)
 
@@ -1746,7 +1741,7 @@ module geometry
 
                                 !% --- lookup with sediment
                                 case (filled_circular)  
-                                    ! if (ii > 98) call util_CLprint('IIIIh')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIh')
                                     area(tB)      = llgeo_filled_circular_area_from_depth_singular      (tB,depth(tB),setting%ZeroValue%Area)
                                     topwidth(tB)  = llgeo_filled_circular_topwidth_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth)
                                     perimeter(tB) = llgeo_filled_circular_perimeter_from_depth_singular (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -1760,7 +1755,7 @@ module geometry
 
                                 !% --- analytical closed-conduit cases
                                 case (mod_basket)   !% analytical            
-                                    ! if (ii > 98) call util_CLprint('IIIIi')                     
+                                    ! if (ii > 98) util_utest_CLprint('IIIIi')                     
                                     area(tB)      = llgeo_mod_basket_area_from_depth_singular        (tB,depth(tB),setting%ZeroValue%Area)
                                     topwidth(tB)  = llgeo_mod_basket_topwidth_from_depth_singular    (tB,depth(tB),setting%ZeroValue%Topwidth)
                                     perimeter(tB) = llgeo_mod_basket_perimeter_from_depth_singular   (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -1773,7 +1768,7 @@ module geometry
                                     ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
 
                                 case (rectangular_closed) !% analytical
-                                    ! if (ii > 98) call util_CLprint('IIIIj')
+                                    ! if (ii > 98) util_utest_CLprint('IIIIj')
                                     area(tB)      = llgeo_rectangular_closed_area_from_depth_singular      (tB, depth(tB),setting%ZeroValue%Area)
                                     topwidth(tB)  = llgeo_rectangular_closed_topwidth_from_depth_singular  (tB, depth(tB),setting%ZeroValue%Topwidth)
                                     perimeter(tB) = llgeo_rectangular_closed_perimeter_from_depth_singular (tB, depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -1786,7 +1781,7 @@ module geometry
                                     ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
 
                                 case (rect_round)  !% analytical         
-                                    ! if (ii > 98) call util_CLprint('IIIIk')                         
+                                    ! if (ii > 98) util_utest_CLprint('IIIIk')                         
                                     area(tB)      = llgeo_rect_round_area_from_depth_singular       (tB,depth(tB),setting%ZeroValue%Area)
                                     topwidth(tB)  = llgeo_rect_round_topwidth_from_depth_singular   (tB,depth(tB),setting%ZeroValue%Topwidth)
                                     perimeter(tB) = llgeo_rect_round_perimeter_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -1799,7 +1794,7 @@ module geometry
                                     ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
 
                                 case (rect_triang) !% analytical           
-                                    ! if (ii > 98) call util_CLprint('IIIIl')                        
+                                    ! if (ii > 98) util_utest_CLprint('IIIIl')                        
                                     area(tB)      = llgeo_rectangular_triangular_area_from_depth_singular      (tB,depth(tB),setting%ZeroValue%Area)
                                     topwidth(tB)  = llgeo_rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth)
                                     perimeter(tB) = llgeo_rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -1820,18 +1815,18 @@ module geometry
                                     !stop 399848
                                 end select
 
-                                ! if (ii > 98) call util_CLprint('JJJJ')
+                                ! if (ii > 98) util_utest_CLprint('JJJJ')
                                 !% --- standard for all geometries
                                 !hydDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure &
                                 !                    (tBA, area(tBA), topwidth(tBA))
                                 dHdA(tB)     = oneR / topwidth(tB)
 
-                                ! if (ii > 98) call util_CLprint('KKKK')
+                                ! if (ii > 98) util_utest_CLprint('KKKK')
                             end if
-                            ! if (ii > 98) call util_CLprint('LLLL')
+                            ! if (ii > 98) util_utest_CLprint('LLLL')
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
-                            ! if (ii > 98) call util_CLprint('MMMM')
+                            ! if (ii > 98) util_utest_CLprint('MMMM')
                         end if
                     end do
                 end if
@@ -3332,7 +3327,7 @@ module geometry
         !% ----open channels  
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular &
-                (idx,tt_area, indepth, ZeroValueArea)
+                (idx,tt_area, indepth, elemR(idx,er_FullArea), ZeroValueArea)
 
         case (parabolic)
             !outvalue = parabolic_area_from_depth_singular (idx, indepth)
@@ -3509,7 +3504,7 @@ module geometry
         
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular &
-                (idx,tt_width, indepth, ZeroValueTopwidth)
+                (idx,tt_width, indepth, elemR(idx,er_FullTopWidth), ZeroValueTopwidth)
 
         !% -----CLOSED CONDUITS ---------------------------------------------
         case (arch, basket_handle, catenary, circular, eggshaped, gothic,  &
@@ -3695,7 +3690,7 @@ module geometry
         
         case (irregular)
             outvalue = irregular_geometry_from_depth_singular &
-                (idx,tt_area, indepth, ZeroValuePerimeter)
+                (idx,tt_area, indepth, elemR(idx,er_FullArea), ZeroValuePerimeter)
 
         !% --- CLOSED CONDUITS   
         case (arch, basket_handle, circular, eggshaped, horiz_ellipse, horseshoe, vert_ellipse)
@@ -3905,7 +3900,7 @@ module geometry
          !%------------- ----------------------------------------------------
 
         where (volume(thisP)/length(thisP) .le. setting%ZeroValue%Area)
-            depth(thisP) = setting%ZeroValue%Depth
+            depth(thisP) = setting%ZeroValue%Depth * 0.99d0
         end where
 
         ! print *, ' '
