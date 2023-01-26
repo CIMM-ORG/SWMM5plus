@@ -1443,6 +1443,8 @@ contains
         elemI(ElemLocalCounter,ei_node_Gidx_BIPquick)   = thisNode
         !% a JM node will never be a phantom node. Thus, the BQuick and SWMM idx will be the same
         elemI(ElemLocalCounter,ei_node_Gidx_SWMM)       = thisNode
+        !% save the number total number of real branches connected to a junction main
+        elemSI(ElemLocalCounter,esi_JunctionMain_Total_Branches) = node%I(thisNode,ni_N_link_u) + node%I(thisNode,ni_N_link_d) 
         !% Assign junction main element to node
         node%I(thisNode,ni_elem_idx)                    = ElemLocalCounter
         !% --- a JM node is connected to faces through multipol JB branches, so the node face index is null
