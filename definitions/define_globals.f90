@@ -334,6 +334,21 @@ module define_globals
     integer, allocatable :: link_output_idx(:)
     integer, allocatable :: node_output_idx(:)
 
+    integer, allocatable, target           :: output_static_types_Link(:)
+    integer, allocatable, target           :: output_static_typeProcessing_Link(:)
+    integer, allocatable, target           :: output_static_typeMultiplyByBarrels_Link(:)
+    character(len=64), allocatable, target :: output_static_typeNames_Link(:)
+    character(len=16), allocatable         :: output_static_typeUnits_Link(:)
+    real(8), allocatable                   :: output_static_link(:,:)[:]
+
+
+    integer, allocatable, target           :: output_static_types_Node(:)
+    integer, allocatable, target           :: output_static_typeProcessing_Node(:)
+    integer, allocatable, target           :: output_static_typeMultiplyByBarrels_Node(:)
+    character(len=64), allocatable, target :: output_static_typeNames_Node(:)
+    character(len=16), allocatable         :: output_static_typeUnits_Node(:)
+    real(8), allocatable                   :: output_static_node(:,:)[:]
+
     !% element output types
     integer, allocatable, target           :: output_types_elemR(:)
     integer, allocatable, target           :: output_typeProcessing_elemR(:)
@@ -342,6 +357,15 @@ module define_globals
     character(len=16), allocatable         :: output_typeUnits_elemR(:)
     character(len=64), allocatable, target :: output_typeNames_withTime_elemR(:)
     character(len=15), allocatable, target :: output_typeUnits_withTime_elemR(:)
+
+    integer, allocatable, target           :: output_static_types_elemR(:)
+    integer, allocatable, target           :: output_static_typeProcessing_elemR(:)
+    integer, allocatable, target           :: output_static_typeMultiplyByBarrels_elemR(:)
+    character(len=64), allocatable, target :: output_static_typeNames_elemR(:)
+    character(len=16), allocatable         :: output_static_typeUnits_elemR(:)
+    real(8), allocatable                   :: output_static_elem(:,:)[:]
+
+    
 
 
     !% face output types
@@ -385,7 +409,7 @@ module define_globals
     integer, allocatable, target :: thisElementOut(:), thisFaceOut(:)
 
     integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
-    integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output link
+    integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output node
     integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
 
     !% Temporary arrays that don't fit in any of the standard array structures
@@ -502,6 +526,9 @@ module define_globals
     integer :: N_Total_Curves !% sum of swmm input curves and additional storage curves
     integer :: N_subcatch_runon
     integer, target :: N_OutTypeElem
+    integer, target :: N_Out_static_TypeElem
+    integer, target :: N_Out_static_TypeLink
+    integer, target :: N_Out_static_TypeNode
     integer, target :: N_OutTypeFace
 
     !% Number of API parameters  ! REVISED APPROACH 20220422brh

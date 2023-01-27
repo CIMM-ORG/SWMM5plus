@@ -1422,9 +1422,10 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
-            eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number, er_Volume, &
-                        er_InterpWeight_dG, er_InterpWeight_uG, er_InterpWeight_dH,   er_InterpWeight_uH, &
-                        er_InterpWeight_dQ, er_InterpWeight_uQ, er_InterpWeight_dP, er_InterpWeight_uP] 
+            eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number, &
+                        er_Volume, er_velocity, er_InterpWeight_dG, er_InterpWeight_uG, &
+                        er_InterpWeight_dH, er_InterpWeight_uH, er_InterpWeight_dQ, &
+                        er_InterpWeight_uQ, er_InterpWeight_dP, er_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces
@@ -2077,6 +2078,107 @@ module face
         end if
 
     end subroutine face_zerodepth_interior
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! subroutine face_zerodepth_shared (facePackCol)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% where one side has a zero depth element, the face head is
+    !     !% adjusted to the smaller of (1) the head computed by interpolation
+    !     !% or (2) the head on the non-zero depth element.
+    !     !% Input: column in the facePS(:,:) array containing the packed 
+    !     !% indexes of faces with zero elements on upstream, downstream, o
+    !     !% both sides.
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, intent(in) :: facePackCol
+    !         integer             :: ii
+    !         integer, pointer    :: Npack, thisP, eup, edn, BUpIdx, BDnIdx
+    !         real(8), pointer    :: fHeadDn, fHeadUp, fDepthDn, fDepthUp
+    !         real(8), pointer    :: fAreaDn, fAreaUp, fFlowrate
+    !         real(8), pointer    :: fVelocityDn, fVelocityUp, fZbottom
+    !         real(8), pointer    :: eHead, eFlowrate, eArea, eVelocity
+    !         logical, pointer    :: isGhostUp, isGhostDn
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !         fHeadDn     => faceR(:,fr_Head_d)
+    !         fHeadUp     => faceR(:,fr_Head_u)
+    !         fDepthDn    => faceR(:,fr_Depth_d)
+    !         fDepthUp    => faceR(:,fr_Depth_u)
+    !         fAreaDn     => faceR(:,fr_Area_d)
+    !         fAreaUp     => faceR(:,fr_Area_u)
+    !         fVelocityDn => faceR(:,fr_Velocity_d)
+    !         fVelocityUp => faceR(:,fr_Velocity_u)
+    !         fFlowrate   => faceR(:,fr_Flowrate)
+    !         fZbottom    => faceR(:,fr_Zbottom)
+    !         eHead    => elemR(:,er_Head)
+    !         eArea    => elemR(:,er_Area)
+    !         eFlowrate=> elemR(:,er_Flowrate)
+    !         eVelocity=> elemR(:,er_Velocity)
+    !         eDn      => faceI(:,fi_Melem_dL)
+    !         eUp      => faceI(:,fi_Melem_uL)
+    !     !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !         !% --- CASE: Face has zero element upstream
+    !         Npack => npack_facePS(facePackCol)
+
+    !         if (Npack > 0) then
+    !             do ii = 1,Npack
+    !                 !% Aliases
+    !                 thisP       => facePS(ii,facePackCol)
+    !                 eup         => faceI(thisP,fi_Melem_uL)
+    !                 edn         => faceI(thisP,fi_Melem_dL)
+    !                 BUpIdx      => faceI(thisP,fi_BoundaryElem_uL)
+    !                 BDnIdx      => faceI(thisP,fi_BoundaryElem_dL)
+    !                 isGhostUp   => faceYN(thisP,fYN_isUpGhost)
+    !                 isGhostDn   => faceYN(thisP,fYN_isDnGhost)
+    !                 fHeadDn     => faceR(thisP,fr_Head_d)
+    !                 fHeadUp     => faceR(thisP,fr_Head_u)
+    !                 fDepthDn    => faceR(thisP,fr_Depth_d)
+    !                 fDepthUp    => faceR(thisP,fr_Depth_u)
+    !                 fAreaDn     => faceR(thisP,fr_Area_d)
+    !                 fAreaUp     => faceR(thisP,fr_Area_u)
+    !                 fVelocityDn => faceR(thisP,fr_Velocity_d)
+    !                 fVelocityUp => faceR(thisP,fr_Velocity_u)
+    !                 fFlowrate   => faceR(thisP,fr_Flowrate)
+    !                 fZbottom    => faceR(thisP,fr_Zbottom)
+    !                 eDn         => faceI(thisP,fi_Melem_dL)
+    !                 eUp         => faceI(thisP,fi_Melem_uL)
+
+    !                 select case (facePackCol)
+
+    !                     case (fp_elem_downstream_is_zero)
+
+    !                         !% set up aliases to upstream zero element values
+    !                         if (isGhostUp) then
+    !                             eHead     => elemGR(ii,ebgr_Head)
+    !                             eArea     => elemGR(ii,ebgr_Area)
+    !                             eFlowrate => elemGR(ii,ebgr_Flowrate)
+    !                             eVelocity => elemGR(ii,ebgr_Velocity)
+    !                         else
+    !                             eHead     => elemB%R(ii,ebgr_Head)
+    !                             eArea     => elemB%R(ii,ebgr_Area)
+    !                             eFlowrate => elemB%R(ii,ebgr_Flowrate)
+    !                             eVelocity => elemB%R(ii,ebgr_Velocity)
+    !                         end if
+
+    !                         !% ---set head to the smaller of the face head and the non-zero element upstream
+    !                         fHeadUp = min(fHeadUp, eHead)  
+    !                         fHeadDn = fHeadUp 
+
+    !                         !% --- get a face depth consistent with this head
+    !                         !%     note this depth might be negative
+    !                         fDepthUp = max(fHeadUp - fZbottom, zeroR)
+    !                         fDepthDn = fDepthUp
+    !                         !% --- get face area consistent with this depth
+    !                 end select
+
+    !             end do
+    !         end if
+
+    ! end subroutine face_zerodepth_shared
 !%
 !%==========================================================================
 !%==========================================================================

@@ -208,6 +208,7 @@
         enumerator :: SingleValue
         !% keys for output FeatureType
         enumerator :: LinkOut
+        enumerator :: NodeOut
         enumerator :: NodeElemOut
         enumerator :: NodeFaceOut
         !% keys for curve types

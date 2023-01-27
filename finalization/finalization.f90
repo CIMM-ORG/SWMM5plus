@@ -75,7 +75,13 @@ contains
                 !% write the control file for the stored mult-level files
                 call outputML_write_control_file ()
 
+                if(N_Out_static_TypeElem > 0) then 
+                    call outputML_combine_static_elem_data ()
+                end if
                 sync all
+ 
+                
+
 
                 !if (this_image() == 1) write(*,*) 'starting convert elements'
                 call outputML_convert_elements_to_linknode_and_write ()

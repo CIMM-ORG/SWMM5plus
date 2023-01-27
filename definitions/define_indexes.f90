@@ -650,6 +650,7 @@ module define_indexes
         !% share the same column sets.
         enumerator ::  esi_JunctionMain_Type       = 1             !% KEY junction main type
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
+        enumerator ::  esi_JunctionMain_Total_Branches             !% total number of branches connected to the junction main
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
         enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
@@ -760,6 +761,7 @@ module define_indexes
         !enumerator ::  esr_JunctionMain_PondedVolume
         enumerator ::  esr_JunctionMain_SurchargeExtraDepth
         enumerator ::  esr_JunctionBranch_Kfactor
+        enumerator ::  esr_JunctionBranch_dfdQ
         enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
@@ -1261,6 +1263,7 @@ module define_indexes
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
         enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
         enumerator ::  ebgr_Volume                    !% volume at boundary/ghost element
+        enumerator ::  ebgr_Velocity                  !% velocity at boundary/ghost element
         enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element

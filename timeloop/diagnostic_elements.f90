@@ -54,30 +54,35 @@ module diagnostic_elements
         thisCol => col_elemP(ep_Diag)
         Npack   => npack_elemP(thisCol)
 
-        !% --- HACK, this if (Npack > 0) was commented out by SS in late December
-        !%     but restored by BRH in 20230114
-        !%     This should not be called if there are no diagnostic elements
-        !%     Need to review this decision
-        if (Npack > 0) then
-            ! print *, 'calling diagnostic by type Npack = ',Npack
+        !% --- if (Npack > 0) was commented out by SS
+        !%     within this conditional face update has been called.
+        !%     the face update syncs all the images when running in parallel
+        !%     if daignostic elements are presents in a system, and if one/some
+        !%     does not include a diagnostic element, it will cause a race condition.
+        !%     because the images with the diagnostic elements will wait for syncs 
+        !%     inside the face update. however, images that do not include a diagnostic 
+        !%     element will never reach that condition.
 
-                ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
+        ! if (Npack > 0) then
+        ! print *, 'calling diagnostic by type Npack = ',Npack
 
-            call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
+            ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
 
-                ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
+        call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
 
-            !% reset any face values affected
-            call face_interpolation (fp_Diag, dummy)
+            ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
 
-                ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
+        !% reset any face values affected
+        call face_interpolation (fp_Diag, dummy)
 
-            !% --- reset the zero and small depth fluxes
-            call adjust_zero_and_small_depth_face (ETM, .false.)
+            ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
 
-                ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
+        !% --- reset the zero and small depth fluxes
+        call adjust_zero_and_small_depth_face (ETM, .false.)
 
-        end if
+            ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
+
+        ! end if
        
         if (setting%Profile%useYN) call util_profiler_stop (pfc_diagnostic_toplevel)
 

@@ -1263,7 +1263,9 @@ contains
 
         !% --- error checking for disconnected nodes
         noerrorfound = .true.
-        do ii = 1,size(node%I,1)
+        do ii = 1,N_node
+            ! print *, 'Node name is ',trim(node%Names(ii)%str)
+            print*, '---------------------------------------------'
             if (node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d) == zeroI) then
                 noerrorfound = .false.
                 print *, 'USER CONFIGURATION ERROR: disconnected node.'
