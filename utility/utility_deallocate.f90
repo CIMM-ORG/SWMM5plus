@@ -41,19 +41,19 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
-        !print *, 'call util_deallocate_linknode() ',this_image()
+        print *, 'call util_deallocate_linknode() ',this_image()
         call util_deallocate_linknode()
 
-        !print *, 'call util_deallocate_elemX_faceX() ', this_image()
+        print *, 'call util_deallocate_elemX_faceX() ', this_image()
         call util_deallocate_elemX_faceX()
 
-        !print *, 'call util_deallocate_elem_boundary_ghost() ', this_image()
+        print *, 'call util_deallocate_elem_boundary_ghost() ', this_image()
         call util_deallocate_elem_boundary_ghost()
 
-        !print *, 'call util_deallocate_columns() ', this_image()
+        print *, 'call util_deallocate_columns() ', this_image()
         call util_deallocate_columns()
 
-        !print *, 'call util_deallocate_bc() ', this_image()
+        print *, 'call util_deallocate_bc() ', this_image()
         call util_deallocate_bc()
 
         !%-------------------------------------------------------------------
@@ -296,6 +296,106 @@ contains
         deallocate(faceP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceP')
 
+        if(allocated(output_types_elemR)) then
+            deallocate(output_types_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_types_elemR')
+
+            deallocate(output_typeProcessing_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_typeProcessing_elemR')
+
+            deallocate(output_typeMultiplyByBarrels_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_typeMultiplyByBarrels_elemR')
+
+            deallocate(output_typeNames_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_typeNames_elemR')
+
+            deallocate(output_typeUnits_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_typeUnits_elemR')
+
+            deallocate(output_typeNames_withTime_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_typeNames_withTime_elemR')
+
+            deallocate(output_typeUnits_withTime_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_typeUnits_withTime_elemR')
+        end if
+
+        if(allocated(output_static_types_elemR)) then
+
+            deallocate(output_static_types_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_types_elemR')
+
+            deallocate(output_static_typeProcessing_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeProcessing_elemR')
+
+            deallocate(output_static_typeMultiplyByBarrels_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeMultiplyByBarrels_elemR')
+
+            deallocate(output_static_typeNames_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeNames_elemR')
+
+            deallocate(output_static_typeUnits_elemR,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeUnits_elemR')
+
+            deallocate(output_static_elem,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_elem')
+
+        end if 
+        
+
+        if(allocated(output_static_types_Link)) then
+
+            deallocate(output_static_types_Link,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_types_Link')
+
+
+            deallocate(output_static_typeProcessing_Link,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeProcessing_Link')
+
+
+            deallocate(output_static_typeMultiplyByBarrels_Link,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeMultiplyByBarrels_Link')
+
+
+            deallocate(output_static_typeNames_Link,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeNames_Link')
+
+
+            deallocate(output_static_typeUnits_Link,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeUnits_Link')
+
+
+            deallocate(output_static_Link,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_Link')
+
+        end if 
+        
+        if(allocated(output_static_types_Node)) then
+            
+            deallocate(output_static_types_Node,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_types_Node')
+
+            deallocate(output_static_typeProcessing_Node,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeProcessing_Node')
+
+            deallocate(output_static_typeMultiplyByBarrels_Node,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeMultiplyByBarrels_Node')
+
+            deallocate(output_static_typeNames_Node,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeNames_Node')
+
+            deallocate(output_static_typeUnits_Node,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_typeUnits_Node')
+
+            deallocate(output_static_Node,stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'output_static_Node')
+
+        end if
+
+        !    deallocate(output_types_elemR,stat=deallocation_status, errmsg=emsg)
+        !    call util_deallocate_check(deallocation_status, emsg, 'output_types_elemR')
+
+
+
         !%-------------------------------------------------------------------
         !% closing
             if (setting%Debug%File%utility_deallocate) &
@@ -482,6 +582,8 @@ contains
         if (setting%Debug%File%utility_deallocate) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_bc
+
+    
 !%
 !%==========================================================================
 !% END MODULE
