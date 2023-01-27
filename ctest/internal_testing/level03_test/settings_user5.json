@@ -6,13 +6,20 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 15.00
+        "NominalElemLength" : 50.00,
+        "Force_nodes_to_nJM" : true,
+        "JunctionBranchLengthFactor" : 1.0, 
+        "MinElemLengthFactor"        : 0.8,
+        "MinElemLengthMethod" : "ElemLengthAdjust"
     },
     "Limiter" : {
         "Dt" : {
             "Minimum"     : 1e-4
         }
-    },    
+    },  
+    "Junction" : {
+        "useAltJB" : false
+    },  
     "Output" : {
         "StoredLevels" : 4000,
         "CommandLine" : {
@@ -47,5 +54,11 @@
         "PreissmannSlot" : {
             "Method" : "DynamicSlot"
         }
+    },
+    "VarialbleDT" :{
+        "CFL_hi_max" : 0.6,
+        "CFL_target" : 0.4,
+        "CFL_lo_max" : 0.1,
+        "CFL_inflow_max" : 0.4
     }
 }

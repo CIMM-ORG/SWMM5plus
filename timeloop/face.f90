@@ -87,13 +87,17 @@ module face
 
             ! call util_utest_CLprint ('    face after adjust face for zero setting')
 
-        call face_zerodepth_interior(fp_elem_downstream_is_zero)
-        call face_zerodepth_interior(fp_elem_upstream_is_zero)
-        call face_zerodepth_interior(fp_elem_bothsides_are_zero)
+        if (.not. setting%Junction%useAltJB) then
+            call face_zerodepth_interior(fp_elem_downstream_is_zero)
+            ! call util_utest_CLprint ('    face after face zerodepth interior 1')
+            call face_zerodepth_interior(fp_elem_upstream_is_zero)
+            ! call util_utest_CLprint ('    face after face zerodepth interior 2')
+            call face_zerodepth_interior(fp_elem_bothsides_are_zero)
+        end if
 
         ! print *, 'in face DDDD ',faceR(42,fr_Depth_u)
 
-            ! call util_utest_CLprint ('    face after face zerodepth interior')
+            ! call util_utest_CLprint ('    face after face zerodepth interior 3')
 
         !% --- face reconstruction of all the shared faces
         call face_interpolation_shared (faceCol)
@@ -840,10 +844,11 @@ module face
         call face_interp_interior_set &
             (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack) 
 
-            !  ! call util_utest_CLprint ('     face_interpolation_interior at AAAA')
+             ! call util_utest_CLprint ('     face_interpolation_interior at AAAA')
 
         call face_interp_interior_set &
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
+            
 
         call face_interp_interior_set &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
@@ -852,7 +857,7 @@ module face
             (fOtherSet, eOtherSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
 
 
-            !  ! call util_utest_CLprint ('     face_interpolation_interior at BBBB')
+             ! call util_utest_CLprint ('     face_interpolation_interior at BBBB')
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -1958,7 +1963,8 @@ module face
         Npack => npack_faceP(facePackCol)
 
         ! print *, 'in face zerodepth interior'
-        ! print *, fFlowrate(43)
+        ! print *, 'faces: ', faceP(1:Npack,facePackCol)
+        ! print *, 'facePackCol ',facePackCol, fp_elem_downstream_is_zero, fp_elem_upstream_is_zero, fp_elem_bothsides_are_zero
         
         if (Npack > 0) then 
             thisP => faceP(1:Npack,facePackCol) 
@@ -1968,8 +1974,13 @@ module face
 
                 case (fp_elem_downstream_is_zero)
                     !% ---set head to the smaller of the face head and the non-zero element upstream
+                    ! print *, 'Head ',fHeadUp(thisP), eHead(eUp(thisP)), fHeadDn(thisP)
+
                     fHeadUp(thisP) = min(fHeadUp(thisP), eHead(eUp(thisP)))
                     fHeadDn(thisP) = fHeadUp(thisP)
+
+                    ! print *, 'fHead(thisP)',fHeadUp(thisP), fHeadDn(thisP)
+                    ! print *, 'zbottom     ',fZbottom(thisP)
 
                     !% --- get a face depth consistent with this head
                     !%     note this depth might be negative

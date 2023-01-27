@@ -654,6 +654,7 @@ module define_indexes
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
         enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
+        enumerator ::  esi_JunctionBranch_IsUpstream               !% 1 if this is an upstream branch, 0 if downstream
         enumerator ::  esi_JunctionBranch_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
@@ -1347,6 +1348,9 @@ module define_indexes
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
         enumerator :: fr_Preissmann_Number      !% preissmann number at face
+
+        enumerator :: fr_Temp01    !% only needed for debugging
+        enumerator :: fr_Temp02    !% only needed for debugging
 
         !% HACK: THE FOLLOWING MAY NEED TO BE RESTORED
         ! enumerator :: fr_Zbottom_u             !% Bottom elevation on upstream side of face

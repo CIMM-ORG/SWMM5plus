@@ -155,6 +155,23 @@ module define_settings
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
+        Logical :: isElemLengthOut          = .false.  
+        Logical :: isElemBottomSlopeOut     = .false.      
+        Logical :: isElemBreathMaxOut       = .false.      
+        Logical :: isElemFullAreaOut        = .false.      
+        Logical :: isElemFullDepthOut       = .false.  
+        Logical :: isElemManningsOut        = .false.      
+        Logical :: isElemZBottomOut         = .false.  
+        Logical :: isElemZCrownOut          = .false.  
+        Logical :: isLinkLengthOut          = .false.  
+        Logical :: isLinkAdjustedLengthOut  = .false.          
+        Logical :: isLinkInletOffsetOut     = .false.      
+        Logical :: isLinkOutletOffsetOut    = .false.          
+        Logical :: isLinkSlopeOut           = .false.  
+        Logical :: isLinkZBottomUpOut       = .false.      
+        Logical :: isLinkZBottomDownOut     = .false.      
+        Logical :: isNodeZBottomOut         = .false.  
+        Logical :: isNodeFullDepthOut       = .false.  
     end type DataOutType
 
     !% setting%Solver%ForceMain
@@ -533,6 +550,7 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
+        logical :: useAltJB = .false.
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -1229,6 +1247,12 @@ contains
 
         
     !% Discretization. =====================================================================
+        !% -- Forcing all nodes to nJM
+        !%                      Discretization.Force_nodes_to_nJM
+        call json%get('Discretization.Force_nodes_to_nJM', logical_value, found)
+        if (found) setting%Discretization%Force_nodes_to_nJM = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.Force_nodes_to_nJM not found'
+      
         !% -- Channel overflow
         !%                      Discretization.AllowChannelOverflowTF
         call json%get('Discretization.AllowChannelOverflowTF', logical_value, found)
@@ -1359,6 +1383,11 @@ contains
 
     !% Junctions. =====================================================================
         !rm 20220207brh
+             !%                       Junction.useAltJB
+        call json%get('Junction.useAltJB', logical_value, found)
+        if (found) setting%Junction%useAltJB = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Junction.useAltJB not found'
+        
         !%                       Junction.isDynamicYN
         ! call json%get('Junction.isDynamicYN', logical_value, found)
         ! if (found) setting%Junction%isDynamicYN = logical_value
@@ -1658,6 +1687,93 @@ contains
         if (found) setting%Output%DataOut%isPreissmannNumberOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannNumberOut not found'
              
+        !%                       Dataout.isElemLengthOut
+        call json%get('Output.DataOut.isElemLengthOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemLengthOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemLengthOut not found'
+         
+         !%                       Dataout.isElemBottomSlopeOut
+        call json%get('Output.DataOut.isElemBottomSlopeOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemBottomSlopeOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemBottomSlopeOut not found'
+         
+         !%                       Dataout.isElemBreathMaxOut
+        call json%get('Output.DataOut.isElemBreathMaxOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemBreathMaxOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemBreathMaxOut not found'
+
+        !%                       Dataout.isElemFullAreaOut
+        call json%get('Output.DataOut.isElemFullAreaOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemFullAreaOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemFullAreaOut not found'
+
+        !%                       Dataout.isElemFullDepthOut
+        call json%get('Output.DataOut.isElemFullDepthOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemFullDepthOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemFullDepthOut not found'
+
+        !%                       Dataout.isElemManningsOut
+        call json%get('Output.DataOut.isElemManningsOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemManningsOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemManningsOut not found'
+
+        !%                       Dataout.isElemZBottomOut
+        call json%get('Output.DataOut.isElemZBottomOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemZBottomOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemZBottomOut not found'
+
+        !%                       Dataout.isElemZCrownOut
+        call json%get('Output.DataOut.isElemZCrownOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemZCrownOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemZCrownOut not found'
+
+        !%                       Dataout.isLinkLengthOut
+        call json%get('Output.DataOut.isLinkLengthOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkLengthOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkLengthOut not found'
+
+        !%                       Dataout.isLinkAdjustedLengthOut
+        call json%get('Output.DataOut.isLinkAdjustedLengthOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkAdjustedLengthOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkAdjustedLengthOut not found'
+
+        !%                       Dataout.isLinkInletOffsetOut
+        call json%get('Output.DataOut.isLinkInletOffsetOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkInletOffsetOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkInletOffsetOut not found'
+
+        !%                       Dataout.isLinkOutletOffsetOut
+        call json%get('Output.DataOut.isLinkOutletOffsetOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkOutletOffsetOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkOutletOffsetOut not found'
+
+        !%                       Dataout.isLinkSlopeOut
+        call json%get('Output.DataOut.isLinkSlopeOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkSlopeOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkSlopeOut not found'
+
+        !%                       Dataout.isLinkZBottomUpOut
+        call json%get('Output.DataOut.isLinkZBottomUpOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkZBottomUpOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkZBottomUpOut not found'
+                 
+        !%                       Dataout.isLinkZBottomDownOut
+        call json%get('Output.DataOut.isLinkZBottomDownOut', logical_value, found)
+        if (found) setting%Output%DataOut%isLinkZBottomDownOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isLinkZBottomDownOut not found'
+
+        !%                       Dataout.isNodeZBottomOut
+        call json%get('Output.DataOut.isNodeZBottomOut', logical_value, found)
+        if (found) setting%Output%DataOut%isNodeZBottomOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isNodeZBottomOut not found'
+
+        !%                       Dataout.isNodeFullDepthOut
+        call json%get('Output.DataOut.isNodeFullDepthOut', logical_value, found)
+        if (found) setting%Output%DataOut%isNodeFullDepthOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isNodeFullDepthOut not found'
+    
+
+
         !% --- Report settings
         !%                       Report.useSWMMinpYN
         call json%get('Output.Report.useSWMMinpYN', logical_value, found)

@@ -16,6 +16,7 @@ module xsect_tables
 
     private
 
+    public :: xsect_find_x_matching_y
     public :: xsect_table_lookup
     public :: xsect_table_lookup_array
     public :: xsect_table_lookup_singular
@@ -23,109 +24,194 @@ module xsect_tables
 
 contains
 
-!
-!==========================================================================
-! functions for table interpolation
-!==========================================================================
-!
-    ! pure function table_lookup &
-    !     (normalizedInput, table, nItems) result(normalizedOutput)
-        !
-        ! table lookup function. This function is single operation
-        !
-        ! real(8),      intent(in)      :: table(:)
-        ! real(8),      intent(in)      :: normalizedInput
-        ! integer,   intent(in)      :: nItems
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function xsect_find_x_matching_y &
+        (yValue, table ) result(outvalue)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% inds the x matching an input y for a table that is normally
+        !% accessed by a uniform x to find a value y. For example, an
+        !% table for depth-from-area has area (x) with uniform distribution
+        !% of normalized values from 0 to 1 and returns a depth (y) that
+        !% is normalized from 0 to 1. Here, we want to invert the table
+        !% and find the area (y) for a given (x). 
+        !% The general approach is to find where in the table the yValue
+        !% resides, then use linear interpolation to see if the table 
+        !% is linear -- if so, then function ends. If not, then function
+        !% uses simple iterative scheme to find the value.
+        !% NOTE: this is not efficient and generally should only be used
+        !% in the initialization
+        !%------------------------------------------------------------------
+            real(8), intent(in) :: yValue
+            real(8), intent(in) :: table(:)
 
-        ! real(8)     :: normalizedOutput, normalizedOutput2
-        ! real(8)     :: delta, startPos, endPos
-        ! integer  :: ii
+            real(8) :: delta, dy,dx, yfrac, yAdj, yPrime, xGuess, yGuess, yErr
+            real(8) :: yEps = 1.0d-10
 
-        ! !--------------------------------------------------------------------------
-        ! !% find which segment of table contains x
-        ! delta = oneR / (nItems - oneR)
+            logical :: isfinished
 
-        ! ii = int(normalizedInput / delta)
+            integer :: ii, nItems, nCycle
 
-        ! if     ( ii .GE. (nItems - oneI) ) then
+            integer :: maxCycle = 100
+        
+        !%------------------------------------------------------------------
+        !% --- number of items in the table
+        nItems = size(table)
+        delta  = oneR / real(nItems-oneI,8)
 
-        !     normalizedOutput = table(nItems)
+        ! print *, 'yValue in ',yValue
+        ! print *, 'delta     ',delta
+        ! print *, 'nItems    ',nItems
+        ! print *, 'eps       ',yEps
+        ! print *, ' '
 
-        ! elseif ( ii .LE. zeroI) then
+        ! print *, 'This Table, i, x, y'
+        ! do ii = 1,nItems
+        !     print *, ii, real(ii-1)*delta, table(ii)
+        ! end do
+        ! print *, ' '
 
-        !     normalizedOutput = zeroR
+        if (yValue > table(nItems)) then 
+            print *, 'CODE OR CONFIGURATION ERROR:'
+            print *, 'yValue input into xsect_find_x_matching_y is larger than'
+            print *, 'the maximum value in the table. This may be a failure to'
+            print *, 'normalize the input.'
+            outvalue = zeroR
+            call util_crashpoint(669874)
+            return
+        end if
 
-        ! else
+        isfinished = .false.
+        do ii=2,nItems
+            !% --- iterate through to find where the yValue lies in the table
 
-        !     startPos = ii * delta
-        !     endPos   = (ii + oneI) * delta
+            ! write(*,"(A,3f12.8)") 'yvalue ', table(ii-oneI), yValue, table(ii)
 
-        !     normalizedOutput = table(ii) + (normalizedInput - startPos) * &
-        !         (table(ii + oneI) - table(ii)) / delta
+            if ((yValue .ge. (table(ii-oneI) - yEps)) .and. (yValue .le. (table(ii-oneI) + yEps))) then 
+                !% --- exact match found for a table entery
+                    ! print *, 'exact match'
+                outvalue = delta * real(ii-twoI,8)
+                isfinished = .true.
+                exit  ! leave the loop
+            elseif ((table(ii-oneI) < yValue) .and. (yValue < table(ii))) then
+                !% --- apply linear interpolation and check if that is the solution
+                !%   yvalue between the limits of these table entries
+                !%   use linear interpolation for the output value
+                    ! print *, 'between ii ',ii-1, ii
+                dy = table(ii) - table(ii-oneI)
+                    ! print *, 'dy         ',dy
+                yfrac = yValue - table(ii-oneI)
+                    ! print *, 'yfrac      ',yfrac
+                xGuess = delta * real(ii-twoI,8) + delta * yfrac /dy
+                    ! print *, 'xGuess   ',xGuess
+                yGuess = xsect_table_lookup_singular(xGuess,table)
+                    ! print *, 'YGuess   ',yGuess
+                if ((yGuess .ge. yValue - yEps) &
+                    .and. &
+                    (yGuess .le. yValue + yEps)) then
+                    isfinished = .true.
+                    outvalue = xGuess
+                    exit  ! leave the loop
+                else 
+                    !% --- table is nonlinear
+                    !%     iterate to find approximate solution to error
+                    !%     level of yEps
+                    dx = delta / 10.d0 
+                    yErr   = yGuess - yValue
+                        ! print *, 'starting '
+                        ! print *, xGuess, yGuess, yErr
+                    nCycle = 0
+                    do while (abs(yErr) > yEps)
+                            ! print *, '  new cycle'
+                        nCycle = nCycle + oneI
+                        if (yGuess < yValue ) then
+                            !% -- guess is smaller than value
+                            yAdj = xsect_table_lookup_singular(xGuess+dx,table)
+                            if (yAdj == yValue) then 
+                                print *, 'CODE ERROR: unexpected result in table interpolation'
+                                call util_crashpoint(698732)
+                            end if
+                            if (yAdj == yValue) then 
+                                !% --- found value
+                                isfinished = .true.
+                                outvalue = xGuess+dx
+                            elseif (yValue < yAdj) then
+                                    ! print *, 'bracketed from down'
+                                !% --- bracketed 
+                                xGuess = xGuess + (yValue - yGuess) * dx / (yAdj - yGuess)
+                                dx = dx / twoR
+                            else
+                                    ! print *, 'guess smaller'
+                                !% --- guess is still smaller than value
+                                xGuess = xGuess + dx
+                            end if
+                        else
+                            !% --- guess is larger than value
+                            yAdj = xsect_table_lookup_singular(xGuess-dx,table)
+                            if (yAdj == yValue) then 
+                                print *, 'CODE ERROR: unexpected result in table interpolation'
+                                call util_crashpoint(698733)
+                            end if
+                            if (yAdj == yValue) then 
+                                !% --- found value
+                                isfinished = .true.
+                                outvalue = xGuess-dx
+                            elseif (yValue > yAdj) then
+                                    ! print *, 'bracketed from up'
+                                !% --- bracketed 
+                                xGuess = xGuess - (yGuess - yValue) * dx / (yGuess - yAdj)
+                                dx = dx / twoR
+                            else
+                                    ! print *, 'guess is larger'
+                                !% --- guess is still larger than value
+                                xGuess = xGuess - dx
+                            end if
+                        end if
 
-        !     if (ii == oneI) then
-        !         ! use quadratic interpolation for low x value
-        !         normalizedOutput2 = normalizedOutput + (normalizedInput - startPos) &
-        !             * (normalizedInput - endPos) / (delta*delta) * (table(ii)/2.0 - table(ii+1) &
-        !             + table(ii+2)/2.0)
+                        yGuess = xsect_table_lookup_singular(xGuess,table)
+                        yErr   = yGuess - yValue
 
-        !         if ( normalizedOutput2 > 0.0 ) then
-        !             normalizedOutput = normalizedOutput2
-        !         endif
+                        if (abs(yErr) .le. yEps) then 
+                            isfinished = .true.
+                            outvalue = xGuess 
+                        end if
 
-        !     endif
+                            ! print *, 'at end '
+                            ! print *, xGuess, yGuess, yErr
 
-        ! endif
+                        if (nCycle .ge. maxCycle) exit
+                    end do
+                end if
+            else
+                !% continue cycle
+            end if
+        end do
 
-    ! end function table_lookup
-!
-!==========================================================================
-!==========================================================================
-!
-    ! pure function get_theta_of_alpha &
-    !     (alpha) result(theta)
-        !
-        ! get the angle theta for small value of A/Afull (alpha) for circular geometry
-        !
-        ! real(8),      intent(in)      :: alpha
+        ! print *, ' '
+        ! print *, 'at end '
+        ! print *, 'outvalue ',outvalue 
+        ! print *, 'y from x ', xsect_table_lookup_singular(outvalue,table)
+        ! print *, 'yValue in', yValue
+        ! print *, ' '
 
+        if (.not. isfinished) then 
+            print *, 'CODE ERROR:'
+            print *, 'failed to find interpolated value from table'
+            call util_crashpoint(3395872)
+        end if
 
-        ! real(8)     :: theta
-        ! real(8)     :: theta1, d, ap
+        !stop 666987
+   
 
-        ! integer  :: ii
-
-        ! !--------------------------------------------------------------------------
-        ! !% this code is adapted from SWMM 5.1 source code
-        ! if     (alpha .GE. 1.0) then
-        !     theta = 1.0
-        ! elseif (alpha .LE. 0.0) then
-        !     theta = 0.0
-        ! elseif (alpha .LE. 1.0e-5) then
-        !     theta = 37.6911 / 16.0 * alpha ** (onethirdR)
-        ! else
-        !     theta = 0.031715 - 12.79384 * alpha + 8.28479 * sqrt(alpha)
-        !     theta1 = theta
-        !     ap = twoR * pi *alpha
-        !     do ii = 1,40
-        !         d = - (ap - theta + sin(theta)) / (1.0 - cos(theta))
-        !         if (d > 1.0) then
-        !             d = sign(oneR,d)
-        !         endif
-        !         theta = theta - d
-        !         if ( abs(d) .LE. 0.0001 ) then
-        !             return
-        !         endif
-        !     enddo
-        !     theta = theta1
-        !     return
-        ! endif
-
-    ! end function get_theta_of_alpha
-!
-!==========================================================================
-!==========================================================================
-!
+    end function xsect_find_x_matching_y
+!%
+!%==========================================================================
+!% functions for table interpolation
+!%==========================================================================
+!%
     pure subroutine xsect_table_lookup &
         (inoutArray, normalizedInput, table, thisP)
         !%-----------------------------------------------------------------------------
@@ -201,7 +287,7 @@ contains
 !%
     subroutine xsect_table_lookup_array &
         (inoutArray, normalizedInput, table, thisP)   
-  !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
         !% Description:
         !% interpolates the normalized value from the lookup table.
         !% This subroutine handles the case where each element in thisP must
@@ -236,7 +322,7 @@ contains
         !%     this uses the temporary column
         position => elemI(:,ei_Temp01)
 
-        delta = oneR / (nItems - oneR)
+        delta = oneR / (real(nItems,8) - oneR)
 
         !% this finds the position in the table for interpolation
         position(thisP) = int(normalizedInput(thisP) / delta) +oneI
@@ -313,19 +399,24 @@ contains
         real(8), intent(in)       :: normalizedInput, table(:)
         integer                   :: nItems
         integer                   :: position
+        integer                   :: ii
         real(8)                   :: delta
         !%----------------------------------------------------------------------------
 
         nItems = size(table)
 
-        delta = oneR / (nItems - oneR)
+        delta = oneR / (real(nItems,8) - oneR)
+
+        ! do ii=1,nItems 
+        !     print *, ii, table(ii)
+        ! end do
 
         !% --- Compute the floor (integer not exceeding normalized/delta)
         !%     that is the lower index position in the lookup table
         position = int(normalizedInput / delta) + oneI
 
-        !print *, 'position ',position
-        !print *,  normalizedInput, delta
+        ! print *, 'position ',position
+        ! print *,  'norm input, delta ', normalizedInput, delta
 
         !% find the normalized output from the lookup table
         if (position .LT. oneI) then
@@ -440,6 +531,105 @@ contains
     end function xsect_nonuniform_lookup_singular
 !%
 !%==========================================================================
+!%==========================================================================
+       ! pure function table_lookup &
+    !     (normalizedInput, table, nItems) result(normalizedOutput)
+        !
+        ! table lookup function. This function is single operation
+        !
+        ! real(8),      intent(in)      :: table(:)
+        ! real(8),      intent(in)      :: normalizedInput
+        ! integer,   intent(in)      :: nItems
+
+        ! real(8)     :: normalizedOutput, normalizedOutput2
+        ! real(8)     :: delta, startPos, endPos
+        ! integer  :: ii
+
+        ! !--------------------------------------------------------------------------
+        ! !% find which segment of table contains x
+        ! delta = oneR / (nItems - oneR)
+
+        ! ii = int(normalizedInput / delta)
+
+        ! if     ( ii .GE. (nItems - oneI) ) then
+
+        !     normalizedOutput = table(nItems)
+
+        ! elseif ( ii .LE. zeroI) then
+
+        !     normalizedOutput = zeroR
+
+        ! else
+
+        !     startPos = ii * delta
+        !     endPos   = (ii + oneI) * delta
+
+        !     normalizedOutput = table(ii) + (normalizedInput - startPos) * &
+        !         (table(ii + oneI) - table(ii)) / delta
+
+        !     if (ii == oneI) then
+        !         ! use quadratic interpolation for low x value
+        !         normalizedOutput2 = normalizedOutput + (normalizedInput - startPos) &
+        !             * (normalizedInput - endPos) / (delta*delta) * (table(ii)/2.0 - table(ii+1) &
+        !             + table(ii+2)/2.0)
+
+        !         if ( normalizedOutput2 > 0.0 ) then
+        !             normalizedOutput = normalizedOutput2
+        !         endif
+
+        !     endif
+
+        ! endif
+
+    ! end function table_lookup
+!
+!==========================================================================
+!==========================================================================
+!
+    ! pure function get_theta_of_alpha &
+    !     (alpha) result(theta)
+        !
+        ! get the angle theta for small value of A/Afull (alpha) for circular geometry
+        !
+        ! real(8),      intent(in)      :: alpha
+
+
+        ! real(8)     :: theta
+        ! real(8)     :: theta1, d, ap
+
+        ! integer  :: ii
+
+        ! !--------------------------------------------------------------------------
+        ! !% this code is adapted from SWMM 5.1 source code
+        ! if     (alpha .GE. 1.0) then
+        !     theta = 1.0
+        ! elseif (alpha .LE. 0.0) then
+        !     theta = 0.0
+        ! elseif (alpha .LE. 1.0e-5) then
+        !     theta = 37.6911 / 16.0 * alpha ** (onethirdR)
+        ! else
+        !     theta = 0.031715 - 12.79384 * alpha + 8.28479 * sqrt(alpha)
+        !     theta1 = theta
+        !     ap = twoR * pi *alpha
+        !     do ii = 1,40
+        !         d = - (ap - theta + sin(theta)) / (1.0 - cos(theta))
+        !         if (d > 1.0) then
+        !             d = sign(oneR,d)
+        !         endif
+        !         theta = theta - d
+        !         if ( abs(d) .LE. 0.0001 ) then
+        !             return
+        !         endif
+        !     enddo
+        !     theta = theta1
+        !     return
+        ! endif
+
+    ! end function get_theta_of_alpha
+!
+!==========================================================================
+!==========================================================================
+!
 ! END OF MODULE xsect_tables
 !%==========================================================================
 !%

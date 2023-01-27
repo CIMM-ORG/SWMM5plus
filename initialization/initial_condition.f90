@@ -157,6 +157,8 @@ contains
 
             ! call util_utest_CLprint ('initial_condition afer IC_from_nodedata')
 
+            !stop 48734
+
         !% --- second call for diagnostic that was next to JM/JB
         sync all
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
@@ -341,6 +343,8 @@ contains
 
             ! call util_utest_CLprint ('initial_condition after face_interpolation')
 
+            !stop 5590873
+
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
@@ -365,7 +369,7 @@ contains
 
         ! call util_utest_CLprint ('initial_condition at end')
 
-            !stop 666987
+           !stop 666987
 
 
         ! print *, trim(reverseKey(elemI(iet(3),ei_geometryType)))
@@ -666,7 +670,7 @@ contains
         !%     where head upstream is less than zbottom, depth is zero
         DepthUp = max(headUp - zLinkUp, zeroR)
 
-        ! print *, 'DepthUp ',DepthUp
+        !print *, 'DepthUp ',DepthUp
 
             ! print *, ' =================================== '
             ! print *, 'thisLink ',thisLink, ' ',trim(link%Names(thisLink)%str)
@@ -690,7 +694,7 @@ contains
         !%     where downstream head is less than zbottom, depth is zero
         DepthDn = max(headDn - zLinkDn, zeroR)
 
-        ! print *, 'Depth Dn ',DepthDn
+        !print *, 'Depth Dn ',DepthDn
 
         !% --- check for a downstream gate on the node
         !%     adjust depths and head as needed
@@ -827,7 +831,8 @@ contains
                 print *, trim(link%Names(thisLink)%str)
                 print *, 'Depth at upstream node is zero and non-zero depth at'
                 print *, 'downstream noded implies upstream node depth'
-                print *, 'should be at least ',HeadDn - zLinkUp, ' meters.'
+                print *, 'should be at least ',HeadDn - zLinkUp, ' meters'
+                print *, 'or ',(HeadDn - zLinkUp)*3.28084d0, 'feet'
                 print *, 'Please check the initial depths at the nodes connecting'
                 print *, 'to this link.'
                 call util_crashpoint(40187339)
@@ -836,19 +841,20 @@ contains
         elseif ((DepthDn .le. setting%ZeroValue%Depth) .and. &
                 (DepthUp .le. setting%ZeroValue%Depth)) then
             !% --- zero depths everywhere along the element.        
-            eDepth(pElem) = setting%ZeroValue%Depth 
-            eHead (pElem) = eZBottom(pElem) + setting%ZeroValue%Depth         
+            eDepth(pElem) = setting%ZeroValue%Depth  * 0.99d0 
+            eHead (pElem) = eZBottom(pElem) + setting%ZeroValue%Depth  * 0.99d0        
         else 
             print *, 'CODE ERROR: unexpected else.'
             print *, 'code should not have reached this point'
             call util_crashpoint(8898723)
         end if
 
-        where(eDepth(pElem) < setting%ZeroValue%Depth)
-            eDepth(pElem) = setting%ZeroValue%Depth
-            eHead(pElem)  = eZbottom(pElem) + setting%ZeroValue%Depth
+        where(eDepth(pElem) .le. setting%ZeroValue%Depth)
+            eDepth(pElem) = setting%ZeroValue%Depth * 0.99d0
+            eHead(pElem)  = eZbottom(pElem) + setting%ZeroValue%Depth * 0.99d0
         endwhere
 
+        !print *, 'in here in link ', elemR(15,er_Depth)
         !%------------------------------------------------------------------------------------
         !% saz 01/11/2023
         !% commented out to set up link depth based on node heads only 
@@ -3269,7 +3275,9 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pJunction
-            !  print *, 'pJunction ',ii, packed_nJm_idx(ii)
+                ! print *, ' '
+                ! print *, 'pJunction  in nJM from nodedata ',ii, packed_nJm_idx(ii)
+
             !% necessary pointers
             thisJunctionNode => packed_nJm_idx(ii)
             call init_IC_get_junction_data (thisJunctionNode)
@@ -3463,6 +3471,10 @@ contains
 
         !% --- self index
         elemSI(JMidx,esi_JunctionBranch_Main_Index ) = JMidx
+
+        ! print *, 'JM values ',elemR(JMidx,er_Head), elemR(JMidx,er_Head) - 198.12d0
+        ! print *, 'Depth     ', elemR(JMidx,er_Depth)
+        ! print *, 'zbottom   ', elemR(JMidx,er_Zbottom)
    
         !%................................................................
         !% Junction Branches
@@ -3495,6 +3507,7 @@ contains
                 Fidx => elemI(JBidx,ei_MFace_dL)
                 !% --- even are downstream branches
                 isupstream = .false.
+                elemSI(JBidx,esi_JunctionBranch_IsUpstream) = zeroI
                 if (elemYN(JBidx,eYN_isBoundary_dn)) then
                     Ci   = faceI(Fidx,fi_Connected_image)
                     Aidx = faceI(Fidx,fi_GhostElem_dL)
@@ -3505,6 +3518,7 @@ contains
             else
                 !% --- odd are upstream branches
                 isupstream = .true.
+                elemSI(JBidx,esi_JunctionBranch_IsUpstream) = oneI
                 Fidx => elemI(JBidx,ei_MFace_uL)
                 if (elemYN(JBidx,eYN_isBoundary_up)) then
                     Ci   = faceI(Fidx,fi_Connected_image)
@@ -4243,9 +4257,24 @@ contains
         !% --- temporary store of the normalized depth
         depth(tpack) = depth(tpack) / fulldepth(tpack)
 
-        !% --- get normalized area from normalized depth
+        !% --- get first guess at normalized area from normalized depth
+        !%     NOTE that the table that produces depth from area is used
+        !%     in the time-march and is NOT exactly invertible with the
+        !%     area from depth table. Thus, we have a two-step process
+        !%     for initial conditions to get the area that provides the
+        !%     area in the area-to-depth table for the initial depth.
         thisTable => transectTableDepthR(:,:,tt_area)
         call xsect_table_lookup_array (area, depth, thisTable, tpack) 
+
+        !% --- Find the area associated with the initial depth in the
+        !%     depth-from-area lookup table
+        thisTable => transectTableAreaR(:,:,tt_depth)
+        do ii=1,size(tpack)
+            !% --- get the area that matches the depth
+            area(tpack(ii)) = xsect_find_x_matching_y (depth(tpack(ii)), thisTable(elemI(tpack(ii),ei_transect_idx),:) )
+        end do
+        !% --- Recompute the depth from area
+        call xsect_table_lookup_array (depth, area, thisTable, tpack)
 
         !% --- get physical area
         area(tpack) = area(tpack) * fullarea(tpack)
@@ -4267,6 +4296,8 @@ contains
         !% --- restore the physical depth
         depth(tpack) = depth(tpack) * fulldepth(tpack)
 
+
+
         !% --- derived data
         area0(tpack)     = area(tpack)
         area1(tpack)     = area(tpack)
@@ -4276,6 +4307,8 @@ contains
         volume(tpack)    = area(tpack) * length(tpack)
         volume0(tpack)   = volume(tpack)
         volume1(tpack)   = volume(tpack)
+
+
         
         !%------------------------------------------------------------------
         !% Closing:
@@ -5758,9 +5791,9 @@ contains
         !% Description:
         !% computes the bottom slope of all channel and conduit elements
         !%------------------------------------------------------------------
-        integer, pointer :: npack, thisP(:), fup(:), fdn(:)
-        integer          :: thisCol
-        real(8), pointer :: slope(:), length(:), fZbottom(:)
+            integer, pointer :: npack, thisP(:), fup(:), fdn(:), Fidx
+            integer          :: thisCol, mm, ii, JBidx, Aidx, Ci
+            real(8), pointer :: slope(:), length(:), fZbottom(:)
         !%------------------------------------------------------------------
         !% Aliases
             thisCol = ep_CC_ALLtm
@@ -5780,6 +5813,49 @@ contains
         where (abs(slope(thisP)) < setting%ZeroValue%Slope)
             slope(thisP) = sign(setting%ZeroValue%Slope,slope(thisP))
         endwhere
+
+        !% initialize bottom slope for JB -- BRUTE FORCE HACK
+        do mm=1,N_elem(this_image())
+            if (elemI(mm,ei_elementType) == JM) then
+                !% -- upstream branches
+                do ii=1,max_branch_per_node,2
+                    JBidx = mm+ii
+                    if (elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) then 
+                        Fidx => elemI(JBidx,ei_MFace_uL)
+                        if (elemYN(JBidx,eYN_isBoundary_up)) then
+                            Ci   = faceI(Fidx,fi_Connected_image)
+                            Aidx = faceI(Fidx,fi_GhostElem_uL)
+                        else
+                            Ci   = this_image()
+                            Aidx = faceI(Fidx,fi_Melem_uL)
+                        end if
+                        !% --- branch inherits slope of adjacent branch
+                        elemR(JBidx,er_BottomSlope) = elemR(Aidx,er_BottomSlope)[Ci]  
+                    else 
+                        !% no action
+                    end if
+                end do
+                !% --- downstream branches
+                do ii=2,max_branch_per_node,2
+                    JBidx = mm+ii
+                    if (elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) then 
+                        Fidx => elemI(JBidx,ei_MFace_dL)
+                        if (elemYN(JBidx,eYN_isBoundary_dn)) then
+                            Ci   = faceI(Fidx,fi_Connected_image)
+                            Aidx = faceI(Fidx,fi_GhostElem_dL)
+                        else
+                            Ci   = this_image()
+                            Aidx = faceI(Fidx,fi_Melem_dL)
+                        end if
+                        !% --- branch inherits slope of adjacent branch
+                        elemR(JBidx,er_BottomSlope) = elemR(Aidx,er_BottomSlope)[Ci]  
+                    else 
+                        !% no action
+                    end if
+                end do
+            end if
+        end do
+
 
         !%------------------------------------------------------------------
     end subroutine init_IC_bottom_slope    

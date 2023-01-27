@@ -42,6 +42,7 @@ module utility_allocate
     public :: util_allocate_bc
     public :: util_allocate_profiler
     public :: util_allocate_outputML_elemtypes
+    public :: util_allocate_outputML_static_elemtypes
     public :: util_allocate_outputML_facetypes
     public :: util_allocate_outputML_storage
     public :: util_allocate_outputML_times
@@ -935,6 +936,144 @@ contains
             if (setting%Debug%File%utility_allocate) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_elemtypes
+
+   subroutine util_allocate_outputML_static_elemtypes ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% allocates the output type arrays for the static element data that are output
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer            :: allocation_status
+            character(len=99)  :: emsg
+            character(64)       :: subroutine_name = 'util_allocate_outputML_static_elemtypes'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Output%Report%suppress_MultiLevel_Output) return
+            if (.not. setting%Output%ElementsExist_global) return
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% --- bug check
+        !if (N_Out_static_TypeElem < 1) then
+        !    write(*,"(A)") 'ERROR (code) the N_Out_static_TypeElem is less than 1 (i.e. no output types selected)'
+        !    write(*,"(A)") '... which should have caused Output.ElementsExist_glboal = .false.'
+        !    write(*,"(A,i8)") '... setting%Output%N_Out_static_TypeElem      ', N_Out_static_TypeElem
+        !    write(*,"(A,i8)") '... etting%Output%ElementsExist_glboal ', setting%Output%ElementsExist_global
+        !    stop
+        !end if
+        
+        print *, "before static output allocation"
+        if (N_Out_static_TypeElem >= 1) then 
+            !% --- allocate the output types for elements
+            allocate(output_static_types_elemR(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_types_elemR')
+            output_static_types_elemR(:) = nullvalueI
+
+            !% --- allocate the output type processing for elements
+            allocate(output_static_typeProcessing_elemR(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeProcessing_elemR')
+            output_static_typeProcessing_elemR(:) = nullvalueI
+
+            !% --- allocate the output type logical for whether this output is multiplied by number of barrels
+            allocate(output_static_typeMultiplyByBarrels_elemR(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeMultiplyByBarrels_elemR')
+            output_static_typeMultiplyByBarrels_elemR(:) = zeroI
+
+            !% --- allocate the output typeNames
+            allocate(output_static_typeNames_elemR(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeNames_elemR')
+            output_static_typeNames_elemR(:) = ""
+
+            !% --- allocate the output typeUnits
+            allocate(output_static_typeUnits_elemR(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeUnits_elemR')
+            output_static_typeUnits_elemR(:) = ""
+
+            allocate(output_static_elem(sum(N_OutElem),N_Out_static_TypeElem+3)[*], stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_elem')
+            output_static_elem(:,:) = nullValueR
+        end if 
+
+
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+                !% --- allocate the output types for Links
+        print *, "before static output link allocation"
+        if (N_Out_static_TypeLink >= 1) then
+            allocate(output_static_types_Link(N_Out_static_TypeLink), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_types_Link')
+            output_static_types_Link(:) = nullvalueI
+
+            !% --- allocate the output type processing for Links
+            allocate(output_static_typeProcessing_Link(N_Out_static_TypeLink), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeProcessing_Link')
+            output_static_typeProcessing_Link(:) = nullvalueI
+
+            !% --- allocate the output type logical for whether this output is multiplied by number of barrels
+            allocate(output_static_typeMultiplyByBarrels_Link(N_Out_static_TypeLink), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeMultiplyByBarrels_Link')
+            output_static_typeMultiplyByBarrels_Link(:) = zeroI
+
+            !% --- allocate the output typeNames
+            allocate(output_static_typeNames_Link(N_Out_static_TypeLink), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeNames_Link')
+            output_static_typeNames_Link(:) = ""
+
+            !% --- allocate the output typeUnits
+            allocate(output_static_typeUnits_Link(N_Out_static_TypeLink), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeUnits_Link')
+            output_static_typeUnits_Link(:) = ""
+
+            allocate(output_static_Link(N_link_output,N_Out_static_TypeLink)[*], stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_Link')
+            output_static_Link(:,:) = nullValueR
+        end if
+
+        
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% --- allocate the output types for Nodes
+        print *, "before static output node allocation"
+
+        if (N_Out_static_TypeNode >= 1) then 
+
+            allocate(output_static_types_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_types_Node')
+            output_static_types_Node(:) = nullvalueI
+
+            !% --- allocate the output type processing for Nodes
+            allocate(output_static_typeProcessing_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeProcessing_Node')
+            output_static_typeProcessing_Node(:) = nullvalueI
+
+            !% --- allocate the output type logical for whether this output is multiplied by number of barrels
+            allocate(output_static_typeMultiplyByBarrels_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeMultiplyByBarrels_Node')
+            output_static_typeMultiplyByBarrels_Node(:) = zeroI
+
+            !% --- allocate the output typeNames
+            allocate(output_static_typeNames_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeNames_Node')
+            output_static_typeNames_Node(:) = ""
+
+            !% --- allocate the output typeUnits
+            allocate(output_static_typeUnits_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_typeUnits_Node')
+            output_static_typeUnits_Node(:) = ""
+
+            allocate(output_static_Node(N_Node_output,N_Out_static_TypeNode)[*], stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'output_static_Node')
+            output_static_Node(:,:) = nullValueR
+        end if
+
+
+
+        !% Closing
+            if (setting%Debug%File%utility_allocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_outputML_static_elemtypes
+
+
 !%
 !%==========================================================================
 !%==========================================================================

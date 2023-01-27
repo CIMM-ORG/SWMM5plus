@@ -266,6 +266,9 @@ module geometry_lowlevel
                        ) / elemR(thisP,er_BreadthMax)
         endwhere
 
+        where (llgeo_elldepth_pure > elemR(thisP,er_Depth))
+            llgeo_elldepth_pure = elemR(thisP,er_Depth)
+        endwhere
 
         ! if (head .le. ZbreadthMax) then
         !     outvalue =  area / topwidth

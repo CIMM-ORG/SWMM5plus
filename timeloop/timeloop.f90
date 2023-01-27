@@ -428,7 +428,7 @@ contains
     
                 end if         
     
-                call util_CLprint ('before reporting')
+                !call util_CLprint ('before reporting')
 
                 ! print *, '7 nextHydrologyTime ', setting%Time%Hydrology%NextTime
                 ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
@@ -491,7 +491,7 @@ contains
                 !     stop 9
                 ! end if
     
-                call util_CLprint('before time step change')
+                !call util_utest_CLprint('before time step change')
         
                 sync all
                 !% ---increment the time step and counters for the next time loop

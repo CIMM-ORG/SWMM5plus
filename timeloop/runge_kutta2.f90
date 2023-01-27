@@ -64,11 +64,11 @@ module runge_kutta2
             ! end do
             ! stop 498733
 
-            ! print *, ' '
+            !print *, ' '
             ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
             ! call util_utest_checkIsNan ()
 
-            !stop 40987
+            !stop 409879
             
 
         !% --- compute the dynamic mannings N (DISABLED AS OF 20220817 brh)
@@ -114,6 +114,11 @@ module runge_kutta2
 
             ! call util_utest_CLprint ('EEE  after face interpolation step 1---------------')
 
+            ! if (setting%Time%Step == 15) then
+            !     print *, ' '
+            !     stop 733723
+            !  end if
+
         !% --- set the zero and small depth fluxes
         !%     This resets the faces that are zero
         call adjust_zero_and_small_depth_face (whichTM, .true.)
@@ -125,7 +130,14 @@ module runge_kutta2
         call diagnostic_toplevel (.true.)
         call util_crashstop(402873)
 
-            ! call util_utest_CLprint ('GGG  after diagnostic step 1 before adjust Vfilter')
+            ! call util_utest_CLprint ('GGG  after diagnostic step 1')
+
+        !% --- RK2 solution step -- set the JB as a function of the face and JM values
+        if (setting%Junction%useAltJB) then 
+            call ll_alternate_JB (whichTM,istep)
+        end if
+
+        ! call util_utest_CLprint ('GGG01  after after ll_alternate_JB')
 
         !% --- RK2 solution step -- check culverts
         call culvert_toplevel()
@@ -189,6 +201,13 @@ module runge_kutta2
 
             ! call util_utest_CLprint ('OOO  after diagnostic step 2')
 
+        !% --- RK2 solution step -- set the JB as a function of the face and JM values
+        if (setting%Junction%useAltJB) then 
+            call ll_alternate_JB (whichTM,istep)
+        end if
+
+            ! call util_utest_CLprint ('OOO_01  after ll_alternae_JB step 2')
+
         !% --- RK2 solution step -- check culverts
         call culvert_toplevel()
         call util_crashstop(669742)        
@@ -212,14 +231,13 @@ module runge_kutta2
         elemR(:,er_VolumeArtificialInflowTotal) = elemR(:,er_VolumeArtificialInflowTotal) + elemR(:,er_VolumeArtificialInflow)
         
             ! call util_utest_CLprint ('ZZZ  after accumulate overflow step 2')
-            !print *, '==================================================='
-             call util_utest_checkIsNan ()
+            ! print *, '==================================================='
+            ! call util_utest_checkIsNan ()
 
-
-        !    if (setting%Time%Step == 1) then
-        !     print *, ' '
-        !        stop 6987588
-        !    end if
+            ! if (setting%Time%Step == 25) then
+            !    print *, ' '
+            !    stop 6987588
+            ! end if
 
         !%-----------------------------------------------------------------
         !% closing
@@ -371,22 +389,22 @@ module runge_kutta2
         integer :: tmType
         !%-----------------------------------------------------------------------------
         !%       
-            ! call util_utest_CLprint ('before rk2 continuity step etm')
+            ! ! call util_utest_CLprint ('before rk2 continuity step etm')
 
         !% perform the continuity step of the rk2 for ETM CC and JM
         call rk2_continuity_step_ETM(istep)
 
-            ! call util_utest_CLprint ('after rk2 continuity step etm')
+            ! ! call util_utest_CLprint ('after rk2 continuity step etm')
 
         !% only adjust extremely small element volumes that have been introduced
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume/twentyR, col_elemP(ep_CCJM_H_ETM), .true.)
 
-            ! call util_utest_CLprint ('after rk2 call to adjust limit by zero')
+            ! ! call util_utest_CLprint ('after rk2 call to adjust limit by zero')
 
         !% perform the momentum step of the rk2 for ETM
         call rk2_momentum_step_ETM(istep)
 
-            ! call util_utest_CLprint (' after rk2 call to rk2_momentum_step_ETM')
+            ! ! call util_utest_CLprint (' after rk2 call to rk2_momentum_step_ETM')
 
     end subroutine rk2_step_ETM
 !%
@@ -541,7 +559,7 @@ module runge_kutta2
         !%
         if (Npack > 0) then
 
-                ! call util_utest_CLprint (' start of rk2_momentum_step_ETM')
+                ! ! call util_utest_CLprint (' start of rk2_momentum_step_ETM')
 
                 ! print *, ' '
                 ! print *, 'in rk2_momentum_step at start'
@@ -554,7 +572,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at A'
                 ! print *, elemR(61,er_Ksource), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                ! call util_utest_CLprint (' after rk2 call ll_momentum_Ksource_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_momentum_Ksource_CC')
 
 
             !% --- Common source for momentum on channels and conduits for ETM
@@ -563,7 +581,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at B'
                 ! print *, elemR(61,er_SourceMomentum), elemR(61,er_HydRadius), elemR(61,er_ManningsN), elemR(61,er_Flowrate)
 
-                ! call util_utest_CLprint (' after rk2 call ll_momentum_source_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_momentum_source_CC')
 
             !% --- Common Gamma for momentum on channels and conduits for  ETM
             !%     Here for all channels and conduits, assuming CM roughness
@@ -572,7 +590,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at C'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)      
             
-                ! call util_utest_CLprint (' after rk2 call ll_momentum_gammaCM_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_momentum_gammaCM_CC')
 
             !% --- handle force mains as Gamma terms
             !%     These overwrites the gamma from the CM roughness above
@@ -599,7 +617,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at E'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                ! call util_utest_CLprint (' after rk2 call ll_minorloss_friction_gamma_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_minorloss_friction_gamma_CC')
   
             !% --- Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
@@ -608,7 +626,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at F'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
             
-                ! call util_utest_CLprint (' after rk2 call ll_momentum_solve_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_momentum_solve_CC')
 
 
             !% --- velocity for ETM time march
@@ -617,7 +635,7 @@ module runge_kutta2
 
                 ! print *, 'in rk2_momentum_step at G'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
-                ! call util_utest_CLprint (' after rk2 call ll_momentum_velocity_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_momentum_velocity_CC')
 
 
             !% --- prevent backflow through flapgates
@@ -626,18 +644,20 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at H'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                ! call util_utest_CLprint (' after rk2 call ll_enforce_flapgate_CC')
+                ! ! call util_utest_CLprint (' after rk2 call ll_enforce_flapgate_CC')
 
         end if
 
         !% --- update junction branches
-        call ll_flowrate_and_velocity_JB(ETM,istep)
+        !%     note that if setting%Junction%useAltJB = .true. this sets these to zero
+        !call ll_flowrate_and_velocity_JB(ETM,istep)
+        call ll_flowrate_and_velocity_JB_2(ETM,istep)
 
             !     print *, 'in rk2_momentum_step at I'
             !     print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
     
-            ! call util_utest_CLprint (' after ll_flowrate_and_velocity_JB')
+            ! ! call util_utest_CLprint (' after ll_flowrate_and_velocity_JB')
 
     end subroutine rk2_momentum_step_ETM
 !%

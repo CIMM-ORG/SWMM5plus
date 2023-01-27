@@ -36,7 +36,7 @@ module geometry
     use utility_profiler
     use utility_crash
     ! use utility, only: util_CLprint, util_syncwrite
-    ! use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -154,7 +154,7 @@ module geometry
             end select
             call util_crashstop(49872)
         !%--------------------------------------------------------------------
-            ! call util_utest_CLprint ('in geometry at top==========================================')  
+            ! call util_utestLprint ('in geometry at top==========================================')  
 
         !% STATUS: at this point we know volume and velocity on all elements
         !% from RK2 solution
@@ -166,7 +166,7 @@ module geometry
         if (setting%SWMMinput%AllowPonding) then
             call geo_ponding_inflow (thisColP_JM)   
         end if
-            ! call util_utest_CLprint ('in geometry after ponding inflow') 
+            ! call util_utestLprint ('in geometry after ponding inflow') 
            
         !% --- PREISSMAN SLOT    
         !%     also adds to ponded volume or computes overflow volume for JM (only)
@@ -175,7 +175,7 @@ module geometry
         !%     (but not for the slot)
         call slot_toplevel (whichTM, thisColP_Closed_CC, thisColP_JM)
 
-            ! call util_utest_CLprint ('in geometry after slot toplevel') 
+            ! call util_utestLprint ('in geometry after slot toplevel') 
 
             !stop 29387488
 
@@ -198,7 +198,7 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Volume, setting%ZeroValue%Volume, thisColP_all_TM, .true.)
 
-            ! call util_utest_CLprint ('in geometry after limit_by_zerovalues (volume)') 
+            ! call util_utestLprint ('in geometry after limit_by_zerovalues (volume)') 
 
         !% --- DEPTH
         !%     compute the depth on all elements of CC JM based on geometry.
@@ -209,7 +209,7 @@ module geometry
         ! print *, 'after geo_depth_from_volume '
         ! print *, elemR(50,er_Depth), elemR(51,er_Depth)
 
-            ! call util_utest_CLprint ('in geometry after depth_from_volume') 
+            ! call util_utestLprint ('in geometry after depth_from_volume') 
 
         !% --- ZERO DEPTH CC JM -- now done in geo_depth_from_volume_by_type 20230113
         !%     reset all zero or near-zero depths in aa CC and JM
@@ -217,7 +217,7 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
 
-            ! call util_utest_CLprint ('in geometry after limit_by_zerovalues (depth)') 
+            ! call util_utestLprint ('in geometry after limit_by_zerovalues (depth)') 
 
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC and JM
@@ -234,7 +234,7 @@ module geometry
  
         ! print *, 'after geo_head_from_depth '
         ! print *, elemR(50,er_Head), elemR(51,er_Head)
-            ! call util_utest_CLprint ('in geometry after head_from_depth')
+            ! call util_utestLprint ('in geometry after head_from_depth')
 
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
@@ -246,7 +246,7 @@ module geometry
             call geo_overflow_openchannels (thisColP_Open_CC)
         end if
 
-            ! call util_utest_CLprint ('in geometry after overflow_openchannels')
+            ! call util_utestLprint ('in geometry after overflow_openchannels')
 
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC JM
         !%     limit the volume in closed element (CC, JM) to the full volume
@@ -254,14 +254,14 @@ module geometry
         call geo_volumelimit_closed (thisColP_Closed_CC)
         call geo_volumelimit_closed (thisColP_JM)
 
-            ! call util_utest_CLprint ('in geometry after volumelimit_closed')
+            ! call util_utestLprint ('in geometry after volumelimit_closed')
 
         !% REMOVED 20220909 brh
         !% --- limit volume for incipient surcharge. This is done after depth is computed
         !%     so that the "depth" algorithm can include depths greater than fulldepth
         !%     as a way to handle head for incipient surcharge.
         !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
-            ! call util_utest_CLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
+            ! call util_utestLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
         !% --- limit depth for surcharged on CC. This is done after head is computed
         !%     so that the depth algorithm can include depths greater than fulldepth where the 
         !%     geometry algorithm does not enforrce full depth
@@ -279,14 +279,14 @@ module geometry
         !%     This is needed before JB are computed
         call slot_JM_head_PSadd (thisColP_JM)
 
-            ! call util_utest_CLprint ('in geometry after JM_head_PSadd') 
+            ! call util_utestLprint ('in geometry after JM_head_PSadd') 
            
         !% --- JB VALUES
         !%    assign the non-volume geometry on junction branches JB based on JM head
         !%    Values limited by full volume. Volume assigned is area * length
         call geo_assign_JB (whichTM, thisColP_JM)
 
-            ! call util_utest_CLprint ('in geometry after assign_JB') 
+            ! call util_utestLprint ('in geometry after assign_JB') 
 
         !% --- JB CLOSED CONDUIT VOLUME LIMIT
         !%     further limiting the JB volume by full is probably not needed,
@@ -294,14 +294,14 @@ module geometry
         !%     with JB volume assigned by area * length.
         call geo_volumelimit_closed (thisColP_Closed_JB)
 
-            ! call util_utest_CLprint ('in geometry after volumelimit_closed') 
+            ! call util_utestLprint ('in geometry after volumelimit_closed') 
 
         !% --- PREISSMANN SLOT HEAD REMOVE IN JM
         !%     we need to remove the PS and ponding from the JM cells so that we can easily
         !%     compute other geometry without full JM causing problems
         call slot_JM_head_PSremove (thisColP_JM)
 
-            ! call util_utest_CLprint ('in geometry after JM_head_PSremove')  
+            ! call util_utestLprint ('in geometry after JM_head_PSremove')  
 
         !% STATUS: at this point we have all geometry on CC, JM, JB that is
         !% limited by the full volume values. The CC and JM have slot values stored
@@ -320,14 +320,14 @@ module geometry
             !call geo_area_from_volume (thisColP_all_TM)
         end if
 
-            ! call util_utest_CLprint ('in geometry after area_from_volume') 
+            ! call util_utestLprint ('in geometry after area_from_volume') 
 
         ! !% --- ZERO AREA CC JM
         ! !%     reset all zero or near-zero areas in CC and JM
         ! call adjust_limit_by_zerovalues &
         !      (er_Area, setting%ZeroValue%Area, thisColP_all_TM, .false.)
 
-            ! call util_utest_CLprint ('in geometry after adjust_limit_by_zeroValues area')   
+            ! call util_utestLprint ('in geometry after adjust_limit_by_zeroValues area')   
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
@@ -335,7 +335,7 @@ module geometry
         !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
         call geo_topwidth_from_depth_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_utest_CLprint ('in geometry after topwidth_from_depth') 
+            ! call util_utestLprint ('in geometry after topwidth_from_depth') 
 
         ! !% --- ZERO TOPWIDTH CC
         ! !%     reset all zero or near-zero topwidth in CC 
@@ -343,7 +343,7 @@ module geometry
         ! call adjust_limit_by_zerovalues &
         !      (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_CC, .false.)
 
-            ! call util_utest_CLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
+            ! call util_utestLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
@@ -356,7 +356,7 @@ module geometry
         ! %     Note: perimeter for JM is undefined in this subroutine
         !OBSOLETE  call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-            ! call util_utest_CLprint ('in geometry after perimeter from depth') 
+            ! call util_utestLprint ('in geometry after perimeter from depth') 
 
         !% --- compute hyddepth
         !call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
@@ -390,30 +390,30 @@ module geometry
         !     !call geo_pressure_head_from_hyddepth (thisColP_CC)
         ! end if
 
-            ! call util_utest_CLprint ('in geometry after ell_from_head') 
+            ! call util_utestLprint ('in geometry after ell_from_head') 
 
         !% --- make adjustments for slots on closed elements only
         !%     These add slot values to volume, depth, head
         call slot_CC_adjustments (thisColP_Closed_CC)
 
-            ! call util_utest_CLprint ('in geometry after slot_CC_adustments') 
+            ! call util_utestLprint ('in geometry after slot_CC_adustments') 
 
         call slot_JM_adjustments (thisColP_JM)
 
-            ! call util_utest_CLprint ('in geometry after slot_JM_adjustments') 
+            ! call util_utestLprint ('in geometry after slot_JM_adjustments') 
 
         !% --- compute the SlotDepth, SlotArea, SlotVolume and update
         !%     elem volume and depth for JB. Note elem head on JB either with or
         !%     without surcharge is assigned in geo_assign_JB
         call slot_JB_computation (thisColP_JM)
         
-            ! call util_utest_CLprint ('in geometry after slot_JB_computation') 
+            ! call util_utestLprint ('in geometry after slot_JB_computation') 
 
         !% Set JM values that are not otherwise defined
         !% HydDepth, ell. Note that topwidth, hydradius, perimeter are undefined.
         call geo_JM_values ()
 
-            ! call util_utest_CLprint ('in geometry after JM_values') 
+            ! call util_utestLprint ('in geometry after JM_values') 
 
         !% HOLD UNTIL AC RE-VISITED
         ! !% compute the dHdA that are only for AC nonsurcharged
@@ -421,7 +421,7 @@ module geometry
         !     call geo_dHdA (ep_AC_ACnonSurcharged)
         ! end if
 
-            ! call util_utest_CLprint ('in geometry at end') 
+            ! call util_utestLprint ('in geometry at end') 
 
 
         !stop 2397843
@@ -1010,6 +1010,8 @@ module geometry
         thisCol => col_elemPGx(epg_CC_rectangular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
+                ! print *, 'rect here Volume/length',elemR(15,er_Volume)/elemR(15,er_Length)
+                ! print *,  'zero area           ',setting%ZeroValue%Area
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
             call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
         end if    
@@ -3897,11 +3899,13 @@ module geometry
             depth       => elemR(:,er_Depth)
             volume      => elemR(:,er_Volume)
             length      => elemR(:,er_Length)
-         !%------------- ----------------------------------------------------
+        !%------------- ----------------------------------------------------
 
         where (volume(thisP)/length(thisP) .le. setting%ZeroValue%Area)
             depth(thisP) = setting%ZeroValue%Depth * 0.99d0
         end where
+
+
 
         ! print *, ' '
         ! print *, 'in geo_ZeroDepth_from_volume'

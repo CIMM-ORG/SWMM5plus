@@ -1,0 +1,187 @@
+[TITLE]
+;;Project Title/Notes
+;;MODIFIED: A: making conduits open channels, B: no infiltration, C: no weirs, D: no rainfall
+;; E:  INFLOW@102 = 0, F: INFLOW@1SB3 = 0
+;; F01 -- cutting down to a single line fo rthe inflow 1SB1 and renaming
+;; F02 -- removing the parallel path of b07_826
+;; F03 -- removeing all parallel
+;; F04 -- truncating domain
+;; f05 -- replaceing irregular with rectangular open
+;; f06 -- replacing trapezoidal with rectangular open
+;; f07 -- uniform link lengths
+;; f08 -- dummy domain
+Example User5 
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CFS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           08/11/1998
+START_TIME           00:00:00
+REPORT_START_DATE    08/11/1998
+REPORT_START_TIME    00:00:00
+END_DATE             08/11/1998
+END_TIME             06:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:01:00
+WET_STEP             00:01:00
+DRY_STEP             00:01:00
+ROUTING_STEP         0:00:30 
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  FROUDE
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         12.557
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.005
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[FILES]
+;;Interfacing Files
+
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+
+5SB1             689.42     60.58      .00        0          0 
+7SB1             684.17     65.83      .00        0          0  
+9SB1             680.71     69.29      .00        0          0  
+10SB1            676.54     73.46      .00        0          0 
+17SB1            675.41     74.59      .0        0          0    
+40SB1            675.00     25.00      .0        0          0       
+brh01            665        25         .0
+       
+
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+;O.O_RM           637.8      FIXED      650              No        
+;O.O_RM             660      FIXED      675.5              YES  
+O.O_RM             638       FREE                        YES               
+
+[STORAGE]
+;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
+;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
+1SB1             704.45   35.55      0.0        TABULAR    1SB1                         0        0        
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+a01_644               1SB1             5SB1             500.0      0.019      0.0        6.58       0.0        0                
+a03p_54inch_1         5SB1             7SB1             500.0      0.019      0.0        0.0        0.0        0               
+a05p_54inch_2         7SB1             9SB1             500.0      0.019      0.0        0.0        0.0        0         
+a06_647               9SB1             10SB1            500.0      0.019      0.0        2.58       0.0        0                
+a08p_848chan          10SB1            17SB1            500.0      0.02       4.58       4.5        0.0        0             
+a10p_849_2            17SB1            40SB1            500.0      0.019      0.0        0.0        0.0        0             
+a12_650              40SB1             brh01            500.0      0.019      0.0        0.0        0.0        0       
+aBRH01               brh01             O.O_RM           5000.0     0.03       0.0        0.0        0.0        0
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+a01_644               RECT_OPEN    30.0             3.0        0          0          1                  
+a03p_54inch_1         RECT_OPEN    30.0             4.5        0          0          1                                     
+a05p_54inch_2         RECT_OPEN    30.0             4.5        0          0          1 
+a06_647               RECT_OPEN    30.0             3.5        0          0          1   
+a08p_848chan          RECT_OPEN    30.0             5.0        0          0          1                      
+a10p_849_2            RECT_OPEN    30.0             5.0        0          0          1     
+a12_650               RECT_OPEN    30.0             5.0        0          0          1   
+aBRH01                RECT_OPEN    30.0             5.0        0          0          1   
+
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------           
+    1SB1             FLOW             INFLOW@1SB1      FLOW     1.0      1.0              
+
+[CURVES]
+;;Name           Type       X-Value    Y-Value   
+;;-------------- ---------- ---------- ----------
+1SB1             STORAGE    0.0        209088.0  
+1SB1                        4.65       274428.0  
+;
+99               STORAGE    0.0        43.56     
+99                          0.53       32670.0   
+99                          1.53       111949.2  
+99                          2.53       116305.2  
+99                          3.53       121096.8  
+99                          4.53       125888.4  
+99                          5.53       130244.4  
+99                          6.53       135036.0  
+99                          7.53       140263.2  
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+INFLOW@1SB1      08/11/1998 00:00      0.00000   
+INFLOW@1SB1                 00:05      39.60000  
+INFLOW@1SB1                 00:10      425.10000 
+INFLOW@1SB1                 00:15      634.10000 
+INFLOW@1SB1                 00:20      591.00000 
+INFLOW@1SB1      08/11/1998 00:25      441.00000 
+INFLOW@1SB1                 00:30      313.00000 
+INFLOW@1SB1                 00:35      255.00000 
+INFLOW@1SB1                 00:40      220.00000 
+INFLOW@1SB1                 00:45      197.00000 
+INFLOW@1SB1      08/11/1998 00:50      180.00000 
+INFLOW@1SB1                 00:55      168.00000 
+INFLOW@1SB1                 01:00      170.00000 
+INFLOW@1SB1                 01:05      153.00000 
+INFLOW@1SB1                 01:10      87.00000  
+INFLOW@1SB1      08/11/1998 01:15      55.00000  
+INFLOW@1SB1                 01:20      54.00000  
+INFLOW@1SB1                 01:25      52.00000  
+INFLOW@1SB1                 01:30      45.00000  
+INFLOW@1SB1                 01:35      32.00000  
+INFLOW@1SB1      08/11/1998 01:40      18.00000  
+INFLOW@1SB1                 01:45      11.00000  
+INFLOW@1SB1                 01:50      8.00000   
+INFLOW@1SB1                 01:55      7.00000   
+INFLOW@1SB1                 02:00      6.00000   
+INFLOW@1SB1      08/11/1998 02:05      5.00000   
+INFLOW@1SB1                 02:10      4.00000   
+INFLOW@1SB1                 02:15      3.00000   
+INFLOW@1SB1                 02:20      2.00000   
+INFLOW@1SB1                 02:25      1.00000   
+INFLOW@1SB1      08/11/1998 02:30      1.00000   
+INFLOW@1SB1                 02:35      1.00000   
+INFLOW@1SB1                 02:40      1.00000   
+INFLOW@1SB1                 02:45      1.00000   
+INFLOW@1SB1                 02:50      1.00000   
+INFLOW@1SB1      08/11/1998 02:55      1.00000   
+INFLOW@1SB1                 03:00      1.00000   
+INFLOW@1SB1                 03:05      1.00000   
+INFLOW@1SB1                 03:10      1.00000   
+INFLOW@1SB1                 03:15      1.00000   
+INFLOW@1SB1      08/11/1998 03:20      1.00000   
+INFLOW@1SB1                 03:25      1.00000   
+INFLOW@1SB1                 03:30      1.00000   
+INFLOW@1SB1                 03:35      1.00000   
+INFLOW@1SB1                 03:40      1.00000   
+INFLOW@1SB1      08/11/1998 03:45      1.00000   
+INFLOW@1SB1                 03:50      1.00000   
+INFLOW@1SB1                 04:12      1.00000   
+INFLOW@1SB1                 23:58      1.00000  
+;
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
