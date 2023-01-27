@@ -9,7 +9,7 @@ module update
     use utility_profiler
     use utility_crash
     !use utility, only: util_utest_CLprint, util_syncwrite
-    ! use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -155,20 +155,20 @@ module update
         ! print *, 'in ',trim(subroutine_name)
         ! print *, flowrate(1), area(1), velocity(1)
 
-        ! ! call util_utest_CLprint ('in update element Flowrate A')
+        ! ! ! call util_utest_CLprint ('in update element Flowrate A')
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
 
-            ! ! call util_utest_CLprint ('in update element Flowrate B')
+            ! ! ! call util_utest_CLprint ('in update element Flowrate B')
 
             !% --- limit flowrate by the full value (if it exists)
             where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
                 flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
             end where
             
-            ! ! call util_utest_CLprint ('in update element Flowrate C')
+            ! ! ! call util_utest_CLprint ('in update element Flowrate C')
         end if
 
         ! print *, flowrate(139), area(139), velocity(139)
@@ -215,13 +215,14 @@ module update
         character(64) :: subroutine_name = 'update_Froude_number_JB'
         integer, intent(in) :: thisCol_JM
         integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
-        real(8), pointer :: Froude(:), velocity(:), ellDepth(:), grav
+        real(8), pointer :: Froude(:), velocity(:), Depth(:), grav
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
         !if (crashYN) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
-        ellDepth    => elemR(:,er_EllDepth)  !% Use the ell value (modified hydraulic depth)
+        !ellDepth    => elemR(:,er_EllDepth)  !% Use the ell value (modified hydraulic depth) NOT AVAILALBE
+        Depth       => elemR(:,er_Depth)
         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         grav     => setting%constant%gravity
         !%-----------------------------------------------------------------------------
@@ -236,7 +237,8 @@ module update
                 do kk=1,max_branch_per_node
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
-                        Froude(tB) = velocity(tB) / sqrt(grav * ellDepth(tB))
+                        !Froude(tB) = velocity(tB) / sqrt(grav * ellDepth(tB))
+                        Froude(tB) = velocity(tB) / sqrt(grav * Depth(tB))
                         !print *, kk, tB, Froude(tB), velocity(tB),'  Froude JB'
                     end if
                 end do
@@ -476,54 +478,67 @@ module update
   
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
-            wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
-
-            ! print *, ' '
-            ! print *, ii
-            ! print *, 'wavespeed ',wavespeed(51)
-            ! print *, 'velocity  ',velocity(51)
-            ! print *, 'pcelerity ',PCelerity(51)
-            ! print *, ' '
-
-            where (.not. isSlot(thisP+ii)) 
-                w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
-                w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
-            elsewhere
-                !% --- Preissmann slot
-                w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
-                w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
-            endwhere
-
-            !% apply limiters to timescales
-            where (w_uQ(thisP+ii) < zeroR)
+            if (setting%Junction%useAltJB) then 
+                !% -- baseline update pushes the element values to
+                !%    the JB faces
                 w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-            endwhere
-            where (w_uQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-            endwhere
-            where (w_uQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-            endwhere
-
-            where (w_dQ(thisP+ii) < zeroR)
                 w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-            endwhere
-            where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-            endwhere
-            where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-            endwhere
+                w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+            else
+                wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
 
-            !% set the geometry interp the same as flow interp
-            w_uG(thisP+ii) = w_uQ(thisP+ii)
-            w_dG(thisP+ii) = w_dQ(thisP+ii)
-            w_uP(thisP+ii) = w_uQ(thisP+ii)
-            w_dP(thisP+ii) = w_dQ(thisP+ii)
+                ! print *, ' '
+                ! print *, ii
+                ! print *, 'wavespeed ',wavespeed(51)
+                ! print *, 'velocity  ',velocity(51)
+                ! print *, 'pcelerity ',PCelerity(51)
+                ! print *, ' '
 
-            !% use head interp as length-scaled
-            w_uH(thisP+ii) = onehalfR * length(thisP+ii)
-            w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
+                where (.not. isSlot(thisP+ii)) 
+                    w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
+                    w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
+                elsewhere
+                    !% --- Preissmann slot
+                    w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
+                    w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
+                endwhere
+
+                !% apply limiters to timescales
+                where (w_uQ(thisP+ii) < zeroR)
+                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
+                where (w_uQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
+                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
+                endwhere
+                where (w_uQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
+                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
+
+                where (w_dQ(thisP+ii) < zeroR)
+                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
+                where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
+                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
+                endwhere
+                where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
+                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
+
+                !% set the geometry interp the same as flow interp
+                w_uG(thisP+ii) = w_uQ(thisP+ii)
+                w_dG(thisP+ii) = w_dQ(thisP+ii)
+                w_uP(thisP+ii) = w_uQ(thisP+ii)
+                w_dP(thisP+ii) = w_dQ(thisP+ii)
+
+                !% use head interp as length-scaled
+                w_uH(thisP+ii) = onehalfR * length(thisP+ii)
+                w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
+                end if
         end do
 
         !print *, ' '

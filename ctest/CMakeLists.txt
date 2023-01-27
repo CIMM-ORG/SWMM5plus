@@ -18,13 +18,13 @@ enable_testing()
 # )
 
 ###################################### LEVEL 1 PASSED #############################
-# Passed 20230103
+# Passed 20230103 
 # add_test(NAME extran1_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230103
+# # Passed 20230103 Failed 20230123
 # add_test(NAME extran1_arch_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_arch_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -36,7 +36,7 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230103
+# Passed 20230103
 # add_test(NAME extran1_catenary_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_catenary_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -116,91 +116,91 @@ enable_testing()
 
 ###############################################  LEVEL 2 PASSED ###############################
 
-# # Passed 20230104
+# # Passed 20230104  Failed 20230123
 # add_test(NAME extran3_bottom_orifice_pid
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran3_bottom_orifice_pid.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104   Failed 20230123
 # add_test(NAME extran3_side_open_close_orifice
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran3_side_open_close_orifice.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104   Failed 20230123
 # add_test(NAME extran3_side_open_close_rect_offset_orifice
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran3_side_open_close_rect_offset_orifice.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104   Failed 20230123
 # add_test(NAME extran3_side_open_close_rect_orifice
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran3_side_open_close_rect_orifice.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104   Failed 20230123
 # add_test(NAME extran3_side_orifice
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran3_side_orifice.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104   Failed 20230123
 # add_test(NAME extran3_side_rect_orifice
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran3_side_rect_orifice.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104 Failed 20230123
 # add_test(NAME extran4_roadway
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_roadway.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104 Failed 20230123
 # add_test(NAME extran4_sideflow
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_sideflow.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104 Failed 20230123
 # add_test(NAME extran4_trapezoidal
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_trapezoidal.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104  Failed 20230123
 # add_test(NAME extran4_vnotch
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_vnotch.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104
+# # Passed 20230104  Failed 20230123
 # add_test(NAME extran4
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230102
+# # Passed 20230102  Failed 20230123
 # add_test(NAME extran6_storage_functional_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_storage_functional_final.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # # Passed 20230102
+# # # Passed 20230102 Passed 20230123
 # add_test(NAME extran6_pump_type2_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_pump_type2_final.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230102
+# # Passed 20230102  Failed 20230123
 # add_test(NAME extran6_pump_type3_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_pump_type3_final.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230102
+# # Passed 20230102  Passed 20230123
 # add_test(NAME extran6_pump_type4_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_pump_type4_final.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -422,8 +422,14 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# FAIL 20230104 -- crash in subcatchment initialization
+# FAIL 20230104 -- 
 add_test(NAME user5
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_F08.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/outbrh/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+
+
+# add_test(NAME extran1_rect_open_test_A05
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/extran1_rect_open_test_A05.inp -s ./ctest/internal_testing/brh/settings_extran1_test_A.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )

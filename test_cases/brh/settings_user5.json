@@ -6,13 +6,17 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 15.00
+        "NominalElemLength" : 100.00,
+        "Force_nodes_to_nJM" : true
     },
     "Limiter" : {
         "Dt" : {
             "Minimum"     : 1e-4
         }
-    },    
+    },  
+    "Junction" : {
+        "useAltJB" : false
+    },  
     "Output" : {
         "StoredLevels" : 4000,
         "CommandLine" : {

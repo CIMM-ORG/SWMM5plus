@@ -10,10 +10,14 @@
         "disableInterpolationYN": false
     },
     "Discretization" : {
+        "Force_nodes_to_nJM" : true,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 100.00
+    },
+    "Junction" : {
+        "useAltJB" : true
     },
     "Limiter" : {
         "BC" : {

@@ -533,6 +533,7 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
+        logical :: useAltJB = .false.
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -1229,6 +1230,12 @@ contains
 
         
     !% Discretization. =====================================================================
+        !% -- Forcing all nodes to nJM
+        !%                      Discretization.Force_nodes_to_nJM
+        call json%get('Discretization.Force_nodes_to_nJM', logical_value, found)
+        if (found) setting%Discretization%Force_nodes_to_nJM = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.Force_nodes_to_nJM not found'
+      
         !% -- Channel overflow
         !%                      Discretization.AllowChannelOverflowTF
         call json%get('Discretization.AllowChannelOverflowTF', logical_value, found)
@@ -1359,6 +1366,11 @@ contains
 
     !% Junctions. =====================================================================
         !rm 20220207brh
+             !%                       Junction.useAltJB
+        call json%get('Junction.useAltJB', logical_value, found)
+        if (found) setting%Junction%useAltJB = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Junction.useAltJB not found'
+        
         !%                       Junction.isDynamicYN
         ! call json%get('Junction.isDynamicYN', logical_value, found)
         ! if (found) setting%Junction%isDynamicYN = logical_value
