@@ -21,6 +21,8 @@ module adjust
 
     private
 
+    public :: adjust_zero_or_small_depth_identify_NEW
+
     public :: adjust_face_for_zero_setting
     public :: adjust_face_for_zero_setting_singular
 
@@ -98,8 +100,13 @@ module adjust
 !%
 !%==========================================================================
 !%==========================================================================  
+!% 
+
 !%
-    subroutine adjust_zero_and_small_depth_elem (whichTM, isReset, isZeroFlux)
+!%==========================================================================
+!%==========================================================================  
+!%
+    subroutine adjust_zero_and_small_depth_elem(whichTM, isReset, isZeroFlux)
         !%------------------------------------------------------------------
         !% Description:
         !% Top level adjustment routine for zero and small depth conditions
@@ -122,7 +129,8 @@ module adjust
            
             call adjust_smalldepth_identify_all ()
             
-            call pack_small_and_zero_depth_elements (whichTM)
+            call pack_small_and_zero_depth_elements (whichTM, CC)
+            call pack_small_and_zero_depth_elements (whichTM, JM)
 
             call pack_zero_depth_interior_faces ()
             
@@ -495,6 +503,54 @@ module adjust
         !%----------------------------------------------------------------------
         !% Closing
     end subroutine adjust_zerodepth_identify_all
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_zero_or_small_depth_identify_NEW (elementType, isZero)    
+        !%------------------------------------------------------------------
+        !% Description
+        !% identifies all the zero or small depths of element inType
+        !% if isZero is true then zero depths are identified, else small depths
+        !%------------------------------------------------------------------
+        !% Declarations:
+        !%------------------------------------------------------------------
+            integer, intent(in) :: elementType 
+            logical, intent(in) :: isZero
+            logical, pointer :: thisDepth(:), otherDepth(:)
+            integer, pointer :: elemType(:)
+            real(8), pointer :: depth0
+            real(8), pointer :: eDepth(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            elemType     => elemI(:,ei_elementType)       
+            eDepth       => elemR(:,er_Depth)
+
+            if (isZero) then
+                depth0     => setting%ZeroValue%Depth
+                thisDepth  => elemYN(:,eYN_isZeroDepth)
+                otherDepth => elemYN(:,eYN_isSmallDepth)
+            else
+                depth0     => setting%SmallDepth%DepthCutoff
+                otherDepth => elemYN(:,eYN_isZeroDepth)
+                thisDepth  => elemYN(:,eYN_isSmallDepth)
+            endif
+        !%------------------------------------------------------------------
+
+        where (elemType .eq. elementType)
+            where (eDepth .le. depth0)
+                thisDepth  = .true.
+                otherDepth = .false.
+            elsewhere
+                thisDepth  = .false.
+            endwhere
+        endwhere
+
+    end subroutine adjust_zero_or_small_depth_identify_NEW
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%   
 !%  
 !%==========================================================================   
 !%==========================================================================

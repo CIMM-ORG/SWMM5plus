@@ -21,13 +21,31 @@ module update
     private
 
     public :: update_auxiliary_variables
+    public :: update_auxiliary_variables_NEW
     !public :: update_Froude_number_junction_branch
 
     contains
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
-    !%
+!%
+    subroutine update_auxiliary_variables_NEW (whichTM, eType)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the variables dependent on the TM solution of volume
+        !% and velocity
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
+            integer, intent(in) :: eType    !% which elements, CC, Diag, JB, JM
+            character(64) :: subroutine_name = 'update_auxiliary_variables'
+        !%------------------------------------------------------------------
+
+    end subroutine update_auxiliary_variables_NEW
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
     subroutine update_auxiliary_variables (whichTM)
         !%------------------------------------------------------------------
         !% Description:
@@ -37,7 +55,7 @@ module update
         !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
             integer, pointer :: thisCol_CC, thisCol_JM
-            character(64) :: subroutine_name = 'update_auxiliary_variables'
+            character(64) :: subroutine_name = 'update_auxiliary_variables_OLD'
         !%------------------------------------------------------------------
         !% Preliminaries:
             !if (crashYN) return

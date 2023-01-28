@@ -66,8 +66,10 @@ contains
         
         call pack_dynamic_shared_faces()
 
-        call pack_small_and_zero_depth_elements(ALLtm)
-        call pack_small_and_zero_depth_elements(ETM)
+        call pack_small_and_zero_depth_elements(ALLtm, CC)
+        call pack_small_and_zero_depth_elements(ALLtm, JM)
+        call pack_small_and_zero_depth_elements(ETM, CC)
+        call pack_small_and_zero_depth_elements(ETM, JM)
         call pack_zero_depth_interior_faces ()
         ! call pack_zero_depth_shared_faces ()
 
@@ -3257,12 +3259,16 @@ contains
             npack => npack_elemP(ptype)
 
             npack = count(                                            &
+                    (elemI(:,ei_elementType) == CC)                   &
+                    .and.                                             &
                     (elemYN(:,eYN_isForceMain))                       &
                     .and.                                             &
                     (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams) )
 
             if (npack > 0) then
                 elemP(1:npack,ptype) = pack(eIdx,                     &
+                    (elemI(:,ei_elementType) == CC)                   &
+                    .and.                                             &
                     (elemYN(:,eYN_isForceMain))                       &
                     .and.                                             &
                     (elemSI(:,esi_Conduit_Forcemain_Method) == HazenWilliams) )
@@ -4128,11 +4134,11 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine pack_small_and_zero_depth_elements (whichTM)
+    subroutine pack_small_and_zero_depth_elements (whichTM, eType)
         !%-----------------------------------------------------------------
         !% dynamic packing of elements with small and zero depths
         !%-----------------------------------------------------------------
-        integer, intent(in)  :: whichTM
+        integer, intent(in)  :: whichTM, eType
         integer, pointer :: ptype, npack, eIdx(:)
         !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
@@ -4257,91 +4263,98 @@ contains
             ! end if
 
         case (ETM)
-            !% ep_SmallDepth_CC_ETM ====================================
-            !% - all Small depth that are CC and ETM time march
-            ptype => col_elemP(ep_SmallDepth_CC_ETM)
-            npack => npack_elemP(ptype)
+            select case (eType)
+            case (CC)
+                !% ep_SmallDepth_CC_ETM ====================================
+                !% - all Small depth that are CC and ETM time march
+                ptype => col_elemP(ep_SmallDepth_CC_ETM)
+                npack => npack_elemP(ptype)
 
-            npack = count( &
-                    (elemYN(:,eYN_isSmallDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == CC) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM) )
+                npack = count( &
+                        (elemYN(:,eYN_isSmallDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == CC) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM) )
 
-            if (npack > 0) then
-                elemP(1:npack,ptype) = pack(eIdx,  &
-                    (elemYN(:,eYN_isSmallDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == CC) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM))
-            end if
+                if (npack > 0) then
+                    elemP(1:npack,ptype) = pack(eIdx,  &
+                        (elemYN(:,eYN_isSmallDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == CC) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+                end if
 
-             !% BeginNew 20220122brh
-            !% ep_SmallDepth_JM_ETM ====================================
-            !% - all Small depth that are JM and ETM time march
-            ptype => col_elemP(ep_SmallDepth_JM_ETM)
-            npack => npack_elemP(ptype)
+                 !% ep_ZeroDepth_CC_ETM ====================================
+                !% - all zero depth that are CC and ETM time march
+                ptype => col_elemP(ep_ZeroDepth_CC_ETM)
+                npack => npack_elemP(ptype)
 
-            npack = count( &
-                    (elemYN(:,eYN_isSmallDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == JM) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM) )
+                npack = count( &
+                        (elemYN(:,eYN_isZeroDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == CC) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM) )
 
-            if (npack > 0) then
-                elemP(1:npack,ptype) = pack(eIdx,  &
-                    (elemYN(:,eYN_isSmallDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == JM) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM))
-            end if
+                if (npack > 0) then
+                    elemP(1:npack,ptype) = pack(eIdx,  &
+                        (elemYN(:,eYN_isZeroDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == CC) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM) )
+                end if
+           
+            case (JM)
+                !% BeginNew 20220122brh
+                !% ep_SmallDepth_JM_ETM ====================================
+                !% - all Small depth that are JM and ETM time march
+                ptype => col_elemP(ep_SmallDepth_JM_ETM)
+                npack => npack_elemP(ptype)
+
+                npack = count( &
+                        (elemYN(:,eYN_isSmallDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JM) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM) )
+
+                if (npack > 0) then
+                    elemP(1:npack,ptype) = pack(eIdx,  &
+                        (elemYN(:,eYN_isSmallDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JM) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+                end if
+
+                !% ep_ZeroDepth_JM_ETM ====================================
+                !% - all Zero depth that are JM for ETM
+                ptype => col_elemP(ep_ZeroDepth_JM_ETM)
+                npack => npack_elemP(ptype)
+
+                npack = count( &
+                        (elemYN(:,eYN_isZeroDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JM) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+
+                if (npack > 0) then
+                    elemP(1:npack,ptype) = pack(eIdx,  &
+                        (elemYN(:,eYN_isZeroDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JM) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+                end if
+            case default 
+                print *, 'unexpected case default'
+                call util_crashpoint(5598723)
+            end select
             !% EndNew 20220122brh
-
-            !% ep_ZeroDepth_CC_ETM ====================================
-            !% - all zero depth that are CC and ETM time march
-            ptype => col_elemP(ep_ZeroDepth_CC_ETM)
-            npack => npack_elemP(ptype)
-
-            npack = count( &
-                    (elemYN(:,eYN_isZeroDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == CC) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM) )
-
-            if (npack > 0) then
-                elemP(1:npack,ptype) = pack(eIdx,  &
-                    (elemYN(:,eYN_isZeroDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == CC) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM) )
-            end if
-
-            !% ep_ZeroDepth_JM_ETM ====================================
-            !% - all Zero depth that are JM for ETM
-            ptype => col_elemP(ep_ZeroDepth_JM_ETM)
-            npack => npack_elemP(ptype)
-
-            npack = count( &
-                    (elemYN(:,eYN_isZeroDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == JM) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM))
-
-            if (npack > 0) then
-                elemP(1:npack,ptype) = pack(eIdx,  &
-                    (elemYN(:,eYN_isZeroDepth)) &
-                    .and. &
-                    (elemI(:,ei_elementType) == JM) &
-                    .and. &
-                    (elemI(:,ei_tmType) == ETM))
-            end if
 
         case (AC)
             !     !% BeginNew 20220122brh

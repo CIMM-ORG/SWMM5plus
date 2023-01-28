@@ -26,6 +26,7 @@ module runge_kutta2
     private
 
     public :: rk2_toplevel_ETM
+    public :: rk2_toplevel_ETM_NEW
     public :: rk2_toplevel_AC
     public :: rk2_toplevel_ETMAC
 
@@ -33,6 +34,54 @@ module runge_kutta2
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
+!%
+    subroutine rk2_toplevel_ETM_NEW ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% single RK2 step for explicit time advance of SVE
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: istep, ii
+            integer :: whichTM
+            character(64) :: subroutine_name = 'rk2_toplevel_ETM'
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            !% --- set the time-marching type for this routine
+            whichTM = ETM
+            !% --- reset the overflow counter for this time level
+            elemR(:,er_VolumeOverFlow) = zeroR     
+            elemR(:,er_VolumeArtificialInflow) = zeroR   
+        !%-----------------------------------------------------------------
+        !% Aliases
+        !%-----------------------------------------------------------------
+
+        !% --- Dynamic manning's n not included in this routine.
+
+        !% --- compute Force Main Manning's N for force main elements
+        !%     20230128 -- modified pack so only CC elements, which should not matter
+        if (setting%Solver%ForceMain%AllowForceMainTF) call forcemain_ManningsN ()   
+
+        !% --- RK2 solution step -- single time advance step
+        !%     CC advanced for continuity and momentum
+        istep=1
+        call rk2_step_ETM_NEW (istep, CC)   
+
+        !% --- RK2 solution step -- update all CC aux variables
+        !%     Note, these updates CANNOT depend on face values
+        call update_auxiliary_variables_NEW (whichTM, CC)
+
+        !% --- identify zero depths
+        call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
+        !% --- identify small depths
+        call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
+
+        !select case (setting%Junction%Method)
+
+    end subroutine rk2_toplevel_ETM_NEW        
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
     subroutine rk2_toplevel_ETM ()
         !%------------------------------------------------------------------
         !% Description:
@@ -89,13 +138,13 @@ module runge_kutta2
         !%     JM advanced for continuity
         !%     JB determined from adjacent values.
         istep=1
-        call rk2_step_ETM (istep)
+        call rk2_step_ETM(istep)
 
             ! call util_utest_CLprint ('BBB after volume/momentum step 1---------------------------')
    
         !% --- RK2 solution step -- update all non-diagnostic aux variables
         !%     Note, these updates CANNOT depend on face values
-        call update_auxiliary_variables (whichTM)
+        call update_auxiliary_variables(whichTM)
 
             ! call util_utest_CLprint ('CCC  after update aux step 1-----------------------')
 
@@ -375,6 +424,19 @@ module runge_kutta2
 !%
 !%==========================================================================
 !% PRIVATE
+!%==========================================================================
+!%
+    subroutine rk2_step_ETM_NEW (istep, eType)
+        !%------------------------------------------------------------------
+        !% Performs rk2 step for volume and velocity for element eType
+        !%------------------------------------------------------------------
+            integer, intent(in) :: istep, eType
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+    end subroutine rk2_step_ETM_NEW
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine rk2_step_ETM (istep)
