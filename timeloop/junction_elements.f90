@@ -38,18 +38,22 @@ module junction_elements
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: nBranches(:), iFaceUp(:), iFaceDn(:)
         integer, pointer :: Npack, tFup, tFdn
-        real(8), pointer :: eFlow(:), eHead(:), dfdQ(:), fFlow(:), fHead_u(:), fHead_d(:)
-        real(8), pointer :: planArea(:), dt, grav, epsH, crk(:)
+        real(8), pointer :: eFlow(:), eHead(:), eArea(:), eLength(:), dfdQ(:)
+        real(8), pointer :: planArea(:), eGamma(:), dt, grav, epsH, jbFactor, crk(:)
         real(8), pointer :: tempFlow(:), tempHead(:)
+        real(8), pointer :: fFlow(:), fHead_u(:), fHead_d(:), fArea_u(:), fArea_d(:), fGamma(:)
         integer :: ii, jj, kk, tB, jDim, info
-        real(8) :: alpha, beta, gamma, kFactor
+        real(8) :: a, c, alpha, beta, kFactor
         real(8), allocatable :: jMatrix(:,:), inv_jMatrix(:,:), fVector(:), fSolution(:)
         !%-----------------------------------------------------------------------------
         !%
         nBranches    => elemSI(:,esi_JunctionMain_Total_Branches)
         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        eArea        => elemR(:,er_Area)
         eFlow        => elemR(:,er_Flowrate)
         eHead        => elemR(:,er_Head)
+        eGamma       => elemR(:,er_GammaM)
+        eLength      => elemR(:,er_Length)
         dfdQ         => elemSR(:,esr_JunctionBranch_dfdQ)
         planArea     => elemSR(:,esr_Storage_Plane_Area)
         tempFlow     => elemR(:,er_Temp01)
@@ -61,11 +65,15 @@ module junction_elements
         fFlow        => faceR(:,fr_Flowrate)
         fHead_u      => faceR(:,fr_Head_u)
         fHead_d      => faceR(:,fr_Head_d)
+        fArea_u      => faceR(:,fr_Area_u)
+        fArea_d      => faceR(:,fr_Area_d)
+        fGamma       => faceR(:,fr_GammaM)
 
         crk          => setting%Solver%crk2
         dt           => setting%Time%Hydraulics%Dt
         grav         => setting%constant%gravity
         epsH         => setting%Eps%Head
+        jbFactor     => setting%Discretization%JunctionBranchLengthFactor            
         !%-----------------------------------------------------------------------------
         !%
         select case (whichTM)
@@ -87,8 +95,10 @@ module junction_elements
             thisP => elemP(1:Npack,thisColP_JM)
 
             !% ================================================================================
-            !% first loop through the junctions to branch flowrate heads
-            !% and initial guess to the solution
+            !% first loop through the junctions to duplicate the face values to the 
+            !% junction elements
+            !% HACK: This assumes a face is already been properly updated with the 
+            !% adjacent CC element values.
             do ii=1,Npack
                 tM => thisP(ii)  !% JM junction main ID
 
@@ -105,6 +115,10 @@ module junction_elements
                         eFlow(tB) = fFlow(tFup) 
                         !% copy the downstream face head over to junction branch as the first guess
                         eHead(tB) = fHead_d(tFup) 
+                        !% copy the downstream face area of the upstream face
+                        eArea(tB) = fArea_d(tFup)
+                        !% copy the gamma (friction factor) terms
+                        eGamma(tB) = fGamma(tFup) 
                         !% copy the head and the flow as a first guess
                         tempHead(tB) = eHead(tB)
                         tempFlow(tB) = eHead(tB) 
@@ -121,6 +135,10 @@ module junction_elements
                         eFlow(tB) = fFlow(tFdn)
                         !% copy the upstream face head over to junction branch as the first guess
                         eHead(tB) = fHead_u(tFdn)
+                        !% copy the upstream face area of the downstream face
+                        eArea(tB) = fArea_u(tFdn)
+                        !% copy the gamma (friction factor) terms
+                        eGamma(tB) = fGamma(tFdn) 
                         !% copy the head and the flow as a first guess
                         tempHead(tB) = eHead(tB)
                         tempFlow(tB) = eHead(tB)
@@ -172,14 +190,25 @@ module junction_elements
                         !% heads copied over from the subsequent faces
 
                         !% --- HACK: hard coded for testing
-                        !% --- gamma is one for upstream branches
-                        gamma = oneR
-                        !% --- beta is gamm muliplied by the flow direction
-                        beta = gamma * sign(oneR, eHead(tB) - eHead(tM))
-                        !% --- k is hardcoded to a constant value of 1 for u/s branch
-                        kFactor = oneR
+                        !% --- beta is positive one for upstream branches
+                        beta = oneR
+                        !% --- k factor value, which is dependent on the flow direction
+                        if (beta * sign(oneR, eFlow(tB)) > 0) then
+                            kFactor = oneR
+                        else 
+                            kFactor = onehalfR
+                        end if
+
+                        !% --- first constant, 'a' term
+                        !% lunction length, eLength(tB) was divided by the JunctionBranchFactor to
+                        !% retrieve the length of the adjacent element
+                        a = beta * ((eLength(tB) / jbFactor) * eGamma (tB)) / (twoR * eArea(tB))
+
+                        !% --- second, 'c' term
+                        c = beta * kFactor / (grav * eArea(tB) ** twoI)
+                        
                         !% --- find the functional derivative of flow for the junction branch
-                        dfdQ(tB) = twoR * beta * kFactor * abs(eFlow(tB))  
+                        dfdQ(tB) = a + c * sign(oneR,eFlow(tB)) * eFlow(tB) 
 
                         !% --- populate the jMatrix
                         !% the functional derivative will be at the diagonal
@@ -190,14 +219,15 @@ module junction_elements
                         jMatrix(jDim,jj) = beta   
 
                         !% --- populate the function vector
-                        fVector(jj) = beta * kFactor * (eFlow(tB) ** twoI) + tempHead(tM) - eHead(tB)    
+                        !% HACK: does Ej and Ea term represent the head of the system?? FOr here I put them as head
+                        fVector(jj) = a * eFlow(tB) + c * sign(oneR,eFlow(tB)) * eFlow(tB) ** twoI + tempHead(tM) - eHead(tB)    
 
                         !% --- populate the solution vector with the first gussess
                         fSolution(jj) = tempFlow(tB)
 
                         !% the last element of the function vector is the sum of all the branch flowrates with 
                         !% some additional term, which will be dealt with later 
-                        fVector(jDim) = fVector(jDim) + gamma * eFlow(tB)       
+                        fVector(jDim) = fVector(jDim) + beta * eFlow(tB)       
                     end if
                 end do
 
@@ -213,14 +243,25 @@ module junction_elements
                         !% heads copied over from the subsequent faces
 
                         !% --- HACK: hard coded for testing
-                        !% --- gamma is negatice one for upstream branches
-                        gamma = - oneR
-                        !% --- beta is gamma muliplied by the flow direction
-                        beta = gamma * sign(oneR, eHead(tM) - eHead(tB))
-                        !% --- k is hardcoded to a constant value of 0.5 for u/s branch
-                        kFactor = onehalfR
+                        !% --- beta is negative one for downstream branches
+                        beta = - oneR
+                        !% --- k factor value, which is dependent on the flow direction
+                        if (beta * sign(oneR, eFlow(tB)) > 0) then
+                            kFactor = oneR
+                        else 
+                            kFactor = onehalfR
+                        end if
+
+                        !% --- first constant, 'a' term
+                        !% lunction length, eLength(tB) was divided by the JunctionBranchFactor to
+                        !% retrieve the length of the adjacent element
+                        a = beta * ((eLength(tB) / jbFactor) * eGamma (tB)) / (twoR * eArea(tB))
+
+                        !% --- second, 'c' term
+                        c = beta * kFactor / (grav * eArea(tB) ** twoI)
+                        
                         !% --- find the functional derivative of flow for the junction branch
-                        dfdQ(tB) = twoR * beta * kFactor * abs(eFlow(tB))  
+                        dfdQ(tB) = a + c * sign(oneR,eFlow(tB)) * eFlow(tB) 
 
                         !% --- populate the jMatrix
                         !% the functional derivative will be at the diagonal
@@ -231,14 +272,15 @@ module junction_elements
                         jMatrix(jDim,jj) = beta  
 
                         !% --- populate the function vector
-                        fVector(jj) = beta * kFactor * (eFlow(tB) ** twoI) + tempHead(tM) - eHead(tB)
+                        !% HACK: does Ej and Ea term represent the head of the system?? FOr here I put them as head
+                        fVector(jj) = a * eFlow(tB) + c * sign(oneR,eFlow(tB)) * eFlow(tB) ** twoI + tempHead(tM) - eHead(tB) 
 
                         !% --- populate the solution vector with the first gussess
                         fSolution(jj) = tempFlow(tB)
 
                         !% the last element of the function vector is the sum of all the branch flowrates with 
                         !% some additional term, which will be dealt with later 
-                        fVector(jDim) = fVector(jDim) + gamma * eFlow(tB)                            
+                        fVector(jDim) = fVector(jDim) + beta * eFlow(tB)                            
                     end if
                 end do
 

@@ -793,7 +793,7 @@ module face
             integer :: fGeoSetU(2), fGeoSetD(2), eGeoSet(2)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
             integer :: fFlowSet(1), eFlowSet(1)
-            integer :: fPreissmenSet(1), ePreissmenSet(1)
+            integer :: fOtherSet(2), eOtherSet(2)
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
         !% Aliases       
@@ -835,8 +835,8 @@ module face
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_Flowrate]
 
-        fPreissmenSet = [fr_Preissmann_Number]
-        ePreissmenSet = [er_Preissmann_Number]
+        fOtherSet = [fr_Preissmann_Number, fr_GammaM]
+        eOtherSet = [er_Preissmann_Number, er_GammaM]
 
             ! call util_utest_CLprint ('     face_interpolation_interior at start')
 
@@ -854,7 +854,7 @@ module face
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
         call face_interp_interior_set &
-            (fPreissmenSet, ePreissmenSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
+            (fOtherSet, eOtherSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
 
 
              ! call util_utest_CLprint ('     face_interpolation_interior at BBBB')
@@ -906,7 +906,7 @@ module face
             integer :: fGeoSetU(2), fGeoSetD(2), eGhostGeoSet(2)
             integer :: fHeadSetU(1), fHeadSetD(1), eGhostHeadSet(1)
             integer :: fFlowSet(1), eGhostFlowSet(1)
-            integer :: fPreissmenSet(1), eGhostPreissmenSet(1)
+            integer :: fOtherSet(2), eGhostOtherSet(2)
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
@@ -955,8 +955,8 @@ module face
         fFlowSet      = [fr_Flowrate]
         eGhostFlowSet = [ebgr_Flowrate]
 
-        fPreissmenSet      = [fr_Preissmann_Number]
-        eGhostPreissmenSet = [ebgr_Preissmann_Number]
+        fOtherSet      = [fr_Preissmann_Number, fr_GammaM]
+        eGhostOtherSet = [ebgr_Preissmann_Number, ebgr_GammaM]
 
         !% transfer all the local elemR data needed for face interpolation into elemB data structure
         call local_data_transfer_to_boundary_array (facePackCol, Npack)
@@ -974,7 +974,7 @@ module face
             (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
 
         call face_interp_shared_set &
-            (fPreissmenSet, eGhostPreissmenSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
+            (fOtherSet, eGhostOtherSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -1422,10 +1422,10 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
-            eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number, &
-                        er_Volume, er_velocity, er_InterpWeight_dG, er_InterpWeight_uG, &
-                        er_InterpWeight_dH, er_InterpWeight_uH, er_InterpWeight_dQ, &
-                        er_InterpWeight_uQ, er_InterpWeight_dP, er_InterpWeight_uP] 
+            eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number,     &
+                        er_Volume, er_velocity, er_GammaM, er_InterpWeight_dG, er_InterpWeight_uG,      &
+                        er_InterpWeight_dH, er_InterpWeight_uH, er_InterpWeight_dQ, er_InterpWeight_uQ, &
+                        er_InterpWeight_dP, er_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces
