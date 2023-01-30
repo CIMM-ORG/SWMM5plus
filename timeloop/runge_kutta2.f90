@@ -7,9 +7,10 @@ module runge_kutta2
     use update
     use face
     use forcemain, only: forcemain_ManningsN
+    use junction_elements
     use lowlevel_rk2
     use culvert_elements, only: culvert_toplevel
-    !use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
+    use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use adjust
     use diagnostic_elements
     use utility, only: util_CLprint, util_syncwrite
@@ -43,7 +44,7 @@ module runge_kutta2
         !% Declarations:
             integer :: istep, ii
             integer :: whichTM
-            character(64) :: subroutine_name = 'rk2_toplevel_ETM'
+            character(64) :: subroutine_name = 'rk2_toplevel_ETM_NEW'
         !%------------------------------------------------------------------
         !% Preliminaries
             !% --- set the time-marching type for this routine
@@ -55,27 +56,146 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-        !% --- Dynamic manning's n not included in this routine.
+        !% --- NOTE: Dynamic manning's n not included in this routine.
 
         !% --- compute Force Main Manning's N for force main elements
+        !%     Note this is only computed at the start of the RK2 and the
+        !%     value is held constant throughout the step.
         !%     20230128 -- modified pack so only CC elements, which should not matter
         if (setting%Solver%ForceMain%AllowForceMainTF) call forcemain_ManningsN ()   
 
         !% --- RK2 solution step -- single time advance step
         !%     CC advanced for continuity and momentum
         istep=1
-        call rk2_step_ETM_NEW (istep, CC)   
+        call rk2_step_ETM_CC (istep)   
+        call util_crashstop(739874)
 
         !% --- RK2 solution step -- update all CC aux variables
         !%     Note, these updates CANNOT depend on face values
-        call update_auxiliary_variables_NEW (whichTM, CC)
+        call update_auxiliary_variables_CC (whichTM)
+        call util_crashstop(2968722)
+
+        !% --- identify zero depths (.true. is zero depth)
+        call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
+        !% --- identify small depths (.false. is small depth)
+        call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
+        !% --- create packed arrays
+        call pack_small_and_zero_depth_elements (whichTM, CC)
+        !% --- set the zero depths
+        call adjust_zerodepth_element_values (whichTM, CC) 
+        !% --- HACK: NOT SURE IF THIS IS NEEDED FOR IMPLICIT APPROACH?
+        call pack_zero_depth_interior_faces ()
+        !% --- apply limiters to fluxes and velocity
+        !%     (.false. so that smalldepth fluxes are not set to zero)
+        call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
+        call adjust_limit_velocity_max_CC (whichTM) 
+
+        !% --- RK2 solution step  -- all face interpolation
+        sync all
+        call face_interpolation(fp_all,whichTM)
+        call util_crashstop(72129873)
+        !% --- flux adjustments (.true. so that conservative fluxes are altered)
+        call adjust_smalldepth_face_fluxes_CC (whichTM,.true.)
+        call adjust_zerodepth_face_fluxes_CC  (whichTM,.true.)
+
+        !% --- RK2 solution step -- compute implicit junction
+        call junction_toplevel (whichTM, istep)
+        call util_crashstop (112873)
+
+        !% QUESTION: IS THERE A NEED FOR FURTHER ZERO/small ADJUST HERE?
+
+        !% --- RK2 solution step  -- update diagnostic elements and faces
+        !%     (.true. as this is RK first step)
+        call diagnostic_toplevel (.true.)
+        call util_crashstop(982332)
+
+        !% --- RK2 solution step -- check culverts
+        !%     HACK: Can this be included in diagnostic?
+        call culvert_toplevel()
+        call util_crashstop(669743)
+
+        !% --- RK2 solution step  -- make ad hoc adjustments
+        call adjust_Vfilter_CC (whichTM) !% this is useful in lateral flow induced oscillations
+        call util_crashstop(13987)
+        
+        !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
+        call rk2_store_conservative_fluxes (whichTM)
+
+        !% --- reset the overflow counter (we only save conservation in the 2nd step)
+        elemR(:,er_VolumeOverFlow) = zeroR
+        elemR(:,er_VolumeArtificialInflow) = zeroR
+
+        !% --------------------------------------------------------------------------
+        !% --------------------------------------------------------------------------
+        !% --- RK2 solution step -- RK2 second step for ETM 
+        !%     CC advanced for continuity and momentum
+        istep=2
+        call rk2_step_ETM_CC (istep)
+        call util_crashstop(3298744)
+
+        !% --- RK2 solution step -- update all CC aux variables
+        !%     Note, these updates CANNOT depend on face values
+        call update_auxiliary_variables_CC (whichTM)
+        call util_crashstop(2968722)
 
         !% --- identify zero depths
         call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
         !% --- identify small depths
         call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
+        !% --- create packed arrays
+        call pack_small_and_zero_depth_elements (whichTM, CC)
+        !% --- set the minimum geometry values where depth is zero depth
+        call adjust_zerodepth_element_values (whichTM, CC) 
+        !% --- HACK: NOT SURE IF THIS IS NEEDED FOR IMPLICIT APPROACH?
+        call pack_zero_depth_interior_faces ()
+        !% --- apply limiters to fluxes and velocity
+        !%     .false. so that smalldepth fluxes are not set to zero
+        call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
+        call adjust_limit_velocity_max_CC (whichTM) 
 
-        !select case (setting%Junction%Method)
+        !% --- RK2 solution step  -- all face interpolation
+        sync all
+        call face_interpolation(fp_all,whichTM)
+        call util_crashstop(72129873)
+        !% --- flux adjusments with .false. so that conservative fluxes are not altered
+        call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
+        call adjust_zerodepth_face_fluxes_CC  (whichTM,.false.)
+
+        !% --- RK2 solution step -- compute implicit junction
+        call junction_toplevel (whichTM, istep)
+        call util_crashstop (112873)
+
+        !% QUESTION: IS THERE A NEED FOR FURTHER ZERO ADJUST HERE?
+
+        !% --- RK2 solution step  -- update diagnostic elements and faces
+        !%     (.false. as this is RK second step)
+        call diagnostic_toplevel (.false.)
+        call util_crashstop(982332)
+
+        !% --- RK2 solution step -- check culverts
+        !%     HACK: Can this be included in diagnostic?
+        call culvert_toplevel()
+        call util_crashstop(669743)
+
+        !% --- RK2 solution step  -- make ad hoc adjustments
+        call adjust_Vfilter_CC (whichTM) !% this is useful in lateral flow induced oscillations
+        call util_crashstop(13987)
+
+        !% --- check zero and small depths that might be changed by Vfilter
+        !% --- identify zero depths
+        call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
+        !% --- identify small depths
+        call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
+        !% --- create packed arrays
+        call pack_small_and_zero_depth_elements (whichTM, CC)
+        !% --- set the minimum geometry values where depth is zero depth
+        call adjust_zerodepth_element_values (whichTM, CC) 
+        !% --- HACK: NOT SURE IF THIS IS NEEDED FOR IMPLICIT APPROACH?
+        call pack_zero_depth_interior_faces ()
+        !% --- apply limiters to fluxes and velocity
+        !%     (.false. so that smalldepth fluxes are not set to zero)
+        call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
+        call adjust_limit_velocity_max_CC (whichTM) 
 
     end subroutine rk2_toplevel_ETM_NEW        
 !%
@@ -193,7 +313,7 @@ module runge_kutta2
         call util_crashstop(669743)
 
         !% --- RK2 solution step  -- make ad hoc adjustments
-        call adjust_Vfilter (whichTM) ! brh20220211 this is useful in lateral flow induced oscillations
+        call adjust_Vfilter_CC (whichTM) ! brh20220211 this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
 
             ! call util_utest_CLprint ('HHH  after Vfilter step 1 -------------------------')
@@ -263,7 +383,7 @@ module runge_kutta2
         
         !% --- RK2 solution step -- make ad hoc adjustments (V filter)
         ! print *, 'vfilter before ',elemR(54,er_Flowrate)
-        call adjust_Vfilter (whichTM)
+        call adjust_Vfilter_CC (whichTM)
         call util_crashstop(449872)
         ! print *, 'vfilter after ',elemR(54,er_Flowrate)
 
@@ -363,7 +483,7 @@ module runge_kutta2
         call util_crashstop(66234)
 
         !% step X -- make ad hoc adjustments
-        call adjust_Vfilter (ALLtm)
+        call adjust_Vfilter_CC (ALLtm)
         call util_crashstop(53434)
 
         !% step 6 -- RK2 step 2 for AC
@@ -415,7 +535,7 @@ module runge_kutta2
         call util_crashstop(23422)
 
         !% step X -- make ad hoc adjustments
-        call adjust_Vfilter (ALLtm)
+        call adjust_Vfilter_CC (ALLtm)
         call util_crashstop(99287)
 
         if (setting%Debug%File%runge_kutta2)  &
@@ -426,15 +546,80 @@ module runge_kutta2
 !% PRIVATE
 !%==========================================================================
 !%
-    subroutine rk2_step_ETM_NEW (istep, eType)
+    subroutine rk2_step_ETM_CC (istep)
         !%------------------------------------------------------------------
-        !% Performs rk2 step for volume and velocity for element eType
+        !% Performs rk2 step for volume and velocity for CC elements
+        !% using ETM method
         !%------------------------------------------------------------------
-            integer, intent(in) :: istep, eType
+            integer, intent(in) :: istep
+            integer, pointer    :: thisPackCol, Npack
+            integer, pointer    :: FMpackCol, nFMpack
+
+            integer, parameter :: thisMethod = ETM
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
 
-    end subroutine rk2_step_ETM_NEW
+        !% --- CONTINUITY
+        thisPackCol => col_elemP(ep_CC_H_ETM)
+        Npack       => npack_elemP(thisPackCol)
+        if (Npack > 0) then
+
+            !% --- Compute net flowrates for CC as source termo
+            call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
+
+            !% --- Solve for new volume
+            call ll_continuity_volume_ETM (er_Volume, thisPackCol, Npack, istep)
+
+            !% --- adjust extremely small volumes that might be been introduced
+            call adjust_limit_by_zerovalues &
+                (er_Volume, setting%ZeroValue%Volume, thisPackCol, .true.)
+        end if  
+
+        !% --- MOMENTUM
+        thisPackCol => col_elemP(ep_CC_Q_ETM)
+        Npack       => npack_elemP(thisPackCol)
+        if (Npack > 0) then
+
+            !% --- momentum K source terms for different methods for ETM
+            call ll_momentum_Ksource_CC (er_Ksource, thisPackCol, Npack)
+
+            !% --- Common source for momentum on channels and conduits for ETM
+            call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
+
+            !% --- Common Gamma for momentum on channels and conduits for  ETM
+            !%     Here for all channels and conduits, assuming CM roughness
+            call ll_momentum_gammaCM_CC (er_GammaM, thisPackCol, Npack)
+
+            !% --- handle force mains as Gamma terms
+            !%     These overwrite the gamma from the CM roughness above
+            if (setting%Solver%ForceMain%AllowForceMainTF) then 
+
+                !% --- surcharged Force main elements with Hazen-Williams roughness
+                FMPackCol => col_elemP(ep_FM_HW_PSsurcharged)
+                nFMpack   => npack_elemP(FMPackCol)
+                if (nFMpack > 0) call ll_momentum_gammaFM_CC (er_GammaM, FMPackCol, nFMpack, HazenWilliams)
+
+                !% --- surcharged Force Main elements with Darcy-Weisbach roughness
+                FMPackCol => col_elemP(ep_FM_dw_PSsurcharged)
+                nFMpack   => npack_elemP(FMPackCol)
+                if (nFMpack > 0) call ll_momentum_gammaFM_CC (er_GammaM, FMPackCol, nFMpack, DarcyWeisbach)
+            end if
+
+            !% --- add minor loss term to gamma for all conduits
+            call ll_minorloss_friction_gamma_CC (er_GammaM, thisPackCol, Npack)   
+
+            !% --- Advance flowrate to n+1/2 for conduits and channels with ETM
+            call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
+
+            !% --- velocity for ETM time march
+            call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
+
+            !% --- prevent backflow through flapgates
+            call ll_enforce_flapgate_CC (er_Velocity, thisPackCol, Npack)
+
+        end if
+        
+    end subroutine rk2_step_ETM_CC
 !%
 !%==========================================================================
 !%==========================================================================
@@ -493,7 +678,7 @@ module runge_kutta2
 !%
     subroutine rk2_continuity_step_ETM (istep)
         !%-----------------------------------------------------------------------------
-        !% Description:
+        !% Description:  THIS WILL BECOM OBSOLETE WITH IMPLICIT JUNCTION
         !% perform the continuity step of the rk2 for ETM
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: istep
@@ -536,7 +721,7 @@ module runge_kutta2
         thisPackCol => col_elemP(ep_CCJM_H_ETM)
         Npack => npack_elemP(thisPackCol)
         if (Npack > 0) then
-            call ll_continuity_volume_CCJM_ETM (er_Volume, thisPackCol, Npack, istep)
+            call ll_continuity_volume_ETM (er_Volume, thisPackCol, Npack, istep)
         end if
 
             ! print *, 'in rk2_continuity_step after volume CCJM'
@@ -602,6 +787,7 @@ module runge_kutta2
 !%==========================================================================
 !%
     subroutine rk2_momentum_step_ETM (istep)
+        ! THIS WILL BECOME OBSOLETE WITH IMPLICIT JUNCTION
         !%------------------------------------------------------------------
         !% Description:
         !% perform the momentum step of the rk2 for ETM (or ETM part of ETMAC)

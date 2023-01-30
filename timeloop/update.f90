@@ -21,7 +21,7 @@ module update
     private
 
     public :: update_auxiliary_variables
-    public :: update_auxiliary_variables_NEW
+    public :: update_auxiliary_variables_CC
     !public :: update_Froude_number_junction_branch
 
     contains
@@ -29,7 +29,7 @@ module update
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine update_auxiliary_variables_NEW (whichTM, eType)
+    subroutine update_auxiliary_variables_CC(whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% Updates the variables dependent on the TM solution of volume
@@ -37,11 +37,44 @@ module update
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
-            integer, intent(in) :: eType    !% which elements, CC, Diag, JB, JM
-            character(64) :: subroutine_name = 'update_auxiliary_variables'
+            integer, pointer :: thisCol_CC
+            character(64) :: subroutine_name = 'update_auxiliary_variables_CC'
+        !%------------------------------------------------------------------
+        !% Aliases
+            !% --- set packed column for updated elements
+            select case (whichTM)
+                case (ALLtm)
+                    thisCol_CC  => col_elemP(ep_CC_ALLtm)
+                case (ETM)
+                    thisCol_CC  => col_elemP(ep_CC_ETM)
+                case (AC)
+                    thisCol_CC  => col_elemP(ep_CC_AC)
+                case default
+                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                    print *, 'which has key ',trim(reverseKey(whichTM))
+                    call util_crashpoint(45834)
+            end select
         !%------------------------------------------------------------------
 
-    end subroutine update_auxiliary_variables_NEW
+        !% --- update the head (non-surcharged) and geometry
+        call geometry_toplevel_CC (whichTM)
+
+        !% NOTE -- not calling the adjust_limit_velocity_max here as it has
+        !% already been done in RK2 step
+
+        !% --- Compute the flowrate on CC.
+        call update_element_flowrate (thisCol_CC)
+
+        !% --- compute element Froude numbers for CC
+        call update_Froude_number_element (thisCol_CC)
+
+        !% --- compute the wave speeds
+        call update_wavespeed_element(thisCol_CC)
+
+        !% --- compute element-face interpolation weights on CC
+        call update_interpweights_CC(thisCol_CC, whichTM)
+
+    end subroutine update_auxiliary_variables_CC
 !%
 !%==========================================================================
 !%==========================================================================
@@ -75,7 +108,7 @@ module update
              !stop 1098734
 
         !% --- adjust velocity with limiters
-        call adjust_limit_velocity_max (whichTM)
+        call adjust_limit_velocity_max_CC (whichTM)
         call util_crashstop(21987)
 
             ! call util_utest_CLprint ('in update before update_CC_element_flowrate')

@@ -28,22 +28,22 @@ module adjust
 
     public :: adjust_zero_and_small_depth_elem
     public :: adjust_zero_and_small_depth_face
-    public :: adjust_Vfilter
+    public :: adjust_Vfilter_CC
 
     public :: adjust_limit_by_zerovalues  !% used in geometry
     public :: adjust_limit_by_zerovalues_singular  !% used in geometry
-    public :: adjust_limit_velocity_max
+    public :: adjust_limit_velocity_max_CC
     !public :: adjust_JB_elem_flux_to_equal_face
     
 
     public :: adjust_zerodepth_identify_all
-    ! public :: adjust_zerodepth_element_values 
-    ! public :: adjust_zerodepth_face_fluxes_CC
+    public :: adjust_zerodepth_element_values 
+    public :: adjust_zerodepth_face_fluxes_CC
     ! public :: adjust_zerodepth_face_fluxes_JMJB
 
     public :: adjust_smalldepth_identify_all
-    ! public :: adjust_smalldepth_element_fluxes
-    ! public :: adjust_smalldepth_face_fluxes
+    public :: adjust_smalldepth_element_fluxes_CC
+    public :: adjust_smalldepth_face_fluxes_CC
    
 
     contains
@@ -146,11 +146,11 @@ module adjust
              ! ! call util_utest_CLprint('-------------BBBB')
 
 
-        call adjust_smalldepth_element_fluxes (whichTM, isZeroFlux)
+        call adjust_smalldepth_element_fluxes_CC (whichTM, isZeroFlux)
 
             ! ! call util_utest_CLprint('-------------CCCC')
         
-        call adjust_limit_velocity_max (whichTM) 
+        call adjust_limit_velocity_max_CC (whichTM) 
 
             ! ! call util_utest_CLprint('-------------DDDD')
 
@@ -180,7 +180,8 @@ module adjust
         !%------------------------------------------------------------------
             ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
 
-        call adjust_smalldepth_face_fluxes     (whichTM,ifixQCons)
+        call adjust_smalldepth_face_fluxes_CC     (whichTM,ifixQCons)
+        call adjust_smalldepth_face_fluxes_JMJB    (whichTM,ifixQCons)
 
             ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
 
@@ -205,13 +206,13 @@ module adjust
 !%========================================================================== 
 !%==========================================================================
 !%
-    subroutine adjust_Vfilter (whichTM)
+    subroutine adjust_Vfilter_CC (whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% Performs ad-hoc adjustments that may be needed for stability
         !%------------------------------------------------------------------
             integer, intent(in) :: whichTM  !% indicates which Time marching method
-            character(64) :: subroutine_name = 'adjust_Vfilter'
+            character(64) :: subroutine_name = 'adjust_Vfilter_CC'
         !%------------------------------------------------------------------
             !if (crashYN) return
             if (setting%Debug%File%adjust) &
@@ -250,7 +251,7 @@ module adjust
         
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_Vfilter
+    end subroutine adjust_Vfilter_CC
 !%
 !%========================================================================== 
 !%==========================================================================  
@@ -351,7 +352,7 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine adjust_limit_velocity_max (whichTM)
+    subroutine adjust_limit_velocity_max_CC (whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% employs velocity limiters and small volume treatments to limit 
@@ -398,7 +399,7 @@ module adjust
         !%------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine adjust_limit_velocity_max
+    end subroutine adjust_limit_velocity_max_CC
 !%
 !%==========================================================================  
 !%==========================================================================
@@ -685,7 +686,7 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_smalldepth_element_fluxes(whichTM, isZeroFlux)
+    subroutine adjust_smalldepth_element_fluxes_CC (whichTM, isZeroFlux)
         !% -----------------------------------------------------------------
         !% Description
         !% uses the ep_SmallDepth_CC_ALLtm pack to set the velocity and
@@ -705,7 +706,7 @@ module adjust
             integer, target  :: pset(2)
             real(8)          :: psign(2)
             integer :: ii
-            character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes'
+            character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes_CC'
         !% -----------------------------------------------------------------
         !% Preliminaries:   
             select case (whichTM)
@@ -867,7 +868,7 @@ module adjust
         VelocityBlend(thisP) = nullvalueR
 
         !% -----------------------------------------------------------------
-    end subroutine adjust_smalldepth_element_fluxes  
+    end subroutine adjust_smalldepth_element_fluxes_CC  
 !%  
 !%========================================================================== 
 !%==========================================================================
@@ -877,7 +878,7 @@ module adjust
         !% Description:
         !% thisCol must be one of the ZeroDepth packed arrays that identifies
         !% all the (near) zero depth element locations.
-        !% only applicable to CC, not JM or JB
+        !% only applicable to CC,
         !% if ifixQCons = .true. then the conservative fluxes are adjusted
         !% -----------------------------------------------------------------
             integer, intent(in)  :: whichTM
@@ -1128,10 +1129,281 @@ module adjust
 !%  
 !%==========================================================================   
 !%==========================================================================
+!%   
+    subroutine adjust_smalldepth_face_fluxes_CC (whichTM, ifixQCons)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets the face values around an element where the ad-hoc
+        !% small depth algorithm is used. Must be done after the small depth
+        !% element values have been set.
+        !% if ifixQCons = .true. then the conservative fluxes are adjusted
+        !%------------------------------------------------------------------
+        !% Declarations:
+            logical, intent(in) ::  ifixQCons
+            integer, intent(in) :: whichTM
+            integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
+            integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
+            real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
+            real(8), pointer :: fVel_u(:), fVel_d(:)
+            real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
+            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: elemH(:), elemL(:), elemVol(:)
+            real(8), pointer :: dt, grav
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            select case (whichTM)
+            case (ALLtm)
+                !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6634112)
+            case (ETM)
+                thisCol   => col_elemP(ep_SmallDepth_CC_ETM)
+            case (AC)
+                !thisCol   => col_elemP(ep_SmallDepth_CC_AC)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6634723)
+            case default
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
+                !stop 
+                call util_crashpoint( 447833)
+                !return
+            end select
+        !%------------------------------------------------------------------
+        !% Aliases:
+            faceQ     => faceR(:,fr_Flowrate)
+            faceHu    => faceR(:,fr_Head_u)
+            faceHd    => faceR(:,fr_Head_d)
+            faceAu    => faceR(:,fr_Area_u)
+            faceAd    => faceR(:,fr_Area_d)
+            fQCons    => faceR(:,fr_Flowrate_Conservative)
+            elemQ     => elemR(:,er_Flowrate)
+            elemH     => elemR(:,er_Head)
+            elemL     => elemR(:,er_Length)
+            fVel_u    => faceR(:,fr_Velocity_u)
+            fVel_d    => faceR(:,fr_Velocity_d)
+            
+            elemVol   => elemR(:,er_Volume_N0)
+            isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            dt        => setting%Time%Hydraulics%Dt
+            grav      => setting%constant%gravity
+            fdn       => elemI(:,ei_Mface_dL)
+            fup       => elemI(:,ei_Mface_uL)
+        !%------------------------------------------------------------------
+        !% Handle the CC elements
+        npack => npack_elemP(thisCol)
+        if (npack > 0) then
+            thisP  => elemP(1:npack,thisCol)
+        
+            where (elemQ(thisP) .ge. zeroR)
+                !% --- flow in downstream direction
+                !%     downstream face value is minimum of the face value or element value
+                faceQ(fdn(thisP)) = min(elemQ(thisP)     , faceQ(fdn(thisP)) )      
+                !%     upstream face value is either the inflow from face or zero
+                faceQ(fup(thisP)) = max(faceQ(fup(thisP)), zeroR)
+                !% --- downstream outflow is limited to 1/3 the element volume 
+                faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), elemVol(thisP) / (threeR * dt) )   !% 20220122brh
+            elsewhere
+                !% --- flow in upstream direction
+                !%     downstream face value is inflow (negative face flow) or zero
+                faceQ(fdn(thisP)) = min(faceQ(fdn(thisP)), zeroR )
+                !%     upstream face value is the inflow (faceQ > 0) or the larger (smaller magnitude, closer
+                !%     to zero) of the negative flowrate at face or element
+                faceQ(fup(thisP)) = max(elemQ(thisP)     , faceQ(fup(thisP)) ) 
+                !% --- upstream out flow is limited to 1/3 the element volume !% 20220122brh
+                faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
+            endwhere
+
+            !% 20220531brh
+            !% --- provide inflow rate from large head differences with small volume cells
+            !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
+            call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+
+            ! print *, 'face Q after second step'
+            ! print *, faceQ(fdn(thisP))
+
+            if (ifixQCons) then
+                !% update the conservative face Q
+                fQCons(fdn(thisP)) = faceQ(fdn(thisP))
+                fQCons(fup(thisP)) = faceQ(fup(thisP))
+            end if
+
+            !% --- reset velocities
+            where ( faceAd(fup(thisP)) > setting%ZeroValue%Area)
+                fVel_d(fup(thisP)) = faceQ(fup(thisP)) /  faceAd(fup(thisP))
+            elsewhere
+                fVel_d(fup(thisP)) = zeroR
+            endwhere
+
+            where (faceAu(fup(thisP)) > setting%ZeroValue%Area)
+                fVel_u(fup(thisP)) = faceQ(fup(thisP)) /  faceAu(fup(thisP))
+            elsewhere
+                fVel_u(fup(thisP)) = zeroR
+            endwhere
+
+            where (faceAd(fdn(thisP)) > setting%ZeroValue%Area)
+                fVel_d(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAd(fdn(thisP))
+            elsewhere 
+                fVel_d(fdn(thisP)) = zeroR
+            end where
+
+            where (faceAu(fdn(thisP)) > setting%ZeroValue%Area)
+                fVel_u(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAu(fdn(thisP))
+            elsewhere 
+                fVel_u(fdn(thisP)) = zeroR
+            endwhere
+        else
+            !% no CC elements
+        end if
+
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine adjust_smalldepth_face_fluxes_CC
+
+!%  
+!%==========================================================================   
+!%==========================================================================
+!%
+    subroutine adjust_smalldepth_face_fluxes_JMJB (whichTM, ifixQCons)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Sets the face values around an element where the ad-hoc
+        !% small depth algorithm is used. Must be done after the small depth
+        !% element values have been set.
+        !% if ifixQCons = .true. then the conservative fluxes are adjusted
+        !%------------------------------------------------------------------
+        !% Declarations:
+            logical, intent(in) ::  ifixQCons
+            integer, intent(in) :: whichTM
+            integer, pointer :: fdn(:), fup(:), thisP(:), npack
+            integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
+            real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
+            real(8), pointer :: fVel_u(:), fVel_d(:)
+            real(8), pointer :: faceHu(:), faceHd(:), faceAu(:), faceAd(:)
+            real(8), pointer :: faceDu(:), faceDd(:)
+            real(8), pointer :: elemH(:), elemL(:), elemVol(:)
+            real(8), pointer :: dt, grav
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            select case (whichTM)
+            case (ALLtm)
+                !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6634112)
+            case (ETM)
+                thisColJM => col_elemP(ep_SmallDepth_JM_ETM) 
+            case (AC)
+                !thisColJM => col_elemP(ep_SmallDepth_JM_AC)
+                print *, 'CODE ERROR: AC Not implemented'
+                call util_crashpoint(6634723)
+            case default
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
+                !stop 
+                call util_crashpoint( 447833)
+                !return
+            end select
+        !%------------------------------------------------------------------
+        !% Aliases:
+            faceQ     => faceR(:,fr_Flowrate)
+            faceHu    => faceR(:,fr_Head_u)
+            faceHd    => faceR(:,fr_Head_d)
+            faceAu    => faceR(:,fr_Area_u)
+            faceAd    => faceR(:,fr_Area_d)
+            !faceDu    => faceR(:,fr_HydDepth_u)
+            !faceDd    => faceR(:,fr_HydDepth_d)
+            fQCons    => faceR(:,fr_Flowrate_Conservative)
+            elemQ     => elemR(:,er_Flowrate)
+            elemH     => elemR(:,er_Head)
+            elemL     => elemR(:,er_Length)
+            fVel_u    => faceR(:,fr_Velocity_u)
+            fVel_d    => faceR(:,fr_Velocity_d)
+
+            
+            elemVol   => elemR(:,er_Volume_N0)
+            isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            dt        => setting%Time%Hydraulics%Dt
+            grav      => setting%constant%gravity
+            fdn       => elemI(:,ei_Mface_dL)
+            fup       => elemI(:,ei_Mface_uL)
+        !%------------------------------------------------------------------
+        !% Handle the JM elements
+        npackJM => npack_elemP(thisColJM)
+        if (npackJM > 0) then
+            thisJM => elemP(1:npackJM,thisColJM)
+
+            do ii = 1,max_branch_per_node,2
+                where (elemQ(thisJM+ii) .ge. zeroR)
+                    !% --- flow in downstream direction in upstream branch
+                    !%     upstream face value is either the inflow from face or zero if face is outflow
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), zeroR) * (real(isbranch(thisJM+ii),8))
+                elsewhere
+                    !% --- flow in upstream direction in upstream branch is the inflow (faceQ >0) or
+                    !%     the larger (closer to zero of the negative flowrate at face or element)
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), elemQ(thisJM+ii)) * (real(isbranch(thisJM+ii),8))
+                    !% --- outflow (-faceQ) is limited to 1/3 volume in junction
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), -elemVol(thisJM+ii) / (threeR * dt) )
+                endwhere
+
+
+                where (elemQ(thisJM+1+ii) .ge. zeroR)
+                    !% --- flow downstream direction in downstream branch 
+                    !%     downstream face value is the smaller of the face or branch values
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemQ(thisJM+1+ii))  * (real(isbranch(thisJM+1+ii),8))
+                    !% --- outflow (+faceQ) is limited to 1/3 volume in junction
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemVol(thisJM+1+ii) / (threeR * dt) )
+                elsewhere
+                    !% --- flow upstream direction in downstream branch
+                    !%     face flow is the inflow (negative direction) from downstream or zero.
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)),zeroR) * (real(isbranch(thisJM+1+ii),8))
+                endwhere
+
+                if (ifixQCons) then
+                    !% update the conservative face Q
+                    fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
+                    fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
+                end if
+
+                !% --- reset velocities
+                where (faceAd(fup(thisJM+ii)) > setting%ZeroValue%Area)
+                    fVel_d(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAd(fup(thisJM+ii  )) 
+                elsewhere 
+                    fVel_d(fup(thisJM+ii  )) = zeroR
+                endwhere
+
+                where (faceAu(fup(thisJM+ii)) > setting%ZeroValue%Area)
+                    fVel_u(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAu(fup(thisJM+ii  ))
+                elsewhere
+                    fVel_u(fup(thisJM+ii  )) = zeroR
+                endwhere
+
+                where ( faceAd(fdn(thisJM+1+ii))> setting%ZeroValue%Area)
+                    fVel_d(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAd(fdn(thisJM+1+ii))
+                elsewhere
+                    fVel_d(fdn(thisJM+1+ii)) = zeroR
+                endwhere
+
+                where (faceAu(fdn(thisJM+1+ii)) > setting%ZeroValue%Area)
+                    fVel_u(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAu(fdn(thisJM+1+ii))
+                elsewhere
+                    fVel_u(fdn(thisJM+1+ii)) = zeroR
+                endwhere
+            end do
+        end if
+
+        !%------------------------------------------------------------------
+        !% Closing:
+    end subroutine adjust_smalldepth_face_fluxes_JMJB
+
+!%  
+!%==========================================================================
+!%==========================================================================
 !%
     subroutine adjust_smalldepth_face_fluxes (whichTM, ifixQCons)
         !%------------------------------------------------------------------
-        !% Description:
+        !% Description: THIS WILL EVENTUALLY BE OBSOLETE REPLACED BY _CC and JMJB calls
         !% Sets the face values around an element where the ad-hoc
         !% small depth algorithm is used. Must be done after the small depth
         !% element values have been set.

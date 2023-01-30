@@ -550,6 +550,7 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
+        integer :: Method = Implicit !% keywords Explicit1, Explicit2, Implicit
         logical :: useAltJB = .false.
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction

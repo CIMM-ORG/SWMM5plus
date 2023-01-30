@@ -49,12 +49,13 @@ module geometry
     private
 
     public :: geometry_toplevel
+    public :: geometry_toplevel_CC
     public :: geo_common_initialize
     public :: geo_sectionfactor_from_depth_singular
     public :: geo_Qcritical_from_depth_singular
     public :: geo_criticaldepth_singular
     public :: geo_normaldepth_singular
-    !public :: geo_topwidth_from_depth_by_type
+    !public :: geo_topwidth_from_depth_by_type_CC
     ! public :: geo_hyddepth_from_area_and_topwidth_singular
     public :: geo_topwidth_from_depth_singular
     public :: geo_area_from_depth_singular
@@ -67,6 +68,134 @@ module geometry
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
+!%
+    subroutine geometry_toplevel_CC(whichTM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes geometry on channel/conduit (CC) elements for the  
+        !% time-marching scheme of whichTM (ETM, AC, ALLtm)
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM  !% time march
+            integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer    :: thisP(:)
+            integer, pointer    :: thisColP_CC, thisColP_Open_CC, thisColP_Closed_CC
+            integer, pointer    :: Npack
+        !%------------------------------------------------------------------
+        !% Aliases
+            select case (whichTM)
+                ! case (ALLtm)
+                case (ETM)
+                    elemPGx                => elemPGetm(:,:)
+                    npack_elemPGx          => npack_elemPGetm(:)
+                    col_elemPGx            => col_elemPGetm(:)
+                    thisColP_CC            => col_elemP(ep_CC_ETM)
+                    thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
+                    thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
+                ! case (AC)
+                case default
+                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                    print *, 'which has key ',trim(reverseKey(whichTM))
+                    call util_crashpoint(7389)
+            end select
+            call util_crashstop(49872)
+        !%------------------------------------------------------------------
+
+        !% --- PREISSMAN SLOT    
+        !% --- Handle Preissmann Slot for closed CC elements
+        !%     with this time march type.
+        thisColP_CC => col_elemP(thisColP_Closed_CC)
+        Npack       => npack_elemP(thisColP_CC)
+        if (Npack > 0) then
+            call slot_CC_ETM (thisColP_CC, Npack)
+        end if
+
+        !% NOTE we're skipping the adjust_limit_by_zerovalues(Volume) used in the
+        !% old version of this subroutine as the call is now made in the RK step for
+        !% continuity.
+
+        !% --- DEPTH
+        !%     compute the depth on all elements of CC based on geometry.
+        !%     If surcharged, this call returns the full depth of a closed conduit 
+        !%     without adding Preissmann Slot depth.
+        call geo_depth_from_volume_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+
+        !% --- ZERO DEPTH CC
+        !%     reset all zero or near-zero depths in CC
+        !%     Arguably this should not be needed as the individual depth computations
+        !%     in geo_depth_from_volume_by_type_CC should use the zerovalues as minimums
+        !%     but this needs to be confirmed.
+        call adjust_limit_by_zerovalues &
+            (er_Depth, setting%ZeroValue%Depth, thisColP_CC, .false.)
+
+        !% --- PIEZOMETRIC HEAD
+        !%     compute the head on all elements of CC
+        !%     This sets head consistent with depth computed in geo_depth_from_volume
+        !%     Head is strictly limited to the max depth + zbottom so it does not
+        !%     include surcharge effects     
+        Npack     => npack_elemP(thisColP_CC)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_CC)
+            elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
+                                    (thisP, elemR(thisP,er_Depth))
+        end if
+
+        !% --- OPEN CHANNEL OVERFLOW
+        !%     Compute the overflow lost for CC open channels above
+        !%     their maximum volume (no ponding allowed from open CC). 
+        !%     Note that overflow or ponding for JM elements is handled 
+        !%     in slot_JM_ETM.
+        !%     Note, this is NOT standard in EPA-SWMM
+        if (setting%Discretization%AllowChannelOverflowTF) then
+            call geo_overflow_openchannels (thisColP_Open_CC)
+        end if
+
+        !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC
+        !%     limit the volume in closed element (CC) to the full volume
+        !%     Note the excess volume has already been stored in the Preissman Slot
+        call geo_volumelimit_closed (thisColP_Closed_CC)
+
+        !% --- CROSS-SECTIONAL AREA
+        !%     compute area from volume for CC
+        !%     For closed conduits this is based on the volume limited by full volume.
+        !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
+        Npack     => npack_elemP(thisColP_CC)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_CC)
+            elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
+            elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
+        end if
+
+        !% --- TOPWIDTH CC
+        !%     compute topwidth from depth for all CC
+        !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
+        call geo_topwidth_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+
+        !% --- PERIMETER AND HYDRAULIC RADIUS CC
+        !%     compute hydraulic radius and perimeter
+        !%     note these two are done together because for analytical cross-sections
+        !%     we have equations for perimeter, whereas lookup cross-sections
+        !%     have tables for hydraulic radius.
+        call geo_perimeter_and_hydradius_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx) 
+
+        !% --- ELLDEPTH MODIFIED HYDRAULIC DEPTH
+        !%     the modified hydraulic depth "ell" is used for 
+        !%     for Froude number computations on all CC elements
+        call geo_elldepth_from_head_CC (thisColP_CC)
+
+        !% ---- ADJUST SLOT 
+        !%      make adjustments for slots on closed elements only
+        !%     These add slot values to volume, depth, head
+        call slot_CC_adjustments (thisColP_Closed_CC)
+
+        !% --- check for crashpoint and stop here
+        call util_crashstop(830984)
+
+    end subroutine geometry_toplevel_CC
+!% 
+!%==========================================================================
+!%==========================================================================
+
 !%
     subroutine geometry_toplevel (whichTM)
         !%------------------------------------------------------------------
@@ -333,7 +462,7 @@ module geometry
         !%     compute topwidth from depth for all CC
         !%     Note: Topwidth for JM is undefined in this subroutine
         !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
-        call geo_topwidth_from_depth_by_type (elemPGx, npack_elemPGx, col_elemPGx)
+        call geo_topwidth_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
 
             ! call util_utestLprint ('in geometry after topwidth_from_depth') 
 
@@ -350,7 +479,7 @@ module geometry
         !%     note these two are done together because for analytical cross-sections
         !%     we have equations for perimeter, whereas lookup cross-sections
         !%     have tables for hydraulic radius.
-        call geo_perimeter_and_hydradius_from_depth_by_type (elemPGx, npack_elemPGx, col_elemPGx)  
+        call geo_perimeter_and_hydradius_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)  
 
         ! % --- compute perimeter from maximum depth for all CC
         ! %     Note: perimeter for JM is undefined in this subroutine
@@ -380,7 +509,7 @@ module geometry
         !% --- the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         !%     Note: ell for JM is undefined in this subroutine
-        call geo_elldepth_from_head (thisColP_CC)
+        call geo_elldepth_from_head_CC (thisColP_CC)
 
         !% --- compute pressure head from the modified hydraulic depth
         ! Npack     => npack_elemP(thisColP_CC)
@@ -954,7 +1083,271 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine geo_depth_from_volume_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% This updates depths in nonsurcharged CC elements in PGx arrays
+        !% The elemPGx determines whether this is ALLtm, ETM or AC elements
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer :: Npack, thisCol
+            character(64) :: subroutine_name = 'geo_depth_from_volume_by_type'
+        !%-------------------------------------------------------------------
+        !% cycle through different geometries  
+
+                ! print *, ' '
+                ! print *, 'at start of geo_depth_from_volume_by_type'
+                ! print *, 54, elemR(54,er_Depth), elemR(54,er_Volume)
+                ! print *, ' '
+        
+                
+        !% --- open channels ------------------------------------------
+
+        !% --- IRREGULAR
+        thisCol => col_elemPGx(epg_CC_irregular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if    
+                
+        !% -- POWER FUNCTION
+        thisCol => col_elemPGx(epg_CC_power_function)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
+            call util_crashpoint(5559872)
+            !call powerfunction_depth_from_volume (elemPGx, Npack, thisCol)
+            !call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- PARABOLIC
+        thisCol => col_elemPGx(epg_CC_parabolic)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+                
+        !% --- RECTANGULAR CHANNEL
+        thisCol => col_elemPGx(epg_CC_rectangular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+                ! print *, 'rect here Volume/length',elemR(15,er_Volume)/elemR(15,er_Length)
+                ! print *,  'zero area           ',setting%ZeroValue%Area
+            call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if    
+
+        !% --- TRAPEZOIDAL CHANNEL
+        thisCol => col_elemPGx(epg_CC_trapezoidal)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- TRIANGULAR CHANNEL
+        thisCol => col_elemPGx(epg_CC_triangular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call triangular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- CLOSED CONDUITS  ---------------------------------------
+
+        !% --  ARCH CONDUIT
+        thisCol => col_elemPGx(epg_CC_arch)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume   &
+                (elemPGx, Npack, thisCol, YArch)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  BASKET_HANDLE
+        thisCol => col_elemPGx(epg_CC_basket_handle)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YBasketHandle)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)   
+        end if
+
+        !% --  CATENARY
+        thisCol => col_elemPGx(epg_CC_catenary)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YCatenary)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+        !% --- CIRCULAR CONDUIT
+        thisCol => col_elemPGx(epg_CC_circular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call circular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  EGG_SHAPED
+        thisCol => col_elemPGx(epg_CC_egg_shaped)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YEgg)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- FILLED CIRCULAR CONDUIT
+        thisCol => col_elemPGx(epg_CC_filled_circular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --  GOTHIC
+        thisCol => col_elemPGx(epg_CC_gothic)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YGothic)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+        !% --  HORIZONTAL ELLIPSE
+        thisCol => col_elemPGx(epg_CC_horiz_ellipse)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YHorizEllip)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+        !% --  HORSESHOE
+        thisCol => col_elemPGx(epg_CC_horse_shoe)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YHorseShoe)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+        !% --  MODIFIED BASKET HANDLE
+        thisCol => col_elemPGx(epg_CC_mod_basket)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- RECTANGULAR CLOSED CONDUIT
+        thisCol => col_elemPGx(epg_CC_rectangular_closed)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if        
+
+        !% --- RECTANGULAR ROUND CONDUIT
+        thisCol => col_elemPGx(epg_CC_rectangular_round)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rect_round_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% -- RECTANGULAR TRIANGULAR
+        thisCol => col_elemPGx(epg_CC_rectangular_triangular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        ! % --- SEMI-CIRCULAR CONDUIT
+        thisCol => col_elemPGx(epg_CC_semi_circular)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YSemiCircular)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+        !% --  SEMI ELLIPTICAL
+        thisCol => col_elemPGx(epg_CC_semi_elliptical)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YSemiEllip)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+        !% --  VERTICAL ELLIPSE
+        thisCol => col_elemPGx(epg_CC_vert_ellipse)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call llgeo_tabular_depth_from_volume           &
+                (elemPGx, Npack, thisCol, YVertEllip)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+        end if
+
+    end subroutine geo_depth_from_volume_by_type_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_depth_from_volume_by_type_JM (elemPGx, npack_elemPGx, col_elemPGx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% This solves nonsurcharged CCJMJB elements because of PGx arrays
+        !% The elemPGx determines whether this is ALLtm, ETM or AC elements
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer :: Npack, thisCol
+            character(64) :: subroutine_name = 'geo_depth_from_volume_by_type_JM'
+        !%-------------------------------------------------------------------
+        
+        !% --- JUNCTIONS ---------------------------------------------------- 
+
+        !% JM with functional geometry
+        thisCol => col_elemPGx(epg_JM_functionalStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% JM with tabular geometry
+        thisCol => col_elemPGx(epg_JM_tabularStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+        !% JM with implied storage 
+        thisCol => col_elemPGx(epg_JM_impliedStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+        end if
+
+    end subroutine geo_depth_from_volume_by_type_JM
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
+
+        !% OBSOLETE WITH JUNCTION IMPLICIT. REPLACED BY ..._CC and ..._JM
+
         !%------------------------------------------------------------------
         !% Description:
         !% This solves nonsurcharged CCJMJB elements because of PGx arrays
@@ -1885,7 +2278,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_topwidth_from_depth_by_type &
+    subroutine geo_topwidth_from_depth_by_type_CC &
         (elemPGx, npack_elemPGx, col_elemPGx)
         !%------------------------------------------------------------------
         !% Description:
@@ -1898,7 +2291,7 @@ module geometry
 
             real(8), pointer :: topwidth(:)
 
-            character(64) :: subroutine_name = 'geo_topwidth_from_depth_by_type'
+            character(64) :: subroutine_name = 'geo_topwidth_from_depth_by_type_CC'
         !%-------------------------------------------------------------------
         !% Aliases
             topwidth => elemR(:,er_TopWidth)
@@ -2120,12 +2513,12 @@ module geometry
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_topwidth_from_depth_by_type
+    end subroutine geo_topwidth_from_depth_by_type_CC
 !%
 !%========================================================================== 
 !%==========================================================================  
 !%
-    subroutine geo_perimeter_and_hydradius_from_depth_by_type &
+    subroutine geo_perimeter_and_hydradius_from_depth_by_type_CC &
         (elemPGx, npack_elemPGx, col_elemPGx)
 
         !%-------------------------------------------------------------------
@@ -2518,7 +2911,7 @@ module geometry
         !%-------------------------------------------------------------------
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_perimeter_and_hydradius_from_depth_by_type
+    end subroutine geo_perimeter_and_hydradius_from_depth_by_type_CC
 !%
 !%========================================================================== 
 !%==========================================================================
@@ -3022,7 +3415,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_elldepth_from_head (thisColP)
+    subroutine geo_elldepth_from_head_CC (thisColP)
         !%------------------------------------------------------------------
         !% Description:
         !% computes the value of "ell" -- the modified hydraulic depth
@@ -3103,7 +3496,7 @@ module geometry
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_elldepth_from_head
+    end subroutine geo_elldepth_from_head_CC
 !%
 !%==========================================================================
 !%==========================================================================

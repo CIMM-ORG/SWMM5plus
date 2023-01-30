@@ -18,6 +18,7 @@ module preissmann_slot
 
     private
     public :: slot_toplevel 
+    public :: slot_CC_ETM
     public :: slot_initialize
     public :: slot_JM_head_PSadd
     public :: slot_JM_head_PSremove
@@ -32,6 +33,7 @@ module preissmann_slot
 !%==========================================================================
 !%
     subroutine slot_toplevel (whichTM, colP_CC_PS, colP_JM_PS)
+        !% THIS MAY BE OBSOLETE WITH IMPLICIT JUNCTION
         !%------------------------------------------------------------------
         !% Description:
         !% Stores the slot volumes etc. and handles ponding/overflow

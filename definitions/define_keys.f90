@@ -184,6 +184,10 @@
         !% type of face interpolation for downstream JB
         enumerator :: static
         enumerator :: dynamic
+        !% setting%Junction%Method
+        enumerator :: Explicit1
+        enumerator :: Explicit2 
+        enumerator :: Implicit
         !% MISC keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment
@@ -500,6 +504,9 @@
         reverseKey(TA2) = 'TA2'
         reverseKey(static) = 'static'
         reverseKey(dynamic) = 'dynamic'
+        reverseKey(Explicit1) = 'Explicit1'
+        reverseKey(Explicit2) = 'Explicit2'
+        reverseKey(Implicit)  = 'Implicit'
         reverseKey(doesnotexist) = 'doesnotexist'
         reverseKey(vshape) = 'vshape'
         reverseKey(vshape_surcharge_only) = 'vshape_surcharge_only'

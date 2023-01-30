@@ -1337,6 +1337,8 @@ module define_indexes
         enumerator :: fr_GammaM                 !% gamma momentum source term
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
+        enumerator :: fr_Length_u               !% length of upstream element
+        enumerator :: fr_Length_d               !% length of downstream element
         enumerator :: fr_Zbottom                !% zbottom of faces
         !enumerator :: fr_ZbreadthMax            !% elevation of maximum breadth
         !enumerator :: fr_HydDepth_d             !% hydraulic Depth on downstream side of face
@@ -1410,6 +1412,42 @@ module define_indexes
     end enum
     integer, target :: Ncol_faceP =  fp_lastplusone-1
 
+
+!%
+!%==========================================================================
+!% JUNCTION DATA STRUCTURE
+!%==========================================================================
+!%  
+    !% Note that the jDataR and jDataI arrays are NOT global, but only
+    !%     available in the junction_elements module
+
+    !% --- local indexes for jdataR storage
+    enum, bind(c)
+        enumerator :: jr_Area = 1
+        enumerator :: jr_a
+        enumerator :: jr_c
+        enumerator :: jr_beta
+        enumerator :: jr_Ebranch
+        enumerator :: jr_Gamma
+        enumerator :: jr_K
+        enumerator :: jr_Length
+        enumerator :: jr_Q 
+        enumerator :: jr_Qlat
+        enumerator :: jr_DeltaQ
+        enumerator :: jr_resid
+        enumerator :: jr_LambdaA
+        enumerator :: jr_LambdaB
+        enumerator :: jr_LambdaC
+        enumerator :: jr_lastplusone
+    end enum
+    integer, parameter :: NCol_jDataR = jr_lastplusone-1
+
+    !% local indexes for jDataI storage
+    enum, bind(c)
+        enumerator :: ji_kidx=1 
+        enumerator :: ji_lastplusone 
+    end enum 
+integer, parameter :: Ncol_jDataI = ji_lastplusone-1
 !%
 !%==========================================================================
 !% PROFILER

@@ -25,7 +25,7 @@ module lowlevel_rk2
     public :: ll_alternate_JB
     public :: ll_continuity_netflowrate_CC
     public :: ll_continuity_netflowrate_JM
-    public :: ll_continuity_volume_CCJM_ETM
+    public :: ll_continuity_volume_ETM
     public :: ll_continuity_volume_CCJM_AC_open
     public :: ll_continuity_head_CCJM_AC_surcharged
     public :: ll_continuity_add_gamma_CCJM_AC_open
@@ -33,7 +33,7 @@ module lowlevel_rk2
     public :: ll_continuity_add_source_CCJM_AC_surcharged
     public :: ll_momentum_Ksource_CC
     public :: ll_momentum_source_CC
-    public :: ll_momentum_lateral_source_CC
+    !public :: ll_momentum_lateral_source_CC
     public :: ll_momentum_gammaCM_CC
     public :: ll_momentum_gammaFM_CC
     public :: ll_momentum_solve_CC
@@ -159,7 +159,7 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_continuity_volume_CCJM_ETM (outCol, thisCol, Npack, istep)
+    subroutine ll_continuity_volume_ETM (outCol, thisCol, Npack, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Solve for volume from continuity in ETM step
@@ -188,7 +188,7 @@ module lowlevel_rk2
        !print *, 'in ll_continuity_volume'
        !print *, VolumeN0(1), crk(istep)* dt * Csource(1), elemR(1,outCol)
 
-    end subroutine ll_continuity_volume_CCJM_ETM
+    end subroutine ll_continuity_volume_ETM
 !%
 !%==========================================================================
 !%==========================================================================
@@ -587,43 +587,43 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_momentum_lateral_source_CC (inoutCol, thisCol, Npack)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Adding lateral inflow source term to momentum
-        !% EXPERIMENTAL 20220524 -- DO NOT USE
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: inoutCol, thisCol, Npack
-            real(8), pointer :: Qlat(:), Area(:)
-            integer, pointer :: thisP(:)
-            character(64)    :: subroutine_name = "ll_momentum_lateral_source_CC"
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-        if (setting%Debug%File%lowlevel_rk2) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%------------------------------------------------------------------
-        !% Aliases:
-            thisP    => elemP(1:Npack,thisCol)
-            Qlat     => elemR(:,er_FlowrateLateral)
-            Area     => elemR(:,er_Area)
-        !%------------------------------------------------------------------
+    ! subroutine ll_momentum_lateral_source_CC (inoutCol, thisCol, Npack)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Adding lateral inflow source term to momentum
+    !     !% EXPERIMENTAL 20220524 -- DO NOT USE
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, intent(in) :: inoutCol, thisCol, Npack
+    !         real(8), pointer :: Qlat(:), Area(:)
+    !         integer, pointer :: thisP(:)
+    !         character(64)    :: subroutine_name = "ll_momentum_lateral_source_CC"
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !     if (setting%Debug%File%lowlevel_rk2) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !         thisP    => elemP(1:Npack,thisCol)
+    !         Qlat     => elemR(:,er_FlowrateLateral)
+    !         Area     => elemR(:,er_Area)
+    !     !%------------------------------------------------------------------
 
-            print *, 'CODE ERROR: momentum lateral source sould not be used'
-            stop 559873
+    !         print *, 'CODE ERROR: momentum lateral source sould not be used'
+    !         stop 559873
 
-       ! print *, ' before qlat source ',elemR(780,inoutCol)    
+    !    ! print *, ' before qlat source ',elemR(780,inoutCol)    
 
-        !% HACK the onehalfR should be replaced with a coefficient
-        elemR(thisP,inoutCol) = elemR(thisP,inoutCol) &
-            + (Qlat(thisP))**2 / Area(thisP)
+    !     !% HACK the onehalfR should be replaced with a coefficient
+    !     elemR(thisP,inoutCol) = elemR(thisP,inoutCol) &
+    !         + (Qlat(thisP))**2 / Area(thisP)
 
-        !print *, ' after qlat source ',elemR(780,inoutCol)     
-        !%------------------------------------------------------------------
-        !% Closing:
-        if (setting%Debug%File%lowlevel_rk2) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine ll_momentum_lateral_source_CC
+    !     !print *, ' after qlat source ',elemR(780,inoutCol)     
+    !     !%------------------------------------------------------------------
+    !     !% Closing:
+    !     if (setting%Debug%File%lowlevel_rk2) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine ll_momentum_lateral_source_CC
 !%
 !%==========================================================================
 !%==========================================================================
