@@ -484,7 +484,7 @@ module junction_elements
             !% --- a
             jR(mm,1:np(mm),jr_a) = jR(mm,1:np(mm),jr_beta)             &
                 * jR(mm,1:np(mm),jr_Length) * jR(mm,1:np(mm),jr_Gamma) &
-                / (twoR * jR(mm,1:np(mm),jr_Area))
+                / (twoR * setting%constant%gravity * jR(mm,1:np(mm),jr_Area))
 
             !% --- c
             jR(mm,1:np(mm),jr_c) = jR(mm,1:np(mm),jr_beta)     &
