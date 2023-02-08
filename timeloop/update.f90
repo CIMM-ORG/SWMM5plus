@@ -22,6 +22,8 @@ module update
 
     public :: update_auxiliary_variables
     public :: update_auxiliary_variables_CC
+    public :: update_auxiliary_variables_JM
+    public :: update_interpweights_JB
     !public :: update_Froude_number_junction_branch
 
     contains
@@ -29,7 +31,7 @@ module update
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine update_auxiliary_variables_CC(whichTM)
+    subroutine update_auxiliary_variables_CC (whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% Updates the variables dependent on the TM solution of volume
@@ -77,6 +79,63 @@ module update
     end subroutine update_auxiliary_variables_CC
 !%
 !%==========================================================================
+!%==========================================================================
+!% 
+    subroutine update_auxiliary_variables_JM (whichTM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the variables for JM junctions after their solution
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
+            integer, pointer    :: thisCol_JM, Npack, tM
+            integer             :: mm
+            character(64) :: subroutine_name = 'update_auxiliary_variables_JM'
+        !%------------------------------------------------------------------
+        !% Aliases
+            !% --- set packed column for updated elements
+            select case (whichTM)
+                case (ALLtm)
+                    thisCol_JM  => col_elemP(ep_JM_ALLtm)
+                case (ETM)
+                    thisCol_JM  => col_elemP(ep_JM_ETM)
+                case (AC)
+                    thisCol_JM  => col_elemP(ep_JM_AC)
+                case default
+                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                    print *, 'which has key ',trim(reverseKey(whichTM))
+                    call util_crashpoint(45834)
+            end select
+        !%------------------------------------------------------------------
+
+        !% updates needed for depth, storage, and HACK PREISSMANN SLOT?
+
+        !% --- our approach is to use the volume (computed from conservative Q)
+        !%     to get our functional and tabular areas and depth. 
+        !%     HOWEVER: the head is NOT reset based on volume, but is allowed
+        !%     to have a discrepancy since the head MUST be a solution of the
+        !%     junction equation.
+
+        Npack => npack_elemP(thisCol_JM)
+        if (Npack > 0) then 
+            do mm=1,Npack
+                tM => elemP(mm,thisCol_JM)
+                select case (elemSI(tM,esi_JunctionMain_Type))
+                    case (ImpliedStorage)
+                        elemR(tM,er_Depth) = elemR(tM,er_Head) - elemR(tM,er_Zbottom)
+                    case (TabularStorage)
+                    case (FunctionalStorage)
+                    case default 
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(729874)
+                end select
+            end do
+        end if
+
+
+    end subroutine update_auxiliary_variables_JM
+! !%
+! !%==========================================================================
 !%==========================================================================
 !%    
     subroutine update_auxiliary_variables (whichTM)
@@ -529,67 +588,75 @@ module update
   
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
-            if (setting%Junction%useAltJB) then 
-                !% -- baseline update pushes the element values to
-                !%    the JB faces
-                w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-            else
-                wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
+            select case (setting%Junction%Method)
 
-                ! print *, ' '
-                ! print *, ii
-                ! print *, 'wavespeed ',wavespeed(51)
-                ! print *, 'velocity  ',velocity(51)
-                ! print *, 'pcelerity ',PCelerity(51)
-                ! print *, ' '
-
-                where (.not. isSlot(thisP+ii)) 
-                    w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
-                    w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
-                elsewhere
-                    !% --- Preissmann slot
-                    w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
-                    w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
-                endwhere
-
-                !% apply limiters to timescales
-                where (w_uQ(thisP+ii) < zeroR)
+                case (Implicit0, Explicit2)
+                    !% -- baseline update pushes the element values to
+                    !%    the JB faces
                     w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
-                where (w_uQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-                endwhere
-                where (w_uQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
-
-                where (w_dQ(thisP+ii) < zeroR)
                     w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
-                where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-                endwhere
-                where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
+                    w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
 
-                !% set the geometry interp the same as flow interp
-                w_uG(thisP+ii) = w_uQ(thisP+ii)
-                w_dG(thisP+ii) = w_dQ(thisP+ii)
-                w_uP(thisP+ii) = w_uQ(thisP+ii)
-                w_dP(thisP+ii) = w_dQ(thisP+ii)
+                case (Explicit1)
+                    wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
 
-                !% use head interp as length-scaled
-                w_uH(thisP+ii) = onehalfR * length(thisP+ii)
-                w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
-                end if
+                    ! print *, ' '
+                    ! print *, ii
+                    ! print *, 'wavespeed ',wavespeed(51)
+                    ! print *, 'velocity  ',velocity(51)
+                    ! print *, 'pcelerity ',PCelerity(51)
+                    ! print *, ' '
+
+                    where (.not. isSlot(thisP+ii)) 
+                        w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
+                        w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
+                    elsewhere
+                        !% --- Preissmann slot
+                        w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
+                        w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
+                    endwhere
+
+                    !% apply limiters to timescales
+                    where (w_uQ(thisP+ii) < zeroR)
+                        w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    endwhere
+                    where (w_uQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
+                        w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
+                    endwhere
+                    where (w_uQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
+                        w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    endwhere
+
+                    where (w_dQ(thisP+ii) < zeroR)
+                        w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    endwhere
+                    where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
+                        w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
+                    endwhere
+                    where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
+                        w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    endwhere
+
+                    !% set the geometry interp the same as flow interp
+                    w_uG(thisP+ii) = w_uQ(thisP+ii)
+                    w_dG(thisP+ii) = w_dQ(thisP+ii)
+                    w_uP(thisP+ii) = w_uQ(thisP+ii)
+                    w_dP(thisP+ii) = w_dQ(thisP+ii)
+
+                    !% use head interp as length-scaled
+                    w_uH(thisP+ii) = onehalfR * length(thisP+ii)
+                    w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
+
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(6229087)
+            end select
+
         end do
 
         !print *, ' '

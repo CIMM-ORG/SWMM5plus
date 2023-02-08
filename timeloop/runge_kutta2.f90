@@ -90,6 +90,9 @@ module runge_kutta2
         call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
         call adjust_limit_velocity_max_CC (whichTM) 
 
+        !% --- set the interpolation weights on faces to JB junction branches
+        call update_interpweights_JB (ep_JM_ETM)
+
         !% --- RK2 solution step  -- all face interpolation
         sync all
         call face_interpolation(fp_all,whichTM)
@@ -102,7 +105,7 @@ module runge_kutta2
         call junction_toplevel (whichTM, istep)
         call util_crashstop (112873)
 
-        !% QUESTION: IS THERE A NEED FOR FURTHER ZERO/small ADJUST HERE?
+        !% QUESTION: IS THERE A NEED FOR FURTHER ZERO/small ADJUST FOR JM HERE?
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         !%     (.true. as this is RK first step)
@@ -153,6 +156,9 @@ module runge_kutta2
         call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
         call adjust_limit_velocity_max_CC (whichTM) 
 
+        !% --- set the interpolation weights on faces to JB junction branches
+        call update_interpweights_JB (ep_JM_ETM)
+
         !% --- RK2 solution step  -- all face interpolation
         sync all
         call face_interpolation(fp_all,whichTM)
@@ -164,6 +170,8 @@ module runge_kutta2
         !% --- RK2 solution step -- compute implicit junction
         call junction_toplevel (whichTM, istep)
         call util_crashstop (112873)
+
+        call update_auxiliary_variables_JM (whichTM)
 
         !% QUESTION: IS THERE A NEED FOR FURTHER ZERO ADJUST HERE?
 
@@ -302,7 +310,7 @@ module runge_kutta2
             ! call util_utest_CLprint ('GGG  after diagnostic step 1')
 
         !% --- RK2 solution step -- set the JB as a function of the face and JM values
-        if (setting%Junction%useAltJB) then 
+        if (setting%Junction%Method .eq. Explicit2) then 
             call ll_alternate_JB (whichTM,istep)
         end if
 
@@ -371,7 +379,7 @@ module runge_kutta2
             ! call util_utest_CLprint ('OOO  after diagnostic step 2')
 
         !% --- RK2 solution step -- set the JB as a function of the face and JM values
-        if (setting%Junction%useAltJB) then 
+        if (setting%Junction%Method .eq. Explicit2) then 
             call ll_alternate_JB (whichTM,istep)
         end if
 
@@ -477,7 +485,6 @@ module runge_kutta2
         sync all
         call face_interpolation(fp_all,ALLtm)
         
-
         !% step 5 -- update diagnostic elements and faces
         call diagnostic_toplevel (.true.)
         call util_crashstop(66234)
@@ -897,9 +904,16 @@ module runge_kutta2
         end if
 
         !% --- update junction branches
-        !%     note that if setting%Junction%useAltJB = .true. this sets these to zero
-        !call ll_flowrate_and_velocity_JB(ETM,istep)
-        call ll_flowrate_and_velocity_JB_2(ETM,istep)
+        select case (setting%Junction%Method)
+            case (Implicit0)
+                !% no action
+            case (Explicit1)
+                call ll_flowrate_and_velocity_JB(ETM,istep)
+            case (Explicit2)
+                call ll_flowrate_and_velocity_JB_2(ETM,istep)
+            case default
+                print *, 'CODE ERROR: unexpected case default'
+        end select
 
             !     print *, 'in rk2_momentum_step at I'
             !     print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)

@@ -550,8 +550,7 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        integer :: Method = Implicit !% keywords Explicit1, Explicit2, Implicit
-        logical :: useAltJB = .false.
+        integer :: Method = Implicit0 !% keywords Explicit1, Explicit2, Implicit0
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -560,6 +559,8 @@ module define_settings
         !% NOTE StorageSurchargeExtraDepth can only be used if elemR(:,er_FullArea) is computed for storage
         !real(8) :: StorageSurchargeExtraDepth  = 0.d0  !% default surcharge depth for ALL storage (not regular junctions)
         real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
+        real(8) :: OverflowOrificeLength = 1.5d0 !% length of overfloe orifice
+        real(8) :: OverflowOrificeHeight = 0.15d0
     end type JunctionType
 
     ! setting%Limiter
@@ -1383,12 +1384,25 @@ contains
         !% do not read           File.UnitNumber...
 
     !% Junctions. =====================================================================
+        !%                            Junction.Method
+        call json%get('Junction.Method', c, found)
+        if (found) then            
+            call util_lower_case(c)
+            if (c == 'implicit0') then
+                setting%Junction%Method = Implicit0
+            else if (c == 'explicit1') then
+                setting%Junction%Method = Explicit1
+            else if (c == 'explicit2') then
+                setting%Junction%Method = Explicit2
+            else
+                write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
+                write(*,"(A)") '..is not in allowed options of:'
+                write(*,"(A)") '... linear, uniform, exponential, fixedhead'
+                stop 93775
+            end if
+        end if
         !rm 20220207brh
-             !%                       Junction.useAltJB
-        call json%get('Junction.useAltJB', logical_value, found)
-        if (found) setting%Junction%useAltJB = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Junction.useAltJB not found'
-        
+
         !%                       Junction.isDynamicYN
         ! call json%get('Junction.isDynamicYN', logical_value, found)
         ! if (found) setting%Junction%isDynamicYN = logical_value
@@ -1424,6 +1438,18 @@ contains
         call json%get('Junction.InfiniteExtraDepthValue', real_value, found)
         if (found) setting%Junction%InfiniteExtraDepthValue = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.InfiniteExtraDepthValue not found'
+
+        !%                       Junction.OverflowOrificeLength
+        call json%get('Junction.OverflowOrificeLength', real_value, found)
+        if (found) setting%Junction%OverflowOrificeLength = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.OverflowOrificeLength not found'
+
+        !%                       Junction.OverflowOrificeHeight
+        call json%get('Junction.OverflowOrificeHeight', real_value, found)
+        if (found) setting%Junction%OverflowOrificeHeight = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.OverflowOrificeHeight not found'
+
+
 
     !% Limiter. =====================================================================
         !rm 20220207brh

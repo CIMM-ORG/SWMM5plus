@@ -17,7 +17,7 @@
         "NominalElemLength" : 100.00
     },
     "Junction" : {
-        "useAltJB" : true
+        "Method" : "Implicit0"
     },
     "Limiter" : {
         "BC" : {

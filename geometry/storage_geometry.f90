@@ -107,7 +107,7 @@ module storage_geometry
     subroutine storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Only applies on JM that has storage (or non-surcharged trapezoidal conduits)
+        !% Only applies on JM that has tabular storage (or non-surcharged trapezoidal conduits)
         !%-----------------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
             integer, pointer :: thisP, curveID
@@ -177,7 +177,7 @@ module storage_geometry
     subroutine storage_create_integrated_volume_curve (CurveID)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Intigrate the SWMM5 area vs depth curve into volume vs depth curve
+        !% Integrate the SWMM5 area vs depth curve into volume vs depth curve
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: CurveID
         real(8), pointer    :: depth(:), area(:), integrated_volume(:)

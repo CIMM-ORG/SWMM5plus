@@ -740,6 +740,11 @@ module lowlevel_rk2
         !% Description:
         !% Adds the minor loss term for channels and conduits to elemR(:,inoutCol)
         !% note this term is g h_L / L = KU/2L
+        !% REVISED 20230202 so that only conduit minor loss is considered
+        !% the exit/entrance are now applied in the junction_elements only
+        !% Note that for nJ2 and nBC connections the entry/exit losses have
+        !% already been added to the Kconduit_MinorLoss for the first and
+        !% last elements of the link.
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: inoutCol, thisCol, Npack
@@ -754,8 +759,8 @@ module lowlevel_rk2
         !% Aliases
             thisP    => elemP(1:Npack,thisCol)
             velocity => elemR(:,er_velocity)
-            Kentry   => elemR(:,er_Kentry_MinorLoss)
-            Kexit    => elemR(:,er_Kexit_MinorLoss)
+            !Kentry   => elemR(:,er_Kentry_MinorLoss)
+            !Kexit    => elemR(:,er_Kexit_MinorLoss)
             Kconduit => elemR(:,er_Kconduit_MinorLoss)
             length   => elemR(:,er_Length)
             oneVec   => elemR(:,er_ones)
@@ -768,7 +773,7 @@ module lowlevel_rk2
         !% ---- minor loss term (without gravity, which cancels out in derivation)
         elemR(thisP,inoutCol) = elemR(thisP,inoutCol)               &
                 + abs(velocity(thisP))                              & 
-                * (Kentry(thisP) + Kexit(thisP) + Kconduit(thisP))  &
+                * (Kconduit(thisP))                                 &
                /                                                    &
                (twoR * length(thisP)) 
 
@@ -1139,7 +1144,7 @@ module lowlevel_rk2
             end select
     
             !% --- alternate form of junctions skips this
-            if (setting%Junction%useAltJB) then 
+            if (setting%Junction%Method .ne. Explicit2) then 
                 return
             end if
         !%-----------------------------------------------------------------------------
@@ -1570,19 +1575,8 @@ module lowlevel_rk2
             stop 7659
         end select
 
-        !% --- alternate form of junctions
-        if (setting%Junction%useAltJB) then 
-            ! Npack => npack_elemP(thisColP_JM)
-            ! thisP => elemP(1:Npack,thisColP_JM)
-            ! do kk=1,max_branch_per_node,2
-            !     eFlow(thisP(1:Npack)+kk)     = zeroR
-            !     eVelocity(thisp(1:Npack)+kk) = zeroR
-            ! end do
-            ! do kk=2,max_branch_per_node,2
-            !     eFlow(thisP(1:Npack)+kk)     = zeroR
-            !     eVelocity(thisp(1:Npack)+kk) = zeroR
-            ! end do
-
+        !% --- alternate form of junctions skip this
+        if (setting%Junction%Method .ne. Explicit1) then
             !% do nothing
             return
         end if

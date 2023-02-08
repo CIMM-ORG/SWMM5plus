@@ -379,8 +379,7 @@ module define_indexes
         enumerator :: er_InterpWeight_uP            !% interpolation Weight, upstream, for Preissmann number
         enumerator :: er_InterpWeight_dP            !% interpolation Weight, downstream, for Preissmann number
         enumerator :: er_Ksource                    !% k source term for AC solver
-        enumerator :: er_Kentry_MinorLoss           !% K factor for entry minor loss
-        enumerator :: er_Kexit_MinorLoss            !% K factor for exit minor loss
+        enumerator :: er_KJunction_MinorLoss        !% K factor for entry/exit minor loss at junction
         enumerator :: er_Kconduit_MinorLoss         !% K factor over the body of the conduit
         enumerator :: er_Length                     !% length of element (static)
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
@@ -651,6 +650,7 @@ module define_indexes
         enumerator ::  esi_JunctionMain_Type       = 1             !% KEY junction main type
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JunctionMain_Total_Branches             !% total number of branches connected to the junction main
+        enumerator ::  esi_JunctionMain_OverflowType               !% NoOverflow, Ponding, OverflowWeir
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
         enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
@@ -760,6 +760,8 @@ module define_indexes
         enumerator ::  esr_JunctionMain_PondedArea = 1
         !enumerator ::  esr_JunctionMain_PondedVolume
         enumerator ::  esr_JunctionMain_SurchargeExtraDepth
+        enumerator ::  esr_JunctionMain_OverflowOrifice_Length
+        enumerator ::  esr_Junctionmain_OverflowOrifice_Height
         enumerator ::  esr_JunctionBranch_Kfactor
         enumerator ::  esr_JunctionBranch_dfdQ
         enumerator ::  esr_Storage_Constant
@@ -1265,6 +1267,8 @@ module define_indexes
         enumerator ::  ebgr_Volume                    !% volume at boundary/ghost element
         enumerator ::  ebgr_Velocity                  !% velocity at boundary/ghost element
         enumerator ::  ebgr_GammaM                    !% momentum source term
+        enumerator ::  ebgr_Length
+        enumerator ::  ebgr_KJunction_MinorLoss
         enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
         enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
         enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
@@ -1337,6 +1341,7 @@ module define_indexes
         enumerator :: fr_GammaM                 !% gamma momentum source term
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
+        enumerator :: fr_KJunction_MinorLoss    !% K factor for entrance/exit loss from element adjacent to nJM
         enumerator :: fr_Length_u               !% length of upstream element
         enumerator :: fr_Length_d               !% length of downstream element
         enumerator :: fr_Zbottom                !% zbottom of faces
@@ -1432,9 +1437,8 @@ module define_indexes
         enumerator :: jr_K
         enumerator :: jr_Length
         enumerator :: jr_Q 
-        enumerator :: jr_Qlat
         enumerator :: jr_DeltaQ
-        enumerator :: jr_resid
+        enumerator :: jr_residQ
         enumerator :: jr_LambdaA
         enumerator :: jr_LambdaB
         enumerator :: jr_LambdaC

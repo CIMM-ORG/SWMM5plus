@@ -50,6 +50,7 @@ module geometry
 
     public :: geometry_toplevel
     public :: geometry_toplevel_CC
+    public :: geometry_toplevel_JM
     public :: geo_common_initialize
     public :: geo_sectionfactor_from_depth_singular
     public :: geo_Qcritical_from_depth_singular
@@ -195,9 +196,44 @@ module geometry
 !% 
 !%==========================================================================
 !%==========================================================================
-
 !%
-    subroutine geometry_toplevel (whichTM)
+    subroutine geometry_toplevel_JM (whichTM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes geometry on junction JM elements for the  
+        !% time-marching scheme of whichTM (ETM, AC, ALLtm)
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM  !% time march
+            integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer    :: thisP(:)
+            integer, pointer    :: thisColP_CC, thisColP_Open_CC, thisColP_Closed_CC
+            integer, pointer    :: Npack
+        !%------------------------------------------------------------------
+        !% Aliases
+            select case (whichTM)
+                ! case (ALLtm)
+                case (ETM)
+                    elemPGx                => elemPGetm(:,:)
+                    npack_elemPGx          => npack_elemPGetm(:)
+                    col_elemPGx            => col_elemPGetm(:)
+                    thisColP_CC            => col_elemP(ep_JM_ETM)
+                    thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
+                    thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
+                ! case (AC)
+                case default
+                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                    print *, 'which has key ',trim(reverseKey(whichTM))
+                    call util_crashpoint(7389)
+            end select
+            call util_crashstop(49872)
+
+        end subroutine geometry_toplevel_JM 
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geometry_toplevel(whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% Input whichTM is one of ETM, AC, or ALLtm

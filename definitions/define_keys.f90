@@ -187,7 +187,12 @@
         !% setting%Junction%Method
         enumerator :: Explicit1
         enumerator :: Explicit2 
-        enumerator :: Implicit
+        enumerator :: Implicit0
+        !% type of junction overflow
+        enumerator :: NoOverflow
+        enumerator :: Ponded 
+        enumerator :: OverflowWeir
+        enumerator :: OverflowOrifice
         !% MISC keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment
@@ -506,7 +511,7 @@
         reverseKey(dynamic) = 'dynamic'
         reverseKey(Explicit1) = 'Explicit1'
         reverseKey(Explicit2) = 'Explicit2'
-        reverseKey(Implicit)  = 'Implicit'
+        reverseKey(Implicit0)  = 'Implicit0'
         reverseKey(doesnotexist) = 'doesnotexist'
         reverseKey(vshape) = 'vshape'
         reverseKey(vshape_surcharge_only) = 'vshape_surcharge_only'

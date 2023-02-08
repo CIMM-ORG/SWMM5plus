@@ -10,7 +10,7 @@
         "Force_nodes_to_nJM" : true
     },
     "Junction" : {
-        "useAltJB" : true
+        "Method" : "Implicit0"
     },
     "Limiter" : {
         "Dt" : {

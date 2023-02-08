@@ -18,7 +18,7 @@
         }
     },  
     "Junction" : {
-        "useAltJB" : false
+        "Method" : "Implicit0"
     },  
     "Output" : {
         "StoredLevels" : 4000,

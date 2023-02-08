@@ -87,12 +87,14 @@ module face
 
             ! call util_utest_CLprint ('    face after adjust face for zero setting')
 
-        if (.not. setting%Junction%useAltJB) then
+        if (setting%Junction%Method == Explicit1) then
             call face_zerodepth_interior(fp_elem_downstream_is_zero)
             ! call util_utest_CLprint ('    face after face zerodepth interior 1')
             call face_zerodepth_interior(fp_elem_upstream_is_zero)
             ! call util_utest_CLprint ('    face after face zerodepth interior 2')
             call face_zerodepth_interior(fp_elem_bothsides_are_zero)
+        else 
+            !% other methods skip this
         end if
 
         ! print *, 'in face DDDD ',faceR(42,fr_Depth_u)
@@ -790,10 +792,10 @@ module face
         !%------------------------------------------------------------------
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, pointer    ::  Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(2), fGeoSetD(2), eGeoSet(2)
+            integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
             integer :: fFlowSet(1), eFlowSet(1)
-            integer :: fOtherSet(2), eOtherSet(2)
+            integer :: fOtherSet(3), eOtherSet(3)
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
         !% Aliases       
@@ -824,9 +826,9 @@ module face
         !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
         !eGeoSet  = [er_Area,   er_Topwidth,   er_EllDepth]
 
-        fGeoSetU = [fr_Area_u, fr_Depth_u]
-        fGeoSetD = [fr_Area_d, fr_Depth_d]
-        eGeoSet  = [er_Area,   er_Depth]
+        fGeoSetU = [fr_Area_u, fr_Depth_u, fr_Length_u]
+        fGeoSetD = [fr_Area_d, fr_Depth_d, fr_Length_d]
+        eGeoSet  = [er_Area,   er_Depth,   er_Length]
 
         fHeadSetU = [fr_Head_u]
         fHeadSetD = [fr_Head_d]
@@ -835,8 +837,8 @@ module face
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_Flowrate]
 
-        fOtherSet = [fr_Preissmann_Number, fr_GammaM]
-        eOtherSet = [er_Preissmann_Number, er_GammaM]
+        fOtherSet = [fr_Preissmann_Number, fr_GammaM, fr_KJunction_MinorLoss]
+        eOtherSet = [er_Preissmann_Number, er_GammaM, er_KJunction_MinorLoss]
 
             ! call util_utest_CLprint ('     face_interpolation_interior at start')
 
@@ -903,10 +905,10 @@ module face
         !% Declarations
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, pointer    :: Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(2), fGeoSetD(2), eGhostGeoSet(2)
+            integer :: fGeoSetU(3), fGeoSetD(3), eGhostGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eGhostHeadSet(1)
             integer :: fFlowSet(1), eGhostFlowSet(1)
-            integer :: fOtherSet(2), eGhostOtherSet(2)
+            integer :: fOtherSet(3), eGhostOtherSet(3)
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
@@ -944,9 +946,9 @@ module face
         ! fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
         ! eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
 
-        fGeoSetU     = [fr_Area_u, fr_Depth_u]
-        fGeoSetD     = [fr_Area_d, fr_Depth_d]
-        eGhostGeoSet = [ebgr_Area, ebgr_Depth]
+        fGeoSetU     = [fr_Area_u, fr_Depth_u,   fr_Length_u]
+        fGeoSetD     = [fr_Area_d, fr_Depth_d,   fr_Length_d]
+        eGhostGeoSet = [ebgr_Area, ebgr_Depth, ebgr_Length]
 
         fHeadSetU     = [fr_Head_u]
         fHeadSetD     = [fr_Head_d]
@@ -955,8 +957,8 @@ module face
         fFlowSet      = [fr_Flowrate]
         eGhostFlowSet = [ebgr_Flowrate]
 
-        fOtherSet      = [fr_Preissmann_Number, fr_GammaM]
-        eGhostOtherSet = [ebgr_Preissmann_Number, ebgr_GammaM]
+        fOtherSet      = [  fr_Preissmann_Number,   fr_GammaM,   fr_KJunction_MinorLoss]
+        eGhostOtherSet = [ebgr_Preissmann_Number, ebgr_GammaM, ebgr_KJunction_MinorLoss]
 
         !% transfer all the local elemR data needed for face interpolation into elemB data structure
         call local_data_transfer_to_boundary_array (facePackCol, Npack)
@@ -1423,8 +1425,10 @@ module face
 
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
             eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number,     &
-                        er_Volume, er_velocity, er_GammaM, er_InterpWeight_dG, er_InterpWeight_uG,      &
-                        er_InterpWeight_dH, er_InterpWeight_uH, er_InterpWeight_dQ, er_InterpWeight_uQ, &
+                        er_Volume, er_Velocity, er_GammaM, er_Length, er_KJunction_MinorLoss,           &
+                        er_InterpWeight_dG, er_InterpWeight_uG,                                         &
+                        er_InterpWeight_dH, er_InterpWeight_uH,                                         &
+                        er_InterpWeight_dQ, er_InterpWeight_uQ,                                         &
                         er_InterpWeight_dP, er_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------

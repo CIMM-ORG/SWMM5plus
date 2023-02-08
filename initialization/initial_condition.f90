@@ -108,10 +108,9 @@ contains
         elemR(1:size(elemR,1)-1,er_Setting)       = oneR
 
         !% --- initialize all the minor losses and seepage rates to zero
-        elemR(:,er_Kentry_MinorLoss)   = zeroR
-        elemR(:,er_Kexit_MinorLoss)    = zeroR
-        elemR(:,er_Kconduit_MinorLoss) = zeroR
-        elemR(:,er_SeepRate)           = zeroR
+        elemR(:,er_KJunction_MinorLoss) = zeroR
+        elemR(:,er_Kconduit_MinorLoss)  = zeroR
+        elemR(:,er_SeepRate)            = zeroR
 
         !% --- initialize overflow
         elemR(:,er_VolumeOverFlow) = zeroR
@@ -948,7 +947,7 @@ contains
         !% Declarations:
             integer, intent(in) :: thisLink
             integer :: ii
-            integer, pointer :: firstelem, lastelem
+            integer, pointer :: firstelem, lastelem, tNode
             character(64) :: subroutine_name = 'init_IC_get_flow_and_roughness_from_linkdata'
         !--------------------------------------------------------------------------
             if (setting%Debug%File%initial_condition) &
@@ -970,11 +969,35 @@ contains
             elemR(:,er_ManningsN_Dynamic)  = elemR(:,er_ManningsN)   
         endwhere
 
-        !% --- assign minor losses at entry and exit to the first and last elements
-        !%     in the link
-        elemR(firstelem,er_Kentry_MinorLoss) = link%R(thisLink,lr_Kentry_MinorLoss)
-        elemR(lastelem ,er_Kexit_MinorLoss)  = link%R(thisLink,lr_Kexit_MinorLoss)
-        
+        !% --- assign minor losses
+        !%     If connection not to an nJM junction, then add the entry/exit losses
+        !%     to the Kconduit_MinorLoss
+        !elemR(firstelem,er_Kentry_MinorLoss) = link%R(thisLink,lr_Kentry_MinorLoss)
+        !elemR(lastelem ,er_Kexit_MinorLoss)  = link%R(thisLink,lr_Kexit_MinorLoss)
+        tNode => link%I(thisLink,li_Mnode_u)
+        if (node%I(tNode,ni_node_type) == nJM) then 
+            !% --- this is an outlet from an nJM junction, which uses the entry minor
+            !%     loss from the downstream link
+            !%     HACK -- need a way to have different entry/exit for flow reversal
+            elemR(firstelem,er_KJunction_MinorLoss) = link%R(thisLink,lr_Kentry_MinorLoss)
+        else
+            !% --- this is an nJ2 or a nBC junction, so the entry loss is added to the conduit loss
+            elemR(firstelem,er_Kconduit_MinorLoss) = elemR(firstelem,er_Kconduit_MinorLoss) &
+                                                   + link%R(thisLink,lr_Kentry_MinorLoss)
+        end if
+
+        tNode => link%I(thisLink,li_Mnode_d)
+        if (node%I(tNode,ni_node_type) == nJM) then 
+            !% --- this is an inlet to an nJM junction, which uses the exit minor
+            !%     loss from the upstream link as the entrance loss to the junction
+            !%     HACK -- need a way to have different entry/exit for flow reversal
+            elemR(lastelem,er_KJunction_MinorLoss) = link%R(thisLink,lr_Kexit_MinorLoss)
+        else
+            !% --- this is an nJ2 or a nBC junction, so the exit loss is added to the conduit loss
+            elemR(lastelem,er_Kconduit_MinorLoss) = elemR(lastelem,er_Kconduit_MinorLoss) &
+                                                   + link%R(thisLink,lr_Kexit_MinorLoss)
+        end if
+
         ! print *, ' '
         ! print *, 'in ',trim(subroutine_name)
         ! do ii=1,size(elemI,1)
@@ -3419,19 +3442,65 @@ contains
         !%     which might be 0 (effectively preventing any surcharge)
         elemYN(JMidx,eYN_canSurcharge) = .true.
 
-        !% --- handle surcharge depth if provided in node data
-        if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) > zeroR) then
-            !% --- check for initialization
-            if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) == nullvalueR) then 
-                print *, 'ERROR: Surcharge Extra Depth at a junction not initialized'
-                print *, 'This should not happen! Likely problem forinitialization code'
-                call util_crashpoint(8838723)
+        !% --- check for initialization of surcharge extra depth
+        if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) == nullvalueR) then 
+            print *, 'ERROR: Surcharge Extra Depth at a junction not initialized'
+            print *, 'This should not happen! Likely problem forinitialization code'
+            call util_crashpoint(8838723)
+        end if
+
+        !% --- Set the extra head above the crown for maximum surcharge at Junction
+        elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)      &
+            = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
+
+        !% --- Set the overflow and surcharge conditions
+        !% --- check for infinite extra depth 
+        !%     if infinite marker (1000) is used, then no oveflow allowed
+        !%     applies to both 1000 m and 1000 ft as input.
+        if  ( ( (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)                &
+                .le. 1.001d0 * setting%Junction%InfiniteExtraDepthValue)           &
+                .and.                                                              &
+                (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)                &
+                .ge. 0.999d0 * setting%Junction%InfiniteExtraDepthValue)           &
+                )                                                                  &
+            .or.                                                                   &
+                ( (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)              &
+                .le. 1.001d0 * setting%Junction%InfiniteExtraDepthValue*0.3048d0)  & 
+                .and.                                                              &
+                (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)                &
+                .ge. 0.999d0 * setting%Junction%InfiniteExtraDepthValue*0.3048d0)  & 
+                )                                                                  &
+            ) then 
+            !% --- set type to NoOverflow 
+            elemSI(JMidx,esi_JunctionMain_OverflowType) = NoOverflow    
+        else
+            !% --- not infinite depth
+            if (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) .eq. zeroR) then 
+                !% --- open channel storage
+                if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
+                    !% --- use the overflow weir algorithm
+                    elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowWeir
+                else
+                    !% --- use ponded overflow algorithm
+                    elemSI(JMidx,esi_JunctionMain_OverflowType) = Ponded 
+                end if
+            else 
+                !% --- closed conduit overflow
+                if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
+                    !% --- use oveflow orifice
+                    elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowOrifice
+                    !% --- HACK using default orifice length and height for overflow
+                    elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) = setting%Junction%OverflowOrificeLength
+                    elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%OverflowOrificeHeight
+                else
+                    !% --- use ponded overflow
+                    elemSI(JMidx,esi_JunctionMain_OverflowType) = Ponded 
+                end if
             end if
-            !% --- Piezometric head for maximum surcharge at Junction
-            elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)      &
-                = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
-        else 
-            elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
+        end if
+
+        !else 
+            !elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
 
             !% --- THE StorageSurchargeExtraDepth IS NOT YET IMPLEMENTED!
             !%     It requires computation of elemR(:,er_FullArea) in initial_conditions
@@ -3456,7 +3525,7 @@ contains
             !     !%     then the junction cannot surcharge.
             !     elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
             ! end if
-        end if    
+        !end if    
 
         !% JM elements are not solved for momentum.
         elemR(JMidx,er_Flowrate)     = zeroR
