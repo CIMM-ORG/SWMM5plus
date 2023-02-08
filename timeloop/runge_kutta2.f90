@@ -103,9 +103,9 @@ module runge_kutta2
 
         !% --- RK2 solution step -- compute implicit junction
         call junction_toplevel (whichTM, istep)
-        call util_crashstop (112873)
+        call util_crashstop (112875)
 
-        !% QUESTION: IS THERE A NEED FOR FURTHER ZERO/small ADJUST FOR JM HERE?
+        call update_auxiliary_variables_JM (whichTM)
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         !%     (.true. as this is RK first step)
@@ -157,6 +157,9 @@ module runge_kutta2
         call adjust_limit_velocity_max_CC (whichTM) 
 
         !% --- set the interpolation weights on faces to JB junction branches
+        !%     HACK - in the new junction scheme these should be invariant over
+        !%     the simulation and should not need to be changed. But presently
+        !%     we are overwriting every step to be sure there isn't any problem
         call update_interpweights_JB (ep_JM_ETM)
 
         !% --- RK2 solution step  -- all face interpolation
@@ -172,8 +175,6 @@ module runge_kutta2
         call util_crashstop (112873)
 
         call update_auxiliary_variables_JM (whichTM)
-
-        !% QUESTION: IS THERE A NEED FOR FURTHER ZERO ADJUST HERE?
 
         !% --- RK2 solution step  -- update diagnostic elements and faces
         !%     (.false. as this is RK second step)

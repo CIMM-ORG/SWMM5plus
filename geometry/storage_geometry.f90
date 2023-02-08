@@ -158,7 +158,7 @@ module storage_geometry
             thisP     => elemPGx(1:Npack,thisCol)
             depth     => elemR(:,er_Depth)
             fulldepth => elemR(:,er_FullDepth)
-            pArea     => elemSR(:,esr_Storage_Plane_Area)
+            pArea     => elemSR(:,esr_Storage_Plan_Area)
             volume    => elemR(:,er_Volume)
         !%-------------------------------------------------------------------
 
@@ -182,14 +182,14 @@ module storage_geometry
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP, curveID
-        real(8), pointer :: planArea, tempPArea, volume
+        real(8), pointer :: planeArea, tempPArea, volume
         integer :: ii
         !%-----------------------------------------------------------------------------
         do ii = 1, Npack
             thisP     => elemPGx(ii,thisCol) 
             tempPArea => elemR(thisP,er_Temp01)
             volume    => elemR(thisP,er_Volume)
-            planArea  => elemSR(thisP,esr_Storage_Plane_Area)
+            planeArea => elemSR(thisP,esr_Storage_Plan_Area)
             curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
            
             !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
@@ -197,9 +197,8 @@ module storage_geometry
             call util_curve_lookup_singular(curveID, er_Volume, er_Temp01, curve_storage_volume, &
                  curve_storage_area, 1)
 
-
-            !% --- copy the data over from elemR temporary space to elemSR(thisP,esr_Storage_Plane_Area)
-            planArea = tempPArea
+            !% --- copy the data over from elemR temporary space to elemSR(thisP,esr_Storage_Plan_Area)
+            planeArea = tempPArea
 
         end do
 
@@ -357,8 +356,8 @@ module storage_geometry
             integer, intent(in) :: idx
             real(8), intent(in) :: indepth
         !%-------------------------------------------------------------------
-        outvalue = elemSR(idx,esr_Storage_Plane_Area) * indepth
-        !print *, 'in storage ',elemSR(idx,esr_Storage_Plane_Area), indepth
+        outvalue = elemSR(idx,esr_Storage_Plan_Area) * indepth
+        !print *, 'in storage ',elemSR(idx,esr_Storage_Plan_Area), indepth
             
     end function storage_implied_volume_from_depth_singular
 !%    

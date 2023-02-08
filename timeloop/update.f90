@@ -6,6 +6,7 @@ module update
     use define_keys
     use geometry
     use adjust
+    use storage_geometry, only: storage_plan_area_from_volume
     use utility_profiler
     use utility_crash
     !use utility, only: util_utest_CLprint, util_syncwrite
@@ -88,7 +89,8 @@ module update
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
-            integer, pointer    :: thisCol_JM, Npack, tM
+            integer, pointer    :: Npack, thisCol, thisP(:)
+            integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer             :: mm
             character(64) :: subroutine_name = 'update_auxiliary_variables_JM'
         !%------------------------------------------------------------------
@@ -96,11 +98,18 @@ module update
             !% --- set packed column for updated elements
             select case (whichTM)
                 case (ALLtm)
-                    thisCol_JM  => col_elemP(ep_JM_ALLtm)
+                    print *, 'CODE UNFINISHED'
+                    call util_crashpoint(12109874)
+                    !thisCol_JM             => col_elemP(ep_JM_ALLtm)
                 case (ETM)
-                    thisCol_JM  => col_elemP(ep_JM_ETM)
+                    elemPGx                => elemPGetm(:,:)
+                    npack_elemPGx          => npack_elemPGetm(:)
+                    col_elemPGx            => col_elemPGetm(:)
+                    !thisCol_JM             => col_elemP(ep_JM_ETM)
                 case (AC)
-                    thisCol_JM  => col_elemP(ep_JM_AC)
+                    print *, 'CODE UNFINISHED'
+                    call util_crashpoint(2109874)
+                    !thisCol_JM  => col_elemP(ep_JM_AC)
                 case default
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
                     print *, 'which has key ',trim(reverseKey(whichTM))
@@ -108,30 +117,55 @@ module update
             end select
         !%------------------------------------------------------------------
 
-        !% updates needed for depth, storage, and HACK PREISSMANN SLOT?
+        !% updates needed for depth, storage plan area
 
         !% --- our approach is to use the volume (computed from conservative Q)
-        !%     to get our functional and tabular areas and depth. 
-        !%     HOWEVER: the head is NOT reset based on volume, but is allowed
-        !%     to have a discrepancy since the head MUST be a solution of the
-        !%     junction equation.
+        !%     to get our functional and tabular plan areas.
+        !%
+        !%     The depth is simply the head - Zbottom, corrected for the maximum
+        !%     allowed 
+        !% 
+        !%     Note that head, depth, and volume may be slightly inconsistent
+        !%     
 
-        Npack => npack_elemP(thisCol_JM)
-        if (Npack > 0) then 
-            do mm=1,Npack
-                tM => elemP(mm,thisCol_JM)
-                select case (elemSI(tM,esi_JunctionMain_Type))
-                    case (ImpliedStorage)
-                        elemR(tM,er_Depth) = elemR(tM,er_Head) - elemR(tM,er_Zbottom)
-                    case (TabularStorage)
-                    case (FunctionalStorage)
-                    case default 
-                        print *, 'CODE ERROR: unexpected case default'
-                        call util_crashpoint(729874)
-                end select
-            end do
+        !% --- update the plan area and depths for functional storage
+            print *, 'functional storage'
+        thisCol => col_elemPGx(epg_JM_functionalStorage)
+        Npack   => npack_elemP(thisCol)
+        if (Npack > 0) then
+            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack, thisCol)
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)                            
         end if
 
+        !% --- update the plan area  and depths for tabular storage
+            print *, 'tabular storage'
+        thisCol => col_elemPGx(epg_JM_tabularStorage)
+        print *, 'thisCol ',thisCol
+        Npack   => npack_elemP(thisCol)
+        print *, 'npack ',Npack
+        print *, elemPGx(1:Npack, thisCol)
+        if (Npack > 0) then
+            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack, thisCol)
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)    
+        end if
+
+        !% --- set plan area  and depths for implied storage to zero
+            print *, 'implied storage'
+        thisCol => col_elemPGx(epg_JM_impliedStorage)
+        Npack   => npack_elemP(thisCol)
+        if (Npack > 0) then
+            thisP => elemPGx(1:Npack, thisCol)
+            elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)    
+        end if
 
     end subroutine update_auxiliary_variables_JM
 ! !%

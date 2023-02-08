@@ -304,7 +304,7 @@ module junction_elements
         Zcrown      (1:Npack) = elemR(thisJM,er_Zcrown)
         OverflowType(1:Npack) = elemSI(thisJM,esi_JunctionMain_OverflowType)
         Aponded     (1:Npack) = elemSR(thisJM,esr_JunctionMain_PondedArea)
-        Aplan       (1:Npack) = elemSR(thisJM,esr_Storage_Plane_Area)
+        Aplan       (1:Npack) = elemSR(thisJM,esr_Storage_Plan_Area)
         JunctionType(1:Npack) = elemSI(thisJM,esi_JunctionMain_Type)
 
         OverflowLength(1:Npack) = elemSR(thisJM,esr_JunctionMain_OverflowOrifice_Length)
@@ -1024,7 +1024,7 @@ module junction_elements
                     !% --- no change to conservation by storage
                 case (TabularStorage,FunctionalStorage)
                     thisCons = thisCons &
-                         - (elemSR(tM,esr_Storage_Plane_Area)    &
+                         - (elemSR(tM,esr_Storage_Plan_Area)    &
                               / (  setting%Solver%crk2(istep)    &
                                   * setting%Time%Hydraulics%Dt ) &
                            )                                     &

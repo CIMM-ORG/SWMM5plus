@@ -1040,7 +1040,7 @@ contains
                 end if
 
             else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
-                ! write(*,*) '... is storage type '
+                 write(*,*) '... is storage type '
                 node%I(ii, ni_node_type) = nJm
                 node%YN(ii, nYN_has_storage) = .true.
             else 
