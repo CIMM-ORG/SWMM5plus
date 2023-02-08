@@ -2667,7 +2667,7 @@ contains
                 .and. &
                 (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
                 .and. &
-                ( elemI(:,ei_tmType) == ETM) &
+                (elemI(:,ei_tmType) == ETM) &
                 )
         if (npack > 0) then
             elemPGetm(1:npack, ptype) = pack(eIdx, &

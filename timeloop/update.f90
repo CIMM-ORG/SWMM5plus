@@ -131,7 +131,7 @@ module update
         !% --- update the plan area and depths for functional storage
             print *, 'functional storage'
         thisCol => col_elemPGx(epg_JM_functionalStorage)
-        Npack   => npack_elemP(thisCol)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
             thisP => elemPGx(1:Npack, thisCol)
@@ -144,7 +144,7 @@ module update
             print *, 'tabular storage'
         thisCol => col_elemPGx(epg_JM_tabularStorage)
         print *, 'thisCol ',thisCol
-        Npack   => npack_elemP(thisCol)
+        Npack   => npack_elemPGx(thisCol)
         print *, 'npack ',Npack
         print *, elemPGx(1:Npack, thisCol)
         if (Npack > 0) then
@@ -158,7 +158,7 @@ module update
         !% --- set plan area  and depths for implied storage to zero
             print *, 'implied storage'
         thisCol => col_elemPGx(epg_JM_impliedStorage)
-        Npack   => npack_elemP(thisCol)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             thisP => elemPGx(1:Npack, thisCol)
             elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
