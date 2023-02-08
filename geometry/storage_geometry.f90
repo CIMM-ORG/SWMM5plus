@@ -27,6 +27,7 @@ module storage_geometry
     public :: storage_implied_volume_from_depth_singular
     public :: storage_functional_volume_from_depth_singular
     public :: storage_tabular_volume_from_depth_singular
+    public :: storage_plan_area_from_volume
     !public :: storage_implied_length
 
     contains
@@ -170,6 +171,39 @@ module storage_geometry
        
         !%-------------------------------------------------------------------
     end subroutine storage_implied_depth_from_volume
+!%  
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Only applies on JM that has storage by functional depth
+        !%-----------------------------------------------------------------------------
+        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+        integer, pointer :: thisP, curveID
+        real(8), pointer :: planArea, tempPArea, volume
+        integer :: ii
+        !%-----------------------------------------------------------------------------
+        do ii = 1, Npack
+            thisP     => elemPGx(ii,thisCol) 
+            tempPArea => elemR(thisP,er_Temp01)
+            volume    => elemR(thisP,er_Volume)
+            planArea  => elemSR(thisP,esr_Storage_Plane_Area)
+            curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
+           
+            !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
+            !      using storage_create_curve_from_function()
+            call util_curve_lookup_singular(curveID, er_Volume, er_Temp01, curve_storage_volume, &
+                 curve_storage_area, 1)
+
+
+            !% --- copy the data over from elemR temporary space to elemSR(thisP,esr_Storage_Plane_Area)
+            planArea = tempPArea
+
+        end do
+
+    end subroutine storage_plan_area_from_volume
 !%  
 !%==========================================================================
 !%==========================================================================

@@ -1380,6 +1380,49 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine geo_plan_area_from_volume_by_type_JM (elemPGx, npack_elemPGx, col_elemPGx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% This calculates plan area for nonsurcharged JM elements because of PGx arrays
+        !% The elemPGx determines whether this is ALLtm, ETM or AC elements
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+            integer, pointer :: Npack, thisCol
+            character(64) :: subroutine_name = 'geo_depth_from_volume_by_type_JM'
+        !%-------------------------------------------------------------------
+        
+        !% --- JUNCTIONS ---------------------------------------------------- 
+
+        !% --- JM with functional geometry
+        thisCol => col_elemPGx(epg_JM_functionalStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- JM with tabular geometry
+        thisCol => col_elemPGx(epg_JM_tabularStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% --- JM with implied geometry
+        !% JM does not have an implied storage anymore
+        !% thus, do nothing and the initially set zero
+        !% plan area will be carried over.
+        ! thisCol => col_elemPGx(epg_JM_impliedStorage)
+        ! Npack   => npack_elemPGx(thisCol)
+        ! if (Npack > 0) then
+        !     !% not needed
+        ! end if
+
+    end subroutine geo_plan_area_from_volume_by_type_JM    
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
 
         !% OBSOLETE WITH JUNCTION IMPLICIT. REPLACED BY ..._CC and ..._JM
