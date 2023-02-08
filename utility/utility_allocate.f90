@@ -1037,27 +1037,27 @@ contains
 
         if (N_Out_static_TypeNode >= 1) then 
 
-            allocate(output_static_types_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            allocate(output_static_types_Node(N_Out_static_TypeNode), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'output_static_types_Node')
             output_static_types_Node(:) = nullvalueI
 
             !% --- allocate the output type processing for Nodes
-            allocate(output_static_typeProcessing_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            allocate(output_static_typeProcessing_Node(N_Out_static_TypeNode), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'output_static_typeProcessing_Node')
             output_static_typeProcessing_Node(:) = nullvalueI
 
             !% --- allocate the output type logical for whether this output is multiplied by number of barrels
-            allocate(output_static_typeMultiplyByBarrels_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            allocate(output_static_typeMultiplyByBarrels_Node(N_Out_static_TypeNode), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'output_static_typeMultiplyByBarrels_Node')
             output_static_typeMultiplyByBarrels_Node(:) = zeroI
 
             !% --- allocate the output typeNames
-            allocate(output_static_typeNames_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            allocate(output_static_typeNames_Node(N_Out_static_TypeNode), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'output_static_typeNames_Node')
             output_static_typeNames_Node(:) = ""
 
             !% --- allocate the output typeUnits
-            allocate(output_static_typeUnits_Node(N_Out_static_TypeElem), stat=allocation_status, errmsg=emsg)
+            allocate(output_static_typeUnits_Node(N_Out_static_TypeNode), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'output_static_typeUnits_Node')
             output_static_typeUnits_Node(:) = ""
 

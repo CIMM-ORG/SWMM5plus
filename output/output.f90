@@ -1729,6 +1729,7 @@ contains
             integer            :: thisUnit
             character(len=256) :: thisFile
             character(len=32)  :: tlinkname, tnodename
+            character(len=256) :: fn_link_static_csv,       fn_linkFV_static_csv,      fn_node_static_csv, fn_nodeFV_static_csv
             character(len=256) :: fn_link_unf, fn_link_csv, fn_linkFV_csv,             fn_link_h5,      fn_linkFV_h5,     fn_linkFV_static_h5, fn_link_static_h5
             character(len=256) :: fn_nodeElem_unf, fn_nodeElem_csv, fn_nodeElemFV_csv, fn_nodeelem_h5,  fn_nodeElemFV_h5, fn_nodeFV_static_h5, fn_node_static_h5
             character(len=256) :: fn_nodeFace_unf, fn_nodeFace_csv, fn_nodeFaceFV_csv, fn_nodeFace_h5,  fn_nodeFaceFV_h5
@@ -1815,8 +1816,7 @@ contains
         !% --- close the control file
         close(thisUnit)
 
-        !% --- Open the HD5F API and file
-        print *, "before get the start time as this"    
+        !% --- Open the HD5F API and file   
 
         !% --- get the start time as "thisd
         call util_datetime_decodedate(StartTimeEpoch, startdate(1), startdate(2), startdate(3))
@@ -1844,12 +1844,10 @@ contains
             !return
         end select
 
-        print *, "before outputML_get_all_output_binary_filenames"
 
         !% --- HACK to make this independent of globals, this call will have to be changed and files always written/read.
         call outputML_get_all_output_binary_filenames (nWritten)
 
-        print *, "before creating hdf5 file"
         if(setting%Output%Report%useHD5F) then 
                 call outputML_HD5F_create_file(H5_file_id)
         end if
@@ -2671,8 +2669,7 @@ contains
 
             !% -----------------------------------
             !% --- PART 5a --- WRITE OUTPUT FOR LINKS
-            !% -----------------------------------
-            print *, "before write output for links"            
+            !% -----------------------------------         
 
                 if (NtotalOutputElements > 0) then
                     do kk=1,nOutLink
@@ -2719,6 +2716,8 @@ contains
 
                             fn_link_unf = trim(setting%File%outputML_Link_kernel) // '_' //trim(tlinkname) //'.unf'
                             fn_link_csv = trim(setting%File%outputML_Link_kernel) // '_' //trim(tlinkname) //'.csv'
+                            fn_link_static_csv = trim(setting%File%outputML_Link_kernel) // '_static_' //trim(tlinkname) //'.csv'
+                            fn_linkFV_static_csv = trim(setting%File%outputML_Link_kernel) // '_static_FV_' //trim(tlinkname) //'.csv'
                             fn_link_h5 = 'link_'//trim(tlinkname) 
                             fn_linkFV_static_h5 = 'link_FV_static_'//trim(tlinkname) 
                             fn_link_static_h5 ='link_static_'//trim(tlinkname) 
@@ -2739,6 +2738,44 @@ contains
                                 !% --- open formatted csv link file
 
                                 if(setting%Output%Report%useCSV) then
+                                    if(N_Out_static_TypeLink > 0) then 
+                                        open(newunit=fU_link_csv, file=trim(fn_link_static_csv), form='formatted', &
+                                            action='write', access='append')
+                                        !% --- write header to csv link file
+                                        call outputML_csv_static_header( &
+                                            fU_link_csv, N_Out_static_TypeLink, nTotalTimeLevels, dummyI, &
+                                            OutLink_pSWMMidx(kk), &
+                                            startdate, setting%Time%StartEpoch, &
+                                            output_static_typeNames_Link, output_static_typeUnits_Link, &
+                                            dummyarrayI,    &
+                                            tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
+
+                                        call outputML_csv_static_writedata(fU_link_csv, &
+                                                SWMMlink, .false., LinkOut)
+
+                                        close(fU_link_csv)
+                                    end if 
+                                    if(N_Out_static_TypeElem > 0 ) then 
+                                        open(newunit=fU_linkFV_csv, file=trim(fn_linkFV_static_csv), form='formatted', &
+                                            action='write', access='append')
+                                        !% write header to csv static link file
+                                        call outputML_csv_static_header( &
+                                            fU_linkFV_csv, N_Out_static_TypeElem, nTotalTimeLevels, dummyI, &
+                                            OutLink_pSWMMidx(kk), &
+                                            startdate, setting%Time%StartEpoch, &
+                                            output_static_typeNames_elemR, output_static_typeUnits_elemR, &
+                                            dummyarrayI,    &
+                                            tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .true.)
+
+                                        !% write the actual data to the static csv file
+                                        call outputML_csv_static_writedata(fU_linkFV_csv, &
+                                                SWMMlink, .true., LinkOut)
+
+                                        !% close static csv file 
+                                        close(fU_linkFV_csv)
+                                    end if 
+
+
                                     open(newunit=fU_link_csv, file=trim(fn_link_csv), form='formatted', &
                                         action='write', access='append')
                                     !% --- write header to csv link file
@@ -2838,6 +2875,8 @@ contains
                             if (ii==1) then
                                 !% --- open a new file for this type and set the header
                                 if(setting%Output%Report%useCSV) then
+                                    
+
                                     open(newunit=fU_linkFV_csv, file=trim(fn_linkFV_csv), form='formatted', &
                                         action='write', access='append')
                                     !% --- write the header
@@ -2950,6 +2989,11 @@ contains
                                 // '_elem_' //trim(tnodename) //'.unf'
                             fn_nodeElem_csv = trim(setting%File%outputML_Node_kernel) &
                                 // '_elem_' //trim(tnodename) //'.csv'
+                            fn_node_static_csv = trim(setting%File%outputML_Node_kernel) &
+                                // '_static_' //trim(tnodename) //'.csv'
+                            fn_nodeFV_static_csv = trim(setting%File%outputML_Node_kernel) &
+                                // 'FV_static_' //trim(tnodename) //'.csv' 
+                                
                             fn_nodeElem_h5  = "node_elem_"//trim(tnodename)
                             fn_node_static_h5 = "node_static_"//trim(tnodename)
                             fn_nodeFV_static_h5 = "nodeFV_static_"//trim(tnodename)
@@ -2966,6 +3010,56 @@ contains
                                 !     dummyarrayI,    &
                                 !     tlinkname, setting%Time%DateTimeStamp, time_units_str, .false.)
                                 if(setting%Output%Report%useCSV) then
+
+                                    if(N_Out_static_TypeNode > 0 ) then
+                                        
+                                        !% open formatted csv node file
+                                        open(newunit=fU_nodeElem_csv, file=trim(fn_node_static_csv), form='formatted', &
+                                        action='write', access='append')
+                                        
+                                        !% create csv header for static output
+                                        call outputML_csv_static_header( &
+                                        fU_nodeElem_csv, N_Out_static_TypeNode, nTotalTimeLevels, dummyI, &
+                                        OutNodeElem_pSWMMidx(kk), &
+                                        startdate, setting%Time%StartEpoch, &
+                                        output_static_typeNames_Node, output_static_typeUnits_Node, &
+                                        dummyarrayI,    &
+                                        tnodename, setting%Time%DateTimeStamp, time_units_str, NodeOut, .false.)
+
+                                        !% write the actual static data out to the file
+                                        call outputML_csv_static_writedata(fU_nodeElem_csv, &
+                                            SWMMnode, .false., NodeOut)
+
+                                        !% close the csv file 
+                                        close(fU_nodeElem_csv) 
+                                        
+                                    end if
+
+                                    !% Checking if there is static elem output to output for nodes 
+                                    if(N_Out_static_TypeElem > 0 ) then 
+
+                                        !% open formatted csv node file
+                                        open(newunit=fU_nodeElem_csv, file=trim(fn_nodeFV_static_csv), form='formatted', &
+                                        action='write', access='append')
+
+                                        !% create csv header for static output
+                                        call outputML_csv_static_header( &
+                                        fU_nodeElem_csv, N_Out_static_TypeElem, nTotalTimeLevels, dummyI, &
+                                        OutNodeElem_pSWMMidx(kk), &
+                                        startdate, setting%Time%StartEpoch, &
+                                        output_static_typeNames_elemR, output_static_typeUnits_elemR, &
+                                        dummyarrayI,    &
+                                        tnodename, setting%Time%DateTimeStamp, time_units_str, NodeElemOut, .true.)
+                                        
+                                        !% write the actual static data out to the file
+                                        call outputML_csv_static_writedata(fU_nodeElem_csv, &
+                                            SWMMnode, .true., NodeElemOut)
+
+                                        !% close the csv file
+                                        close(fU_nodeElem_csv) 
+                                    
+                                    end if
+
                                     !% --- open formatted csv node file
                                     open(newunit=fU_nodeElem_csv, file=trim(fn_nodeElem_csv), form='formatted', &
                                         action='write', access='append')
@@ -2981,31 +3075,35 @@ contains
 
                                 if(setting%Output%Report%useHD5F) then  
 
+                                    !% Check if there static node data to output 
                                     if(N_Out_static_TypeNode > 0 ) then
 
+                                        !% Create HDF5 file and dataset to write static output to 
                                         call outputML_HD5F_create_static_dset(fn_node_static_h5,H5_file_id, &
                                             startdate, mminc, &
                                             OutNodeElem_pSWMMidx(kk), &
                                             setting%Time%StartEpoch, &
                                             pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                             tnodename, setting%Time%DateTimeStamp, NodeOut, .false.)
-!   
+!                                       !% write the static data to the HDF5 file 
                                         call outputML_HD5F_write_static_file(fn_node_static_h5,H5_file_id, &
                                             SWMMnode, .false.,NodeOut)
                                     end if
 
+                                    !% Check if there static elem node data to output 
                                     if(N_Out_static_TypeElem > 0 ) then 
 
+                                        !% Create HDF5 file and dataset to write static output to 
                                         call outputML_HD5F_create_static_dset(fn_nodeFV_static_h5,H5_file_id, &
                                                 startdate, mminc, &
                                                 SWMMnode, &
                                                 setting%Time%StartEpoch, &
                                                 pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                                 tnodename, setting%Time%DateTimeStamp, NodeElemOut, .true.)
-                                     
+                                        !% write the static data to the HDF5 file
                                         call outputML_HD5F_write_static_file(fn_nodeFV_static_h5,H5_file_id, &
-                                            SWMMnode, .true., NodeElemOut)
-                                        
+                                             SWMMnode, .true., NodeElemOut)
+                                           
                                     end if 
                                     call outputML_HD5F_create_dset(fn_nodeElem_h5,H5_file_id, &
                                         nTypeElem, nLevel, dummyI, &
@@ -3651,8 +3749,253 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_csv_header
 !%
+!%
 !%==========================================================================
 !%==========================================================================
+!%
+!%
+    subroutine outputML_csv_static_header &
+        (funitIn, nType, nTotalTimeLevels, thistype, thisIndex,   &
+        startdate, startEpoch,                &
+        output_type_names, output_type_units, &
+        elementsInLink,                       &
+        tlinkname, ModelRunID,time_units_str, &
+        FeatureType, isFV)
+        !%-----------------------------------------------------------------------------
+        !% standard header for static output data csv output files
+        !% Should be independent of global data
+        !%-----------------------------------------------------------------------------
+        integer, intent(in)             :: funitIn  !% formatted file unit, must be open
+        integer, intent(in)             :: nType    !% number of data types (excluding time)
+        integer, intent(in)             :: nTotalTimeLevels !% expected number of time rows in file
+        integer, intent(in)             :: startdate(6)      !% yr, month, day, hr, min sec of model start date
+        integer, intent(in)             :: thistype !% type index for FV output
+        integer, intent(in)             :: thisIndex !% global index for link or node
+        real(8), intent(in)             :: startEpoch    !% start date in Epoch days
+
+        character(len=*), intent(in)    :: output_type_names(:) !% must be size nType
+        character(len=*), intent(in)    :: output_type_units(:) !% must be size nType
+        character(len=*), intent(in)    :: time_units_str
+
+        integer, intent(in)             :: elementsInLink(:)
+
+        character(len=*), intent(in)    :: tlinkname !% this linkID from SWMM
+        character(len=*), intent(in)    :: ModelRunID   !% datetime stamp from run
+
+        integer, intent(in)             :: FeatureType !% (e.g., LinkOut, NodeOut)
+
+        logical, intent(in)             :: isFV      !% true for a FV file
+
+        integer :: N_node_elem
+        integer :: mm, ii  
+        character(64) :: subroutine_name = 'outputML_csv_static_header'
+        !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% -- ROW 1 --- LINK OR NODE ID (keyword, string)
+        write(funitIn,fmt='(2a)') 'SWMM_ID: ,', trim(tlinkname)
+
+        !% --- ROW 2 --- FEATURE TYPE (keyword, string)
+        select case (FeatureType)
+        case (LinkOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Link'
+        case (NodeElemOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVelement)'
+        case (NodeFaceOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVface)'
+        case (NodeOut)
+            write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node'
+        case default
+            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            print *, 'which has key ',trim(reverseKey(FeatureType))
+            !stop 
+            call util_crashpoint( 663986)
+            !return
+        end select
+
+        !% --- ROW 3 --- SWMM INDEX NUMBER IN CODE
+        select case (FeatureType)
+            case (LinkOut)
+                write(funitIn,fmt='(a,i8)') 'CODE(...link_Gidx_SWMM): ,', thisIndex
+            case (NodeElemOut)
+                write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
+            case (NodeFaceOut)
+                write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
+            case (NodeOut)
+                write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
+
+            case default
+                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                print *, 'which has key ',trim(reverseKey(FeatureType))
+                !stop 
+                call util_crashpoint( 993764)
+                return
+        end select
+
+        !% --- ROW 4 --- MODEL RUN ID (keyword, string)
+        write(funitIn,fmt='(2a)') 'ModelRunID: ,',trim(ModelRunID)
+
+        !% --- ROW 5 -- MODEL START DAY BY SWMM EPOCH DAYS (keyword, real)
+        write(funitIn,fmt='(a,G0.16,a,i4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)')  &
+            'Model_start_day(epoch):,',startEpoch
+
+        !% --- ROW 6 -- MODEL START DAY BY yyyy_mm_dd (keyword, string)
+        write(funitIn,fmt='(a,i4,a,i2.2,a,i2.2)') &
+             'Model_start_day(yyyy_mm_ss):,', &
+            startdate(1),'_',startdate(2),'_',startdate(3)
+
+        !% --- ROW 7 -- MODEL START TIME BY hh:mm:ss (keyword, string)
+        write(funitIn,fmt='(a,i2.2,a,i2.2,a,i2.2)')  &
+            'Model_start_time(hh:mm:ss):,', &
+            startdate(4),":",startdate(5),":",startdate(6)
+
+        !% --- ROW 8 -- NUMBER OF DATA HEADER ROWS (keyword integer)
+        write(funitIN,fmt='(2a,i8)') 'NumberOfDataHeaderRows:',',',3
+
+        !% --- ROW 9 -- HEADER ROW CONTENTS (keyword, string, string ... to NumberOfHeaderRows)
+        select case (FeatureType)
+        case (LinkOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'ElementID',',','DataType',',','Units'
+        case (NodeElemOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'ElementID',',','DataType',',','Units'
+        case (NodeFaceOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'FaceID',',','DataType',',','Units'
+        case (NodeOut)
+            write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'NodeID',',','DataType',',','Units'
+        case default
+            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            print *, 'which has key ',trim(reverseKey(FeatureType))
+            !stop 
+            call util_crashpoint( 873853)   
+            !return
+        end select
+
+        !% --- ROW 10 --- EXPECTED NUMBER OF DATA ROWS
+        !% --- ROW 11 --- EXPECTED NUMBER OF DATA COLUMNS
+        if(isFV .and. FeatureType .eq. LinkOut) then
+            write(funitIn,fmt='(a,i8)') 'NumberDataRows: ,',link%I(thisIndex,li_N_element)
+            write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeElem + 1 
+        
+        else if(isFV .eq. .false. .and. FeatureType .eq. LinkOut) then
+            write(funitIn,fmt='(a,i8)') 'NumberDataRows: 1,'
+            write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeLink 
+        
+        else if(isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+            write(funitIn,fmt='(a,i8)') 'NumberDataRows: 1,'
+            write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeNode
+        
+        else if(isFv .and. FeatureType .eq. NodeElemOut) Then
+            N_node_elem = 0
+            do ii = 1, sum(N_OutElem) 
+                if(output_static_elem(ii,2) .eq. 0.0 .and. output_static_elem(ii,1) .eq. thisIndex) then
+                    N_node_elem = N_node_elem + 1    
+                end if
+            end do 
+            write(funitIn,fmt='(a,i8)') 'NumberDataRows:,', N_node_elem
+            write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeElem + 1 
+
+        end if 
+
+        !% --- ROW 12 --- 4th HEADER ROW -- Profiles Data
+        !% Profiles are always written with node IDs being on odd indexs while links being on Evens
+        !% This goes through and writes the profiles, if they are being used. 
+        if(allocated(output_profile_ids)) then
+
+            do ii = 1, max_profiles_N
+                do mm = 1, max_links_profile_N
+                    if(mod(mm,2) > 0 .and. output_profile_ids(ii,mm) .ne. nullValueI) then
+                        write(funitIn,fmt='(2a)',advance='no') node%names(output_profile_ids(ii,mm))%str,','
+                    
+                    else if (mod(mm,2) == 0 .and. output_profile_ids(ii,mm) .ne. nullValueI) then
+                        write(funitIn,fmt='(2a)',advance='no') link%names(output_profile_ids(ii,mm))%str,','
+
+                    end if
+                end do
+                write(funitIn,fmt='(a)')
+            end do 
+
+        end if  
+
+        
+        !% --- ROW 12 --- BEGIN STATEMENT
+        write(funitIn,fmt='(a)') 'BEGIN_HEADERS_AND_DATA'
+
+        !% --- ROW 13 --- 1st HEADER ROW -- ELEMENT INDEX
+        if (isFV) then
+            !write(funitIn,fmt='(*(i8,a))',advance='no') 0,','  !% time column
+            do mm=1,nType-1
+                !write(funitIn,fmt='(*(i8,a))',advance='no')  elementsInLink(mm),','
+            end do
+            write(funitIn,fmt='(i8)') (elementsInLink(nType))
+        else
+            select case (FeatureType)
+            case (LinkOut)
+                do mm=1,nType-1
+                    write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
+                end do
+                write(funitIn,fmt='(i8)') 0
+            case (NodeElemOut,NodeFaceOut)
+                do mm=1,nType-1
+                    write(funitIn,fmt='(*(i8,a))',advance='no') elementsInLink(thisType),','
+                end do
+                write(funitIn,fmt='(i8)') elementsInLink(thisType)
+            case (NodeOut)
+                do mm=1,nType-1
+                    write(funitIn,fmt='(*(i8,a))',advance='no') 0,','
+                end do
+                write(funitIn,fmt='(i8)') 0
+            case default
+                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                print *, 'which has key ',trim(reverseKey(FeatureType))
+                !stop 
+                call util_crashpoint( 93873)
+                !return
+            end select
+        end if
+
+        !% --- ROW 14 -- 2nd HEADER ROW -- DATA TYPE
+        if (isFV) then
+            write(funitIn,fmt='(2a)',advance='no') 'Element Index,'
+            do mm=1,nType-1
+                write(funitIn,fmt='(2a)',advance='no')  trim(output_type_names(mm)),','
+            end do
+            write(funitIn,fmt='(a)') trim(output_type_names(Ntype))
+        else
+            do mm=1,nType-1
+                write(funitIn,fmt='(2a)',advance='no')  trim(output_type_names(mm)),','
+            end do
+            write(funitIn,fmt='(a)') trim(output_type_names(nType))
+        end if
+
+        !% --- ROW 15 --- 3rd HEADER ROW -- DATA UNITS
+        if (isFV) then
+            write(funitIn,fmt='(2a)',advance='no') '[-],'
+            do mm=1,nType-1
+                write(funitIn,fmt='(2a)',advance='no')  trim(output_type_units(mm)),','
+            end do
+            write(funitIn,fmt='(a)') trim(output_type_units(Ntype))
+        else
+            do mm=1,nType-1
+                write(funitIn,fmt='(2a)',advance='no') trim(output_type_units(mm)),','
+            end do
+            write(funitIn,fmt='(a)') trim(output_type_units(nType))
+        end if
+
+
+
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine outputML_csv_static_header
+
+
+
+
+!%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
 !%
     subroutine outputML_unf_header &
         (funitIn, nType, nTotalTimeLevels,    &
@@ -3773,8 +4116,75 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine  outputML_csv_writedata
 !%
+!%
 !%==========================================================================
 !%==========================================================================
+!%
+!%
+    subroutine outputML_csv_static_writedata &
+        (funitIn, idx1, isFV, FeatureType)
+        !%-----------------------------------------------------------------------------
+        !% writes the static data set for the given node or link in either FV or Link Node format  
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: funitIn !% file unit number to write to
+        integer, intent(in) :: idx1    !% the link or node being output (kk)
+        logical, intent(in) :: isFV   !% is finite volume output
+        integer, intent(in) :: FeatureType !% FeatureType being written
+        
+
+        character(64) :: subroutine_name = 'outputML_csv_static_writedata'
+
+        integer :: mm, ii, N_output, N_node_elem, first_elem_idx
+        logical :: first_elem_detect
+        !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% Outputting static elem data for a link
+        if (isFV .and. FeatureType .eq. LinkOut) then
+            !% Number of static output elements 
+            N_output = size(output_static_elem(:,1))
+            !% Loop through the static output elements and find which are links and have the same link index as the passed link
+            !% As stated in outputML_combine_static_elem_data column 2 of the array store the indictor if the element is a link or node
+            !% Then write to csv 
+            do ii = 1, N_output
+                if(output_static_elem(ii,2) .ne. 0.0 .and. output_static_elem(ii,1) .eq. idx1) then
+                    write(funitIn,'(*(G0.6 : ","))'), output_static_elem(ii,3:N_Out_static_TypeElem+3)
+                end if
+            end do 
+        
+        !% Writing of static Link data 
+        else if (isFV .eq. .false. .and. FeatureType .eq. LinkOut) then
+            write(funitIn,'(*(G0.6 : ","))'),link%R(idx1,output_static_types_Link(:))
+        
+        !% Writing of static node data
+        else if (isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+            write(funitIn,'(*(G0.6 : ","))'), node%R(idx1,output_static_types_Node(:)) 
+        
+        !% Writing of static fv elem data for nodes
+        else if (isFV .and. FeatureType .eq. NodeElemOut) then
+            !% Number of static output elements  
+            N_output = size(output_static_elem(:,1))
+
+            !% similar process as above for the static elem data stored in links but we need to check if the element is node rather than a link
+            do ii = 1, N_output
+                if(output_static_elem(ii,2) .eq. 0.0 .and. output_static_elem(ii,1) .eq. idx1) then
+                    write(funitIn,'(*(G0.6 : ","))') (output_static_elem(ii,3:N_Out_static_TypeElem+3))
+                end if
+            end do 
+
+        end if
+        
+
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine  outputML_csv_static_writedata
+
+
+
+!%==========================================================================
+!%==========================================================================
+!%
 !%
     subroutine outputML_unf_writedata &
         (funitIn, nType, nLevel, klink, OutLink_ProcessedDataR)
@@ -4942,17 +5352,13 @@ contains
         INTEGER     ::   HD_error                !% For HDF5 errors
 
         !% Open HDF5 API
-        print *, "before h5open_f"
         CALL h5open_f(HD_error)
         print *, HD_ERROR
         !setting the file name of the .h5 file
-        print *, "after h5open_f"
         h5_file_name = trim(setting%File%output_timestamp_subfolder)//"/output.h5"
 
         !% Open the .h5 file
-        print *, "before h5fcreate_f" 
         CALL h5fcreate_f(h5_file_name, H5F_ACC_TRUNC_F, file_id, HD_error)
-        print *, "after h5fcreate_f"
 
     end subroutine outputML_HD5F_create_file
 
@@ -5974,7 +6380,6 @@ contains
         thisP => elemP(1:Npack,ep_Output_Elements)
         thisType => output_static_types_elemR(:)
 
-        print *, "before outputML_combine_static_elem_data" 
         !% Finding local index for each image for output of static element data 
         !% such that all images can write to image one without overlapping data or race conditions. 
         sync all 
@@ -5992,20 +6397,27 @@ contains
         
         !% Filling the rest of output_static_elem's columns with the selected types choosen in the json file 
         output_static_elem(local_index:(Npack+local_index)-1,4:)[1] = elemR(thisP,thisType)
-        print *, "print after filling 3 and 4+ columns " 
+ 
         !% Filling output_static_elem's first column with the global link or node index depending on type
         !% Filling output_static_elem's second column with a 1.0 if a link and 0.0 if a node output 
         do ii=1, size(thisP)
+            !print *, "thisP(ii)::", thisP(ii)
             if (elemI(thisP(ii),ei_link_Gidx_SWMM) .NE. nullValueI) then
+                !print *, "link name", link%Names(elemI(thisP(ii),ei_link_Gidx_SWMM))%str
                 output_static_elem(local_index+ii-1,1)[1] = elemI(thisP(ii),ei_link_Gidx_SWMM)
                 output_static_elem(local_index+ii-1,2)[1] = 1.0
             else
-                output_static_elem(local_index:(Npack+local_index)-1,1)[1] = elemI(thisP,ei_node_Gidx_SWMM)
+                output_static_elem(local_index+ii-1,1)[1] = elemI(thisP(ii),ei_node_Gidx_SWMM)
                 output_static_elem(local_index+ii-1,2)[1] = 0.0
             end if
         end do
 
-        print *, "after outputML_combine_static_elem_data" 
+        !print *, "output_static_elem(:,1)::", output_static_elem(:,1)
+        !print *, "output_static_elem(:,2)::", output_static_elem(:,2)
+
+        !stop
+        
+        !print *, "after outputML_combine_static_elem_data" 
 
     end subroutine outputML_combine_static_elem_data
 
