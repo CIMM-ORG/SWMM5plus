@@ -139,7 +139,7 @@ module outlet_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% must be single element ID
         integer, pointer :: FlowDirection, CurveID, OutletType
-        real(8), pointer :: Flowrate, Depth, CurrentSetting, EffectiveHeadDelta, qCoeff, qExpon
+        real(8), pointer :: Flowrate, Depth, CurrentSetting, EffectiveHeadDelta, qCoeff, qExpon, dQdH
         logical, pointer :: hasFlapGate
         real(8) :: CoeffOrifice
         !%-----------------------------------------------------------------------------
@@ -148,6 +148,7 @@ module outlet_elements
         FlowDirection      => elemSI(eIdx,esi_Outlet_FlowDirection)
         CurveID            => elemSI(eIdx,esi_Outlet_CurveID)
         Depth              => elemR(eIdx,er_Depth)
+        dQdH               => elemR(eIdx,er_dQdH)
         Flowrate           => elemR(eIdx,er_Flowrate) 
         CurrentSetting     => elemR(eIdx,er_Setting) 
         qCoeff             => elemSR(eIdx,esr_Outlet_Coefficient)
@@ -159,18 +160,22 @@ module outlet_elements
         if (hasFlapGate .and. (FlowDirection < zeroR)) then
             Depth = zeroR
             Flowrate = zeroR
+            dQdH = zeroR
         else
             select case (OutletType)
                 case (func_head_outlet, func_depth_outlet) 
                     Depth = EffectiveHeadDelta
                     Flowrate = CurrentSetting * real(FlowDirection,8) * qCoeff * (effectiveHeadDelta ** qExpon)
+                    !% --- dQdH is zero for outlet elements
+                    dQdH = zeroR
                 case (tabl_head_outlet, tabl_depth_outlet)
 
                     Depth = EffectiveHeadDelta
                     call util_curve_lookup_singular(CurveID, er_Depth, er_Flowrate, &
                         curve_outlet_depth, curve_outlet_flowrate,1)
                     Flowrate = Flowrate * CurrentSetting * real(FlowDirection,8)
-
+                    !% --- dQdH is zero for outlet elements
+                    dQdH = zeroR
                 case default
                     print *, 'CODE ERROR outlet type unknown for # ', OutletType
                     print *, 'which has key ',trim(reverseKey(OutletType))
