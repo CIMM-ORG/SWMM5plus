@@ -342,6 +342,7 @@ module define_indexes
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_DepthAtBreadthMax          !% depth below the point of maximum breadth
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
+        enumerator :: er_dQdH                       !% derivative of flowrate with respect to head
         enumerator :: er_dSlotArea                  !% change in slot volume
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume

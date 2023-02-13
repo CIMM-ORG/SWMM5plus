@@ -225,7 +225,7 @@ module weir_elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% must be single element ID
         integer, pointer :: FlowDirection
-        real(8), pointer :: Area, Flowrate, EffectiveFullDepth, Depth 
+        real(8), pointer :: Area, Flowrate, EffectiveFullDepth, Depth, dQdH 
         real(8), pointer :: EffectiveHeadDelta, grav
         logical, pointer :: hasFlapGate
         real(8) :: CoeffOrifice, hLoss
@@ -233,6 +233,7 @@ module weir_elements
         !if (crashYN) return
         Area               => elemR(eIdx,er_Area)
         Depth              => elemR(eIdx,er_Depth)
+        dQdH               => elemR(eIdx,er_dQdH)
         Flowrate           => elemR(eIdx,er_Flowrate)
         hasFlapGate        => elemYN(eiDx,eYN_hasFlapGate) 
         FlowDirection      => elemSI(eIdx,esi_Weir_FlowDirection)
@@ -259,6 +260,9 @@ module weir_elements
             Flowrate = FlowDirection * CoeffOrifice * sqrt(EffectiveHeadDelta)
         end if
 
+        !% find the dQ/dH
+        dQdH = onehalfR * Flowrate / EffectiveFullDepth
+
     end subroutine weir_surcharge_flow
 !%
 !%========================================================================== 
@@ -272,7 +276,7 @@ module weir_elements
         integer, intent(in) :: eIdx, inCol
         logical, intent(in) :: ApplySubmergenceCorrection, ApplyHeadlossCorrection
         integer, pointer :: SpecificWeirType, EndContractions, FlowDirection
-        real(8), pointer :: Flowrate, Head, EffectiveHeadDelta, CurrentSetting, fullDepth
+        real(8), pointer :: Flowrate, Head, EffectiveHeadDelta, CurrentSetting, fullDepth, dQdH
         real(8), pointer :: RectangularBreadth, TrapezoidalBreadth
         real(8), pointer :: TriangularSideSlope, TrapezoidalLeftSlope, TrapezoidalRightSlope
         real(8), pointer :: CoeffTriangular, CoeffRectangular
@@ -288,6 +292,7 @@ module weir_elements
         EndContractions  => elemSI(eIdx,esi_Weir_EndContractions)
         FlowDirection    => elemSI(eIdx,esi_Weir_FlowDirection)
         
+        dQdH                  => elemR(eIdx,er_dQdH)
         Head                  => elemR(eIdx,er_Head)
         Flowrate              => elemR(eIdx,er_Flowrate)
         CurrentSetting        => elemR(eIdx,er_Setting)
@@ -308,6 +313,9 @@ module weir_elements
         !% These are changed below if needed
         SubCorrectionTriangular = oneR
         SubCorrectionRectangular = oneR
+
+        !% initialized dQ/dH to zero
+        dQdH =  zeroR
          
         select case (SpecificWeirType)
             case (transverse_weir)
@@ -326,6 +334,9 @@ module weir_elements
                     !% recalculate the flowrate based on new adjusted head
                     Flowrate = real(FlowDirection,8) * CrestLength * CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
                 end if
+
+                !% find the dQ/dH
+                dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
 
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
@@ -356,6 +367,9 @@ module weir_elements
                         Flowrate = real(FlowDirection,8) * CrestLength * CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
                     end if
 
+                    !% find the dQ/dH
+                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
+
                     !% correction factor for nominal downstream submergence
                     if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
                         ratio = (NominalDsHead - Zcrest) / (Head - Zcrest) 
@@ -373,13 +387,19 @@ module weir_elements
 
                     WeirExponent => Setting%Weir%Transverse%WeirExponent
 
+                    Flowrate = real(FlowDirection,8) * CrestLength * &
+                        CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
+                    
+                    !% find the dQ/dH
+                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
+
                     if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
                         ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)      
                         SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
                     endif
                 
-                    Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
-                        CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
+                    !% apply submergence correction
+                    Flowrate =  SubCorrectionRectangular * Flowrate 
                 endif  
 
             case (trapezoidal_weir)
@@ -408,6 +428,9 @@ module weir_elements
                     FlowTriang  = real(FlowDirection,8) * (CoeffTriangular * ((TrapezoidalLeftSlope &
                                 + TrapezoidalRightSlope) / twoR) * (EffectiveHeadDelta ** WeirExponentVNotch))
                 end if
+
+                !% find the dQ/dH
+                dQdH = WeirExponent * FlowRect/EffectiveHeadDelta + WeirExponentVNotch * FlowTriang/EffectiveHeadDelta
                 
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
@@ -436,6 +459,9 @@ module weir_elements
                     Flowrate = real(FlowDirection,8) * CoeffTriangular * &
                         TriangularSideSlope * (EffectiveHeadDelta ** WeirExponent)
                 end if
+
+                !% find the dQ/dH
+                dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
 
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
