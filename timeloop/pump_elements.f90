@@ -121,12 +121,13 @@ module pump_elements
             integer, intent(in) :: eIdx  !% pump index
             integer, pointer    :: CurveID
             integer             :: Ci, Aidx
-            real(8), pointer    :: FlowRate, Volume, Head, Depth
+            real(8), pointer    :: FlowRate, Volume, Head, Depth, dQdH
             real(8)             :: upDepth, upHead, upVolume, upFlowrate, maxFlowrate
         !%------------------------------------------------------------------
         !% Aliases:
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             FlowRate => elemR(eIdx,er_Flowrate)
+            dQdH     => elemR(eIdx,er_dQdH)
             Head     => elemR(eIdx,er_Head)
             Depth    => elemR(eIdx,er_Depth)
             Volume   => elemR(eIdx,er_Volume)
@@ -180,6 +181,9 @@ module pump_elements
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
 
+        !% --- dQ/dH is zero for type 1 pump
+        dQdH = zeroR
+
         ! print *, 'flowrate limit ', Flowrate
 
         !% --- reset pump depth and head to zero (no meaning)
@@ -201,14 +205,17 @@ module pump_elements
             integer, intent(in) :: interpType !% 0 for type1, 1 for type4
             integer, pointer    :: CurveID
             integer             :: Ci, Aidx 
-            real(8), pointer    :: FlowRate, Head, Depth
-            real(8)             :: upDepth, upHead, upVolume, upFlowrate, maxFlowrate
+            real(8), pointer    :: FlowRate, Head, Depth, dQdH, tempFlowrate, tempDepth
+            real(8)             :: upDepth, upHead, upVolume, upFlowrate, maxFlowrate, dH
         !%------------------------------------------------------------------
         !% Aliases:
             CurveID   => elemSI(eIdx,esi_Pump_CurveID)
             FlowRate  => elemR (eIdx,er_Flowrate)
             Head      => elemR (eIdx,er_Head)
             Depth     => elemR (eIdx,er_Depth)
+            dQdH      => elemR (eIdx,er_dQdH)
+            tempFlowrate => elemR(eIdx,er_Temp01)
+            tempDepth    => elemR(eIdx,er_Temp02)
         !%-----------------------------------------------------------------
         !% Preliminaries
             upDepth=zeroR; upHead = zeroR; upVolume=zeroR; upFlowrate=zeroR
@@ -237,6 +244,7 @@ module pump_elements
             Flowrate = zeroR
             Head     = zeroR
             Depth    = zeroR
+            dQdH     = zeroR
             return 
         end if
 
@@ -248,6 +256,19 @@ module pump_elements
 
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
+
+        if (interpType == 0) then
+            dQdH = zeroR
+        else
+            dH = 0.001
+            tempDepth = Depth + dH
+            
+            !% interpolate for new temp depth and temp flowrate
+            call util_curve_lookup_singular( &
+                CurveID, er_Temp02, er_Temp01, curve_pump_Xvar, curve_pump_flowrate,interpType)
+            
+            dQdH = (tempFlowrate - Flowrate) / dH
+        end if
 
         !% --- reset pump depth and head to zero (no meaning)
         Depth = zeroR
@@ -269,15 +290,18 @@ module pump_elements
             integer, intent(in) :: eIdx  !% pump index
             integer             :: Ci, Aidx
             integer, pointer    :: CurveID
-            real(8), pointer    :: Head, Depth, Flowrate
+            real(8), pointer    :: Head, Depth, Flowrate, dQdH, tempFlowrate, tempDepth
             real(8)             :: upDepth, upHead, upVolume, upFlowrate, maxFlowrate
-            real(8)             :: dnHead
+            real(8)             :: dnHead, dH
         !%------------------------------------------------------------------
         !% Aliases:
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             Head     => elemR(eIdx,er_Head)
             Depth    => elemR(eIdx,er_Depth)
+            dQdH     => elemR(eIdx,er_dQdH)
             FlowRate => elemR(eIdx,er_Flowrate)
+            tempFlowrate => elemR(eIdx,er_Temp01)
+            tempDepth    => elemR(eIdx,er_Temp02)
         !%------------------------------------------------------------------
         !% Preliminaries
             upDepth=zeroR; upHead = zeroR; upVolume=zeroR; upFlowrate=zeroR
@@ -311,6 +335,7 @@ module pump_elements
             Flowrate = zeroR
             Head     = zeroR
             Depth    = zeroR
+            dQdH     = zeroR
             return 
         end if
 
@@ -319,6 +344,16 @@ module pump_elements
             CurveID, er_Head, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
 
         ! print *, 'flowrate ',flowrate
+
+        !% --- dQdh calculation
+        dH = 0.001
+        tempDepth = Depth + dH
+        
+        !% interpolate for new temp depth and temp flowrate
+        call util_curve_lookup_singular( &
+            CurveID, er_Temp02, er_Temp01, curve_pump_Xvar, curve_pump_flowrate,1)
+        
+        dQdH = (tempFlowrate - Flowrate) / dH
 
         !% --- reset the pump element head to the upstream value
         Head  = zeroR

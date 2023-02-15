@@ -282,7 +282,7 @@ module orifice_elements
         integer, intent(in) :: eIdx
         integer, pointer :: FlowDirection
         real(8), pointer :: Flowrate, EffectiveHeadDelta, Zcrest, grav
-        real(8), pointer :: DischargeCoeff, EffectiveFullArea
+        real(8), pointer :: dQdH, DischargeCoeff, EffectiveFullArea
         real(8), pointer :: WeirExponent, SharpCrestedWeirCoeff
         real(8), pointer :: CriticalHead, FractionCritDepth
         real(8) :: Coef, ratio
@@ -300,6 +300,7 @@ module orifice_elements
         EffectiveFullArea     => elemSR(eIdx,esr_Orifice_EffectiveFullArea)
         FractionCritDepth     => elemSR(eIdx,esr_Orifice_FractionCriticalDepth)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
+        dQdH                  => elemR(eIdx,er_dQdH)
         Flowrate              => elemR(eIdx,er_Flowrate)
         WeirExponent          => Setting%Orifice%TransverseWeirExponent
         grav                  => setting%constant%gravity
@@ -309,15 +310,18 @@ module orifice_elements
         if ((EffectiveHeadDelta == zeroR) .or. (FractionCritDepth <= zeroR)) then
             !% no flow case
             Flowrate = zeroR
+            dQdH     = zeroR
         elseif (FractionCritDepth < oneR) then
             !% case where inlet depth is below critical depth thus,
             !% orifice behaves as a rectangular transverse weir
             Coef     = DischargeCoeff * EffectiveFullArea * sqrt(twoR * grav * CriticalHead)
             Flowrate = FlowDirection * Coef * (FractionCritDepth ** WeirExponent)
+            dQdH     = WeirExponent * Flowrate / (FractionCritDepth * CriticalHead)
         else
             !% standard orifice flow condition
             Coef      = DischargeCoeff * EffectiveFullArea * sqrt(twoR * grav)
             Flowrate  = FlowDirection * Coef * sqrt(EffectiveHeadDelta)
+            dQdH      = onehalfR * (Flowrate / EffectiveHeadDelta)
         end if
 
         if (setting%Debug%File%orifice_elements) &

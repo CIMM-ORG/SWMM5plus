@@ -82,11 +82,12 @@ module roadway_weir_elements
     !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         real(8), pointer    :: RoadHeight, RoadWidth, Head, NominalDSmHead 
-        real(8), pointer    :: RectangularBreadth, disCoeff, Flowrate
+        real(8), pointer    :: RectangularBreadth, disCoeff, Flowrate, dQdH
         integer, pointer    :: FlowDirection, RoadSurf
         real(8) :: HeadUp, HeadDn, cD
         logical :: useVariableCoeff
     !%-----------------------------------------------------------------------------
+        dQdH                  => elemR(eIdx,er_dQdH)
         Flowrate              => elemR(eIdx,er_Flowrate)
         Head                  => elemR(eIdx,er_Head)
         RoadHeight            => elemSR(eIdx,esr_Weir_Zcrest) 
@@ -111,6 +112,8 @@ module roadway_weir_elements
                 (HeadUp, HeadDn, RoadWidth, RoadSurf)
 
             Flowrate = real(FlowDirection,8) * cD * RectangularBreadth * (HeadUp ** 1.5)
+            !% find dQ/dH
+            dQdH = 1.5 * Flowrate / HeadUp
         end if
 
     end subroutine roadway_weir_flow
