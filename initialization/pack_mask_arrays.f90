@@ -2902,9 +2902,9 @@ contains
                 ))
         endif
 
-        !% ep_CC_DownstreamJBadjacent
+        !% ep_CC_DownstreamOfJunction
         !% - all CC element downstream of a JB
-        ptype => col_elemP(ep_CC_DownstreamJBadjacent)
+        ptype => col_elemP(ep_CC_DownstreamOfJunction)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -2920,6 +2920,26 @@ contains
                 (elemYN(:,eYN_isElementDownstreamOfJB)) &
                 ))
         endif
+
+        !% ep_CC_UpstreamOfJunction
+        !% - all CC element upstream of a JB
+        ptype => col_elemP(ep_CC_UpstreamOfJunction)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemYN(:,eYN_isElementUpstreamOfJB)) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                ( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemYN(:,eYN_isElementUpstreamOfJB)) &
+                ))
+        endif
+        
 
         !% ep_CC_Open_Elements
         !% --- all the open channel time-marching elements
@@ -4738,6 +4758,29 @@ contains
                 )
         end if
 
+        !% fp_JB
+        !% --- faces that are adjacent to a JM
+        ptype => col_faceP(fp_JB)
+        npack => npack_faceP(ptype)
+
+        npack =  count( &
+            faceYN(1:Nfaces,fYN_isInteriorFace)   &
+                .and. &
+                (   (elemI(edn,ei_elementType) == JB) &
+                    .or.  &
+                    (elemI(eup,ei_elementTYpe) == JB) &
+                ) )
+
+        if (npack > 0) then 
+            faceP(1:npack, ptype) = pack( fIdx, &
+                faceYN(1:Nfaces,fYN_isInteriorFace)   &
+                .and. &
+                (   (elemI(edn,ei_elementType) == JB) &
+                   .or.  &
+                    (elemI(eup,ei_elementTYpe) == JB) &
+                ) )
+        end if
+
         !% fp_J1
         !% - faces with only one link that are not inflow BC
         ptype => col_faceP(fp_J1)
@@ -4776,25 +4819,29 @@ contains
         npack =  count( &
                 faceYN(1:Nfaces,fYN_isInteriorFace)   &
                 .and. &
-                (elemI(edn,ei_HeqType) == diagnostic) &
-                .or.  &
-                (elemI(edn,ei_QeqType) == diagnostic) &
-                .or.  &
-                (elemI(eup,ei_HeqType) == diagnostic) &
-                .or.  &
-                (elemI(eup,ei_QeqType) == diagnostic))
+                ( &
+                   (elemI(edn,ei_HeqType) == diagnostic) &
+                   .or.  &
+                   (elemI(edn,ei_QeqType) == diagnostic) &
+                   .or.  &
+                   (elemI(eup,ei_HeqType) == diagnostic) &
+                   .or.  &
+                   (elemI(eup,ei_QeqType) == diagnostic) &
+                ) )
 
         if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
                     faceYN(1:Nfaces,fYN_isInteriorFace)   &
                     .and. &
-                    (elemI(edn,ei_HeqType) == diagnostic) &
-                    .or.  &
-                    (elemI(edn,ei_QeqType) == diagnostic) &
-                    .or.  &
-                    (elemI(eup,ei_HeqType) == diagnostic) &
-                    .or.  &
-                    (elemI(eup,ei_QeqType) == diagnostic))
+                    ( &
+                       (elemI(edn,ei_HeqType) == diagnostic) &
+                       .or.  &
+                       (elemI(edn,ei_QeqType) == diagnostic) &
+                       .or.  &
+                       (elemI(eup,ei_HeqType) == diagnostic) &
+                       .or.  &
+                       (elemI(eup,ei_QeqType) == diagnostic) &
+                    ) )
         end if
 
         faceYN(faceP(1:npack, ptype),fYN_isDiag_adjacent) = .true.
@@ -4939,6 +4986,7 @@ contains
         !% - all faces adjacent to a diagnostic element which is shared across images
         ptype => col_facePS(fp_Diag)
         npack => npack_facePS(ptype)
+        npack = 0
 
         !% pointer towards the total number of shared faces in an image
         N_shared_faces  => npack_facePS(fp_all)
@@ -4982,6 +5030,49 @@ contains
         end if
         
         if (npack > 0) faceYN(facePS(1:npack, ptype),fYN_isDiag_adjacent) = .true.
+
+
+        !% fp_JB (shared faces)
+        ptype => col_facePS(fp_JB)
+        npack => npack_facePS(ptype)
+        npack = 0
+        
+        !% pointer towards the total number of shared faces in an image
+        N_shared_faces  => npack_facePS(fp_all)
+
+        if (N_shared_faces > 0) then 
+            do ii=1,N_shared_faces
+                thisP       => facePS(ii,fp_all)
+                eup         => faceI(thisP,fi_Melem_uL)
+                edn         => faceI(thisP,fi_Melem_dL)
+                isUpGhost   => faceYN(thisP,fYN_isUpGhost)
+                gup         => faceI(thisP,fi_GhostElem_uL)
+                isDnGhost   => faceYN(thisP,fYN_isDnGhost)
+                gdn         => faceI(thisP,fi_GhostElem_dL)
+                c_image     => faceI(thisP,fi_Connected_image)
+            end do
+
+            if (isUpGhost) then
+                if ((elemI(gup,ei_elementType)[c_image] == JB) .or.  &
+                    (elemI(edn,ei_elementType)          == JB))   then
+
+                     !% advance the number of pack value
+                     npack = npack + oneI
+                     !% save the face index
+                     facePS(npack,ptype) = thisP
+                 end if
+
+            elseif (isDnGhost) then
+                if ((elemI(gdn,ei_elementType)[c_image] == JB) .or.  &
+                    (elemI(eup,ei_elementType)          == JB))  then
+
+                    !% advance the number of pack value
+                    npack = npack + oneI
+                    !% save the face index
+                    facePS(npack,ptype) = thisP
+                end if
+            end if
+        end if
             
         !% stop the shared timer
         sync all

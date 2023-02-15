@@ -1380,6 +1380,11 @@ contains
             !% real data
             faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
 
+            !% special condition if a element will be immediate upsteam of a JB
+            if (node%I(thisNode,ni_node_type) == nJm) then
+                elemYN(ElemLocalCounter,eYN_isElementUpstreamOfJB) = .true.
+            endif
+
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
             faceYN(FaceLocalCounter,fYN_isDnGhost)    = .true.
@@ -1397,6 +1402,8 @@ contains
                 !% these global indexes will be set later
                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
             end if
+
+
         end if
 
         if (setting%Debug%File%network_define) &
@@ -1758,6 +1765,8 @@ contains
 
                                 !% local d/s face map to element u/s of the branch
                                 elemI(LinkLastElem,ei_Mface_dL) = fLidx
+                                !% set the first element as the immediate downstream element of a JB
+                                elemYN(LinkLastElem,eYN_isElementUpstreamOfJB) = .true.
 
                                 !print *, '====================================== yy'
                                 !print *, trim(subroutine_name), LinkLastElem, elemI(LinkLastElem,ei_Mface_dL)

@@ -10,7 +10,7 @@
         "disableInterpolationYN": false
     },
     "Discretization" : {
-        "Force_nodes_to_nJM" : false,
+        "ForceNodesJM" : false,
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",

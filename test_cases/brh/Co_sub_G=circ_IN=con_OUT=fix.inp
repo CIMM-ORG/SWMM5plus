@@ -49,8 +49,8 @@ DRY_ONLY         NO
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
 N1                13.129     0          2          0          0         
-N2                8.7523     0          2          0          0         
-N3                4.3762     0          2          0          0         
+N2                8.7523     0          2          1000          0         
+N3                4.3762     0          2          1000          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        

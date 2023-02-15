@@ -7,7 +7,7 @@
     },
     "Discretization" : {
         "NominalElemLength" : 50.00,
-        "Force_nodes_to_nJM" : true,
+        "ForceNodesJM" : true,
         "JunctionBranchLengthFactor" : 1.0, 
         "MinElemLengthFactor"        : 0.8,
         "MinElemLengthMethod" : "ElemLengthAdjust"

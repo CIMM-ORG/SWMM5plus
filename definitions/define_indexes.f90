@@ -342,10 +342,13 @@ module define_indexes
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_DepthAtBreadthMax          !% depth below the point of maximum breadth
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
+        enumerator :: er_dQdH
+        enumerator :: er_2B_psiL                    !% intermediate term for elements adjacent to junctions
         enumerator :: er_dSlotArea                  !% change in slot volume
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_EllDepth                        !% the ell (lower case L) modified hydraulic depth
+        enumerator :: er_EnergyHead                 !% total energy head on element
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
@@ -362,7 +365,7 @@ module define_indexes
         enumerator :: er_FullTopwidth               !% Topwidth of full conduit or channel
         enumerator :: er_FullVolume                 !% Volume of a full conduit or channel (static)
         enumerator :: er_GammaC                     !% gamma continuity source term for AC solver
-        enumerator :: er_GammaM                     !% gamma momentum source term for AC solver
+        enumerator :: er_GammaM                     !% gamma momentum source term for ALL solver
         enumerator :: er_Head                       !% piezometric head (latest) -- water surface elevation in open channel
         enumerator :: er_Head_N0                    !% piezometric head (time N)
         !enumerator :: er_HeadAvg                    !% average of head on faces of an element.
@@ -457,6 +460,7 @@ module define_indexes
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isDummy
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
+        enumerator :: eYN_isElementUpstreamOfJB
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
         enumerator :: eYN_isPSsurcharged                !% TRUE if Preissmann slot is present for this cell
@@ -535,8 +539,9 @@ module define_indexes
         !enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
         !enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
-        enumerator :: ep_JB_Downstream            !% all the downstream JB elements 
-        enumerator :: ep_CC_DownstreamJBadjacent    !% all CC element downstream of a JB 
+        enumerator :: ep_JB_Downstream             !% all the downstream JB elements 
+        enumerator :: ep_CC_DownstreamOfJunction  !% all CC element downstream of a JB 
+        enumerator :: ep_CC_UpstreamOfJunction    !% all CC elements upstream of a JB
         enumerator :: ep_CC_Open_Elements           !% all CC elements that are open channel
         enumerator :: ep_CC_Closed_Elements         !% all closed CC elements 
         !enumerator :: ep_JM_Closed_Elements         !% all closed JM elements
@@ -595,6 +600,7 @@ module define_indexes
         enumerator :: epg_CC_mod_basket               !% CC modified basked conduits
         enumerator :: epg_CC_semi_elliptical          !% CC semi-elliptical conduits
         enumerator :: epg_CC_vert_ellipse             !% CC vertical elliptical conduits
+
         !% --- junctions
         enumerator :: epg_JM_functionalStorage        !% JM functional geometry relationship 
         enumerator :: epg_JM_tabularStorage           !% JM tabular geometry relationship 
@@ -652,6 +658,7 @@ module define_indexes
         enumerator ::  esi_JunctionMain_Total_Branches             !% total number of branches connected to the junction main
         enumerator ::  esi_JunctionMain_OverflowType               !% NoOverflow, Ponding, OverflowWeir
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
+        enumerator ::  esi_JunctionBranch_CC_adjacent              !% assigned 1 if CC is adjacent element
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
         enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
         enumerator ::  esi_JunctionBranch_IsUpstream               !% 1 if this is an upstream branch, 0 if downstream
@@ -763,7 +770,6 @@ module define_indexes
         enumerator ::  esr_JunctionMain_OverflowOrifice_Length
         enumerator ::  esr_Junctionmain_OverflowOrifice_Height
         enumerator ::  esr_JunctionBranch_Kfactor
-        enumerator ::  esr_JunctionBranch_dfdQ
         enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
@@ -1261,6 +1267,8 @@ module define_indexes
         enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
         enumerator ::  ebgr_Topwidth                  !% topwidth of flow at free surfac boundary/ghost element
         enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
+        enumerator ::  ebgr_2B_psiL                   !% 2 * beta * psi * L term for junctions
+        enumerator ::  ebgr_EnergyHead                !% total energy head
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
         enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
@@ -1332,6 +1340,8 @@ module define_indexes
         enumerator :: fr_Area_u                 !% cross-sectional area on upstream side of face
         enumerator :: fr_Depth_d 
         enumerator :: fr_Depth_u
+        enumerator :: fr_EnergyHead             !% total energy head 
+        enumerator :: fr_2B_psiL                !% 2 * beta * psi * L term at junctions
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
@@ -1344,6 +1354,7 @@ module define_indexes
         enumerator :: fr_KJunction_MinorLoss    !% K factor for entrance/exit loss from element adjacent to nJM
         enumerator :: fr_Length_u               !% length of upstream element
         enumerator :: fr_Length_d               !% length of downstream element
+        enumerator :: fr_psiL2                  !% head loss term for juction computation
         enumerator :: fr_Zbottom                !% zbottom of faces
         !enumerator :: fr_ZbreadthMax            !% elevation of maximum breadth
         !enumerator :: fr_HydDepth_d             !% hydraulic Depth on downstream side of face
@@ -1380,7 +1391,7 @@ module define_indexes
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
         enumerator :: fYN_isPSsurcharged
-        enumerator :: fYN_isDownstreamJbFace
+        enumerator :: fYN_isDownstreamJBFace
         enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed
         enumerator :: fYN_isDiag_adjacent
@@ -1403,6 +1414,7 @@ module define_indexes
         enumerator :: fp_all = 1                !% all faces execpt boundary, null, and shared faces
         enumerator :: fp_AC                     !% face with adjacent AC element
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
+        enumerator :: fp_JB                     !% face with adjacent JB
         enumerator :: fp_elem_downstream_is_zero
         enumerator :: fp_elem_upstream_is_zero
         enumerator :: fp_elem_bothsides_are_zero
@@ -1426,7 +1438,7 @@ module define_indexes
     !% Note that the jDataR and jDataI arrays are NOT global, but only
     !%     available in the junction_elements module
 
-    !% --- local indexes for jdataR storage
+    !% --- local indexes for jDataR storage
     enum, bind(c)
         enumerator :: jr_Area = 1
         enumerator :: jr_a
@@ -1451,7 +1463,61 @@ module define_indexes
         enumerator :: ji_kidx=1 
         enumerator :: ji_lastplusone 
     end enum 
-integer, parameter :: Ncol_jDataI = ji_lastplusone-1
+    integer, parameter :: Ncol_jDataI = ji_lastplusone-1
+
+
+
+    !% --- local indexes for jBranchR
+    enum, bind(c)
+        enumerator :: jbr_a = 1
+        enumerator :: jbr_beta
+        enumerator :: jbr_DX
+        enumerator :: jbr_Edelta
+        enumerator :: jbr_flowsign
+        enumerator :: jbr_Lambda
+        enumerator :: jbr_psiL2
+        enumerator :: jbr_Qinit
+        enumerator :: jbr_Q
+        enumerator :: jbr_Qdelta
+        enumerator :: jbr_Qresid
+        enumerator :: jbr_Sm
+        enumerator :: jbr_Y
+        enumerator :: jbr_lastplusone 
+    end enum
+    integer, parameter :: NCol_jBranchR = jbr_lastplusone-1
+
+    !% --- local indexes for jBranchI
+    enum, bind(c)
+        enumerator :: jbi_kidx = 1
+        enumerator :: jbi_lastplusone 
+    end enum
+    integer, parameter :: NCol_jBranchI = jbi_lastplusone-1
+
+
+    !% --- local indexes for jMainR
+    enum, bind(c)
+        enumerator :: jmr_AreaPlan = 1
+        enumerator :: jmr_B
+        enumerator :: jmr_cJ
+        enumerator :: jmr_DX
+        enumerator :: jmr_Hstart
+        enumerator :: jmr_Hdelta
+        enumerator :: jmr_Hresid
+        enumerator :: jmr_Qlat
+        enumerator :: jmr_Sc
+        enumerator :: jmr_lastplusone 
+    end enum
+    integer, parameter :: NCol_jMainR = jmr_lastplusone-1
+
+    !% --- local indexes for jMainI
+    enum, bind(c)
+        enumerator :: jmi_kidx = 1
+        enumerator :: jmi_Jtype
+        enumerator :: jmi_lastplusone 
+    end enum
+    integer, parameter :: NCol_jMainI = jmi_lastplusone-1
+
+
 !%
 !%==========================================================================
 !% PROFILER

@@ -173,6 +173,8 @@ module define_globals
     integer, parameter :: max_dn_branch_per_node = 5   !% ADDBRANCH
     integer, parameter :: max_branch_per_node = 10      !% ADDBRANCH
 
+    !% branchsign is lobal is used for junction branches (JB)
+    !%     for upstream (+1.d0) and downstream (-1.d0)
     real(8) :: branchsign(max_branch_per_node)
 
     !% Main Arrays - Allocated in utility_allocate.f08

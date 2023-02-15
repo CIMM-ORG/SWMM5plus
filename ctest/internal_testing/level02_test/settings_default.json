@@ -13,7 +13,7 @@
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 61.00,
         "FullConduitTopwidthDepthFraction" : 0.95,
-        "Force_nodes_to_nJM" : true
+        "ForceNodesJM" : true
     },
     "Limiter" : {
         "Dt" : {

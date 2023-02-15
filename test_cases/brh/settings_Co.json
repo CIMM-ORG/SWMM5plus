@@ -13,7 +13,11 @@
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 500.00
+        "NominalElemLength" : 50.00
+    },
+    "Junction" :{
+        "ForceNodesJM" : true,
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -49,7 +53,7 @@
             "isAreaOut"         : true,
             "isDepthOut"        : true,
             "isFlowrateOut"     : true,
-            "isFroudeNumberOut" : false,
+            "isFroudeNumberOut" : true,
             "isHeadOut"         : true,
             "isHydRadiusOut"    : false,
             "isPerimeterOut"    : false,

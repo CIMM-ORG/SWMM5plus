@@ -41,7 +41,7 @@
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 10.00,
         "FullConduitTopwidthDepthFraction" : 0.95,
-        "Force_nodes_to_nJM" : false
+        "ForceNodesJM" : false
     },
     "Eps" : {
         "FroudeJump" : 0.1,

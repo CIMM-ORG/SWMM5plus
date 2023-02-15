@@ -870,9 +870,18 @@ module utility
         if (npack > 0) then
             thisP => elemP(1:npack,thisColJM)
 
+            tempCons(thisP) = dt * eQlat(thisP) - VolOver(thisP)
+
             !% --- volume and lateral flux terms on JM
-            tempCons(thisP) =  dt * eQlat(thisP)                      &
-                    - (VolNew(thisP) - VolOld(thisP)) - VolOver(thisP)
+            where (elemSI(thisP,esi_JunctionMain_Type) .ne. ImpliedStorage)
+                tempCons(thisP) =  tempCons(thisP) - (VolNew(thisP) - VolOld(thisP))
+            endwhere
+
+            ! print *, 'VolNew ',VolNew(thisP)
+            ! print *, 'VolOld ',VolOld(thisP)
+            ! print *, 'VolOver',VolOver(thisP)
+            ! print *, 'Qlat   ',eQlat(thisP)
+            ! print *, 'tempCons 01',tempCons(thisP)        
 
             !% --- get fluxes on branches for JM
             do ii=1,max_branch_per_node,2
@@ -885,6 +894,8 @@ module utility
                         - dt * real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8)    
                 endwhere                         
             end do
+
+            ! print *, 'tempCons 02',tempCons(thisP) 
 
             eCons(thisP) = eCons(thisP) + tempCons(thisP)
 

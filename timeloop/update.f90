@@ -25,6 +25,8 @@ module update
     public :: update_auxiliary_variables_CC
     public :: update_auxiliary_variables_JM
     public :: update_interpweights_JB
+    public :: update_element_psi_CC
+    public :: update_element_energyHead_CC
     !public :: update_Froude_number_junction_branch
 
     contains
@@ -81,6 +83,117 @@ module update
 !%
 !%==========================================================================
 !%==========================================================================
+!%
+    subroutine update_element_psi_CC (thisCol) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the 2 * beta * psi * L for conduit/channel elements adjacent
+        !% to junction. 
+        !% thisCol is packed ep_CC_DownstreamOfJunction or ep_CC_UpstreamOfJunction
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisCol
+            integer, pointer :: Npack, thisP(:), fup(:), fdn(:)
+            real(8), pointer :: hL(:), Hup(:), Hdn(:), Vup(:), Vdn(:), grav
+            real(8), pointer :: psiL(:), beta(:), Qelem(:)
+            real(8) :: Qepsilon
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            Npack => npack_elemP(thisCol)
+            if (Npack < 1) return 
+            Qepsilon = setting%ZeroValue%Velocity * setting%ZeroValue%Area
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP => elemP(1:Npack,thisCol)
+            fup   => elemI(:,ei_Mface_uL)
+            fdn   => elemI(:,ei_Mface_dl)
+
+            hL    => elemR(:,er_Temp01)  !% head loss
+            beta  => elemR(:,er_Temp03)  !% +-1 depending on branch type
+            Qelem => elemR(:,er_Flowrate)
+            psiL  => elemR(:,er_2B_psiL)  !% 2 * beta * psi * L term
+
+            Hdn   => faceR(:,fr_Head_d) !% Head downstream face
+            Hup   => faceR(:,fr_Head_u) !% Head upstream face
+            Vdn   => faceR(:,fr_Velocity_d) !% Velocity downstream face
+            Vup   => faceR(:,fr_Velocity_u) !% Velocity upstream face
+
+            grav => setting%Constant%gravity
+        !%------------------------------------------------------------------
+
+        !% --- ensure Temp arrays are initialized
+        hL(thisP)   = zeroR
+        beta(thisP) = zeroR
+
+        !% --- set beta for an upstream (+1) or downstream (-1) branch
+        select case (thisCol)
+        case (ep_CC_DownstreamOfJunction)
+            beta(thisP) = -oneR
+        case (ep_CC_UpstreamOfJunction)
+            beta(thisP) = +oneR
+        case default 
+            print *, 'CODE ERROR'
+            print *, 'Unexpected case default'
+            call util_crashpoint(729873)
+        end select
+
+        !% ---compute the head loss over the element
+        hL(thisP) = Hdn(fup(thisP)) - Hup(fdn(thisP)) &
+            + onehalfR * ( (Vdn(fup(thisP))**2) - (Vup(fdn(thisP))**2) ) / grav
+
+        !% --- error checking
+        !%     head loss, which is + for nominal downstream flow,
+        !%     should also be the same sign for Q, so their product should be 
+        !%     greater than zero
+        if (any((Qelem(thisP) * hL(thisP)) < zeroR)) then 
+            print *, 'CODE ERROR'
+            print *, 'Unexpected mismatch between flowrate direction and head loss'
+            print *, 'Likely bug in code'
+            call util_crashpoint(6298723)
+        end if
+
+        !% --- compute the 2 \beta * psi * L term
+        where (Qelem(thisP) > Qepsilon)
+            psiL(thisP) = twoR * beta(thisP) * hL(thisP) / (Qelem(thisP)**2)
+        elsewhere
+            psiL(thisP) = zeroR 
+        endwhere
+
+    end subroutine update_element_psi_CC    
+!%
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine update_element_energyHead_CC (thisCol)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Updates the energy head on elements
+        !% Must be done after all zerodepth and smalldepth adjustments
+        !% thisCol should be (e.g.) ep_CC_ETM
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisCol
+            integer, pointer    :: thisP(:), Npack
+            real(8), pointer    :: Ehead(:), Head(:), Velocity(:), grav
+        !%------------------------------------------------------------------
+        !% Aliases
+            Npack => npack_elemP(thisCol)
+            if (Npack < 1) return
+            thisP => elemP(1:Npack,thisCol)
+            grav  => setting%Constant%gravity
+
+            Ehead    => elemR(:,er_EnergyHead)
+            Head     => elemR(:,er_Head)
+            Velocity => elemR(:,er_Velocity)
+        !%------------------------------------------------------------------
+
+        Ehead(thisP) = Head(thisP) + onehalfR * (Velocity(thisP)**2) / grav
+        
+
+    end subroutine update_element_energyHead_CC
+!%
+!%==========================================================================
+!%==========================================================================
 !% 
     subroutine update_auxiliary_variables_JM (whichTM)
         !%------------------------------------------------------------------
@@ -89,7 +202,7 @@ module update
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
-            integer, pointer    :: Npack, thisCol, thisP(:)
+            integer, pointer    :: Npack, thisCol, thisP(:), thisCol_JM
             integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer             :: mm
             character(64) :: subroutine_name = 'update_auxiliary_variables_JM'
@@ -105,7 +218,7 @@ module update
                     elemPGx                => elemPGetm(:,:)
                     npack_elemPGx          => npack_elemPGetm(:)
                     col_elemPGx            => col_elemPGetm(:)
-                    !thisCol_JM             => col_elemP(ep_JM_ETM)
+                    thisCol_JM             => col_elemP(ep_JM_ETM)
                 case (AC)
                     print *, 'CODE UNFINISHED'
                     call util_crashpoint(2109874)
@@ -117,56 +230,19 @@ module update
             end select
         !%------------------------------------------------------------------
 
-        !% updates needed for depth, storage plan area
+        !% --- geometry for both JM and JB
+        call geometry_toplevel_JM (whichTM)  
+        
+        !% --- compute element Froude number for JB
+        call update_Froude_number_JB (thisCol_JM) 
 
-        !% --- our approach is to use the volume (computed from conservative Q)
-        !%     to get our functional and tabular plan areas.
-        !%
-        !%     The depth is simply the head - Zbottom, corrected for the maximum
-        !%     allowed 
-        !% 
-        !%     Note that head, depth, and volume may be slightly inconsistent
-        !%     
+        !% --- wave speed on JM
+        call update_wavespeed_element(thisCol_JM)
 
-        !% --- update the plan area and depths for functional storage
-            print *, 'functional storage'
-        thisCol => col_elemPGx(epg_JM_functionalStorage)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
-            thisP => elemPGx(1:Npack, thisCol)
-            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
-                                        elemR(thisP,er_FullDepth))
-            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)                            
-        end if
+        !% --- standard interpolation weights
+        call update_interpweights_JB (thisCol_JM)
 
-        !% --- update the plan area  and depths for tabular storage
-            print *, 'tabular storage'
-        thisCol => col_elemPGx(epg_JM_tabularStorage)
-        print *, 'thisCol ',thisCol
-        Npack   => npack_elemPGx(thisCol)
-        print *, 'npack ',Npack
-        print *, elemPGx(1:Npack, thisCol)
-        if (Npack > 0) then
-            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
-            thisP => elemPGx(1:Npack, thisCol)
-            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
-                                        elemR(thisP,er_FullDepth))
-            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)    
-        end if
-
-        !% --- set plan area  and depths for implied storage to zero
-            print *, 'implied storage'
-        thisCol => col_elemPGx(epg_JM_impliedStorage)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            thisP => elemPGx(1:Npack, thisCol)
-            elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
-            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
-                                        elemR(thisP,er_FullDepth))
-            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)    
-        end if
-
+        
     end subroutine update_auxiliary_variables_JM
 ! !%
 ! !%==========================================================================
@@ -619,24 +695,35 @@ module update
         !%------------------------------------------------------------------
         ! print *, ' '
         ! print *, ' in weight '
+
+        ! do ii=1,max_branch_per_node
+        !             w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        !             w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+        ! end do    
   
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
-            select case (setting%Junction%Method)
+            ! select case (setting%Junction%Method)
 
-                case (Implicit0, Explicit2)
-                    !% -- baseline update pushes the element values to
-                    !%    the JB faces
-                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                ! case (Implicit0, Explicit2)
+                !     !% -- baseline update pushes the element values to
+                !     !%    the JB faces
+                !     w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                !     w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
 
-                case (Explicit1)
+                ! case (Explicit1)
                     wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
 
                     ! print *, ' '
@@ -686,10 +773,10 @@ module update
                     w_uH(thisP+ii) = onehalfR * length(thisP+ii)
                     w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
 
-                case default
-                    print *, 'CODE ERROR: unexpected case default'
-                    call util_crashpoint(6229087)
-            end select
+                ! case default
+                !     print *, 'CODE ERROR: unexpected case default'
+                !     call util_crashpoint(6229087)
+            ! end select
 
         end do
 
@@ -763,8 +850,8 @@ module update
     !         w_dH(thisP1) = oneR
     !     end if
 
-    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJBadjacent)
-    !     Npack2            => npack_elemP(ep_CC_DownstreamJBadjacent)
+    !     thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamOfJunction)
+    !     Npack2            => npack_elemP(ep_CC_DownstreamOfJunction)
 
     !     !% replace the interpolation weights for elements downstream of dn JB
     !     if (Npack2 > 0) then

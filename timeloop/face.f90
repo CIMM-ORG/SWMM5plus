@@ -36,7 +36,7 @@ module face
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine face_interpolation (facecol, whichTM)
+    subroutine face_interpolation (facecol, whichTM, skipQ)
         !%------------------------------------------------------------------
         !% Description:
         !% Interpolates faces from elements
@@ -47,6 +47,7 @@ module face
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in)  :: faceCol, whichTM
+            logical, intent(in)  :: skipQ 
             integer, pointer :: Npack
             logical :: isBConly, isTM
             integer :: iblank
@@ -72,7 +73,7 @@ module face
         ! print *, 'in face AAAA ',faceR(43,fr_Depth_u), faceR(43,fr_Flowrate)
         
         !% --- face reconstruction of all the interior faces
-        call face_interpolation_interior (faceCol)
+        call face_interpolation_interior (faceCol,skipQ)
 
         ! print *, 'in face BBBB ',faceR(43,fr_Depth_u), faceR(43,fr_Flowrate)
 
@@ -87,22 +88,22 @@ module face
 
             ! call util_utest_CLprint ('    face after adjust face for zero setting')
 
-        if (setting%Junction%Method == Explicit1) then
+        !if (setting%Junction%Method == Explicit1) then
             call face_zerodepth_interior(fp_elem_downstream_is_zero)
             ! call util_utest_CLprint ('    face after face zerodepth interior 1')
             call face_zerodepth_interior(fp_elem_upstream_is_zero)
             ! call util_utest_CLprint ('    face after face zerodepth interior 2')
             call face_zerodepth_interior(fp_elem_bothsides_are_zero)
-        else 
+        !else 
             !% other methods skip this
-        end if
+        !end if
 
         ! print *, 'in face DDDD ',faceR(42,fr_Depth_u)
 
             ! call util_utest_CLprint ('    face after face zerodepth interior 3')
 
         !% --- face reconstruction of all the shared faces
-        call face_interpolation_shared (faceCol)
+        call face_interpolation_shared (faceCol,skipQ)
 
             ! call util_utest_CLprint ('    face after face interpolation_shared')
 
@@ -785,17 +786,18 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine face_interpolation_interior (facePackCol)
+    subroutine face_interpolation_interior (facePackCol,skipQ)
         !%------------------------------------------------------------------
         !% Description:
         !% Interpolates all faces using a pack
         !%------------------------------------------------------------------
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
+            logical, intent(in) :: skipQ  !% is true if flux interpolation is skipped
             integer, pointer    ::  Npack        !% expected number of packed rows in faceP.
             integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
-            integer :: fFlowSet(1), eFlowSet(1)
-            integer :: fOtherSet(3), eOtherSet(3)
+            integer :: fFlowSet(3), eFlowSet(3)
+            integer :: fOtherSet(1), eOtherSet(1)
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
         !% Aliases       
@@ -806,25 +808,9 @@ module face
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
         !%------------------------------------------------------------------     
-        !% Face values are needed for
-        !% Area_u, Area_d, Head_u, Head_d, Flowrate,
-
-        !% HACK: not sure if we need
-        !% Topwidth_u, Topwidth_d, HydDepth_u, HydDepth_d
-        !% Velocity_u, Velocity_d
-
-        !% General approach
         !% interpolate to ..._u
         !% identify hydraulic jumps
         !% set .._u and ..d based on jumps
- 
-
-        !% set the matching sets
-        !% THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
-        !% Note these can be expanded for other terms to be interpolated.
-        !fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-        !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-        !eGeoSet  = [er_Area,   er_Topwidth,   er_EllDepth]
 
         fGeoSetU = [fr_Area_u, fr_Depth_u, fr_Length_u]
         fGeoSetD = [fr_Area_d, fr_Depth_d, fr_Length_d]
@@ -834,32 +820,40 @@ module face
         fHeadSetD = [fr_Head_d]
         eHeadSet = [er_Head]
 
-        fFlowSet = [fr_Flowrate]
-        eFlowSet = [er_Flowrate]
+        if (.not. skipQ) then
+            fFlowSet = [fr_Flowrate, fr_2B_psiL, fr_EnergyHead]
+            eFlowSet = [er_Flowrate, er_2B_psiL, er_EnergyHead]
+        end if
 
-        fOtherSet = [fr_Preissmann_Number, fr_GammaM, fr_KJunction_MinorLoss]
-        eOtherSet = [er_Preissmann_Number, er_GammaM, er_KJunction_MinorLoss]
+        !fOtherSet = [fr_Preissmann_Number, fr_GammaM, fr_KJunction_MinorLoss, fr_2B_psiL, fr_EnergyHead]
+        !eOtherSet = [er_Preissmann_Number, er_GammaM, er_KJunction_MinorLoss, er_2B_psiL, er_EnergyHead]
+        fOtherSet = [fr_Preissmann_Number]
+        eOtherSet = [er_Preissmann_Number]
 
-            ! call util_utest_CLprint ('     face_interpolation_interior at start')
 
-        !% two-sided interpolation to using the upstream face set
+        !% two-sided interpolation
         call face_interp_interior_set &
-            (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack) 
-
-             ! call util_utest_CLprint ('     face_interpolation_interior at AAAA')
+            (fGeoSetU, eGeoSet,   er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack) 
 
         call face_interp_interior_set &
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
             
-
-        call face_interp_interior_set &
-            (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+        if (.not. skipQ) then
+            call face_interp_interior_set &
+                (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+        end if
 
         call face_interp_interior_set &
             (fOtherSet, eOtherSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
 
 
              ! call util_utest_CLprint ('     face_interpolation_interior at BBBB')
+
+            ! print *, ' '
+            ! print *, 'flowrate in face interp'
+            ! print *, elemR(30,er_Flowrate), faceR(31,fr_Flowrate), elemR(32,er_Flowrate)
+            ! print *, elemI(30,ei_Mface_dL), elemI(32,ei_Mface_uL)
+            ! print *, ' '
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -883,8 +877,16 @@ module face
         call jump_compute
 
         !% --- compute volume-based limits on flowrate
-        call face_flowrate_limits_interior (facePackCol)
+        if (.not. skipQ) then
+            call face_flowrate_limits_interior (facePackCol)
+        end if
 
+
+        ! print *, ' '
+        ! print *, 'flowrate in face interp 2'
+        ! print *, elemR(30,er_Flowrate), faceR(31,fr_Flowrate), elemR(32,er_Flowrate)
+        ! print *, elemI(30,ei_Mface_dL), elemI(32,ei_Mface_uL)
+        ! print *, ' '
         !%------------------------------------------------------------------
         !% Closing
         if (setting%Debug%File%face) &
@@ -894,7 +896,7 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine face_interpolation_shared (facePackCol)
+    subroutine face_interpolation_shared (facePackCol,skipQ)
         !%------------------------------------------------------------------
         !% Description:
         !% Interpolates all the shared faces
@@ -904,11 +906,12 @@ module face
         !%-------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
+            logical, intent(in) :: skipQ        !% = true if flowrate is skipped
             integer, pointer    :: Npack        !% expected number of packed rows in faceP.
             integer :: fGeoSetU(3), fGeoSetD(3), eGhostGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eGhostHeadSet(1)
-            integer :: fFlowSet(1), eGhostFlowSet(1)
-            integer :: fOtherSet(3), eGhostOtherSet(3)
+            integer :: fFlowSet(3), eGhostFlowSet(3)
+            integer :: fOtherSet(1), eGhostOtherSet(1)
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
         !%-------------------------------------------------------------------
@@ -927,12 +930,6 @@ module face
                 setting%Time%WallClock%SharedStart_C = cval
             end if
         !%-------------------------------------------------------------------
-        !% Face values are needed for
-        !% Area_u, Area_d, Head_u, Head_d, Flowrate,
-
-        !% HACK not sure if we need
-        !% Topwidth_u, Topwidth_d, HydDepth_u, HydDepth_d
-        !% Velocity_u, Velocity_d
 
         !% General approach
         !% interpolate to ..._u
@@ -940,12 +937,6 @@ module face
         !% set .._u and ..d based on jumps
 
         !% set the matching sets
-        !% HACK THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
-        !% Note these can be expanded for other terms to be interpolated.
-        ! fGeoSetU     = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-        ! fGeoSetD     = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-        ! eGhostGeoSet = [ebgr_Area,   ebgr_Topwidth,   ebgr_HydDepth]
-
         fGeoSetU     = [fr_Area_u, fr_Depth_u,   fr_Length_u]
         fGeoSetD     = [fr_Area_d, fr_Depth_d,   fr_Length_d]
         eGhostGeoSet = [ebgr_Area, ebgr_Depth, ebgr_Length]
@@ -954,11 +945,15 @@ module face
         fHeadSetD     = [fr_Head_d]
         eGhostHeadSet = [ebgr_Head]
 
-        fFlowSet      = [fr_Flowrate]
-        eGhostFlowSet = [ebgr_Flowrate]
+        if (.not. skipQ) then
+            fFlowSet      = [fr_Flowrate,      fr_2B_psiL,   fr_EnergyHead]
+            eGhostFlowSet = [ebgr_Flowrate,  ebgr_2B_psiL, ebgr_EnergyHead]
+        end if
 
-        fOtherSet      = [  fr_Preissmann_Number,   fr_GammaM,   fr_KJunction_MinorLoss]
-        eGhostOtherSet = [ebgr_Preissmann_Number, ebgr_GammaM, ebgr_KJunction_MinorLoss]
+        !%fOtherSet      = [  fr_Preissmann_Number,   fr_GammaM,   fr_KJunction_MinorLoss,   fr_2B_psiL,   fr_EnergyHead]
+        !eGhostOtherSet = [ebgr_Preissmann_Number, ebgr_GammaM, ebgr_KJunction_MinorLoss, ebgr_2B_psiL, ebgr_EnergyHead]
+        fOtherSet      = [  fr_Preissmann_Number]
+        eGhostOtherSet = [ebgr_Preissmann_Number]
 
         !% transfer all the local elemR data needed for face interpolation into elemB data structure
         call local_data_transfer_to_boundary_array (facePackCol, Npack)
@@ -972,8 +967,10 @@ module face
         call face_interp_shared_set &
             (fHeadSetU, eGhostHeadSet, ebgr_InterpWeight_dH, ebgr_InterpWeight_uH, facePackCol, Npack)
 
-        call face_interp_shared_set &
-            (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
+        if (.not. skipQ) then
+            call face_interp_shared_set &
+                (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
+        end if
 
         call face_interp_shared_set &
             (fOtherSet, eGhostOtherSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
@@ -990,7 +987,9 @@ module face
         call face_velocities (facePackCol, .false.)
 
         !% --- compute volume-based limits on flowrate
-        call face_flowrate_limits_shared (facePackCol)
+        if (.not. skipQ) then
+            call face_flowrate_limits_shared (facePackCol)
+        end if
 
         !% 20220425brh
         ! if (this_image() == 3) then

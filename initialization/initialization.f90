@@ -1231,12 +1231,12 @@ contains
                 end if
             end if
 
-            !% force all the nJ2 to nJm if the user 
-            !% setting%Discretization%Force_nodes_to_nJM setting is true
+            !% --- force all the nJ2 to nJm if the user 
+            !%     setting%Junction%ForceNodesJM setting is true
             if ((node%I(ii, ni_node_type) == nJ2)          .and.  &
-                setting%Discretization%Force_nodes_to_nJM ) then
+                setting%Junction%ForceNodesJM ) then
                 !% --- switch to nJm
-                ! write(*,*) 'Forced switch to nJM based on setting%Discretization%Force_nodes_to_nJM'
+                write(*,*) 'Forced switch to nJM based on setting%Junction%ForceNodesJM'
                 node%I(ii, ni_node_type) = nJm
             end if
 

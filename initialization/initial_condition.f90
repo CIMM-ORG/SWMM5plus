@@ -305,6 +305,10 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
         call init_IC_branch_dummy_values ()
 
+        !% --- initialize branch values that need to be zero
+        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch zero values'
+        call init_IC_branch_zero_values ()
+
             ! call util_utest_CLprint ('initial_condition after IC_branch_dummy_values')
 
         !% --- set all the auxiliary (dependent) variables
@@ -313,10 +317,6 @@ contains
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
         call update_auxiliary_variables_JM (whichTM)
-
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_interpweights_JB'
-        call update_interpweights_JB (ep_JM_ETM)
-
 
             ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables')
 
@@ -346,7 +346,7 @@ contains
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
-        call face_interpolation (fp_all,ALLtm)
+        call face_interpolation (fp_all,ALLtm,.false.)
 
             ! call util_utest_CLprint ('initial_condition after face_interpolation')
 
@@ -3379,8 +3379,8 @@ contains
         !% find the first element ID associated with that nJm
         !% masked on the global node number for this node.
 
-        print *, 'thisJunctionNode ',thisJunctionNode
-        print *, ' '
+        ! print *, 'thisJunctionNode ',thisJunctionNode
+        ! print *, ' '
 
         ! print *, 'Lidx'
         ! print *, elemI(:,ei_Lidx)
@@ -3395,8 +3395,8 @@ contains
         !     print *, ii, elemI(ii,ei_Lidx), elemI(ii,ei_node_Gidx_SWMM)
         ! end do
 
-        print *, '    ============================================='
-        print *, 'JMidx ',JMidx, ' ',node%YN(thisJunctionNode,nYN_has_storage)
+        ! print *, '    ============================================='
+        ! print *, 'JMidx ',JMidx, ' ',node%YN(thisJunctionNode,nYN_has_storage)
 
         !% the first element index is a junction main
         elemI(JMidx,ei_elementType)  = JM
@@ -3427,7 +3427,7 @@ contains
             elemSR(JMidx,esr_Storage_FractionEvap) = zeroR  !% --- no evap from implied storage junction
         end if
 
-        print *, 'type ',elemSI(JMidx,esi_JunctionMain_Type),ImpliedStorage
+        ! print *, 'type ',elemSI(JMidx,esi_JunctionMain_Type),ImpliedStorage
 
         !% --- junction main depth and head from initial conditions
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
@@ -3687,7 +3687,14 @@ contains
                 faceI(elemI(JBidx, ei_Mface_dL),fi_barrels)  = elemI(JBidx,ei_barrels)  
             else 
                 print *, 'JBidx null face both down and up ',JBidx
-                stop 298734
+                stop 650987
+            end if
+
+            !% --- check if the connected element is CC
+            if (elemI(AIdx,ei_elementType) == CC) then 
+                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = oneI
+            else
+                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = zeroI
             end if
 
             !% --- Ability to surcharge is set by JM
@@ -3956,10 +3963,13 @@ contains
                     end select
                 end do
 
-                !% Breadth is consistent with length and plane area
+                !% Breadth is consistent with length and plan area
                 elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plan_Area) &
                                                         /   elemR(JMidx,er_Length)
-                elemR(JMidx,er_BreadthMax) =  elemSGR(JMidx,esgr_Rectangular_Breadth)                                      
+                elemR(JMidx,er_BreadthMax) =  elemSGR(JMidx,esgr_Rectangular_Breadth)     
+                
+                !% HACK -- for IMPLICIT0 junction ONLY -- revisit if EXPLICIT1 or EXPLICIT2 is used
+                elemR(JMidx,er_FullVolume) = zeroR
 
             case (FunctionalStorage)     
                 !% --- create a storage curve from the function
@@ -4436,6 +4446,9 @@ contains
         !%------------------------------------------------------------------
         
         elemR(:,er_Velocity) = zeroR
+        elemR(:,er_GammaM) = zeroR
+        elemR(:,er_GammaC) = zeroR
+        faceR(:,fr_GammaM) = zeroR
 
         if (npack < 1) return
         velocity(thisP) = flowrate(thisP) / area(thisP)
@@ -4645,6 +4658,28 @@ contains
         end do
 
     end subroutine init_IC_branch_dummy_values
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_branch_zero_values ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% assigns zero to _JB values as IC.
+        !%------------------------------------------------------------------
+            integer, pointer :: npack, thisP(:)
+            integer :: kk
+        !%------------------------------------------------------------------
+            npack   => npack_elemP(ep_JM)
+            if (npack < 1) return
+            thisP     => elemP(1:npack,ep_JM)
+        !%------------------------------------------------------------------
+        do kk = 1,max_branch_per_node
+            elemR(thisP+kk,er_2B_psiL)    = zeroR
+            elemR(thisP+kk,er_EnergyHead) = zeroR
+        end do
+
+    end subroutine init_IC_branch_zero_values
 !%
 !%==========================================================================
 !%==========================================================================

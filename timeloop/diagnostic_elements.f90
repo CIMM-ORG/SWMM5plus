@@ -73,7 +73,7 @@ module diagnostic_elements
             ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
 
         !% reset any face values affected
-        call face_interpolation (fp_Diag, dummy)
+        call face_interpolation (fp_Diag, dummy, .false.)
 
             ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
 

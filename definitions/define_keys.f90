@@ -512,6 +512,10 @@
         reverseKey(Explicit1) = 'Explicit1'
         reverseKey(Explicit2) = 'Explicit2'
         reverseKey(Implicit0)  = 'Implicit0'
+        reverseKey(NoOverflow) = 'NoOverflow'
+        reverseKey(Ponded)     = 'Ponded'
+        reverseKey(OverflowWeir) = 'OverflowWeir'
+        reverseKey(OverflowOrifice) = 'OverflowOrifice'
         reverseKey(doesnotexist) = 'doesnotexist'
         reverseKey(vshape) = 'vshape'
         reverseKey(vshape_surcharge_only) = 'vshape_surcharge_only'
@@ -676,6 +680,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(ElemLengthAdjust)) , ElemLengthAdjust
         write(*,'(A," = ",i4)') trim(reverseKey(ETM)) , ETM
         write(*,'(A," = ",i4)') trim(reverseKey(ETM_AC)) , ETM_AC
+        write(*,'(A," = ",i4)') trim(reverseKey(Explicit1)),Explicit1 
+        write(*,'(A," = ",i4)') trim(reverseKey(Explicit2)),Explicit2
         write(*,'(A," = ",i4)') trim(reverseKey(filled_circular)) , filled_circular
         write(*,'(A," = ",i4)') trim(reverseKey(force_main)) , force_main
         write(*,'(A," = ",i4)') trim(reverseKey(FroudeNumber)) , FroudeNumber
@@ -687,6 +693,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(HazenWilliams)), HazenWilliams
         write(*,'(A," = ",i4)') trim(reverseKey(horseshoe)) , horseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(horiz_ellipse)) , horiz_ellipse
+        write(*,'(A," = ",i4)') trim(reverseKey(Implicit0)), Implicit0
         write(*,'(A," = ",i4)') trim(reverseKey(InDays)) , InDays
         write(*,'(A," = ",i4)') trim(reverseKey(InHours)) , InHours
         write(*,'(A," = ",i4)') trim(reverseKey(InMinutes)) , InMinutes
@@ -757,12 +764,16 @@
         write(*,'(A," = ",i4)') trim(reverseKey(NodeElemOut)) , NodeElemOut
         write(*,'(A," = ",i4)') trim(reverseKey(NodeFaceOut)) , NodeFaceOut
         write(*,'(A," = ",i4)') trim(reverseKey(notused)) , notused
+        write(*,'(A," = ",i4)') trim(reverseKey(NoOverflow)), NoOverflow
         write(*,'(A," = ",i4)') trim(reverseKey(NoRoadSurface)) , NoRoadSurface
         write(*,'(A," = ",i4)') trim(reverseKey(nStorage)) , nStorage
         write(*,'(A," = ",i4)') trim(reverseKey(orifice)) , orifice
         write(*,'(A," = ",i4)') trim(reverseKey(outlet)) , outlet
+        write(*,'(A," = ",i4)') trim(reverseKey(OverflowOrifice)), OverflowOrifice
+        write(*,'(A," = ",i4)') trim(reverseKey(OverflowWeir)), OverflowWeir
         write(*,'(A," = ",i4)') trim(reverseKey(parabolic)) , parabolic
         write(*,'(A," = ",i4)') trim(reverseKey(Paved)) , Paved
+        write(*,'(A," = ",i4)') trim(reverseKey(Ponded)) , Ponded
         write(*,'(A," = ",i4)') trim(reverseKey(power_function)) , power_function
         write(*,'(A," = ",i4)') trim(reverseKey(pump)) , pump
         write(*,'(A," = ",i4)') trim(reverseKey(Pump1Curve)) , Pump1Curve

@@ -205,21 +205,13 @@ module geometry
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM  !% time march
-            integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            integer, pointer    :: thisP(:)
-            integer, pointer    :: thisColP_CC, thisColP_Open_CC, thisColP_Closed_CC
-            integer, pointer    :: Npack
+            integer, pointer    :: thisColP_JM
         !%------------------------------------------------------------------
         !% Aliases
             select case (whichTM)
                 ! case (ALLtm)
                 case (ETM)
-                    elemPGx                => elemPGetm(:,:)
-                    npack_elemPGx          => npack_elemPGetm(:)
-                    col_elemPGx            => col_elemPGetm(:)
-                    thisColP_CC            => col_elemP(ep_JM_ETM)
-                    thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
-                    thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
+                    thisColP_JM  => col_elemP(ep_JM_ETM)
                 ! case (AC)
                 case default
                     print *, 'CODE ERROR: time march type unknown for # ', whichTM
@@ -227,6 +219,14 @@ module geometry
                     call util_crashpoint(7389)
             end select
             call util_crashstop(49872)
+
+        !% --- JB VALUES
+        !%    assign the non-volume geometry on junction branches JB based on JM head
+        !%    Values limited by full volume. Volume assigned is area * length
+        call geo_assign_JB (whichTM,thisColP_JM)
+
+        !% --- JM values
+        call geo_assign_JM (whichTM)
 
         end subroutine geometry_toplevel_JM 
 !% 
@@ -1825,7 +1825,6 @@ module geometry
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
             real(8), pointer :: sedimentDepth(:), thisTable(:,:)
             real(8), pointer :: fulltopwidth(:), breadthmax(:)
-            !real(8), pointer :: pressurehead(:)
             real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:), fullhydradius(:)
             real(8), pointer :: Atable(:), Ttable(:), Rtable(:), Stable(:)
             real(8), pointer :: grav  
@@ -1852,13 +1851,10 @@ module geometry
             depth         => elemR(:,er_Depth)
             dHdA          => elemR(:,er_dHdA)
             ellDepth      => elemR(:,er_EllDepth)
-            !ellMax        => elemR(:,er_FullEllDepth)
             head          => elemR(:,er_Head)
-            !hyddepth      => elemR(:,er_HydDepth)
             hydradius     => elemR(:,er_HydRadius)
             length        => elemR(:,er_Length)
             perimeter     => elemR(:,er_Perimeter)
-            !pressurehead  => elemR(:,er_Pressure_Head)
             sedimentDepth => elemR(:,er_SedimentDepth)
             topwidth      => elemR(:,er_Topwidth)
             velocity      => elemR(:,er_Velocity)
@@ -1868,16 +1864,11 @@ module geometry
             fullArea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_FullDepth)
             fullTopWidth  => elemR(:,er_FullTopWidth)
-            !fullhyddepth  => elemR(:,er_FullHydDepth)
             fullhydradius => elemR(:,er_FullHydRadius)
             fullperimeter => elemR(:,er_FullPerimeter)
-            !overflow      => elemR(:,er_VolumeOverFlow)
-            !slotDepth     => elemR(:,er_SlotDepth)
-            !slotVolume    => elemR(:,er_SlotVolume)
             Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
             thisSolve     => elemI(:,ei_tmType)
-            !isSlot        => elemYN(:,eYN_isPSsurcharged)
             grav => setting%Constant%gravity
         !%------------------------------------------------------------------
 
@@ -1885,22 +1876,8 @@ module geometry
             thisP  => elemP(1:Npack,thisColP_JM)
 
             !% cycle through the all the main junctions and each of its branches
-            do ii=1,Npack
-                
+            do ii=1,Npack             
                 tM => thisP(ii) !% junction main ID
-
-                ! write(chartemp,"(A,I8,A)") "        thisP_JM =",tM,'========================================='
-                ! if ((ii > 98) .and. (tM == 1606)) util_utest_CLprint(chartemp)
-
-                !% moved 20220909brh
-                ! !% if a slot present, add the slot depth and volume back to JM
-                ! if (isSlot(tM)) then
-                !     volume(tM)   = volume(tM)  + SlotVolume(tM) 
-                !     depth(tM)    = depth(tM)   + SlotDepth(tM)
-                !     head(tM)     = head(tM)    + SlotDepth(tM)
-                !     ell(tM)      = ellMax(tM)
-                !     !% Overflow(tM) = zeroR
-                ! end if 
 
                 !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
@@ -1910,32 +1887,19 @@ module geometry
                         tB = tM + kk !% junction branch ID
                         tBA(1) = tB  !% array for pure array functions
 
-                        ! write(chartemp,"(A,I8)") "        tB=",tB
-                        ! if ((ii > 98) .and. (tM == 1606)) util_utest_CLprint(chartemp)
-                        ! print *, kk, tB
-                        ! print *, BranchExists(tB)
-
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
-                            ! print *, head(tM), zBtm(tB)
-                            ! print *, kk, branchsign(kk)
-                            ! print *, velocity(tB)
-                            ! print *, Kfac(tB)
                             if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
-                                ! if (ii > 98) util_utest_CLprint('AAAA')
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
                                 !% the headloss is added to an inflow and subtracted at
                                 !% an outflow
                                 !% Note this is a time-lagged velocity as the JB velocity
                                 !% is not updated until after face interpolation                                
-                                head(tB) = head(tM) + sedimentDepth(tB)                &
+                                head(tB) = head(tM)                                    &
                                     + branchsign(kk) * sign(oneR,velocity(tB))         &
                                     * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
                                
-                                ! if (tB == 63) then 
-                                !      print *, 'AAAA in JB: head:',head(tB), zBtm(tB)
-                                ! end if
                             else
                                 !% for main head below the branch bottom entrance we assign a
                                 !% Froude number of one on an inflow to the junction main. Note
@@ -1947,15 +1911,8 @@ module geometry
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
                                     *(velocity(tB)**twoR) / (grav) 
 
-                                ! if (tB == 53) then 
-                                !         print *, 'BBBB in JB: head:',head(tB), zBtm(tB)
-                                ! end if
                             end if
 
-                            ! if (ii > 98) util_utest_CLprint('CCCC')
-                            ! if (tB == 50) then
-                            !     print *, 'head in JB ',head(tB)
-                            ! end if
 
                             !% HACK -- the above uses a Froude number argument for head(TM) < zBtm(tB)
                             !%      however, when the JB is surcharged we probably should be using the
@@ -1964,33 +1921,17 @@ module geometry
                             !% compute provisional depth
                             depth(tB) = head(tB) - (zBtm(tB) + sedimentDepth(tB))
 
-                            ! if (tB == 63) then 
-                            !     print *, 'CCCC in JB: depth:',depth(tB), setting%ZeroValue%Depth
-                            ! end if
-
-                            ! if (ii > 98) util_utest_CLprint('DDDD')
-
                             if (depth(tB) .ge. fulldepth(tB)) then
-                                ! if (ii > 98) util_utest_CLprint('EEEE')
                                 !% surcharged or incipient surcharged
                                 depth(tB)        = fulldepth(tB)
                                 area(tB)         = fullArea(tB)
-                                !hyddepth(tB)     = fullhyddepth(tB)
                                 perimeter(tB)    = fullperimeter(tB)
                                 topwidth(tB)     = setting%ZeroValue%Topwidth
                                 hydRadius(tB)    = fulldepth(tB) / fullperimeter(tB)
                                 dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
                                 ellDepth(tBA)    = llgeo_elldepth_pure(tBA)
-                                !pressurehead(tB) = zBtm(tB) + ell(tB)
-                                ! if ((ii > 98) .and. (setting%Time%Step > 37466)) then
-                                !     util_utest_CLprint('EEEE')
-                                !     print *, depth(tB)
-                                ! end if
-
-                                ! write(*,"(A,i5,10f12.5)") 'AAA ell ',tB, ell(tB), depth(tB), hydDepth(tB), fulldepth(tB)
 
                             elseif (depth(tB) .le. setting%ZeroValue%Depth) then
-                                ! if (ii > 98) util_utest_CLprint('FFFF')
                                 !% negligible depth is treated with ZeroValues
                                 depth(tB)        = setting%ZeroValue%Depth * 0.99d0
                                 area(tB)         = setting%ZeroValue%Area
@@ -2297,10 +2238,8 @@ module geometry
 
                                 ! if (ii > 98) util_utest_CLprint('KKKK')
                             end if
-                            ! if (ii > 98) util_utest_CLprint('LLLL')
                             !% --- universal computation of volume
                             volume(tB) = area(tB) * length(tB)
-                            ! if (ii > 98) util_utest_CLprint('MMMM')
                         end if
                     end do
                 end if
@@ -2316,6 +2255,93 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_assign_JB
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_assign_JM (whichTM)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Assigns depths and storage data for JM
+        !% --- our approach is to use the volume (computed from conservative Q)
+        !%     to get our functional and tabular plan areas.
+        !%
+        !%     The depth is simply the head - Zbottom, corrected for the maximum
+        !%     allowed 
+        !% 
+        !%     Note that head, depth, and volume may be slightly inconsistent
+        !%     
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: whichTM
+            integer, pointer    :: thisCol, Npack, thisP(:)
+            integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+        !%------------------------------------------------------------------
+                  !% Aliases
+            !% --- set packed column for updated elements
+            select case (whichTM)
+            case (ALLtm)
+                print *, 'CODE UNFINISHED'
+                call util_crashpoint(12109874)
+                !thisCol_JM             => col_elemP(ep_JM_ALLtm)
+            case (ETM)
+                elemPGx                => elemPGetm(:,:)
+                npack_elemPGx          => npack_elemPGetm(:)
+                col_elemPGx            => col_elemPGetm(:)
+                !thisCol_JM             => col_elemP(ep_JM_ETM)
+            case (AC)
+                print *, 'CODE UNFINISHED'
+                call util_crashpoint(2109874)
+                !thisCol_JM  => col_elemP(ep_JM_AC)
+            case default
+                print *, 'CODE ERROR: time march type unknown for # ', whichTM
+                print *, 'which has key ',trim(reverseKey(whichTM))
+                call util_crashpoint(45834)
+        end select
+
+        !% --- update the plan area and depths for functional storage
+        !    print *, 'functional storage'
+        thisCol => col_elemPGx(epg_JM_functionalStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack, thisCol)
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth) 
+            elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)                           
+        end if
+
+        !% --- update the plan area  and depths for tabular storage
+        !    print *, 'tabular storage'
+        thisCol => col_elemPGx(epg_JM_tabularStorage)
+        !print *, 'thisCol ',thisCol
+        Npack   => npack_elemPGx(thisCol)
+        !print *, 'npack ',Npack
+        !print *, elemPGx(1:Npack, thisCol)
+        if (Npack > 0) then
+            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack, thisCol)
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth) 
+            elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)  
+        end if
+
+        !% --- set plan area  and depths for implied storage to zero
+            !print *, 'implied storage'
+        thisCol => col_elemPGx(epg_JM_impliedStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            thisP => elemPGx(1:Npack, thisCol)
+            elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)
+            elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)    
+        end if
+
+    end subroutine geo_assign_JM
 !%
 !%==========================================================================
 !%==========================================================================

@@ -483,7 +483,6 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        logical :: Force_nodes_to_nJM = .false.
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
         logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
@@ -551,6 +550,7 @@ module define_settings
     ! setting%Junction
     type JunctionType
         integer :: Method = Implicit0 !% keywords Explicit1, Explicit2, Implicit0
+        logical :: ForceNodesJM = .false.
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -1249,12 +1249,7 @@ contains
 
         
     !% Discretization. =====================================================================
-        !% -- Forcing all nodes to nJM
-        !%                      Discretization.Force_nodes_to_nJM
-        call json%get('Discretization.Force_nodes_to_nJM', logical_value, found)
-        if (found) setting%Discretization%Force_nodes_to_nJM = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.Force_nodes_to_nJM not found'
-      
+
         !% -- Channel overflow
         !%                      Discretization.AllowChannelOverflowTF
         call json%get('Discretization.AllowChannelOverflowTF', logical_value, found)
@@ -1401,12 +1396,16 @@ contains
                 stop 93775
             end if
         end if
-        !rm 20220207brh
+       
+                !%                       Junction.ForceNodesJM
+        call json%get('Junction.ForceNodesJM', logical_value, found)
+        if (found) setting%Junction%ForceNodesJM = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.ForceNodesJM not found'
 
         !%                       Junction.isDynamicYN
         ! call json%get('Junction.isDynamicYN', logical_value, found)
         ! if (found) setting%Junction%isDynamicYN = logical_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Junction.isDynamicYN not found'
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.isDynamicYN not found'
 
         ! !%                       Junction.CFLlimit
         ! call json%get('Junction.CFLlimit', real_value, found)

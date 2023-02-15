@@ -662,6 +662,7 @@ module lowlevel_rk2
                 ( rh(thisP)**fourthirdsR )                         
     
         !    print *, 'in ',trim(subroutine_name)
+        !    print *, 'Gamma element values'
         !    print *, elemR(thisP,outCol)
         !    print *, ' '
         !    print *, '============================'
@@ -777,6 +778,9 @@ module lowlevel_rk2
                /                                                    &
                (twoR * length(thisP)) 
 
+        ! print *, 'in ', trim(subroutine_name)
+        ! print *, 'Gamma element updated for minor loss'
+        ! print *, elemR(thisP,inoutCol)
         ! !print *, elemR(thisP,inoutCol)
         ! print *, elemR(thisP,inoutCol)
         ! print *, ' '
