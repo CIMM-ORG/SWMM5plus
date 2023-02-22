@@ -236,7 +236,7 @@ module junction_elements
                 ! print *, ' '
                 ! print *, 'flowrates after update'
                 ! !do kk=1,max_branch_per_node
-                ! do kk=1,3
+                ! do kk=1,4
                 !     print *, 'Q : ',kk, elemR(thisJM(mm)+kk,er_Flowrate)
                 ! end do
 
@@ -272,11 +272,15 @@ module junction_elements
                 ! print *, 'starting conservation resid flows '
                 ! print *, QnetIn, QnetOut, elemR(thisJM(mm),er_FlowrateLateral)
 
-                if (elemR(thisJM(mm),er_FlowrateLateral) .ge. zeroR) then 
-                    QnetIn = QnetIn + elemR(thisJM(mm),er_FlowrateLateral)
-                else
-                    QnetOut = QnetOut + elemR(thisJM(mm),er_FlowrateLateral)
-                end if
+                !% DO NOT USE THIS -- we do not adjust the lateral inflow rate, so its not included
+                ! if (elemR(thisJM(mm),er_FlowrateLateral) .ge. zeroR) then 
+                !     QnetIn = QnetIn + elemR(thisJM(mm),er_FlowrateLateral)
+                ! else
+                !     QnetOut = QnetOut + elemR(thisJM(mm),er_FlowrateLateral)
+                ! end if
+
+                ! print *, 'QnetIn and Out ',QnetIn, QnetOut
+                ! print *, ' '
 
 
                 call junction_fix_conservation(thisJM(mm),resid, Qoverflow, Qstorage, QnetIn, QnetOut)
@@ -958,6 +962,7 @@ module junction_elements
         ! print *, abs(resid), localEpsilon
 
         if (abs(resid) > localEpsilon) then 
+            print *, 'resid ',resid
             print *, 'CODE ERROR: unexpected volume residual'
             call util_crashpoint(6109873)
             return 
