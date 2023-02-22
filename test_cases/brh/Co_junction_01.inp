@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             08:00:00
+END_TIME             00:03:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -68,8 +68,8 @@ C2                N2                O4                1500       0.0333       0 
 [XSECTIONS]
 ;;Link           Shape        Diameter           Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1                RECT_CLOSED    5                   1           0          0           1                   
-C2                RECT_CLOSED    5                   1           0          0           1                   
+C1                  CIRCULAR    4                   0           0          0           1                   
+C2                  CIRCULAR    4                   0           0          0           1                   
 ;;C3                CIRCULAR    4                   0           0          0           1        
 
 [LOSSES]

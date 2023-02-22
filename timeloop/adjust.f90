@@ -522,26 +522,28 @@ module adjust
             integer, pointer :: elemType(:)
             real(8), pointer :: depth0
             real(8), pointer :: eDepth(:)
+            real(8) :: lowcutoff
         !%------------------------------------------------------------------
         !% Aliases
             elemType     => elemI(:,ei_elementType)       
             eDepth       => elemR(:,er_Depth)
 
             if (isZero) then
+                !% -- zero depth logical
                 depth0     => setting%ZeroValue%Depth
-                thisDepth  => elemYN(:,eYN_isZeroDepth)
-                otherDepth => elemYN(:,eYN_isSmallDepth)
+                lowcutoff  = -huge(0.0d0)
+                thisDepth  => elemYN(:,eYN_isZeroDepth)                
             else
+                !% --- small depth logical
                 depth0     => setting%SmallDepth%DepthCutoff
-                otherDepth => elemYN(:,eYN_isZeroDepth)
+                lowcutoff  = setting%ZeroValue%Depth
                 thisDepth  => elemYN(:,eYN_isSmallDepth)
             endif
         !%------------------------------------------------------------------
 
         where (elemType .eq. elementType)
-            where (eDepth .le. depth0)
+            where ((eDepth .le. depth0) .and. (eDepth > lowcutoff))
                 thisDepth  = .true.
-                otherDepth = .false.
             elsewhere
                 thisDepth  = .false.
             endwhere
@@ -923,13 +925,14 @@ module adjust
 
             ! print *, ' '
             ! print *, 'in adjust_zerodepth_face-fluxes'
+            ! print *, 'fup, fdn ',fup(15), fdn(15)
 
         !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
         fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
 
-        ! print *, 'AAA   fQ ',fQ(33), fQ(42)
+            ! print *, 'AAA   fQ ',fQ(5),fQ(14)
 
             ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
 
@@ -941,7 +944,8 @@ module adjust
         ! print *, 'fQ(fup) ',fQ(fup(thisP)) 
         ! print *, 'fQ(fdn) ',fQ(fdn(thisP))
 
-        ! print *, 'BBB   fQ ',fQ(33), fQ(42)
+
+            ! print *, 'BBB   fQ ',fQ(5), fQ(14)
 
             ! ! ! call util_utest_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
 
@@ -1195,6 +1199,12 @@ module adjust
         npack => npack_elemP(thisCol)
         if (npack > 0) then
             thisP  => elemP(1:npack,thisCol)
+
+            ! print *, ' '
+            ! print *, ' in small depth face flux adjust'
+            ! print *, elemQ(31), faceQ(fdn(31))
+            ! print *, faceQ(fup(31))
+            
         
             where (elemQ(thisP) .ge. zeroR)
                 !% --- flow in downstream direction
@@ -1215,13 +1225,17 @@ module adjust
                 faceQ(fup(thisP)) = max(faceQ(fup(thisP)), -elemVol(thisP) / (threeR * dt))
             endwhere
 
+
+            ! print *, 'after 1st step'
+            ! print *, faceQ(fup(31))
+
             !% 20220531brh
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
             call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
 
-            ! print *, 'face Q after second step'
-            ! print *, faceQ(fdn(thisP))
+            ! print *, 'face Qup after second step'
+            ! print *, faceQ(fup(31))
 
             if (ifixQCons) then
                 !% update the conservative face Q

@@ -25,7 +25,7 @@ module timeloop
               interface_get_groundwater_inflow
     use utility_crash
     use control_hydraulics, only: control_update
-    ! use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -73,7 +73,7 @@ contains
         endTime     = setting%Time%End
         reportStart = setting%Output%Report%StartTime 
 
-        ! print *, 'Starting timeloop toplevel '
+        !print *, 'Starting timeloop toplevel '
 
         !% --- set spinup controls and call spinup
         call tl_spinup()
@@ -97,15 +97,15 @@ contains
             setting%Time%WallClock%LastStepStored = setting%Time%Step
         end if 
 
-        ! print *, 'CCC '
+        !print *, 'CCC '
         !% --- initialize the time settings for hydraulics and hydrology steps
         call tl_initialize_loop (doHydraulicsStepYN, doHydrologyStepYN, .false.)
 
-        ! print *, 'DDD '
+        !print *, 'DDD '
         !-- perform the time-marching loop
         call tl_outerloop (doHydrologyStepYN, doHydraulicsStepYN, .false., .false.)
 
-        ! print *, 'EEE '
+       ! print *, 'EEE '
 
         sync all
         !% --- close the timemarch time tick
@@ -114,7 +114,7 @@ contains
             setting%Time%WallClock%TimeMarchEnd= cval
         end if
 
-        ! print *, 'FFF '
+        !print *, 'FFF '
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -272,7 +272,7 @@ contains
         do while (setting%Time%Now <= setting%Time%End - dtTol)
                 ! print *, ' '
                 ! print * , '==========================================================================='
-                ! print *, 'top of tl_outerloop loop at time ',setting%Time%Now
+                !print *, 'top of tl_outerloop loop at time ',setting%Time%Now
                 ! print *, ' '
                     ! call util_utest_CLprint ('top of tl_outerloop')
 
@@ -387,7 +387,7 @@ contains
 
                     call tl_hydraulics()
                 
-                    ! print *, 'out of tl_hydraulics'
+                    !print *, 'out of tl_hydraulics'
 
                     ! print *, '4 nextHydrologyTime ', setting%Time%Hydrology%NextTime
                     ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
@@ -1264,6 +1264,8 @@ contains
             !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,oldDT)
             thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,oldDT)
 
+            
+
                 ! print *, ' '
                 ! print *, 'baseline CFL, minCFL, this step: '
                 ! print *, thisCFL, minCFL, stepNow
@@ -1274,24 +1276,24 @@ contains
                 newDT = oldDT * targetCFL / thisCFL
                 lastCheckStep = stepNow
 
-                ! print *, 'Adjust DT for high CFL    ',newDT   
+                !  print *, 'Adjust DT for high CFL    ',newDT   
 
             else 
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
                 if (stepNow >= lastCheckStep + checkStepInterval) then
-                  ! print *, '------------------------------------------------------------------------------'
-                  ! print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
+                !   print *, '------------------------------------------------------------------------------'
+                !   print *, 'checking step: ',stepNow ,lastCheckStep, checkStepInterval
 
                     !% --- check for low CFL only on prescribed intervals and increase time step
                     if (thisCFL .le. minCFL) then
                         !% --- for really small CFL, the new DT could be unreasonably large (or infinite)
                         !%     so use a value based on inflows to fill to small volume
-                       !print *, 'vanishing CFL'
+                            ! print *, 'vanishing CFL'
                         call tl_dt_vanishingCFL(newDT)
 
                     elseif ((minCFL < thisCFL) .and. (thisCFL .le. maxCFLlow)) then
                         !% --- increase the time step and reset the checkStep Counter
-                       !print *, 'lowCFL'
+                            !    print *, 'lowCFL'
                         newDT = OldDT * targetCFL / thisCFL 
                     else
                         !% -- for maxCFLlow < thisCFL < maxCFL do nothing
@@ -1325,7 +1327,7 @@ contains
 
         !% --- limit by inflow/head external boundary conditions time intervals
         if (setting%VariableDT%limitByBC_YN) then
-            !print *, 'here limiting DT by BC ',newDT, setting%BC%smallestTimeInterval
+            ! print *, 'here limiting DT by BC ',newDT, setting%BC%smallestTimeInterval
             newDT = min(setting%BC%smallestTimeInterval,newDT)
         end if
 
@@ -1351,6 +1353,7 @@ contains
                     ! print *, 'rounding small    ',newDT   
             elseif ((newDT > onetenthR) .and. (newDT .le. oneR)) then
                 newDT = real(floor(newDT * onehundredR),) / onehundredR
+                    ! print *, 'rounding smaller  ',newDT
             else 
                 !% do not round smaller values
             end if
@@ -1384,7 +1387,7 @@ contains
 
         if (newDT < 0.01d0) then 
             print *, 'ERROR: time step has dropped below 0.01 s. need to investigate!'
-            stop 7798734
+            call util_crashpoint(119874)
         end if
 
         !% increment the hydraulics time clock
@@ -1732,7 +1735,7 @@ contains
             real(8), pointer    :: thisDT
             integer, pointer :: Npack, thisP(:)
             real(8), pointer :: velocity(:), wavespeed(:), length(:), PCelerity(:)
-            integer :: itemp(1), ip, fup, fdn, eup, edn
+            integer :: itemp(1), ip, fup, fdn, eup, edn, ii
         !%-------------------------------------------------------------------
             Npack              => npack_elemP(thisCol)
             thisP              => elemP(1:Npack,thisCol)
@@ -1750,6 +1753,19 @@ contains
             ! print *, ' '
             ! print *, 'in tl_get_max_cfl, Npack = ', Npack
 
+            ! print *, ' element type '
+            ! print *, elemI(thisP,ei_elementType)
+            ! print *, trim(reverseKey(elemI(thisP(1),ei_elementType)))
+
+            ! print *, 'depth '
+            ! print *, elemR(thisP,er_Depth)
+            ! do ii=1,size(thisP)
+            !     print *, thisP(ii),elemR(thisP(ii),er_Depth)
+            ! end do
+
+            ! print *, 'head '
+            ! print *, elemR(thisP,er_Head)
+
             ! print *, 'thisP '
             ! print *, thisP
             ! print *, ' '
@@ -1761,7 +1777,7 @@ contains
             ! print *, wavespeed(thisP)
             ! print *, ' '
             ! print *, 'Preiss C  '
-            ! ! print *, PCelerity(thisP)
+            ! print *, PCelerity(thisP)
             ! print *, ' '
             ! print *, 'max values'
             ! print *, maxval(velocity(thisP)), maxval(wavespeed(thisP)) , maxval(PCelerity(thisP))

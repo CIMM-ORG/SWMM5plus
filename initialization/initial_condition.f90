@@ -346,7 +346,7 @@ contains
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
-        call face_interpolation (fp_all,ALLtm,.false.)
+        call face_interpolation (fp_all,ALLtm,.false.,.false.,.false.)
 
             ! call util_utest_CLprint ('initial_condition after face_interpolation')
 

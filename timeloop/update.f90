@@ -9,8 +9,8 @@ module update
     use storage_geometry, only: storage_plan_area_from_volume
     use utility_profiler
     use utility_crash
-    !use utility, only: util_utest_CLprint, util_syncwrite
-    !use utility_unit_testing, only: util_utest_CLprint
+    !use utility, only: util_syncwrite 
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -67,8 +67,12 @@ module update
         !% NOTE -- not calling the adjust_limit_velocity_max here as it has
         !% already been done in RK2 step
 
+            ! call util_utest_CLprint ('------- BBB02  in update_auxiliary_variables_CC')
+
         !% --- Compute the flowrate on CC.
         call update_element_flowrate (thisCol_CC)
+
+            ! call util_utest_CLprint ('------- BBB03  in update_auxiliary_variables_CC')
 
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
@@ -97,6 +101,7 @@ module update
             real(8), pointer :: hL(:), Hup(:), Hdn(:), Vup(:), Vdn(:), grav
             real(8), pointer :: psiL(:), beta(:), Qelem(:)
             real(8) :: Qepsilon
+            integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries
             Npack => npack_elemP(thisCol)
@@ -141,15 +146,22 @@ module update
         hL(thisP) = Hdn(fup(thisP)) - Hup(fdn(thisP)) &
             + onehalfR * ( (Vdn(fup(thisP))**2) - (Vup(fdn(thisP))**2) ) / grav
 
+        ! print *, ' '
+        ! print *, 'headloss ',hL(2:3)
+
         !% --- error checking
         !%     head loss, which is + for nominal downstream flow,
         !%     should also be the same sign for Q, so their product should be 
-        !%     greater than zero
+        !%     greater than zero. In some dynamic cases this may not be true.
+        !%     When this happens we set hL = 0 so that psiL = 0
         if (any((Qelem(thisP) * hL(thisP)) < zeroR)) then 
-            print *, 'CODE ERROR'
-            print *, 'Unexpected mismatch between flowrate direction and head loss'
-            print *, 'Likely bug in code'
-            call util_crashpoint(6298723)
+            where ((Qelem(thisP) * hL(thisP)) < zeroR)
+                hL(thisP) = zeroR
+            endwhere
+            ! print *, 'CODE ERROR'
+            ! print *, 'Unexpected mismatch between flowrate direction and head loss'
+            ! print *, 'Likely bug in code'
+            ! call util_crashpoint(6298723)
         end if
 
         !% --- compute the 2 \beta * psi * L term
@@ -158,6 +170,12 @@ module update
         elsewhere
             psiL(thisP) = zeroR 
         endwhere
+
+        ! print *, ' '
+        ! print *, 'thisP ',thisP
+        ! print *, 'beta   ',beta(2:3)
+        ! print *, 'psiL   ',psiL(2:3)
+        ! print *, 'Qelem2 ',Qelem(2:3)**2
 
     end subroutine update_element_psi_CC    
 !%
@@ -232,6 +250,8 @@ module update
 
         !% --- geometry for both JM and JB
         call geometry_toplevel_JM (whichTM)  
+       
+            ! call util_utest_CLprint ('------- in update after geometry_toplevel_JM')
         
         !% --- compute element Froude number for JB
         call update_Froude_number_JB (thisCol_JM) 
@@ -267,12 +287,12 @@ module update
         !%------------------------------------------------------------------
         !%
 
-             ! call util_utest_CLprint ('in update before geometry toplevel')
+             ! ! call util_utest_CLprint ('in update before geometry toplevel')
         
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel (whichTM)
 
-             ! call util_utest_CLprint ('in update before adjust_limit_velocity_max')
+             ! ! call util_utest_CLprint ('in update before adjust_limit_velocity_max')
 
              !stop 1098734
 
@@ -280,7 +300,7 @@ module update
         call adjust_limit_velocity_max_CC (whichTM)
         call util_crashstop(21987)
 
-            ! call util_utest_CLprint ('in update before update_CC_element_flowrate')
+            ! ! call util_utest_CLprint ('in update before update_CC_element_flowrate')
 
         !% --- set packed column for updated elements
         select case (whichTM)
@@ -304,37 +324,37 @@ module update
         !%     The JB flowrate is not updated until after face interpolation
         call update_element_flowrate (thisCol_CC)
 
-            ! call util_utest_CLprint ('in update before update_Froude_number_element')
+            ! ! call util_utest_CLprint ('in update before update_Froude_number_element')
 
         !% --- compute element Froude numbers for CC
         call update_Froude_number_element (thisCol_CC)
 
-             ! call util_utest_CLprint ('in update before CC wavespeed')
+             ! ! call util_utest_CLprint ('in update before CC wavespeed')
 
         !% --- compute the wave speeds
         call update_wavespeed_element(thisCol_CC)
 
-            ! call util_utest_CLprint ('in update before JM wavespeed')
+            ! ! call util_utest_CLprint ('in update before JM wavespeed')
 
         call update_wavespeed_element(thisCol_JM)
 
-            ! call util_utest_CLprint ('in update before CC interpweights')
+            ! ! call util_utest_CLprint ('in update before CC interpweights')
 
         !% --- compute element-face interpolation weights on CC
         call update_interpweights_CC(thisCol_CC, whichTM)
 
-            ! call util_utest_CLprint ('in update before JB interpweights')
+            ! ! call util_utest_CLprint ('in update before JB interpweights')
 
         !% --- compute element-face interpolation weights on JB
         call update_interpweights_JB (thisCol_JM)
 
         
-            ! call util_utest_CLprint ('in update before update Froude Number Junction Branch')
+            ! ! call util_utest_CLprint ('in update before update Froude Number Junction Branch')
 
         !% --- compute element Froude number for JB
         call update_Froude_number_JB (thisCol_JM) 
 
-            ! call util_utest_CLprint ('in update before update BCoutlet_flowrate')
+            ! ! call util_utest_CLprint ('in update before update BCoutlet_flowrate')
 
         !% --- not needed 20220716brh
         !% --- flow values on an BC outlet face 20220714brh
@@ -375,20 +395,20 @@ module update
         ! print *, 'in ',trim(subroutine_name)
         ! print *, flowrate(1), area(1), velocity(1)
 
-        ! ! ! call util_utest_CLprint ('in update element Flowrate A')
+        ! call util_utest_CLprint ('in update element Flowrate A')
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
 
-            ! ! ! call util_utest_CLprint ('in update element Flowrate B')
+            ! call util_utest_CLprint ('in update element Flowrate B')
 
             !% --- limit flowrate by the full value (if it exists)
             where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
                 flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
             end where
             
-            ! ! ! call util_utest_CLprint ('in update element Flowrate C')
+            ! call util_utest_CLprint ('in update element Flowrate C')
         end if
 
         ! print *, flowrate(139), area(139), velocity(139)
@@ -491,6 +511,7 @@ module update
             grav      => setting%constant%gravity
         !%------------------------------------------------------------------
 
+       ! print *, 'in update wavespeed element'    
         
         !% wavespeed at modified hydraulic depth (ell) 
         wavespeed(thisP) = sqrt(grav * ellDepth(thisP))

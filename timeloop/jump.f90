@@ -150,7 +150,11 @@ module jump
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_upstream
+
+            !print *, 'jump from upstream ',thisP
         end if
+
+
 
         !% count the number of faces with reverse flow and a jump from 
         !% downstream (supercritical) to upstream (subcritical)
@@ -191,6 +195,8 @@ module jump
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_downstream
+
+            !print *, 'jump from downstream ',thisP
         end if
 
     end subroutine jump_face_identify

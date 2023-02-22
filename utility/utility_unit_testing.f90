@@ -44,15 +44,38 @@ contains
 
             integer  :: tE, tFu, tFd
 
-            !% --- selected elements for KNa5
-                                 
-            integer :: iet(7) = (/29, 30,   32, 31, 33,   42 ,  43 /)
-            integer :: ift(4) = (/  30,  31,            32 , 41  /)
+            !integer ::  iet(7) = (/ 2, 3, 5, 4, 6, 15,  16/)
+            !integer ::  ift(4) = (/   3, 4,       5 , 14/)     
+
+            !integer :: iet(7) = (/ 18,  19,   21, 20, 22,     31  ,  32/)
+            !integer :: ift(4) = (/   19,    20          , 21,    30 /)
 
 
 
+            ! integer :: iet(7) = (/  31  , 32,    33,   34,    35,   36 ,37   /)
+             !integer :: ift(4) = (/     30,    31,     34 , 35/)
+
+            !integer :: iet(7) = (/ 37, 38, 39, 40, 41,   42,  43 /)
+            !integer :: ift(4) = (/   37, 38,          40,   41 /)
+
+            !integer :: iet(7) = (/43, 44, 45, 46, 47, 48, 49 /)
+            !integer :: ift(4) = (/   37, 38,          40,   41 /)
+
+            !integer :: iet(7) = (/55,   56,   57,  58,   59,   60,    61 /)
+            !integer :: ift(6) = (/   54,   55 ,  56,  57,    58,   59/)
+
+            !% extran1_rect_open_001 and 002
+            !integer :: iet(9) = (/   18,  19,   21, 20,  22, 31, 32,  33,  34/)
+            !integer :: ift(6) = (/      19 , 20,            21, 30, 31, 32  /)
 
 
+            !% extran1_rect_open_002
+            ! integer :: iet(7) = (/ 21,  20, 22,  31,  32,   33,   34, 35,  36,  37,  38,  39,   40/)
+            ! integer :: ift(6) = (/   21,  31,   32 ,  33,  34,  35,  36,  37,  38  /)
+
+         !% extran1_rect_open_final
+            integer :: iet(9) = (/18,  19,   21,  20,  22,    134,     135,    136,  137 /)
+            integer :: ift(6) = (/  19,   20 ,              21,    132,     133,   134/)
 
 
         !%------------------------------------------------------------------
@@ -67,31 +90,28 @@ contains
             grav => setting%Constant%gravity
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
-      
+
+         !if (setting%Time%Step < 2700) return
+
         !% --- USEFUL HEADER -----------------------------------------------
             print *, ' '
             write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
             write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
             '; dt = ',setting%Time%Hydraulics%Dt,&
             '; time = ',setting%Time%Now / 60.d0, ' min'       !   print *, ' '
-            !   print *, 'up, face:    ',elemI(iet,ei_Mface_uL)
-            !   print *, 'dn  face:    ',elemI(iet,ei_Mface_dL)
-            !   print *, ' '
-            !   print *, 'up elem      ',faceI(ift,fi_Melem_uL)
-            !   print *, 'dn elem      ',faceI(ift,fi_Melem_dL)
-            !   print *, ' '
-         
 
+         !      print *, 'up, face:    ',elemI(iet,ei_Mface_uL)
+         !      print *, 'dn  face:    ',elemI(iet,ei_Mface_dL)
+         !      print *, ' '
+         !      print *, 'up elem      ',faceI(ift,fi_Melem_uL)
+         !      print *, 'dn elem      ',faceI(ift,fi_Melem_dL)
+         !      print *, ' '
+   
+         !  stop 2098374
 
-            !  stop 4098734
-         !%------------------------------------------------------------------
-
-           ! print *, 'elemRDepth ',elemR(:,er_Depth)
-
-            !print *, 'elemRFroud ',elemR(:,er_FroudeNumber)
-
-            !if (setting%Time%Step==100) stop 698734
-         !return
+            ! print *, ' '
+            ! print *, 'lateral inflow 20', elemR(20,er_FlowrateLateral)
+            ! print *, ' '
 
             ! do ii=1,N_elem(1)
             !    if (elemI(ii,ei_elementType) == CC) then
@@ -130,6 +150,43 @@ contains
             !    end if
             ! end do
 
+            ! print *, 'branches and elements'
+            ! do ii=1,N_elem(1)
+            !    if (elemI(ii,ei_elementType) == CC) then
+            !       if (faceI(fup(ii),fi_BCType) == BCup) then 
+            !          write(*,"(A, i5, A)"), 'fbcU', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
+            !       end if
+            !          write(*,"(A, i5, A)"), 'fup ', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
+            !          write(*,"(A, i5,A)"), 'e   ', ii,            '             '//trim(reverseKey(elemI(    ii ,ei_elementType)))
+            !          write(*,"(A, i5,A)"), 'fdn ', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+            !       if (faceI(fup(ii),fi_BCType) == BCdn) then
+            !          write(*,"(A, i5, A)"), 'fbcD', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+            !       end if 
+            !    elseif (elemI(ii,ei_elementType) == JM) then
+            !       !% upstream branches
+            !       do jj=1,max_branch_per_node,2
+            !          if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneR) then
+            !             write(*,"(A, i5,  A)"),     'fup ', fup(ii+jj),  '             '//trim(reverseKey(faceI(fup(ii+jj),fi_BCType)))
+            !             write(*,"(A, i5, A, i5)"), 'eJB ', ii+jj,      '             JB ',   elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
+            !          end if
+            !       end do
+            !       !%  JM
+            !             write(*,"(A, i5, A)"),      'eJM ', ii,  ' '//trim(reverseKey(elemI(ii,ei_elementType)))
+            !       !% downstream branches
+            !       do jj=2,max_branch_per_node,2
+            !          if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneR) then
+            !             write(*,"(A, i5,  A, i5)"), 'eJB ', ii+jj     ,  '            JB ', elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
+            !             write(*,"(A, i5, A)"),     'fdn ', fdn(ii+jj),  '               '//trim(reverseKey(faceI(fdn(ii+jj),fi_BCType)))
+            !          end if
+            !       end do
+            !    elseif ((elemI(ii,ei_elementType) == JB) ) then
+            !       ! skip
+            !    else 
+            !       print *, 'unexpected element type '
+            !       print *, trim(reverseKey(elemI(ii,ei_elementType)))
+            !       stop 77873
+            !    end if
+            ! end do
             ! stop 239874
             ! return
 
@@ -189,10 +246,98 @@ contains
   
       !   return
 
-            write(*,"(A9,16A11)"),' ','elem','face','elem','face','jb','JM','jb','face','elem','face','elem'
-            
+      write(*,"(A,L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A,   L3, A,A,  L3, A,A, L3, A, A, L3)"),&
+      'Zero           ',&
+      elemYN(iet(1),eYN_isZeroDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(2),eYN_isZeroDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(3),eYN_isZeroDepth),&
+      '    ', &
+      '    ', &
+      elemYN(iet(4),eYN_isZeroDepth),&
+      '    ', &
+      '    ', &
+      elemYN(iet(5),eYN_isZeroDepth),&
+      '        ', &
+      '        ', &
+      elemYN(iet(6),eYN_isZeroDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(7),eYN_isZeroDepth ),&
+      '         ', &
+      '         ', &
+      elemYN(iet(8),eYN_isZeroDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(9),eYN_isZeroDepth)
 
-      write(*,"(A,16f11.3)") '     H    '  ,          &
+
+
+      write(*,"(A,L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A,   L3, A,A,  L3, A,A, L3, A, A, L3, A,A, L3)"),&
+      'Small          ',&
+      elemYN(iet(1),eYN_isSmallDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(2),eYN_isSmallDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(3),eYN_isSmallDepth),&
+      '    ', &
+      '    ', &
+      elemYN(iet(4),eYN_isSmallDepth),&
+      '    ', &
+      '    ', &
+      elemYN(iet(5),eYN_isSmallDepth),&
+      '        ', &
+      '        ', &
+      elemYN(iet(6),eYN_isSmallDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(7),eYN_isSmallDepth), &
+      '         ', &
+      '         ', &
+      elemYN(iet(8),eYN_isSmallDepth),&
+      '          ', &
+      '          ', &
+      elemYN(iet(9),eYN_isSmallDepth)
+
+      write(*,"(A9,20A11)"),' ','elem','face','elem','face','jb','JM','jb','face','elem','face','elem','face','elem','face','elem'
+      !write(*,"(A9,16A11)"),' ','elem','face','elem','face','elem','face','elem','face','elem','face','elem','face','elem'
+            
+      write(*,"(A,20f11.4)") '     D    '  ,          &
+      elemR(iet(1),er_Depth), &
+      faceR(ift(1),fr_Depth_d), &
+      elemR(iet(2),er_Depth), &
+      faceR(ift(2),fr_Depth_d), &
+      elemR(iet(3),er_Depth),&
+      elemR(iet(4),er_Depth),&
+      elemR(iet(5),er_Depth),&
+      faceR(ift(3),fr_Depth_d), &
+      elemR(iet(6),er_Depth), &
+      faceR(ift(4),fr_Depth_d), &
+      elemR(iet(7),er_Depth), &
+      faceR(ift(8),fr_Depth_d), &
+      elemR(iet(6),er_Depth), &
+      faceR(ift(6),fr_Depth_d), &
+      elemR(iet(9),er_Depth)
+
+      ! write(*,"(A,16e11.3)") '     A    '  ,          &
+      ! elemR(iet(1),er_Area), &
+      ! faceR(ift(1),fr_Area_d), &
+      ! elemR(iet(2),er_Area), &
+      ! faceR(ift(2),fr_Area_d), &
+      ! elemR(iet(3),er_Area),&
+      ! elemR(iet(4),er_Area),&
+      ! elemR(iet(5),er_Area),&
+      ! faceR(ift(3),fr_Area_d), &
+      ! elemR(iet(6),er_Area), &
+      ! faceR(ift(4),fr_Area_d), &
+      ! elemR(iet(7),er_Area)
+
+      write(*,"(A,20f11.3)") '     H    '  ,          &
       elemR(iet(1),er_Head), &
       faceR(ift(1),fr_Head_d), &
       elemR(iet(2),er_Head), &
@@ -203,10 +348,30 @@ contains
       faceR(ift(3),fr_Head_d), &
       elemR(iet(6),er_Head), &
       faceR(ift(4),fr_Head_d), &
-      elemR(iet(7),er_Head)
+      elemR(iet(7),er_Head), &
+      faceR(ift(5),fr_Head_d), &
+      elemR(iet(8),er_Head), &
+      faceR(ift(6),fr_Head_d), &
+      elemR(iet(9),er_Head)
 
+       write(*,"(A,20f11.3)") 'Zbottom   '  ,          &
+      elemR(iet(1),er_Zbottom), &
+      faceR(ift(1),fr_Zbottom), &
+      elemR(iet(2),er_Zbottom), &
+      faceR(ift(2),fr_Zbottom), &
+      elemR(iet(3),er_Zbottom),&
+      elemR(iet(4),er_Zbottom),&
+      elemR(iet(5),er_Zbottom),&
+      faceR(ift(3),fr_Zbottom), &
+      elemR(iet(6),er_Zbottom),&
+      faceR(ift(4),fr_Zbottom), &
+      elemR(iet(7),er_Zbottom), &
+      faceR(ift(5),fr_Zbottom), &
+      elemR(iet(8),er_Zbottom),&
+      faceR(ift(6),fr_Zbottom), &
+      elemR(iet(9),er_Zbottom)
 
-      write(*,"(A,16f11.3)") '     Q    '  ,          &
+      write(*,"(A,20f11.3)") '     Q    '  ,          &
       elemR(iet(1),er_Flowrate), &
       faceR(ift(1),fr_Flowrate), &
       elemR(iet(2),er_Flowrate), &
@@ -217,7 +382,81 @@ contains
       faceR(ift(3),fr_Flowrate), &
       elemR(iet(6),er_Flowrate),&
       faceR(ift(4),fr_Flowrate), &
-      elemR(iet(7),er_Flowrate)
+      elemR(iet(7),er_Flowrate),&
+      faceR(ift(5),fr_Flowrate), &
+      elemR(iet(8),er_Flowrate),&
+      faceR(ift(6),fr_Flowrate), &
+      elemR(iet(9),er_Flowrate)
+
+      ! write(*,"(A,16e11.3)") '   FR     '  ,          &
+      ! elemR(iet(1),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(2),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(3),er_FroudeNumber),&
+      ! 0.0d0, &
+      ! elemR(iet(4),er_FroudeNumber),&
+      ! 0.0d0, &
+      ! elemR(iet(5),er_FroudeNumber),&
+      ! 0.0d0, &
+      ! elemR(iet(6),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(7),er_FroudeNumber) 
+
+      
+      write(*,"(A,16f11.3)") '   Vel up '  ,          &
+      elemR(iet(1),er_Velocity), &
+      faceR(ift(1),fr_Velocity_u), &
+      elemR(iet(2),er_Velocity), &
+      faceR(ift(2),fr_Velocity_u), &
+      elemR(iet(3),er_Velocity),&
+      elemR(iet(4),er_Velocity),&
+      elemR(iet(5),er_Velocity),&
+      faceR(ift(3),fr_Velocity_u), &
+      elemR(iet(6),er_Velocity), &
+      faceR(ift(4),fr_Velocity_u), &
+      elemR(iet(7),er_Velocity), &
+      faceR(ift(5),fr_Velocity_u), &
+      elemR(iet(8),er_Velocity), &
+      faceR(ift(6),fr_Velocity_u), &
+      elemR(iet(9),er_Velocity)
+
+      write(*,"(A,16f11.3)") '   Vel dn '  ,          &
+      elemR(iet(1),er_Velocity), &
+      faceR(ift(1),fr_Velocity_d), &
+      elemR(iet(2),er_Velocity), &
+      faceR(ift(2),fr_Velocity_d), &
+      elemR(iet(3),er_Velocity),&
+      elemR(iet(4),er_Velocity),&
+      elemR(iet(5),er_Velocity),&
+      faceR(ift(3),fr_Velocity_d), &
+      elemR(iet(6),er_Velocity), &
+      faceR(ift(4),fr_Velocity_d), &
+      elemR(iet(7),er_Velocity), &
+      faceR(ift(5),fr_Velocity_d), &
+      elemR(iet(8),er_Velocity), &
+      faceR(ift(6),fr_Velocity_d), &
+      elemR(iet(9),er_Velocity)
+
+     ! if (setting%Time%Step==2723) stop 698734
+
+
+      ! if (setting%Time%Step == 1160) stop 39873
+
+      ! write(*,"(A,16e11.3)") '2BpsiL    '  ,          &
+      ! elemR(iet(1),er_2B_psiL), &
+      ! faceR(ift(1),fr_2B_psiL), &
+      ! elemR(iet(2),er_2B_psiL), &
+      ! faceR(ift(2),fr_2B_psiL), &
+      ! elemR(iet(3),er_2B_psiL),& 
+      ! elemR(iet(4),er_2B_psiL),&
+      ! elemR(iet(5),er_2B_psiL),&
+      ! faceR(ift(3),fr_2B_psiL), &
+      ! elemR(iet(6),er_2B_psiL),&
+      ! faceR(ift(4),fr_2B_psiL), &
+      ! elemR(iet(7),er_2B_psiL)
+
+
 
       ! write(*,"(A,16e11.3)") 'IW_uQ     '  ,          &
       ! elemR(iet(1),er_Interpweight_uQ), &
@@ -249,7 +488,7 @@ contains
       ! print *, ' '
       ! print *, faceR(ift(2),fr_Flowrate)
             
-      if (setting%Time%Step==2) stop 698734
+      
 
       ! write(*,"(24A)") '                 ',&
       ! trim(reverseKey(elemI(iet(1),ei_elementType))),&
@@ -274,36 +513,7 @@ contains
       ! '               '
 
 
-      ! write(*,"(A,L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A,   L3, A,A,  L3, A,A,A, L3, A, L3)"), '               ',&
-      ! elemYN(iet(1),eYN_isZeroDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(2),eYN_isZeroDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(3),eYN_isZeroDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(4),eYN_isZeroDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(5),eYN_isZeroDepth)
 
-
-      ! write(*,"(A,L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A, L3, A,A,   L3, A,A,  L3, A,A,A, L3, A, L3)"), '               ',&
-      ! elemYN(iet(1),eYN_isSmallDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(2),eYN_isSmallDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(3),eYN_isSmallDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(4),eYN_isSmallDepth),&
-      ! '               ', &
-      ! '               ', &
-      ! elemYN(iet(5),eYN_isSmallDepth)
 
       ! ! write(*,"(45A)") '           ',&
       ! ! trim(link%Names(elemI(iet(1),ei_link_Gidx_SWMM))%str), &

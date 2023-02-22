@@ -375,6 +375,9 @@ contains
            !print *, 'zero depth ',setting%ZeroValue%Depth
 
 
+        ! print *, elemR(93,er_WaveSpeed), elemR(93,er_EllDepth) 
+        ! print *, elemR(93,er_Depth), elemR(93,er_Zbottom), elemR(93,er_Head)
+        ! stop 550987
 
 
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM

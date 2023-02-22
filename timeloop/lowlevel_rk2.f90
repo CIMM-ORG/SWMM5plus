@@ -564,20 +564,21 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! print *, 'faces: ',iup(2189), idn(2189)
-        ! print *,  fQ(iup(2189)), fUdn(iup(2189))
-        ! print *, '1st term ',fQ(iup(2189)) * fUdn(iup(2189))
-        ! print *, '2nd term ',-fQ(idn(2189)) * fUup(idn(2189))
-        ! print *, 'balance of 1-2 ',fQ(iup(2189)) * fUdn(iup(2189)) - fQ(idn(2189)) * fUup(idn(2189))
-        ! print *, 'pieces ',fQ(iup(2189)), fUdn(iup(2189))
-        ! print *, 'pieces ',fQ(idn(2189)), fUup(idn(2189))
-        ! print *, 'pieces ',fAdn(iup(2189)) , fHdn(iup(2189))
-        ! print *, 'pieces ',fAup(idn(2189)) , fHup(idn(2189))
-        ! print *, '3rd term ',fAdn(iup(2189)) * fHdn(iup(2189))
-        ! print *, '4th term ',-fAup(idn(2189)) * fHup(idn(2189))
-        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(2189)) * fHdn(iup(2189)) - fAup(idn(2189)) * fHup(idn(2189)))
-        ! print *, 'source ',eKsource(2189)
-        ! print *, 'output ',elemR(2189,outCol)
+        ! print *, 'faces: ',iup(58), idn(58)
+        ! print *,  fQ(iup(58)), fUdn(iup(58))
+        ! print *, '1st term ',fQ(iup(58)) * fUdn(iup(58))
+        ! print *,  -fQ(idn(58)), fUup(idn(58))
+        ! print *, '2nd term ',-fQ(idn(58)) * fUup(idn(58))
+        ! print *, 'balance of 1-2 ',fQ(iup(58)) * fUdn(iup(58)) - fQ(idn(58)) * fUup(idn(58))
+        ! print *, 'pieces ',fQ(iup(58)), fUdn(iup(58))
+        ! print *, 'pieces ',fQ(idn(58)), fUup(idn(58))
+        ! print *, 'pieces ',fAdn(iup(58)) , fHdn(iup(58))
+        ! print *, 'pieces ',fAup(idn(58)) , fHup(idn(58))
+        ! print *, '3rd term ',fAdn(iup(58)) * fHdn(iup(58))
+        ! print *, '4th term ',-fAup(idn(58)) * fHup(idn(58))
+        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(58)) * fHdn(iup(58)) - fAup(idn(58)) * fHup(idn(58)))
+        ! print *, 'source ',eKsource(58)
+        ! print *, 'output ',elemR(58,outCol)
         ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &

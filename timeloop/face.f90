@@ -36,7 +36,7 @@ module face
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine face_interpolation (facecol, whichTM, skipQ)
+    subroutine face_interpolation (facecol, whichTM, skipQ, skipZeroAdjust, skipJump)
         !%------------------------------------------------------------------
         !% Description:
         !% Interpolates faces from elements
@@ -44,10 +44,13 @@ module face
         !% that would prevent it from being called by all images. That is,
         !% this subroutine MUST be called by all images (even with a null)
         !% to make sure that the images can be synced before sharing.
+        !% skipQ = true skips the interpolation for flowrate variables
+        !% skipZeroAdjust = true skips the adjustment for zero cells, which
+        !%    must be skipped for interpolation of JM to ensure mass conservation
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in)  :: faceCol, whichTM
-            logical, intent(in)  :: skipQ 
+            logical, intent(in)  :: skipQ, skipZeroAdjust, skipJump
             integer, pointer :: Npack
             logical :: isBConly, isTM
             integer :: iblank
@@ -73,11 +76,11 @@ module face
         ! print *, 'in face AAAA ',faceR(43,fr_Depth_u), faceR(43,fr_Flowrate)
         
         !% --- face reconstruction of all the interior faces
-        call face_interpolation_interior (faceCol,skipQ)
+        call face_interpolation_interior (faceCol,skipQ,skipJump)
 
         ! print *, 'in face BBBB ',faceR(43,fr_Depth_u), faceR(43,fr_Flowrate)
 
-            ! call util_utest_CLprint ('    face after face_interpolation_interior')
+            ! call util_utest_CLprint ('    XXX01 face after face_interpolation_interior')
 
         !% --- force zero fluxes on closed element downstream faces
         !%     note this does not require a "faceCol" argument as we
@@ -86,21 +89,23 @@ module face
 
         ! print *, 'in face CCCC ',faceR(42,fr_Depth_u)
 
-            ! call util_utest_CLprint ('    face after adjust face for zero setting')
+            ! call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
 
-        !if (setting%Junction%Method == Explicit1) then
+
+        if (.not. skipZeroAdjust) then
+
             call face_zerodepth_interior(fp_elem_downstream_is_zero)
-            ! call util_utest_CLprint ('    face after face zerodepth interior 1')
+
+                ! call util_utest_CLprint ('    XXX03 face after adjust face for zero setting')
+
             call face_zerodepth_interior(fp_elem_upstream_is_zero)
-            ! call util_utest_CLprint ('    face after face zerodepth interior 2')
+                ! call util_utest_CLprint ('    XXX04 face after adjust face for zero setting')
+
             call face_zerodepth_interior(fp_elem_bothsides_are_zero)
-        !else 
-            !% other methods skip this
-        !end if
 
-        ! print *, 'in face DDDD ',faceR(42,fr_Depth_u)
+                ! call util_utest_CLprint ('    XXX05 face after face zerodepth interior 3')
 
-            ! call util_utest_CLprint ('    face after face zerodepth interior 3')
+        end if
 
         !% --- face reconstruction of all the shared faces
         call face_interpolation_shared (faceCol,skipQ)
@@ -786,13 +791,14 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine face_interpolation_interior (facePackCol,skipQ)
+    subroutine face_interpolation_interior (facePackCol,skipQ,skipJump)
         !%------------------------------------------------------------------
         !% Description:
         !% Interpolates all faces using a pack
         !%------------------------------------------------------------------
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
-            logical, intent(in) :: skipQ  !% is true if flux interpolation is skipped
+            logical, intent(in) :: skipQ  !% this is true if flux interpolation is skipped
+            logical, intent(in) :: skipJump !% this is true if jump_compute is skipped 
             integer, pointer    ::  Npack        !% expected number of packed rows in faceP.
             integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
@@ -830,7 +836,6 @@ module face
         fOtherSet = [fr_Preissmann_Number]
         eOtherSet = [er_Preissmann_Number]
 
-
         !% two-sided interpolation
         call face_interp_interior_set &
             (fGeoSetU, eGeoSet,   er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack) 
@@ -846,14 +851,9 @@ module face
         call face_interp_interior_set &
             (fOtherSet, eOtherSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)  
 
-
              ! call util_utest_CLprint ('     face_interpolation_interior at BBBB')
 
-            ! print *, ' '
-            ! print *, 'flowrate in face interp'
-            ! print *, elemR(30,er_Flowrate), faceR(31,fr_Flowrate), elemR(32,er_Flowrate)
-            ! print *, elemI(30,ei_Mface_dL), elemI(32,ei_Mface_uL)
-            ! print *, ' '
+            
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
@@ -871,22 +871,24 @@ module face
         !% NOTE the following have their own Npack computations
 
         !% calculate the velocity in faces and put limiter
-        call face_velocities (facePackCol, .true.)
+        call face_velocities (facePackCol, .true.) 
+
+            ! call util_utest_CLprint ('     face_interpolation_interior at DDDD01')
 
         !% reset all the hydraulic jump interior faces
-        call jump_compute
+        if (.not. skipJump) then
+            call jump_compute
+        end if
+
+            ! call util_utest_CLprint ('     face_interpolation_interior at DDDD02')
 
         !% --- compute volume-based limits on flowrate
         if (.not. skipQ) then
             call face_flowrate_limits_interior (facePackCol)
-        end if
+        end if 
 
+            ! call util_utest_CLprint ('     face_interpolation_interior at EEEE')
 
-        ! print *, ' '
-        ! print *, 'flowrate in face interp 2'
-        ! print *, elemR(30,er_Flowrate), faceR(31,fr_Flowrate), elemR(32,er_Flowrate)
-        ! print *, elemI(30,ei_Mface_dL), elemI(32,ei_Mface_uL)
-        ! print *, ' '
         !%------------------------------------------------------------------
         !% Closing
         if (setting%Debug%File%face) &
@@ -1063,6 +1065,10 @@ module face
 
         ! print *, 'G ',elemR(49,er_InterpWeight_uG),elemR(49,er_InterpWeight_dG)
 
+            ! print *, ' ', size(fset)
+            ! print *, 'thisP in fset ',thisP
+
+
         do ii=1,size(fset)
             ! if (ii == 2) then 
             !     do jj=1,Npack
@@ -1078,6 +1084,12 @@ module face
             !         end if
             !     end do
             ! end if
+
+            ! print *, ' '
+            ! print *, ' ',ii, thisP(ii)
+            ! print *, eset(ii), er_Head
+            ! print *, elemR(eup(thisP(1)),eset(ii)), elemR(edn(thisP(1)),eWup)
+            ! print *, elemR(edn(thisP(1)),eset(ii)), elemR(eup(thisP(1)),eWdn)
       
 
             faceR(thisP,fset(ii)) = &
@@ -1085,6 +1097,9 @@ module face
                  +elemR(edn(thisP),eset(ii)) * elemR(eup(thisP),eWdn) &
                 ) / &
                 ( elemR(edn(thisP),eWup) + elemR(eup(thisP),eWdn))
+
+            ! print *, 'face ',faceR(thisP(1),fset(ii))    
+            ! print *, ' '
         end do
 
         !% NOTES
@@ -1972,10 +1987,16 @@ module face
         if (Npack > 0) then 
             thisP => faceP(1:Npack,facePackCol) 
 
+            ! print *, ' '
+            ! print *, 'in face_zerodepth_interior'
+            ! print *, 'thisP ',thisP, eUp(thisP)
+
             !% --- set the head on the face for elements that have adjacent zero
             select case (facePackCol)
 
                 case (fp_elem_downstream_is_zero)
+
+                    ! print *, 'in fp_elem_downstream_is_zero'
                     !% ---set head to the smaller of the face head and the non-zero element upstream
                     ! print *, 'Head ',fHeadUp(thisP), eHead(eUp(thisP)), fHeadDn(thisP)
 
@@ -1997,13 +2018,15 @@ module face
                     end do
                     fAreaDn(thisP) = fAreaUp(thisP)
 
+                    ! print *, 'fDepthUp(thisP)   ', fDepthUp(thisP)
+                    ! print *, 'fAreaUp(thisP)    ', fAreaUp(thisP) 
+                    ! print *, 'eArea(eUp(thisP)) ',eArea(eUp(thisP))
                     !% --- set the flowrate through the face
                     !%     flowrate can only be from upstream to downstream (positive flow allowed) 
                     where ((fDepthUp(thisP) > setting%ZeroValue%Depth) .and. &
                            (fAreaUp(thisP) .ge. eArea(eUp(thisP))))
                         !%--- if the depth > 0 and the face area is greater than the element area
                         !%     then the face flow can support the entire flow rate (if an outflow)
-                    
                         fFlowrate(thisP)   = max(zeroR,eFlowrate(eUp(thisP)))
 
                     elsewhere ((fDepthUp(thisP) > setting%ZeroValue%Depth) .and. &
@@ -2016,6 +2039,14 @@ module face
                     elsewhere !% for face depth < zero there is no possibility of a face flow
                         fFlowrate(thisP) = zeroR
                     endwhere
+                    
+                    ! print *, ' '
+                    ! print *, 'eflowrate ',eFlowrate(eUp(5))
+                    ! print *, 'vel rate  ',eVelocity(eUp(5)) * fAreaUp(5)
+                    ! print *, 'vel       ',eVelocity(eUp(5))
+                    ! print *, 'area      ',fAreaUp(5)
+                    ! print *, 'flowrate   ',fFlowrate(5)
+                    ! print *, ' '
 
                     !% --- zero the face velocities to prevent small areas from being a problem
                     !%     this also means the advection of momentum into the element on the
