@@ -1438,11 +1438,12 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
-            eColumns = [er_Area, er_Topwidth, er_Depth, er_Head, er_Flowrate, er_Preissmann_Number,     &
-                        er_Volume, er_Velocity, er_GammaM, er_Length, er_KJunction_MinorLoss,           &
-                        er_InterpWeight_dG, er_InterpWeight_uG,                                         &
-                        er_InterpWeight_dH, er_InterpWeight_uH,                                         &
-                        er_InterpWeight_dQ, er_InterpWeight_uQ,                                         &
+            eColumns = [er_Area, er_Topwidth, er_Depth, er_2B_psiL, er_EnergyHead, &
+                        er_Head, er_Flowrate, er_Preissmann_Number, er_Volume,     &
+                        er_Velocity, er_GammaM, er_Length, er_KJunction_MinorLoss, &
+                        er_InterpWeight_dG, er_InterpWeight_uG,                    &
+                        er_InterpWeight_dH, er_InterpWeight_uH,                    &
+                        er_InterpWeight_dQ, er_InterpWeight_uQ,                    &
                         er_InterpWeight_dP, er_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
