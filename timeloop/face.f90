@@ -10,7 +10,7 @@ module face
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
     use utility_crash, only: util_crashpoint
-    !use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -875,10 +875,17 @@ module face
 
             ! call util_utest_CLprint ('     face_interpolation_interior at DDDD01')
 
+            ! print *, ' '
+            ! print *, faceR(170,fr_Velocity_u), faceR(170,fr_Velocity_d)
+
         !% reset all the hydraulic jump interior faces
         if (.not. skipJump) then
             call jump_compute
         end if
+
+        ! print *, ' '
+        ! print *, faceR(170,fr_Velocity_u), faceR(170,fr_Velocity_d)
+        ! print *, ' '
 
             ! call util_utest_CLprint ('     face_interpolation_interior at DDDD02')
 

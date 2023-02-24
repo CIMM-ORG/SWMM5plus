@@ -56,7 +56,7 @@ module runge_kutta2
         !% Aliases
         !%-----------------------------------------------------------------
 
-                ! print *, ' '
+                !print *, ' '
                  ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- NOTE: Dynamic manning's n not included in this routine.
@@ -261,11 +261,15 @@ module runge_kutta2
         call face_interpolation(fp_all,whichTM,.false.,.false.,.false.)
         call util_crashstop(72129873)
 
+            ! call util_utest_CLprint ('------- QQQ  after face_interpolation')
+
         !% --- flux adjusments with .false. so that conservative fluxes are not altered
         call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
+            ! call util_utest_CLprint ('------- QQQ01  after adjust smalldepth face flux')
         call adjust_zerodepth_face_fluxes_CC  (whichTM,.false.)
+            ! call util_utest_CLprint ('------- QQQ02  after adjust zerodepth face flux')
 
-            ! call util_utest_CLprint ('------- QQQ  after face_interpolation')
+            
 
         !% --- RK2 solution step -- compute implicit junction
         call junction_toplevel (whichTM, istep)

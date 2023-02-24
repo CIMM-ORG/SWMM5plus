@@ -157,7 +157,7 @@ contains
 
             ! call util_utest_CLprint ('initial_condition afer IC_from_nodedata')
 
-            !stop 48734
+
 
         !% --- second call for diagnostic that was next to JM/JB
         sync all
@@ -3359,13 +3359,13 @@ contains
         !% Declarations
             integer, intent(in) :: thisJunctionNode
 
-            integer              :: ii, jj, JMidx, JBidx, Aidx, Ci
+            integer              :: ii, jj, kk, JMidx, JBidx, Aidx, Ci
             integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, NumRows
             integer, pointer     :: Fidx, F2idx
             integer              :: nbranches
             real(8), allocatable :: integrated_volume(:)
             real(8)              :: LupMax, LdnMax
-            real(8)              :: aa,bb
+            real(8)              :: aa,bb, lowZ
             logical              :: isupstream
 
             character(64) :: subroutine_name = 'init_IC_get_junction_data'
@@ -3425,6 +3425,17 @@ contains
             elemSI(JMidx,esi_JunctionMain_Type)    = ImpliedStorage
             elemI (JMidx,ei_geometryType)          = rectangular
             elemSR(JMidx,esr_Storage_FractionEvap) = zeroR  !% --- no evap from implied storage junction
+
+            !% --- check for low Zbottom in an implied storage
+            !%     Require junction bottom to be at or above the minimum branch
+            !%     Zbottom with implied storage
+            lowZ = huge(oneR)
+            do kk=1,max_branch_per_node
+                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) == 1) then 
+                    lowZ = min(lowZ, elemR(JMidx+kk,er_Zbottom))
+                end if
+            end do
+            elemR(JMidx,er_Zbottom) = max(elemR(JMidx,er_Zbottom), lowZ)
         end if
 
         ! print *, 'type ',elemSI(JMidx,esi_JunctionMain_Type),ImpliedStorage

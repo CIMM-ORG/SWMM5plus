@@ -1200,10 +1200,13 @@ module adjust
         if (npack > 0) then
             thisP  => elemP(1:npack,thisCol)
 
+            ! print *, ' thisP '
+            ! print *, thisP
+            ! print *, ' '
+
             ! print *, ' '
             ! print *, ' in small depth face flux adjust'
-            ! print *, elemQ(31), faceQ(fdn(31))
-            ! print *, faceQ(fup(31))
+            ! print *, faceQ(fup(178)),elemQ(178), faceQ(fdn(178))
             
         
             where (elemQ(thisP) .ge. zeroR)
@@ -1227,7 +1230,7 @@ module adjust
 
 
             ! print *, 'after 1st step'
-            ! print *, faceQ(fup(31))
+            ! print *, faceQ(fup(178))
 
             !% 20220531brh
             !% --- provide inflow rate from large head differences with small volume cells
@@ -1235,7 +1238,7 @@ module adjust
             call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
 
             ! print *, 'face Qup after second step'
-            ! print *, faceQ(fup(31))
+            ! print *, faceQ(fup(178))
 
             if (ifixQCons) then
                 !% update the conservative face Q
@@ -1963,8 +1966,8 @@ module adjust
         !%     depth at the face is twice the small depth cutoff
 
         ! print *, 'first where '
-        ! print *, elemH(51), faceHu(fdn(51))   
-        ! print *, faceDu(fdn(51)), twoR * thisDepthCutoff
+        ! print *, elemH(178), faceHu(fdn(178))   
+        ! print *, faceDu(fdn(178)), twoR * thisDepthCutoff
         ! print *, ' '
 
         where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
@@ -1983,12 +1986,17 @@ module adjust
         end where
 
         ! print *, ' '
-        ! print *, 'faceQ   ',faceQ(fdn(51))
-        ! print *, 'faceAu  ',faceAu(fdn(51))
-        ! print *, 'elemH   ',elemH(51)
-        ! print *, 'faceHu  ',faceHu(fdn(51))
-        ! print *, 'elemL   ',elemL(51)
-        ! print *, 'faceQmin',faceQmin(fdn(51))
+        ! print *, 'faceQ   ',faceQ(fdn(178))
+        ! print *, 'faceAu  ',faceAu(fdn(178))
+        ! print *, 'elemH   ',elemH(178)
+        ! print *, 'faceHu  ',faceHu(fdn(178))
+        ! print *, 'elemL   ',elemL(178)
+        ! print *, 'faceQmin',faceQmin(fdn(178))
+        ! print *, ' '
+
+        ! print *, 'second where '
+        ! print *, elemH(178), faceHd(fup(178))   
+        ! print *, faceDd(fup(178)), twoR * thisDepthCutoff
         ! print *, ' '
 
         !% --- for the upstream face dH/dx > 0 leads to a positive Q
@@ -2008,6 +2016,10 @@ module adjust
            !% --- limit by available volume flowrate that empties upstream element
             faceQ(fup(thisP)) = min( faceQ(fup(thisP)), faceQmax(fup(thisP)))
         end where
+
+        ! print *, 'at end '
+        ! print *, faceQ(fup(178)), faceQmax(fup(178))
+        ! print *, ' '
 
     end subroutine adjust_faceflux_for_headgradient
 !%

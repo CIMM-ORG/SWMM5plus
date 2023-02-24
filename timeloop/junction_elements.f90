@@ -134,10 +134,12 @@ module junction_elements
             call junction_branch_getface (elemR(:,er_Flowrate),fr_Flowrate,thisJM(mm),ei_Mface_uL,1)
             call junction_branch_getface (elemR(:,er_Flowrate),fr_Flowrate,thisJM(mm),ei_Mface_dL,2)
 
-            ! print *, ' '
-            ! print *, '======================================================='
-            ! print *, 'flowrates JM =', thisJM(mm)
-            ! print *, elemR(thisJM(mm)+1,er_Flowrate), elemR(thisJM(mm)+2,er_Flowrate), elemR(thisJM(mm),er_FlowrateLateral)
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, '======================================================='
+                !     print *, 'flowrates JM =', thisJM(mm)
+                !     print *, elemR(thisJM(mm)+1,er_Flowrate), elemR(thisJM(mm)+2,er_Flowrate), elemR(thisJM(mm),er_FlowrateLateral)
+                ! end if
 
             !% --- store face energy head in JB for upstream (1) and downstream (2)
             call junction_branch_getface (elemR(:,er_EnergyHead),fr_EnergyHead,thisJM(mm),ei_Mface_uL,1)
@@ -150,8 +152,15 @@ module junction_elements
             !% --- compute net flowrate from branches
             QnetBranches = junction_main_QnetBranches (thisJM(mm))
 
-            ! print *, ' '
-            ! print *, 'Qnetbranches ',QnetBranches
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'Qnetbranches ',QnetBranches
+                ! end if
+
+                ! if (thisJM(mm) == 31) then 
+                !     print *, ' '
+                !     print *, 'Qlat ',elemR(thisJM(mm),er_FlowrateLateral)
+                ! end if
 
             !% --- compute overflow rate
             Qoverflow = junction_main_Qoverflow (thisJM(mm))
@@ -162,30 +171,38 @@ module junction_elements
             !% --- compute overflow rate with change in head
             dQdHoverflow = junction_main_dQdHoverflow (thisJM(mm))
 
-            ! print *, ' '
-            ! print *, 'dQdHoverflow ',dQdHoverflow
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'dQdHoverflow ',dQdHoverflow
+                ! end if
 
             !% --- compute dQdH for each branch -- must include diagnostic
             call junction_branch_dQdH (elemR(:,er_dQdH),thisJM(mm), elemI(:,ei_Mface_uL), 1)
             call junction_branch_dQdH (elemR(:,er_dQdH),thisJM(mm), elemI(:,ei_Mface_dL), 2)
 
-            ! print *, ' '
-            ! print *, 'dQdH branches'
-            ! print *, elemR(thisJM+1,er_dQdH), elemR(thisJM+2,er_dQdH)
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'dQdH branches'
+                !     print *, elemR(thisJM(mm)+1,er_dQdH), elemR(thisJM(mm)+2,er_dQdH)
+                ! end if
 
             !% --- compute net branch dQdH (product with beta)
             dQdHsum =  junction_main_branchdQdHsum (thisJM(mm))
 
-            ! print *, ' '
-            ! print *, 'dQdHsum ',dQdHsum
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'dQdHsum ',dQdHsum
+                ! end if
 
             !% --- compute the junction head change
             dH = junction_main_dH &
                 (thisJM(mm), Qnetbranches, Qoverflow, dQdHstorage, dQdHoverflow, dQdHsum)
 
-            ! print *, ' '
-            ! print *, 'dH before limit = ',dH   
-            ! print *, ' '
+                    ! if (thisJM(mm) == 31) then
+                    !     print *, ' '
+                    !     print *, 'dH before limit = ',dH   
+                    !     print *, ' '
+                    ! end if
 
             ! print *, 'max gain ',junction_dH_maxgain (elemR(:,er_EnergyHead), elemR(thisJM(mm),er_Head), thisJM(mm))
             ! print *, 'max loss ',junction_dH_maxloss (elemR(:,er_EnergyHead), elemR(thisJM(mm),er_Head), thisJM(mm))
@@ -199,9 +216,9 @@ module junction_elements
                 !% -- if dH = zero, no change
             end if
 
-            ! print *, ' '
-            ! print *, 'dH after first limit = ',dH   
-            ! print *, ' '
+                ! print *, ' '
+                ! print *, 'dH after first limit = ',dH   
+                ! print *, ' '
 
             !% limit dH to prevent negative head
             if ((elemR(thisJM(mm),er_Head) - elemR(thisJM(mm),er_Zbottom) + dH) < setting%ZeroValue%Depth) then 
@@ -210,19 +227,21 @@ module junction_elements
                 dH = (elemR(thisJM(mm),er_Zbottom) + 0.99d0*setting%ZeroValue%Depth) - elemR(thisJM(mm),er_Head)
             end if
 
-            ! print *, ' '
-            ! print *, 'dH after second limit = ',dH   
-            ! print *, ' '
+                ! print *, ' '
+                ! print *, 'dH after second limit = ',dH   
+                ! print *, ' '
 
             !% --- limit dH dropping based on where overflow shuts off
             if (Qoverflow .ne. zeroR) then 
                 dH = max(dH, junction_dH_overflow_min(thisJM(mm)))
             end if
 
-            ! print *, ' '
-            ! print *, 'dH after third limit = ',dH   
-            ! ! print *, 'available ', elemR(thisJM(mm),er_Head) - elemR(thisJM(mm),er_Zbottom)
-            ! ! print *, ' '
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'dH after third limit = ',dH   
+                ! end if
+                ! ! ! print *, 'available ', elemR(thisJM(mm),er_Head) - elemR(thisJM(mm),er_Zbottom)
+                ! ! ! print *, ' '
 
             !% --- update junction head
             elemR(thisJM(mm),er_Head) = elemR(thisJM(mm),er_Head) + dH
@@ -232,13 +251,14 @@ module junction_elements
                 = elemR(thisJM(mm)+1:thisJM(mm)+max_branch_per_node,er_Flowrate)  &
                 + dH * elemR(thisJM(mm)+1:thisJM(mm)+max_branch_per_node,er_dQdH)
 
-
-                ! print *, ' '
-                ! print *, 'flowrates after update'
-                ! !do kk=1,max_branch_per_node
-                ! do kk=1,4
-                !     print *, 'Q : ',kk, elemR(thisJM(mm)+kk,er_Flowrate)
-                ! end do
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'flowrates after update', thisJM(mm)
+                !     !do kk=1,max_branch_per_node
+                !     do kk=1,2
+                !         print *, 'Q : ',kk, elemR(thisJM(mm)+kk,er_Flowrate)
+                !     end do
+                ! end if
 
             !% --- update overflow
             Qoverflow = Qoverflow + dH * dQdHoverflow
@@ -262,8 +282,10 @@ module junction_elements
             !% --- adjust for non-conservation
             resid = junction_conservation_residual (thisJM(mm), Qoverflow, Qstorage) 
 
-                ! print *, 'conservation resid ',resid
-                ! print *, ' '
+                ! if (thisJM(mm) == 31) then
+                !     print *, 'conservation resid ',resid, ';   thisJM ',thisJM(mm)
+                !     print *, ' '
+                ! end if
 
             if (abs(resid) > 1.0d-16) then 
                 QnetIn  = junction_branch_Qnet (thisJM(mm),+oneI)
@@ -289,15 +311,17 @@ module junction_elements
             !% --- update volume overflow 
             elemR(thisJM(mm),er_VolumeOverflow) = Qoverflow * setting%Time%Hydraulics%Dt
 
-            ! print *, ' '
-            ! print *, 'flowrates after conservation force', thisJM(mm)
-            ! !do kk=1,max_branch_per_node
-            ! do kk=1,3
-            !     print *, 'Q : ',kk, elemR(thisJM(mm)+kk,er_Flowrate)
-            ! end do
+                ! if (thisJM(mm) == 31) then
+                !     print *, ' '
+                !     print *, 'flowrates after conservation force', thisJM(mm)
+                !     !do kk=1,max_branch_per_node
+                !     do kk=1,2
+                !         print *, 'Q : ',kk, elemR(thisJM(mm)+kk,er_Flowrate)
+                !     end do
+                ! end if
 
-            ! print *, 'final conservation resid ',resid
-            ! print *, ' '
+                ! print *, 'final conservation resid ',resid
+                ! print *, ' '
 
 
 
@@ -305,28 +329,28 @@ module junction_elements
             call junction_branchface_forceJBvalue (fr_Flowrate, er_Flowrate, ei_Mface_uL, thisJM(mm), 1) 
             call junction_branchface_forceJBvalue (fr_Flowrate, er_Flowrate, ei_Mface_dL, thisJM(mm), 2) 
 
-            ! print *, ' '
-            ! print *, 'faces flowrate should be JB values'
-            ! print *, elemR(5,er_Flowrate), elemR(6,er_Flowrate)
-            ! print *, faceR(4,fr_Flowrate), faceR(5,fr_Flowrate)
+                ! print *, ' '
+                ! print *, 'faces flowrate should be JB values'
+                ! print *, elemR(5,er_Flowrate), elemR(6,er_Flowrate)
+                ! print *, faceR(4,fr_Flowrate), faceR(5,fr_Flowrate)
 
-            ! if (abs(elemR(5,er_Flowrate) - elemR(6,er_Flowrate)) > localEpsilon) then 
-            !     print *, 'flowrate mismatch '
-            !     stop 669874
-            ! end if 
+                ! if (abs(elemR(5,er_Flowrate) - elemR(6,er_Flowrate)) > localEpsilon) then 
+                !     print *, 'flowrate mismatch '
+                !     stop 669874
+                ! end if 
 
-            !% --- note the head values are handled in update_auxiliary_variables_JM
+                !% --- note the head values are handled in update_auxiliary_variables_JM
 
 
-            ! print *, ' '
-            ! print *, 'dH after limit = ',dH   
-            ! print *, ' '
+                ! print *, ' '
+                ! print *, 'dH after limit = ',dH   
+                ! print *, ' '
 
-            ! if (abs(elemR(thisJM(mm),er_Head)) > 2000.d0) then 
-            !     print *, 'Strange Head at ',thisJM(mm)
-            !     print *, elemR(thisJM(mm),er_Head)
-            !     call util_crashpoint(709874)
-            ! end if
+                ! if (abs(elemR(thisJM(mm),er_Head)) > 2000.d0) then 
+                !     print *, 'Strange Head at ',thisJM(mm)
+                !     print *, elemR(thisJM(mm),er_Head)
+                !     call util_crashpoint(709874)
+                ! end if
         end do
 
     end subroutine junction_calculation
@@ -601,18 +625,30 @@ module junction_elements
                     ! print *, 'MN, Lenght           ', elemR(tB,er_ManningsN) , elemR(tB,er_Length)
                     ! print *, 'delta E              ',fEnergyHead(fm(tB)) - eHead(JMidx)
 
-                    !% --- Use CM approach
-                    if (abs(fEnergyHead(fm(tB)) - eHead(JMidx)) > localEpsilon) then
-                        dQdH(tB) = - branchsign(kk)                                                 &
-                            * elemR(tB,er_Area) * (elemR(tB,er_HydRadius)**twothirdR)               &
-                            / (                                                                     &
-                                twoR * elemR(tB,er_ManningsN) * (sqrt(elemR(tB,er_Length)))         &
-                                * sqrt(abs(fEnergyHead(fm(tB)) - eHead(JMidx)))  &
-                                )
 
-                        ! print *, 'dQdH                  ', dQdH(tB)
-                    else 
+                    if (eHead(JMidx) < elemR(tB,er_Zbottom)) then 
+                        !% junction head is too low such that change does not affect branch flow
                         dQdH(tB) = zeroR
+
+                        ! if (JMidx == 31) then 
+                        !     print *, 'dQdH zero for tB  ',tB
+                        !  end if
+                    else
+                        !% --- Use CM approach
+                        if (abs(fEnergyHead(fm(tB)) - eHead(JMidx)) > localEpsilon) then
+                            dQdH(tB) = - branchsign(kk)                                                 &
+                                * elemR(tB,er_Area) * (elemR(tB,er_HydRadius)**twothirdR)               &
+                                / (                                                                     &
+                                    twoR * elemR(tB,er_ManningsN) * (sqrt(elemR(tB,er_Length)))         &
+                                    * sqrt(abs(fEnergyHead(fm(tB)) - eHead(JMidx)))  &
+                                    )
+
+                            !  if (JMidx == 31) then 
+                            !     print *, 'tb, dQdH   ',tB, dQdH(tB)
+                            !  end if
+                        else 
+                            dQdH(tB) = zeroR
+                        end if
                     end if
                 ! end if
                     ! print *, 'CODE ERROR'
@@ -886,6 +922,10 @@ module junction_elements
         !% --- check for a degenerate condition
         if ((QnetIn .le. zeroR) .and. (QnetOut .ge. zeroR)) then 
             print *, 'CODE ERROR: unexpected zero fluxes and non-zero residual'
+            print *, 'Junction index ',JMidx
+            print *, 'Qnet In  ',QnetIn
+            print *, 'Qnet Out ',QnetOut
+            print *, 'residual ',resid
             call util_crashpoint(229873)
             return
         end if

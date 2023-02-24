@@ -89,24 +89,26 @@ module jump
         integer :: image
         integer, pointer :: faceIdx(:), eup(:), edn(:), thisP(:), jumptype(:)
         integer, pointer :: Npack_jumpUp, Npack_JumpDn, Nfaces
-        logical, pointer :: isSurcharged(:), isInterior(:)
-        real(8), pointer :: feps, Fr(:)
+        logical, pointer :: isSurcharged(:), isInterior(:), isZeroDepth(:), isSmallDepth(:)
+        real(8), pointer :: feps, Fr(:), Head(:)
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
-        !if (crashYN) return
         !% pointing to the number of faces in this image
-        image  = this_image()
-        Nfaces => N_face(image)
+            image  = this_image()
+            Nfaces => N_face(image)
         !%-----------------------------------------------------------------------------
-        Fr           => elemR(:,er_FroudeNumber)
-        isSurcharged => elemYN(:,eYN_isSurcharged)
+            Fr           => elemR(:,er_FroudeNumber)
+            Head         => elemR(:,er_Head)
+            isSurcharged => elemYN(:,eYN_isSurcharged)
+            isZeroDepth  => elemYN(:,eYN_isZeroDepth)
+            isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%-----------------------------------------------------------------------------
-        isInterior   => faceYN(1:Nfaces,fYN_isInteriorFace)
-        eup          => faceI(1:Nfaces,fi_Melem_uL)
-        faceIdx      => faceI(1:Nfaces,fi_Lidx) 
-        edn          => faceI(1:Nfaces,fi_Melem_dL)
-        jumptype     => faceI(1:Nfaces,fi_jump_type)
-        feps         => setting%EPS%FroudeJump
+            isInterior   => faceYN(1:Nfaces,fYN_isInteriorFace)
+            eup          => faceI(1:Nfaces,fi_Melem_uL)
+            faceIdx      => faceI(1:Nfaces,fi_Lidx) 
+            edn          => faceI(1:Nfaces,fi_Melem_dL)
+            jumptype     => faceI(1:Nfaces,fi_jump_type)
+            feps         => setting%EPS%FroudeJump
         !%-----------------------------------------------------------------------------
 
         !% zero out old jump
@@ -118,6 +120,8 @@ module jump
         npack_faceP(fp_JumpUp) = count( &
             isInterior &
             .and. &
+            (Head(eup) < Head(edn)) &
+            .and. &
             (Fr(eup) > oneR + feps)  &  ! supercritical downstream flow in upstream
             .and. &
             (Fr(edn) < oneR - feps)   &  ! subcritical in downstream
@@ -126,7 +130,15 @@ module jump
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
-            (.not. isSurcharged(eDn)) )
+            (.not. isSurcharged(edn))  & 
+            .and. &
+            (.not. isSmallDepth(eup)) &
+            .and. & 
+            (.not. isSmallDepth(edn)) &
+            .and. &
+            (.not. isZeroDepth(eup)) &
+            .and. &
+            (.not. isZeroDepth(edn)) )
 
         Npack_JumpUp => npack_faceP(fp_JumpUp) 
 
@@ -134,6 +146,8 @@ module jump
         if (Npack_JumpUp > 0) then
             faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
                 isInterior &
+                .and. &
+                (Head(eup) < Head(edn)) &
                 .and. &
                 (Fr(eup) > oneR + feps)  & ! supercritical downstream flow in upstream
                 .and. &
@@ -143,7 +157,15 @@ module jump
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &
-                (.not. isSurcharged(eDn)) )
+                (.not. isSurcharged(edn)) & 
+                .and. &
+                (.not. isSmallDepth(eup)) &
+                .and. & 
+                (.not. isSmallDepth(edn)) &
+                .and. &
+                (.not. isZeroDepth(eup)) &
+                .and. &
+                (.not. isZeroDepth(edn)) )
 
             !% pointer to the packed indexes
             thisP => faceP(1:Npack_JumpUp,fp_JumpUp)
@@ -151,7 +173,12 @@ module jump
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_upstream
 
-            !print *, 'jump from upstream ',thisP
+            ! print *, ' '
+            ! print *, 'jump from upstream ',thisP
+            ! print *, ' is small up ',elemYN(eup(thisP),eYN_isSmallDepth)
+            ! print *, ' is small dn ', elemYN(edn(thisP),eYN_isSmallDepth)
+            ! print *, ' is zero up  ', elemYN(eup(thisP),eYN_isZeroDepth)
+            ! print *, ' is zero dn  ', elemYN(edn(thisP),eYN_isZeroDepth)
         end if
 
 
@@ -162,6 +189,8 @@ module jump
         npack_faceP(fp_JumpDn)  = count( &
             isInterior &
             .and. &
+            (Head(eup) > Head(edn)) &
+            .and. &
             (Fr(eup) > -oneR + feps) &  ! subcritical reverse flow in upstream
             .and. &
             (Fr(eup) <= zeroR) &        ! not a downstream flow in upstream
@@ -170,7 +199,15 @@ module jump
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
-            (.not. isSurcharged(eDn)) )
+            (.not. isSurcharged(edn))  & 
+            .and. &
+            (.not. isSmallDepth(eup)) &
+            .and. & 
+            (.not. isSmallDepth(edn)) &
+            .and. &
+            (.not. isZeroDepth(eup)) &
+            .and. &
+            (.not. isZeroDepth(edn)) )
 
         !% assign the above count to the npack storage for later use
         Npack_JumpDn => npack_faceP(fp_JumpDn)
@@ -180,6 +217,8 @@ module jump
             faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
                 isInterior &
                 .and. &
+                (Head(eup) > Head(edn)) &
+                .and. & 
                 (Fr(eup) > -oneR + feps) & ! subcritical reverse flow in upstream
                 .and. &
                 (Fr(eup) <= zeroR) &        ! not a downstream flow in upstream
@@ -188,7 +227,15 @@ module jump
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &
-                (.not. isSurcharged(eDn)) )
+                (.not. isSurcharged(edn))  & 
+                .and. &
+                (.not. isSmallDepth(eup)) &
+                .and. & 
+                (.not. isSmallDepth(edn)) &
+                .and. &
+                (.not. isZeroDepth(eup)) &
+                .and. &
+                (.not. isZeroDepth(edn)) )
             
             !% pointer to thee packed indexes
             thisP => faceP(1:Npack_JumpDn,fp_JumpDn)
@@ -196,7 +243,8 @@ module jump
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_downstream
 
-            !print *, 'jump from downstream ',thisP
+            ! print *, ' '
+            ! print *, 'jump from downstream ',thisP
         end if
 
     end subroutine jump_face_identify

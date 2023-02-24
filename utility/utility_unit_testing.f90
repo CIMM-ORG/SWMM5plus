@@ -74,10 +74,20 @@ contains
             ! integer :: ift(6) = (/   21,  31,   32 ,  33,  34,  35,  36,  37,  38  /)
 
          !% extran1_rect_open_final
-            integer :: iet(9) = (/18,  19,   21,  20,  22,    134,     135,    136,  137 /)
-            integer :: ift(6) = (/  19,   20 ,              21,    132,     133,   134/)
+            !integer :: iet(9) = (/18,  19,   21,  20,  22,    134,     135,    136,  137 /)
+            !integer :: ift(6) = (/  19,   20 ,              21,    132,     133,   134/)
 
+         !% extran1_horizontal_ellipsi_final
+            ! integer :: iet(9) = (/200,     201,    202,     165, 164, 166 ,   175,    176,   156/)
+            ! integer :: ift(6) = (/     190,   191,    157,                158    , 167  , 149/)
 
+            ! !% extran1_horizontal_ellipsi_final
+            integer :: iet(9) = (/ 29,   30,   32,  31,  33,   178,   179,   180, 181 /)
+            integer :: ift(6) = (/    28,   29,              30,   168,   169, 170/)
+
+            ! integer :: iet(9) = (/ 178,   179,    180,   181,   182,   183,  184,   185, 186 /)
+            ! integer :: ift(8) = (/     168,   169,   170,    171,   172,  173,   174,  176 /)
+    
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------
@@ -91,7 +101,7 @@ contains
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
 
-         !if (setting%Time%Step < 2700) return
+         ! if (setting%Time%Step < 5750) return
 
         !% --- USEFUL HEADER -----------------------------------------------
             print *, ' '
@@ -202,6 +212,8 @@ contains
             !    end if
             ! end do
 
+            ! stop 239874
+
 
             !    do ii=1,size(iet)
             !       print *, ' '
@@ -305,7 +317,7 @@ contains
       elemYN(iet(9),eYN_isSmallDepth)
 
       write(*,"(A9,20A11)"),' ','elem','face','elem','face','jb','JM','jb','face','elem','face','elem','face','elem','face','elem'
-      !write(*,"(A9,16A11)"),' ','elem','face','elem','face','elem','face','elem','face','elem','face','elem','face','elem'
+      ! write(*,"(A9,16A11)"),' ','elem','face','elem','face','elem','face','elem','face','elem','face','elem','face','elem'
             
       write(*,"(A,20f11.4)") '     D    '  ,          &
       elemR(iet(1),er_Depth), &
@@ -319,23 +331,10 @@ contains
       elemR(iet(6),er_Depth), &
       faceR(ift(4),fr_Depth_d), &
       elemR(iet(7),er_Depth), &
-      faceR(ift(8),fr_Depth_d), &
-      elemR(iet(6),er_Depth), &
+      faceR(ift(5),fr_Depth_d), &
+      elemR(iet(8),er_Depth), &
       faceR(ift(6),fr_Depth_d), &
       elemR(iet(9),er_Depth)
-
-      ! write(*,"(A,16e11.3)") '     A    '  ,          &
-      ! elemR(iet(1),er_Area), &
-      ! faceR(ift(1),fr_Area_d), &
-      ! elemR(iet(2),er_Area), &
-      ! faceR(ift(2),fr_Area_d), &
-      ! elemR(iet(3),er_Area),&
-      ! elemR(iet(4),er_Area),&
-      ! elemR(iet(5),er_Area),&
-      ! faceR(ift(3),fr_Area_d), &
-      ! elemR(iet(6),er_Area), &
-      ! faceR(ift(4),fr_Area_d), &
-      ! elemR(iet(7),er_Area)
 
       write(*,"(A,20f11.3)") '     H    '  ,          &
       elemR(iet(1),er_Head), &
@@ -367,7 +366,7 @@ contains
       faceR(ift(4),fr_Zbottom), &
       elemR(iet(7),er_Zbottom), &
       faceR(ift(5),fr_Zbottom), &
-      elemR(iet(8),er_Zbottom),&
+      elemR(iet(8),er_Zbottom), &
       faceR(ift(6),fr_Zbottom), &
       elemR(iet(9),er_Zbottom)
 
@@ -387,24 +386,8 @@ contains
       elemR(iet(8),er_Flowrate),&
       faceR(ift(6),fr_Flowrate), &
       elemR(iet(9),er_Flowrate)
-
-      ! write(*,"(A,16e11.3)") '   FR     '  ,          &
-      ! elemR(iet(1),er_FroudeNumber), &
-      ! 0.0d0, &
-      ! elemR(iet(2),er_FroudeNumber), &
-      ! 0.0d0, &
-      ! elemR(iet(3),er_FroudeNumber),&
-      ! 0.0d0, &
-      ! elemR(iet(4),er_FroudeNumber),&
-      ! 0.0d0, &
-      ! elemR(iet(5),er_FroudeNumber),&
-      ! 0.0d0, &
-      ! elemR(iet(6),er_FroudeNumber), &
-      ! 0.0d0, &
-      ! elemR(iet(7),er_FroudeNumber) 
-
       
-      write(*,"(A,16f11.3)") '   Vel up '  ,          &
+      write(*,"(A,20f11.3)") '   Vel up '  ,          &
       elemR(iet(1),er_Velocity), &
       faceR(ift(1),fr_Velocity_u), &
       elemR(iet(2),er_Velocity), &
@@ -421,7 +404,7 @@ contains
       faceR(ift(6),fr_Velocity_u), &
       elemR(iet(9),er_Velocity)
 
-      write(*,"(A,16f11.3)") '   Vel dn '  ,          &
+      write(*,"(A,20f11.3)") '   Vel dn '  ,          &
       elemR(iet(1),er_Velocity), &
       faceR(ift(1),fr_Velocity_d), &
       elemR(iet(2),er_Velocity), &
@@ -438,7 +421,49 @@ contains
       faceR(ift(6),fr_Velocity_d), &
       elemR(iet(9),er_Velocity)
 
-     ! if (setting%Time%Step==2723) stop 698734
+
+      ! write(*,"(A,20e11.3)") '  FR      '  ,          &
+      ! elemR(iet(1),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(2),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(3),er_FroudeNumber),&
+      ! 0.0d0, &
+      ! elemR(iet(4),er_FroudeNumber),&
+      ! 0.0d0, &
+      ! elemR(iet(5),er_FroudeNumber),&
+      ! 0.0d0, &
+      ! elemR(iet(6),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(7),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(8),er_FroudeNumber), &
+      ! 0.0d0, &
+      ! elemR(iet(9),er_FroudeNumber)   
+
+      !if (setting%Time%Step==5755) stop 698734
+
+      ! write(*,"(A,20e11.3)") '  Vol     '  ,          &
+      ! elemR(iet(1),er_Volume), &
+      ! 0.0d0, &
+      ! elemR(iet(2),er_Volume), &
+      ! 0.0d0, &
+      ! elemR(iet(3),er_Volume),&
+      ! 0.0d0, &
+      ! elemR(iet(4),er_Volume),&
+      ! 0.0d0, &
+      ! elemR(iet(5),er_Volume),&
+      ! 0.0d0, &
+      ! elemR(iet(6),er_Volume), &
+      ! 0.0d0, &
+      ! elemR(iet(7),er_Volume), &
+      ! 0.0d0, &
+      ! elemR(iet(8),er_Volume), &
+      ! 0.0d0, &
+      ! elemR(iet(9),er_Volume)   
+
+
+     
 
 
       ! if (setting%Time%Step == 1160) stop 39873
