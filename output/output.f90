@@ -2717,9 +2717,9 @@ contains
                             fn_link_unf = trim(setting%File%outputML_Link_kernel) // '_' //trim(tlinkname) //'.unf'
                             fn_link_csv = trim(setting%File%outputML_Link_kernel) // '_' //trim(tlinkname) //'.csv'
                             fn_link_static_csv = trim(setting%File%outputML_Link_kernel) // '_static_' //trim(tlinkname) //'.csv'
-                            fn_linkFV_static_csv = trim(setting%File%outputML_Link_kernel) // '_static_FV_' //trim(tlinkname) //'.csv'
+                            fn_linkFV_static_csv = trim(setting%File%outputML_Link_kernel) // 'FV_static_' //trim(tlinkname) //'.csv'
                             fn_link_h5 = 'link_'//trim(tlinkname) 
-                            fn_linkFV_static_h5 = 'link_FV_static_'//trim(tlinkname) 
+                            fn_linkFV_static_h5 = 'linkFV_static_'//trim(tlinkname) 
                             fn_link_static_h5 ='link_static_'//trim(tlinkname) 
                             
 
