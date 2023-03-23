@@ -9,7 +9,7 @@
         "JunctionBranchLengthFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
-        "NominalElemLength" : 100.00
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "BC" : {
@@ -58,11 +58,11 @@
             "isWaveSpeedOut"    : false
         },
         "Report" : {
-            "useSWMMinpYN" :true,
+            "useSWMMinpYN" :false,
             "provideYN" : true,
             "suppress_MultiLevel_Output" : false,
             "StartTime" : 0.0,
-            "TimeInterval" : 300.0,
+            "TimeInterval" : 1.0,
             "TimeUnits" : "Hours"
         }
     },
