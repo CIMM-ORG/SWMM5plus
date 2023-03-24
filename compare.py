@@ -48,6 +48,26 @@ def convert_dset_to_csv(file_name,dset_name):
             csvwriter.writerows((dset.attrs['header_data'][:,:].astype('U13')))
             csvwriter.writerows(np.round(dset[:,:],6))
 
+def get_index_from_data_array(array,data_name):
+    # returns the index of specific data in the link/node dataset in h5
+    # this function doesnot work for linkFV/nodeFV dataset
+
+    # find the header in the data array and convert them to string
+    header = array.attrs['header_data'][1,:].astype('U101')
+    # find the colum index in the dataset matching the attribute name
+    idx = [i for i, s in enumerate(header) if data_name == s]
+    if idx == []:
+        print("---------------------- ERROR IN get_index_from_data_array ----------------------")
+        print("passed dataset name: "+data_name+" is not in output.h5")
+        print("please turn on "+data_name+" output from SWMM5+ settings file")
+        print("-------------------------------------------------------------------------------")
+        print(header)   
+        exit()
+        return 0
+    else:
+        return idx[0]
+
+
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
 Qtolerance = 25.0            # percentage flow tolerance for comparing between the norms
@@ -294,10 +314,17 @@ for x in all_dset_names:
 
         # ... extract SWMM5+ data
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',x)
+
+        # find the column index of Flowrate in the link hdf5 dataset
+        index = get_index_from_data_array(z,'Flowrate')
         # extract the flowrates from the swmm5_plus .h5 file
-        swmmF_link_Q = z[:,3] * Qf
+        swmmF_link_Q = z[:,index] * Qf
+
+        # find the column index of Depth in the link hdf5 dataset
+        index = get_index_from_data_array(z,'Depth')
         # extract the depths from the swmm5_plus .h5 file
-        swmmF_link_Y = z[:,2] * Yf
+        swmmF_link_Y = z[:,index] * Yf
+
         # extract the timestamp
         time = z[:,0]
         array_len_Q = len(swmmC_link_Q)
@@ -411,9 +438,12 @@ for x in all_dset_names:
         # extract the flowrates from the swmm5_plus .h5 file
         z = get_array_from_dset(swmm5_plus_dir+'/output.h5',data_set_name)
 
-        if is_nJ2:  
-            swmmF_node_H = ((z[:,5] + z[:,6])/2.) * Yf # averaging the u/s and d/s peizometric heads
+        if is_nJ2:
+            idx_1 = get_index_from_data_array(z,'PiezometricHeadUpstream')
+            idx_2 = get_index_from_data_array(z,'PiezometricHeadDownstream') 
+            swmmF_node_H = ((z[:,idx_1] + z[:,idx_2])/2.) * Yf # averaging the u/s and d/s peizometric heads
         else:
+            # for the JM piezometric head data, the first column will always be JM head
             swmmF_node_H = (z[:,1]) * Yf # take the JM peizometric head
         # extract the timestamp
         time = z[:,0]
